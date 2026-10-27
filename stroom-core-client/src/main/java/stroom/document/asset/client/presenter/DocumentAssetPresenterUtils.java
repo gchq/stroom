@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Utility methods used by DocumentAssetPresenter.
+ * Utility methods used by the Assets tab (DocumentAssetsTabController) and the asset chooser.
  * Separated out as the main class was getting too big.
  */
 public class DocumentAssetPresenterUtils {
@@ -241,7 +241,7 @@ public class DocumentAssetPresenterUtils {
      * @param newItemLabel The label of the new item
      * @return A string for the path to the new item.
      */
-    static String getNewItemPath(final DocumentAssetTreeItem parent, final String newItemLabel) {
+    public static String getNewItemPath(final DocumentAssetTreeItem parent, final String newItemLabel) {
         final String parentPath = getItemPath(parent);
         if (parentPath.equals(SLASH)) {
             return newItemLabel;
@@ -253,7 +253,7 @@ public class DocumentAssetPresenterUtils {
     /**
      * Generates a potentially non-classing label for an asset.
      */
-    static String generateNonClashingLabel(final String label, final int i) {
+    public static String generateNonClashingLabel(final String label, final int i) {
         final int iDot = label.lastIndexOf('.');
         String namePart = label;
         String extPart = "";
@@ -272,7 +272,9 @@ public class DocumentAssetPresenterUtils {
      * @param itemId The ID of the item with the label. Ensures the label doesn't clash with itself.
      * @return true if there is a clash, false if not.
      */
-    static boolean labelClashesInTreeRoot(final DocumentAssetTree tree, final String itemLabel, final String itemId) {
+    public static boolean labelClashesInTreeRoot(final DocumentAssetTree tree,
+                                                 final String itemLabel,
+                                                 final String itemId) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
             final DocumentAssetTreeItem assetTreeItem = tree.getItem(i);
             if (!Objects.equals(assetTreeItem.getId(), itemId)
@@ -288,7 +290,7 @@ public class DocumentAssetPresenterUtils {
      * or the parent of the selected file (can't add things to a file).
      * @return The node that we're going to add things to. Null if we're adding to the root item.
      */
-    static DocumentAssetTreeItem findFolderForSelectedItem(final DocumentAssetTreeItem selectedTreeItem) {
+    public static DocumentAssetTreeItem findFolderForSelectedItem(final DocumentAssetTreeItem selectedTreeItem) {
         if (selectedTreeItem != null) {
             if (selectedTreeItem.isLeaf()) {
                 // File so we want the parent folder

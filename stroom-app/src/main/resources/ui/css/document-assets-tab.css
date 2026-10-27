@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.gin;
+/* A document's Assets tab (DocumentAssetsTab). */
 
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+/* The editor's area: the editor, or a message while no file is selected */
+.document-assets-tab__editor-area {
+    display: flex;
+    flex-direction: column;
+}
 
-import com.google.inject.Provider;
+.document-assets-tab__editor-area > * {
+    flex: 1 1 auto;
+    min-height: 0;
+}
 
-@SuppressWarnings({"rawtypes", "unused"})
-public interface DocumentAssetGinjector {
-
-    Provider<DocumentAssetPresenter> getDocumentAssetPresenter();
-
+.document-assets-tab__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color--disabled);
 }

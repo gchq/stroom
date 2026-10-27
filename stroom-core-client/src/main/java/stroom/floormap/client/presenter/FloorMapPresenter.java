@@ -18,7 +18,8 @@ package stroom.floormap.client.presenter;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.document.asset.client.component.DocumentAssetsTabController;
+import stroom.document.asset.client.presenter.DocumentAssetsTabProvider;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ControllerTabProvider;
@@ -57,7 +58,8 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final DocumentAssetPresenter<FloorMapDoc> documentAssetPresenter;
+    private final DocumentAssetsTabController<FloorMapDoc> assetsTab;
+    private final DocumentAssetsTabProvider<FloorMapDoc> assetsTabProvider;
     private FloorMapMapPresenter floorMapMapPresenter;
     private FloorMapEditorPresenter floorMapEditorPresenter;
     private FloorMapSettingsController floorMapSettings;
@@ -93,10 +95,10 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final Provider<FloorMapQueryPresenter> floorMapQueryPresenterProvider,
                              final DocumentUserPermissionsTabProvider<FloorMapDoc> documentUserPermissionsTabProvider,
-                             final DocumentAssetPresenter<FloorMapDoc> documentAssetPresenter) {
+                             final DocumentAssetsTabController<FloorMapDoc> assetsTab) {
         super(eventBus, view);
-        own(documentAssetPresenter);
-        this.documentAssetPresenter = documentAssetPresenter;
+        this.assetsTab = own(assetsTab);
+        this.assetsTabProvider = new DocumentAssetsTabProvider<>(eventBus, assetsTab);
 
         addTab(MAP, new DocTabProvider<>(() -> {
             floorMapMapPresenter = make(floorMapMapPresenterProvider);
@@ -201,7 +203,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             }
             return floorMapSettings;
         }, FloorMapSettingsController::read, FloorMapSettingsController::write));
-        addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
+        addTab(ASSETS, assetsTabProvider);
 
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
@@ -283,7 +285,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             previousContent = content;
         }
 
-        if (content == documentAssetPresenter) {
+        if (assetsTabProvider.isPresenter(content)) {
             onChange();
         }
     }
@@ -310,7 +312,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         return super.hasAssociatedDirty() ||
                 (floorMapMapPresenter != null && floorMapMapPresenter.hasAssociatedDirty()) ||
                 (floorMapEditorPresenter != null && floorMapEditorPresenter.hasPendingChanges()) ||
-                (documentAssetPresenter != null && documentAssetPresenter.isDirty());
+                assetsTab.isDirty();
     }
 
     /// Returns the post-save callback for the Editor tab's staged-change flush
@@ -319,7 +321,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     /// The returned [java.util.function.BiConsumer] first flushes any
     /// pending Editor-tab changes via
     /// [FloorMapEditorPresenter#onSave(FloorMapDoc, Consumer)], then on
-    /// success delegates to [stroom.document.asset.client.presenter.DocumentAssetPresenter#onSave]
+    /// success delegates to [DocumentAssetsTabController#onSave]
     /// to persist any associated binary assets.
     ///
     /// @return a BiConsumer that is inserted into the Stroom document save chain
@@ -341,10 +343,10 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 if (floorMapMapPresenter != null) {
                     floorMapMapPresenter.refresh();
                 }
-                documentAssetPresenter.onSave(doc, callback);
+                assetsTab.onSave(doc, callback);
             });
         } else {
-            documentAssetPresenter.onSave(document, callback);
+            assetsTab.onSave(document, callback);
         }
     }
 
@@ -364,6 +366,6 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     /// @param document The new document to save to.
     /// @param callback Thing to call when the assets have been saved.
     public void saveAsAssets(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
-        documentAssetPresenter.onSaveAs(document, callback);
+        assetsTab.onSaveAs(document, callback);
     }
 }

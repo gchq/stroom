@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -34,6 +34,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.core.client.GWT;
@@ -41,7 +43,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [DocumentAssetPresenter]
+/// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [DocumentAssetsTabController]
 /// (a Visualisation's 'Assets' tab: the asset tree with its toolbar) and its 'Add File' upload
 /// dialog with fake REST replies.
 ///
@@ -54,7 +56,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The draft assets are the seed (`chart.js`), then the seed and the uploaded file. Each file name
 /// has its own upload reply, with the key `rk-<name>`.
 ///
-/// The presenter (from the editors batch's ginjector) is read as `VisualisationPresenter` reads
+/// The controller (from the editors batch's ginjector) is read as `VisualisationPresenter` reads
 /// its tabs, and shown with its toolbar above it, as the document's tab shows them, filling the
 /// page.
 ///
@@ -332,20 +334,21 @@ public final class VisualisationAssetsStories {
         harness.add(frame);
         // After start-up, as its editor reads the user's preferences
         harness.afterStartUp(() -> {
-            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.own(
-                    injector.getVisualisationAssetsPresenter());
-            for (final Widget toolbar : presenter.getDocumentButtons()) {
+            // As its document's opener says, which its tabs follow
+            harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(false));
+            final DocumentAssetsTabController<VisualisationDoc> assetsTab = harness.own(
+                    injector.getVisualisationAssetsTab());
+            for (final Widget toolbar : assetsTab.getDocumentButtons()) {
                 toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
                 frame.add(toolbar);
             }
-            final Widget content = presenter.getWidget();
+            final Widget content = assetsTab.asWidget();
             content.getElement().getStyle().setProperty("flex", "1 1 auto");
             content.getElement().getStyle().setProperty("minHeight", "0");
             content.getElement().getStyle().setProperty("position", "relative");
             frame.add(content);
             // As VisualisationPresenter reads its tabs
-            presenter.setReadOnly(false);
-            presenter.read(docRef, doc);
+            assetsTab.read(docRef, doc);
         });
         return harness.asWidget();
     }

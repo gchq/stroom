@@ -7,24 +7,27 @@
  * <p>To integrate the Document Asset Manager into a new or existing document type, follow these steps:</p>
  *
  * <h3>1. Dependency Injection</h3>
- * <p>Inject a {@link stroom.document.asset.client.presenter.DocumentAssetPresenter} into your document's
- * primary presenter (usually a <code>DocTabPresenter</code>). Ensure the presenter is parameterized with
- * your document's shared POJO type.</p>
+ * <p>Inject a {@link stroom.document.asset.client.component.DocumentAssetsTabController} into your
+ * document's primary presenter (usually a <code>DocTabPresenter</code>), which owns it. Ensure it is
+ * parameterized with your document's shared POJO type.</p>
  * <pre>
- * private final DocumentAssetPresenter&lt;MyDoc&gt; documentAssetPresenter;
+ * private final DocumentAssetsTabController&lt;MyDoc&gt; assetsTab;
+ * private final DocumentAssetsTabProvider&lt;MyDoc&gt; assetsTabProvider;
  *
  * &#64;Inject
- * public MyPresenter(..., DocumentAssetPresenter&lt;MyDoc&gt; documentAssetPresenter, ...) {
- *     this.documentAssetPresenter = documentAssetPresenter;
+ * public MyPresenter(..., DocumentAssetsTabController&lt;MyDoc&gt; assetsTab, ...) {
+ *     this.assetsTab = own(assetsTab);
+ *     this.assetsTabProvider = new DocumentAssetsTabProvider&lt;&gt;(eventBus, assetsTab);
  * }
  * </pre>
  *
  * <h3>2. Add the Asset Tab</h3>
- * <p>Add a new tab to your document view and provide the <code>documentAssetPresenter</code> as the provider.</p>
+ * <p>Add a new tab to your document view with the {@link DocumentAssetsTabProvider}, which shows the
+ * controller and adds its buttons to the document's toolbar.</p>
  * <pre>
  * private static final TabData ASSETS = new TabDataImpl("Assets");
  * ...
- * addTab(ASSETS, new DocTabProvider&lt;&gt;(() -&gt; documentAssetPresenter));
+ * addTab(ASSETS, assetsTabProvider);
  * </pre>
  *
  * <h3>3. Synchronize Tab Selection</h3>
@@ -33,7 +36,7 @@
  * <pre>
  * &#64;Override
  * protected void afterSelectTab(final MyPresenterWidget&lt;?&gt; content) {
- *     if (content == documentAssetPresenter) {
+ *     if (assetsTabProvider.isPresenter(content)) {
  *         onChange();
  *     }
  * }
@@ -46,7 +49,7 @@
  * &#64;Override
  * protected boolean hasAssociatedDirty() {
  *     return super.hasAssociatedDirty()
- *         || (documentAssetPresenter != null &amp;&amp; documentAssetPresenter.isDirty());
+ *         || assetsTab.isDirty();
  * }
  * </pre>
  *
@@ -56,12 +59,12 @@
  * <pre>
  * &#64;Override
  * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveCallback() {
- *     return (doc, callback) -&gt; documentAssetPresenter.onSave(doc, callback);
+ *     return (doc, callback) -&gt; assetsTab.onSave(doc, callback);
  * }
  *
  * &#64;Override
  * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveAsCallback() {
- *     return (doc, callback) -&gt; documentAssetPresenter.onSaveAs(doc, callback);
+ *     return (doc, callback) -&gt; assetsTab.onSaveAs(doc, callback);
  * }
  * </pre>
  *

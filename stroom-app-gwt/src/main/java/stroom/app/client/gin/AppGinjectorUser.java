@@ -37,8 +37,6 @@ import stroom.data.client.gin.StreamStoreModule;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
-import stroom.document.asset.client.gin.DocumentAssetGinjector;
-import stroom.document.asset.client.gin.DocumentAssetModule;
 import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
@@ -96,7 +94,6 @@ import com.google.web.bindery.event.shared.EventBus;
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
-        DocumentAssetModule.class,
         DocumentationModule.class,
         EntityModule.class,
         FeedModule.class,
@@ -140,7 +137,6 @@ import com.google.web.bindery.event.shared.EventBus;
 public interface AppGinjectorUser extends
         AlertGinjector,
         DashboardGinjector,
-        DocumentAssetGinjector,
         EntityGinjector,
         Ginjector,
         PluginsGinjector,

@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.document.asset.client.presenter.DocumentAssetAddFileCallback;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.document.asset.shared.DocumentAssetResource;
@@ -190,7 +189,7 @@ public class DocumentAssetQuickUploadController extends Controller implements Do
                 .onSuccess(ok -> {
                     if (Boolean.TRUE.equals(ok)) {
                         if (onUploaded != null) {
-                            onUploaded.accept(DocumentAssetPresenter.ASSET_SERVLET_PATH_PREFIX
+                            onUploaded.accept(DocumentAssetsTabController.ASSET_SERVLET_PATH_PREFIX
                                     + docUuid + "/" + fileName);
                         }
                     } else {

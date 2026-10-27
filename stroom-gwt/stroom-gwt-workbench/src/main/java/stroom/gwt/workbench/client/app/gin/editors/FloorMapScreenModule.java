@@ -27,11 +27,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// The presenter and view bindings of Stroom's `FloorMapModule`
 /// (`stroom/floormap/client/gin/FloorMapModule.java`) that a floor map's Editor tab
 /// ([FloorMapEditorPresenter]), Map tab ([FloorMapMapPresenter], with its Tracking, Groups and
-/// cluster member lists) need, the dialog that
-/// initialises a new floor map (`FloorMapInitController`), and the document
-/// asset chooser its asset boxes open
-/// (`stroom/document/asset/client/gin/DocumentAssetModule.java`), without their plugins and app
-/// services.
+/// cluster member lists) need, and the dialog that initialises a new floor map
+/// (`FloorMapInitController`), without their plugins and app services.
 public class FloorMapScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

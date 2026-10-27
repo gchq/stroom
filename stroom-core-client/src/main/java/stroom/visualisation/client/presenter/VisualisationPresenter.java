@@ -17,11 +17,11 @@
 package stroom.visualisation.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.document.asset.client.component.DocumentAssetsTabController;
+import stroom.document.asset.client.presenter.DocumentAssetsTabProvider;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -45,24 +45,25 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter;
+    private final DocumentAssetsTabController<VisualisationDoc> assetsTab;
+    private final DocumentAssetsTabProvider<VisualisationDoc> assetsTabProvider;
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final Provider<VisualisationSettingsController> settingsProvider,
-                                  final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter,
+                                  final DocumentAssetsTabController<VisualisationDoc> assetsTab,
                                   final Provider<MarkdownEditController> markdownEditProvider,
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(documentAssetPresenter);
-        this.documentAssetPresenter = documentAssetPresenter;
+        this.assetsTab = own(assetsTab);
+        this.assetsTabProvider = new DocumentAssetsTabProvider<>(eventBus, assetsTab);
 
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 VisualisationSettingsController::read,
                 VisualisationSettingsController::write));
-        addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
+        addTab(ASSETS, assetsTabProvider);
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
@@ -85,7 +86,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
 
     @Override
     protected void afterSelectTab(final MyPresenterWidget<?> content) {
-        if (content == documentAssetPresenter) {
+        if (assetsTabProvider.isPresenter(content)) {
             onChange();
         }
     }
@@ -113,7 +114,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      */
     @Override
     protected boolean hasAssociatedDirty() {
-        return super.hasAssociatedDirty() || (documentAssetPresenter != null && documentAssetPresenter.isDirty());
+        return super.hasAssociatedDirty() || assetsTab.isDirty();
     }
 
     /**
@@ -144,7 +145,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        documentAssetPresenter.onSave(document, callback);
+        assetsTab.onSave(document, callback);
     }
 
     /**
@@ -154,6 +155,6 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAsAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        documentAssetPresenter.onSaveAs(document, callback);
+        assetsTab.onSaveAs(document, callback);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter;
+package stroom.document.asset.client.component;
 
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
@@ -22,11 +22,11 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.component.DocumentAssetAddItemDialogController;
 import stroom.document.asset.client.component.DocumentAssetAddItemDialogController.DialogType;
-import stroom.document.asset.client.component.DocumentAssetEditAssetDialogController;
-import stroom.document.asset.client.component.DocumentAssetUploadFileDialogController;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
+import stroom.document.asset.client.component.DocumentAssetsTab.AssetAction;
+import stroom.document.asset.client.presenter.DocumentAssetAddFileCallback;
+import stroom.document.asset.client.presenter.DocumentAssetPresenterUtils;
+import stroom.document.asset.client.presenter.DocumentAssetState;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAssetResource;
@@ -36,21 +36,21 @@ import stroom.document.asset.shared.DocumentAssetUpdateDelete;
 import stroom.document.asset.shared.DocumentAssetUpdateNewFile;
 import stroom.document.asset.shared.DocumentAssetUpdateRename;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.ResourceKey;
-import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
@@ -70,74 +70,33 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * Shows the Assets - images, css etc - associated with the Visualisation.
- */
-public class DocumentAssetPresenter<D extends AbstractDoc>
-        extends DocPresenter<DocumentAssetView, D>
+/// A document's Assets tab ([DocumentAssetsTab]): its images, CSS, scripts and so on, which the
+/// user adds, uploads, renames, deletes and edits as a draft on the server. The draft becomes the
+/// document's assets when the document is saved: its owner (e.g. `VisualisationPresenter`,
+/// `FloorMapPresenter`) calls [#onSave] or [#onSaveAs] from the document's post-save callback, and
+/// counts the tab's [#isDirty()] as its own.
+///
+/// @param <D> The document's type.
+public class DocumentAssetsTabController<D extends AbstractDoc>
+        extends Controller
         implements HasToolbar, DocumentAssetAddFileCallback {
 
-    /**
-     * Illegal asset name characters - not allowed in any file or folder name
-     */
-    private static final String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
-
-    /**
-     * Servlet path - start of the URL for the asset as retrieved via the Servlet
-     */
+    /// Servlet path - start of the URL for the asset as retrieved via the Servlet
     public static final String ASSET_SERVLET_PATH_PREFIX = "/assets/";
 
-    /**
-     * REST interface
-     */
+    // Illegal asset name characters - not allowed in any file or folder name
+    private static final String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
+
     private static final DocumentAssetResource DOCUMENT_ASSET_RESOURCE =
             GWT.create(DocumentAssetResource.class);
 
-    /**
-     * Rest factory to trigger storing file uploads
-     */
+    private final DocumentAssetsTab view;
     private final RestFactory restFactory;
 
-    /**
-     * Tree representing file assets and folders
-     */
-    private final DocumentAssetTree tree = new DocumentAssetTree();
+    // Tree representing file assets and folders
+    private final DocumentAssetTree tree;
 
-    /**
-     * Button to revert any changes and go back to live version
-     */
-    // The tab's buttons, for its document's toolbar
-    private final Toolbar toolbar = new Toolbar("Asset actions");
-    private final ToolbarButton revertButton =
-            toolbar.button(SvgImage.REFRESH, "Revert Asset Changes", this::onRevertButtonClick);
-
-    /**
-     * Button to add stuff to the tree
-     */
-    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add File or Folder",
-            this::showAddMenu);
-
-    /**
-     * Button to delete stuff from the tree
-     */
-    private final ToolbarButton deleteButton =
-            toolbar.button(SvgImage.DELETE, "Delete Selected Asset", this::onDeleteButtonClick);
-
-    /**
-     * Button to edit stuff from the tree
-     */
-    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename Selected Asset",
-            this::onEditFilename);
-
-    /**
-     * Button to view stuff
-     */
-    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE,
-            "View Selected Asset in Browser (opens in new tab)", this::onViewAsset);
-
-    /**
-     * Dialog that appears when user wants to upload a file
-     */
+    // Dialog that appears when user wants to upload a file
     private final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider;
 
     // Makes the dialog that adds a file or folder
@@ -146,68 +105,60 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     // Makes the dialog that renames the tree item
     private final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider;
 
-    /**
-     * Editor widget
-     */
-    private final EditorPresenter editorPresenter;
+    // The selected file's editor
+    private final CodeEditorController editor;
 
-    /**
-     * Set of the node paths that are open when the document is saved
-     */
+    // Set of the node paths that are open when the document is saved
     private final Set<String> treeItemPathToOpenState = new HashSet<>();
 
-    /**
-     * Items in the context menu
-     */
+    // Items in the Add menu
     private final List<Item> menuItems = new ArrayList<>();
 
-    /**
-     * State of content edited in editor
-     */
+    // State of content edited in editor
     private final DocumentAssetState assetDirtyState = new DocumentAssetState();
 
-    /**
-     * True if the server has pending draft asset changes that have not yet been saved to live,
-     * as reported by the assets' isDirty() on the last fetch. Drives isDirty()
-     * (and therefore the Save/revert buttons) via {@link #hasAssociatedDirty()}.
-     */
+    // True if the server has pending draft asset changes that have not yet been saved to live, as
+    // reported by the assets' isDirty() on the last fetch. Drives isDirty() (and therefore the
+    // Save/revert buttons)
     private boolean serverDirty;
 
-    /**
-     * Current document - may be null
-     */
+    // Current document - may be null
     private D document;
 
-    /**
-     * True if the UI is readonly, false if read-write
-     */
-
+    /// Made by GIN, with its tab.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The tab.
+    /// @param restFactory              Fetches and changes the draft assets.
+    /// @param uploadFileDialogProvider Makes the dialog that uploads a file.
+    /// @param addItemDialogProvider    Makes the dialog that adds a file or folder.
+    /// @param editAssetDialogProvider  Makes the dialog that renames a file or folder.
+    /// @param codeEditorProvider       Makes the controller of the file's editor.
     @Inject
-    public DocumentAssetPresenter(final EventBus eventBus,
-                                  final DocumentAssetView view,
-                                  final RestFactory restFactory,
-                                  final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider,
-                                  final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
-                                  final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
-                                  final Provider<EditorPresenter> editorPresenterProvider) {
-        super(eventBus, view);
-        addButton.setOpensMenu(true);
-
+    public DocumentAssetsTabController(
+            final EventBus eventBus,
+            final DocumentAssetsTab view,
+            final RestFactory restFactory,
+            final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider,
+            final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
+            final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
+            final Provider<CodeEditorController> codeEditorProvider) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
         this.uploadFileDialogProvider = uploadFileDialogProvider;
         this.addItemDialogProvider = addItemDialogProvider;
         this.editAssetDialogProvider = editAssetDialogProvider;
-        this.editorPresenter = make(editorPresenterProvider);
+        initWidget(view);
+        this.tree = view.getTree();
+        this.editor = make(codeEditorProvider).attach(view.getEditor());
 
-        tree.setAccessibleName("Assets");
         tree.setOnSelect(item -> onSelectionChange());
-        this.getView().setTreeAndEditor(tree, editorPresenter);
+        view.setOnAction(this::onAction);
 
         // Hook up the dirty events on the editor
-        editorPresenter.addValueChangeHandler(
-                event -> this.onEditorContentChanged());
-        editorPresenter.addFormatHandler(
-                event -> this.onEditorContentChanged());
+        own(editor.addValueChangeHandler(event -> onEditorContentChanged()));
+        own(editor.addFormatListener(event -> onEditorContentChanged()));
 
         // Ensure editor is disabled by default
         disableEditor();
@@ -238,18 +189,31 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .build());
     }
 
-    @Override
-    protected boolean hasAssociatedDirty() {
+    private void onAction(final AssetAction action) {
+        switch (action) {
+            case REVERT -> onRevertButtonClick();
+            case ADD -> showAddMenu();
+            case DELETE -> onDeleteButtonClick();
+            case RENAME -> onEditFilename();
+            case VIEW -> onViewAsset();
+        }
+    }
+
+    /// @return Whether there are changes to the assets that the document's Save would save: draft
+    /// changes on the server, or an edit to the file shown not yet sent to the draft.
+    public boolean isDirty() {
         return serverDirty || assetDirtyState.isDirtyAndNeedsSaveToDraft();
     }
 
-    /**
-     * Callback from the Add dialog that adds a file that has been uploaded.
-     *
-     * @param parentFolderItem The node that the file has been added to.
-     * @param fileName         The name of the file that was uploaded.
-     * @param resourceKey      The resource key of the file, so that the server can find it later.
-     */
+    private boolean isReadOnly() {
+        return context(Contexts.READ_ONLY);
+    }
+
+    /// Callback from the Add dialog that adds a file that has been uploaded.
+    ///
+    /// @param parentFolderItem The node that the file has been added to.
+    /// @param fileName         The name of the file that was uploaded.
+    /// @param resourceKey      The resource key of the file, so that the server can find it later.
     @Override
     public void addUploadedFile(final DocumentAssetTreeItem parentFolderItem,
                                 final String fileName,
@@ -260,16 +224,15 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         doUpdateNewUploadedFile(path, resourceKey);
     }
 
-    /**
-     * Generates a label that doesn't clash with other files/folders in the same directory.
-     * Adds an integer to the end, incrementing until an integer is found that doesn't
-     * clash with anything else.
-     *
-     * @param assetParentItem The tree item that holds the directory.
-     * @param label           The label that we're trying to put into the directory.
-     * @param itemId          The ID of the item with this label. Can be null if this is a new item with no ID yet.
-     * @return A label that doesn't clash with anything else.
-     */
+    /// Generates a label that doesn't clash with other files/folders in the same directory.
+    /// Adds an integer to the end, incrementing until an integer is found that doesn't
+    /// clash with anything else.
+    ///
+    /// @param assetParentItem The tree item that holds the directory.
+    /// @param label           The label that we're trying to put into the directory.
+    /// @param itemId          The ID of the item with this label. Can be null if this is a new item with no ID
+    ///                        yet.
+    /// @return A label that doesn't clash with anything else.
     @Override
     public String getNonClashingLabel(final DocumentAssetTreeItem assetParentItem,
                                       final String label,
@@ -300,30 +263,27 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         // Ensure state is set correctly
         updateState();
 
-        return List.of(toolbar);
+        return List.of(view.getToolbar());
     }
 
     private void showAddMenu() {
-        final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
+        final Rect relativeRect = new Rect(view.getActionElement(AssetAction.ADD)).grow(3);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         ShowMenuEvent.builder()
                 .name("Add")
                 .items(menuItems)
                 .popupPosition(position)
-                .opener(addButton.getElement())
+                .opener(view.getActionElement(AssetAction.ADD))
                 .allowCloseOnMoveLeft()
                 .fire(this);
     }
 
-    /**
-     * Called by DocPresenter, the superclass, when the document is loaded.
-     *
-     * @param docRef   Document reference
-     * @param document Document
-     */
-    @Override
-    protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
-                          final D document) {
+    /// Shows a document's draft assets, fetched from the server.
+    ///
+    /// @param docRef   The document.
+    /// @param document The document.
+    public void read(@SuppressWarnings("unused") final DocRef docRef,
+                     final D document) {
         this.document = document;
 
         // Update UI state
@@ -333,30 +293,19 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         this.fetchDraftAssets(document);
     }
 
-    /**
-     * Implementation of onWrite() from DocPresenter. Doesn't do anything, as saving is driven by
-     * the owning presenter's post-save callback calling onSave() instead.
-     */
-    @Override
-    protected D onWrite(final D document) {
-        return document;
-    }
-
-    /**
-     * Called by the owning presenter (e.g. VisualisationPresenter, FloorMapPresenter) via the
-     * DocumentPlugin post-save callback, to save the assets.
-     * Requests the server to copy data from the draft area to the live area of the database.
-     *
-     * @param document Document that was returned by the save
-     * @param callback Thing to call when everything is saved.
-     */
+    /// Called by the owning presenter (e.g. VisualisationPresenter, FloorMapPresenter) via the
+    /// DocumentPlugin post-save callback, to save the assets.
+    /// Requests the server to copy data from the draft area to the live area of the database.
+    ///
+    /// @param document Document that was returned by the save
+    /// @param callback Thing to call when everything is saved.
     public void onSave(final D document, final Consumer<D> callback) {
         this.document = document;
 
         // Check if the editor content is dirty and needs saving
         if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
             doUpdateContent(assetDirtyState.getPathToEditItem(),
-                    editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                    editor.getText().getBytes(StandardCharsets.UTF_8),
                     () -> doOnWrite(callback),
                     this::doSelectionChangeAfterUpdateContentFailed);
         } else {
@@ -364,19 +313,16 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Called by the owning presenter via the DocumentPlugin post-save callback, to do SaveAs.
-     * SaveAs does the following:
-     * <ol>
-     *     <li>Copies the live assets to the new document</li>
-     *     <li>Copies the draft assets to the new document</li>
-     *     <li>Updates any necessary content in the draft assets</li>
-     *     <li>Saves the draft into live for the new document</li>
-     * </ol>
-     *
-     * @param newDocument The document we're Saving As.
-     * @param callback    The lamda to call when this chain is complete.
-     */
+    /// Called by the owning presenter via the DocumentPlugin post-save callback, to do SaveAs.
+    /// SaveAs does the following:
+    ///
+    /// 1. Copies the live assets to the new document
+    /// 2. Copies the draft assets to the new document
+    /// 3. Updates any necessary content in the draft assets
+    /// 4. Saves the draft into live for the new document
+    ///
+    /// @param newDocument The document we're Saving As.
+    /// @param callback    The lamda to call when this chain is complete.
     public void onSaveAs(final D newDocument, final Consumer<D> callback) {
 
         Console.info("onSaveAs for " + document + " to " + newDocument);
@@ -385,7 +331,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         byte[] updatedContent = null;
         if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
             updatedContentPath = assetDirtyState.getPathToEditItem();
-            updatedContent = editorPresenter.getText().getBytes(StandardCharsets.UTF_8);
+            updatedContent = editor.getText().getBytes(StandardCharsets.UTF_8);
         }
         final DocumentAssetSaveAsParameters params =
                 new DocumentAssetSaveAsParameters(newDocument.getUuid(), updatedContentPath, updatedContent);
@@ -409,14 +355,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error saving the document to a new document: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Called when Add button / Add Folder is clicked.
-     * Inserts a new folder with the currently selected folder.
-     */
+    // Called when Add / New Folder or New File is chosen: adds one in the selected folder
     private void onCreateNewItem(final boolean addFile) {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem parentItem =
@@ -441,10 +385,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
 
     }
 
-    /**
-     * Called when the Delete button is clicked.
-     * Deletes the currently selected item.
-     */
+    // Called when the Delete button is clicked: deletes the selected item
     private void onDeleteButtonClick() {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem assetTreeItem = tree.getSelectedItem();
@@ -456,7 +397,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                     message = "Are you sure you want to delete the selected folder and all its descendants?";
                 }
 
-                ConfirmEvent.fire(DocumentAssetPresenter.this, message,
+                ConfirmEvent.fire(this, message,
                         result -> {
                             if (result) {
                                 final String path = DocumentAssetPresenterUtils.getItemPath(assetTreeItem);
@@ -468,18 +409,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Gets dirty events to update the class member variable.
-     */
-    @Override
-    public void onDirty() {
-        updateState();
-    }
-
-    /**
-     * Called when the EDIT button is pressed. Allows users to change the text of
-     * an item in the tree.
-     */
+    // Called when the Rename button is pressed: lets the user rename the selected item
     private void onEditFilename() {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
@@ -499,26 +429,20 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Called when the editor is dirty and needs a save.
-     */
+    // Called when the editor is dirty and needs a save
     private void onEditorContentChanged() {
         assetDirtyState.onAssetContentChanged();
-        onChange();
-        // Force fire a dirty event to ensure parents re-evaluate their dirty state
-        // even if our own dirty state hasn't transitioned.
+        // The document works out again whether it is dirty, counting this tab's isDirty()
         markChanged();
+        updateState();
     }
 
-    /**
-     * Called when the Revert button is clicked.
-     * Gets rid of draft changes and goes back to the live version of the assets.
-     * Scheduler calls here shouldn't be necessary.
-     */
+    // Called when the Revert button is clicked: gets rid of draft changes and goes back to the
+    // live version of the assets. Scheduler calls here shouldn't be necessary.
     private void onRevertButtonClick() {
 
         final String message = "Are you sure you want to lose all your changes?";
-        ConfirmEvent.fire(DocumentAssetPresenter.this, message,
+        ConfirmEvent.fire(this, message,
                 result -> {
                     if (result) {
                         Scheduler.get().scheduleFinally(() -> {
@@ -531,9 +455,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                             Scheduler.get().scheduleFinally(() -> {
                                                 final DocRef docRef = document.asDocRef();
                                                 document = null; // Make sure doc is reloaded on refresh
-                                                RefreshDocumentEvent.fire(
-                                                        DocumentAssetPresenter.this,
-                                                        docRef);
+                                                RefreshDocumentEvent.fire(this, docRef);
                                             });
                                         } else {
                                             AlertEvent.fireError(this,
@@ -547,21 +469,20 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                                 "Error reverting to live version: " + error.getMessage(),
                                                 null);
                                     })
-                                    .taskMonitorFactory(this)
+                                    .owner(this)
+                                    .taskMonitorFactory(taskMonitor())
                                     .exec();
                         });
                     }
                 });
     }
 
-    /**
-     * Called when the selection changes.
-     */
+    // Called when the selection changes
     private void onSelectionChange() {
         if (!isReadOnly()) {
             if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
                 doUpdateContent(assetDirtyState.getPathToEditItem(),
-                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                        editor.getText().getBytes(StandardCharsets.UTF_8),
                         this::doSelectionChangeAfterUpdateContentSuccess,
                         this::doSelectionChangeAfterUpdateContentFailed);
             } else {
@@ -572,19 +493,14 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Called after onSelectionChange() when the saving of existing content fails.
-     * Select back to previous item.
-     */
+    // Called after onSelectionChange() when the saving of existing content fails: selects the
+    // previous item again
     private void doSelectionChangeAfterUpdateContentFailed() {
         tree.setSelectedItem(assetDirtyState.getEditItem(), false);
         updateState();
     }
 
-    /**
-     * Called after the current editor contents has been saved.
-     * Loads up the new editor contents.
-     */
+    // Called after the current editor contents has been saved: loads up the new editor contents
     private void doSelectionChangeAfterUpdateContentSuccess() {
         assetDirtyState.onUpdateContentSuccess();
 
@@ -602,27 +518,20 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Handles a failure to fetch draft content, from doSelectionChangeAfterUpdateContentSuccess()
-     * or the fetchDraftContent() error path.
-     */
+    // Handles a failure to fetch draft content, from doSelectionChangeAfterUpdateContentSuccess()
+    // or the fetchDraftContent() error path
     private void doSelectItemFetchDraftContentFailed() {
         disableEditor();
         updateState();
     }
 
-    /**
-     * Called after the new editor contents has been loaded.
-     */
+    // Called after the new editor contents has been loaded
     private void doSelectionChangeAfterFetchDraftContentSuccess() {
         updateState();
     }
 
-    /**
-     * Called when Add Button / Upload File is clicked.
-     * Shows the uploadFileDialog. The dialog calls back into this object via the
-     * DocumentAssetAddFileCallback interface.
-     */
+    // Called when Add / Upload File is chosen: shows the upload dialog, which calls back into this
+    // object via the DocumentAssetAddFileCallback interface
     private void onUploadFile() {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem folderItem =
@@ -633,11 +542,9 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Called when the user wants to view an asset.
-     * Opens a new Browser window (tab) pointing to the asset via the Servlet.
-     */
-    public void onViewAsset() {
+    // Called when the user wants to view an asset: opens a new browser window (tab) pointing to
+    // the asset via the Servlet
+    private void onViewAsset() {
         final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
         if (selectedItem != null) {
             // Find the document ID
@@ -651,9 +558,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         }
     }
 
-    /**
-     * Called from onWrite() after any saving of content has happened, if that is necessary.
-     */
+    // Called from onSave() after any saving of content has happened, if that is necessary
     private void doOnWrite(final Consumer<D> callback) {
         // Transfer draft saves to live
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
@@ -673,16 +578,13 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "Error saving assets: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST call to the server to create a new folder.
-     * Then calls fetchDraftAssets() to reload the tree.
-     *
-     * @param path Where the folder must be created.
-     */
+    // Does the REST call to the server to create a new folder, then calls fetchDraftAssets() to
+    // reload the tree
     private void doUpdateNewFolder(final String path) {
         Objects.requireNonNull(path);
 
@@ -703,15 +605,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error creating a new folder: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST call to create a new file.
-     *
-     * @param path The path and name of the file.
-     */
+    // Does the REST call to create a new file at the path given
     private void doUpdateNewFile(final String path) {
         Objects.requireNonNull(path);
 
@@ -735,16 +634,13 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error creating a new file: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST call to create a new file, where the user has uploaded a file.
-     *
-     * @param path        Where to put the file
-     * @param resourceKey The resource key associated with the upload
-     */
+    // Does the REST call to create a new file at the path given, where the user has uploaded a
+    // file (the upload's resource key)
     private void doUpdateNewUploadedFile(final String path,
                                          final ResourceKey resourceKey) {
         Objects.requireNonNull(path);
@@ -771,16 +667,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error uploading a new file: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST call to delete a file or folder
-     *
-     * @param path     The path to delete. The terminal name in the path will be deleted.
-     * @param isFolder Whether the path refers to a folder or a file.
-     */
+    // Does the REST call to delete a file or folder: the terminal name in the path is deleted
     private void doUpdateDelete(final String path,
                                 final boolean isFolder) {
         Objects.requireNonNull(path);
@@ -808,17 +700,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error deleting an item: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST call to rename a file or folder.
-     *
-     * @param oldPath  The thing we want to rename
-     * @param newPath  The new path to replace the old path
-     * @param isFolder Whether the thing being renamed is a folder.
-     */
+    // Does the REST call to rename a file or folder
     private void doUpdateRename(final String oldPath,
                                 final String newPath,
                                 final boolean isFolder) {
@@ -843,18 +730,13 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error renaming an item: " + error.getMessage(),
                             null);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Does the REST update for the content of a file.
-     *
-     * @param path            The path to the file.
-     * @param content         The new content for a file. Must not be null but can be empty.
-     * @param successCallback Method to call on success
-     * @param failureCallback Method to call on failure, after showing the alert dialog.
-     */
+    // Does the REST update for the content of a file (which must not be null but can be empty),
+    // then runs the success callback, or the failure callback after showing the alert dialog
     private void doUpdateContent(final String path,
                                  final byte[] content,
                                  final Runnable successCallback,
@@ -882,25 +764,19 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             "There was an error updating content: " + error.getMessage(),
                             failureCallback);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Called to clear-down the editor and disable it when the item cannot be edited
-     */
+    // Clears down the editor and disables it when the item cannot be edited
     private void disableEditor() {
-        editorPresenter.setText("");
-        editorPresenter.setReadOnly(true);
-        getView().setEditorVisible(false);
+        editor.setText("");
+        editor.setReadOnly(true);
+        view.setEditorVisible(false);
     }
 
-    /**
-     * Fetches the content for the asset at the given path.
-     *
-     * @param document The document that owns the assets.
-     * @param path     The path of the asset. Must be a leaf node path.
-     */
+    // Fetches the content for the asset at the given path (a leaf node's) of the document
     private void fetchDraftContent(final D document,
                                    final String path,
                                    final Runnable successCallback,
@@ -924,10 +800,10 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
 
-                        getView().setEditorVisible(true);
-                        editorPresenter.setText(result.getContent());
-                        editorPresenter.setReadOnly(isReadOnly());
-                        editorPresenter.setMode(editorMode);
+                        view.setEditorVisible(true);
+                        editor.setText(result.getContent());
+                        editor.setReadOnly(isReadOnly());
+                        editor.setMode(editorMode);
                         successCallback.run();
                     }
                 })
@@ -937,17 +813,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             + path + "': \n" + error.getMessage(),
                             failureCallback);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Called from onRead() to pull down the assets from the server.
-     * Uses REST to grab the assets and display them within the tree control.
-     * Async.
-     *
-     * @param document The document received from the server.
-     */
+    // Called from read() to pull down the assets from the server and show them in the tree
     private void fetchDraftAssets(final D document) {
         final String ownerId = document.getUuid();
         DocumentAssetPresenterUtils.storeOpenClosedState(tree, treeItemPathToOpenState);
@@ -967,7 +838,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                     // Set dirty state from the state of the DB, i.e. whether the user has pending
                     // draft asset changes not yet saved to live.
                     this.serverDirty = assets.isDirty();
-                    onChange();
+                    markChanged();
 
                     // Restore the open/closed state of the tree
                     DocumentAssetPresenterUtils.restoreOpenClosedState(tree, treeItemPathToOpenState);
@@ -978,59 +849,44 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .onFailure(error -> AlertEvent.fireError(this,
                         "Error downloading assets for this visualisation: " + error.getMessage(),
                         null))
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    /**
-     * Sets the state of the UI when things have changed.
-     */
+    // Sets the state of the UI when things have changed
     private void updateState() {
 
         if (isReadOnly()) {
-            revertButton.setEnabled(false);
-            addButton.setEnabled(false);
-            deleteButton.setEnabled(false);
-            editButton.setEnabled(false);
-            viewButton.setEnabled(false);
+            view.setActionEnabled(AssetAction.REVERT, false);
+            view.setActionEnabled(AssetAction.ADD, false);
+            view.setActionEnabled(AssetAction.DELETE, false);
+            view.setActionEnabled(AssetAction.RENAME, false);
+            view.setActionEnabled(AssetAction.VIEW, false);
         } else {
-            revertButton.setEnabled(isDirty());
+            view.setActionEnabled(AssetAction.REVERT, isDirty());
 
             final DocumentAssetTreeItem item = tree.getSelectedItem();
             if (item == null) {
                 // Assume the root item is selected so enable 'add'
-                addButton.setEnabled(true);
-                deleteButton.setEnabled(false);
-                editButton.setEnabled(false);
-                viewButton.setEnabled(false);
+                view.setActionEnabled(AssetAction.ADD, true);
+                view.setActionEnabled(AssetAction.DELETE, false);
+                view.setActionEnabled(AssetAction.RENAME, false);
+                view.setActionEnabled(AssetAction.VIEW, false);
                 disableEditor();
             } else {
-                addButton.setEnabled(true);
-                deleteButton.setEnabled(true);
-                editButton.setEnabled(true);
+                view.setActionEnabled(AssetAction.ADD, true);
+                view.setActionEnabled(AssetAction.DELETE, true);
+                view.setActionEnabled(AssetAction.RENAME, true);
                 // Only enable this button if tree isn't dirty (otherwise the item might not be on the server)
                 // and the thing isn't a folder
-                viewButton.setEnabled(!isDirty() && item.isLeaf());
+                view.setActionEnabled(AssetAction.VIEW, !isDirty() && item.isLeaf());
             }
         }
     }
 
-    // --------------------------------------------------------------------------------
-
-    /**
-     * Interface for View.
-     */
-    public interface DocumentAssetView extends View {
-
-        /// Puts the asset tree beside the editor.
-        ///
-        /// @param tree   The asset tree.
-        /// @param editor The editor of the chosen file.
-        void setTreeAndEditor(DocumentAssetTree tree, EditorPresenter editor);
-
-        /// Shows the editor, or in its place a message asking for a file to be selected.
-        ///
-        /// @param visible Whether the editor is shown.
-        void setEditorVisible(boolean visible);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

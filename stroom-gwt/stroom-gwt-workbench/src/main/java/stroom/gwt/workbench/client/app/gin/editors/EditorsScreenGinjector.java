@@ -20,7 +20,7 @@ import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.floormap.client.component.FloorMapInitController;
@@ -135,7 +135,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
-    DocumentAssetPresenter<VisualisationDoc> getVisualisationAssetsPresenter();
+    DocumentAssetsTabController<VisualisationDoc> getVisualisationAssetsTab();
 
     /// @return A document's asset picker, as a floor map's settings have it, which opens the
     /// 'Choose Asset' dialog.

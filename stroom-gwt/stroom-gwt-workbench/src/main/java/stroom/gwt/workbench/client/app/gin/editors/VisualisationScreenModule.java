@@ -16,16 +16,12 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.document.asset.client.presenter.DocumentAssetPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
-import stroom.document.asset.client.view.DocumentAssetViewImpl;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `VisualisationModule`
-/// (`stroom/visualisation/client/gin/VisualisationModule.java`) and of the document asset
-/// presenters its 'Assets' tab uses (`stroom/document/asset/client/gin/DocumentAssetModule.java`),
-/// without their plugins and app services.
+/// (`stroom/visualisation/client/gin/VisualisationModule.java`), without its plugins and app
+/// services.
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
 public class VisualisationScreenModule extends AbstractPresenterModule {
@@ -34,9 +30,6 @@ public class VisualisationScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(VisualisationPresenter.class);
-        bindPresenterWidget(DocumentAssetPresenter.class,
-                DocumentAssetView.class,
-                DocumentAssetViewImpl.class);
     }
 }
 
