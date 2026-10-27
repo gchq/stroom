@@ -18,6 +18,7 @@ package stroom.widget.component.client;
 
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -28,7 +29,7 @@ import java.util.Objects;
 
 /// Shows a controller's widget in a [LayerContainer], e.g. as the body of one of a document's
 /// tabs, as a presenter is shown. Make one per controller and keep it, as the container tells its
-/// layers apart by identity. Focusing the layer focuses the controller, if it takes the focus.
+/// layers apart by identity. Focusing the layer focuses the controller.
 public final class ControllerLayer implements Layer, Focus {
 
     private final IsWidget content;
@@ -61,13 +62,12 @@ public final class ControllerLayer implements Layer, Focus {
         }
     }
 
-    /// Puts the focus in the content if it takes the focus (it is a [Focus]), as a presenter shown
-    /// as a layer does, e.g. when its tab is chosen.
+    /// Puts the focus in the content, as a presenter shown as a layer is focused, e.g. when its tab
+    /// is chosen: a content that is a [Focus] focuses itself, any other its first tab stop
+    /// ([ContentFocus]).
     @Override
     public void focus() {
-        if (content instanceof final Focus focus) {
-            focus.focus();
-        }
+        ContentFocus.focus(content);
     }
 
     private Widget getWidget() {

@@ -24,8 +24,10 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-// Owners such as the table filter dialog focus their chosen tab's layer if it is a Focus, as a
-// presenter shown as a layer was
+// Owners such as the table filter dialog focus their chosen tab's layer if it is a Focus, and the
+// content pane focuses a tab's layer through ContentFocus, as a presenter shown as a layer was.
+// Focusing a content's first tab stop needs a browser, so that path is covered by the stories
+// (AppShell.OpensDocument)
 class TestControllerLayer {
 
     @Test
@@ -40,7 +42,7 @@ class TestControllerLayer {
     }
 
     @Test
-    void focusingTheLayerDoesNothingToContentThatDoesNotTakeTheFocus() {
+    void focusingTheLayerWithNoWidgetToFocusDoesNothing() {
         final ControllerLayer layer = new ControllerLayer(new PlainContent());
 
         assertThatCode(layer::focus).doesNotThrowAnyException();
