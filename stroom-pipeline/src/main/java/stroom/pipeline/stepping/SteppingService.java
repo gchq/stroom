@@ -292,10 +292,7 @@ public class SteppingService {
             // whichever of us runs second sees the other's write (the same load-bearing ordering as
             // terminateSweep; reversed, a still-queued task could start against a deleted store).
             sweep.requestTerminate();
-            final TaskContext taskContext = sweep.getTaskContext();
-            if (taskContext != null) {
-                taskManager.terminate(taskContext.getTaskId());
-            }
+            terminateTask(sweep.getTaskContext());
             throw new RuntimeException("Timed out waiting for " + what + " of stream " + metaId);
         }
         if (sweep.getError() != null) {
@@ -815,9 +812,18 @@ public class SteppingService {
         // task has not started yet has no context to terminate; the flag is what stops it, and this
         // ordering is the half of the handshake that guarantees the capture task sees it.
         sweep.requestTerminate();
-        final TaskContext taskContext = sweep.getTaskContext();
+        terminateTask(sweep.getTaskContext());
+    }
+
+    // Terminate a producer task this service launched. TaskManager.terminate() demands
+    // MANAGE_TASKS_PERMISSION, which an ordinary stepping user does not have, so this runs as the processing
+    // user. That is safe because the caller never names an arbitrary task: it is always a sweep owned by a
+    // session, and sessions are keyed by user. Run as the requesting user, a timed-out step, closing a
+    // session, or a step that reaps another user's idle session would fail with a permission error - and,
+    // in closeSession, before the session's store is deleted.
+    private void terminateTask(final TaskContext taskContext) {
         if (taskContext != null) {
-            taskManager.terminate(taskContext.getTaskId());
+            securityContext.asProcessingUser(() -> taskManager.terminate(taskContext.getTaskId()));
         }
     }
 
