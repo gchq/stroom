@@ -68,6 +68,14 @@ public interface AiService {
      */
     String chat(DocRef modelRef, String systemPrompt, String message);
 
+    /// Checks the model's endpoint serves its model: the model must be listed by `<base URL>/models`, or found
+    /// by asking for it by its ID (`/models/{id}`), not just the endpoint reached.
+    ///
+    /// @param modelDoc The model.
+    /// @return What the endpoint says of the model (its entry, as indented JSON), not the whole list.
+    /// @throws java.util.NoSuchElementException if the endpoint doesn't serve it (the implementation's says which
+    ///                                          models it does).
+    /// @throws RuntimeException if the endpoint can't be reached or refuses the request.
     String getModel(OpenAIModelDoc modelDoc);
 
     ChatModel getChatModel(OpenAIModelDoc modelDoc);

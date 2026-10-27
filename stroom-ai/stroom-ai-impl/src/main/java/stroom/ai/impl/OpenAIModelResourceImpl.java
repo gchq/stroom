@@ -116,6 +116,9 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
         try {
             final String model = aiServiceProvider.get().getModel(modelDoc);
             return new OpenAIModelTestResponse(model != null, model);
+        } catch (final ModelNotFoundException e) {
+            // The endpoint was reached but doesn't serve the model: the detail lists those it does.
+            return new OpenAIModelTestResponse(false, e.getMessage(), e.detail());
         } catch (final NoSuchElementException e) {
             return new OpenAIModelTestResponse(false, "Model " + modelDoc.getModelId() + " not found");
         } catch (final RuntimeException e) {
