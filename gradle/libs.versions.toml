@@ -103,7 +103,7 @@ jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.2.0" }
 
 # This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
 # jackson-annotations is the same for both and is included above
-jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.2" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.8" }
 jackson2-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by jackson-bom
 jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by jackson-bom
 
