@@ -30,6 +30,7 @@ import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapFactListController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapLayers;
+import stroom.floormap.client.component.FloorMapObjectEditController;
 import stroom.floormap.client.component.FloorMapSetScaleController;
 import stroom.floormap.client.component.FloorMapTimeListController;
 import stroom.floormap.client.component.FloorMapTimelineController;
@@ -111,7 +112,7 @@ import java.util.function.Consumer;
 /// ```
 ///
 /// Object properties are *not* a slot: they open as a modal dialog
-/// (`FloorMapObjectEditPresenter`), so there is no `PROPERTIES`
+/// (`FloorMapObjectEditController`), so there is no `PROPERTIES`
 /// region to lay out. The right-hand dock holds the Layers panel; Groups lives on the Map
 /// tab's dock.
 ///
@@ -159,7 +160,7 @@ public class FloorMapEditorPresenter
     private final FloorMapTimelineController floorMapTimeline;
     private final FloorMapFactListController floorMapFactList;
     private final FloorMapTimeListController floorMapTimeList;
-    private final FloorMapObjectEditPresenter floorMapObjectEditPresenter;
+    private final FloorMapObjectEditController floorMapObjectEdit;
 
     /// The dialog that turns a measured line into the map's scale.
     private final Provider<FloorMapSetScaleController> setScaleProvider;
@@ -225,7 +226,7 @@ public class FloorMapEditorPresenter
                                    final Provider<FloorMapTimelineController> timelineProvider,
                                    final Provider<FloorMapFactListController> factListProvider,
                                    final Provider<FloorMapTimeListController> timeListProvider,
-                                   final Provider<FloorMapObjectEditPresenter> propertiesProvider,
+                                   final Provider<FloorMapObjectEditController> propertiesProvider,
                                    final Provider<FloorMapDockController> dockProvider,
                                    final FloorMapLayers layersPanel,
                                    final Provider<FloorMapLayerStyleController> layerStyleProvider,
@@ -241,11 +242,11 @@ public class FloorMapEditorPresenter
         this.floorMapTimeline = make(timelineProvider);
         this.floorMapFactList = make(factListProvider);
         this.floorMapTimeList = make(timeListProvider);
-        this.floorMapObjectEditPresenter = make(propertiesProvider);
+        this.floorMapObjectEdit = make(propertiesProvider);
         // Let the properties dialog state an image's real-world size: the canvas
         // has already measured any image it has drawn, so this needs no second
         // load.
-        this.floorMapObjectEditPresenter.setAspectRatioResolver(
+        this.floorMapObjectEdit.setAspectRatioResolver(
                 canvas::getImageAspectRatio);
         final FloorMapDockController dock = make(dockProvider);
         this.setScaleProvider = setScaleProvider;
@@ -413,8 +414,8 @@ public class FloorMapEditorPresenter
         }
 
         // Pass mapName + doc to Properties panel so it can resolve asset paths.
-        floorMapObjectEditPresenter.setMapName(mapName);
-        floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+        floorMapObjectEdit.setMapName(mapName);
+        floorMapObjectEdit.setFloorMapDoc(sessionEntity());
 
         // Load time range → initialise slider → load canvas + Fact List.
         // Initialise the range/scrubber on the first read only; a save-triggered
@@ -505,7 +506,7 @@ public class FloorMapEditorPresenter
     private void onLayerTypeStylesEdited(final List<TypeStyle> newTypeStyles) {
         docSession.stageTypeStyles(newTypeStyles);
         canvas.setTypeStyles(newTypeStyles);
-        floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+        floorMapObjectEdit.setFloorMapDoc(sessionEntity());
         setDirty(true);
     }
 
@@ -1021,12 +1022,12 @@ public class FloorMapEditorPresenter
     private void reflectSelectionSideEffects(final java.util.Collection<String> keys) {
         if (keys != null && keys.size() == 1) {
             final String primary = keys.iterator().next();
-            floorMapObjectEditPresenter.setMapName(getMapName());
-            floorMapObjectEditPresenter.setObject(primary);
+            floorMapObjectEdit.setMapName(getMapName());
+            floorMapObjectEdit.setObject(primary);
             loadTimeListForSelectedFact();
         } else {
             floorMapTimeList.setEntries(new ArrayList<>());
-            floorMapObjectEditPresenter.setObject(null);
+            floorMapObjectEdit.setObject(null);
         }
     }
 
@@ -1131,7 +1132,7 @@ public class FloorMapEditorPresenter
         if (entry == null) {
             return;
         }
-        floorMapObjectEditPresenter.showForEdit(
+        floorMapObjectEdit.showForEdit(
                 "Edit Time Properties",
                 entry,
                 (saved, clone) -> {
@@ -1205,7 +1206,7 @@ public class FloorMapEditorPresenter
                         accessor())
                 : cloned;
 
-        floorMapObjectEditPresenter.show(
+        floorMapObjectEdit.show(
                 "Add Time Properties",
                 newEntry,
                 saved -> {
@@ -1252,7 +1253,7 @@ public class FloorMapEditorPresenter
                         deleteAllShardsForKey(mapName, key, () -> {
                             if (wasSelected) {
                                 floorMapTimeList.setEntries(new ArrayList<>());
-                                floorMapObjectEditPresenter.loadEntry(null);
+                                floorMapObjectEdit.loadEntry(null);
                             }
                             loadAtTime(model.getSelectedTime());
                         });
@@ -1483,7 +1484,7 @@ public class FloorMapEditorPresenter
                         }
                         // Select through the one selection path so *every* side
                         // effect happens — notably
-                        // FloorMapObjectEditPresenter.setObject, without which the
+                        // FloorMapObjectEditController.setObject, without which the
                         // dialog writes under whatever key it was last given.
                         // This must also come before the fetch: fetchTimeList drops
                         // a response whose key is not the current selection, so
@@ -1627,11 +1628,11 @@ public class FloorMapEditorPresenter
                     mapName, newKey, model.getSelectedTime(), valueStr);
 
             // Open the properties editor so the user can customise before committing
-            floorMapObjectEditPresenter.setMapName(mapName);
-            floorMapObjectEditPresenter.setObject(newKey);
-            floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+            floorMapObjectEdit.setMapName(mapName);
+            floorMapObjectEdit.setObject(newKey);
+            floorMapObjectEdit.setFloorMapDoc(sessionEntity());
 
-            floorMapObjectEditPresenter.show(
+            floorMapObjectEdit.show(
                     "Add Object",
                     entry,
                     saved -> {
@@ -1694,7 +1695,7 @@ public class FloorMapEditorPresenter
                     // re-hand the upgraded document to the object-edit dialog
                     // so it resolves the new roles immediately.
                     canvas.setTypeStyles(typeStyles());
-                    floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+                    floorMapObjectEdit.setFloorMapDoc(sessionEntity());
                     setDirty(true);
                     if (areaSupportEnabledListener != null) {
                         areaSupportEnabledListener.run();
@@ -1731,7 +1732,7 @@ public class FloorMapEditorPresenter
                     docSession.stageStatusUpgrade(valueSchema(), getEntity().getValueFormat());
                     // Re-hand the upgraded document to the object-edit dialog so it
                     // resolves the new role immediately.
-                    floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+                    floorMapObjectEdit.setFloorMapDoc(sessionEntity());
                     setDirty(true);
                     if (statusSupportEnabledListener != null) {
                         statusSupportEnabledListener.run();
@@ -1790,11 +1791,11 @@ public class FloorMapEditorPresenter
 
             // Open the properties editor so the user can name/colour the area
             // before committing.
-            floorMapObjectEditPresenter.setMapName(mapName);
-            floorMapObjectEditPresenter.setObject(newKey);
-            floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+            floorMapObjectEdit.setMapName(mapName);
+            floorMapObjectEdit.setObject(newKey);
+            floorMapObjectEdit.setFloorMapDoc(sessionEntity());
 
-            floorMapObjectEditPresenter.show(
+            floorMapObjectEdit.show(
                     "Add Area",
                     entry,
                     saved -> {

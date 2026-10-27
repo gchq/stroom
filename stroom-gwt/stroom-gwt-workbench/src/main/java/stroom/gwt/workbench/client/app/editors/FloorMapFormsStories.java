@@ -19,9 +19,9 @@ package stroom.gwt.workbench.client.app.editors;
 import stroom.floormap.client.component.FloorMapGroupEdit;
 import stroom.floormap.client.component.FloorMapLayerStyle;
 import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
+import stroom.floormap.client.component.FloorMapObjectEdit;
 import stroom.floormap.client.component.FloorMapSetScale;
 import stroom.floormap.client.component.MemberCandidate;
-import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -29,7 +29,6 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -147,11 +146,10 @@ public final class FloorMapFormsStories {
                 })
                 // An area's fill: 'Default' is a tick box, ticked to use its type's colour
                 .story("AreaFill", context -> {
-                    final FloorMapObjectEditViewImpl view = new FloorMapObjectEditViewImpl(
-                            GWT.create(FloorMapObjectEditViewImpl.Binder.class));
+                    final FloorMapObjectEdit view = new FloorMapObjectEdit();
                     view.setAreaFieldsVisible(true);
                     view.setDefaultFill("#336699");
-                    // No image chosen, as its presenter shows it
+                    // No image chosen, as its controller shows it
                     view.getAssetBox().setText("None");
                     return view.asWidget();
                 })

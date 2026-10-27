@@ -20,13 +20,10 @@ import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
-import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
-import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
-import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -46,9 +43,6 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapEditorPresenter.class,
                 FloorMapEditorView.class,
                 FloorMapEditorViewImpl.class);
-        bindPresenterWidget(FloorMapObjectEditPresenter.class,
-                FloorMapObjectEditView.class,
-                FloorMapObjectEditViewImpl.class);
         bindPresenterWidget(FloorMapSettingsPresenter.class,
                 FloorMapSettingsView.class,
                 FloorMapSettingsViewImpl.class);

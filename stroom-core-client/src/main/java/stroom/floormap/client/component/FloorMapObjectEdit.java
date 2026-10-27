@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.widget.colour.client.ColourBox;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.function.Consumer;
 
-/// View implementation for the floor map object (fact) edit dialog.
+/// The properties of a floor map object (a fact) at one time, in a dialog.
 ///
 /// Renders form fields for the object's name, type, effective time, position,
 /// an image chooser, and the scale/rotation of its world→map transform. Every
@@ -52,14 +48,14 @@ import java.util.function.Consumer;
 /// and the two components mean nothing separately. Editing it solves the
 /// translation back out ([FloorMapTransformationMatrix#placing]), leaving
 /// the stored coordinates untouched — the same thing a canvas drag does.
-public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObjectEditView {
+public class FloorMapObjectEdit extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// The unit the position and size boxes are typed in. Fixed rather than
     /// best-fitting: a field that changed between mm and km as you typed would be
     /// unusable.
     private static final Unit INPUT_UNIT = Unit.METRE;
-
-    private final Widget widget;
 
     @UiField
     DateTimeBox effectiveTimeBox;
@@ -67,8 +63,6 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     TextBox nameBox;
     @UiField
     TextBox typeBox;
-    @UiField
-    SimplePanel chooseImgContainer;
     @UiField
     DropDownBox assetBox;
 
@@ -106,22 +100,6 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     FormGroup verticesGroup;
     @UiField
     Label vertexCountLabel;
-    // Wrapper rows and unit suffixes, held only so their ARIA can be set up in
-    // the constructor — see nameControlsForScreenReaders().
-    @UiField
-    FlowPanel fillRow;
-    @UiField
-    FlowPanel positionRow;
-    @UiField
-    FlowPanel sizeRow;
-    @UiField
-    FlowPanel scaleRow;
-    @UiField
-    FlowPanel rotationRow;
-    @UiField
-    Label posUnit;
-    @UiField
-    Label sizeUnit;
 
     private boolean enabled = true;
 
@@ -159,14 +137,14 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     private String shownSizeH = "";
 
     /// Whether the user has touched the fill controls since the form was last
-    /// populated. The presenter writes the fill only when this is set, so a
+    /// populated. The controller writes the fill only when this is set, so a
     /// stored fill value the picker cannot represent (e.g. `"red"` — SVG
     /// accepts it, an `<input type=color>` cannot) survives an edit of
     /// unrelated fields instead of being coerced to black.
     private boolean fillDirty;
 
     /// The colour the map actually paints an area of this type when it has no fill
-    /// of its own, as resolved by the presenter from the document's type styles.
+    /// of its own, as resolved by the controller from the document's type styles.
     ///
     /// The swatch shows this whenever *Default* is ticked, so the picker
     /// never advertises a colour that pressing OK would not produce. Leaving the
@@ -174,12 +152,16 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     /// that ticking Default does not deliver.
     private String defaultFill = TypeStyle.DEFAULT_COLOUR;
 
-    @Inject
-    public FloorMapObjectEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        nameControlsForScreenReaders();
-        setAreaFieldsVisible(false);
-        fillDefaultCheck.setValue(true);
+    private Consumer<String> onTypeChange = type -> {
+    };
+
+    /// Makes the form, the area fields hidden and Default ticked.
+    public FloorMapObjectEdit() {
+        initWidget(BINDER.createAndBindUi(this));
+        //noinspection unused e
+        typeBox.addKeyUpHandler(e -> onTypeChange.accept(typeBox.getText()));
+        //noinspection unused e
+        typeBox.addValueChangeHandler(e -> onTypeChange.accept(typeBox.getText()));
         fillDefaultCheck.addValueChangeHandler(e -> {
             fillDirty = true;
             if (Boolean.TRUE.equals(e.getValue())) {
@@ -200,61 +182,18 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }, MouseDownEvent.getType());
     }
 
-    /// Gives every control in this form an accessible name.
+    /// Whether the effective-time field currently holds a parseable date-time.
     ///
-    /// The three rows holding a single plain input — Name, Type and Area Fill
-    /// Opacity — are named by `identity` in the ui.xml, which produces a
-    /// real `<label for>`. The rest cannot be: a `for` attribute only
-    /// reaches a labelable element, and these rows hold either a composite widget
-    /// (whose root is a wrapper `div` with the input nested inside), an
-    /// picker (a button named by the value it shows), or two inputs under one label. Each of those is named
-    /// here instead — as a group for the row, plus an individual name per input so
-    /// "X" and "Y" are distinguishable.
-    ///
-    /// The trailing "m" suffixes are hidden: every measurement input already
-    /// says "in metres" in its own name, so announcing the unit again after each
-    /// pair is noise.
-    private void nameControlsForScreenReaders() {
-        FloorMapAria.group(chooseImgContainer, "Image");
-
-        FloorMapAria.group(fillRow, "Area Fill Colour");
-        // The checkbox brings its own "Default" label; only the swatch is unnamed.
-        FloorMapAria.label(fillBox, "Area fill colour");
-
-        // DateTimeBox is a composite, so its root is a div and identity= would put
-        // the id somewhere <label for> cannot follow.
-        FloorMapAria.group(effectiveTimeBox, "Effective From Time");
-
-        FloorMapAria.group(positionRow, "Position in metres");
-        FloorMapAria.label(posX, "Position X in metres");
-        FloorMapAria.label(posY, "Position Y in metres");
-
-        FloorMapAria.group(sizeRow, "Size in metres");
-        FloorMapAria.label(sizeW, "Width in metres");
-        FloorMapAria.label(sizeH, "Height in metres");
-
-        FloorMapAria.group(scaleRow, "Scale");
-        FloorMapAria.label(w2mSx, "Scale X, as a multiple of natural size");
-        FloorMapAria.label(w2mSy, "Scale Y, as a multiple of natural size");
-
-        FloorMapAria.group(rotationRow, "Rotation");
-        FloorMapAria.label(w2mRot, "Rotation in degrees, counter-clockwise");
-
-        FloorMapAria.hide(posUnit);
-        FloorMapAria.hide(sizeUnit);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// `DateTimeBox` yields `null` for text it cannot parse and for a
+    /// cleared box, so this must be checked before [#getEffectiveTime()].
     public boolean isEffectiveTimeValid() {
         return effectiveTimeBox.getValue() != null;
     }
 
-    @Override
+    /// Returns the effective-time value entered by the user, in epoch milliseconds.
+    ///
+    /// @throws IllegalStateException if the field is empty or unparseable — call
+    ///         [#isEffectiveTimeValid()] first
     public long getEffectiveTime() {
         final Long value = effectiveTimeBox.getValue();
         if (value == null) {
@@ -269,41 +208,56 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         return value;
     }
 
-    @Override
+    /// Sets the effective-time field to the given epoch-millisecond value.
     public void setEffectiveTime(final long timeMs) {
         effectiveTimeBox.setValue(timeMs);
     }
 
-    @Override
+    /// Returns the fact's stored coordinates, unchanged.
+    ///
+    /// These are a pre-transform offset in the fact's own frame, not a
+    /// position on the map, so the form neither shows nor edits them: the
+    /// position boxes carry the resolved map position and write it into the
+    /// placement matrix. The value round-trips so an edit cannot disturb
+    /// it.
     public double getX() {
         return loadedCoords[0];
     }
 
-    @Override
+    /// Supplies the fact's stored X coordinate.
     public void setX(final double x) {
         loadedCoords[0] = x;
         showPosition();
     }
 
-    @Override
+    /// Returns the fact's stored Y coordinate, unchanged.
     public double getY() {
         return loadedCoords[1];
     }
 
-    @Override
+    /// Supplies the fact's stored Y coordinate.
     public void setY(final double y) {
         loadedCoords[1] = y;
         showPosition();
     }
 
-    @Override
+    /// Sets what one map unit means in the real world, so the position boxes
+    /// can be shown in metres.
+    ///
+    /// @param measurementUnits the document's units; `null` uses the
+    ///         default scale
     public void setMeasurementUnits(final FloorMapMeasurementUnits measurementUnits) {
         this.measurementUnits = measurementUnits;
         showPosition();
         showSize();
     }
 
-    @Override
+    /// Sets the fact's size in map units at scale 1, so the form can state
+    /// and edit its real-world size.
+    ///
+    /// @param baseSize `{width, height}`, or `null` when the fact
+    ///         has no measurable extent — the size fields are then
+    ///         hidden and the raw scale factors shown instead
     public void setBaseSize(final double[] baseSize) {
         this.baseSize = baseSize != null && baseSize.length >= 2
                         && baseSize[0] > 0 && baseSize[1] > 0
@@ -315,42 +269,46 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         showSize();
     }
 
-    @Override
+    /// Returns the object display name entered by the user.
     public String getName() {
         return nameBox.getText();
     }
 
-    @Override
+    /// Sets the object display name field.
     public void setName(final String name) {
         nameBox.setText(name == null ? "" : name);
     }
 
-    @Override
+    /// Returns the object type entered by the user.
     public String getType() {
         return typeBox.getText();
     }
 
-    @Override
+    /// Sets the object type field.
     public void setType(final String type) {
         typeBox.setText(type == null ? "" : type);
     }
 
-    @Override
-    public void setTypeChangedHandler(final Consumer<String> handler) {
-        //noinspection unused e
-        typeBox.addKeyUpHandler(e -> handler.accept(typeBox.getText()));
-        //noinspection unused e
-        typeBox.addValueChangeHandler(e -> handler.accept(typeBox.getText()));
+    /// @param onTypeChange Given the type typed, as the user edits it, so type-dependent fields can
+    ///                     be shown or hidden live.
+    public void setOnTypeChange(final Consumer<String> onTypeChange) {
+        this.onTypeChange = onTypeChange;
     }
 
-    @Override
+    /// Returns the explicit area fill colour (7-char hex), or `""`
+    /// when the type default should be used.
     public String getFill() {
         return Boolean.TRUE.equals(fillDefaultCheck.getValue())
                 ? ""
                 : fillBox.getValue();
     }
 
-    @Override
+    /// Tells the form which colour the map draws an area of this type in when
+    /// it has no fill of its own, so the swatch can show it while
+    /// *Default* is ticked instead of a colour that would not be used.
+    ///
+    /// @param hexColour the resolved default (7-char hex); `null`/empty
+    ///         falls back to [TypeStyle#DEFAULT_COLOUR]
     public void setDefaultFill(final String hexColour) {
         defaultFill = hexColour == null || hexColour.isEmpty()
                 ? TypeStyle.DEFAULT_COLOUR
@@ -362,7 +320,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    @Override
+    /// Sets the area fill colour; `null`/empty selects the type default.
     public void setFill(final String hexColour) {
         final boolean isDefault = hexColour == null || hexColour.isEmpty();
         fillDefaultCheck.setValue(isDefault);
@@ -375,12 +333,14 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         fillDirty = false;
     }
 
-    @Override
+    /// `true` once the user has touched the fill controls since the
+    /// last [#setFill]; the fill is only written back when set, so a
+    /// stored value the picker cannot represent survives unrelated edits.
     public boolean isFillDirty() {
         return fillDirty;
     }
 
-    @Override
+    /// Returns the area fill opacity, or `null` when unset (default).
     public Double getOpacity() {
         final String text = opacityBox.getText();
         if (text == null || text.trim().isEmpty()) {
@@ -393,12 +353,14 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    @Override
+    /// Sets the area fill opacity field; `null` clears it.
     public void setOpacity(final Double opacity) {
         opacityBox.setText(opacity != null ? String.valueOf(opacity) : "");
     }
 
-    @Override
+    /// `true` when the opacity field is blank or holds a number in
+    /// `[0, 1]`; used to block saving a value that would otherwise
+    /// be silently discarded or persisted out of range.
     public boolean isOpacityValid() {
         final String text = opacityBox.getText();
         if (text == null || text.trim().isEmpty()) {
@@ -412,12 +374,14 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    @Override
+    /// Shows the (read-only) polygon vertex count; `null` clears it.
     public void setVertexCount(final Integer count) {
         vertexCountLabel.setText(count != null ? String.valueOf(count) : "");
     }
 
-    @Override
+    /// Shows or hides the area-only fields (fill, opacity, vertex count).
+    /// The point-position X/Y fields are inversely visible — an area is
+    /// placed purely by its world-to-map matrix.
     public void setAreaFieldsVisible(final boolean visible) {
         fillGroup.setVisible(visible);
         opacityGroup.setVisible(visible);
@@ -426,12 +390,15 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         // position too — the centre its outline is stored around.
     }
 
-    @Override
+    /// @return The box the image picker (an asset selection controller) is attached to.
     public DropDownBox getAssetBox() {
         return assetBox;
     }
 
-    @Override
+    /// Returns the 6-element world-to-map affine transformation matrix.
+    ///
+    /// @throws IllegalStateException if a geometry field is not a usable number — call
+    ///         [#getGeometryFieldError()] first
     public double[] getWorldToMapMatrix() {
         final String invalid = getGeometryFieldError();
         if (invalid != null) {
@@ -467,7 +434,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         };
     }
 
-    @Override
+    /// Sets the 6-element world-to-map affine transformation matrix.
     public void setWorldToMapMatrix(final double[] m) {
         if (m != null && m.length >= 6) {
             System.arraycopy(m, 0, loadedMatrix, 0, 6);
@@ -596,7 +563,16 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         return FloorMapMeasurementUnits.orDefault(measurementUnits);
     }
 
-    @Override
+    /// The display name of the first geometry field holding something that is not a
+    /// usable number, or `null` when they are all fine.
+    ///
+    /// Must be checked before [#getWorldToMapMatrix()]: the position, size,
+    /// scale and rotation boxes are free text, and each one silently became a default
+    /// on a parse failure - a typo in a position box moved the object to 0 m, a typo in
+    /// the rotation box straightened it - so a mistake was committed as a real edit
+    /// with nothing shown to the user.
+    ///
+    /// @return the offending field's label, e.g. `"Position X"`, or `null`
     public String getGeometryFieldError() {
         // Mirrors exactly which boxes getWorldToMapMatrix() actually reads, so the user is
         // never blocked on a value that is about to be ignored:
@@ -698,7 +674,10 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    @Override
+    /// Enables or disables all form fields.
+    ///
+    /// @param enabled `true` to enable editing, `false` to
+    ///         disable (grey-out) all inputs
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         effectiveTimeBox.setEnabled(enabled);
@@ -716,14 +695,16 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    @Override
+    /// @return The effective from time box, for a controller to open its dialog.
     public DateTimeBox getEffectiveTimeBox() {
         return effectiveTimeBox;
     }
 
+
     // --------------------------------------------------------------------------------
 
-    public interface Binder extends UiBinder<Widget, FloorMapObjectEditViewImpl> {
+
+    interface Binder extends UiBinder<Widget, FloorMapObjectEdit> {
 
     }
 }

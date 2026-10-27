@@ -21,25 +21,10 @@
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:colour="urn:import:stroom.widget.colour.client"
              xmlns:t="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:a="urn:import:stroom.widget.component.client">
 
-    <ui:style>
-        .matrixBox {
-            width: 80px !important;
-            min-width: 80px !important;
-            margin-right: 8px;
-        }
-
-        .fillDefault {
-            margin-right: 12px;
-        }
-
-        .unitSuffix {
-            white-space: nowrap;
-        }
-    </ui:style>
-
-    <g:FlowPanel addStyleNames="max dock-container-vertical form overflow-y-auto">
+    <g:FlowPanel addStyleNames="floor-map-object-edit max dock-container-vertical form overflow-y-auto">
 
                 <form:FormGroup label="Name" identity="floorMapObjectName">
                     <form:HelpHTML>
@@ -69,12 +54,12 @@
                             drawn as that image (a background is simply an image fact); leave it
                             empty to draw the type's default shape instead.</p>
                     </form:HelpHTML>
-                    <g:SimplePanel ui:field="chooseImgContainer" addStyleNames="wide-control">
+                    <a:AriaPanel role="group" ariaLabel="Image" addStyleNames="wide-control">
                         <dd:DropDownBox ui:field="assetBox"/>
-                    </g:SimplePanel>
+                    </a:AriaPanel>
                 </form:FormGroup>
 
-                <form:FormGroup ui:field="fillGroup" label="Area Fill Colour">
+                <form:FormGroup ui:field="fillGroup" label="Area Fill Colour" visible="false">
                     <form:HelpHTML>
                         <p>The colour used to fill this area on the map. Leave
                             <em>Default</em> ticked to use the colour configured for the
@@ -82,13 +67,16 @@
                             Styles</em>) — the swatch shows that colour; untick it to give
                             this area its own colour.</p>
                     </form:HelpHTML>
-                    <g:FlowPanel ui:field="fillRow" addStyleNames="dock-container-horizontal align-center">
-                        <t:TickBox ui:field="fillDefaultCheck" label="Default" addStyleNames="{style.fillDefault}"/>
-                        <colour:ColourBox ui:field="fillBox" />
-                    </g:FlowPanel>
+                    <a:AriaPanel role="group" ariaLabel="Area Fill Colour"
+                                 addStyleNames="dock-container-horizontal align-center">
+                        <t:TickBox ui:field="fillDefaultCheck" label="Default" value="true"
+                                   addStyleNames="floor-map-object-edit__fill-default"/>
+                        <colour:ColourBox ui:field="fillBox" ariaLabel="Area fill colour"/>
+                    </a:AriaPanel>
                 </form:FormGroup>
 
-                <form:FormGroup ui:field="opacityGroup" label="Area Fill Opacity" identity="floorMapObjectOpacity">
+                <form:FormGroup ui:field="opacityGroup" label="Area Fill Opacity" identity="floorMapObjectOpacity"
+                                visible="false">
                     <form:HelpHTML>
                         <p>How translucent the area's fill is, from <code>0</code>
                             (invisible) to <code>1</code> (opaque). Leave empty for the
@@ -97,7 +85,7 @@
                     <form:TextBox ui:field="opacityBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
-                <form:FormGroup ui:field="verticesGroup" label="Vertices">
+                <form:FormGroup ui:field="verticesGroup" label="Vertices" visible="false">
                     <form:HelpHTML>
                         <p>The number of corners in this area's polygon. The shape is
                             drawn on the canvas ("Draw Area Here") and is not edited
@@ -116,7 +104,8 @@
                         <p>Changing this on an existing version asks whether to <em>move</em> the
                             version to the new time or keep a <em>copy</em> at the old time.</p>
                     </form:HelpHTML>
-                    <datetimebox:DateTimeBox ui:field="effectiveTimeBox" addStyleNames="timeline-date-box wide-control" />
+                    <datetimebox:DateTimeBox ui:field="effectiveTimeBox" role="group" ariaLabel="Effective From Time"
+                                             addStyleNames="timeline-date-box wide-control"/>
                 </form:FormGroup>
 
                 <form:FormGroup label="Position (X, Y) in metres">
@@ -129,11 +118,17 @@
                         <p>For an <em>area</em> this is the centre of its outline; for a
                             background or other image, the point the image is placed from.</p>
                     </form:HelpHTML>
-                    <g:FlowPanel ui:field="positionRow" addStyleNames="dock-container-horizontal align-center">
-                        <form:TextBox ui:field="posX" addStyleNames="stroom-control {style.matrixBox}" />
-                        <form:TextBox ui:field="posY" addStyleNames="stroom-control {style.matrixBox}" />
-                        <g:Label ui:field="posUnit" text="m" addStyleNames="{style.unitSuffix}" />
-                    </g:FlowPanel>
+                    <a:AriaPanel role="group" ariaLabel="Position in metres"
+                                 addStyleNames="dock-container-horizontal align-center">
+                        <form:TextBox ui:field="posX" ariaLabel="Position X in metres"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                        <form:TextBox ui:field="posY" ariaLabel="Position Y in metres"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                        <!-- Each box already says "in metres" -->
+                        <a:AriaPanel ariaHidden="true" addStyleNames="floor-map-object-edit__unit">
+                            <g:Label text="m"/>
+                        </a:AriaPanel>
+                    </a:AriaPanel>
                 </form:FormGroup>
                 <form:FormGroup ui:field="sizeGroup" label="Size (Width, Height) in metres">
                     <form:HelpHTML>
@@ -148,11 +143,17 @@
                             A plain shape marker is drawn at a fixed size on screen and has no
                             size to set.</p>
                     </form:HelpHTML>
-                    <g:FlowPanel ui:field="sizeRow" addStyleNames="dock-container-horizontal align-center">
-                        <form:TextBox ui:field="sizeW" addStyleNames="stroom-control {style.matrixBox}" />
-                        <form:TextBox ui:field="sizeH" addStyleNames="stroom-control {style.matrixBox}" />
-                        <g:Label ui:field="sizeUnit" text="m" addStyleNames="{style.unitSuffix}" />
-                    </g:FlowPanel>
+                    <a:AriaPanel role="group" ariaLabel="Size in metres"
+                                 addStyleNames="dock-container-horizontal align-center">
+                        <form:TextBox ui:field="sizeW" ariaLabel="Width in metres"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                        <form:TextBox ui:field="sizeH" ariaLabel="Height in metres"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                        <!-- Each box already says "in metres" -->
+                        <a:AriaPanel ariaHidden="true" addStyleNames="floor-map-object-edit__unit">
+                            <g:Label text="m"/>
+                        </a:AriaPanel>
+                    </a:AriaPanel>
                 </form:FormGroup>
                 <form:FormGroup ui:field="scaleGroup" label="Scale (X, Y)">
                     <form:HelpHTML>
@@ -161,10 +162,13 @@
                         <p>Shown only for objects whose size cannot be stated in metres — anything
                             with a real extent offers a <em>Size</em> in metres above instead.</p>
                     </form:HelpHTML>
-                    <g:FlowPanel ui:field="scaleRow" addStyleNames="dock-container-horizontal align-center">
-                        <form:TextBox ui:field="w2mSx" addStyleNames="stroom-control {style.matrixBox}" />
-                        <form:TextBox ui:field="w2mSy" addStyleNames="stroom-control {style.matrixBox}" />
-                    </g:FlowPanel>
+                    <a:AriaPanel role="group" ariaLabel="Scale"
+                                 addStyleNames="dock-container-horizontal align-center">
+                        <form:TextBox ui:field="w2mSx" ariaLabel="Scale X, as a multiple of natural size"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                        <form:TextBox ui:field="w2mSy" ariaLabel="Scale Y, as a multiple of natural size"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                    </a:AriaPanel>
                 </form:FormGroup>
 
                 <form:FormGroup label="Rotation (degrees)">
@@ -174,9 +178,11 @@
                         <p>Dragging the round handle above the object's selection frame sets this
                             for you, holding <strong>Shift</strong> to snap to 15&#176; steps.</p>
                     </form:HelpHTML>
-                    <g:FlowPanel ui:field="rotationRow" addStyleNames="dock-container-horizontal align-center">
-                        <form:TextBox ui:field="w2mRot" addStyleNames="stroom-control {style.matrixBox}" />
-                    </g:FlowPanel>
+                    <a:AriaPanel role="group" ariaLabel="Rotation"
+                                 addStyleNames="dock-container-horizontal align-center">
+                        <form:TextBox ui:field="w2mRot" ariaLabel="Rotation in degrees, counter-clockwise"
+                                      addStyleNames="stroom-control floor-map-object-edit__number"/>
+                    </a:AriaPanel>
                 </form:FormGroup>
 
     </g:FlowPanel>

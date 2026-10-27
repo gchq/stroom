@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
-import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
+import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.value.FloorMapEntryParser;
 import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.client.value.ValueAccessor;
@@ -34,23 +34,20 @@ import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.shared.TemporalEntry;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.datepicker.client.DateTimeBoxController;
-import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
 
-/// Presenter for the properties form used to edit individual floor-map object
-/// entries (temporal versions of a fact).
+/// The properties form ([FloorMapObjectEdit]) used to edit individual floor-map object
+/// entries (temporal versions of a fact), in a dialog its owner keeps and shows again.
 ///
 /// Used by the **Editor tab** ([FloorMapEditorPresenter]) only, always as a
 /// modal OK/Cancel dialog via [#show(String, TemporalEntry, Consumer)]. The Map tab held an
@@ -71,7 +68,9 @@ import javax.inject.Inject;
 /// [#setMapName(String)] **must** be called before
 /// [#buildEntry(long, String)] or [#show(String, TemporalEntry, Consumer)]
 /// is invoked; otherwise an [IllegalStateException] is thrown.
-public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjectEditView> {
+public class FloorMapObjectEditController extends Controller {
+
+    private final FloorMapObjectEdit view;
 
     private final DocumentAssetSelectionController assetSelection;
     private String objectId;
@@ -122,7 +121,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     private String requireMapName() {
         if (mapName == null) {
             throw new IllegalStateException(
-                    "mapName has not been set — call setMapName() before using this presenter");
+                    "mapName has not been set — call setMapName() before using this controller");
         }
         return mapName;
     }
@@ -189,29 +188,38 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         assetSelection.setDocument(floorMapDoc);
         // Always called before the form is populated, so the position boxes know
         // their scale by the time they are filled in.
-        getView().setMeasurementUnits(floorMapDoc != null
+        view.setMeasurementUnits(floorMapDoc != null
                 ? floorMapDoc.getMeasurementUnits()
                 : null);
     }
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The content.
+    /// @param assetSelectionProvider        Makes the image picker's controller.
+    /// @param dateTimeBoxControllerProvider Makes the effective time box's controller.
     @Inject
-    public FloorMapObjectEditPresenter(final EventBus eventBus,
-                                       final FloorMapObjectEditView view,
-                                       final Provider<DocumentAssetSelectionController> assetSelectionProvider,
-                                       final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
-        super(eventBus, view);
+    public FloorMapObjectEditController(final EventBus eventBus,
+                                        final FloorMapObjectEdit view,
+                                        final Provider<DocumentAssetSelectionController> assetSelectionProvider,
+                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         make(dateTimeBoxControllerProvider).attach(view.getEffectiveTimeBox());
 
-        assetSelection = make(assetSelectionProvider).attach(getView().getAssetBox());
+        assetSelection = make(assetSelectionProvider);
+        assetSelection.attach(view.getAssetBox());
         // Typing "area" into a fresh Add-Object dialog reveals the area fields.
-        getView().setTypeChangedHandler(this::onTypeChanged);
+        view.setOnTypeChange(this::onTypeChanged);
     }
 
     /// Re-applies everything the object's type decides: whether the area-only
     /// fields are shown, and which default fill the swatch advertises.
     private void onTypeChanged(final String type) {
         updateAreaFieldsVisibility(type);
-        getView().setDefaultFill(defaultFillForType(type));
+        view.setDefaultFill(defaultFillForType(type));
     }
 
     /// Shows or hides the area-only fields (fill colour, opacity, vertex count):
@@ -219,7 +227,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     /// geometry.
     private void updateAreaFieldsVisibility(final String type) {
         final boolean isArea = isArea(type);
-        getView().setAreaFieldsVisible(isArea);
+        view.setAreaFieldsVisible(isArea);
     }
 
     /// The colour the canvas fills an area of this type with when it carries no
@@ -279,20 +287,6 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         doShow(caption, entry, true, onSave);
     }
 
-    /// Save handler that can *reject* what the user entered.
-    ///
-    /// Returning `false` keeps the dialog open, so a caller that rejects
-    /// a save (for example because the chosen effective time is already occupied)
-    /// does not also throw away everything the user typed.
-    @FunctionalInterface
-    public interface SaveHandler {
-
-        /// @param entry the entry built from the current form state
-        /// @param clone `true` when the user chose to clone rather than move
-        /// @return `true` to accept and close, `false` to stay open
-        boolean onSave(TemporalEntry entry, boolean clone);
-    }
-
     /// Shared implementation behind [#show] and [#showForEdit].
     ///
     /// The key the dialog will write under is resolved **once, here**
@@ -314,10 +308,10 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         final String key = FloorMapEditorModel.resolveEntryKey(entry, objectId);
         loadEntry(entry);
         //noinspection unused e
-        ShowPopupEvent.builder(this)
+        ControllerDialog.show(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption(caption)
-                .onShow(e -> getView().setEnabled(true))
+                .onShow(e -> view.setEnabled(true))
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         // Every path that declines to close MUST call e.reset(). Clicking OK
@@ -328,7 +322,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                         // everything the user typed. The three sibling dialogs
                         // (FloorMapSetScaleController, FloorMapGroupEditController,
                         // FloorMapLayerStyleController) all pass e::reset for this reason.
-                        final String type = getView().getType();
+                        final String type = view.getType();
                         if (type == null || type.trim().isEmpty()) {
                             AlertEvent.fireError(this,
                                     "Object type must not be empty. "
@@ -336,14 +330,14 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                                     e::reset);
                             return;
                         }
-                        if (isArea(type) && !getView().isOpacityValid()) {
+                        if (isArea(type) && !view.isOpacityValid()) {
                             AlertEvent.fireError(this,
                                     "Area fill opacity must be a number between 0 and 1, "
                                     + "or empty for the default.",
                                     e::reset);
                             return;
                         }
-                        final String badGeometryField = getView().getGeometryFieldError();
+                        final String badGeometryField = view.getGeometryFieldError();
                         if (badGeometryField != null) {
                             // Checked before reading the matrix, for the same reason as the
                             // effective time below: the geometry boxes are free text, and a
@@ -354,7 +348,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                                     e::reset);
                             return;
                         }
-                        if (!getView().isEffectiveTimeValid()) {
+                        if (!view.isEffectiveTimeValid()) {
                             // Checked before reading the value: DateTimeBox yields null for a
                             // cleared or unparseable field, and unboxing that threw an NPE from
                             // inside this handler - before any validation ran, and with the
@@ -367,7 +361,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                         // Kept primitive: TemporalEntry.getEffectiveTimeMs() is a Long, so
                         // comparing it against a Long below would ask whether the two are
                         // the same object rather than the same instant.
-                        final long time = getView().getEffectiveTime();
+                        final long time = view.getEffectiveTime();
                         if (askMoveOrClone && entry != null && entry.getEffectiveTimeMs() != time) {
                             // Effective time changed — ask whether to move or clone.
                             ConfirmEvent.fire(this,
@@ -416,7 +410,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     ///
     /// @param entry the entry to display, or `null` to clear and disable the form
     public void loadEntry(final TemporalEntry entry) {
-        getView().setEnabled(entry != null);
+        view.setEnabled(entry != null);
         assetSelection.setEnabled(entry != null);
         resetInputs(entry);
     }
@@ -438,19 +432,19 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             newValue = accessor.createEmpty("entry");
         }
 
-        accessor.setString(newValue, pathForRole(Role.TYPE), getView().getType());
-        accessor.setString(newValue, pathForRole(Role.LABEL), getView().getName());
+        accessor.setString(newValue, pathForRole(Role.TYPE), view.getType());
+        accessor.setString(newValue, pathForRole(Role.LABEL), view.getName());
         accessor.setString(newValue, pathForRole(Role.IMAGE),
                 assetSelection.getSelectedAssetPath() == null
                         ? ""
                         : assetSelection.getSelectedAssetPath());
 
         accessor.setArray(newValue, pathForRole(Role.POSITION),
-                new double[]{getView().getX(), getView().getY()});
+                new double[]{view.getX(), view.getY()});
 
         // Every fact — background included — is placed by its WORLD_TO_MAP matrix.
         accessor.setArray(newValue, pathForRole(Role.WORLD_TO_MAP),
-                getView().getWorldToMapMatrix());
+                view.getWorldToMapMatrix());
 
         // Fill/opacity are written only for areas, so non-area objects never
         // accumulate empty area fields even when the schema maps the roles.
@@ -460,16 +454,16 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         // (e.g. "red") must survive an edit of unrelated fields. GEOMETRY is
         // never written from the form — it is preserved purely by the overlay
         // above.
-        if (isArea(getView().getType())) {
+        if (isArea(view.getType())) {
             final String fillPath = pathForRole(Role.FILL);
-            if (fillPath != null && getView().isFillDirty()) {
-                final String fill = getView().getFill();
+            if (fillPath != null && view.isFillDirty()) {
+                final String fill = view.getFill();
                 accessor.setString(newValue, fillPath,
                         fill != null && !fill.isEmpty() ? fill : null);
             }
             final String opacityPath = pathForRole(Role.OPACITY);
             if (opacityPath != null) {
-                accessor.setNumber(newValue, opacityPath, getView().getOpacity());
+                accessor.setNumber(newValue, opacityPath, view.getOpacity());
             }
         }
 
@@ -509,7 +503,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         loadedEntry = selected;
         loadedHasGeometry = false;
         if (selected != null) {
-            getView().setEffectiveTime(selected.getEffectiveTimeMs());
+            view.setEffectiveTime(selected.getEffectiveTimeMs());
             double x = 0.0;
             double y = 0.0;
             String name = "";
@@ -573,188 +567,58 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             } catch (final Exception ex) {
                 // Ignore
             }
-            getView().setX(x);
-            getView().setY(y);
-            getView().setName(name);
-            getView().setType(type);
+            view.setX(x);
+            view.setY(y);
+            view.setName(name);
+            view.setType(type);
             assetSelection.setSelectedAssetPath(img);
-            getView().setWorldToMapMatrix(w2m);
+            view.setWorldToMapMatrix(w2m);
             // Before setFill: the swatch shows the default while Default is ticked.
-            getView().setDefaultFill(defaultFillForType(type));
-            getView().setFill(fill);
-            getView().setOpacity(opacity);
-            getView().setVertexCount(vertexCount);
-            getView().setBaseSize(baseSize(img, vertices));
+            view.setDefaultFill(defaultFillForType(type));
+            view.setFill(fill);
+            view.setOpacity(opacity);
+            view.setVertexCount(vertexCount);
+            view.setBaseSize(baseSize(img, vertices));
             updateAreaFieldsVisibility(type);
         } else {
-            getView().setEffectiveTime(0L);
-            getView().setX(0.0);
-            getView().setY(0.0);
+            view.setEffectiveTime(0L);
+            view.setX(0.0);
+            view.setY(0.0);
             final boolean background = FloorMapJsonKeys.BACKGROUND.equals(objectId);
-            getView().setName(background
+            view.setName(background
                     ? FloorMapJsonKeys.BACKGROUND_DISPLAY_NAME
                     : "");
-            getView().setType(background
+            view.setType(background
                     ? FloorMapJsonKeys.BACKGROUND
                     : "");
             assetSelection.setSelectedAssetPath("");
-            getView().setWorldToMapMatrix(new double[]{1.0, 0.0, 0.0, 1.0, 0.0, 0.0});
-            getView().setDefaultFill(defaultFillForType(background
+            view.setWorldToMapMatrix(new double[]{1.0, 0.0, 0.0, 1.0, 0.0, 0.0});
+            view.setDefaultFill(defaultFillForType(background
                     ? FloorMapJsonKeys.BACKGROUND
                     : null));
-            getView().setFill("");
-            getView().setOpacity(null);
-            getView().setVertexCount(null);
-            getView().setBaseSize(null);
+            view.setFill("");
+            view.setOpacity(null);
+            view.setVertexCount(null);
+            view.setBaseSize(null);
             updateAreaFieldsVisibility(null);
         }
     }
 
+
     // --------------------------------------------------------------------------------
 
-    /// View contract for the object-edit properties form.
+
+    /// Save handler that can *reject* what the user entered.
     ///
-    /// Implementations provide the UI widgets for all editable fields:
-    /// effective time, coordinates, name, type, image chooser, and the two
-    /// affine-transform matrices.
-    public interface FloorMapObjectEditView extends View {
+    /// Returning `false` keeps the dialog open, so a caller that rejects
+    /// a save (for example because the chosen effective time is already occupied)
+    /// does not also throw away everything the user typed.
+    @FunctionalInterface
+    public interface SaveHandler {
 
-        /// @return The effective from time box, for a controller to open its dialog.
-        DateTimeBox getEffectiveTimeBox();
-
-        /// Whether the effective-time field currently holds a parseable date-time.
-        ///
-        /// `DateTimeBox` yields `null` for text it cannot parse and for a
-        /// cleared box, so this must be checked before [#getEffectiveTime()].
-        boolean isEffectiveTimeValid();
-
-        /// Returns the effective-time value entered by the user, in epoch milliseconds.
-        ///
-        /// @throws IllegalStateException if the field is empty or unparseable — call
-        ///         [#isEffectiveTimeValid()] first
-        long getEffectiveTime();
-
-        /// Sets the effective-time field to the given epoch-millisecond value.
-        void setEffectiveTime(long timeMS);
-
-        /// Returns the fact's stored coordinates, unchanged.
-        ///
-        /// These are a pre-transform offset in the fact's own frame, not a
-        /// position on the map, so the form neither shows nor edits them: the
-        /// position boxes carry the resolved map position and write it into the
-        /// placement matrix. The value round-trips so an edit cannot disturb
-        /// it.
-        double getX();
-
-        /// Supplies the fact's stored X coordinate.
-        void setX(double x);
-
-        /// Returns the fact's stored Y coordinate, unchanged.
-        double getY();
-
-        /// Supplies the fact's stored Y coordinate.
-        void setY(double y);
-
-        /// Sets what one map unit means in the real world, so the position boxes
-        /// can be shown in metres.
-        ///
-        /// @param measurementUnits the document's units; `null` uses the
-        ///         default scale
-        void setMeasurementUnits(FloorMapMeasurementUnits measurementUnits);
-
-        /// Sets the fact's size in map units at scale 1, so the form can state
-        /// and edit its real-world size.
-        ///
-        /// @param baseSize `{width, height}`, or `null` when the fact
-        ///         has no measurable extent — the size fields are then
-        ///         hidden and the raw scale factors shown instead
-        void setBaseSize(double[] baseSize);
-
-        /// Returns the object display name entered by the user.
-        String getName();
-
-        /// Sets the object display name field.
-        void setName(String name);
-
-        /// Returns the object type entered by the user.
-        String getType();
-
-        /// Sets the object type field.
-        void setType(String type);
-
-        /// Registers a callback invoked (with the current type text) as the
-        /// user edits the type field, so type-dependent fields can be shown or
-        /// hidden live.
-        void setTypeChangedHandler(Consumer<String> handler);
-
-        /// Returns the explicit area fill colour (7-char hex), or `""`
-        /// when the type default should be used.
-        String getFill();
-
-        /// Sets the area fill colour; `null`/empty selects the type default.
-        void setFill(String hexColour);
-
-        /// Tells the view which colour the map draws an area of this type in when
-        /// it has no fill of its own, so the swatch can show it while
-        /// *Default* is ticked instead of a colour that would not be used.
-        ///
-        /// @param hexColour the resolved default (7-char hex); `null`/empty
-        ///         falls back to [TypeStyle#DEFAULT_COLOUR]
-        void setDefaultFill(String hexColour);
-
-        /// `true` once the user has touched the fill controls since the
-        /// last [#setFill]; the fill is only written back when set, so a
-        /// stored value the picker cannot represent survives unrelated edits.
-        boolean isFillDirty();
-
-
-        /// Returns the area fill opacity, or `null` when unset (default).
-        Double getOpacity();
-
-        /// Sets the area fill opacity field; `null` clears it.
-        void setOpacity(Double opacity);
-
-        /// `true` when the opacity field is blank or holds a number in
-        /// `[0, 1]`; used to block saving a value that would otherwise
-        /// be silently discarded or persisted out of range.
-        boolean isOpacityValid();
-
-        /// Shows the (read-only) polygon vertex count; `null` clears it.
-        void setVertexCount(Integer count);
-
-        /// Shows or hides the area-only fields (fill, opacity, vertex count).
-        /// The point-position X/Y fields are inversely visible — an area is
-        /// placed purely by its world-to-map matrix.
-        void setAreaFieldsVisible(boolean visible);
-
-        /// @return The box the image picker (an asset selection controller) is attached to.
-        DropDownBox getAssetBox();
-
-        /// The display name of the first geometry field holding something that is not a
-        /// usable number, or `null` when they are all fine.
-        ///
-        /// Must be checked before [#getWorldToMapMatrix()]: the position, size,
-        /// scale and rotation boxes are free text, and each one silently became a default
-        /// on a parse failure - a typo in a position box moved the object to 0 m, a typo in
-        /// the rotation box straightened it - so a mistake was committed as a real edit
-        /// with nothing shown to the user.
-        ///
-        /// @return the offending field's label, e.g. `"Position X"`, or `null`
-        String getGeometryFieldError();
-
-        /// Returns the 6-element world-to-map affine transformation matrix.
-        ///
-        /// @throws IllegalStateException if a geometry field is not a usable number — call
-        ///         [#getGeometryFieldError()] first
-        double[] getWorldToMapMatrix();
-
-        /// Sets the 6-element world-to-map affine transformation matrix.
-        void setWorldToMapMatrix(double[] matrix);
-
-        /// Enables or disables all form fields.
-        ///
-        /// @param enabled `true` to enable editing, `false` to
-        ///         disable (grey-out) all inputs
-        void setEnabled(final boolean enabled);
+        /// @param entry the entry built from the current form state
+        /// @param clone `true` when the user chose to clone rather than move
+        /// @return `true` to accept and close, `false` to stay open
+        boolean onSave(TemporalEntry entry, boolean clone);
     }
 }

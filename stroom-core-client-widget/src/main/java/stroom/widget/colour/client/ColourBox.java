@@ -52,6 +52,11 @@ public class ColourBox extends Widget implements HasValue<String> {
         sinkEvents(Event.ONCHANGE);
     }
 
+    /// @param ariaLabel The picker's name for screen readers, where no label names it.
+    public void setAriaLabel(final String ariaLabel) {
+        input.setAttribute("aria-label", ariaLabel);
+    }
+
     /// @param onChange Told the new colour when the user picks one (or `setValue(value, true)` sets
     ///                 one), or null for nothing.
     public void setOnChange(final Consumer<String> onChange) {

@@ -132,6 +132,16 @@ public class DateTimeBox
         textBox.setFocus(true);
     }
 
+    /// @param role The box's WAI-ARIA role, e.g. `group` to name its text box and button as one.
+    public void setRole(final String role) {
+        getElement().setAttribute("role", role);
+    }
+
+    /// @param ariaLabel The box's name for screen readers, where no label names it.
+    public void setAriaLabel(final String ariaLabel) {
+        getElement().setAttribute("aria-label", ariaLabel);
+    }
+
     /// Sets the field's `name` attribute.
     ///
     /// @param name The name.
