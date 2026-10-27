@@ -61,6 +61,8 @@ class TestExtractionChange {
         assertThat(changed.generated()).isTrue();
         assertThat(changed.alsoGiven()).isEmpty();
         assertThat(changed.added()).extracting(ExtractionField::name).containsExactly("Organisation");
+        // What anything else using it loses.
+        assertThat(changed.removed()).containsExactly("Type");
         // The namespace it was written with is kept.
         assertThat(ExtractionXslt.read(changed.code())).hasValueSatisfying(generated -> {
             assertThat(generated.namespace()).isEqualTo("event-logging:3");
