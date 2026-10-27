@@ -58,8 +58,7 @@ class TestOpenAIModelResourceImpl {
         final AiService aiService = Mockito.mock(AiService.class);
         Mockito.when(aiService.getModel(Mockito.any())).thenThrow(new ModelNotFoundException("gpt-5",
                 "https://api.example/v1/models", List.of("gpt-4o", "o3")));
-        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
-                .thenReturn(true);
+        allowEdit(true);
         final OpenAIModelResourceImpl withService = new OpenAIModelResourceImpl(
                 () -> null, () -> aiService, () -> null, () -> securityContext, () -> factory);
 
@@ -73,6 +72,31 @@ class TestOpenAIModelResourceImpl {
                 .endsWith("in the detail.");
         assertThat(response.getDetail()).as("the models to choose from")
                 .isEqualTo("Models listed by https://api.example/v1/models:\ngpt-4o\no3");
+    }
+
+    @Test
+    void validateModel_needsEditPermissionOnTheModelBeingTested() {
+        // Only someone who could save the settings may make Stroom connect with them; Use alone isn't enough.
+        final AiService aiService = Mockito.mock(AiService.class);
+        Mockito.when(aiService.getModel(Mockito.any())).thenReturn("{\"id\": \"gpt-4o\"}");
+        final OpenAIModelResourceImpl withService = new OpenAIModelResourceImpl(
+                () -> null, () -> aiService, () -> null, () -> securityContext, () -> factory);
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").modelId("gpt-4o").build();
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        allowEdit(false);
+
+        assertThatThrownBy(() -> withService.validateModel(model))
+                .isInstanceOf(PermissionException.class)
+                .hasMessageContaining("EDIT permission on AI model");
+        Mockito.verify(aiService, Mockito.never()).getModel(Mockito.any());
+
+        allowEdit(true);
+        assertThat(withService.validateModel(model).isOk()).isTrue();
+        // The model's own UUID is checked, the one the editor sends.
+        Mockito.verify(securityContext, Mockito.atLeastOnce()).hasDocumentPermission(
+                Mockito.argThat(docRef -> "model-uuid".equals(docRef.getUuid())),
+                Mockito.eq(DocumentPermission.EDIT));
     }
 
     @Test
