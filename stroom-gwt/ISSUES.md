@@ -666,6 +666,20 @@ list, and the list's one choice handler is kept in a field. Story `TableAddColum
 
 ## Memory
 
+### Replies helpers give to lists that have gone
+
+**Found in wave 10's audit** (27 October 2026). A controller's own REST calls have `.owner(this)`,
+so a reply that comes after it is disposed is dropped. The shared helpers some lists call take no
+owner, so their replies still run: `NodeClient` (the job and node lists' `listEnabledNodes`, the
+node list's info tooltip, priority and enabled changes), `NodeGroupClient`, `CredentialClient` (the
+credentials list), `ResultStoreModel` (the result store list), `UiConfigCache` (the user list) and
+`DocumentTypeCache` (the document permission lists). A late reply updates a list no one sees, and
+the node list's info tooltip can show after its screen has closed. Fix: give each helper's methods an
+owner, as `AnnotationResourceClient`'s finds now have.
+
+* `stroom-core-client/src/main/java/stroom/node/client/NodeClient.java`
+* `stroom-core-client/src/main/java/stroom/node/client/component/NodeStatusListController.java`
+
 ### The stepping chooser can be left unowned
 
 **Found in wave 8's audit** (26 October 2026). `PipelinePlugin.onBeginStepping` makes the "Choose
@@ -1812,6 +1826,16 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 10's audit** (2026-10-27):
+  * A controller shown as a tab didn't get the focus when its tab was chosen: the table filter
+    dialog (and the other owners that focus a chosen tab's layer if it is a `Focus`) found a
+    `ControllerLayer`, which wasn't one, where a presenter had been, so the Include Exclude tab lost
+    its focus. A regression on this branch, not in master. `ControllerLayer` passes the focus on
+    (`TestControllerLayer`, which failed before).
+  * The cache lists' delayed refresh and the node list's delayed redraw could run after their screen
+    had closed; they are cancelled when it goes. The processor list's saves and the annotation
+    lists' finds now drop replies to a list that has gone.
 
 * **Wave 8's audit** (2026-10-26):
   * An Elastic index's Rerank Score Field Suffix didn't make the index changed (no change handler,

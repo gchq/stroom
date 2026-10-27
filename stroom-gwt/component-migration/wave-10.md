@@ -14,6 +14,90 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert every list presenter built on PagerView/DataGridWidget into a list component plus a controller that owns its REST data: RestDataProvider with an owner, and FilteredList where the list has a quick filter. Selection goes out through callbacks, and back-references to parents are removed. The floor map grid lists use the shared ToolbarGrid.
 
+## Audited (27 October 2026)
+
+Six reviewers read the wave's 77 commits against this plan, "Done means" and AGENTS.md (the floor map
+lists, the type filter and the document lists; the processor, preferences, user and annotation lists;
+the dictionary, task, job, property, store, node, cache and security lists; the retention, content,
+dependency, rule, AI, account, shard and schedule lists; the dashboard, volume, tag, XPath, shard,
+script, trace, activity and filter lists; and the last thirteen, from the profile periods to the
+stream lists). Fixed, in 13 commits:
+
+- **A regression on this branch.** The table filter dialog focuses its chosen tab's layer if it is a
+  `Focus`, as a presenter was; a `ControllerLayer` wasn't, so the Include Exclude tab (and any
+  controller shown as a tab) lost its focus when chosen. `ControllerLayer` is a `Focus` that focuses
+  its content if that takes the focus (`TestControllerLayer`).
+- **Owned work and replies.** The cache lists' delayed refresh and the node list's delayed redraw are
+  cancelled when they go (`onDispose`); the processor list's saves and the annotation client's finds
+  (`findAnnotations`, `findAnnotationTags`, which now take an owner) drop replies to a list that has
+  gone; the document permission list adds its columns once both its document and the document types
+  are known, whichever comes first.
+- **BEM and no inline styles.** The type filter's rules are in `type-filter.css` (they were in
+  `explorer-tree.css`); the dependency status is `dependency-list__status` (`--ok`, `--missing`);
+  a property's value or source that differs between the nodes is red through
+  `manage-global-property-list__multiple`, not an inline colour; a pipeline property's or reference's
+  state is `pipeline-property--added`, `--removed`, `--inherited` or `--default`, in
+  `pipeline-property.css` (were `pipelineStructureViewImpl-property-*` in `components.css`); the inline
+  `border: none` five owners put on their lists went, as the lists' roots have no border.
+- **Inputs and outputs.** The pathway list gives its choice through `setOnSelectionChange`, not its
+  selection model; the retention list is told which rule is the default (`setDefaultRule`), so it no
+  longer imports the presenter's constant; the retention and template lists' enabled callbacks are
+  `setOnEnabledChange`; the result store settings dialog is made for each use (`makeDialog`); the tab
+  session chooser focuses its list when shown.
+- **The plan's helpers.** The Elastic field list uses the shared `ListDataProvider`, as the Solr one
+  does; the document selection and processor lists add their document columns with
+  `DataGridUtil.addDocRefColumn`; the column selection fills its grid with `setRowData(rows)`;
+  `DataGrid.setColumnWidth(column, width)` takes pixels (the stream list's expander uses it);
+  `PagerPanel.remove` stops paging the list it removes; `HeadedPagerPanel` is no longer a `View`.
+- **Names.** The owners' fields and parameters are named for the lists they hold (`dataRetentionPolicyList`,
+  not `listPresenter`), in 50 files; class names that went are gone from comments, stories,
+  DATA_GRID_DESIGN.md, COMPONENTS.md, WRITING-STORIES.md, COVERAGE-PLAN.md and the open entries of
+  ISSUES.md.
+- **Smaller.** Commented-out code (the user list's old columns and logging, the template list's
+  columns, the cluster values list's demo data, the batch permissions' edit, the stream list's old
+  expression) and unused focus methods went; `///` javadoc for the user list's controller and its
+  `Mode`, the annotation list's setters, `FactObject`, the cluster value rows, the processor info and
+  status helpers and five constructors; the task list's stray block, a garbled template comment and
+  javadoc, same-package imports and double blank lines went; the find screens no longer implement
+  `FindDocResultListHandler`, which the lists' callbacks replaced.
+- **Tests.** Stories for the dialog that chooses which changed documents to save
+  (`App/Data/DocRefSelectionDialog`: Default, OkGivesTheDocumentsTicked, CancelGivesNothing).
+
+Checked and not changed: the `"<br/>"` headings a reviewer thought would show as text are HTML
+(`DataGrid.addColumn(column, String, width)` treats its text as HTML), so they show nothing, as before;
+the document permission list has stories (`UserTabScreen.DocumentPermissionsTab`,
+`DocumentPermissionsScreen`).
+
+Left, on purpose (recorded below or in ISSUES.md):
+
+- **Removals wait.** Code and rules this wave left unused stay until removals are allowed:
+  `AskStroomAiClient.listChats`, `ScheduledProcessHistoryList.clearRows`,
+  `DataGridUtil.colouredCellExtractor`, `ElasticIndexFieldDataProvider`, `FindDocResultListHandler`,
+  and `components.css`'s `.solrIndexFieldListViewImpl-synchState` (copied to
+  `solr-index-field-list.css`) and node ping bar rules (`.nodePingBar-*`).
+- **Wrappers kept.** The `SimplePanel` wrappers around the key binding, keyboard shortcut, application
+  permission, Elastic and Solr field lists and the include/exclude filter keep the DOM, and so the
+  screenshots, as they were; the include/exclude dictionary list is a `DocRefList`, which takes no
+  toolbar children, so its buttons are added in Java.
+- **No `ToolbarGrid`.** The four floor map lists share the `floormap-list` block (`floormap-list__toolbar`
+  keeps the 26px strip), not a new `ToolbarGrid` widget, as nothing else would use it.
+- **Separate callbacks.** Lists with Add, Edit and Remove have a callback each (`setOnAdd`,
+  `setOnEdit`, `setOnRemove`) rather than an action enum, across the wave.
+- **Nested types stay nested.** `UserListController.Mode` and the keyboard shortcuts' row are at the
+  bottom of their classes, as AGENTS.md allows.
+- **The task monitor is the pager's.** The application permissions and user lists' requests spin the
+  pager's refresh button, as every other list's do, rather than a monitor of their own.
+- **Copyright years.** A component is new (2026); its controller continues the presenter's code and
+  keeps its year.
+- **Helpers with no owner.** `NodeClient`, `NodeGroupClient`, `CredentialClient`, `ResultStoreModel`,
+  `UiConfigCache` and `DocumentTypeCache` take no owner, so their replies still reach a list that has
+  gone (ISSUES.md, "Replies helpers give to lists that have gone").
+- **The constraint list's read-only argument** stays with the bug it keeps (ISSUES.md), and the
+  retention and template lists' action menus still have no opener (ISSUES.md).
+- **History.** Two commits don't build on their own: `4608101725` holds a file of the next commit, and
+  `406bbb67cf` the rename of `PropertyListPresenter` to `PropertyListController` that `058f8fc228`
+  completes. They are left as they are rather than rewriting the branch.
+
 ## CSS and template notes for the wave
 
 - List frame: every list here declares the wave-5 pager frame <dg:PagerView> (as a no-arg widget) holding <dg:DataGrid> (renamed from DataGridWidget, package stroom.widget.datagrid.client); tableName, multiLine, pageSize, profile, accessibleName and striped become template attributes; the toolbar's name and its ToolbarButtons (svg, title, enabled="false") are declared inside it as PipelineStructureViewImpl.ui.xml already does with <v:Toolbar>/<v:ToolbarButton>. Only the " (read only)" style suffixes and enabled states stay in Java.
