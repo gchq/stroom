@@ -118,13 +118,14 @@ class TestAiSuggestions {
                         "What stands out in the 'Pairs' table?");
 
         // Once each table with rows has a chart and something filters by one: the first table, which is grouped
-        // already.
+        // already, and a value from its events that the index doesn't have (a search extraction).
         final String charted = DESCRIPTION
                                + "\n## Visualisation 'Timeline' (id vis-2)\nLinked table: 'Messages'\n"
                                + "\n## Table 'Filtered' (id table-3)\nTable selection filters: User A = "
                                + "${component.vis-1.selection.source}\n";
         assertThat(AiSuggestions.forTab(DASHBOARD, false, tables, null, charted))
                 .containsExactly("What stands out in the 'Pairs' table?",
+                        "Add a field from the events to the 'Pairs' table",
                         "Explain what this dashboard shows and where its data comes from");
 
         // A table with no rows is asked about; no chart is suggested for it.
