@@ -195,15 +195,16 @@ public class UserActionService {
 
     /// Writes the search extraction a `create_extraction_pipeline` button proposed (its XSLT and pipeline), with the
     /// name and folder the user chose, or the change to a table's extraction pipeline a `change_extraction_pipeline`
-    /// button proposed (its XSLT, in place), once the user has confirmed exactly what is written, as the user.
-    /// Nothing else is written: the hash of what they were shown must be that of what would be written now. The
+    /// button proposed (its XSLT, in place), once the user has chosen the name and folder, or written the change
+    /// they were shown, as the user. Nothing else is written: the hash of what was prepared when the button was
+    /// clicked must be that of what would be written now. The
     /// button is claimed first, so it writes once; if the write fails, it can be used again. The browser then sets
     /// the table up, unsaved.
     ///
     /// @param chatId    The chat, which the user must own.
     /// @param messageId The tool result message the action is in.
     /// @param actionId  The action's id.
-    /// @param request   The name, folder and hash the user confirmed.
+    /// @param request   The name and folder the user chose, and the hash of what was prepared.
     /// @return What happened: the new pipeline and the table's changes, or why nothing was written.
     public AiWriteExtractionResult writeExtraction(final int chatId,
                                                    final int messageId,
@@ -292,7 +293,7 @@ public class UserActionService {
                 "Created pipeline '" + written.pipeline().getName() + "' using XSLT '" + written.xslt().getName()
                 + "'", true);
         // So the model knows on its next turn (or now, if it is working).
-        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I confirmed the "
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I created the "
                                                                      + "extraction: Stroom wrote XSLT and pipeline '"
                                                                      + written.pipeline().getName() + "' ("
                                                                      + written.pipeline().getUuid() + "), "
@@ -428,9 +429,9 @@ public class UserActionService {
         return AiUserActionResult.createVisualisation(create);
     }
 
-    /// Says what a proposed search extraction would write, for the browser to show the user with the name and folder
-    /// they choose, and to confirm. Nothing is written here (see [#writeExtraction]), so the button can be used
-    /// again.
+    /// Prepares what a proposed search extraction would write, for the browser to have written once the user chooses
+    /// its name and folder. Nothing is written here (see [#writeExtraction]), so the button can be used again (e.g.
+    /// if the user cancels the New dialog).
     private AiUserActionResult createExtraction(final int chatId, final UserActionRecord action) {
         if (action.request() == null || action.doc() == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The dashboard no longer exists, or you can't see it.";
@@ -446,7 +447,7 @@ public class UserActionService {
             return new AiUserActionResult(false, e.getMessage(), null);
         }
         auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
-                "Showed what would be written, to confirm", true);
+                "Prepared what would be written, for the user to name", true);
         return AiUserActionResult.createExtraction(create);
     }
 

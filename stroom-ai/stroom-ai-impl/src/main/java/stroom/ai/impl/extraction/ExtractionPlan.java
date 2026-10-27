@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 /// A search extraction the agent proposed for a dashboard table, as its `create_extraction_pipeline` or
 /// `change_extraction_pipeline` button keeps it: everything Stroom needs to write it, and to set the table up to use
-/// it, once the user confirms it.
+/// it, once the user goes ahead.
 ///
 /// @param component   The table's name, as the user sees it.
 /// @param componentId The table's component id.

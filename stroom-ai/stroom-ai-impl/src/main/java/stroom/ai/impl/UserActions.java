@@ -99,9 +99,9 @@ public class UserActions {
     /// created, the Visualisation is given a chart the agent planned, drawn with ECharts, and is added to the
     /// dashboard (or the query's `show` clause), unsaved (only from Stroom's own propose_visualisation tool).
     public static final String CREATE_VISUALISATION = "create_visualisation";
-    /// Shows what a search extraction the agent proposed for a dashboard table would write (an XSLT and a pipeline),
-    /// with the name and folder the user chooses, for them to confirm; only then is it written, and the table set
-    /// up to use it, unsaved (only from Stroom's own propose_extraction_pipeline tool).
+    /// Writes a search extraction the agent proposed for a dashboard table (an XSLT and a pipeline), with the name
+    /// and folder the user chooses in Stroom's New dialog, as the button prepared it, and sets the table up to use
+    /// it, unsaved (only from Stroom's own propose_extraction_pipeline tool).
     public static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
     /// Shows a change the agent proposed to a dashboard table's extraction pipeline, in place, as a diff of its
     /// XSLT with the other documents that use it, for the user to confirm; only then is it written, and columns
