@@ -3211,7 +3211,8 @@ public class AskStroomAiPresenter
         }
     }
 
-    // Has the server write a search extraction the user chose a name and folder for, then sets the table up to use it, unsaved.
+    // Has the server write a search extraction the user chose a name and folder for, then sets the table up to use
+    // it, unsaved.
     private void writeExtraction(final int chatId,
                                  final int messageId,
                                  final String actionId,
