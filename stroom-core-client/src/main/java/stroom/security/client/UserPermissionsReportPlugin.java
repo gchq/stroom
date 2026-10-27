@@ -21,8 +21,8 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.UserPermissionReportController;
 import stroom.security.client.component.UserRefPopupController;
-import stroom.security.client.presenter.UserPermissionReportPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -41,13 +41,13 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     private final ContentManager contentManager;
     private final Provider<UserRefPopupController> userRefPopupProvider;
-    private final Provider<UserPermissionReportPresenter> userPermissionReportPresenterAsyncProvider;
+    private final Provider<UserPermissionReportController> userPermissionReportPresenterAsyncProvider;
     private final ClientSecurityContext securityContext;
 
     @Inject
     public UserPermissionsReportPlugin(final EventBus eventBus,
                                        final ContentManager contentManager,
-                                       final Provider<UserPermissionReportPresenter>
+                                       final Provider<UserPermissionReportController>
                                                userPermissionReportPresenterAsyncProvider,
                                        final Provider<UserRefPopupController> userRefPopupProvider,
                                        final ClientSecurityContext securityContext) {
@@ -103,7 +103,7 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     public void open() {
 //        userRefPopupProvider.get().show(userRef -> {
-//            final UserPermissionReportPresenter presenter = userPermissionReportPresenterAsyncProvider.get();
+//            final UserPermissionReportController presenter = userPermissionReportPresenterAsyncProvider.get();
 //            presenter.setUserRef(userRef);
 //            final CloseContentEvent.Handler closeHandler = (event) -> {
 //                if (presenter instanceof CloseContentEvent.Handler) {

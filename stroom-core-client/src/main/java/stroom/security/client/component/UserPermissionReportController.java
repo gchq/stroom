@@ -14,98 +14,88 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.data.client.component.ExpressionDialogController;
 import stroom.explorer.client.component.DocumentPermissionsListController;
 import stroom.explorer.shared.FindResultWithPermissions;
-import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.component.BatchDocumentPermissionsEditController;
-import stroom.security.client.component.DocumentUserPermissionsEditController;
-import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.security.shared.PermissionShowLevel;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
-import javax.inject.Inject;
 
-public class UserPermissionReportPresenter
-        extends MyPresenterWidget<UserPermissionReportView>
-        implements QuickFilterUiHandlers {
+/// A user's or group's Document Permissions tab ([UserPermissionReport]): lists the documents and
+/// the user's permissions on each, filtered by a quick filter, an expression and which permissions
+/// are shown, and edits the permissions on one document or on all those listed.
+public class UserPermissionReportController extends Controller {
 
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final DocumentPermissionsListController documentPermissionsList;
     private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
     private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
-    private final SelectionBox<PermissionShowLevel> permissionVisibility;
+    private final UserPermissionReport view;
     private ExpressionOperator filterExpression;
     private String quickFilter;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResultWithPermissions> docs;
     private UserRef userRef;
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                             The application's event bus.
+    /// @param view                                 The content.
+    /// @param filterDialogProvider                 Makes the dialog that filters the documents.
+    /// @param documentPermissionsList              The documents and the user's permissions on each.
+    /// @param documentUserPermissionsEditProvider  Makes the dialog that edits the permissions on one
+    ///                                             document.
+    /// @param batchDocumentPermissionsEditProvider Makes the dialog that edits the permissions on all
+    ///                                             the documents listed.
+    /// @param quickFilterContextHandlerFactory     Gives the quick filter its recent filters.
     @Inject
-    public UserPermissionReportPresenter(final EventBus eventBus,
-                                         final UserPermissionReportView view,
-                                         final QuickFilterPageView quickFilterPageView,
-                                         final Provider<ExpressionDialogController> filterDialogProvider,
-                                         final DocumentPermissionsListController documentPermissionsList,
-                                         final Provider<DocumentUserPermissionsEditController>
-                                                 documentUserPermissionsEditProvider,
-                                         final Provider<BatchDocumentPermissionsEditController>
-                                                 batchDocumentPermissionsEditProvider,
-                                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view);
+    public UserPermissionReportController(final EventBus eventBus,
+                                          final UserPermissionReport view,
+                                          final Provider<ExpressionDialogController> filterDialogProvider,
+                                          final DocumentPermissionsListController documentPermissionsList,
+                                          final Provider<DocumentUserPermissionsEditController>
+                                                  documentUserPermissionsEditProvider,
+                                          final Provider<BatchDocumentPermissionsEditController>
+                                                  batchDocumentPermissionsEditProvider,
+                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(documentPermissionsList);
         this.documentPermissionsList = documentPermissionsList;
         this.documentUserPermissionsEditProvider = documentUserPermissionsEditProvider;
         this.batchDocumentPermissionsEditProvider = batchDocumentPermissionsEditProvider;
         this.filterDialogProvider = filterDialogProvider;
 
-        view.setPermissionListView(quickFilterPageView);
-        quickFilterPageView.setDataView(documentPermissionsList);
-        quickFilterPageView.setUiHandlers(this);
+        view.setDocumentsList(documentPermissionsList);
+        view.setOnFilterChange(this::onFilterChange);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        documentPermissionsList.setOnFilterError(quickFilterPageView::setFilterError);
-        quickFilterPageView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
-                DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
-        quickFilterPageView.setLabel("Documents");
-        quickFilterPageView.setHelpText(new SafeHtmlBuilder()
-                .appendHtmlConstant("<p>")
-                .appendEscaped("Lists documents, optionally filtered based on the value of the")
-                .appendHtmlConstant("<em>")
-                .appendEscaped("Permission Visibility")
-                .appendHtmlConstant("</em>")
-                .appendEscaped("dropdown.")
-                .appendHtmlConstant("</p>")
-                .toSafeHtml());
+        documentPermissionsList.setOnFilterError(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, taskMonitor()));
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
 
-        permissionVisibility = view.getPermissionVisibility();
-        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
-        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        documentPermissionsList.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
+        documentPermissionsList.getCriteriaBuilder().showLevel(view.getPermissionShowLevel());
 
         documentPermissionsList.setOnEdit(this::onEdit);
         documentPermissionsList.setOnFilter(this::onFilter);
@@ -115,10 +105,10 @@ public class UserPermissionReportPresenter
             documentPermissionsList.setBatchEditEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
 
-        own(permissionVisibility.addValueChangeHandler(e -> {
-            documentPermissionsList.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
+        view.setOnPermissionShowLevelChange(showLevel -> {
+            documentPermissionsList.getCriteriaBuilder().showLevel(showLevel);
             documentPermissionsList.refresh();
-        }));
+        });
     }
 
     private void onFilter() {
@@ -143,7 +133,7 @@ public class UserPermissionReportPresenter
                     selected.getFindResult().getDocRef(),
                     selected.getPermissions(),
                     documentPermissionsList::refresh,
-                    this);
+                    taskMonitor());
         }
     }
 
@@ -182,8 +172,7 @@ public class UserPermissionReportPresenter
                 .build();
     }
 
-    @Override
-    public void onFilterChange(final String text) {
+    private void onFilterChange(final String text) {
         // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest. The
         // show-all term stays an expression: it is this screen's own default, not user input.
         quickFilter = text;
@@ -241,6 +230,9 @@ public class UserPermissionReportPresenter
 //        refresh();
 //    }
 
+    /// Lists the documents with a user's or group's permissions on them.
+    ///
+    /// @param userRef The user or group.
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
         documentPermissionsList.getCriteriaBuilder().userRef(userRef);
@@ -266,12 +258,13 @@ public class UserPermissionReportPresenter
 //        return "DocumentPermissionReport";
 //    }
 
-    // --------------------------------------------------------------------------------
-
-    public interface UserPermissionReportView extends View {
-
-        SelectionBox<PermissionShowLevel> getPermissionVisibility();
-
-        void setPermissionListView(View view);
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 }

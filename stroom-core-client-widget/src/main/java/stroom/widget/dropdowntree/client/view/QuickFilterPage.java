@@ -18,6 +18,7 @@ package stroom.widget.dropdowntree.client.view;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.HelpHTML;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -41,7 +42,8 @@ import java.util.function.Supplier;
 /// </v:QuickFilterPage>
 /// ```
 ///
-/// The filter has no label unless given one.
+/// The filter has no label unless given one, and no help unless a `<form:HelpHTML>` is declared
+/// inside it too.
 public class QuickFilterPage extends Component implements HasWidgets {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -124,12 +126,17 @@ public class QuickFilterPage extends Component implements HasWidgets {
         this.onFilterChange = onFilterChange;
     }
 
-    /// Sets what the filter filters, as a template declares it.
+    /// Sets what the filter filters, or the filter's help if it is a [HelpHTML], as a template
+    /// declares them.
     ///
-    /// @param widget The content.
+    /// @param widget The content or the help.
     @Override
     public void add(final Widget widget) {
-        data.setWidget(widget);
+        if (widget instanceof HelpHTML) {
+            formGroup.add(widget);
+        } else {
+            data.setWidget(widget);
+        }
     }
 
     /// Removes the content.

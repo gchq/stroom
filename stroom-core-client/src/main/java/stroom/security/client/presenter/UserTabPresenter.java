@@ -24,6 +24,7 @@ import stroom.security.client.component.AppPermissionsEditController;
 import stroom.security.client.component.UserAndGroupsController;
 import stroom.security.client.component.UserDependenciesListController;
 import stroom.security.client.component.UserInfoTabController;
+import stroom.security.client.component.UserPermissionReportController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -80,7 +81,8 @@ public class UserTabPresenter
 
     private final UserInfoTabController userInfo;
     private final ControllerLayer userInfoLayer;
-    private final LazyValue<UserPermissionReportPresenter> userPermsReportPresenterLazyValue;
+    private final LazyValue<UserPermissionReportController> userPermissionReportLazyValue;
+    private ControllerLayer userPermissionReportLayer;
     private final LazyValue<UserDependenciesListController> userDependenciesListLazyValue;
     private ControllerLayer userDependenciesListLayer;
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
@@ -99,7 +101,7 @@ public class UserTabPresenter
                             final LinkTabPanelView view,
                             final UserInfoTabController userInfo,
                             final ClientSecurityContext clientSecurityContext,
-                            final Provider<UserPermissionReportPresenter> userPermsReportPresenterProvider,
+                            final Provider<UserPermissionReportController> userPermissionReportProvider,
                             final Provider<UserDependenciesListController> userDependenciesListProvider,
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
                             final Provider<AppPermissionsEditController> appPermissionsEditProvider,
@@ -108,10 +110,11 @@ public class UserTabPresenter
         own(userInfo);
         this.userInfo = userInfo;
         this.userInfoLayer = new ControllerLayer(userInfo);
-        this.userPermsReportPresenterLazyValue = new LazyValue<>(
-                userPermsReportPresenterProvider,
-                userPermissionReportPresenter -> {
-                    userPermissionReportPresenter.setUserRef(userRef);
+        this.userPermissionReportLazyValue = new LazyValue<UserPermissionReportController>(
+                (Supplier<UserPermissionReportController>) () -> make(userPermissionReportProvider),
+                userPermissionReport -> {
+                    userPermissionReportLayer = new ControllerLayer(userPermissionReport);
+                    userPermissionReport.setUserRef(userRef);
                 });
         this.userDependenciesListLazyValue = new LazyValue<UserDependenciesListController>(
                 (Supplier<UserDependenciesListController>) () -> make(userDependenciesListProvider),
@@ -193,9 +196,9 @@ public class UserTabPresenter
             appPermissionsEdit.setUserRef(userRef);
             callback.accept(appPermissionsEditLayer);
         } else if (DOC_PERMS_TAB.equals(tab)) {
-            final UserPermissionReportPresenter userPermsReportPresenter = userPermsReportPresenterLazyValue.getValue();
-            userPermsReportPresenter.setUserRef(userRef);
-            callback.accept(userPermsReportPresenter);
+            final UserPermissionReportController userPermissionReport = userPermissionReportLazyValue.getValue();
+            userPermissionReport.setUserRef(userRef);
+            callback.accept(userPermissionReportLayer);
         } else if (DEPENDENCIES_TAB.equals(tab)) {
             final UserDependenciesListController userDependenciesList = userDependenciesListLazyValue.getValue();
             userDependenciesList.setUserRef(userRef);
@@ -247,8 +250,8 @@ public class UserTabPresenter
         userInfo.setUserRef(userRef);
         appPermissionsEditLazyValue.consumeIfInitialised(appPermissionsEdit ->
                 appPermissionsEdit.setUserRef(userRef));
-        userPermsReportPresenterLazyValue.consumeIfInitialised(userPermissionReportPresenter ->
-                userPermissionReportPresenter.setUserRef(userRef));
+        userPermissionReportLazyValue.consumeIfInitialised(userPermissionReport ->
+                userPermissionReport.setUserRef(userRef));
         userDependenciesListLazyValue.consumeIfInitialised(userDependenciesList ->
                 userDependenciesList.setUserRef(userRef));
         apiKeysListPresenterLazyValue.consumeIfInitialised(apiKeysPresenter ->

@@ -1,8 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A user's or group's Document Permissions tab: which documents are listed, then the documents
+     and the user's permissions on each, with a quick filter -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">
@@ -33,6 +36,15 @@
                 <l:SelectionBox ui:field="permissionVisibility"/>
             </form:FormGroup>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="permissionsList" styleName="dock-max overflow-hidden"/>
+        <g:SimplePanel styleName="dock-max overflow-hidden">
+            <v:QuickFilterPage ui:field="documents" label="Documents">
+                <form:HelpHTML>
+                    <p>Lists documents, optionally filtered based on the value of the
+                        <em>Permission Visibility</em>
+                        dropdown.
+                    </p>
+                </form:HelpHTML>
+            </v:QuickFilterPage>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>
