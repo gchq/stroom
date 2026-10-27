@@ -17,34 +17,35 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.main.TabManager;
 import stroom.item.client.EventBinder;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
 
-    private final EventBus eventBus;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     private final MutableTabLayoutConfig tabLayoutConfig;
     private final FlexLayout flexLayout;
-    private final TabManager tabManager;
     private final FlexLayoutChangeHandler changeHandler;
-    private final ToolbarButton settings;
-    private final LinkTabBar tabBar;
-    private final LayerContainer layerContainer;
+    @UiField
+    ToolbarButton settings;
+    @UiField
+    LinkTabBar tabBar;
+    @UiField
+    LayerContainerImpl layerContainer;
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
@@ -55,14 +56,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 getTabLayoutConfig().setSelected(index);
                 changeHandler.onChange();
             }));
-            registerHandler(tabBar.addShowMenuHandler(eventBus::fireEvent));
+            registerHandler(tabBar.addShowMenuHandler(flexLayout::showMenu));
             registerHandler(settings.addDomHandler(event -> {
                 if (MouseUtil.isPrimary(event)) {
                     final TabData selectedTab = tabBar.getSelectedTab();
                     if (selectedTab instanceof final DashboardPane component) {
 //                        component.showSettings();
-                        tabManager.showMenu(settings.getElement(),
-                                flexLayout,
+                        flexLayout.showTabMenu(settings.getElement(),
                                 TabLayout.this,
                                 component.getTabConfig());
                     }
@@ -71,58 +71,18 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         }
     };
 
-    public TabLayout(final EventBus eventBus,
-                     final FlexLayout flexLayout,
-                     final TabManager tabManager,
+    /// @param flexLayout      The layout the pane is in, which shows its tabs' menus.
+    /// @param tabLayoutConfig The pane's tabs.
+    /// @param changeHandler   Told when the user selects another tab.
+    public TabLayout(final FlexLayout flexLayout,
                      final MutableTabLayoutConfig tabLayoutConfig,
                      final FlexLayoutChangeHandler changeHandler) {
-        this.eventBus = eventBus;
         this.flexLayout = flexLayout;
-        this.tabManager = tabManager;
-
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
-        tabBar = new LinkTabBar();
-        tabBar.addStyleName("dock-max tabLayout-tabBar");
-
-        final FlowPanel tabContainer = new FlowPanel();
-        tabContainer.setStyleName("tabLayout-tabContainer");
-        tabContainer.add(tabBar);
-
-        final FlowPanel barOuter = new FlowPanel();
-        barOuter.setStyleName("tabLayout-barOuter");
-        barOuter.add(tabContainer);
-
-        final FlowPanel contentInner = new FlowPanel();
-        contentInner.setStyleName("tabLayout-contentInner");
-        contentInner.add(barOuter);
-
-        final FlowPanel contentOuter = new FlowPanel();
-        contentOuter.setStyleName("tabLayout-contentOuter dashboard-panel");
-        contentOuter.add(contentInner);
-
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("tabLayout");
-        panel.add(contentOuter);
-        initWidget(panel);
-
-        // Shown when the pane is hovered over or has the focus (tabLayout-buttons)
-        final Toolbar buttons = new Toolbar("Pane actions");
-        buttons.addStyleName("dock-min tabLayout-buttons icon-colour__grey");
-        barOuter.add(buttons);
-
-        settings = buttons.button(SvgImage.ELLIPSES_VERTICAL, "Tab Actions", null);
-        settings.addStyleName("tabLayout-settingsButton");
-        settings.setOpensMenu(true);
-
-        final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
-        layerContainerImpl.setFade(true);
-        layerContainerImpl.setStyleName("tabLayout-content");
-        contentInner.add(layerContainerImpl);
-
-        layerContainer = layerContainerImpl;
-        tabBar.setTabPanel(layerContainerImpl.getElement());
+        initWidget(BINDER.createAndBindUi(this));
+        tabBar.setTabPanel(layerContainer.getElement());
 
         bind();
     }
@@ -182,5 +142,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
     public MutableTabLayoutConfig getTabLayoutConfig() {
         return tabLayoutConfig;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, TabLayout> {
+
     }
 }

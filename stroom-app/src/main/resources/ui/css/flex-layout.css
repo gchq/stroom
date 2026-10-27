@@ -26,6 +26,15 @@
    released, so while it is dragged the marker is drawn as the dragged splitter.
 */
 
+/* A pane or splitter, where the layout puts it (the custom properties are set by FlexLayout) */
+.flex-layout__item {
+    position: absolute;
+    left: var(--flex-layout__left);
+    top: var(--flex-layout__top);
+    width: var(--flex-layout__width);
+    height: var(--flex-layout__height);
+}
+
 /* A splitter: a focusable separator, its line a vertical one (aria-orientation="vertical")
    between panels side by side, or a horizontal one between stacked panels */
 .flex-layout__splitter {
@@ -33,16 +42,6 @@
     background-color: var(--splitter__background-color);
     z-index: 6;
     outline: none;
-}
-
-.flex-layout__splitter[aria-orientation="vertical"] {
-    width: 1px;
-    height: 100%;
-}
-
-.flex-layout__splitter[aria-orientation="horizontal"] {
-    width: 100%;
-    height: 1px;
 }
 
 /* What can be grabbed: wider than the line, across it */
@@ -119,6 +118,20 @@
     background-color: white;
     opacity: 0;
     z-index: 10;
+    cursor: default;
+}
+
+/* The glass's mouse cursor, as what is dragged */
+.flex-layout__glass--move {
+    cursor: move;
+}
+
+.flex-layout__glass--col-resize {
+    cursor: col-resize;
+}
+
+.flex-layout__glass--row-resize {
+    cursor: row-resize;
 }
 
 /* The marker: where a dragged tab would be dropped (a highlighted area), or the dragged splitter */

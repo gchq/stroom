@@ -32,7 +32,7 @@ import java.util.List;
 
 /// The layout stories of `App/Editors/DashboardEditor` (see `DashboardEditorStories`): a
 /// dashboard's tabs, panels, splitters, design mode and tab menu, in Stroom's real `FlexLayout`
-/// and `TabManager`.
+/// and `TabMenuController`.
 ///
 /// Stroom's layout is driven with the mouse (`FlexLayout` reads mouse events, not pointer events):
 /// a click on a selected tab opens its menu, and tabs and splitters are dragged with

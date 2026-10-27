@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A pane of a dashboard's layout: its tabs, with its actions, above the content of the one
+     selected -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="tabLayout">
+        <g:FlowPanel styleName="tabLayout-contentOuter dashboard-panel">
+            <g:FlowPanel styleName="tabLayout-contentInner">
+                <g:FlowPanel styleName="tabLayout-barOuter">
+                    <g:FlowPanel styleName="tabLayout-tabContainer">
+                        <tab:LinkTabBar ui:field="tabBar" addStyleNames="dock-max tabLayout-tabBar"/>
+                    </g:FlowPanel>
+                    <!-- Shown when the pane is hovered over or has the focus (tabLayout-buttons) -->
+                    <b:Toolbar name="Pane actions" addStyleNames="dock-min tabLayout-buttons icon-colour__grey">
+                        <b:ToolbarButton ui:field="settings" svg="ELLIPSES_VERTICAL" title="Tab Actions"
+                                         opensMenu="true" addStyleNames="tabLayout-settingsButton"/>
+                    </b:Toolbar>
+                </g:FlowPanel>
+                <tab:LayerContainerImpl ui:field="layerContainer" styleName="tabLayout-content" fade="true"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

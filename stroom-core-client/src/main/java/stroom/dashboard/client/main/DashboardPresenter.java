@@ -23,7 +23,8 @@ import stroom.core.client.UrlParameters;
 import stroom.dashboard.client.component.CurrentSelectionController;
 import stroom.dashboard.client.component.KeyValueInputController;
 import stroom.dashboard.client.component.LayoutConstraintController;
-import stroom.dashboard.client.component.RenameTabController;
+import stroom.dashboard.client.component.TabMenuController;
+import stroom.dashboard.client.component.TabMenuController.TabActions;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
@@ -99,6 +100,7 @@ import java.util.logging.Logger;
 public class DashboardPresenter
         extends DocPresenter<DashboardView, DashboardDoc>
         implements
+        TabActions,
         FlexLayoutChangeHandler,
         DocumentTabData,
         HasToolbar,
@@ -147,7 +149,7 @@ public class DashboardPresenter
                               final FlexLayout flexLayout,
                               final Components components,
                               final QueryToolbarController queryToolbar,
-                              final Provider<RenameTabController> renameTabControllerProvider,
+                              final Provider<TabMenuController> tabMenuProvider,
                               final QueryInfo queryInfo,
                               final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
                               final Provider<CurrentSelectionController> currentSelectionControllerProvider,
@@ -168,8 +170,10 @@ public class DashboardPresenter
         queryToolbar.setParamValues(dashboardContext);
 
         // Its rename dialog is this one's, made for one use
-        final TabManager tabManager = new TabManager(components, renameTabControllerProvider, this);
-        flexLayout.setTabManager(tabManager);
+        final TabMenuController tabMenu = make(tabMenuProvider);
+        tabMenu.setDashboard(components, this);
+        flexLayout.setOnShowTabMenu(tabMenu::showMenu);
+        flexLayout.setOnShowMenu(this::fireEvent);
 
         flexLayout.setChangeHandler(this);
         flexLayout.setComponents(components);

@@ -20,9 +20,11 @@ import stroom.dashboard.shared.Dimension;
 import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -41,6 +43,7 @@ public class Splitter extends Widget {
     // BIG_KEY_STEP_PX)
     private static final double KEY_STEP = 10;
     private static final double BIG_KEY_STEP = 50;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private final SplitInfo splitInfo;
     private final Function<MutableLayoutConfig, TabLayout> panels;
@@ -51,20 +54,13 @@ public class Splitter extends Widget {
         this.splitInfo = splitInfo;
         this.panels = panels;
 
-        final Element element = DOM.createDiv();
-        element.setClassName("flex-layout__splitter");
-        element.setTabIndex(0);
-        element.setAttribute("role", "separator");
+        final Element element = BINDER.createAndBindUi(this);
 
         // A split across lays its children out side by side, so its splitter is a vertical line
         // (flex-layout.css draws it by its aria-orientation)
         element.setAttribute("aria-orientation", splitInfo.layoutConfig.getDimension() == Dimension.X
                 ? "vertical"
                 : "horizontal");
-
-        final Element dragger = DOM.createDiv();
-        dragger.setClassName("flex-layout__dragger");
-        element.appendChild(dragger);
 
         setElement(element);
         sinkEvents(Event.ONFOCUS);
@@ -225,5 +221,13 @@ public class Splitter extends Widget {
         public int hashCode() {
             return Objects.hash(layoutConfig, index);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<DivElement, Splitter> {
+
     }
 }

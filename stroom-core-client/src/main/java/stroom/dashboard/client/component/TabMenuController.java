@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.component.RenameTabController;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
+import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -37,31 +39,52 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class TabManager {
+/// The menu of a dashboard's tab: rename it, show its settings, hide, show, duplicate or remove it
+/// or its pane, maximise it or restore the layout, and an embedded query's own actions. It has no
+/// widget of its own: the menu is the app's, and the rename dialog is its own until it is hidden.
+public class TabMenuController extends Controller {
 
-    private final Components components;
     private final Provider<RenameTabController> renameTabControllerProvider;
-    private final DashboardPresenter dashboardPresenter;
+    private Components components;
+    private TabActions dashboard;
 
     private FlexLayout flexLayout;
     private TabLayout tabLayout;
     private MutableTabConfig currentTabConfig;
 
-    public TabManager(final Components components,
-                      final Provider<RenameTabController> renameTabControllerProvider,
-                      final DashboardPresenter dashboardPresenter) {
-        this.components = components;
+    /// Made by GIN, with what it needs.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param renameTabControllerProvider Makes the dialog that renames a tab.
+    @Inject
+    public TabMenuController(final EventBus eventBus,
+                             final Provider<RenameTabController> renameTabControllerProvider) {
+        super(eventBus);
         this.renameTabControllerProvider = renameTabControllerProvider;
-        this.dashboardPresenter = dashboardPresenter;
     }
 
+    /// @param components The dashboard's panes, one per tab.
+    /// @param dashboard  What the menu's actions do to the dashboard.
+    public void setDashboard(final Components components, final TabActions dashboard) {
+        this.components = components;
+        this.dashboard = dashboard;
+    }
+
+    /// Shows a tab's menu below an element, or hides it if it is already showing.
+    ///
+    /// @param target     The element, e.g. the tab or its pane's Tab Actions button.
+    /// @param flexLayout The layout the tab is in.
+    /// @param tabLayout  The pane the tab is in.
+    /// @param tabConfig  The tab.
     public void showMenu(final Element target,
                          final FlexLayout flexLayout,
                          final TabLayout tabLayout,
@@ -72,14 +95,14 @@ public class TabManager {
         final DashboardPane component = components.get(tabConfig.getId());
         if (component != null) {
             if (Objects.equals(currentTabConfig, tabConfig)) {
-                HideMenuEvent.builder().fire(dashboardPresenter);
+                HideMenuEvent.builder().fire(this);
 
-//            } else if (!dashboardPresenter.isDesignMode()) {
+//            } else if (!dashboard.isDesignMode()) {
 //                showSettings(tabConfig);
 
             } else {
 //                if (currentTabConfig != null) {
-//                    HideMenuEvent.builder().fire(dashboardPresenter);
+//                    HideMenuEvent.builder().fire(this);
 //                }
 //
                 currentTabConfig = tabConfig;
@@ -102,7 +125,7 @@ public class TabManager {
                         .opener(target)
                         .popupPosition(popupPosition)
                         .onHide(e -> currentTabConfig = null)
-                        .fire(dashboardPresenter);
+                        .fire(this);
 //                    }
 //                }.schedule(0);
             }
@@ -110,16 +133,23 @@ public class TabManager {
     }
 
 
+    /// Asks for a tab's new name.
+    ///
+    /// @param componentConfig    The tab's pane.
+    /// @param nameChangeConsumer Given the new name.
     public void showRename(final ComponentConfig componentConfig,
                            final Consumer<String> nameChangeConsumer) {
         final TabLayout layout = tabLayout;
-        renameTabControllerProvider.get().rename(dashboardPresenter, componentConfig.getName(), name -> {
+        renameTabControllerProvider.get().rename(this, componentConfig.getName(), name -> {
             nameChangeConsumer.accept(name);
             layout.refresh();
-            dashboardPresenter.onChange();
+            dashboard.onChange();
         });
     }
 
+    /// Shows a tab's pane's settings.
+    ///
+    /// @param tabConfig The tab.
     public void showSettings(final MutableTabConfig tabConfig) {
         final DashboardPane component = components.get(tabConfig.getId());
         if (component != null) {
@@ -127,50 +157,54 @@ public class TabManager {
         }
     }
 
+    /// Duplicates a tab to another dashboard.
+    ///
+    /// @param tabLayoutConfig The tab's pane.
+    /// @param tabConfig       The tab.
     public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
-        dashboardPresenter.duplicateTabTo(tabLayoutConfig, tabConfig);
+        dashboard.duplicateTabTo(tabLayoutConfig, tabConfig);
     }
 
     private void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
-        dashboardPresenter.duplicateTab(tabLayoutConfig, tabConfig);
+        dashboard.duplicateTab(tabLayoutConfig, tabConfig);
     }
 
     private void duplicateTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
-        dashboardPresenter.duplicateTabPanel(tabLayoutConfig);
+        dashboard.duplicateTabPanel(tabLayoutConfig);
     }
 
     private void showTab(final MutableTabConfig tabConfig) {
         tabConfig.setVisible(true);
         flexLayout.clear();
         flexLayout.refresh();
-        dashboardPresenter.onChange();
+        dashboard.onChange();
     }
 
     private void maximiseTab(final MutableTabConfig tabConfig) {
-        dashboardPresenter.maximiseTabs(tabConfig);
+        dashboard.maximiseTabs(tabConfig);
     }
 
     private void restoreTabs() {
-        dashboardPresenter.restoreTabs();
+        dashboard.restoreTabs();
     }
 
     private void hideTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         if (tabLayoutConfig.getVisibleTabCount() <= 1) {
-            AlertEvent.fireError(dashboardPresenter, "You cannot remove or hide all tabs", null);
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
         } else {
             tabConfig.setVisible(false);
             flexLayout.clear();
             flexLayout.refresh();
-            dashboardPresenter.onChange();
+            dashboard.onChange();
         }
     }
 
     private void removeTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
-        dashboardPresenter.removeTab(tabLayoutConfig, tab);
+        dashboard.removeTab(tabLayoutConfig, tab);
     }
 
     private void removeTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
-        dashboardPresenter.removeTabPanel(tabLayoutConfig);
+        dashboard.removeTabPanel(tabLayoutConfig);
     }
 
     private List<Item> updateMenuItems(final MutableTabLayoutConfig tabLayoutConfig,
@@ -187,7 +221,7 @@ public class TabManager {
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
 
-        if (!dashboardPresenter.isMaximised()) {
+        if (!dashboard.isMaximised()) {
             // Create hide menu.
             menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
 
@@ -385,5 +419,55 @@ public class TabManager {
                 .text("Run Query")
                 .command(embeddedQueryPresenter::runQuery)
                 .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a tab's menu does to its dashboard.
+    public interface TabActions {
+
+        /// Tells the dashboard it has changed.
+        void onChange();
+
+        /// @return Whether a tab is maximised.
+        boolean isMaximised();
+
+        /// Duplicates a tab to another dashboard.
+        ///
+        /// @param tabLayoutConfig The tab's pane.
+        /// @param tabConfig       The tab.
+        void duplicateTabTo(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tabConfig);
+
+        /// Duplicates a tab in its pane.
+        ///
+        /// @param tabLayoutConfig The tab's pane.
+        /// @param tabConfig       The tab.
+        void duplicateTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tabConfig);
+
+        /// Duplicates every tab in a pane.
+        ///
+        /// @param tabLayoutConfig The pane.
+        void duplicateTabPanel(MutableTabLayoutConfig tabLayoutConfig);
+
+        /// Maximises a tab.
+        ///
+        /// @param tabConfig The tab.
+        void maximiseTabs(MutableTabConfig tabConfig);
+
+        /// Restores the layout a maximised tab hid.
+        void restoreTabs();
+
+        /// Removes a tab.
+        ///
+        /// @param tabLayoutConfig The tab's pane.
+        /// @param tabConfig       The tab.
+        void removeTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tabConfig);
+
+        /// Removes every tab in a pane.
+        ///
+        /// @param tabLayoutConfig The pane.
+        void removeTabPanel(MutableTabLayoutConfig tabLayoutConfig);
     }
 }

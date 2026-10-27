@@ -19,31 +19,32 @@ package stroom.dashboard.client.flexlayout;
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.main.TabManager;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.Glass;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.Size;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import javax.inject.Inject;
+import java.util.function.Consumer;
 
 public class FlexLayout extends Composite {
 
@@ -62,9 +63,18 @@ public class FlexLayout extends Composite {
     private static final double OUTER_SPLIT_BOUNDARY = 5;
     private static Glass marker;
     private static Glass glass;
-    private final EventBus eventBus;
-    private final FlowPanel designSurface;
-    private final SimplePanel scrollPanel;
+    private static final Binder BINDER = GWT.create(Binder.class);
+    // The glass's mouse cursor, while a tab or splitter is dragged
+    private static final String[] GLASS_MODES = {
+            "flex-layout__glass--move",
+            "flex-layout__glass--col-resize",
+            "flex-layout__glass--row-resize"};
+    @UiField
+    FlowPanel designSurface;
+    @UiField
+    SimplePanel scrollPanel;
+    @UiField
+    SimplePanel layout;
     private final Map<Object, PositionAndSize> positionAndSizeMap = new HashMap<>();
     private final Map<SplitInfo, Splitter> splitToWidgetMap = new HashMap<>();
     private final Map<MutableLayoutConfig, TabLayout> layoutToWidgetMap = new HashMap<>();
@@ -85,7 +95,9 @@ public class FlexLayout extends Composite {
     private boolean draggingTab;
     private Splitter selectedSplitter;
     private boolean clear = true;
-    private TabManager tabManager;
+    private TabMenuOpener onShowTabMenu;
+    private Consumer<ShowMenuEvent> onShowMenu = event -> {
+    };
 
     private FlexLayoutChangeHandler changeHandler;
 
@@ -106,10 +118,8 @@ public class FlexLayout extends Composite {
     private double[] placementStart;
     private final PlacementKeys placementKeys = new PlacementKeys();
 
-    @Inject
-    public FlexLayout(final EventBus eventBus) {
-        this.eventBus = eventBus;
-
+    /// Makes the layout, with nothing in it.
+    public FlexLayout() {
         if (glass == null) {
             glass = new Glass("flex-layout__glass");
         }
@@ -117,32 +127,8 @@ public class FlexLayout extends Composite {
             marker = new Glass("flex-layout__marker");
         }
 
-        designSurface = new FlowPanel();
-        designSurface.setStyleName("dashboard-designSurface");
-
-        final SimplePanel layout = new SimplePanel(designSurface) {
-            @Override
-            protected void onAttach() {
-                super.onAttach();
-                GlobalResizeObserver.addListener(getElement(), e -> onResize());
-            }
-
-            @Override
-            protected void onDetach() {
-                GlobalResizeObserver.removeListener(getElement());
-                super.onDetach();
-            }
-        };
-        layout.setStyleName("dashboard-layout");
-
-        scrollPanel = new SimplePanel(layout);
-        scrollPanel.setStyleName("dashboard-scrollPanel");
+        initWidget(BINDER.createAndBindUi(this));
         scrollPanel.addDomHandler(event -> resizeChildWidgets(), ScrollEvent.getType());
-
-        final SimplePanel outerPanel = new SimplePanel(scrollPanel);
-        outerPanel.setStyleName("dashboard-outerPanel");
-
-        initWidget(outerPanel);
 
         designSurfaceElement = designSurface.getElement();
         focusMemory = new FocusMemory(layoutToWidgetMap, splitToWidgetMap, designSurface);
@@ -151,8 +137,38 @@ public class FlexLayout extends Composite {
         sinkBitlessEvent("focusin");
     }
 
-    public void setTabManager(final TabManager tabManager) {
-        this.tabManager = tabManager;
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        GlobalResizeObserver.addListener(layout.getElement(), e -> onResize());
+    }
+
+    @Override
+    protected void onUnload() {
+        GlobalResizeObserver.removeListener(layout.getElement());
+        super.onUnload();
+    }
+
+    /// @param onShowTabMenu Shows a tab's menu, e.g. when its pane's Tab Actions button is pressed.
+    public void setOnShowTabMenu(final TabMenuOpener onShowTabMenu) {
+        this.onShowTabMenu = onShowTabMenu;
+    }
+
+    /// @param onShowMenu Shows a menu a pane's tab bar asks for, e.g. the list of its hidden tabs.
+    public void setOnShowMenu(final Consumer<ShowMenuEvent> onShowMenu) {
+        this.onShowMenu = onShowMenu;
+    }
+
+    // Shows a tab's menu, below an element
+    void showTabMenu(final Element target, final TabLayout tabLayout, final MutableTabConfig tabConfig) {
+        if (onShowTabMenu != null) {
+            onShowTabMenu.show(target, this, tabLayout, tabConfig);
+        }
+    }
+
+    // Shows a menu a pane's tab bar asks for
+    void showMenu(final ShowMenuEvent event) {
+        onShowMenu.accept(event);
     }
 
     @Override
@@ -304,12 +320,11 @@ public class FlexLayout extends Composite {
 //            final TabData tab = mouseTarget.getFirstTab();
 //            if (Objects.equals(selection.getFirstTab(), tab)) {
 //                final TabLayout tabLayout = mouseTarget.tabLayout;
-            if (tabManager != null && mouseTarget.tabLayout != null && mouseTarget.tabWidget != null) {
+            if (mouseTarget.tabLayout != null && mouseTarget.tabWidget != null) {
                 final MutableTabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
                 if (tabConfig != null) {
-                    tabManager.showMenu(
+                    showTabMenu(
                             mouseTarget.tabWidget.getElement(),
-                            this,
                             mouseTarget.tabLayout,
                             tabConfig);
                 }
@@ -398,15 +413,14 @@ public class FlexLayout extends Composite {
                                 // Let the handler know the layout is dirty.
                                 changeHandler.onChange();
                             }
-                        } else if (tabManager != null) {
+                        } else {
                             final MutableTabConfig tabConfig = mouseTarget
                                     .tabLayout
                                     .getTabLayoutConfig()
                                     .get(mouseTarget.tabIndex);
                             if (tabConfig != null) {
-                                tabManager.showMenu(
+                                showTabMenu(
                                         mouseTarget.tabWidget.getElement(),
-                                        this,
                                         tabLayout,
                                         tabConfig);
                             }
@@ -943,30 +957,36 @@ public class FlexLayout extends Composite {
         marker.getElement().removeClassName("flex-layout__marker--splitter");
         marker.getElement().removeClassName("flex-layout__marker--down");
         marker.getElement().removeClassName("flex-layout__marker--across");
-        setGlassCursor(Cursor.DEFAULT);
+        setGlassMode(null);
     }
 
     private void setMoveCursor() {
         marker.getElement().removeClassName("flex-layout__marker--splitter");
         marker.getElement().removeClassName("flex-layout__marker--down");
         marker.getElement().removeClassName("flex-layout__marker--across");
-        setGlassCursor(Cursor.MOVE);
+        setGlassMode("flex-layout__glass--move");
     }
 
     private void setMarkerCursor(final int dim) {
         marker.getElement().addClassName("flex-layout__marker--splitter");
 
         if (Dimension.X == dim) {
-            setGlassCursor(Cursor.COL_RESIZE);
+            setGlassMode("flex-layout__glass--col-resize");
             marker.getElement().addClassName("flex-layout__marker--across");
         } else if (Dimension.Y == dim) {
-            setGlassCursor(Cursor.ROW_RESIZE);
+            setGlassMode("flex-layout__glass--row-resize");
             marker.getElement().addClassName("flex-layout__marker--down");
         }
     }
 
-    private void setGlassCursor(final Cursor cursor) {
-        glass.getElement().getStyle().setCursor(cursor);
+    // Gives the glass the mouse cursor of what is dragged, or the default one if null
+    private void setGlassMode(final String mode) {
+        for (final String glassMode : GLASS_MODES) {
+            glass.getElement().removeClassName(glassMode);
+        }
+        if (mode != null) {
+            glass.getElement().addClassName(mode);
+        }
     }
 
     private void stopSplitResize(final double x, final double y) {
@@ -1760,7 +1780,7 @@ public class FlexLayout extends Composite {
             if (key instanceof final MutableTabLayoutConfig tabLayoutConfig) {
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(eventBus, this, tabManager, tabLayoutConfig, changeHandler);
+                    tabLayout = new TabLayout(this, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final MutableTabConfig tabConfig : tabLayoutConfig.getTabs()) {
                             if (tabConfig.isVisible()) {
@@ -1811,11 +1831,11 @@ public class FlexLayout extends Composite {
      * Convenience method to transfer position and size data to an element.
      */
     private void setPositionAndSize(final Element element, final PositionAndSize positionAndSize) {
-        element.getStyle().setPosition(Position.ABSOLUTE);
-        element.getStyle().setLeft(positionAndSize.getLeft(), Unit.PX);
-        element.getStyle().setTop(positionAndSize.getTop(), Unit.PX);
-        element.getStyle().setWidth(positionAndSize.getWidth(), Unit.PX);
-        element.getStyle().setHeight(positionAndSize.getHeight(), Unit.PX);
+        element.addClassName("flex-layout__item");
+        CssProperties.set(element, "--flex-layout__left", positionAndSize.getLeft() + "px");
+        CssProperties.set(element, "--flex-layout__top", positionAndSize.getTop() + "px");
+        CssProperties.set(element, "--flex-layout__width", positionAndSize.getWidth() + "px");
+        CssProperties.set(element, "--flex-layout__height", positionAndSize.getHeight() + "px");
     }
 
     private double getAbsolutePos(final int dimension, final Element element) {
@@ -1959,5 +1979,29 @@ public class FlexLayout extends Composite {
             return tabs.get(0);
         }
     }
-}
 
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FlexLayout> {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Shows a tab's menu.
+    @FunctionalInterface
+    public interface TabMenuOpener {
+
+        /// Shows a tab's menu below an element.
+        ///
+        /// @param target     The element, e.g. the tab or its pane's Tab Actions button.
+        /// @param flexLayout The layout the tab is in.
+        /// @param tabLayout  The pane the tab is in.
+        /// @param tabConfig  The tab.
+        void show(Element target, FlexLayout flexLayout, TabLayout tabLayout, MutableTabConfig tabConfig);
+    }
+}
