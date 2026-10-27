@@ -490,7 +490,7 @@ class TestUserActionService {
                 Mockito.eq(UserActionService.WRITE_EXTRACTION_COMMAND), Mockito.anyString(),
                 Mockito.contains("Created pipeline 'Logons extraction'"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
-                Mockito.contains("I confirmed the extraction"));
+                Mockito.contains("I created the extraction"));
     }
 
     @Test

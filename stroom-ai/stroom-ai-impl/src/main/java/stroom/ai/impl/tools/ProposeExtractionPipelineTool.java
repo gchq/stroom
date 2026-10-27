@@ -60,9 +60,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// `propose_extraction_pipeline` - offers the user a button to make the search extraction the agent tried with
 /// preview_extraction for a table on the dashboard they attached: an XSLT, written by Stroom from the fields, and a
 /// pipeline using it (a child of the Search Extraction template, or one of its own). It changes nothing itself.
-/// The button shows exactly what would be written, with the name and folder the user chooses in Stroom's New
-/// dialog, for them to confirm; only then is it written, as the user, and the table set to use it, with a column
-/// for each new field, as unsaved changes.
+/// When the user clicks the button and chooses its name and folder in Stroom's New dialog, it is written as the
+/// button prepared it, as the user, and the table set to use it, with a column for each new field, as unsaved
+/// changes.
 ///
 /// For a table with an extraction pipeline already, it offers two buttons: one to change that pipeline's XSLT in
 /// place (see [ExtractionChange]), if the user can edit it, shown as a diff with the other dashboards and queries
@@ -115,11 +115,10 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                 .description(ToolDescription.builder()
                         .general("Offers the user a button to make a search extraction for a dashboard table, "
                                  + "to add values from its events to it: an XSLT, which Stroom writes from the "
-                                 + "fields, and a pipeline using it. The button shows exactly what would be written, "
-                                 + "with the name and folder the user chooses, for them to confirm; only then is it "
-                                 + "written, and the table set to use it, with a column for each new field, unsaved. "
-                                 + "Nothing changes until they confirm it. For a table with an extraction pipeline "
-                                 + "already, it offers to change that pipeline in place, or to save a new one (a "
+                                 + "fields, and a pipeline using it. When the user clicks it and chooses the name and "
+                                 + "folder, it is written, and the table set to use it, with a column for each new "
+                                 + "field, unsaved. Nothing changes unless they do. For a table with an extraction "
+                                 + "pipeline already, it offers to change that pipeline in place, or to save a new one (a "
                                  + "child of it): give every field, if Stroom AI wrote its XSLT; only those to add, "
                                  + "if it was written by hand.")
                         .chatOnly(" Give the fields exactly as you last tried them with preview_extraction for this "
@@ -309,10 +308,9 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
             return ToolResult.text("The user has been shown a 'Create extraction pipeline' button for table '"
                                    + tableName + "' on dashboard '" + dashboard.getName() + "', extracting " + names
                                    + columnsAdded + ". When they click it, they choose the name (suggested '" + name
-                                   + "') and folder of the new pipeline and its XSLT, and confirm exactly what is "
-                                   + "written; only then is it written, and the table set to use it, unsaved. "
-                                   + "Nothing changes until they confirm it. Tell them about the button rather than "
-                                   + "saying it was made.")
+                                   + "') and folder of the new pipeline and its XSLT; then it is written, and the "
+                                   + "table set to use it, unsaved. Nothing changes unless they do. Tell them about "
+                                   + "the button rather than saying it was made.")
                     .withUserAction(create);
         }
 
@@ -344,9 +342,9 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                   + name(pipeline) + "' with its own XSLT, in a name (suggested '" + name + "') and folder they "
                   + "choose. They can't change pipeline '" + name(pipeline) + "' in place, as they can't edit its "
                   + "XSLT. ")
-                                                  + "They confirm exactly what is written; only then is it written, "
-                                                  + "and the table set up to use it, unsaved. Nothing changes until "
-                                                  + "they confirm it. Tell them about the button(s) rather than "
+                                                  + "Only once they write the change, or choose the new pipeline's "
+                                                  + "name and folder, is anything written, and the table set up to "
+                                                  + "use it, unsaved. Tell them about the button(s) rather than "
                                                   + "saying it was made.");
         return canEdit
                 ? result.withUserAction(change).withUserAction(create)

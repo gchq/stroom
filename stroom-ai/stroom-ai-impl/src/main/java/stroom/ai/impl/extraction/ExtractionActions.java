@@ -61,9 +61,9 @@ import java.util.Set;
 
 /// Makes the search extraction the agent proposed for a dashboard table, when the user clicks its
 /// `create_extraction_pipeline` button: first [#prepare] says exactly what would be written (an XSLT, written by
-/// Stroom from the fields, and a pipeline using it), for the browser to show the user with the name and folder they
-/// choose; nothing is written until they confirm it, when [#write] writes it, as the user, refusing anything but
-/// what they were shown. The browser then sets the table up to use it, as unsaved changes.
+/// Stroom from the fields, and a pipeline using it); once the user has chosen the name and folder, [#write] writes
+/// it, as the user, refusing anything but what was prepared. The browser then sets the table up to use it, as
+/// unsaved changes.
 ///
 /// The pipeline is a child of the content pack's Search Extraction template, setting only its XSLT, if the user can
 /// use the template; else a pipeline of its own as the template makes.
@@ -111,7 +111,8 @@ public class ExtractionActions {
         this.securityContext = securityContext;
     }
 
-    /// Says exactly what would be written for an extraction, for the user to confirm. Writes nothing.
+    /// Says exactly what would be written for an extraction, with the hash the write must be given. Writes
+    /// nothing.
     ///
     /// @param dashboard The dashboard.
     /// @param name      The name to suggest for the new pipeline and its XSLT.
@@ -134,8 +135,8 @@ public class ExtractionActions {
                 content.pipelineDescription(), NullSafe.get(plan.existing(), Existing::pipeline), content.hash());
     }
 
-    /// Writes the extraction the user confirmed, as the user: the XSLT, then the pipeline using it, both in the
-    /// folder they chose, with the name they chose. If either can't be written, any already made is removed (as
+    /// Writes the extraction once the user has chosen its name and folder, as the user: the XSLT, then the pipeline
+    /// using it, both in the folder they chose, with the name they chose. If either can't be written, any already made is removed (as
     /// the processing user, as the user may not be able to delete what they made); if that fails too, the user is
     /// told what was kept. (A failure inside Stroom's explorer between making a document and its node leaves the
     /// document with no node, which can't be removed from here.)
