@@ -16,9 +16,9 @@
 
 package stroom.search.elastic.client.component;
 
+import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.search.elastic.client.presenter.ElasticIndexFieldDataProvider;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.widget.component.client.Controller;
@@ -36,8 +36,7 @@ public class ElasticIndexFieldListController extends Controller {
 
     private final ElasticIndexFieldList view;
     private final DateTimeFormatter dateTimeFormatter;
-    private final ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider =
-            new ElasticIndexFieldDataProvider<>();
+    private final ListDataProvider<ElasticIndexField> dataProvider = new ListDataProvider<>();
 
     /// Made by GIN, with its content.
     ///
@@ -61,14 +60,15 @@ public class ElasticIndexFieldListController extends Controller {
     /// @param document The index, or `null`.
     public void read(final DocRef docRef, final ElasticIndexDoc document) {
         view.setIndexName(docRef.getName());
-        List<ElasticIndexField> fields = new ArrayList<>();
+        final List<ElasticIndexField> fields;
         if (document != null) {
             fields = document.getFields().stream()
                     .sorted(Comparator.comparing(ElasticIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
             view.setUpdatedAt(dateTimeFormatter.format(System.currentTimeMillis()));
+        } else {
+            fields = new ArrayList<>();
         }
-        dataProvider.setList(fields);
-        dataProvider.refresh();
+        dataProvider.setCompleteList(fields);
     }
 }
