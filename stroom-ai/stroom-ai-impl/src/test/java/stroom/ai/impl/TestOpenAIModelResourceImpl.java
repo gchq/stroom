@@ -16,11 +16,13 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.api.AiService;
 import stroom.credentials.api.StoredSecrets;
 import stroom.openai.shared.McpAuthMode;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelTestResponse;
 import stroom.openai.shared.TestMcpToolServerRequest;
 import stroom.security.api.SecurityContext;
@@ -50,6 +52,28 @@ class TestOpenAIModelResourceImpl {
             () -> Mockito.mock(OpenIdConfiguration.class), () -> null);
     private final OpenAIModelResourceImpl resource = new OpenAIModelResourceImpl(
             () -> null, () -> null, () -> null, () -> securityContext, () -> factory);
+
+    @Test
+    void validateModel_saysWhichModelsTheEndpointServesWhenItsIsNotOne() {
+        final AiService aiService = Mockito.mock(AiService.class);
+        Mockito.when(aiService.getModel(Mockito.any())).thenThrow(new ModelNotFoundException("gpt-5",
+                "https://api.example/v1/models", List.of("gpt-4o", "o3")));
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        final OpenAIModelResourceImpl withService = new OpenAIModelResourceImpl(
+                () -> null, () -> aiService, () -> null, () -> securityContext, () -> factory);
+
+        final OpenAIModelTestResponse response = withService.validateModel(OpenAIModelDoc.builder()
+                .uuid("model-uuid")
+                .modelId("gpt-5")
+                .build());
+
+        assertThat(response.isOk()).isFalse();
+        assertThat(response.getMessage()).startsWith("Model 'gpt-5' was not found at https://api.example/v1/models.")
+                .endsWith("in the detail.");
+        assertThat(response.getDetail()).as("the models to choose from")
+                .isEqualTo("Models listed by https://api.example/v1/models:\ngpt-4o\no3");
+    }
 
     @Test
     void testMcpToolServer_listsTheToolsItWouldOffer() throws Exception {
