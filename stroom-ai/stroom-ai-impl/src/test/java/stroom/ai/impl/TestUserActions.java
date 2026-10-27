@@ -219,7 +219,7 @@ class TestUserActions {
                 .singleElement()
                 .satisfies(action -> assertThat(action.label()).isEqualTo("Create extraction pipeline 'Logons "
                                                                           + "extraction' for table 'Events' on "
-                                                                          + "dashboard 'Logons', a child of "
+                                                                          + "dashboard 'Logons', in place of "
                                                                           + "pipeline 'Logon pipeline', with "
                                                                           + "UserId"));
 

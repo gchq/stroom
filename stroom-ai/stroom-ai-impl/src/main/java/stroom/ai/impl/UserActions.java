@@ -518,7 +518,7 @@ public class UserActions {
                 : "Create extraction pipeline '" + name + "' for table '" + plan.component() + "' on dashboard '"
                   + dashboard.getName() + "', " + (existing == null
                         ? "extracting "
-                        : "a child of pipeline '" + existing + "', with ") + fields;
+                        : "in place of pipeline '" + existing + "', with ") + fields;
         return Optional.of(new UserActionRecord(id, action, truncate(label, MAX_DETAILS_CHARS),
                 NullSafe.isBlankString(summary)
                         ? null

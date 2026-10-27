@@ -3182,7 +3182,7 @@ public class AskStroomAiPresenter
     }
 
     // Goes on to write a search extraction only if its table extracts with the pipeline it did when the extraction
-    // was proposed (none, or the one it changes or is a child of), as the dashboard has it now: else the table
+    // was proposed (none, or the one it changes or replaces), as the dashboard has it now: else the table
     // changes that follow would replace another, and nothing is written.
     private void whenTableExtractsWith(final DocRef dashboard,
                                        final String componentId,
