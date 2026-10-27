@@ -17,12 +17,13 @@
 package stroom.dashboard.client.main;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.dashboard.client.component.DashboardBodyController;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.HasMultipleInstances;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -48,21 +49,23 @@ public class DashboardSuperPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final DashboardPresenter dashboardPresenter;
+    private final DashboardBodyController dashboardBody;
     private int instance;
 
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
-                                   final DashboardPresenter dashboardPresenter,
+                                   final DashboardBodyController dashboardBody,
                                    final Provider<MarkdownEditController> markdownEditProvider,
                                    final DocumentUserPermissionsTabProvider<DashboardDoc>
                                            documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(dashboardPresenter);
-        this.dashboardPresenter = dashboardPresenter;
+        own(dashboardBody);
+        this.dashboardBody = dashboardBody;
 
-        addTab(DASHBOARD, new DocTabProvider<>(() -> dashboardPresenter));
+        addTab(DASHBOARD, ControllerTabProvider.ofOwned(eventBus, dashboardBody,
+                DashboardBodyController::read,
+                DashboardBodyController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
@@ -82,12 +85,12 @@ public class DashboardSuperPresenter
         selectTab(DASHBOARD);
 
         listen(ContentTabSelectionChangeEvent.getType(), e ->
-                dashboardPresenter.onContentTabVisible(e.getTabData() == this));
+                dashboardBody.onContentTabVisible(e.getTabData() == this));
     }
 
     public void setParentContext(final Object context) {
         if (context instanceof final DashboardContext dashboardContext) {
-            dashboardPresenter.setParentContext(dashboardContext);
+            dashboardBody.setParentContext(dashboardContext);
         }
     }
 
@@ -95,18 +98,18 @@ public class DashboardSuperPresenter
     protected void onRead(final DocRef docRef,
                           final DashboardDoc document) {
         super.onRead(docRef, document);
-        dashboardPresenter.onRead(docRef, document);
+        dashboardBody.read(docRef, document);
     }
 
     @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
-            dashboardPresenter.start();
+            dashboardBody.start();
             return true;
         } else if (Action.CLOSE == action
                    && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
-            dashboardPresenter.stop();
+            dashboardBody.stop();
             return true;
 //        } else if (Action.DOCUMENTATION == action
 //                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
@@ -119,16 +122,17 @@ public class DashboardSuperPresenter
 
     @Override
     public List<Widget> getDocumentButtons() {
-        return dashboardPresenter.getDocumentButtons();
+        return dashboardBody.getDocumentButtons();
     }
 
     @Override
     public List<Widget> getToolbars() {
-        return dashboardPresenter.getToolbars();
+        return dashboardBody.getToolbars();
     }
 
-    public DashboardPresenter getDashboardPresenter() {
-        return dashboardPresenter;
+    /// @return The dashboard's body.
+    public DashboardBodyController getDashboardBody() {
+        return dashboardBody;
     }
 
     @Override
@@ -138,7 +142,16 @@ public class DashboardSuperPresenter
 
     @Override
     public String getLabel() {
-        return dashboardPresenter.getLabel() + getInstanceString();
+        final String label = dashboardBody.getTitle() + getInstanceString();
+        return isDirty()
+                ? "* " + label
+                : label;
+    }
+
+    @Override
+    public void onClose() {
+        dashboardBody.onClose();
+        super.onClose();
     }
 
     public void setInstance(final int instance) {
@@ -151,19 +164,19 @@ public class DashboardSuperPresenter
     }
 
     public void setParamsFromLink(final String params) {
-        dashboardPresenter.setParamsFromLink(params);
+        dashboardBody.setParamsFromLink(params);
     }
 
     public void setCustomTitle(final String customTitle) {
-        dashboardPresenter.setCustomTitle(customTitle);
+        dashboardBody.setCustomTitle(customTitle);
     }
 
     public void setQueryOnOpen(final boolean queryOnOpen) {
-        dashboardPresenter.setQueryOnOpen(queryOnOpen);
+        dashboardBody.setQueryOnOpen(queryOnOpen);
     }
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        dashboardPresenter.setResultStoreInfo(resultStoreInfo);
+        dashboardBody.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override

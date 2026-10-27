@@ -32,7 +32,7 @@ import java.util.Map;
 /// columns of the table it filters as tick boxes.
 ///
 /// The settings read the table from the dashboard's components, so the story opens a dashboard with
-/// the table and the filter (Stroom's real `DashboardPresenter`, see `DashboardSupport`) and opens
+/// the table and the filter (Stroom's real `DashboardBodyController`, see `DashboardSupport`) and opens
 /// the filter's settings from its tab's menu. The plays check the filter's settings in the dashboard
 /// that is saved (`PUT /dashboard/v1/{uuid}`).
 public final class TableFilterSettingsStories {

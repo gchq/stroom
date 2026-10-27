@@ -21,7 +21,7 @@ package stroom.gwt.workbench.client.app.dashboard;
 ///
 /// Every dashboard but the legacy one has the model version `7.2.0` that Stroom saves: Stroom
 /// treats a dashboard without one as legacy and adds a 'Params' input to it
-/// (`DashboardPresenter.onRead`).
+/// (`DashboardBodyController.read`).
 public final class DashboardDocs {
 
     // Every layout has a preferred size, as Stroom saves them (SIZELESS_THREE_PANEL leaves them out:

@@ -17,8 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
 import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.dashboard.client.main.DashboardPresenter;
-import stroom.dashboard.client.main.DashboardViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -41,9 +39,6 @@ public class DashboardScreenModule extends AbstractPresenterModule {
         bind(ComponentRegistry.class).in(Singleton.class);
         bind(VisFunctionCache.class).in(Singleton.class);
 
-        bindPresenterWidget(DashboardPresenter.class,
-                DashboardPresenter.DashboardView.class,
-                DashboardViewImpl.class);
     }
 }
 

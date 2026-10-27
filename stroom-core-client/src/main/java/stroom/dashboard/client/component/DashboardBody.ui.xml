@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's body: its layout of panes -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:fl="urn:import:stroom.dashboard.client.flexlayout">
+    <g:FlowPanel ui:field="root" styleName="DashboardViewImpl max dock-container-vertical">
+        <g:SimplePanel ui:field="content" styleName="dock-max DashboardViewImpl-content">
+            <fl:FlexLayout ui:field="layout"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -19,8 +19,6 @@ package stroom.dashboard.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
 import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.dashboard.client.main.DashboardPresenter;
-import stroom.dashboard.client.main.DashboardViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
@@ -37,10 +35,6 @@ public class DashboardModule extends PluginModule {
 
         bindPlugin(DashboardPlugin.class);
 
-        bindPresenterWidget(
-                DashboardPresenter.class,
-                DashboardPresenter.DashboardView.class,
-                DashboardViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
     }

@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dashboard.client.component.CurrentSelectionController;
-import stroom.dashboard.client.component.KeyValueInputController;
-import stroom.dashboard.client.component.LayoutConstraintController;
-import stroom.dashboard.client.component.TabMenuController;
 import stroom.dashboard.client.component.TabMenuController.TabActions;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
@@ -34,7 +29,15 @@ import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
+import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.DashboardContextImpl;
+import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.DashboardSuperPresenter;
+import stroom.dashboard.client.main.MutableConfigUtil;
+import stroom.dashboard.client.main.Queryable;
+import stroom.dashboard.client.main.Refreshable;
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -47,9 +50,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.query.api.ParamUtil;
@@ -60,12 +61,16 @@ import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -74,7 +79,6 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -97,12 +101,14 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DashboardPresenter
-        extends DocPresenter<DashboardView, DashboardDoc>
+/// A dashboard's body ([DashboardBody]): its panes, laid out in tabs and splits, the query toolbar
+/// that runs its queries, and the Dashboard actions (Design Mode, Add Component, Set Layout
+/// Constraints, View Current Selection, Maximise and Restore) on the document's toolbar.
+public class DashboardBodyController
+        extends Controller
         implements
         TabActions,
         FlexLayoutChangeHandler,
-        DocumentTabData,
         HasToolbar,
         SearchStateListener,
         SearchErrorListener {
@@ -110,7 +116,7 @@ public class DashboardPresenter
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
     private static final String DEFAULT_PARAMS_INPUT = "Params";
 
-    private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
+    private static final Logger logger = Logger.getLogger(DashboardBodyController.class.getName());
     private final FlexLayout layoutPresenter;
     private final Components components;
     private final QueryToolbarController queryToolbar;
@@ -119,12 +125,13 @@ public class DashboardPresenter
     private final Provider<CurrentSelectionController> currentSelectionControllerProvider;
     private final Provider<ExplorerPopupController> dashboardSelection;
     private CurrentSelectionController currentSelection;
-    private String lastLabel;
     private boolean loaded;
     private String customTitle;
     private DocRef docRef;
 
+    private final DashboardBody view;
     private boolean embedded;
+    private boolean readOnly;
     private boolean queryOnOpen;
 
     private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
@@ -143,19 +150,22 @@ public class DashboardPresenter
     private final ToolbarButton restoreTabsButton;
     private final Toolbar editToolbar;
 
+    /// Made by GIN, with its content and its parts.
     @Inject
-    public DashboardPresenter(final EventBus eventBus,
-                              final DashboardView view,
-                              final FlexLayout flexLayout,
-                              final Components components,
-                              final QueryToolbarController queryToolbar,
-                              final Provider<TabMenuController> tabMenuProvider,
-                              final QueryInfo queryInfo,
-                              final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
-                              final Provider<CurrentSelectionController> currentSelectionControllerProvider,
-                              final UrlParameters urlParameters,
-                              final Provider<ExplorerPopupController> dashboardSelection) {
-        super(eventBus, view);
+    public DashboardBodyController(final EventBus eventBus,
+                                   final DashboardBody view,
+                                   final Components components,
+                                   final QueryToolbarController queryToolbar,
+                                   final Provider<TabMenuController> tabMenuProvider,
+                                   final QueryInfo queryInfo,
+                                   final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
+                                   final Provider<CurrentSelectionController> currentSelectionControllerProvider,
+                                   final UrlParameters urlParameters,
+                                   final Provider<ExplorerPopupController> dashboardSelection) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        final FlexLayout flexLayout = view.getLayout();
         own(queryToolbar);
         this.queryToolbar = queryToolbar;
         this.layoutPresenter = flexLayout;
@@ -177,7 +187,6 @@ public class DashboardPresenter
 
         flexLayout.setChangeHandler(this);
         flexLayout.setComponents(components);
-        view.setContent(flexLayout);
 
         editToolbar = new Toolbar("Dashboard actions");
         editModeButton = editToolbar.toggle(SvgImage.EDIT, "Design Mode", pressed -> onDesign());
@@ -230,6 +239,10 @@ public class DashboardPresenter
         });
         // Its components go with it (closing it should have removed them already)
         onDispose(components::removeAll);
+        watch(Contexts.READ_ONLY, readOnly -> {
+            this.readOnly = readOnly;
+            enableEditButtons();
+        });
     }
 
     public void setParentContext(final DashboardContext parent) {
@@ -304,7 +317,7 @@ public class DashboardPresenter
         setConstraintsButton.setVisible(designMode);
         selectionInfoButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
-        getView().setDesignMode(designMode);
+        view.setDesignMode(designMode);
 //        components.forEach(component -> component.setDesignMode(designMode));
 
         editModeButton.setState(designMode);
@@ -360,9 +373,10 @@ public class DashboardPresenter
         dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
     }
 
-    void setEmbedded(final boolean embedded) {
+    /// @param embedded Whether the dashboard is shown on its own, embedded in another page.
+    public void setEmbedded(final boolean embedded) {
         this.embedded = embedded;
-        getView().setEmbedded(embedded);
+        view.setEmbedded(embedded);
     }
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
@@ -373,8 +387,11 @@ public class DashboardPresenter
         this.queryOnOpen = queryOnOpen;
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final DashboardDoc dashboard) {
+    /// Shows a dashboard: its panes, layout, time range and design mode.
+    ///
+    /// @param docRef    The dashboard.
+    /// @param dashboard The dashboard.
+    public void read(final DocRef docRef, final DashboardDoc dashboard) {
         this.docRef = docRef;
         if (!loaded) {
             loaded = true;
@@ -546,9 +563,13 @@ public class DashboardPresenter
         final boolean enterDesignMode = config != null && Boolean.TRUE.equals(config.getDesignMode());
         setDesignMode(enterDesignMode);
 
-        addComponentButton.setEnabled(!isReadOnly() && !embedded);
-        setConstraintsButton.setEnabled(!isReadOnly() && !embedded);
-        selectionInfoButton.setEnabled(!isReadOnly() && !embedded);
+        enableEditButtons();
+    }
+
+    private void enableEditButtons() {
+        addComponentButton.setEnabled(!readOnly && !embedded);
+        setConstraintsButton.setEnabled(!readOnly && !embedded);
+        selectionInfoButton.setEnabled(!readOnly && !embedded);
     }
 
     private DashboardPane addComponent(final String type, final ComponentConfig componentConfig) {
@@ -602,8 +623,9 @@ public class DashboardPresenter
         return errors;
     }
 
-    @Override
-    protected DashboardDoc onWrite(final DashboardDoc dashboard) {
+    /// @param dashboard The dashboard.
+    /// @return A copy of it with the panes, layout, time range and design mode shown.
+    public DashboardDoc write(final DashboardDoc dashboard) {
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final DashboardPane component : components) {
             final ComponentConfig componentConfig = component.write();
@@ -624,16 +646,16 @@ public class DashboardPresenter
         return dashboard.copy().dashboardConfig(dashboardConfig).build();
     }
 
-    @Override
+    /// Closes the dashboard's panes, e.g. destroying their searches, as its tab is closed.
     public void onClose() {
         // Remove all components.
         components.onClose();
-        super.onClose();
     }
 
+    /// Tells the document the dashboard has changed.
     @Override
-    public String getType() {
-        return DashboardDoc.TYPE;
+    public void onChange() {
+        markChanged();
     }
 
     public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
@@ -649,7 +671,7 @@ public class DashboardPresenter
                         .forceOpen(true)
                         .callbackOnOpen(presenter -> {
                             if (presenter instanceof final DashboardSuperPresenter dashboardSuperPresenter) {
-                                dashboardSuperPresenter.getDashboardPresenter()
+                                dashboardSuperPresenter.getDashboardBody()
                                         .duplicateTab(tabLayoutConfig, tabConfig, components);
                             }
                         }).fire();
@@ -844,6 +866,16 @@ public class DashboardPresenter
         return layoutPresenter.isMaximised();
     }
 
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
+    }
+
     void toggleStart() {
         final boolean searching = getCombinedSearchState();
         if (searching) {
@@ -853,7 +885,8 @@ public class DashboardPresenter
         }
     }
 
-    void start() {
+    /// Runs the dashboard's queries, asking for their purpose first if Stroom is set to.
+    public void start() {
         // If we have some queryable components then make sure we get query info for them.
         final List<Queryable> queryableComponents = getQueryableComponents();
         if (!queryableComponents.isEmpty()) {
@@ -862,11 +895,12 @@ public class DashboardPresenter
                     queryable.setDashboardContext(dashboardContext);
                     queryable.start();
                 }
-            }, this);
+            }, taskMonitor());
         }
     }
 
-    void stop() {
+    /// Stops the dashboard's queries.
+    public void stop() {
         for (final Queryable queryable : getQueryableComponents()) {
             queryable.stop();
         }
@@ -883,15 +917,7 @@ public class DashboardPresenter
         return queryableComponents;
     }
 
-    @Override
-    public String getLabel() {
-        String label = getTitle();
-        if (isDirty()) {
-            label = "* " + label;
-        }
-        return label;
-    }
-
+    /// @return The dashboard's title: its name, or its custom title with `${name}` replaced by it.
     public String getTitle() {
         String title = "";
         if (docRef != null) {
@@ -903,25 +929,7 @@ public class DashboardPresenter
         return title;
     }
 
-    @Override
-    public boolean isCloseable() {
-        return true;
-    }
-
-    @Override
-    public SvgImage getIcon() {
-        return SvgImage.DOCUMENT_DASHBOARD;
-    }
-
-    @Override
-    protected void onDirty() {
-        // Only fire tab refresh if the tab has changed.
-        if (lastLabel == null || !lastLabel.equals(getLabel())) {
-            lastLabel = getLabel();
-            RefreshContentTabEvent.fire(this, this);
-        }
-    }
-
+    /// @param customTitle The dashboard's title, in which `${name}` is its name, or null for its name.
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
     }
@@ -983,7 +991,7 @@ public class DashboardPresenter
                 return component.asWidget().getElement();
             }
         }
-        return getWidget().getElement();
+        return asWidget().getElement();
     }
 
     private MutableTabConfig getFirstTabConfig(final MutableLayoutConfig layoutConfig) {
@@ -1023,7 +1031,7 @@ public class DashboardPresenter
         queryToolbar.onError(getCombinedErrors());
     }
 
-    @Override
+    /// @return The dashboard.
     public DocRef getDocRef() {
         return docRef;
     }
@@ -1084,18 +1092,4 @@ public class DashboardPresenter
             this.name = name;
         }
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface DashboardView extends View {
-
-        void setContent(Widget view);
-
-        void setEmbedded(boolean embedded);
-
-        void setDesignMode(boolean designMode);
-    }
 }
-
