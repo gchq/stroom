@@ -164,12 +164,13 @@ class TestVisualisationE2e extends AbstractAiIntegrationTest {
                     visualisation.getUuid()) + " (" + create.getShowArguments() + ")");
 
             final Map<String, Object> data = readMap(result.getJsonData());
-            // One row, its values in the order the adapter reads them: source, target, weight, then the two
-            // unmapped groups.
+            // One row, its values in the order the adapter reads them: source, target, weight, then the unmapped
+            // roles.
             final List<?> rows = (List<?>) data.get("values");
             assertThat(rows).hasSize(1);
             assertThat(((List<?>) rows.getFirst()).subList(0, 3)).isEqualTo(List.of("alice", "bob", 3.0));
-            assertThat((List<?>) data.get("types")).hasSize(5);
+            // One type per role of the chart kind.
+            assertThat((List<?>) data.get("types")).hasSize(ChartKind.GRAPH.roles().size());
             final Map<String, Object> settings = readMap(result.getVisSettings().getJson());
             assertThat(settings).containsEntry("source", "Sender").containsEntry("weight", "Count");
         });
