@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent.Level;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.shared.ProcessorFilterChange;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,28 +39,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-class TestBatchProcessorFilterEditPresenter {
+class TestBatchProcessorFilterEditController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
     private final List<ConfirmEvent> confirms = new ArrayList<>();
-    private BatchProcessorFilterEditView view;
-    private UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private BatchProcessorFilterEdit view;
+    private UserRefSelectionController userRefSelection;
     private FakeRestFactory restFactory;
-    private BatchProcessorFilterEditPresenter presenter;
+    private BatchProcessorFilterEditController controller;
 
     @BeforeEach
     void setUp() {
         // The user picker and REST resources are made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
         eventBus.addHandler(ConfirmEvent.getType(), confirms::add);
-        view = Mockito.mock(BatchProcessorFilterEditView.class);
-        userRefSelectionBoxPresenter = Mockito.mock(UserRefSelectionBoxPresenter.class);
+        view = Mockito.mock(BatchProcessorFilterEdit.class);
+        userRefSelection = Mockito.mock(UserRefSelectionController.class);
         restFactory = new FakeRestFactory();
-        presenter = new BatchProcessorFilterEditPresenter(eventBus, view, userRefSelectionBoxPresenter, restFactory);
+        controller = new BatchProcessorFilterEditController(eventBus, view, () -> userRefSelection, restFactory);
     }
 
     @AfterEach
@@ -84,7 +80,7 @@ class TestBatchProcessorFilterEditPresenter {
     @Test
     void ok_runAsUserWithNoUser() {
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.SET_RUN_AS_USER);
-        Mockito.when(userRefSelectionBoxPresenter.getSelected()).thenReturn(null);
+        Mockito.when(userRefSelection.getSelected()).thenReturn(null);
 
         final HidePopupRequestEvent okPressed = showAndPressOk(10);
 
@@ -169,7 +165,7 @@ class TestBatchProcessorFilterEditPresenter {
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
 
-    // Shows the dialog for a filter, presses OK and, if the presenter then asks the server how many
+    // Shows the dialog for a filter, presses OK and, if the controller then asks the server how many
     // processor filters the change would apply to, answers with the given count.
     private HidePopupRequestEvent showAndPressOk(final int filterCount) {
         final HidePopupRequestEvent okPressed = showAndPressOkWithoutCount();
@@ -179,18 +175,15 @@ class TestBatchProcessorFilterEditPresenter {
         return okPressed;
     }
 
-    // Shows the dialog for a filter and presses OK, leaving any request the presenter makes pending.
+    // Presses OK in the dialog for a filter, leaving any request the controller makes pending.
     private HidePopupRequestEvent showAndPressOkWithoutCount() {
-        presenter.show(
+        final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
+        Mockito.when(okPressed.isOk()).thenReturn(true);
+        controller.onHideRequest(
+                okPressed,
                 ExpressionOperator.builder().build(),
                 () -> {
                 });
-        assertThat(shown)
-                .hasSize(1);
-
-        final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
-        Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
         return okPressed;
     }
 

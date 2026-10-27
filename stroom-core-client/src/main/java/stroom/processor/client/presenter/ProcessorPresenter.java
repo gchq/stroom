@@ -26,6 +26,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.client.component.BatchProcessorFilterEditController;
 import stroom.processor.client.component.ProcessorAction;
 import stroom.processor.client.component.ProcessorInfoBuilder;
 import stroom.processor.client.component.ProcessorListController;
@@ -77,7 +78,7 @@ public class ProcessorPresenter
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private final Provider<ExpressionDialogController> filterDialogProvider;
-    private final Provider<BatchProcessorFilterEditPresenter> batchProcessorFilterEditPresenterProvider;
+    private final Provider<BatchProcessorFilterEditController> batchProcessorFilterEditProvider;
 
     private ProcessorType processorType;
     private DocRef docRef;
@@ -100,8 +101,8 @@ public class ProcessorPresenter
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
                               final Provider<ExpressionDialogController> filterDialogProvider,
-                              final Provider<BatchProcessorFilterEditPresenter>
-                                      batchProcessorFilterEditPresenterProvider) {
+                              final Provider<BatchProcessorFilterEditController>
+                                      batchProcessorFilterEditProvider) {
         super(eventBus, view);
         own(processorList);
         own(expressionTree);
@@ -111,7 +112,7 @@ public class ProcessorPresenter
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
         this.filterDialogProvider = filterDialogProvider;
-        this.batchProcessorFilterEditPresenterProvider = batchProcessorFilterEditPresenterProvider;
+        this.batchProcessorFilterEditProvider = batchProcessorFilterEditProvider;
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
@@ -190,9 +191,8 @@ public class ProcessorPresenter
     }
 
     private void onBatchEdit() {
-        final BatchProcessorFilterEditPresenter presenter =
-                makeDialog(batchProcessorFilterEditPresenterProvider);
-        presenter.show(processorList.getExpression(),
+        batchProcessorFilterEditProvider.get().show(this,
+                processorList.getExpression(),
                 processorList::refresh);
     }
 

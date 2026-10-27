@@ -35,8 +35,6 @@ import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
-import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
-import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.client.presenter.FeedDependencyPresenter;
 import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
@@ -45,7 +43,6 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
-import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorProfileEditViewImpl;
@@ -79,10 +76,6 @@ public class PipelineModule extends PluginModule {
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);
         bindPresenterWidget(ProcessorEditPresenter.class, ProcessorEditView.class, ProcessorEditViewImpl.class);
-        bindPresenterWidget(
-                BatchProcessorFilterEditPresenter.class,
-                BatchProcessorFilterEditView.class,
-                BatchProcessorFilterEditViewImpl.class);
         bindPresenterWidget(
                 FeedDependencyPresenter.class,
                 FeedDependencyView.class,

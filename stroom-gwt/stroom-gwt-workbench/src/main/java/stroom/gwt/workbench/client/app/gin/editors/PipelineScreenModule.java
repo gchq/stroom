@@ -18,8 +18,6 @@ package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
-import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.client.presenter.FeedDependencyPresenter;
 import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
@@ -28,7 +26,6 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
-import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorProfileEditViewImpl;
@@ -53,9 +50,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorEditPresenter.class,
                 ProcessorEditView.class,
                 ProcessorEditViewImpl.class);
-        bindPresenterWidget(BatchProcessorFilterEditPresenter.class,
-                BatchProcessorFilterEditView.class,
-                BatchProcessorFilterEditViewImpl.class);
         bindPresenterWidget(FeedDependencyPresenter.class,
                 FeedDependencyView.class,
                 FeedDependencyViewImpl.class);
