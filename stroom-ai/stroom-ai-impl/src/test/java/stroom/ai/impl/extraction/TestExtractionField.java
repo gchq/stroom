@@ -102,6 +102,35 @@ class TestExtractionField {
     }
 
     @Test
+    void aCallAfterAMinusSignIsSeen() {
+        // Seen in review: the text check took the minus for part of a name (as in substring-before), so missed the
+        // call; each call in the compiled expression is checked too.
+        assertThat(ExtractionField.xpathProblem("-doc('http://example.com/x')")).contains("doc()");
+        assertThat(ExtractionField.xpathProblem("1 -doc('x')")).contains("doc()");
+        assertThat(ExtractionField.xpathProblem("1-doc('x')")).contains("doc");
+        assertThat(ExtractionField.xpathProblem("(-unparsed-text('file:///etc/passwd'))"))
+                .contains("unparsed-text");
+        assertThat(ExtractionField.xpathProblem("string(-number(Bytes))")).isNull();
+        assertThat(ExtractionField.xpathProblem("substring-before(Name, '-')")).isNull();
+        assertThat(ExtractionField.xpathProblem("count(Data) - number(@Size)")).isNull();
+        assertThat(ExtractionField.xpathProblem("Data[last()]/@Value")).isNull();
+    }
+
+    @Test
+    void everyAllowedFunctionIsAllowedAsCompiled() {
+        // Saxon may compile a call as another (e.g. an optimised one): each allowed, as XPath would be written.
+        for (final String xpath : List.of("text()", "node()", "string(A)", "normalize-space(A)", "concat(A, B)",
+                "substring(A, 1, 2)", "substring-before(A, 'x')", "substring-after(A, 'x')", "string-length(A)",
+                "string-join(A, ',')", "upper-case(A)", "lower-case(A)", "translate(A, 'a', 'b')",
+                "contains(A, 'x')", "starts-with(A, 'x')", "ends-with(A, 'x')", "not(A)", "true()", "false()",
+                "boolean(A)", "number(A)", "round(A)", "floor(A)", "ceiling(A)", "abs(A)", "sum(A)", "count(A)",
+                "min(A)", "max(A)", "avg(A)", "exists(A)", "empty(A)", "A[position() = 1]", "A[last()]", "name(A)",
+                "local-name(A)", "data(A)", "distinct-values(A)", "format-number(A, '0.0')")) {
+            assertThat(ExtractionField.xpathProblem(xpath)).as(xpath).isNull();
+        }
+    }
+
+    @Test
     void anXPathsCodeIsReadAsXPathReadsIt() {
         assertThat(ExtractionField.code("a[@b = 'x(:y:)'] (: c (: nested :) d :) e"))
                 .isEqualTo("a[@b = ''] (::) e");
