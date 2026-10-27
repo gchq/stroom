@@ -33,11 +33,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,6 +58,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// The node is normally the `elasticsearch` service of stroom-resources. Its URL is taken from the
 /// [#URL_ENV_VAR] environment variable, defaulting to [#DEFAULT_URL]. If the node can't be reached the tests
 /// are skipped, unless [#REQUIRED_ENV_VAR] is `true` (as it should be in CI), in which case they fail.
+///
+/// The TLS tests use a second node, with Elasticsearch's security enabled, so that it serves HTTPS with a
+/// certificate signed by its own CA and needs authentication. See [#getTlsOrSkip()].
 public final class ElasticTestNode {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticTestNode.class);
@@ -58,6 +72,15 @@ public final class ElasticTestNode {
     public static final String REQUIRED_ENV_VAR = "STROOM_TEST_ELASTIC_REQUIRED";
     /// The URL of the stroom-resources `elasticsearch` service with its default port.
     public static final String DEFAULT_URL = "http://localhost:9200";
+    /// The environment variable holding the base URL of the node with security enabled.
+    public static final String TLS_URL_ENV_VAR = "STROOM_TEST_ELASTIC_TLS_URL";
+    /// The environment variable holding the password of the `elastic` user of the node with security enabled.
+    public static final String TLS_PASSWORD_ENV_VAR = "STROOM_TEST_ELASTIC_TLS_PASSWORD";
+    /// The environment variable that, when `true`, makes an unavailable node with security enabled fail the
+    /// tests rather than skip them.
+    public static final String TLS_REQUIRED_ENV_VAR = "STROOM_TEST_ELASTIC_TLS_REQUIRED";
+    /// The default URL of the node with security enabled.
+    public static final String DEFAULT_TLS_URL = "https://localhost:9202";
 
     private static final String INDEX_NAME_PREFIX = "stroom-e2e-";
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
@@ -65,12 +88,22 @@ public final class ElasticTestNode {
 
     private final String baseUrl;
     private final HttpClient httpClient;
+    private final String authorization;
+    private final X509Certificate caCertificate;
 
-    private ElasticTestNode(final String baseUrl) {
+    private ElasticTestNode(final String baseUrl,
+                            final SSLContext sslContext,
+                            final String authorization,
+                            final X509Certificate caCertificate) {
         this.baseUrl = baseUrl;
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
-                .build();
+        final HttpClient.Builder builder = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5));
+        if (sslContext != null) {
+            builder.sslContext(sslContext);
+        }
+        this.httpClient = builder.build();
+        this.authorization = authorization;
+        this.caCertificate = caCertificate;
     }
 
     /// Get the node the tests should use, skipping the calling test if it can't be reached (or failing it,
@@ -79,15 +112,64 @@ public final class ElasticTestNode {
     /// @return The reachable node.
     public static ElasticTestNode getOrSkip() {
         final String url = stripTrailingSlash(getEnv(URL_ENV_VAR, DEFAULT_URL));
-        final boolean required = Boolean.parseBoolean(getEnv(REQUIRED_ENV_VAR, "false"));
-        final ElasticTestNode node = new ElasticTestNode(url);
-        final String unavailableReason = node.getUnavailableReason();
+        final ElasticTestNode node = new ElasticTestNode(url, null, null, null);
+        skipIfUnavailable(
+                node.getUnavailableReason(),
+                REQUIRED_ENV_VAR,
+                LogUtil.message("Elasticsearch node {}", url),
+                LogUtil.message("Start it with stroom-resources, e.g. './bounceIt.sh -x -y elasticsearch', or "
+                                + "set {} to the URL of another node.", URL_ENV_VAR));
+        return node;
+    }
+
+    /// Get the node with Elasticsearch's security enabled, skipping the calling test if it can't be reached
+    /// (or failing it, if [#TLS_REQUIRED_ENV_VAR] is `true`).
+    ///
+    /// The node serves HTTPS with a certificate signed by its own CA, as Elasticsearch does when it
+    /// configures its security automatically on first start. This reads the CA's certificate from the chain
+    /// the node presents, then trusts only that CA, authenticating as the `elastic` user. The URL is taken
+    /// from [#TLS_URL_ENV_VAR], defaulting to [#DEFAULT_TLS_URL], and the password from
+    /// [#TLS_PASSWORD_ENV_VAR].
+    ///
+    /// @return The reachable node.
+    public static ElasticTestNode getTlsOrSkip() {
+        final String url = stripTrailingSlash(getEnv(TLS_URL_ENV_VAR, DEFAULT_TLS_URL));
+        final String password = getEnv(TLS_PASSWORD_ENV_VAR, null);
+        ElasticTestNode node = null;
+        String unavailableReason;
+        if (password == null) {
+            unavailableReason = TLS_PASSWORD_ENV_VAR + " is not set";
+        } else {
+            try {
+                final X509Certificate caCertificate = readCaCertificate(URI.create(url));
+                final String authorization = "Basic " + Base64.getEncoder().encodeToString(
+                        ("elastic:" + password).getBytes(StandardCharsets.UTF_8));
+                node = new ElasticTestNode(url, createSslContext(caCertificate), authorization, caCertificate);
+                unavailableReason = node.getUnavailableReason();
+            } catch (final RuntimeException e) {
+                unavailableReason = e.getMessage();
+            }
+        }
+        skipIfUnavailable(
+                unavailableReason,
+                TLS_REQUIRED_ENV_VAR,
+                LogUtil.message("Elasticsearch node {} with security enabled", url),
+                LogUtil.message("Start one, e.g. 'docker run -d -p 127.0.0.1:9202:9200 -e discovery.type=single-node "
+                                + "-e ELASTIC_PASSWORD=<password> "
+                                + "docker.elastic.co/elasticsearch/elasticsearch:<version>', "
+                                + "and set {} to its password, or set {} to the URL of another node.",
+                        TLS_PASSWORD_ENV_VAR, TLS_URL_ENV_VAR));
+        return node;
+    }
+
+    private static void skipIfUnavailable(final String unavailableReason,
+                                          final String requiredEnvVar,
+                                          final String nodeDescription,
+                                          final String advice) {
         if (unavailableReason != null) {
             final String message = LogUtil.message(
-                    "Elasticsearch node {} is not available ({}). Start it with stroom-resources, e.g. "
-                    + "'./bounceIt.sh -x -y elasticsearch', or set {} to the URL of another node.",
-                    url, unavailableReason, URL_ENV_VAR);
-            if (required) {
+                    "{} is not available ({}). {}", nodeDescription, unavailableReason, advice);
+            if (Boolean.parseBoolean(getEnv(requiredEnvVar, "false"))) {
                 throw new IllegalStateException(message);
             }
             LOGGER.warn(message);
@@ -95,12 +177,30 @@ public final class ElasticTestNode {
                     .as(message)
                     .isNull();
         }
-        return node;
     }
 
     /// @return The base URL of the node, as used in an Elastic Cluster document's connection URLs.
     public String getUrl() {
         return baseUrl;
+    }
+
+    /// @return The certificate of the CA that signed the certificate of a node with security enabled, or
+    /// `null` for a node without.
+    public X509Certificate getCaCertificate() {
+        return caCertificate;
+    }
+
+    /// Create an API key for the `elastic` user of a node with security enabled.
+    ///
+    /// @param name The name of the key.
+    /// @return The encoded key, as Stroom's API key credential holds it.
+    public String createApiKey(final String name) {
+        final HttpResponse<String> response = send(
+                "POST",
+                "/_security/api_key",
+                "{\"name\": \"" + name + "\", \"expiration\": \"1h\"}");
+        assertSuccess(response, "create API key " + name);
+        return readJson(response.body()).get("encoded").asString();
     }
 
     /// Create a unique index name for a test, so that tests don't interfere with each other or with
@@ -281,6 +381,9 @@ public final class ElasticTestNode {
         final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(baseUrl + path))
                 .timeout(TIMEOUT)
                 .header("Accept", JSON_CONTENT_TYPE);
+        if (authorization != null) {
+            builder.header("Authorization", authorization);
+        }
         if (body != null) {
             builder.header("Content-Type", JSON_CONTENT_TYPE)
                     .method(method, BodyPublishers.ofString(body));
@@ -295,6 +398,50 @@ public final class ElasticTestNode {
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted sending " + method + " " + baseUrl + path, e);
+        }
+    }
+
+    /// Read the certificate of the CA at the end of the chain a node presents. The connection trusts any
+    /// certificate, so that the chain can be read, but nothing is sent over it.
+    private static X509Certificate readCaCertificate(final URI uri) {
+        try {
+            final SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[]{new TrustAllTrustManager()}, null);
+            try (final SSLSocket socket = (SSLSocket) sslContext.getSocketFactory()
+                    .createSocket(uri.getHost(), uri.getPort() == -1
+                            ? 443
+                            : uri.getPort())) {
+                socket.setSoTimeout((int) Duration.ofSeconds(5).toMillis());
+                socket.startHandshake();
+                final Certificate[] chain = socket.getSession().getPeerCertificates();
+                final X509Certificate caCertificate = (X509Certificate) chain[chain.length - 1];
+                if (chain.length < 2 || caCertificate.getBasicConstraints() < 0) {
+                    throw new IllegalStateException("The node's certificate is not signed by a CA");
+                }
+                return caCertificate;
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Unable to read the node's certificates: " + e.getMessage(), e);
+        } catch (final GeneralSecurityException e) {
+            throw new IllegalStateException("Unable to read the node's certificates: " + e.getMessage(), e);
+        }
+    }
+
+    private static SSLContext createSslContext(final X509Certificate caCertificate) {
+        try {
+            final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null, null);
+            trustStore.setCertificateEntry("ca", caCertificate);
+            final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+            final SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            return sslContext;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (final GeneralSecurityException e) {
+            throw new IllegalStateException("Unable to create SSL context: " + e.getMessage(), e);
         }
     }
 
@@ -324,5 +471,25 @@ public final class ElasticTestNode {
         return url.endsWith("/")
                 ? url.substring(0, url.length() - 1)
                 : url;
+    }
+
+    /// Trusts any certificate. Only used to read the chain a node presents.
+    @SuppressWarnings("java:S4830") // Deliberately trusts anything, as nothing is sent over the connection
+    private static final class TrustAllTrustManager implements X509TrustManager {
+
+        @Override
+        public void checkClientTrusted(final X509Certificate[] chain, final String authType) {
+            // Trust anything
+        }
+
+        @Override
+        public void checkServerTrusted(final X509Certificate[] chain, final String authType) {
+            // Trust anything
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
     }
 }

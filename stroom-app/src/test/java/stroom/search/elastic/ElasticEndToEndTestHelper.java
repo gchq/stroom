@@ -16,6 +16,14 @@
 
 package stroom.search.elastic;
 
+import stroom.ai.shared.KeyStoreType;
+import stroom.credentials.impl.CredentialsService;
+import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
+import stroom.credentials.shared.KeyStoreSecret;
+import stroom.credentials.shared.PutCredentialRequest;
+import stroom.credentials.shared.Secret;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -56,6 +64,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
+import stroom.resource.api.ResourceStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -64,16 +73,23 @@ import stroom.test.StoreCreationTool;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
+import stroom.util.shared.http.HttpClientConfig;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -109,6 +125,7 @@ public class ElasticEndToEndTestHelper {
     private static final String ELASTIC_INDEXING_FILTER = "elasticIndexingFilter";
     private static final String ELASTIC_INDEXING_FILTER_TYPE = "ElasticIndexingFilter";
 
+    private static final String TRUST_STORE_PASSWORD = "changeit";
     private static final String COMPONENT_ID = "table-1";
     private static final int MAX_RESULTS = 1_000;
 
@@ -122,6 +139,8 @@ public class ElasticEndToEndTestHelper {
     private final Store store;
     private final ResultStoreManager resultStoreManager;
     private final MetaService metaService;
+    private final CredentialsService credentialsService;
+    private final ResourceStore resourceStore;
 
     @Inject
     ElasticEndToEndTestHelper(final StoreCreationTool storeCreationTool,
@@ -133,7 +152,9 @@ public class ElasticEndToEndTestHelper {
                               final DictionaryStore dictionaryStore,
                               final Store store,
                               final ResultStoreManager resultStoreManager,
-                              final MetaService metaService) {
+                              final MetaService metaService,
+                              final CredentialsService credentialsService,
+                              final ResourceStore resourceStore) {
         this.storeCreationTool = storeCreationTool;
         this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.pipelineStore = pipelineStore;
@@ -144,6 +165,8 @@ public class ElasticEndToEndTestHelper {
         this.store = store;
         this.resultStoreManager = resultStoreManager;
         this.metaService = metaService;
+        this.credentialsService = credentialsService;
+        this.resourceStore = resourceStore;
     }
 
     /// Index the sample network monitoring events to a new index with explicit mappings, checking that
@@ -270,9 +293,24 @@ public class ElasticEndToEndTestHelper {
     /// @param node The node to connect to.
     /// @return The new document's reference.
     public DocRef createCluster(final ElasticTestNode node) {
+        return createCluster(List.of(node.getUrl()), null, null);
+    }
+
+    /// Create an Elastic Cluster document connecting to the supplied URLs, with an API key and HTTP client
+    /// settings.
+    ///
+    /// @param connectionUrls The URLs of the nodes.
+    /// @param apiKeyName The name of the API key credential, or `null` for none.
+    /// @param httpClientConfig The HTTP client settings, or `null` to use the default ones.
+    /// @return The new document's reference.
+    public DocRef createCluster(final List<String> connectionUrls,
+                                final String apiKeyName,
+                                final HttpClientConfig httpClientConfig) {
         final DocRef clusterRef = elasticClusterStore.createDocument("E2E cluster");
         final ElasticConnectionConfig connection = new ElasticConnectionConfig();
-        connection.setConnectionUrls(List.of(node.getUrl()));
+        connection.setConnectionUrls(connectionUrls);
+        connection.setApiKeyName(apiKeyName);
+        connection.setHttpClientConfiguration(httpClientConfig);
         final ElasticClusterDoc clusterDoc = elasticClusterStore.readDocument(clusterRef)
                 .copy()
                 .connection(connection)
@@ -418,6 +456,62 @@ public class ElasticEndToEndTestHelper {
     /// @return The result of each task.
     public List<ProcessorResult> processAll() {
         return commonTranslationTestHelper.processAll();
+    }
+
+    /// Create a key store credential holding a single trusted certificate, as a trust store.
+    ///
+    /// @param name The name of the credential.
+    /// @param certificate The certificate to trust, e.g. that of a CA.
+    /// @return The name of the credential.
+    public String createTrustStoreCredential(final String name, final X509Certificate certificate) {
+        // Upload the trust store, as the UI does, before storing the credential that refers to it
+        final ResourceKey resourceKey = resourceStore.createTempFile(name + ".p12");
+        final Path path = resourceStore.getTempFile(resourceKey);
+        try {
+            final java.security.KeyStore trustStore = java.security.KeyStore.getInstance("PKCS12");
+            trustStore.load(null, null);
+            trustStore.setCertificateEntry("ca", certificate);
+            try (final OutputStream outputStream = Files.newOutputStream(path)) {
+                trustStore.store(outputStream, TRUST_STORE_PASSWORD.toCharArray());
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (final GeneralSecurityException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        storeCredential(name,
+                CredentialType.KEY_STORE,
+                KeyStoreType.PKCS12,
+                new KeyStoreSecret(UUID.randomUUID().toString(), KeyStoreType.PKCS12, TRUST_STORE_PASSWORD,
+                        resourceKey));
+        return name;
+    }
+
+    /// Create an access token credential holding an Elasticsearch API key.
+    ///
+    /// @param name The name of the credential.
+    /// @param apiKey The encoded API key.
+    /// @return The name of the credential.
+    public String createApiKeyCredential(final String name, final String apiKey) {
+        storeCredential(name, CredentialType.ACCESS_TOKEN, null, new AccessTokenSecret(apiKey));
+        return name;
+    }
+
+    private void storeCredential(final String name,
+                                 final CredentialType credentialType,
+                                 final KeyStoreType keyStoreType,
+                                 final Secret secret) {
+        final Credential credential = new Credential(
+                UUID.randomUUID().toString(),
+                name,
+                null,
+                null,
+                null,
+                null,
+                credentialType,
+                keyStoreType,
+                null);
+        credentialsService.storeCredentials(new PutCredentialRequest(credential, secret));
     }
 
     /// Create a dictionary.
