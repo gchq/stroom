@@ -25,6 +25,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineLayer;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -108,6 +110,21 @@ class TestExtractionPipelines {
         assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD)).isEmpty();
         Mockito.when(documentAccess.read(CHILD, PipelineDoc.class)).thenReturn(Optional.empty());
         assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD)).isEmpty();
+    }
+
+    @Test
+    void anXsltElementFindingItsXsltByNameCantBeChangedByItsXslt() {
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        data.addElement(PipelineDataUtil.createElement("xsltFilter", "XSLTFilter", null, null));
+        data.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", XSLT));
+        final MergedPipeline plain = MergedPipeline.of(List.of(new PipelineLayer(CHILD, data.build())));
+        assertThat(ExtractionPipelines.unchangeable(plain, "xsltFilter")).isEmpty();
+
+        data.addProperty(new PipelineProperty("xsltFilter", "xsltNamePattern",
+                new PipelinePropertyValue("${feed}-extraction")));
+        final MergedPipeline patterned = MergedPipeline.of(List.of(new PipelineLayer(CHILD, data.build())));
+        assertThat(ExtractionPipelines.unchangeable(patterned, "xsltFilter")).hasValueSatisfying(why ->
+                assertThat(why).contains("finds its XSLT by the name pattern '${feed}-extraction'"));
     }
 
     private static void xslt(final DocumentAccess documentAccess, final String code) {

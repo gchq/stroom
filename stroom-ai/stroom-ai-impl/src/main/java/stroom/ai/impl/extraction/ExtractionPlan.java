@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.extraction;
 
+import stroom.docref.DocRef;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -23,26 +24,49 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
-/// A search extraction the agent proposed for a dashboard table, as its `create_extraction_pipeline` button keeps
-/// it: everything Stroom needs to write it, and to set the table up to use it, once the user confirms it.
+/// A search extraction the agent proposed for a dashboard table, as its `create_extraction_pipeline` or
+/// `change_extraction_pipeline` button keeps it: everything Stroom needs to write it, and to set the table up to use
+/// it, once the user confirms it.
 ///
 /// @param component   The table's name, as the user sees it.
 /// @param componentId The table's component id.
 /// @param namespace   The events' namespace, or blank for none.
-/// @param fields      The fields it gives, besides StreamId and EventId.
-/// @param newColumns  The fields to add the table columns for: those it gives that no column shows yet.
+/// @param fields      The fields it gives, besides StreamId and EventId; for a change to an XSLT written by hand,
+///                    the fields added to it (see [ExtractionChange]).
+/// @param newColumns  The fields to add the table columns for: those it didn't give before that no column shows.
+/// @param existing    The table's extraction pipeline, which it changes (or a new child of which it makes), or
+///                    null for a table with none.
 public record ExtractionPlan(@JsonProperty("component") String component,
                              @JsonProperty("componentId") String componentId,
                              @JsonProperty("namespace") String namespace,
                              @JsonProperty("fields") List<ExtractionField> fields,
-                             @JsonProperty("newColumns") List<String> newColumns) {
+                             @JsonProperty("newColumns") List<String> newColumns,
+                             @JsonProperty("existing") Existing existing) {
+
+    private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
 
     @JsonCreator
     public ExtractionPlan {
         namespace = NullSafe.string(namespace);
         fields = NullSafe.list(fields);
         newColumns = NullSafe.list(newColumns);
+    }
+
+    /// A search extraction for a table with no extraction pipeline.
+    ///
+    /// @param component   The table's name, as the user sees it.
+    /// @param componentId The table's component id.
+    /// @param namespace   The events' namespace, or blank for none.
+    /// @param fields      The fields it gives, besides StreamId and EventId.
+    /// @param newColumns  The fields to add the table columns for.
+    public ExtractionPlan(final String component,
+                          final String componentId,
+                          final String namespace,
+                          final List<ExtractionField> fields,
+                          final List<String> newColumns) {
+        this(component, componentId, namespace, fields, newColumns, null);
     }
 
     /// @param json A plan, as JSON.
@@ -72,11 +96,39 @@ public record ExtractionPlan(@JsonProperty("component") String component,
                 .noneMatch(field -> field.name().equals(column)))) {
             throw new IllegalArgumentException("The extraction adds a column for a field it doesn't give.");
         }
+        final Existing existing = plan.existing();
+        if (existing != null && (existing.pipeline() == null || existing.xslt() == null
+                                 || NullSafe.isBlankString(existing.element())
+                                 || !HASH.matcher(NullSafe.string(existing.codeHash())).matches())) {
+            throw new IllegalArgumentException("The extraction pipeline it changes can't be read.");
+        }
         return plan;
     }
 
     /// @return The plan, as JSON.
     public String toJson() {
         return JsonUtil.writeValueAsString(this, false);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A table's extraction pipeline, as it was when a change to it was proposed.
+    ///
+    /// @param pipeline The pipeline.
+    /// @param element  Its element whose XSLT writes its records.
+    /// @param xslt     That element's XSLT.
+    /// @param codeHash The SHA-256 of the XSLT's code then, as lower-case hex: a change is only written to the code
+    ///                 it was proposed for.
+    public record Existing(@JsonProperty("pipeline") DocRef pipeline,
+                           @JsonProperty("element") String element,
+                           @JsonProperty("xslt") DocRef xslt,
+                           @JsonProperty("codeHash") String codeHash) {
+
+        @JsonCreator
+        public Existing {
+            // Nothing to normalise.
+        }
     }
 }

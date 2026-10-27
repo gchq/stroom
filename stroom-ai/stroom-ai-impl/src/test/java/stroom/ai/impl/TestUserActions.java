@@ -196,6 +196,41 @@ class TestUserActions {
     }
 
     @Test
+    void aChangeExtractionPipelineButtonNeedsThePipelineItChanges() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final List<ExtractionField> fields = List.of(new ExtractionField("UserId", "EventSource/User/Id", null));
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3", fields, List.of(),
+                new ExtractionPlan.Existing(new DocRef("Pipeline", "p1", "Logon pipeline"), "xsltFilter",
+                        new DocRef("XSLT", "x1", "Logon XSLT"), "a".repeat(64)));
+        final Map<String, Object> change = new HashMap<>(createExtraction("Dashboard", plan.toJson()));
+        change.put("action", UserActions.CHANGE_EXTRACTION_PIPELINE);
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(change), NOW)).isEmpty();
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CHANGE_EXTRACTION_PIPELINE);
+            assertThat(action.label()).isEqualTo("Change extraction pipeline 'Logon pipeline' of table 'Events' on "
+                                                 + "dashboard 'Logons' in place, with UserId");
+        });
+        // The same extraction as a new pipeline: a child of the table's.
+        assertThat(userActions.check(null, List.of(createExtraction("Dashboard", plan.toJson())), NOW))
+                .singleElement()
+                .satisfies(action -> assertThat(action.label()).isEqualTo("Create extraction pipeline 'Logons "
+                                                                          + "extraction' for table 'Events' on "
+                                                                          + "dashboard 'Logons', a child of "
+                                                                          + "pipeline 'Logon pipeline', with "
+                                                                          + "UserId"));
+
+        // A change needs the pipeline it changes.
+        change.put("plan", new ExtractionPlan("Events", "table-1", "", fields, List.of()).toJson());
+        assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
+        // And its code's hash.
+        change.put("plan", plan.toJson().replace("a".repeat(64), "short"));
+        assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
+    }
+
+    @Test
     void aCreateExtractionPipelineButtonNeedsADashboardAndAPlanItCanRead() {
         Mockito.when(lookup.find(Mockito.any())).thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
         final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
