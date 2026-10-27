@@ -27,6 +27,9 @@ public final class ShannonEntropyCalculator {
 
     private static final double LN_2 = Math.log(2);
 
+    // Enough to cover basic ASCII without resizing.
+    private static final int MAX_INITIAL_MAP_SIZE = 128;
+
     private ShannonEntropyCalculator() {
         // Utility class.
     }
@@ -46,7 +49,7 @@ public final class ShannonEntropyCalculator {
         }
 
         final int codePointCount = value.codePointCount(0, value.length());
-        final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(codePointCount);
+        final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(Math.min(codePointCount, MAX_INITIAL_MAP_SIZE));
         value.codePoints().forEach(codePoint -> counts.mergeInt(codePoint, 1, Integer::sum));
 
         // One distinct character always scores zero. Returning it here guarantees 0.0 rather than
