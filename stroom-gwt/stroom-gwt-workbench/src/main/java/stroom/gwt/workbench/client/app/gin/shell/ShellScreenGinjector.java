@@ -60,7 +60,6 @@ import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.AnnotationScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.CacheScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentAppScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.ContentExtrasScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentTemplateScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ImportExportScreenModule;
@@ -136,7 +135,6 @@ import com.google.gwt.inject.client.GinModules;
         ImportExportScreenModule.class,
         AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ContentExtrasScreenModule.class,
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,

@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.component.DataUploadController;
 import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.component.MetaListController;
 import stroom.data.client.component.MetaRelationListController;
@@ -76,7 +77,7 @@ public class MetaPresenter
     private final MetaListController metaList;
     private final MetaRelationListController metaRelationList;
     private final DataPresenter dataPresenter;
-    private final Provider<DataUploadPresenter> streamUploadPresenter;
+    private final Provider<DataUploadController> dataUploadProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ButtonView streamListFilter;
     private final ButtonView streamListInfo;
@@ -102,7 +103,7 @@ public class MetaPresenter
                          final MetaRelationListController metaRelationList,
                          final DataPresenter dataPresenter,
                          final Provider<ExpressionDialogController> filterDialogProvider,
-                         final Provider<DataUploadPresenter> streamUploadPresenter,
+                         final Provider<DataUploadController> dataUploadProvider,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory,
                          final DateTimeSettingsFactory dateTimeSettingsFactory,
@@ -114,7 +115,7 @@ public class MetaPresenter
         this.metaList = metaList;
         this.metaRelationList = metaRelationList;
         this.filterDialogProvider = filterDialogProvider;
-        this.streamUploadPresenter = streamUploadPresenter;
+        this.dataUploadProvider = dataUploadProvider;
         this.dataPresenter = dataPresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
@@ -179,7 +180,10 @@ public class MetaPresenter
         // Upload
         if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
             streamListUpload = metaList.getToolbar().button(SvgImage.UPLOAD, "Upload Data to Feed",
-                    () -> make(streamUploadPresenter).show(MetaPresenter.this, feedRef));
+                    () -> {
+                        // Made for one use, and disposed once it is closed
+                        dataUploadProvider.get().show(this, feedRef, this::refresh);
+                    });
         }
 
         // Filter

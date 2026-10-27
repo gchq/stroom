@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.data;
 
-import stroom.data.client.presenter.DataUploadPresenter;
+import stroom.data.client.component.DataUploadController;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -37,7 +37,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Data/DataUploadDialog` stories, showing Stroom's real [DataUploadPresenter] (a feed's
+/// The `App/Data/DataUploadDialog` stories, showing Stroom's real [DataUploadController] (a feed's
 /// 'Upload' dialog, as the feed's data browser shows it) with fake REST replies.
 ///
 /// | Stroom | Used for |
@@ -144,13 +144,12 @@ public final class DataUploadDialogStories {
                 .realAlerts()
                 .build();
         final DocRef feedRef = DocRef.builder().type(FeedDoc.TYPE).uuid(FEED_UUID).name("TEST_FEED").build();
-        final DataUploadPresenter presenter = injector.getDataUploadPresenter();
         harness.afterStartUp(() -> {
-            // The feed's data browser, which the dialog refreshes after an upload (its info
-            // message is fired from it). Created after start-up, as it reads the UI config.
+            // The feed's data browser, which the dialog refreshes after an upload. Created after
+            // start-up, as it reads the UI config.
             final MetaPresenter metaPresenter = harness.own(injector.getMetaPresenter());
             // As MetaPresenter's 'Upload Data to Feed' button shows it
-            presenter.show(metaPresenter, feedRef);
+            injector.getDataUploadController().show(metaPresenter, feedRef, metaPresenter::refresh);
         });
         return harness.asWidget();
     }

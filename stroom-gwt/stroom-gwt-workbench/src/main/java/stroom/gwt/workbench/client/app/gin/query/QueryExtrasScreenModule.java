@@ -16,26 +16,19 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.DataUploadViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's GIN modules whose other bindings the query batch's screens don't
-/// need: `DataUploadPresenter` from `FeedModule` (`MetaPresenter`, which a query's data links
-/// open, depends on it) and `IFrameContentPresenter` from the app's `AppModule`
-/// (`HyperlinkEventHandlerImpl`, which handles a table's links, depends on it).
+/// need: `IFrameContentPresenter` from the app's `AppModule` (`HyperlinkEventHandlerImpl`, which
+/// handles a table's links, depends on it).
 public class QueryExtrasScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(DataUploadPresenter.class,
-                DataUploadView.class,
-                DataUploadViewImpl.class);
         bindPresenterWidget(IFrameContentPresenter.class,
                 IFrameContentView.class,
                 IFrameContentViewImpl.class);

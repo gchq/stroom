@@ -79,7 +79,6 @@ import com.google.gwt.inject.client.GinModules;
         ImportExportScreenModule.class,
         AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ContentExtrasScreenModule.class,
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,

@@ -17,26 +17,18 @@
 package stroom.gwt.workbench.client.app.gin.processing;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.DataUploadViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
 
 /// Single bindings from Stroom's modules that the processing screens need without the rest of
-/// their module: `AlertModule`'s alert dialog (the data browser's selection summary shows one),
-/// `FeedModule`'s data upload dialog (opened from the data browser), `QueryModule`'s processor
-/// limits dialog and `AppModule`'s content manager (a singleton, which the document plugins share,
+/// their module: `AppModule`'s content manager (a singleton, which the document plugins share,
 /// as in Stroom).
 public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(DataUploadPresenter.class,
-                DataUploadView.class,
-                DataUploadViewImpl.class);
         bind(ContentManager.class).in(Singleton.class);
     }
 }

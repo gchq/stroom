@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client.component;
 
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.SelectionBox;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FileChooser;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
+import java.util.List;
 
-    private final Widget widget;
+/// Data to upload to a feed: its meta data, stream type, effective date and file.
+public class DataUpload extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SelectionBox<String> type;
@@ -41,56 +43,56 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     TextArea metaData;
 
-    @Inject
-    public DataUploadViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the form, empty.
+    public DataUpload() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the keyboard focus on the meta data.
     public void focus() {
         metaData.setFocus(true);
     }
 
-    @Override
+    /// @return The file chooser, for its controller to attach to.
     public FileChooser getFileChooser() {
         return fileChooser;
     }
 
-    @Override
+    /// @return The effective date box, for its controller to attach to.
+    public DateTimeBox getEffectiveBox() {
+        return effective;
+    }
+
+    /// @return The effective date chosen, or `null` for none.
     public Long getEffectiveDate() {
         return effective.getValue();
     }
 
-    @Override
-    public SelectionBox<String> getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(final String type) {
+    /// Lists the stream types, one chosen.
+    ///
+    /// @param types The stream types.
+    /// @param type  The one chosen.
+    public void setTypes(final List<String> types, final String type) {
+        this.type.clear();
+        this.type.addItems(types);
         this.type.setValue(type);
     }
 
-    @Override
-    public String getMetaData() {
-        return metaData.getText();
+    /// @return The stream type chosen, or `null` for none.
+    public String getType() {
+        return type.getValue();
     }
 
-    @Override
-    public DateTimeBox getEffectiveBox() {
-        return effective;
+    /// @return The meta data typed, one `Key:Value` entry per line.
+    public String getMetaData() {
+        return metaData.getText();
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, DataUploadViewImpl> {
+    interface Binder extends UiBinder<Widget, DataUpload> {
 
     }
 }

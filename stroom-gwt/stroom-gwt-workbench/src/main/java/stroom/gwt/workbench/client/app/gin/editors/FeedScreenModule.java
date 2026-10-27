@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.DataUploadViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -33,9 +30,6 @@ public class FeedScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(FeedPresenter.class);
-        bindPresenterWidget(DataUploadPresenter.class,
-                DataUploadView.class,
-                DataUploadViewImpl.class);
     }
 }
 
