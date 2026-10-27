@@ -28,7 +28,6 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.presenter.DocPermissionRestClient;
-import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter;
 import stroom.security.client.presenter.ExplorerClient;
 import stroom.security.client.presenter.PermissionChangeClient;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
@@ -64,7 +63,7 @@ public class DocumentUserPermissionsEditController extends Controller {
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
     private final PermissionChangeClient permissionChangeClient;
-    private final Provider<DocumentUserCreatePermissionsEditPresenter> createPermissionsEditProvider;
+    private final Provider<DocumentUserCreatePermissionsEditController> createPermissionsEditProvider;
 
     private UserRef relatedUser;
     private DocRef relatedDoc;
@@ -85,7 +84,7 @@ public class DocumentUserPermissionsEditController extends Controller {
             final DocPermissionRestClient docPermissionClient,
             final ExplorerClient explorerClient,
             final PermissionChangeClient permissionChangeClient,
-            final Provider<DocumentUserCreatePermissionsEditPresenter> createPermissionsEditProvider) {
+            final Provider<DocumentUserCreatePermissionsEditController> createPermissionsEditProvider) {
         super(eventBus);
         this.view = view;
         this.docPermissionClient = docPermissionClient;
@@ -170,7 +169,7 @@ public class DocumentUserPermissionsEditController extends Controller {
     }
 
     private void onEditCreatePermissions(final TaskMonitorFactory taskMonitorFactory) {
-        makeDialog(createPermissionsEditProvider).show(relatedDoc, relatedUser, () -> {
+        createPermissionsEditProvider.get().show(this, relatedDoc, relatedUser, () -> {
         }, taskMonitorFactory);
     }
 

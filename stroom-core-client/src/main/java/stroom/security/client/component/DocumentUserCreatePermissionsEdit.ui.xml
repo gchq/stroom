@@ -1,4 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The document types a user or group may create in a folder -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
@@ -14,4 +15,4 @@
         <g:SimplePanel ui:field="createPermissions" styleName="max"/>
         <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus button--contained-primary" text="Apply To Descendants"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

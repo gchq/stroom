@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -25,42 +25,41 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.security.client.component.DocumentCreatePermissionsListController;
-import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
+import stroom.security.client.presenter.DocPermissionRestClient;
+import stroom.security.client.presenter.ExplorerClient;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.IsWidget;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
-public class DocumentUserCreatePermissionsEditPresenter
-        extends MyPresenterWidget<DocumentUserCreatePermissionsEditView>
-        implements DocumentUserCreatePermissionsEditUiHandler {
+/// Sets the document types a user or group may create in a folder
+/// ([DocumentUserCreatePermissionsEdit]), in a dialog made for one use, and can apply them to the
+/// folder's descendant folders.
+public class DocumentUserCreatePermissionsEditController extends Controller {
 
-    private final Provider<DocumentCreatePermissionsListController>
-            documentCreatePermissionsListProvider;
+    private final DocumentUserCreatePermissionsEdit view;
+    private final Provider<DocumentCreatePermissionsListController> documentCreatePermissionsListProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
 
@@ -68,21 +67,39 @@ public class DocumentUserCreatePermissionsEditPresenter
     private DocRef relatedDoc;
     private DocumentCreatePermissionsListController documentCreatePermissionsList;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                              The application's event bus.
+    /// @param view                                  The content.
+    /// @param documentCreatePermissionsListProvider Makes the document types' list, for a folder.
+    /// @param docPermissionClient                   Fetches the user's permissions on the folder.
+    /// @param explorerClient                        Finds the descendants and changes permissions.
     @Inject
-    public DocumentUserCreatePermissionsEditPresenter(final EventBus eventBus,
-                                                      final DocumentUserCreatePermissionsEditView view,
-                                                      final Provider<DocumentCreatePermissionsListController>
-                                                              documentCreatePermissionsListProvider,
-                                                      final DocPermissionRestClient docPermissionClient,
-                                                      final ExplorerClient explorerClient) {
-        super(eventBus, view);
+    public DocumentUserCreatePermissionsEditController(
+            final EventBus eventBus,
+            final DocumentUserCreatePermissionsEdit view,
+            final Provider<DocumentCreatePermissionsListController> documentCreatePermissionsListProvider,
+            final DocPermissionRestClient docPermissionClient,
+            final ExplorerClient explorerClient) {
+        super(eventBus);
+        this.view = view;
         this.documentCreatePermissionsListProvider = documentCreatePermissionsListProvider;
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
-        getView().setUiHandlers(this);
+        initWidget(view);
+        view.setOnApplyToDescendants(this::onApplyToDescendants);
     }
 
-    public void show(final DocRef docRef,
+    /// Fetches a user's permissions on a folder, then shows them in a dialog, owned by `opener`
+    /// until it is closed. OK saves the document types chosen.
+    ///
+    /// @param opener             What shows it.
+    /// @param docRef             The folder.
+    /// @param userRef            The user or group.
+    /// @param onClose            Called once the dialog closes, by OK or Cancel.
+    /// @param taskMonitorFactory Shows the fetch as busy.
+    public void show(final HasControllerNode opener,
+                     final DocRef docRef,
                      final UserRef userRef,
                      final Runnable onClose,
                      final TaskMonitorFactory taskMonitorFactory) {
@@ -90,19 +107,18 @@ public class DocumentUserCreatePermissionsEditPresenter
         relatedUser = userRef;
 
         // Fetch detailed permissions report.
-        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response ->
-                onLoad(docRef, relatedUser, response, onClose), taskMonitorFactory);
+        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, guard(report ->
+                onLoad(opener, report, onClose)), taskMonitorFactory);
     }
 
-    private void onLoad(final DocRef docRef,
-                        final UserRef userRef,
+    private void onLoad(final HasControllerNode opener,
                         final DocumentUserPermissionsReport report,
                         final Runnable onClose) {
         final PopupSize popupSize;
         if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
             documentCreatePermissionsList = make(documentCreatePermissionsListProvider);
             documentCreatePermissionsList.setup(report);
-            getView().setDocumentTypeView(documentCreatePermissionsList);
+            view.setDocumentTypes(documentCreatePermissionsList);
             popupSize = PopupSize.builder()
                     .width(Size
                             .builder()
@@ -121,13 +137,12 @@ public class DocumentUserCreatePermissionsEditPresenter
             popupSize = PopupSize.builder().build();
         }
 
-        getView().setDocument(docRef);
-        getView().setUser(userRef);
-        ShowPopupEvent.builder(this)
+        view.setDocument(relatedDoc);
+        view.setUser(relatedUser);
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .modal()
                 .popupSize(popupSize)
-                .onShow(e -> getView().focus())
                 .caption("Set Document Create Permissions")
                 .onHideRequest(e -> {
                     if (e.isOk()) {
@@ -142,22 +157,17 @@ public class DocumentUserCreatePermissionsEditPresenter
 
     private void onChange(final HidePopupRequestEvent event,
                           final Runnable onClose) {
-        final AbstractDocumentPermissionsChange change = createChange();
-
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
         builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
-        final ExpressionOperator expression = builder.build();
-
         final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
-                expression, change);
-        explorerClient.changeDocumentPermissions(request, response -> {
+                builder.build(), createChange());
+        explorerClient.changeDocumentPermissions(request, guard(response -> {
             onClose.run();
             event.hide();
-        }, this);
+        }), taskMonitor());
     }
 
-    @Override
-    public void onApplyToDescendants(final TaskMonitorFactory taskMonitorFactory) {
+    private void onApplyToDescendants(final TaskMonitorFactory taskMonitorFactory) {
         final AbstractDocumentPermissionsChange change = createChange();
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
@@ -175,28 +185,25 @@ public class DocumentUserCreatePermissionsEditPresenter
 
         final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
                 expression, change);
-        explorerClient.advancedFind(builder.build(), resultPage -> {
+        explorerClient.advancedFind(expression, guard(resultPage -> {
             final long docCount;
-            if (resultPage != null &&
-                resultPage.getPageResponse() != null &&
-                resultPage.getPageResponse().getTotal() != null) {
+            if (resultPage != null
+                && resultPage.getPageResponse() != null
+                && resultPage.getPageResponse().getTotal() != null) {
                 docCount = resultPage.getPageResponse().getTotal();
             } else {
                 docCount = 0;
             }
 
             if (docCount == 0) {
-                AlertEvent.fireError(
-                        this,
-                        "There are no descendant folders of this folder.",
-                        null);
+                AlertEvent.fireError(this, "There are no descendant folders of this folder.", null);
             } else {
-                final String details = "Setting document create permissions for:\n" +
-                                       relatedUser.getDisplayName() +
-                                       "\n\nTo:\n" +
-                                       getPermissionChange() +
-                                       "\n\nOn:\n" +
-                                       getResultDetails(resultPage);
+                final String details = "Setting document create permissions for:\n"
+                                       + relatedUser.getDisplayName()
+                                       + "\n\nTo:\n"
+                                       + getPermissionChange()
+                                       + "\n\nOn:\n"
+                                       + getResultDetails(resultPage);
                 String message = "Are you sure you want to change permissions on this document?";
                 if (docCount > 1) {
                     message = "Are you sure you want to change permissions for " + docCount + " documents?";
@@ -205,24 +212,17 @@ public class DocumentUserCreatePermissionsEditPresenter
                         SafeHtmlUtils.fromString(message),
                         SafeHtmlUtils.fromString(details), ok -> {
                             if (ok) {
-                                explorerClient.changeDocumentPermissions(request, response -> {
+                                explorerClient.changeDocumentPermissions(request, guard(response -> {
                                     if (response) {
-                                        AlertEvent.fireInfo(
-                                                this,
-                                                "Successfully changed permissions.",
-                                                null);
+                                        AlertEvent.fireInfo(this, "Successfully changed permissions.", null);
                                     } else {
-                                        AlertEvent.fireError(
-                                                this,
-                                                "Failed to change permissions.",
-                                                null);
+                                        AlertEvent.fireError(this, "Failed to change permissions.", null);
                                     }
-                                }, taskMonitorFactory);
+                                }), taskMonitorFactory);
                             }
                         });
             }
-        }, taskMonitorFactory);
-
+        }), taskMonitorFactory);
     }
 
     private String getResultDetails(final ResultPage<FindResult> resultPage) {
@@ -238,7 +238,7 @@ public class DocumentUserCreatePermissionsEditPresenter
                 documentCreatePermissionsList.getExplicitCreatePermissions();
         if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
             return new AddAllDocumentUserCreatePermissions(relatedUser);
-        } else if (explicitCreatePermissions.size() == 0) {
+        } else if (explicitCreatePermissions.isEmpty()) {
             return new RemoveAllDocumentUserCreatePermissions(relatedUser);
         } else {
             return new AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions(
@@ -252,20 +252,15 @@ public class DocumentUserCreatePermissionsEditPresenter
                 documentCreatePermissionsList.getExplicitCreatePermissions();
         if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
             return "[ all ]";
-        } else if (explicitCreatePermissions.size() == 0) {
+        } else if (explicitCreatePermissions.isEmpty()) {
             return "[ none ]";
         } else {
             return explicitCreatePermissions.stream().sorted().collect(Collectors.joining("\n"));
         }
     }
 
-    public interface DocumentUserCreatePermissionsEditView extends View, Focus,
-            HasUiHandlers<DocumentUserCreatePermissionsEditUiHandler> {
-
-        void setDocument(DocRef docRef);
-
-        void setUser(UserRef userRef);
-
-        void setDocumentTypeView(IsWidget view);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }
