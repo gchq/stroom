@@ -17,6 +17,7 @@
 package stroom.document.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -34,19 +35,22 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     private final String initialDocName;
     private final boolean allowNullFolder;
     private final Consumer<ExplorerNode> newDocConsumer;
+    private final Chooser chooser;
 
     private ShowCreateDocumentDialogEvent(final String dialogCaption,
                                           final ExplorerNode selected,
                                           final String docType,
                                           final String initialDocName,
                                           final boolean allowNullFolder,
-                                          final Consumer<ExplorerNode> newDocConsumer) {
+                                          final Consumer<ExplorerNode> newDocConsumer,
+                                          final Chooser chooser) {
         this.dialogCaption = dialogCaption;
         this.selected = selected;
         this.docType = docType;
         this.initialDocName = initialDocName;
         this.allowNullFolder = allowNullFolder;
         this.newDocConsumer = newDocConsumer;
+        this.chooser = chooser;
     }
 
     public static void fire(final HasHandlers handlers,
@@ -63,7 +67,27 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
                         docType,
                         initialDocName,
                         allowNullFolder,
-                        newDocConsumer));
+                        newDocConsumer,
+                        null));
+    }
+
+    /// Shows the dialog only to choose a new document's name and folder, creating nothing: the choice is given to
+    /// the chooser, e.g. to show the user what would be written before anything is.
+    ///
+    /// @param handlers       Where to fire it.
+    /// @param dialogCaption  The dialog's caption.
+    /// @param selected       The folder to suggest.
+    /// @param docType        The type of document it is for.
+    /// @param initialDocName The name to suggest.
+    /// @param chooser        Given the name, folder and permission inheritance chosen, once the user clicks OK.
+    public static void fireChoose(final HasHandlers handlers,
+                                  final String dialogCaption,
+                                  final ExplorerNode selected,
+                                  final String docType,
+                                  final String initialDocName,
+                                  final Chooser chooser) {
+        handlers.fireEvent(new ShowCreateDocumentDialogEvent(dialogCaption, selected, docType, initialDocName,
+                false, null, chooser));
     }
 
     public static Type<Handler> getType() {
@@ -107,6 +131,11 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
         return newDocConsumer;
     }
 
+    /// @return Given the name and folder chosen, creating nothing, or null to create the document.
+    public Chooser getChooser() {
+        return chooser;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -114,5 +143,18 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     public interface Handler extends EventHandler {
 
         void onCreate(final ShowCreateDocumentDialogEvent event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Given a new document's name and folder as the user chose them, when the dialog only chooses them.
+    public interface Chooser {
+
+        /// @param name                  The name chosen.
+        /// @param folder                The folder chosen.
+        /// @param permissionInheritance How the document is to take permissions from the folder.
+        void chosen(String name, ExplorerNode folder, PermissionInheritance permissionInheritance);
     }
 }

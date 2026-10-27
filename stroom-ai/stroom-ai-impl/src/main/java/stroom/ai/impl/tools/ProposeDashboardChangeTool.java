@@ -30,6 +30,7 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.extraction.ExtractionPipelines;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
@@ -50,6 +51,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.TableSettings;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -1264,12 +1266,23 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         return keys;
     }
 
-    // The names of the fields of the table's data source, or null if they can't be read.
+    // The names of the fields a table's columns may use, or null if they can't be read: its data source's, and, if
+    // it extracts its values, those its extraction pipeline gives (which a column may use though the data source
+    // doesn't have them).
     private List<String> fields(final AiTabSearch table) {
         final AskStroomAiContext request = table.getLive() != null
                 ? table.getLive()
                 : table.getResults();
-        return fieldsOf(ResultsRequests.dashboardDataSource(request));
+        final List<String> fields = fieldsOf(ResultsRequests.dashboardDataSource(request));
+        final TableSettings settings = ResultsRequests.tableSettings(request);
+        if (fields == null || settings == null || !settings.extractValues()
+            || settings.getExtractionPipeline() == null) {
+            return fields;
+        }
+        final List<String> withExtracted = new ArrayList<>(fields);
+        ExtractionPipelines.extractedFields(documentAccess, settings.getExtractionPipeline())
+                .ifPresent(withExtracted::addAll);
+        return withExtracted;
     }
 
     // The names of a data source's fields, or null if they can't be read.

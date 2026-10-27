@@ -90,6 +90,8 @@ public final class ToolSummaries {
             Map.entry("propose_documentation_change",
                     "Proposes a change to a document's documentation, for the user to accept."),
             Map.entry("propose_index_template", "Onboarding: builds the final Elasticsearch index template."),
+            Map.entry("propose_extraction_pipeline",
+                    "Offers a button to make a dashboard table's search extraction, once the user confirms it."),
             Map.entry("propose_query", "Offers the user a button to create a query."),
             Map.entry("propose_query_change", "Proposes a change to a query, for the user to accept."),
             Map.entry("propose_visualisation",
