@@ -11,6 +11,12 @@ meaning. Stroom has two mechanisms, and the mapping (`build_translation_xslt`) w
 
 ## Reference data
 
+A table loaded on its own is a build of its own: start it as one (`start_build kind=reference`, or
+`start_onboarding kind=reference`), and its plan has the reference steps (feed, sample, converter, the reference-data
+pipeline, stepped, processed, documented) with no translation, Events or index. A build holding a `Raw Reference`
+sample or a reference-data pipeline is planned this way too. The reference filter is created disabled: the user
+enables it on the pipeline's Processors tab, then `wait_for_processing`.
+
 How it fits together:
 
 1. **A reference feed** holds the table as raw data (stream type `Raw Reference`): `create_feed` with
@@ -36,7 +42,9 @@ How it fits together:
    `wait_for_processing`, which takes the output type, `Reference`, from the pipeline): the pipeline writes
    `Reference` streams. A whole-feed filter takes the feed's own stream type, `Raw Reference`. Do this before the
    events pipeline is first stepped: a lookup made before the feed has a `Reference` stream is remembered by Stroom
-   for 10 minutes (its effective stream cache), and every step in that time finds no reference data.
+   for 10 minutes (its effective stream cache), and every step in that time finds no reference data. The plan holds
+   an events pipeline that looks values up in a feed with no `Reference` stream yet before stepping, until it is
+   processed.
 3. **The events pipeline names the feed** as a pipeline reference on its translation step:
    `create_pipeline references=[{"feed": "ACME-USERS"}]`, or `update_pipeline (references=...)` on a pipeline that
    exists. The loader is found, not assumed: the one other pipelines already load that feed with, else the
