@@ -103,14 +103,14 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
             return new OpenAIModelTestResponse(false, "Model ID must not be empty");
         }
 
-        // Validating a model makes a server-side request to the model's (request-supplied) base URL, so
-        // require USE permission on the model document rather than allowing any logged-in user. Deliberately
-        // outside the try below, as a permission failure is not a validation result.
+        // Validating a model makes a server-side request to the model's (request-supplied) base URL, so only
+        // someone who could save these settings on the model may make Stroom connect with them, as for testing an
+        // MCP tool server. Deliberately outside the try below, as a permission failure is not a validation result.
         final DocRef docRef = getDocRef(modelDoc.getUuid());
         final SecurityContext securityContext = securityContextProvider.get();
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have USE permission on AI model " + docRef);
+                    "You do not have EDIT permission on AI model " + docRef);
         }
 
         try {
