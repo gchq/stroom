@@ -26,7 +26,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreModel;
-import stroom.query.client.presenter.ResultStoreSettingsPresenter;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -45,7 +44,7 @@ public class ResultStoreListController extends Controller {
     private final ResultStoreList view;
     private final RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>> dataProvider;
     private final ResultStoreModel resultStoreModel;
-    private final Provider<ResultStoreSettingsPresenter> resultStoreSettingsProvider;
+    private final Provider<ResultStoreSettingsEditorController> resultStoreSettingsProvider;
 
     /// Made by GIN, with its content.
     ///
@@ -60,7 +59,7 @@ public class ResultStoreListController extends Controller {
                                      final ResultStoreList view,
                                      final ResultStoreModel resultStoreModel,
                                      final DateTimeFormatter dateTimeFormatter,
-                                     final Provider<ResultStoreSettingsPresenter> resultStoreSettingsProvider,
+                                     final Provider<ResultStoreSettingsEditorController> resultStoreSettingsProvider,
                                      final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
@@ -129,8 +128,8 @@ public class ResultStoreListController extends Controller {
     private void edit() {
         final ResultStoreInfo selected = getSelectionModel().getSelected();
         if (selected != null) {
-            makeDialog(resultStoreSettingsProvider)
-                    .show(selected, "Change Result Store Settings", ok -> refresh());
+            resultStoreSettingsProvider.get()
+                    .show(this, selected, "Change Result Store Settings", ok -> refresh());
         }
     }
 

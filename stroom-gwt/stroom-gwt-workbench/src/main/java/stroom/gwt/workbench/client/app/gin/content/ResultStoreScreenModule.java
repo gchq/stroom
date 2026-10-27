@@ -19,9 +19,6 @@ package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
-import stroom.query.client.presenter.ResultStoreSettingsPresenter;
-import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
-import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -36,8 +33,5 @@ public class ResultStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ResultStorePresenter.class,
                 ResultStoreView.class,
                 ResultStoreViewImpl.class);
-        bindPresenterWidget(ResultStoreSettingsPresenter.class,
-                ResultStoreSettingsView.class,
-                ResultStoreSettingsViewImpl.class);
     }
 }

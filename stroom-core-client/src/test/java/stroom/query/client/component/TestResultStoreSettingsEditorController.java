@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+package stroom.query.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent.Level;
@@ -23,11 +23,9 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.LifespanInfo;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
+import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.shared.UpdateStoreRequest;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,7 +35,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -47,31 +44,29 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-class TestResultStoreSettingsPresenter {
+class TestResultStoreSettingsEditorController {
 
     private static final LifespanInfo LIFESPAN = new LifespanInfo("1h", "1d", true, true);
+    private static final ResultStoreInfo RESULT_STORE_INFO = new ResultStoreInfo(null, new QueryKey("query-key"),
+            null, null, "node1", null, true, null, LIFESPAN, LIFESPAN);
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
     private final List<Boolean> saved = new ArrayList<>();
-    private ResultStoreSettingsView view;
+    private ResultStoreSettingsEditor view;
     private ResultStoreModel resultStoreModel;
-    private ResultStoreSettingsPresenter presenter;
+    private ResultStoreSettingsEditorController controller;
 
     @BeforeEach
     void setUp() {
-        // The result store resource is made with GWT.create, which only works in a browser
+        // The settings are a widget, which can only be made in a browser
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
-        view = Mockito.mock(ResultStoreSettingsView.class);
-        Mockito.when(view.getSearchProcessTimeToIdle()).thenReturn("1h");
-        Mockito.when(view.getSearchProcessTimeToLive()).thenReturn("1d");
-        Mockito.when(view.getStoreTimeToIdle()).thenReturn("1h");
-        Mockito.when(view.getStoreTimeToLive()).thenReturn("1d");
+        view = Mockito.mock(ResultStoreSettingsEditor.class);
+        Mockito.when(view.getSearchProcessLifespan()).thenReturn(LIFESPAN);
+        Mockito.when(view.getStoreLifespan()).thenReturn(LIFESPAN);
         resultStoreModel = Mockito.mock(ResultStoreModel.class);
-        presenter = new ResultStoreSettingsPresenter(eventBus, view, resultStoreModel);
+        controller = new ResultStoreSettingsEditorController(eventBus, view, resultStoreModel);
     }
 
     @AfterEach
@@ -83,9 +78,9 @@ class TestResultStoreSettingsPresenter {
     void ok_durationNotSet() {
         // Regression test: a blank duration was sent, the server failed to read it, and the dialog
         // closed with nothing said and nothing changed
-        Mockito.when(view.getStoreTimeToLive()).thenReturn(" ");
+        Mockito.when(view.getStoreLifespan()).thenReturn(new LifespanInfo("1h", " ", true, true));
 
-        final HidePopupRequestEvent okPressed = showAndPressOk();
+        final HidePopupRequestEvent okPressed = pressOk();
 
         assertThat(alerts)
                 .extracting(AlertEvent::getLevel, alert -> alert.getMessage().asString())
@@ -100,11 +95,13 @@ class TestResultStoreSettingsPresenter {
 
     @Test
     void ok_saved() {
-        final HidePopupRequestEvent okPressed = showAndPressOk();
+        final HidePopupRequestEvent okPressed = pressOk();
 
         final SaveCall saveCall = captureSave();
         assertThat(saveCall.request().getStoreLifespan().getTimeToLive())
                 .isEqualTo("1d");
+        assertThat(saveCall.request().getQueryKey())
+                .isEqualTo(new QueryKey("query-key"));
         saveCall.onSaved().accept(true);
 
         assertThat(saved)
@@ -118,7 +115,7 @@ class TestResultStoreSettingsPresenter {
     void ok_saveFails() {
         // Regression test: a failed save (e.g. a duration the server can't read) closed the dialog
         // with nothing said
-        final HidePopupRequestEvent okPressed = showAndPressOk();
+        final HidePopupRequestEvent okPressed = pressOk();
 
         captureSave().errorHandler().onError(new RestError(
                 Mockito.mock(Method.class),
@@ -134,18 +131,22 @@ class TestResultStoreSettingsPresenter {
         Mockito.verify(okPressed).reset();
     }
 
-    private HidePopupRequestEvent showAndPressOk() {
-        final ResultStoreInfo resultStoreInfo = new ResultStoreInfo(null, new QueryKey("query-key"), null, null,
-                "node1", null, true, null, LIFESPAN, LIFESPAN);
-        // The popup's size is worked out from the browser window's
-        try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {
-            presenter.show(resultStoreInfo, "Result Store Settings", saved::add);
-        }
-        assertThat(shown)
-                .hasSize(1);
+    @Test
+    void cancel() {
+        final HidePopupRequestEvent cancelPressed = Mockito.mock(HidePopupRequestEvent.class);
+
+        controller.onHideRequest(RESULT_STORE_INFO, cancelPressed, saved::add);
+
+        assertThat(saved)
+                .containsExactly(false);
+        Mockito.verify(cancelPressed).hide();
+        Mockito.verifyNoInteractions(resultStoreModel);
+    }
+
+    private HidePopupRequestEvent pressOk() {
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+        controller.onHideRequest(RESULT_STORE_INFO, okPressed, saved::add);
         return okPressed;
     }
 
@@ -162,6 +163,10 @@ class TestResultStoreSettingsPresenter {
                 Mockito.any());
         return new SaveCall(request.getValue(), onSaved.getValue(), errorHandler.getValue());
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record SaveCall(UpdateStoreRequest request,
                             Consumer<Boolean> onSaved,
