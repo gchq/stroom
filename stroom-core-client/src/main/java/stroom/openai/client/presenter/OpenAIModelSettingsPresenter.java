@@ -42,7 +42,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettingsView, OpenAIModelDoc>
         implements OpenAIModelSettingsUiHandlers {
@@ -76,7 +75,9 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
 
     @Override
     public void onTestModel() {
-        final OpenAIModelDoc model = onWrite(OpenAIModelDoc.builder().uuid(UUID.randomUUID().toString()).build());
+        // The model being edited, with the settings as they are on screen: the server checks the user may edit
+        // this model before connecting with them.
+        final OpenAIModelDoc model = onWrite(getEntity());
         restFactory
                 .create(OPEN_AI_MODEL_RESOURCE)
                 .method(res -> res.validateModel(model))
