@@ -89,6 +89,8 @@ public class BuildPlan {
     /// The last step.
     public static final String STAGE_FINISH = "finish";
 
+    // The step that writes the build's Events.
+    private static final String PROCESSED = "processed";
     private static final List<List<String>> STAGE_1 = List.of(
             List.of("feed", "Create the feed in the build", "create_feed"),
             List.of("samples", "Upload every sample file as its own stream",
@@ -243,10 +245,43 @@ public class BuildPlan {
                 : context.session());
     }
 
+    /// @param build A build, or null.
+    /// @return Its next step while it has no Events yet (no Events stream from its sample, its next step one before
+    /// processing); empty once it has Events, or when the build is unknown or unreadable. Seen in an e2e run: an
+    /// XSLT written by hand left the translation step to do while the build's Events were processed and documented.
+    public Optional<Map<String, Object>> nextBeforeEvents(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> status = status(build, null);
+            if (status.get("events_streams") instanceof final List<?> events && !events.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.ofNullable(JsonValues.map(status.get("next")))
+                    .filter(next -> isBeforeEvents(next.get("step")));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
     /// @param step A step of the plan, as `next` names it, or null.
-    /// @return Whether it is a step of stage 1, the events pipeline.
-    public static boolean isEventsStep(final Object step) {
-        return step != null && STAGE_1.stream().anyMatch(item -> item.getFirst().equals(step));
+    /// @return Whether it comes before the build's Events exist: a step of stage 1 up to processing (which, as the
+    /// next step, has not run).
+    public static boolean isBeforeEvents(final Object step) {
+        if (step == null) {
+            return false;
+        }
+        for (final List<String> item : STAGE_1) {
+            if (item.getFirst().equals(step)) {
+                return true;
+            }
+            if (PROCESSED.equals(item.getFirst())) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /// @param ref A document.

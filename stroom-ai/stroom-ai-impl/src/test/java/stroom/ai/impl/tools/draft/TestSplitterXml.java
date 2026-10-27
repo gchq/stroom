@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,12 +57,40 @@ class TestSplitterXml extends DraftFixtures {
         assertThat(root.childElements(DS, "split")).extracting(split -> attributes(split).get("id"))
                 .containsExactly("header", "record");
         // After the head's byte order mark regex.
-        assertThat(attributes(root.childElements(DS, "regex").getLast())).containsEntry("id", "blank_line")
+        assertThat(attributes(root.childElements(DS, "regex").getLast())).containsEntry("id", "blankLine")
                 .containsEntry("pattern", SplitterXml.BLANK_LINE);
         assertThat(attributes(only(root.childElements(DS, "split").getLast(), "group"))).containsEntry("id",
                 "fields");
         // As the Stroom MCP server wrote it: no ids, no blank line regex.
-        assertThat(SplitterXml.generateSplitter(spec)).doesNotContain(" id=\"header\"").doesNotContain("blank_line");
+        assertThat(SplitterXml.generateSplitter(spec)).doesNotContain(" id=\"header\"").doesNotContain("blankLine");
+    }
+
+    @Test
+    void everyIdTheConverterWritesIsOneTheSchemaAllows() {
+        // Seen: 'blank_line' broke the schema's id pattern, and Stroom refused every converter built.
+        final List<SplitterSpec> specs = List.of(
+                SplitterSpec.builder("delimited").delimiter(",").header(true).build(),
+                SplitterSpec.builder("delimited").delimiter(" ").header(true).commentPrefix("#")
+                        .headerDirective("#Fields:").build(),
+                SplitterSpec.builder("syslog").rfc("rfc3164").body(SplitterSpec.builder("key_value").build())
+                        .catchAll(true).build(),
+                SplitterSpec.builder("cef").body(SplitterSpec.builder("regex").pattern("^(\\S+)$")
+                        .names(List.of("host")).build()).build(),
+                SplitterSpec.builder("regex").recordStart("\\d").pattern("(?s)(.*)").names(List.of("m")).build(),
+                SplitterSpec.builder("key_value").blankLineRecords(true).catchAll(true).build(),
+                SplitterSpec.builder("fields").fields(Map.of("user", "user=(\\S+)")).catchAll(true).build());
+        final Pattern id = Pattern.compile(" id=\"([^\"]*)\"");
+
+        for (final SplitterSpec spec : specs) {
+            final Matcher ids = id.matcher(SplitterXml.converter(spec));
+            int found = 0;
+            while (ids.find()) {
+                found++;
+                assertThat(ids.group(1)).as("an id in the converter for %s", spec.toMap())
+                        .matches(SplitterXml.ID_PATTERN);
+            }
+            assertThat(found).as("ids in the converter for %s", spec.toMap()).isPositive();
+        }
     }
 
     @Test

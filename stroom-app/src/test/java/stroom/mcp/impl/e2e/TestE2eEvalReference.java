@@ -105,6 +105,9 @@ class TestE2eEvalReference extends AbstractE2eTest {
     void theReferenceSolutionReachesIndexedEvents(final String id) {
         final Map<String, Object> evalCase = EvalCases.load(id);
         final EvalScore score = new EvalScore(id);
+        // The reference solutions leave a user's Id whole (the Stroom MCP server never split its domain off), so the
+        // user keeps the Ids as they are when the translation asks; seen: case 30's alice@example.org split to alice.
+        client.answeringWith(choosing("Keep as is"));
         final long startMs = System.currentTimeMillis();
         try {
             runReference(evalCase, score);

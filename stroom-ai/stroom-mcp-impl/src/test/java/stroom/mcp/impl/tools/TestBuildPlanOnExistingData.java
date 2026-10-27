@@ -356,12 +356,28 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
-    void onlyTheEventsPipelinesStepsAreStageOnes() {
-        assertThat(BuildPlan.isEventsStep("feed")).isTrue();
-        assertThat(BuildPlan.isEventsStep("documented")).isTrue();
-        assertThat(BuildPlan.isEventsStep("index")).isFalse();
-        assertThat(BuildPlan.isEventsStep("promoted")).isFalse();
-        assertThat(BuildPlan.isEventsStep(null)).isFalse();
+    void aBuildWithEventsIsPastTheStepsBeforeThemWhateverIsLeftToDo() {
+        // A new source with only its feed: its next step comes before any Events.
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"));
+        assertThat(plan.nextBeforeEvents("b")).hasValueSatisfying(next ->
+                assertThat(BuildPlan.isBeforeEvents(next.get("step"))).isTrue());
+        // Seen in an e2e run: an XSLT written by hand left the translation to do, the build's Events processed.
+        facts.events = List.of(9L);
+        assertThat(plan.nextBeforeEvents("b")).isEmpty();
+        assertThat(plan.nextBeforeEvents(null)).isEmpty();
+    }
+
+    @Test
+    void onlyTheStepsBeforeProcessingComeBeforeTheBuildsEvents() {
+        assertThat(BuildPlan.isBeforeEvents("feed")).isTrue();
+        assertThat(BuildPlan.isBeforeEvents("stepped")).isTrue();
+        assertThat(BuildPlan.isBeforeEvents("covered")).isTrue();
+        // Processing as the next step hasn't run; once it has, indexing may be asked about.
+        assertThat(BuildPlan.isBeforeEvents("processed")).isTrue();
+        assertThat(BuildPlan.isBeforeEvents("validated")).isFalse();
+        assertThat(BuildPlan.isBeforeEvents("documented")).isFalse();
+        assertThat(BuildPlan.isBeforeEvents("index")).isFalse();
+        assertThat(BuildPlan.isBeforeEvents(null)).isFalse();
     }
 
     @Test

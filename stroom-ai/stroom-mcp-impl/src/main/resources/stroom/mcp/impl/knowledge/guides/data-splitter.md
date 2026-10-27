@@ -41,7 +41,7 @@ are what it writes.
 `stroom_check`: the errors Stroom reports (with `error_hints`), and any record it writes differently from the dry
 run. Processing does what Stroom's parser does, so fix the spec until `stroom_check` says `matches`; a converter
 Stroom loses records with is not saved. Stroom's errors name the converter's part by its id: `header`, `record`,
-`fields` (a record's expressions), `blank_line`, `body`, `unparsed`.
+`fields` (a record's expressions), `blankLine`, `body`, `unparsed`.
 
 What Stroom does that is easy to miss (each seen in Stroom):
 
