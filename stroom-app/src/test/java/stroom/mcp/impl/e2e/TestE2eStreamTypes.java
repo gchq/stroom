@@ -174,6 +174,68 @@ class TestE2eStreamTypes extends AbstractE2eTest {
         newVersion(badge.eventsUuid(), badge.textUuid(), badge.refFeed(), badge.eventsFeed(), badge.eventsRaw());
     }
 
+    @Test
+    void part2AReferenceBuildIsPlannedAsReferenceDataAndLookupsWaitForIt() {
+        // Asked for by the user: a table to look values up in was planned as an events onboarding.
+        final String build = "st-plan-ref-" + STAMP;
+        final String feed = "ST-PLAN-USERS-" + STAMP;
+        final Map<String, Object> started = json("start_build", args("build", build, "kind", "reference"));
+        assertThat(list(started, "plan")).extracting(step -> step.get("step")).as("reference data's own steps")
+                .contains("feed", "samples", "reference_pipeline", "reference_processed")
+                .doesNotContain("translation", "processed", "index");
+        agreed("create_feed", args("build", build, "name", feed, "stream_type", "Raw Reference"));
+        final long raw = number(client.json("upload_sample", args("feed", feed, "sample", DIRECTORY,
+                "stream_type", "Raw Reference", "effective_time", "2000-01-01T00:00:00.000Z")).get("stream_id"));
+        client.json("build_data_splitter", args("stream_ids", List.of(raw), "save_as", feed, "build", build));
+        Map<String, Object> status = json("build_status", args("build", build));
+        assertThat(nextStep(status)).as("the reference-data pipeline next, not a translation")
+                .isEqualTo("reference_pipeline");
+        assertThat(nextTool(status)).isEqualTo("build_reference_xslt");
+        final Map<String, Object> code = client.json("build_reference_xslt", args("mapping", referenceMapping()));
+        client.json("save_xslt", args("build", build, "name", feed + "-Reference", "code", code.get("xslt")));
+        final Map<String, Object> template = map(client.json("find_reference_data", args()),
+                "reference_data_template");
+        final String loaderUuid = (String) agreed("create_pipeline", args("build", build,
+                "name", feed + "-Reference", "template_uuid", template.get("uuid"))).get("uuid");
+        status = json("build_status", args("build", build));
+        assertThat(nextStep(status)).isEqualTo("reference_stepped");
+        assertThat(nextTool(status)).isEqualTo("step_sample");
+        assertThat(client.json("step_sample", args("pipeline_uuid", loaderUuid, "stream_ids", List.of(raw))))
+                .containsEntry("verdict", "clean");
+        assertThat(nextStep(json("build_status", args("build", build)))).isEqualTo("reference_processed");
+
+        // An events pipeline looking users up in the table before it is processed: held back from stepping.
+        final String eventsBuild = "st-plan-badge-" + STAMP;
+        final String eventsFeed = "ST-PLAN-BADGE-" + STAMP;
+        agreed("create_feed", args("build", eventsBuild, "name", eventsFeed));
+        final long eventsRaw = upload(eventsFeed, BADGES);
+        client.json("build_data_splitter", args("stream_ids", List.of(eventsRaw), "save_as", eventsFeed,
+                "build", eventsBuild));
+        agreed("build_translation_xslt", args("mapping", badgeMapping(true), "stream_ids", List.of(eventsRaw),
+                "build", eventsBuild, "name", eventsFeed + "-Events"));
+        final Map<String, Object> text = list(client.json("find_pipeline_templates", args("stage", "translation")),
+                "candidates").stream()
+                .filter(candidate -> "DSParser".equals(candidate.get("parser")))
+                .findFirst()
+                .orElseThrow();
+        agreed("create_pipeline", args("build", eventsBuild, "name", eventsFeed + "-Events", "template_uuid",
+                text.get("uuid"), "references", List.of(Map.of("feed", feed))));
+        status = json("build_status", args("build", eventsBuild));
+        assertThat(nextStep(status)).isEqualTo("stepped");
+        assertThat(nextTool(status)).as("not stepped while its table holds no Reference stream")
+                .isEqualTo("find_reference_data");
+        assertThat(String.valueOf(next(status).get("then"))).contains(feed).contains("10 minutes");
+
+        // The table processed: the reference build moves on, and the events pipeline is stepped.
+        agreed("create_processor_filter", args("pipeline_uuid", loaderUuid, "feed", feed, "created_after",
+                "2000-01-01T00:00:00.000Z"));
+        processAll();
+        assertThat(client.json("wait_for_processing", args("pipeline_uuid", loaderUuid, "stream_ids", List.of(raw),
+                "timeout_seconds", 10))).containsEntry("gate", "pass");
+        assertThat(nextStep(json("build_status", args("build", build)))).isEqualTo("reference_documented");
+        assertThat(nextTool(json("build_status", args("build", eventsBuild)))).isEqualTo("step_sample");
+    }
+
     // Part 2 up to the next version: the reference loaded, looked up, its mapping rebuilt, processed, and attached
     // later to a pipeline made without it.
     private Badge referenceData() {

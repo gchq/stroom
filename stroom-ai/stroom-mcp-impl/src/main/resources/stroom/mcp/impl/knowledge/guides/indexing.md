@@ -126,6 +126,11 @@ Splitter naming the columns, or `xml` with its `record` element; the timestamp f
 drop): only `StreamId`,
 `EventId` and `@timestamp` are mapped explicitly, a JSON object held in a string is also indexed parsed as
 `<field>_json`, and the template is permissive (strings as keywords, a field limit, malformed values ignored).
+Start the build as one (`start_build kind=discovery`, or `start_onboarding kind=discovery`): its plan then skips the
+events pipeline and leads to the discovery plan. The pipeline is a child of a discovery template
+(`find_pipeline_templates stage=discovery`) made with `create_indexing_pipeline`; only when this Stroom has none and
+the user has no pipeline to base it on, `create_indexing_pipeline standalone='discovery'` (no template_uuid) makes
+one of its own, its parser from the input the plan kept with the XSLT, which the user confirms: a last resort.
 
 A network event records its connection under its action (`Network/Permit`, `Network/Deny`, ...): index the
 address, port and protocol once whichever action it is, with `*` for the action in the source

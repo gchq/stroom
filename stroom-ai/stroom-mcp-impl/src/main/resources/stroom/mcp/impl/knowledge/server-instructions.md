@@ -37,7 +37,8 @@ until the build has an events pipeline or is given existing Events streams; crea
 pipeline with no clean step recorded; create_pipeline refuses another source's XSLT and a template whose parser
 cannot read the sample (replace_parser swaps any template's parser for the one it needs). Only when this Stroom
 has no translation template at all and the user has no pipeline to base it on, create_pipeline standalone='events'
-builds the events pipeline on its own: a last resort. Templates are inherited (create_pipeline), never copied: copy_pipeline refuses one, and is for a
+builds the events pipeline on its own: a last resort (for a discovery index with no discovery template,
+create_indexing_pipeline standalone='discovery', the same way). Templates are inherited (create_pipeline), never copied: copy_pipeline refuses one, and is for a
 new version or working copy of a source's own pipeline.
 
 Tools: a tool this server names (in `next`, a hint or a refusal) may not be in your tool list yet: some clients
