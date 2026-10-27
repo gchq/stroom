@@ -179,17 +179,32 @@ class PipelineTemplates {
             result.put("unreadable", unreadable.subList(0, Math.min(MAX_UNREADABLE, unreadable.size())));
         }
         if (candidates.isEmpty()) {
-            result.put("hint", "No template found for this stage; ask the user which pipeline to base it on.");
+            result.put("hint", "No template found for this stage; ask the user which pipeline to base it on."
+                               + ("translation".equals(stage)
+                    ? " Only if they have none, create_pipeline standalone='events' builds the events pipeline "
+                      + "on its own, as Stroom's standard Event Data templates are made (a last resort)."
+                    : ""));
         } else if ("translation".equals(stage)
                    && candidates.stream().noneMatch(c -> "XMLFragmentParser".equals(c.get("parser"))
                                                          || "CombinedParser".equals(c.get("parser")))) {
-            final List<String> xml = candidates.stream()
+            // The XMLParser's templates first; with none, any whose parser can be swapped (seen: a Stroom with
+            // only JSON and text templates was told only to ask the user).
+            List<String> xml = candidates.stream()
                     .filter(c -> "XMLParser".equals(c.get("parser")))
                     .map(c -> String.valueOf(c.get("name")))
                     .toList();
+            final String whose;
+            if (xml.isEmpty()) {
+                xml = candidates.stream()
+                        .filter(c -> PipelineWrites.PARSERS.contains(String.valueOf(c.get("parser"))))
+                        .map(c -> c.get("name") + " (" + c.get("parser") + ")")
+                        .toList();
+                whose = "any translation template (its parser is replaced)";
+            } else {
+                whose = "a translation template whose parser is the XMLParser";
+            }
             result.put("xml_fragments", "No template parses XML fragments (several root elements, e.g. one <Event> "
-                                        + "per line). For such data, create_pipeline from a translation template "
-                                        + "whose parser is the XMLParser"
+                                        + "per line). For such data, create_pipeline from " + whose
                                         + (xml.isEmpty()
                     ? ""
                     : " (" + String.join(", ", xml) + ")")

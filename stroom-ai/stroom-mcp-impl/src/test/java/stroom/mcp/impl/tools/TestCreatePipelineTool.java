@@ -422,4 +422,77 @@ class TestCreatePipelineTool {
     private ToolResult call(final String arguments, final ToolCallContext context) {
         return tool.execute(PortedToolCalls.call(CreatePipelineTool.NAME, arguments), context);
     }
+
+    @Test
+    void anEventsPipelineOfItsOwnIsALastResortWithNoTranslationTemplate() {
+        // Asked in testing: what if this Stroom has no template at all?
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("delimited");
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("x1", "Acme-Events", Map.of());
+        final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"standalone\": "
+                                 + "\"events\", \"set_properties\": [{\"element\": \"translationFilter\", "
+                                 + "\"name\": \"xslt\", \"doc_uuid\": \"x1\", \"doc_type\": \"XSLT\"}, "
+                                 + "{\"element\": \"dsParser\", \"name\": \"textConverter\", \"doc_uuid\": "
+                                 + "\"tc\", \"doc_type\": \"TextConverter\"}]}";
+
+        final Map<String, Object> made = PipelineWorld.json(call(arguments, PortedToolCalls.answering(Map.of())));
+
+        assertThat(made).containsEntry("chain", "Source -> dsParser -> readRecordCountFilter -> splitFilter -> "
+                                                + "translationFilter -> schemaFilter -> recordOutputFilter -> "
+                                                + "writeRecordCountFilter -> streamAppender");
+        assertThat((String) made.get("note")).contains("inherits nothing");
+        final PipelineDoc doc = pipelines.pipelineNamed("Acme-V1-Events");
+        assertThat(doc.getParentPipeline()).isNull();
+        assertThat(doc.getPipelineData().getAddedElements()).hasSize(9);
+        assertThat(doc.getPipelineData().getAddedLinks()).hasSize(8);
+        // Validation kept, Events written.
+        assertThat(PipelineDocs.addedProperties(doc)).contains(
+                new PipelineProperty("schemaFilter", "schemaGroup", new PipelinePropertyValue("EVENTS")),
+                new PipelineProperty("streamAppender", "streamType", new PipelinePropertyValue("Events")),
+                new PipelineProperty("translationFilter", "xslt", new PipelinePropertyValue(new DocRef("XSLT",
+                        "x1", "Acme-Events"))),
+                new PipelineProperty("dsParser", "textConverter", new PipelinePropertyValue(new DocRef(
+                        "TextConverter", "tc", "Acme-Splitter"))));
+        // Read as an events pipeline, as one from a template is.
+        assertThat(pipelines.world.pipelineShapes.shape(doc.getUuid()).stage()).isEqualTo("translation");
+    }
+
+    @Test
+    void anEventsPipelineOfItsOwnTakesTheParserTheSampleNeeds() {
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("json lines");
+        pipelines.xslt("x1", "Acme-Events", Map.of());
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"Acme-V1-Events\", \"standalone\": \"events\", "
+                                                                 + "\"set_properties\": \"translationFilter.xslt=x1\"}",
+                PortedToolCalls.answering(Map.of())));
+
+        assertThat((String) made.get("chain")).startsWith("Source -> jsonParser -> ");
+    }
+
+    @Test
+    void anEventsPipelineOfItsOwnIsRefusedWhileATemplateCanBeInherited() {
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("delimited");
+        final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"standalone\": "
+                                 + "\"events\", \"set_properties\": \"translationFilter.xslt=x1\"}";
+        Mockito.when(pipelines.templates.find("translation")).thenReturn(Map.of("candidates", List.of(
+                Map.of("name", "json-in v3", "parser", "JSONParser"))));
+
+        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+                .contains("only for a Stroom with no translation template, and this one has ['json-in v3']")
+                .contains("replace_parser=");
+
+        Mockito.when(pipelines.templates.find("translation")).thenReturn(Map.of("candidates", List.of()));
+        // The converter the Data Splitter needs is given too.
+        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+                .startsWith("set_properties needs ['dsParser.textConverter']");
+        // No sample: no parser to choose.
+        pipelines.feeds.facts.ownRaw = List.of();
+        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+                .contains("reads its parser from the build's sample");
+        assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
+    }
 }
