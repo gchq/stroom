@@ -146,7 +146,7 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     play.findByText("Keep 30 days");
                     // The panel is the ExpressionTreeController's tree under the
-                    // grid (DataRetentionPolicyViewImpl's split panel), with no class of its own
+                    // grid (DataRetentionPolicy's split panel), with no class of its own
                     final Play panel = play.within(play.querySelector(EXPRESSION_PANEL));
                     // Nothing selected -> no term is shown
                     play.expect(panel.queryByText(TextMatch.containingIgnoreCase("Feed"))).toBeNull();

@@ -1,4 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The data retention rules' Rules tab: the list of rules above the selected rule's expression -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client">
@@ -7,4 +8,4 @@
         <g:SimplePanel ui:field="table" styleName="max"/>
         <g:SimplePanel ui:field="expression" styleName="max"/>
     </split:SplitPane>
-</ui:UiBinder> 
+</ui:UiBinder>

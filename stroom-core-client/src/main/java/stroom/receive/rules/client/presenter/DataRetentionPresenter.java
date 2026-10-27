@@ -23,6 +23,7 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.receive.rules.client.component.DataRetentionImpactController;
+import stroom.receive.rules.client.component.DataRetentionPolicyController;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
@@ -51,7 +52,8 @@ public class DataRetentionPresenter
     private static final TabData IMPACT_SUMMARY_TAB = new TabDataImpl("Impact Summary");
     private static final String TAB_LABEL = "Data Retention";
 
-    private final DataRetentionPolicyPresenter retentionPolicyPresenter;
+    private final DataRetentionPolicyController retentionPolicy;
+    private final ControllerLayer retentionPolicyLayer;
     private final Provider<DataRetentionImpactController> dataRetentionImpactProvider;
 
     private final boolean readOnly = true;
@@ -67,12 +69,13 @@ public class DataRetentionPresenter
     @Inject
     public DataRetentionPresenter(final EventBus eventBus,
                                   final DataRetentionView view,
-                                  final DataRetentionPolicyPresenter retentionPolicyPresenter,
+                                  final DataRetentionPolicyController retentionPolicy,
                                   final Provider<DataRetentionImpactController> dataRetentionImpactProvider) {
         super(eventBus, view);
-        own(retentionPolicyPresenter);
-        this.retentionPolicyPresenter = retentionPolicyPresenter;
-        this.retentionPolicyPresenter.setParentPresenter(this);
+        own(retentionPolicy);
+        this.retentionPolicy = retentionPolicy;
+        this.retentionPolicyLayer = new ControllerLayer(retentionPolicy);
+        retentionPolicy.setOnDirtyChange(this::setDirty);
         this.dataRetentionImpactProvider = dataRetentionImpactProvider;
 
 //        settingsPresenter.addDirtyHandler(event -> {
@@ -92,12 +95,12 @@ public class DataRetentionPresenter
 
     private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (RULES_TAB.equals(tab)) {
-            callback.accept(retentionPolicyPresenter);
+            callback.accept(retentionPolicyLayer);
         } else if (IMPACT_SUMMARY_TAB.equals(tab)) {
             final DataRetentionImpactController impact = getOrCreateImpact();
 
             // Get the current state of the rules saved or dirty
-            final DataRetentionRules currentRules = retentionPolicyPresenter.getPolicy();
+            final DataRetentionRules currentRules = retentionPolicy.getPolicy();
             final int currentPolicyHash = currentRules.hashCode();
             if (lastPolicyHash == null || currentPolicyHash != lastPolicyHash) {
                 lastPolicyHash = currentPolicyHash;
@@ -157,7 +160,7 @@ public class DataRetentionPresenter
         return TAB_LABEL;
     }
 
-    void setDirty(final boolean dirty) {
+    private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
 
