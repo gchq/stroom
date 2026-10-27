@@ -450,6 +450,8 @@ public final class AiSuggestions {
             if (!outline.groupedTables.contains(table.getName())) {
                 suggestions.add("Group the " + name + " table by its most useful column");
             }
+            // A value the index doesn't have, from the table's events (a search extraction).
+            suggestions.add("Add a field from the events to the " + name + " table");
         }
         suggestions.add("Explain what this dashboard shows and where its data comes from");
     }

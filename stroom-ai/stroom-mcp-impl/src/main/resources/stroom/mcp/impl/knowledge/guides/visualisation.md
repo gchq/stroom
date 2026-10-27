@@ -206,7 +206,9 @@ period or the node, e.g. "Find the groups among the 42 people messaging each oth
   - Who links the clusters: the report's bridges (see below).
   - Clusters against a known grouping: map the grouping (e.g. a department) to `sourceGroup` and `targetGroup`;
     the report then gives the group most of each cluster is in. A cluster mixing groups, or a group split across
-    clusters, is often the finding.
+    clusters, is often the finding. If the table lacks the grouping but the events have it (e.g. each user's
+    department), add it as a column with a search extraction: `preview_extraction`, then
+    `propose_extraction_pipeline`.
   - How much: `nodeSize` total (messages sent and received), and `directed` for who starts.
   - Narrow the dashboard to a person: a selection filter on their node (see Filtering by a chart).
 - **Line chart, bars of dates, scatter plot**

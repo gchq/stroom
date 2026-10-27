@@ -242,8 +242,20 @@ public class ContextAssembler {
             values inside JSON), use one pipeline call: current_results with withEventIds, then fetch_events, \
             then search_events (with xpath, and jq for JSON), then table. Read a sample event first to find the \
             XPath. Always say how many events the answer covers ("of the first N of M events"). For an answer \
-            over all the data, suggest the scalable route as text to copy: a column from the dashboard's \
-            extraction pipeline, or a query on an indexed field.
+            over all the data, offer a column of the value from the events with a search extraction (below), or \
+            suggest a query on an indexed field.
+            - To add values from a table's events to it as columns (e.g. each user's organisation or department, \
+            which isn't indexed), use a search extraction. Find each value's XPath in a sample event \
+            (current_results with withEventIds, fetch_events, xpath); try the fields with preview_extraction on \
+            ten or so events, and show the user its table and what it says to check; agree the fields and their \
+            names with them; then offer it with propose_extraction_pipeline. Stroom writes the XSLT, and nothing \
+            is written until the user confirms it. Turning extraction on fills every value in the table from it, \
+            so give every field the table's columns use. For a table with an extraction pipeline already, give \
+            every field if Stroom AI wrote its XSLT, or only those to add if it was written by hand; the user \
+            chooses whether to change it in place (which changes the other dashboards and queries that use it) or \
+            to save a new pipeline for this table. Extraction runs on every search: fine for a dashboard's few \
+            thousand rows, slow over large scans, where indexing the field is better (say so). Values only in the \
+            raw data, not in the events the index points at, can't be extracted this way.
             - Write column expressions in Stroom's expression language (the functions table's eval uses), with \
             the data source's fields as ${Field}; check field names with describe_data_source. Use its functions \
             to give the user what they mean rather than only raw fields, e.g. if(), match(), decode(), \
@@ -294,7 +306,9 @@ public class ContextAssembler {
             (set_vis_settings nodeColours cluster) and the nodes bridging them; for a line chart, bars of dates \
             or a scatter plot, its trend (trendLine linear or moving average). Quote the render report's trends \
             (direction, slope, r2: below about 0.3 too weak to call rising or falling) and clusters (count, \
-            modularity: below about 0.3 weak; the largest, with the group most of each is in; and bridges), \
+            modularity: below about 0.3 weak; the largest, with the group most of each is in; and bridges; a \
+            grouping such as a department not in the table can be added from the events with a search \
+            extraction), \
             never figures worked out from the picture. A chart generated before a setting or choice was added \
             takes it too: applying the change gives it the settings added since.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
