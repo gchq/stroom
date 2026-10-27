@@ -347,6 +347,42 @@ class TestPipelineWrites {
     }
 
     @Test
+    void xmlFragmentsUnderAnXmlParserAreToldToReplaceIt() {
+        // Seen in testing: the XMLParser template taken for XML fragments, without replace_parser, kept only each
+        // record's <System> block, so no rule of the translation matched.
+        final Layout merged = Layout.of(List.of(layer("t", PipelineLayers.layer("t").chain("xmlParser",
+                "XMLParser", "translationFilter", "XSLTFilter").data())));
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("xml fragments");
+
+        assertThatThrownBy(() -> writes.parserReadsSample(BUILD, merged, null, false))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("is XML fragments")
+                .hasMessageContaining("replace_parser='XMLFragmentParser'");
+        writes.parserReadsSample(BUILD, merged, "XMLFragmentParser", false);
+    }
+
+    @Test
+    void anExistingFeedsSurveyedFormatIsCheckedToo() {
+        final Layout merged = Layout.of(List.of(layer("t", PipelineLayers.layer("t").chain("xmlParser",
+                "XMLParser", "translationFilter", "XSLTFilter").data())));
+        final FakeBuildFacts facts = pipelines.feeds.facts;
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"));
+        facts.sources = List.of("ACME");
+        final Map<String, Object> survey = new LinkedHashMap<>();
+        survey.put("streams", List.of(5L));
+        survey.put("sample", "<Event><System/></Event>\n<Event><System/></Event>\n");
+        survey.put("format", "xml fragments");
+        facts.survey = survey;
+        facts.profiler = text -> FakeBuildFacts.profileOf("xml fragments");
+
+        assertThatThrownBy(() -> writes.parserReadsSample(BUILD, merged, null, false))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("(stream 5 of feed ACME) is XML fragments")
+                .hasMessageContaining("replace_parser='XMLFragmentParser'");
+    }
+
+    @Test
     void theTemplateMayBeAName() {
         pipelines.template(PipelineWorld.TEMPLATE_UUID, "Event Data (Text)", PipelineLayers.layer("t"));
 
