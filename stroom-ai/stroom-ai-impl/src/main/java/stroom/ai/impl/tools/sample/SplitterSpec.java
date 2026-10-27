@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.sample;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,17 @@ import java.util.Objects;
 ///                        `#Fields:` (W3C) or `#fields` (Zeek); or null.
 /// @param directives      delimited: other directive lines whose value every record after them carries, as a
 ///                        field named as in the file.
+/// @param escape          delimited, with a header line or column names: the character that escapes the delimiter
+///                        or the quote character after it (`\` in `a\,b`), taken out of the value; or null.
+/// @param spacedValues    key_value, without quote: values may hold the delimiter unquoted (`zones=Zone 1, Zone 2
+///                        user=An end user`), so the pairs are read from the end, as a key never holds it.
+/// @param catchAll        Not delimited: a record the spec doesn't match is kept whole as the field
+///                        [#UNPARSED], and for `fields` the text no field took, rather than reported as an error
+///                        and lost.
+/// @param blankLineRecords Not delimited, without record_start or record_end: a record is a block of lines ended by
+///                        a blank line, the spec applied to the whole block.
+/// @param fields          fields: each field's name and the regex that finds it anywhere in the record (its first
+///                        group, or the whole match), in any order, and each only when present.
 public record SplitterSpec(String kind,
                            String delimiter,
                            boolean headerLine,
@@ -67,10 +79,17 @@ public record SplitterSpec(String kind,
                            String recordStart,
                            String commentPrefix,
                            String headerDirective,
-                           List<String> directives) {
+                           List<String> directives,
+                           String escape,
+                           boolean spacedValues,
+                           boolean catchAll,
+                           boolean blankLineRecords,
+                           Map<String, String> fields) {
 
     /// The kinds of spec.
-    public static final List<String> KINDS = List.of("delimited", "regex", "key_value", "syslog", "cef");
+    public static final List<String> KINDS = List.of("delimited", "regex", "key_value", "syslog", "cef", "fields");
+    /// The field catch_all keeps what the spec didn't parse in.
+    public static final String UNPARSED = "unparsed";
 
     /// Checks the spec is consistent, as the Python model's validator does.
     ///
@@ -87,6 +106,12 @@ public record SplitterSpec(String kind,
         rfc = Objects.requireNonNullElse(rfc, "rfc3164");
         bodyField = Objects.requireNonNullElse(bodyField, "message");
         directives = List.copyOf(Objects.requireNonNullElse(directives, List.of()));
+        fields = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fields, Map.of())));
+        if (escape != null && escape.isEmpty()) {
+            escape = null;
+        }
+        checkAdditions(kind, escape, spacedValues, catchAll, blankLineRecords, fields, quote, commentPrefix,
+                recordStart, recordEnd, delimiter);
         if ("regex".equals(kind) && (pattern == null || pattern.isEmpty() || names.isEmpty())) {
             throw new IllegalArgumentException("regex needs pattern and names");
         }
@@ -117,6 +142,49 @@ public record SplitterSpec(String kind,
         }
     }
 
+    // The checks of what the Java port adds to the Python model: escape, spaced_values, catch_all,
+    // blank_line_records and the fields kind.
+    private static void checkAdditions(final String kind,
+                                       final String escape,
+                                       final boolean spacedValues,
+                                       final boolean catchAll,
+                                       final boolean blankLineRecords,
+                                       final Map<String, String> fields,
+                                       final String quote,
+                                       final String commentPrefix,
+                                       final String recordStart,
+                                       final String recordEnd,
+                                       final String delimiter) {
+        final boolean delimited = "delimited".equals(kind);
+        if (escape != null && (!delimited || commentPrefix != null)) {
+            throw new IllegalArgumentException("escape is for delimited text (without comment_prefix)");
+        }
+        if (escape != null && (escape.equals(delimiter) || escape.equals(quote))) {
+            throw new IllegalArgumentException("escape must differ from the delimiter and the quote");
+        }
+        if (spacedValues && (!"key_value".equals(kind) || quote != null)) {
+            throw new IllegalArgumentException("spaced_values is for key_value without quote: quoted values need "
+                                               + "no reading from the end");
+        }
+        if (catchAll && delimited) {
+            throw new IllegalArgumentException("catch_all is for the kinds that can fail to match a record: a "
+                                               + "delimited record always splits");
+        }
+        if (blankLineRecords && (delimited || recordStart != null || recordEnd != null)) {
+            throw new IllegalArgumentException("blank_line_records is for the kinds other than delimited, without "
+                                               + "record_start or record_end");
+        }
+        if ("fields".equals(kind) != !fields.isEmpty()) {
+            throw new IllegalArgumentException("fields (a name and a regex for each field) is for the fields kind, "
+                                               + "which needs them");
+        }
+        fields.forEach((name, regex) -> {
+            if (name == null || name.isBlank() || regex == null || regex.isEmpty()) {
+                throw new IllegalArgumentException("each of fields needs a name and a regex");
+            }
+        });
+    }
+
     /// @param kind The kind of spec: one of [#KINDS].
     /// @return A builder of a spec of that kind, with the Python model's defaults.
     public static Builder builder(final String kind) {
@@ -127,8 +195,8 @@ public record SplitterSpec(String kind,
     ///
     /// @param json The spec as JSON: `kind`, and any of `delimiter`, `header` (true or false, or the column
     ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `body` (a spec), `body_field`,
-    ///             `quoted_newlines`, `record_end`, `record_start`, `comment_prefix`, `header_directive` and
-    ///             `directives`.
+    ///             `quoted_newlines`, `record_end`, `record_start`, `comment_prefix`, `header_directive`,
+    ///             `directives`, `escape`, `spaced_values`, `catch_all`, `blank_line_records` and `fields`.
     /// @return The spec.
     /// @throws IllegalArgumentException if it isn't a consistent spec.
     @SuppressWarnings("unchecked")
@@ -159,6 +227,17 @@ public record SplitterSpec(String kind,
         builder.commentPrefix = (String) json.get("comment_prefix");
         builder.headerDirective = (String) json.get("header_directive");
         builder.directives = (List<String>) json.get("directives");
+        builder.escape = (String) json.get("escape");
+        builder.spacedValues = Boolean.TRUE.equals(json.get("spaced_values"));
+        builder.catchAll = Boolean.TRUE.equals(json.get("catch_all"));
+        builder.blankLineRecords = Boolean.TRUE.equals(json.get("blank_line_records"));
+        if (json.get("fields") instanceof final Map<?, ?> fields) {
+            final Map<String, String> named = new LinkedHashMap<>();
+            fields.forEach((name, regex) -> named.put(String.valueOf(name), regex == null
+                    ? null
+                    : String.valueOf(regex)));
+            builder.fields = named;
+        }
         return builder.build();
     }
 
@@ -181,6 +260,11 @@ public record SplitterSpec(String kind,
         builder.commentPrefix = commentPrefix;
         builder.headerDirective = headerDirective;
         builder.directives = directives;
+        builder.escape = escape;
+        builder.spacedValues = spacedValues;
+        builder.catchAll = catchAll;
+        builder.blankLineRecords = blankLineRecords;
+        builder.fields = fields;
         return builder;
     }
 
@@ -214,6 +298,11 @@ public record SplitterSpec(String kind,
         putIf(map, "comment_prefix", commentPrefix, commentPrefix != null);
         putIf(map, "header_directive", headerDirective, headerDirective != null);
         putIf(map, "directives", directives, !directives.isEmpty());
+        putIf(map, "escape", escape, escape != null);
+        putIf(map, "spaced_values", spacedValues, spacedValues);
+        putIf(map, "catch_all", catchAll, catchAll);
+        putIf(map, "blank_line_records", blankLineRecords, blankLineRecords);
+        putIf(map, "fields", fields, !fields.isEmpty());
         return map;
     }
 
@@ -248,6 +337,11 @@ public record SplitterSpec(String kind,
         private String commentPrefix;
         private String headerDirective;
         private List<String> directives = List.of();
+        private String escape;
+        private boolean spacedValues;
+        private boolean catchAll;
+        private boolean blankLineRecords;
+        private Map<String, String> fields = Map.of();
 
         private Builder(final String kind) {
             this.kind = kind;
@@ -367,12 +461,47 @@ public record SplitterSpec(String kind,
             return this;
         }
 
+        /// @param escape The character that escapes the delimiter or quote after it, or null.
+        /// @return This builder.
+        public Builder escape(final String escape) {
+            this.escape = escape;
+            return this;
+        }
+
+        /// @param spacedValues True if key=value values may hold the delimiter unquoted.
+        /// @return This builder.
+        public Builder spacedValues(final boolean spacedValues) {
+            this.spacedValues = spacedValues;
+            return this;
+        }
+
+        /// @param catchAll True to keep what the spec doesn't parse as [#UNPARSED].
+        /// @return This builder.
+        public Builder catchAll(final boolean catchAll) {
+            this.catchAll = catchAll;
+            return this;
+        }
+
+        /// @param blankLineRecords True if a record is a block of lines ended by a blank line.
+        /// @return This builder.
+        public Builder blankLineRecords(final boolean blankLineRecords) {
+            this.blankLineRecords = blankLineRecords;
+            return this;
+        }
+
+        /// @param fields Each field's name and the regex that finds it, for the fields kind.
+        /// @return This builder.
+        public Builder fields(final Map<String, String> fields) {
+            this.fields = fields;
+            return this;
+        }
+
         /// @return The spec.
         /// @throws IllegalArgumentException if it isn't consistent.
         public SplitterSpec build() {
             return new SplitterSpec(kind, delimiter, headerLine, columns, quote, pattern, names, pairSeparator, rfc,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
-                    directives);
+                    directives, escape, spacedValues, catchAll, blankLineRecords, fields);
         }
     }
 }

@@ -100,6 +100,41 @@ class TestGetFieldConventionsTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void theBackendIsNotAskedWhileTheBuildIsOnItsEventsPipeline() {
+        // Seen in testing: onboarding a CSV source, the agent's first question was the indexing backend.
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
+                "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+        final ToolCallContext context = IndexingWorld.noForms();
+        // A new source's build, nothing made yet: its next step is the feed.
+        world.processing.feeds.plan.rememberBuild(context, "onboard-acme");
+
+        final Map<String, Object> result = call("{}", context);
+
+        assertThat(result.get("status")).isEqualTo("not_yet");
+        assertThat(((Map<String, Object>) result.get("next")).get("step")).isEqualTo("feed");
+        assertThat(String.valueOf(result.get("hint"))).contains("Don't ask the user about indexing now");
+        assertThat(result).doesNotContainKey("question");
+        // The user has chosen the backend already: it goes on.
+        assertThat(call("{\"backend\": \"lucene\"}", context).get("status")).isNotEqualTo("not_yet");
+    }
+
+    @Test
+    void withNoBuildTheBackendIsAskedAsBefore() {
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
+                "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+
+        assertThat(call("{}", IndexingWorld.noForms()).get("question"))
+                .isEqualTo("Which backend should the new index use?");
+    }
+
+    @Test
     void followingAnExistingIndexChosenInTheFormIsRemembered() {
         world.elasticIndex("k", "Keycloak", "ecs-keycloak-v1", null, false);
         final Map<String, Object> chosen = call("{\"backend\": \"elasticsearch\"}", world.forms(question ->

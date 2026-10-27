@@ -24,11 +24,50 @@ read the client's files, and refuses a path with that instruction.
 | Records ending at a marked line (Kubernetes CRI) | `{"kind": "regex", "record_end": "\S+ (?:stdout\|stderr) F ", "pattern": "(?s)^(\S+) (stdout\|stderr) [PF] (.*)$", "names": ["time", "stream", "message"]}` |
 | Quoted values holding new lines | `{"kind": "delimited", "delimiter": ",", "header": true, "quote": "\"", "quoted_newlines": true}` |
 | A separator of several characters | `{"kind": "delimited", "delimiter": " ~ ", "header": ["time", "user", "action"]}` |
+| Escaped delimiters and quotes (`a\,b`, `"say \"hi\""`) | `{"kind": "delimited", "delimiter": ",", "header": true, "quote": "\"", "escape": "\\"}` |
+| key=value, values holding spaces unquoted | `{"kind": "key_value", "delimiter": " ", "spaced_values": true}` (inferred when the sample needs it) |
+| Labelled fields anywhere, in any order | `{"kind": "fields", "fields": {"user": "user=(\\S+)", "src": "src=(\\S+)"}}` |
+| Records separated by blank lines | `{"kind": "key_value", "delimiter": "\n", "blank_line_records": true}` |
+| Keep a record the spec doesn't match | add `"catch_all": true` (not delimited): it is kept whole as the field `unparsed` |
 | Syslog, then delimited columns (Palo Alto) | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "delimited", "delimiter": ",", "header": ["future_use1", "receive_time", ...]}}` |
 | Columns named by a directive line (W3C, IIS, Blue Coat, Zeek) | `{"kind": "delimited", "delimiter": " ", "header": true, "quote": "\"", "comment_prefix": "#", "header_directive": "#Fields:", "directives": ["#Software:", "#Remark:"]}` |
 
 `body` parses one field further (syslog's `message`, or a regex group) and adds its fields; the recipes below
 are what it writes.
+
+## Stroom's own parser checks it
+
+`build_data_splitter` also runs the converter through Stroom's own Data Splitter parser on the sample and returns
+`stroom_check`: the errors Stroom reports (with `error_hints`), and any record it writes differently from the dry
+run. Processing does what Stroom's parser does, so fix the spec until `stroom_check` says `matches`; a converter
+Stroom loses records with is not saved. Stroom's errors name the converter's part by its id: `header`, `record`,
+`fields` (a record's expressions), `blank_line`, `body`, `unparsed`.
+
+What Stroom does that is easy to miss (each seen in Stroom):
+
+* A cell from a split loses the white space round it, inside quotes too; a cell past the header's last column is
+  written with no name.
+* Blank lines are passed over by the converter `build_data_splitter` writes (otherwise each is a record of empty
+  fields, with no error).
+* Lines ended by a carriage return alone: Stroom takes carriage returns out, so the stream is one line and gives no
+  records, with no error. `build_data_splitter` refuses to save it: the source ends its lines with a new line, or a
+  `FindReplaceFilter` before the parser turns them into new lines.
+* A key=value value holding the delimiter unquoted (`zones=Zone 1`) is cut at it and the rest reported:
+  `spaced_values` reads the pairs from the end (Data Splitter's `reverse`), as a key never holds the delimiter.
+* `ignoreErrors` is never added (save_text_converter refuses it): it hides the errors for text no expression
+  matches, which is then lost without a word. `catch_all` keeps such records instead, as `unparsed`, for the
+  mapping to keep as Unknown and review_coverage to find; agree it with the user.
+
+## Long records: the read buffer
+
+A Data Splitter reads its input through a buffer of `bufferSize` characters, 20,000 by default: a record longer
+than that is lost, and processing reports that a top-level expression "matched too much content and exhausted the
+buffer". The buffer is an attribute of the converter's root element, `<dataSplitter ... version="3.0" bufferSize="100000">`
+(20,000 to 1,000,000,000), not a property of the DSParser element. `build_data_splitter` sets it from the sample's
+longest record (a record over several lines counts whole), at four times that, when the default leaves too little room. When records the sample didn't hold
+are lost for their length, build the converter again with `buffer_size` (about four times the longest record)
+and replace the saved one (`save_text_converter` with its `uuid`), then step and process those streams again.
+Tell the user the size chosen and why.
 
 ## Delimited with a header row
 
@@ -55,9 +94,10 @@ are what it writes.
 
 Change `delimiter` for tab (`\t`), pipe or semicolon data. Quoted fields need
 `<split delimiter="," containerStart="&quot;" containerEnd="&quot;">`. A doubled quote inside a quoted value
-(`"Said ""bye"" and left"`) stays doubled: Data Splitter has no way to make it one (its `escape` attribute breaks
-the quoting), so the mapping reads such a field with `transform: unescape_quotes`; the draft sets it where the
-sample has them.
+(`"Said ""bye"" and left"`) stays doubled: Data Splitter has no way to make it one (its `escape` attribute is for
+an escape character before the quote, `\"`, and breaks quoting by doubling), so the mapping reads such a field with
+`transform: unescape_quotes`; the draft sets it where the sample has them. An escape character (`a\,b`) is the
+spec's `escape`: the converter's split then takes it out of each cell (`$2`).
 
 ## Records over several lines
 

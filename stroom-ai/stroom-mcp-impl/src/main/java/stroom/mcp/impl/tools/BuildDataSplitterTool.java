@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -31,8 +32,10 @@ import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.shared.AiToolCategory;
+import stroom.pipeline.xml.converter.ds3.RootFactory;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
@@ -41,8 +44,14 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.TreeSet;
 
 /// `build_data_splitter` - writes a Data Splitter (text converter) from the sample: its format profiled, the spec
 /// inferred unless one is given, and the spec run on the sample, so the records and field names are seen before
@@ -57,8 +66,11 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     static final String SAVE_AS_ARG = "save_as";
     static final String BUILD_ARG = "build";
     static final String STREAM_IDS_ARG = "stream_ids";
+    static final String BUFFER_SIZE_ARG = "buffer_size";
 
     private static final String WHERE = "build_data_splitter save_as";
+    // The most differences between the dry run and Stroom's parser shown.
+    private static final int MAX_DIFFERENCES = 5;
 
     private final SampleStreamTexts sampleStreamTexts;
     private final SampleProfiling sampleProfiling;
@@ -127,8 +139,10 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                              + "key=value pairs, syslog RFC 5424 or 3164 with the message parsed further) and the "
                              + "spec inferred, unless one is given; the spec is run on the sample locally and the "
                              + "records it produces, the lines that match nothing and the field names a mapping may "
-                             + "use come back (give the same spec to build_translation_xslt as splitter). JSON and "
-                             + "XML need no converter. Saves nothing: save_text_converter saves it.")
+                             + "use come back (give the same spec to build_translation_xslt as splitter). The "
+                             + "converter is also run by Stroom's own parser on the sample (stroom_check): its errors "
+                             + "and any record it writes differently are what processing would do. JSON and XML need "
+                             + "no converter. Saves nothing unless save_as is given.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(SAMPLE_ARG, "The raw sample text (every line of a file). The spec is "
                                                        + "inferred from it when none is given, and run on it, so "
@@ -140,7 +154,13 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                 + "[names]); {'kind': 'key_value', 'delimiter': ' ', 'pair_separator': '=', "
                                 + "'quote': '\"'}; {'kind': 'regex', 'pattern': '^(\\S+) (.*)$', 'names': ['time', "
                                 + "'message']}; {'kind': 'syslog', 'rfc': 'rfc3164', 'body': {'kind': "
-                                + "'key_value'}}."))
+                                + "'key_value'}}; {'kind': 'fields', 'fields': {'user': 'user=(\\S+)', 'src': "
+                                + "'src=(\\S+)'}} (each field found anywhere, in any order). Options: escape: '\\\\' "
+                                + "(delimited: a character escaping the delimiter or quote); spaced_values: true "
+                                + "(key_value: values hold spaces unquoted, read from the end; inferred when needed); "
+                                + "blank_line_records: true (a record is a block of lines ended by a blank line); "
+                                + "catch_all: true (a record the spec doesn't match is kept whole as 'unparsed' "
+                                + "instead of an error and lost: agree it with the user)."))
                         .addStringProperty(SAVE_AS_ARG, "Also save the converter in the build under this document "
                                                         + "name (the build this session is on, or `build`), when "
                                                         + "every line parsed.")
@@ -148,6 +168,15 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                                       + "on.")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(
                                 DraftTranslationMappingTool.SAMPLE_STREAMS))
+                        .addIntegerProperty(BUFFER_SIZE_ARG, "The Data Splitter's read buffer (bufferSize), in "
+                                                             + "characters: a record longer than it matches nothing "
+                                                             + "and is lost. Stroom's default is "
+                                                             + RootFactory.DEFAULT_BUFFER_SIZE + "; set from the "
+                                                             + "sample's longest record when that needs more. Give it "
+                                                             + "when the feed holds longer records than the sample "
+                                                             + "(e.g. records lost in processing, or a line the user "
+                                                             + "says is longer): about four times the longest, at "
+                                                             + "most " + RootFactory.MAX_BUFFER_SIZE + ".")
                         .build())
                 .build();
     }
@@ -194,21 +223,46 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         } else {
             chosen = given(spec, sample);
         }
+        final OptionalInt bufferSize = bufferSize(call, chosen, sample, others);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("spec", chosen.toMap());
         result.put("inferred", spec == null);
-        result.put("converter", SplitterXml.generateSplitter(chosen));
+        final String converter = SplitterXml.converter(chosen);
+        result.put("converter", bufferSize.isPresent()
+                ? SplitterXml.withBufferSize(converter, bufferSize.getAsInt())
+                : converter);
+        bufferSize.ifPresent(size -> result.put("buffer_size", size));
         result.put("converter_type", "DATA_SPLITTER");
         if (profiled != null) {
             result.put("format", profiled.get("format"));
         }
+        final List<String> texts = new ArrayList<>();
         if (sample != null) {
-            dryRun(result, chosen, sample, others);
+            texts.add(sample);
+            texts.addAll(others);
         }
+        Map<String, Object> stroomCheck = null;
+        final Optional<String> carriageReturns = carriageReturnsOnly(texts);
+        if (!texts.isEmpty()) {
+            final List<SplitterDryRun.DryRun> runs = dryRun(result, chosen, texts);
+            stroomCheck = stroomCheck((String) result.get("converter"), texts, runs);
+            result.put("stroom_check", stroomCheck);
+            if (!Boolean.TRUE.equals(stroomCheck.get("matches"))) {
+                result.put("hint", "Stroom's own parser doesn't agree with the dry run (stroom_check): "
+                                   + stroomCheck.get("summary") + " Processing would do what Stroom's parser does: fix "
+                                   + "the spec until stroom_check matches. " + result.get("hint"));
+            }
+        }
+        carriageReturns.ifPresent(note -> result.put("line_endings", note));
         if (saveAs != null) {
             if (result.get("unmatched_count") instanceof final Integer unmatched && unmatched > 0) {
                 result.put("not_saved", unmatched + " line(s) match nothing: fix the spec (or confirm they are "
                                         + "noise) before saving");
+            } else if (carriageReturns.isPresent()) {
+                result.put("not_saved", carriageReturns.get());
+            } else if (stroomCheck != null && Boolean.TRUE.equals(stroomCheck.get("loses_records"))) {
+                result.put("not_saved", "Stroom's own parser " + stroomCheck.get("summary") + " Fix the spec first "
+                                        + "(stroom_check).");
             } else {
                 result.put("saved", translationDocs.createTextConverter(context, plan.resolveBuild(context,
                         stringArg(call, BUILD_ARG), WHERE), saveAs, "DATA_SPLITTER", (String) result.get("converter")));
@@ -217,20 +271,46 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         return result;
     }
 
+    // The Data Splitter's read buffer: the one given, else enough for the sample's longest record (its longest line,
+    // or a record over several lines whole), else Stroom's default (empty). Seen in testing: CSV lines of about
+    // 20,000 characters lost in processing, and the agent, told the DSParser element had no buffer property,
+    // couldn't go on.
+    private OptionalInt bufferSize(final ToolCall call,
+                                   final SplitterSpec spec,
+                                   final String sample,
+                                   final List<String> others) {
+        final Integer given = intArg(call, BUFFER_SIZE_ARG);
+        if (given != null) {
+            if (given < RootFactory.MIN_BUFFER_SIZE || given > RootFactory.MAX_BUFFER_SIZE) {
+                throw new ToolRefusal(BUFFER_SIZE_ARG + " is from " + RootFactory.MIN_BUFFER_SIZE + " (Stroom's "
+                                      + "default) to " + RootFactory.MAX_BUFFER_SIZE + " characters, not " + given);
+            }
+            return OptionalInt.of(given);
+        }
+        final List<String> texts = new ArrayList<>(others);
+        if (sample != null) {
+            texts.add(sample);
+        }
+        int longest = 0;
+        for (final String text : texts) {
+            longest = Math.max(longest, Math.max(SplitterXml.longestLine(text),
+                    SplitterDryRun.longestRecord(spec, text)));
+        }
+        return SplitterXml.bufferSizeFor(longest);
+    }
+
     // The spec run on the sample: every sample stream must parse, not just the first.
-    private static void dryRun(final Map<String, Object> result,
-                               final SplitterSpec chosen,
-                               final String sample,
-                               final List<String> others) {
+    private static List<SplitterDryRun.DryRun> dryRun(final Map<String, Object> result,
+                                                      final SplitterSpec chosen,
+                                                      final List<String> texts) {
         final List<Map<String, String>> records = new ArrayList<>();
         final List<String> unmatched = new ArrayList<>();
-        final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(chosen, sample);
-        records.addAll(run.records());
-        unmatched.addAll(run.unmatchedLines());
-        for (final String text : others) {
-            final SplitterDryRun.DryRun more = SplitterDryRun.dryRun(chosen, text);
-            records.addAll(more.records());
-            unmatched.addAll(more.unmatchedLines());
+        final List<SplitterDryRun.DryRun> runs = new ArrayList<>();
+        for (final String text : texts) {
+            final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(chosen, text);
+            runs.add(run);
+            records.addAll(run.records());
+            unmatched.addAll(run.unmatchedLines());
         }
         result.put("records", records.size());
         result.put("fields", SampleProfiler.inventory(records));
@@ -247,6 +327,115 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                + "splitter; save_text_converter saves the converter (or call again with "
                                + "save_as=<name>).");
         }
+        return runs;
+    }
+
+    // The converter run by Stroom's own parser on each sample text, beside the dry run: what it reports, and the
+    // records it writes differently. Seen in testing: the dry run parsed lines Stroom lost (over its read buffer,
+    // a key=value value holding a space), and kept white space Stroom trims.
+    private static Map<String, Object> stroomCheck(final String converter,
+                                                   final List<String> texts,
+                                                   final List<SplitterDryRun.DryRun> runs) {
+        final List<String> errors = new ArrayList<>();
+        final List<Map<String, Object>> differences = new ArrayList<>();
+        final List<String> counts = new ArrayList<>();
+        int records = 0;
+        for (int i = 0; i < texts.size(); i++) {
+            final String which = texts.size() == 1
+                    ? ""
+                    : "sample " + (i + 1) + ": ";
+            final StroomSplitterRun.Result run = StroomSplitterRun.run(converter, texts.get(i));
+            records += run.records().size();
+            run.errors().forEach(error -> errors.add(which + error));
+            final List<Map<String, String>> dry = runs.get(i).records();
+            // A dry run of a long sample reads records spread over it: only a whole one is compared record by
+            // record.
+            if (dry.size() >= SplitterDryRun.MAX_RECORDS) {
+                continue;
+            }
+            if (run.records().size() != dry.size()) {
+                counts.add(which + "Stroom wrote " + run.records().size() + " record(s) where the dry run found "
+                           + dry.size());
+                continue;
+            }
+            for (int n = 0; n < dry.size() && differences.size() < MAX_DIFFERENCES; n++) {
+                final Map<String, Object> difference = difference(dry.get(n), run.records().get(n));
+                if (!difference.isEmpty()) {
+                    difference.put("record", which + (n + 1));
+                    differences.add(difference);
+                }
+            }
+        }
+        final boolean losesRecords = !errors.isEmpty() || !counts.isEmpty();
+        final Map<String, Object> check = new LinkedHashMap<>();
+        check.put("matches", !losesRecords && differences.isEmpty());
+        check.put("records", records);
+        if (!errors.isEmpty()) {
+            check.put("errors", errors.subList(0, Math.min(10, errors.size())));
+            check.put("error_hints", errorHints(errors));
+        }
+        if (!counts.isEmpty()) {
+            check.put("record_counts", counts);
+        }
+        if (!differences.isEmpty()) {
+            check.put("differences", differences);
+        }
+        check.put("loses_records", losesRecords);
+        check.put("summary", losesRecords
+                ? (errors.isEmpty()
+                        ? String.join("; ", counts) + "."
+                        : "reports " + errors.size() + " error(s), e.g. " + errors.getFirst() + ".")
+                : differences.isEmpty()
+                        ? "writes the same records."
+                        : "writes " + differences.size() + " record(s) differently, e.g. record "
+                          + differences.getFirst().get("record") + ".");
+        return check;
+    }
+
+    // What the errors mean, as stepping's triage says it (the bundled error rules), each said once.
+    private static List<String> errorHints(final List<String> errors) {
+        final ErrorTriage triage = ErrorTriage.bundled();
+        final Set<String> hints = new LinkedHashSet<>();
+        for (final String error : errors) {
+            final ErrorTriage.Classified classified = triage.classify("ERROR", "dsParser", true, error);
+            if (ErrorTriage.BLOCKING.equals(classified.classification())) {
+                hints.add(classified.reason());
+            }
+        }
+        return List.copyOf(hints);
+    }
+
+    // The fields two readings of a record give differently: each side's value of those fields.
+    private static Map<String, Object> difference(final Map<String, String> dry, final Map<String, String> stroom) {
+        final Set<String> names = new TreeSet<>(dry.keySet());
+        names.addAll(stroom.keySet());
+        final Map<String, Object> dryValues = new LinkedHashMap<>();
+        final Map<String, Object> stroomValues = new LinkedHashMap<>();
+        for (final String name : names) {
+            if (!Objects.equals(dry.get(name), stroom.get(name))) {
+                dryValues.put(name, dry.get(name));
+                stroomValues.put(name, stroom.get(name));
+            }
+        }
+        final Map<String, Object> difference = new LinkedHashMap<>();
+        if (!dryValues.isEmpty()) {
+            difference.put("dry_run", dryValues);
+            difference.put("stroom", stroomValues);
+        }
+        return difference;
+    }
+
+    // Lines ended by a carriage return alone: Stroom's Data Splitter takes carriage returns out, so such a
+    // stream is one line to it, and writes no records, with no error (seen in Stroom).
+    private static Optional<String> carriageReturnsOnly(final List<String> texts) {
+        return texts.stream()
+                .filter(text -> text.indexOf('\r') >= 0 && text.indexOf('\n') < 0)
+                .findFirst()
+                .map(text -> "The sample's lines end with a carriage return alone (no new line). Stroom's Data "
+                             + "Splitter takes carriage returns out, so it would read each stream as one line and "
+                             + "write no records, with no error. Ask the user to have the source end lines with a "
+                             + "new line, or put a FindReplaceFilter before the parser in the pipeline (find '\\r', "
+                             + "regex true, replacement a new line); not saved until then.");
     }
 
     // A sample no spec is inferred for: XML fragments take their wrapper; JSON and XML need no converter.

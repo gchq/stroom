@@ -86,6 +86,9 @@ public class TranslationDocs {
 
     private static final Pattern FRAGMENT_ENTITY = Pattern.compile(
             "<!ENTITY\\s+fragment\\s+SYSTEM\\s+[\"']fragment[\"']");
+
+    private static final Pattern IGNORE_ERRORS = Pattern.compile("\\bignoreErrors\\s*=\\s*[\"']\\s*true",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern JSON = Pattern.compile("<\\s*json", Pattern.CASE_INSENSITIVE);
 
     private final WriteGuard guard;
@@ -153,7 +156,7 @@ public class TranslationDocs {
                                                    final String name,
                                                    final String converterType,
                                                    final String code) {
-        checkConverter(converterType, code);
+        checkConverter(converterType, code, null);
         final TextConverterType type = converterType(converterType);
         final TextConverterDoc saved = guard.createFilled(TextConverterDoc.TYPE, name, build, ref ->
                 write(TextConverterDoc.TYPE, read(ref, TextConverterDoc.class).copy()
@@ -178,7 +181,7 @@ public class TranslationDocs {
         final TextConverterDoc doc = read(new DocRef(TextConverterDoc.TYPE, uuid), TextConverterDoc.class);
         checkConverter(doc.getConverterType() == null
                 ? TextConverterType.DATA_SPLITTER.name()
-                : doc.getConverterType().name(), code);
+                : doc.getConverterType().name(), code, doc.getData());
         final DocRef ref = new DocRef(TextConverterDoc.TYPE, uuid, doc.getName());
         guard.checkManaged(context.session(), ref);
         checkVersion(doc, version);
@@ -186,13 +189,26 @@ public class TranslationDocs {
         return planProvider.get().nextFor(context, ref, saved);
     }
 
-    /// A Data Splitter is a `<dataSplitter>` document. JSON needs no text converter at all: the JSONParser element
-    /// of a JSON translation template parses it, and a converter holding a `<jsonParser>` element parses nothing.
+    /// [#checkConverter(String, String, String)] for a new converter.
     ///
     /// @param converterType The converter's type.
     /// @param code          Its definition.
     /// @throws ToolRefusal if the code isn't a converter of that type.
     static void checkConverter(final String converterType, final String code) {
+        checkConverter(converterType, code, null);
+    }
+
+    /// A Data Splitter is a `<dataSplitter>` document. JSON needs no text converter at all: the JSONParser element
+    /// of a JSON translation template parses it, and a converter holding a `<jsonParser>` element parses nothing.
+    /// A Data Splitter may not add `ignoreErrors`: it hides the errors Stroom raises for text no expression
+    /// matches, and that text is lost without a word (validation is never weakened). One the converter replaced
+    /// already had is kept.
+    ///
+    /// @param converterType The converter's type.
+    /// @param code          Its definition.
+    /// @param previous      The definition it replaces, or null.
+    /// @throws ToolRefusal if the code isn't a converter of that type.
+    static void checkConverter(final String converterType, final String code, final String previous) {
         final String text = NullSafe.string(code);
         if (TextConverterType.XML_FRAGMENT.name().equals(converterType)) {
             if (!FRAGMENT_ENTITY.matcher(text).find() || !text.contains("&fragment;")) {
@@ -224,6 +240,13 @@ public class TranslationDocs {
         if (!"dataSplitter".equals(local)) {
             throw new ToolRefusal("Not saved: a DATA_SPLITTER converter's root element is <dataSplitter "
                                   + "xmlns=\"data-splitter:3\">, not <" + local + "> (stroom://guide/data-splitter)");
+        }
+        if (IGNORE_ERRORS.matcher(text).find() && !IGNORE_ERRORS.matcher(NullSafe.string(previous)).find()) {
+            throw new ToolRefusal("Not saved: ignoreErrors hides the errors Stroom raises for text the Data "
+                                  + "Splitter's expressions don't match, so that text would be lost without a word. "
+                                  + "Match it instead: catch_all in build_data_splitter's spec keeps a record the "
+                                  + "spec doesn't match whole, as 'unparsed' (with the user's agreement), and a "
+                                  + "regex with no data element takes text that is to be passed over.");
         }
     }
 
