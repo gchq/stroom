@@ -17,6 +17,8 @@
 package stroom.search.elastic.search;
 
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.search.elastic.ElasticClientCache;
@@ -318,7 +320,37 @@ class TestElasticSearchProvider {
                         tuple("Constant", FieldType.KEYWORD, true),
                         tuple("Pattern", FieldType.KEYWORD, true),
                         tuple("Vector", FieldType.DENSE_VECTOR, true),
-                        tuple("Version", FieldType.INTEGER, true));
+                        tuple("Version", FieldType.KEYWORD, true));
+    }
+
+    @Test
+    void testGetDataSourceFields_versionComparedLikeANumber() throws IOException {
+        // A version is text, but can be compared like a number, as Elasticsearch orders versions by precedence
+        givenMapping("""
+                {
+                  "Version": { "type": "version" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::getConditionSet)
+                .containsExactly(tuple("Version", FieldType.KEYWORD, ConditionSet.ELASTIC_NUMERIC));
+    }
+
+    @Test
+    void testGetDataSourceFields_booleanOnlyOfferedEqualsAndNotEquals() throws IOException {
+        // A boolean field has only two values, so is only compared with one of them
+        givenMapping("""
+                {
+                  "Flag": { "type": "boolean" }
+                }""");
+
+        final List<QueryField> fields = elasticSearchProvider.getDataSourceFields(createIndex());
+
+        assertThat(fields)
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::getConditionSet)
+                .containsExactly(tuple("Flag", FieldType.BOOLEAN, ConditionSet.ELASTIC_BOOLEAN));
+        assertThat(fields.getFirst().getConditionSet().getConditionList())
+                .containsExactly(Condition.EQUALS, Condition.NOT_EQUALS);
     }
 
     @Test
