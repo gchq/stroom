@@ -1153,11 +1153,6 @@
     color: var(--blue-300);
 }
 
-/* Add a smidge of a gap between the split and the next form group */
-.DictionarySettingViewImpl-words > .form-group__label-row {
-    margin-top: 0.5em;
-}
-
 .create-document-types-container {
     display: flex;
     flex-direction: row;

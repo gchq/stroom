@@ -176,6 +176,7 @@
 @import url("floor-map-settings.css");
 @import url("document-assets-tab.css");
 @import url("duplicate-management.css");
+@import url("imports-tab.css");
 @import url("annotation-tag-text.css");
 /* Last, so a scroll pane fills its parent whatever other classes it has */
 @import url("scroll-pane.css");

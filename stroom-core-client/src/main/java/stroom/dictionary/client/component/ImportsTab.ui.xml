@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form DictionarySettingViewImpl">
+    <!-- A dictionary's Imports tab (imports-tab.css) -->
+    <g:FlowPanel styleName="max form-padding form imports-tab">
         <split:SplitPane vertical="true" sizes="300px, *"
                          names="Imports, Effective words" addStyleNames="max">
             <form:FormGroup identity="dictionarySettingsImports"
@@ -15,7 +16,7 @@
             <form:FormGroup identity="dictionarySettingsWords"
                             label="Effective Words"
                             helpText="The words in the selected import, including words from any dictionaries it imports. Read-only."
-                            addStyleNames="default-min-sizes flex-grow-1 DictionarySettingViewImpl-words">
+                            addStyleNames="default-min-sizes flex-grow-1 imports-tab__words">
                 <g:SimplePanel ui:field="wordsPanel" addStyleNames="dock-max stroom-control"/>
             </form:FormGroup>
         </split:SplitPane>

@@ -72,7 +72,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
     public DictionaryEditor(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final Provider<WordsTabController> wordsTabProvider,
-                            final Provider<ImportsTab> importsTabProvider,
+                            final Provider<ImportsTabController> importsTabProvider,
                             final Provider<EffectiveWordsListController> effectiveWordsListProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final Provider<DocumentUserPermissionsTabController> permissionsProvider,
@@ -94,12 +94,12 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 (wordsTab, doc) -> doc.copy().data(wordsTab.getWords()).build());
         addTab(IMPORTS,
                 () -> {
-                    final ImportsTab importsTab = importsTabProvider.get();
+                    final ImportsTabController importsTab = importsTabProvider.get();
                     importsTab.setOnChange(this::onChange);
                     return importsTab;
                 },
-                ImportsTab::read,
-                ImportsTab::write);
+                ImportsTabController::read,
+                ImportsTabController::write);
         addTab(EFFECTIVE_WORDS,
                 effectiveWordsListProvider::get,
                 (effectiveWords, docRef, doc) -> effectiveWords.setDocRef(docRef));
