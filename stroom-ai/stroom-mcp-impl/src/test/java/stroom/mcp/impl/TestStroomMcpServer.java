@@ -715,6 +715,21 @@ class TestStroomMcpServer {
     }
 
     @Test
+    void theInstructionsSayWhichWorkFitsWhatTheUserWants() {
+        // Seen: a discovery index was never offered, and a table to look values up in was onboarded as events; the
+        // Stroom MCP server's entry points were workflow prompts, which a user must know to pick.
+        final String text = String.join(" ", StroomMcpServer.INSTRUCTIONS.split("\\s+"));
+        assertThat(text)
+                .contains("Which work: what the user has and wants decides the path, before any tool.")
+                .contains("Raw data (JSON, delimited text, XML) to explore as it is, with no translation: a "
+                          + "discovery index")
+                .contains("A table to look values up in (users, assets, codes): reference data")
+                .contains("When what the user wants fits more than one, ask which.")
+                // A discovery index's choices are asked together, as the Stroom MCP server's design has it.
+                .contains("Ask the user, in one message: the cluster, the index name");
+    }
+
+    @Test
     void theInstructionsSendTheUsersDecisionsToTheClientsQuestionTool() {
         // Asked for by the user: Stroom AI's agent has ask_user, but ended its answer with a "Questions for you"
         // list, following the server's "ask the user" wording.
