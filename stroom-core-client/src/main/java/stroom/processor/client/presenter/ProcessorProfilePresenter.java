@@ -19,6 +19,7 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.processor.client.component.ProcessorProfileEditController;
 import stroom.processor.client.component.ProcessorProfileListController;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
@@ -37,7 +38,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     public static final String TAB_TYPE = "ProcessorProfiles";
 
     private final ProcessorProfileListController processorProfileList;
-    private final Provider<ProcessorProfileEditPresenter> editProvider;
+    private final Provider<ProcessorProfileEditController> editProvider;
     private final ProcessorProfileClient processorProfileClient;
 
     @Inject
@@ -45,7 +46,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
             final EventBus eventBus,
             final WrapperView view,
             final ProcessorProfileListController processorProfileList,
-            final Provider<ProcessorProfileEditPresenter> editProvider,
+            final Provider<ProcessorProfileEditController> editProvider,
             final ProcessorProfileClient processorProfileClient) {
 
         super(eventBus, view);
@@ -62,8 +63,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final ProcessorProfile processorProfile = ProcessorProfile.builder().name("New Profile").build();
-        final ProcessorProfileEditPresenter editor = makeDialog(editProvider);
-        editor.show(processorProfile, "Create Processor Profile", result -> refresh());
+        editProvider.get().show(this, processorProfile, "Create Processor Profile", result -> refresh());
     }
 
     private void edit() {
@@ -74,8 +74,10 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit(final ProcessorProfile processorProfile) {
-        final ProcessorProfileEditPresenter editor = makeDialog(editProvider);
-        editor.show(processorProfile, "Edit Processor Profile - " + processorProfile.getName(), result -> refresh());
+        editProvider.get().show(this,
+                processorProfile,
+                "Edit Processor Profile - " + processorProfile.getName(),
+                result -> refresh());
     }
 
     private void delete() {

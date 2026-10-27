@@ -219,7 +219,7 @@ public final class ProcessorProfilesScreenStories {
                     play.dblClick(play.getByText("Nightly"));
                     screen.findByText(TextMatch.containing("Edit Processor Profile"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
-                    // ProcessorProfileEditPresenter closes an unchanged profile without saving it
+                    // ProcessorProfileEditController closes an unchanged profile without saving it
                     // (Objects.equals(updated, processorProfile)), so its periods and time zone are kept
                     // by not being sent at all
                     play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Edit Processor Profile")))

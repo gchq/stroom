@@ -41,11 +41,8 @@ import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
-import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
-import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
@@ -80,10 +77,6 @@ public class PipelineModule extends PluginModule {
                 FeedDependencyPresenter.class,
                 FeedDependencyView.class,
                 FeedDependencyViewImpl.class);
-        bindPresenterWidget(
-                ProcessorProfileEditPresenter.class,
-                ProcessorProfileEditView.class,
-                ProcessorProfileEditViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,

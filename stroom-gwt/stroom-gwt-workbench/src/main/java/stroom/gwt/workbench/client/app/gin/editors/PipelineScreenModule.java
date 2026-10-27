@@ -24,11 +24,8 @@ import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
-import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
-import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -53,9 +50,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FeedDependencyPresenter.class,
                 FeedDependencyView.class,
                 FeedDependencyViewImpl.class);
-        bindPresenterWidget(ProcessorProfileEditPresenter.class,
-                ProcessorProfileEditView.class,
-                ProcessorProfileEditViewImpl.class);
     }
 }
 
