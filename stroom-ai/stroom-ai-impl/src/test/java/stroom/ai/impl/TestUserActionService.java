@@ -444,9 +444,9 @@ class TestUserActionService {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
         final AiCreateExtraction create = new AiCreateExtraction("Logons extraction", null, DASHBOARD, "table-1",
                 "Events", "a child of the template", "<xsl:stylesheet/>", List.of("UserId"), List.of(), "x", "p",
-                "hash");
+                null, "hash");
         Mockito.when(extractionActions.prepare(Mockito.eq(DASHBOARD), Mockito.eq("Logons extraction"),
-                Mockito.any())).thenReturn(create);
+                Mockito.any(), Mockito.eq(ToolSession.chat(CHAT)))).thenReturn(create);
         storeResult(extraction());
 
         final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "extract-1");
@@ -456,7 +456,8 @@ class TestUserActionService {
         // Nothing is written, and the button is still to be used.
         Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.any(),
                 Mockito.any());
-        Mockito.verify(extractionActions, Mockito.never()).write(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(extractionActions, Mockito.never()).write(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any());
     }
 
     @Test
@@ -466,7 +467,7 @@ class TestUserActionService {
         final DocRef xslt = new DocRef("XSLT", "x1", "Logons extraction");
         final AiWriteExtractionRequest request = new AiWriteExtractionRequest("Logons extraction",
                 new DocRef("Folder", "f1", "Reports"), PermissionInheritance.DESTINATION, "hash");
-        Mockito.when(extractionActions.write(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq(request)))
+        Mockito.when(extractionActions.write(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq(request), Mockito.any()))
                 .thenReturn(new ExtractionActions.Written(pipeline, xslt, "[]"));
         final String stored = storeResult(extraction());
 
@@ -479,7 +480,8 @@ class TestUserActionService {
         final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
         final InOrder order = Mockito.inOrder(aiDao, extractionActions);
         order.verify(aiDao).compareAndSetMessageText(Mockito.eq(MESSAGE), Mockito.eq(stored), written.capture());
-        order.verify(extractionActions).write(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq(request));
+        order.verify(extractionActions).write(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq(request),
+                Mockito.eq(ToolSession.chat(CHAT)));
         assertThat(JsonUtil.readValue(written.getValue(), ToolResultRecord.class).userActions())
                 .singleElement()
                 .extracting(UserActionRecord::status)
@@ -494,7 +496,7 @@ class TestUserActionService {
     @Test
     void anExtractionThatCantBeWrittenLeavesTheButtonToUseAgain() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
-        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new IllegalStateException("What would be written has changed since you were shown it"));
         final String stored = storeResult(extraction());
 
@@ -515,7 +517,7 @@ class TestUserActionService {
     @Test
     void anyFailureToWriteAnExtractionLeavesTheButtonToUseAgain() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
-        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new NullPointerException("folder"));
         final String stored = storeResult(extraction());
 
@@ -536,7 +538,7 @@ class TestUserActionService {
     @Test
     void aButtonChangedSinceItWasClaimedIsStillMadePendingAgain() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
-        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new IllegalStateException("No"));
         // Claimed; the message then changes, so it can't simply be put back; it is made pending in it as it is.
         Mockito.when(aiDao.compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString()))
@@ -572,8 +574,10 @@ class TestUserActionService {
         final DocRef xslt = new DocRef("XSLT", "x1", "Logons extraction");
         final AiChangeExtraction shown = new AiChangeExtraction(DASHBOARD, "table-1", "Events", pipeline, xslt,
                 "<a/>", "<b/>", "Written again", List.of(), List.of(), "hash");
-        Mockito.when(extractionActions.prepareChange(Mockito.eq(DASHBOARD), Mockito.any())).thenReturn(shown);
-        Mockito.when(extractionActions.writeChange(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq("hash")))
+        Mockito.when(extractionActions.prepareChange(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.any()))
+                .thenReturn(shown);
+        Mockito.when(extractionActions.writeChange(Mockito.eq(DASHBOARD), Mockito.any(), Mockito.eq("hash"),
+                Mockito.any()))
                 .thenReturn(new ExtractionActions.Written(pipeline, xslt, "[]"));
         final String stored = storeResult(change());
 
@@ -593,7 +597,8 @@ class TestUserActionService {
                 .singleElement()
                 .extracting(UserActionRecord::status)
                 .isEqualTo(Status.DONE);
-        Mockito.verify(extractionActions, Mockito.never()).write(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(extractionActions, Mockito.never()).write(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any());
         Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(xslt),
                 Mockito.eq(UserActionService.WRITE_EXTRACTION_COMMAND), Mockito.anyString(),
                 Mockito.contains("Changed XSLT 'Logons extraction' of pipeline 'Logons extraction' in place"),
@@ -606,7 +611,7 @@ class TestUserActionService {
     void usingOneOfAnExtractionsTwoButtonsMakesTheOtherUnusable() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
         final DocRef pipeline = new DocRef("Pipeline", "p2", "New");
-        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(extractionActions.write(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(new ExtractionActions.Written(pipeline, new DocRef("XSLT", "x2", "New"), "[]"));
         // Offered together for the same extraction: change in place, or a new child.
         final UserActionRecord change = change();
@@ -636,13 +641,13 @@ class TestUserActionService {
                 new AiChatMessage(MESSAGE, CHAT, 0L, AiMessageType.TOOL_RESULT, null, written.getValue(), 1, null)));
         assertThat(service.doUserAction(CHAT, MESSAGE, "change-1").getMessage())
                 .isEqualTo(UserActionService.OTHER_EXTRACTION_USED);
-        Mockito.verify(extractionActions, Mockito.never()).prepareChange(Mockito.any(), Mockito.any());
+        Mockito.verify(extractionActions, Mockito.never()).prepareChange(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
     void aChangeToAnXsltChangedSinceIsntShown() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
-        Mockito.when(extractionActions.prepareChange(Mockito.any(), Mockito.any()))
+        Mockito.when(extractionActions.prepareChange(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new IllegalStateException("XSLT 'X' has changed since this was proposed"));
         storeResult(change());
 
@@ -988,7 +993,7 @@ class TestUserActionService {
     }
 
     private static UserActionRecord extraction() {
-        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1),
                 List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of());
         return new UserActionRecord("extract-1", UserActions.CREATE_EXTRACTION_PIPELINE,
                 "Create extraction pipeline 'Logons extraction'", null, null, null, DASHBOARD, plan.toJson(),
@@ -996,7 +1001,7 @@ class TestUserActionService {
     }
 
     private static UserActionRecord change() {
-        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1),
                 List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of(),
                 new ExtractionPlan.Existing(new DocRef("Pipeline", "p1", "Logons extraction"), "xsltFilter",
                         new DocRef("XSLT", "x1", "Logons extraction"), "0".repeat(64)));

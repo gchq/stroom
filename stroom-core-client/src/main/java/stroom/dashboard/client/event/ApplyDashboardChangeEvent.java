@@ -56,6 +56,8 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     private final Consumer<String> onNotApplied;
     private final String undoKey;
 
+    // For Operation.READ_EXTRACTION: given the table's extraction pipeline, once read.
+    private Consumer<DocRef> onExtractionRead;
     private boolean handled;
     private boolean open;
     private boolean editable;
@@ -80,6 +82,39 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         this.onApplied = onApplied;
         this.onNotApplied = onNotApplied;
         this.undoKey = undoKey;
+    }
+
+    /// Asks for the extraction pipeline a dashboard table extracts its values with, as the open dashboard has it now
+    /// (unsaved changes included): e.g. so nothing is written for a table whose pipeline has changed since an
+    /// extraction was proposed for it. A dashboard that isn't open isn't read (onNotRead is told so).
+    ///
+    /// @param handlers      Where to fire it.
+    /// @param dashboard     The dashboard.
+    /// @param componentId   The table's component id.
+    /// @param componentName The table's name as the user sees it.
+    /// @param onRead        Given the table's extraction pipeline, or null if it extracts with none.
+    /// @param onNotRead     Given why it couldn't be read, e.g. the dashboard has no such table.
+    /// @return The event, once handled.
+    public static ApplyDashboardChangeEvent fireReadExtraction(final HasHandlers handlers,
+                                                               final DocRef dashboard,
+                                                               final String componentId,
+                                                               final String componentName,
+                                                               final Consumer<DocRef> onRead,
+                                                               final Consumer<String> onNotRead) {
+        final ApplyDashboardChangeEvent event = new ApplyDashboardChangeEvent(Operation.READ_EXTRACTION, dashboard,
+                componentId, componentName, null, null, null, onNotRead, null);
+        event.onExtractionRead = onRead;
+        handlers.fireEvent(event);
+        return event;
+    }
+
+    /// Gives a [Operation#READ_EXTRACTION] event's table's extraction pipeline.
+    ///
+    /// @param pipeline The pipeline, or null if the table extracts with none.
+    public void extractionRead(final DocRef pipeline) {
+        if (onExtractionRead != null) {
+            onExtractionRead.accept(pipeline);
+        }
     }
 
     /// Asks whether a dashboard is open, and if so whether the user can edit it.
@@ -288,7 +323,9 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         /// Say whether an applied change can be undone.
         CAN_UNDO,
         /// Undo an applied change.
-        UNDO
+        UNDO,
+        /// Read a table's extraction pipeline.
+        READ_EXTRACTION
     }
 
 

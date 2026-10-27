@@ -66,7 +66,8 @@ public final class ExtractionChange {
     /// Changes an extraction XSLT to give fields.
     ///
     /// @param code      The XSLT's code now.
-    /// @param namespace The events' namespace (e.g. `event-logging:3`), or blank for none.
+    /// @param namespace The events' namespace (e.g. `event-logging:3`), blank for none, or null to keep the one an
+    ///                  XSLT Stroom AI wrote was written for.
     /// @param fields    For one Stroom AI wrote, every field it is to give; for one written by hand, the fields to
     ///                  add. Checked (see [ExtractionField#problems(List)]).
     /// @return The changed XSLT.
@@ -86,7 +87,7 @@ public final class ExtractionChange {
             final List<String> removed = before.stream()
                     .filter(name -> !after.contains(name))
                     .toList();
-            final String ns = NullSafe.isBlankString(namespace)
+            final String ns = namespace == null
                     ? generated.get().namespace()
                     : namespace;
             return new Changed(ExtractionXslt.xslt(ns, fields), true, Set.of(), false, added, removed);

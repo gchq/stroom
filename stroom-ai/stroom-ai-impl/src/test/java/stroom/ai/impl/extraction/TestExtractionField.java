@@ -40,6 +40,24 @@ class TestExtractionField {
     }
 
     @Test
+    void anIndexsOwnFieldNamesCanBeGiven() {
+        // As an Elastic index names them, which a table's columns read: seen in a chat whose @timestamp column
+        // couldn't be filled.
+        assertThat(ExtractionField.problems(List.of(
+                new ExtractionField("@timestamp", "EventTime/TimeCreated", "date"),
+                new ExtractionField("user.name", "EventSource/User/Id", null),
+                new ExtractionField("testchatlogs.send.payload.group_chat.content", "EventDetail/Send/Payload", null),
+                new ExtractionField("event:code", "EventDetail/TypeId", null),
+                new ExtractionField("Org (dept)/team", "Org", null)))).isEmpty();
+        // Not what could change the XSLT, or a column's ${...} reference.
+        for (final String name : List.of("a{b", "a}b", "a\"b", "a'b", "a<b", "a>b", "a&b", "a\tb")) {
+            assertThat(ExtractionField.problems(List.of(new ExtractionField(name, "Id", null))))
+                    .as(name)
+                    .singleElement().asString().contains("isn't a name a field can have");
+        }
+    }
+
+    @Test
     void namesTheExtractionGivesAnywayOrTwiceAreRefused() {
         assertThat(ExtractionField.problems(List.of(
                 new ExtractionField("StreamId", "@StreamId", null),
@@ -52,8 +70,8 @@ class TestExtractionField {
                         "'StreamId' is given by every extraction, from the ids of the event; leave it out.",
                         "'user' is given more than once.",
                         "A field has no name.",
-                        "'Bad<name>' isn't a name a field can have: letters, digits, spaces and _ . ( ) -, starting "
-                        + "with a letter, up to 100 characters.",
+                        "'Bad<name>' isn't a name a field can have: up to 100 characters, none of them { } \" ' < > & "
+                        + "or control characters.",
                         "'When' has type 'time': give one of text, number, date.");
     }
 
