@@ -27,8 +27,8 @@ public final class NodePing {
     private final NodeMonitoringConfig nodeMonitoringConfig;
 
     private NodePing(final Long ping,
-               final String error,
-               final NodeMonitoringConfig nodeMonitoringConfig) {
+                     final String error,
+                     final NodeMonitoringConfig nodeMonitoringConfig) {
         this.ping = ping;
         this.error = error;
         this.nodeMonitoringConfig = nodeMonitoringConfig;

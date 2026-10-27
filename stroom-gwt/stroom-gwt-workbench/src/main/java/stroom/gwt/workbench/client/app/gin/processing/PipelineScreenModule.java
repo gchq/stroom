@@ -95,4 +95,3 @@ public class PipelineScreenModule extends AbstractPresenterModule {
                 ProcessorTaskViewImpl.class);
     }
 }
-

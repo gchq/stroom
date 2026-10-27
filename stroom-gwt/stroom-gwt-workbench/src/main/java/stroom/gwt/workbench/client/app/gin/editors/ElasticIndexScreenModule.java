@@ -32,4 +32,3 @@ public class ElasticIndexScreenModule extends AbstractPresenterModule {
         bind(ElasticIndexPresenter.class);
     }
 }
-

@@ -156,7 +156,6 @@ public class NodeGroupEditPresenter
                                     RestErrorHandler.forPopup(this, e),
                                     this);
 
-
 //                            doWithGroupNameValidation(getView().getName(),
 //                                    nodeGroup.getId(),
 //                                    () -> nodeGroupClient.update(updated,

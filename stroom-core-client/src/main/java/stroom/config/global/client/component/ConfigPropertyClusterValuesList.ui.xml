@@ -2,7 +2,7 @@
 <!-- A property's values across the cluster, a tree of them, with a pager -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <dg:PagerPanel ui:field="pager">
+    <dg:PagerPanel>
         <dg:DataGrid ui:field="dataGrid" pageSize="1000" tableName="Cluster Property Values" multiLine="true"/>
     </dg:PagerPanel>
 </ui:UiBinder>

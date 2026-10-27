@@ -96,14 +96,11 @@ public class SelectionHandlersPresenter
         super(eventBus, view);
         this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.selectionHandlerList = selectionHandlerList;
-//        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
 
         getView().setTableView(selectionHandlerList);
-//        getView().setExpressionView(expressionPresenter.getView());
 
         // Stop users from selecting expression items.
-//        expressionPresenter.setSelectionModel(null);
 
         selectionHandlerList.getToolbar().setName("Selection handler actions");
         addButton = selectionHandlerList.getToolbar().button(SvgImage.ADD, "New Selection Handler", this::add);
@@ -126,18 +123,12 @@ public class SelectionHandlersPresenter
                 this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-
         updateButtons();
 
         own(selectionHandlerList.getSelectionModel().addSelectionHandler(event -> {
             final ComponentSelectionHandler rule = selectionHandlerList.getSelectionModel().getSelected();
-            if (rule != null) {
-//                expressionPresenter.read(rule.getExpression());
-                if (event.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-//                expressionPresenter.read(null);
+            if (rule != null && event.getSelectionType().isDoubleSelect()) {
+                edit(rule);
             }
             updateButtons();
         }));
@@ -412,11 +403,6 @@ public class SelectionHandlersPresenter
         updateButtons();
     }
 
-    @Override
-    public void setDashboardContext(final DashboardContext dashboardContext) {
-        super.setDashboardContext(dashboardContext);
-    }
-
     private void updateButtons() {
         final boolean loadedPolicy = selectionHandlers != null;
         final ComponentSelectionHandler selection = selectionHandlerList.getSelectionModel().getSelected();
@@ -446,7 +432,6 @@ public class SelectionHandlersPresenter
             this.dirty = dirty;
         }
     }
-
 
     public void setUseForFilter(final boolean useForFilter) {
         this.useForFilter = useForFilter;

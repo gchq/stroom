@@ -68,4 +68,3 @@ public class MonitoringScreenModule extends AbstractPresenterModule {
                 TaskManagerViewImpl.class);
     }
 }
-

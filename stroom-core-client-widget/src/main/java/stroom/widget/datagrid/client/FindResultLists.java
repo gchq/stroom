@@ -59,7 +59,7 @@ public final class FindResultLists {
         return list;
     }
 
-    /// Makes a list a template declares a list of results: its one column, drawn by `cell`, and how
+    /// Makes a list a template declares into a list of results: its one column, drawn by `cell`, and how
     /// it is selected and opened. The template gives it its page size ([#PAGE_SIZE]), profile
     /// (`LISTBOX`), name and stripes:
     ///

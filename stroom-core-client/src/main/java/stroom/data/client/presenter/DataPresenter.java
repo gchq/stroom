@@ -570,7 +570,6 @@ public class DataPresenter
         this.displayMode = displayMode;
     }
 
-
     public void update(final boolean fireEvents) {
         update(fireEvents, currentStreamType);
     }
@@ -1302,7 +1301,6 @@ public class DataPresenter
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
     public interface DataView extends View, Focus, TaskMonitorFactory {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
@@ -1317,7 +1315,6 @@ public class DataPresenter
 
         void setProgressView(IsWidget sourceProgressBar);
     }
-
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

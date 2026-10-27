@@ -55,7 +55,7 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
                             .getCacheName();
                     cacheNodeList.read(cacheName);
                 }));
-        // When a cache is cleared/evicted refresh the node list presenter
+        // When a cache is cleared/evicted refresh the node list
         cacheList.setOnCacheCleared(cacheNodeList::read);
     }
 

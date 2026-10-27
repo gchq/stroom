@@ -87,8 +87,6 @@ public class MonitoringModule extends PluginModule {
                 JobViewImpl.class);
 
         // Global properties.
-
-
         bindPresenterWidget(
                 GlobalPropertyTabPresenter.class,
                 GlobalPropertyTabPresenter.GlobalPropertyTabView.class,

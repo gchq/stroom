@@ -279,7 +279,6 @@ public class RulesPresenter
                 .fire();
     }
 
-
     @Override
     public void read(final ComponentConfig componentConfig) {
         if (componentConfig.getSettings() instanceof final TableComponentSettings tableComponentSettings) {
@@ -423,7 +422,6 @@ public class RulesPresenter
             onDirtyChange.run();
         }
     }
-
 
 
     // --------------------------------------------------------------------------------

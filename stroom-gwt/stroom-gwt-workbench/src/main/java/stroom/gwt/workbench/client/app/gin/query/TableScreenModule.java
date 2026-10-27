@@ -63,4 +63,3 @@ public class TableScreenModule extends AbstractPresenterModule {
                 ColumnValuesFilterViewImpl.class);
     }
 }
-

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.dictionary;
 
 import stroom.dictionary.client.component.DictionaryEditor;

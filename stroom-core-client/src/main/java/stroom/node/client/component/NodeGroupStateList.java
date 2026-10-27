@@ -196,7 +196,6 @@ public class NodeGroupStateList extends Component {
     }
 
 
-
     // --------------------------------------------------------------------------------
 
 

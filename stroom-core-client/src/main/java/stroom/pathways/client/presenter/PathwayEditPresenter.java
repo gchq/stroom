@@ -128,7 +128,6 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        }));
     }
 
-
 //
 //    private SafeHtml getConstraintsHtml(final PathNode pathNode) {
 //        final HtmlBuilder hb = new HtmlBuilder();

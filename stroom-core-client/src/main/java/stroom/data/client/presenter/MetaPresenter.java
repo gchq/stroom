@@ -273,7 +273,6 @@ public class MetaPresenter
         metaList.refresh();
     }
 
-
     private void showData() {
         final Meta meta = getSelected();
         if (meta == null) {

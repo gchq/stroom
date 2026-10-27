@@ -362,7 +362,6 @@ public class MetaList extends Component {
 
     }
 
-
     /// Which of a list of streams' optional columns it has.
     public enum Columns {
         /// A tick box to choose each stream, and one in the header to choose all of them.

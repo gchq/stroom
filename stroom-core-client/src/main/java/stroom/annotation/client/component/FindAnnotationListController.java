@@ -164,6 +164,7 @@ public class FindAnnotationListController extends Controller {
         view.setKeyboardSelectedRow(row, stealFocus);
     }
 
+    /// @param focusText `true` to put the focus on the filter once the next find comes back.
     public void setFocusText(final boolean focusText) {
         this.focusText = focusText;
     }
@@ -174,18 +175,22 @@ public class FindAnnotationListController extends Controller {
         this.onFilterError = onFilterError;
     }
 
+    /// @param filter The filter's text, for the next find.
     public void setFilter(final String filter) {
         this.filter = filter;
     }
 
+    /// @param permission The permission the user must have on an annotation for it to be listed.
     public void setPermission(final DocumentPermission permission) {
         this.permission = permission;
     }
 
+    /// @param sourceId Lists only annotations linked from this annotation, or `null` for any.
     public void setSourceId(final Long sourceId) {
         this.sourceId = sourceId;
     }
 
+    /// @param destinationId Lists only annotations linked to this annotation, or `null` for any.
     public void setDestinationId(final Long destinationId) {
         this.destinationId = destinationId;
     }

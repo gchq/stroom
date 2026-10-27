@@ -55,7 +55,6 @@ import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
 import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 
-
 public class PipelineModule extends PluginModule {
 
     @Override
@@ -70,7 +69,6 @@ public class PipelineModule extends PluginModule {
         bind(PipelinePresenter.class);
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
-
 
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
         bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterView.class,

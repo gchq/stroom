@@ -193,7 +193,6 @@ public class ApiKeysList extends Component {
                                 null,
                                 (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildActionsForMsg(
                                         NullSafe.get(hashedApiKey, HashedApiKey::getOwner))))
-//                .enabledWhen(User::isEnabled)
                 .build();
 
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar

@@ -48,7 +48,6 @@ public class MetaRelationListController extends MetaListController {
 
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private final Set<Long> hasChildren = new HashSet<>();
-    private final MetaList view;
     private int maxDepth = -1;
 
     /// Made by GIN, with its content.
@@ -85,7 +84,6 @@ public class MetaRelationListController extends MetaListController {
                 expressionValidator,
                 refCells,
                 Columns.LINEAGE);
-        this.view = view;
         setTableName("Related Streams");
     }
 
@@ -133,7 +131,7 @@ public class MetaRelationListController extends MetaListController {
         addChildren(null, data, newData, 0);
 
         // Set the width of the expander column so that all expanders can be seen.
-        view.setExpanderDepth(maxDepth);
+        getView().setExpanderDepth(maxDepth);
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }

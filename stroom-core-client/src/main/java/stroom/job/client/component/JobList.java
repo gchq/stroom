@@ -151,7 +151,6 @@ public class JobList extends Component {
 
     }
 
-
     /// Told when a job's enabled tick box is pressed.
     public interface EnabledHandler {
 

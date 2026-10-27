@@ -39,6 +39,7 @@ public class FieldEditor extends Component {
     @UiField
     TextBox name;
 
+    /// Makes an empty editor.
     public FieldEditor() {
         initWidget(BINDER.createAndBindUi(this));
     }

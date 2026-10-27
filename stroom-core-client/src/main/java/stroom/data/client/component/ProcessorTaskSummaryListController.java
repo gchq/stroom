@@ -16,7 +16,6 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;

@@ -95,7 +95,6 @@ public class UserList extends Component {
         if (showEnabledCol) {
             dataGrid.addColumn(
                     DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(User::isEnabled))
-//                        .enabledWhen(this::isJobNodeEnabled)
                             .withFieldUpdater((final int index, final User user, final TickBoxState value) -> {
                                 if (user != null) {
                                     onEnabledChange.accept(user, value.toBoolean());
@@ -109,18 +108,6 @@ public class UserList extends Component {
                             .build(),
                     ColumnSizeConstants.ENABLED_COL);
 
-//            dataGrid.addResizableColumn(
-//                    DataGridUtil.textColumnBuilder((User user) -> user.isEnabled()
-//                                    ? "Yes"
-//                                    : "No")
-//                            .enabledWhen(User::isEnabled)
-//                            .withSorting(UserFields.FIELD_ENABLED, true)
-//                            .build(),
-//                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_ENABLED)
-//                            .withToolTip("The enabled state of the user. A disabled user effectively has no " +
-//                                         "permissions and cannot login.")
-//                            .build(),
-//                    ColumnSizeConstants.ENABLED_COL);
         }
 
         // Icon
@@ -165,10 +152,6 @@ public class UserList extends Component {
         } else {
             displayNameTooltip = "The name of the user or group.";
         }
-//        final Column<User, String> displayNameCol = DataGridUtil.copyTextColumnBuilder(User::getDisplayName)
-//                .enabledWhen(User::isEnabled)
-//                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-//                .build();
         final Column<User, User> displayNameCol = userColumnBuilder(userCells, DisplayType.DISPLAY_NAME)
                 .enabledWhen(User::isEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
@@ -188,10 +171,6 @@ public class UserList extends Component {
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_FULL_NAME, true)
                             .build(),
-//                    DataGridUtil.textColumnBuilder(User::getFullName)
-//                            .enabledWhen(User::isEnabled)
-//                            .withSorting(UserFields.FIELD_FULL_NAME, true)
-//                            .build(),
                     DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
                             .withToolTip(mode.includesGroups()
                                     ? "The full name of the user. Groups do not have a full name."
@@ -207,10 +186,6 @@ public class UserList extends Component {
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_UNIQUE_ID, true)
                             .build(),
-//                    DataGridUtil.copyTextColumnBuilder(User::getSubjectId)
-//                            .enabledWhen(User::isEnabled)
-//                            .withSorting(UserFields.FIELD_UNIQUE_ID, true)
-//                            .build(),
                     DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_UNIQUE_USER_ID)
                             .withToolTip("The unique user ID on the identity provider.")
                             .build(),
@@ -224,7 +199,6 @@ public class UserList extends Component {
                                 actionMenuItems,
                                 null,
                                 (User user) -> UserAndGroupHelper.buildActionsForMsg(user)))
-//                .enabledWhen(User::isEnabled)
                 .build();
 
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar

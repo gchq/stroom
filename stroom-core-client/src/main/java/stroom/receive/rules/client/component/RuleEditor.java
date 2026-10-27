@@ -44,6 +44,7 @@ public class RuleEditor extends Component {
     @UiField
     SelectionBox<ReceiveAction> action;
 
+    /// Makes an empty editor.
     public RuleEditor() {
         initWidget(BINDER.createAndBindUi(this));
     }

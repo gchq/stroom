@@ -199,7 +199,6 @@ public class PropertyList extends Component {
 
     }
 
-
     /// Where a property's value comes from, which colours it.
     public enum PropertyState {
         /// Set on this pipeline.

@@ -138,6 +138,10 @@ public class UserListController extends Controller {
                 .exec();
     }
 
+    /// Whether to show each user's unique ID, set before the list is first shown.
+    ///
+    /// @param showUniqueUserIdCol `true` to show the column.
+    /// @throws RuntimeException If the columns have already been added.
     public void setShowUniqueUserIdCol(final boolean showUniqueUserIdCol) {
         if (dataProvider == null) {
             this.showUniqueUserIdCol = showUniqueUserIdCol;
@@ -146,6 +150,10 @@ public class UserListController extends Controller {
         }
     }
 
+    /// Whether to show each user's enabled tick box, set before the list is first shown.
+    ///
+    /// @param showEnabledCol `true` to show the column.
+    /// @throws RuntimeException If the columns have already been added.
     public void setShowEnabledCol(final boolean showEnabledCol) {
         if (dataProvider == null) {
             this.showEnabledCol = showEnabledCol;
@@ -154,6 +162,9 @@ public class UserListController extends Controller {
         }
     }
 
+    /// Sets whether the list holds users, groups or both.
+    ///
+    /// @param mode What it lists, not `null`.
     public void setMode(final Mode mode) {
         Objects.requireNonNull(mode);
         this.mode = mode;
@@ -179,28 +190,33 @@ public class UserListController extends Controller {
         refresh();
     }
 
+    /// Clears the selection and finds the users again, the filter showing this text.
+    ///
+    /// @param quickFilterText The filter's text.
     public void setQuickFilterText(final String quickFilterText) {
-//        GWT.log(name + " - setQuickFilterText: " + quickFilterText);
         clear();
         view.setQuickFilterText(quickFilterText);
         onFilterChange(quickFilterText);
     }
 
+    /// Filters the list to show one user, by their display name.
+    ///
+    /// @param userRef The user, or `null` to leave the list as it is.
     public void showUser(final UserRef userRef) {
         if (userRef != null) {
-//            GWT.log(name + " - showUser: " + userRef);
             setQuickFilterText(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
         }
     }
 
+    /// Clears the selection and, once the list has been filled, its rows.
     public void clear() {
-//        GWT.log(name + " - clear");
         view.getSelectionModel().clear();
         if (dataProvider != null) {
             view.clearRows();
         }
     }
 
+    /// Finds the users again, first setting the list up once the UI config is known.
     public void refresh() {
         if (dataProvider == null) {
             uiConfigCache.get(extendedUiConfig -> {
@@ -215,7 +231,6 @@ public class UserListController extends Controller {
                 }
             });
         } else {
-//            GWT.log(name + " - refresh");
             dataProvider.refresh();
         }
     }
@@ -263,8 +278,6 @@ public class UserListController extends Controller {
                             // surface the reason on the filter box. See ResultPage.filterError.
                             view.setFilterError(
                                     NullSafe.get(userResultPage.getFilterError(), TokenError::getText));
-//                            GWT.log(name + " - onSuccess, size: " + userResultPage.size()
-//                                    + ", expr: " + criteriaBuilder.getExpression());
                             dataConsumer.accept(userResultPage);
                         })
                         .onFailure(errorHandler)
@@ -280,16 +293,12 @@ public class UserListController extends Controller {
                 if (resultPageConsumer != null) {
                     resultPageConsumer.accept(data);
                 }
-//                if (!data.isEmpty()) {
-//                    selectionModel.setSelected(data.getFirst());
-//                } else {
-//                    selectionModel.clear();
-//                }
             }
         };
         view.setDataProvider(dataProvider);
     }
 
+    /// @return The selection.
     public MultiSelectionModelImpl<User> getSelectionModel() {
         return view.getSelectionModel();
     }
@@ -311,6 +320,7 @@ public class UserListController extends Controller {
         view.setHelpText(helpText);
     }
 
+    /// @param additionalTerm A term every user listed must also match, or `null` for none.
     public void setAdditionalTerm(final ExpressionTerm additionalTerm) {
         this.additionalTerm = additionalTerm;
     }
@@ -321,19 +331,24 @@ public class UserListController extends Controller {
         return view.getTaskMonitor();
     }
 
+    /// @return The page of users last fetched, or `null` before the first.
     public ResultPage<User> getCurrentData() {
         return currentData;
     }
 
+    /// @param resultPageConsumer Given each page of users as it is fetched, or `null` for none.
     public void setResultPageConsumer(final Consumer<ResultPage<User>> resultPageConsumer) {
         this.resultPageConsumer = resultPageConsumer;
     }
 
+    /// @param copyPermissionsPopupFunction Makes the popup that copies a user's permissions, for
+    ///                                     the action menu.
     public void setCopyPermissionsPopupFunction(
             final Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction) {
         this.copyPermissionsPopupFunction = copyPermissionsPopupFunction;
     }
 
+    /// @param validUserScreensForActionMenu The screens a user's action menu may open.
     public void setValidUserScreensForActionMenu(final Set<UserScreen> validUserScreensForActionMenu) {
         this.validUserScreensForActionMenu = validUserScreensForActionMenu;
     }
@@ -341,9 +356,13 @@ public class UserListController extends Controller {
     // --------------------------------------------------------------------------------
 
 
+    /// What the list holds: users, groups or both.
     public enum Mode {
+        /// Users and not groups.
         USERS_ONLY(true, false),
+        /// Groups and not users.
         GROUPS_ONLY(false, true),
+        /// Users and groups.
         USERS_AND_GROUPS(true, true);
 
         private final boolean includesUsers;
@@ -354,10 +373,12 @@ public class UserListController extends Controller {
             this.includesGroups = includesGroups;
         }
 
+        /// @return `true` if it lists users.
         public boolean includesUsers() {
             return includesUsers;
         }
 
+        /// @return `true` if it lists groups.
         public boolean includesGroups() {
             return includesGroups;
         }

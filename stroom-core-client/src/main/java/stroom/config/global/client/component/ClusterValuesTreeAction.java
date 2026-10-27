@@ -42,6 +42,8 @@ public class ClusterValuesTreeAction implements TreeAction<ClusterValuesRow> {
         return expandedRows.contains(row);
     }
 
+    /// @param row A value's row.
+    /// @return `true` if it has been collapsed.
     public boolean isRowCollapsed(final ClusterValuesRow row) {
         return collapsedRows.contains(row);
     }
@@ -51,6 +53,7 @@ public class ClusterValuesTreeAction implements TreeAction<ClusterValuesRow> {
         return expandedRows;
     }
 
+    /// @param expandedRows The values' rows to show expanded.
     void setExpandedRows(final Set<ClusterValuesRow> expandedRows) {
         this.expandedRows = expandedRows;
     }

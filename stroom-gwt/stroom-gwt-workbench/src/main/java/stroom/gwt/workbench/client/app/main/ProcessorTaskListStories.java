@@ -164,10 +164,10 @@ public final class ProcessorTaskListStories {
         final Spy openFeed = context.fn(OPEN_FEED_SPY);
         harness.getEventBus().addHandler(OpenFeedEvent.getType(), event -> openFeed.call(event.getName()));
         harness.afterStartUp(() -> {
-            final ProcessorTasksListController presenter = injector.getProcessorTasksListController();
+            final ProcessorTasksListController tasksList = injector.getProcessorTasksListController();
             // As a folder's 'Active Tasks' tab reads it
-            presenter.read(FOLDER, null);
-            harness.show(presenter);
+            tasksList.read(FOLDER, null);
+            harness.show(tasksList);
         });
         return harness.asWidget();
     }

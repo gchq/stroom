@@ -33,6 +33,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The user's activities ([ActivityList]) that match the filter its owner gives, a page at a time.
@@ -112,6 +113,6 @@ public class ActivityListController extends Controller {
     /// @param onFilterError Given why the filter was rejected after each find, or `null` if it
     ///                      wasn't.
     public void setFilterErrorConsumer(final Consumer<String> onFilterError) {
-        this.onFilterError = onFilterError;
+        this.onFilterError = Objects.requireNonNull(onFilterError, "onFilterError");
     }
 }

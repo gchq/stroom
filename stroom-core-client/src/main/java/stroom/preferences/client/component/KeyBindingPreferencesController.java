@@ -94,11 +94,6 @@ public final class KeyBindingPreferencesController extends Controller {
         this.onChange = onChange;
     }
 
-    /// Puts the focus on the tab's first control.
-    public void focus() {
-        view.focus();
-    }
-
     /// The rows for every action: one per shortcut the user has, then one per built in shortcut,
     /// or one with no shortcut for an action with none; only those that match the filter.
     ///

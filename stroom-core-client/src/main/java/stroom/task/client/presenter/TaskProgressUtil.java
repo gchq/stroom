@@ -54,9 +54,9 @@ public class TaskProgressUtil {
     /// @param treeAction Which rows are expanded.
     /// @return The page.
     public static ResultPage<TaskProgress> combine(final Range range,
-                                            final FindTaskProgressCriteria criteria,
-                                            final Collection<List<TaskProgress>> input,
-                                            final TaskManagerTreeAction treeAction) {
+                                                   final FindTaskProgressCriteria criteria,
+                                                   final Collection<List<TaskProgress>> input,
+                                                   final TaskManagerTreeAction treeAction) {
         // Validate criteria.
         criteria.validateSortField();
 

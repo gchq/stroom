@@ -97,7 +97,6 @@ public class TabSessionChooser extends Component {
 
     }
 
-
     // A session's name in the list
     interface Template extends SafeHtmlTemplates {
 

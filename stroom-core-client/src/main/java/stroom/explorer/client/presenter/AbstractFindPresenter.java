@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractFindPresenter
         extends MyPresenterWidget<FindView>
-        implements FindUiHandlers, FindDocResultListHandler<FindResult> {
+        implements FindUiHandlers {
 
     private final FindDocResultListController findResultList;
 
@@ -64,7 +64,9 @@ public abstract class AbstractFindPresenter
         findResultList.setOnFilterError(view::setFilterError);
     }
 
-    @Override
+    /// Opens a document found and closes the dialog.
+    ///
+    /// @param match The document, or `null` for none.
     public void openDocument(final FindResult match) {
         if (match != null) {
             OpenDocumentEvent.fire(this, match.getDocRef(), true);
@@ -72,11 +74,10 @@ public abstract class AbstractFindPresenter
         }
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         getView().focus();
     }
-
 
     @Override
     public void changeQuickFilter(final String name) {

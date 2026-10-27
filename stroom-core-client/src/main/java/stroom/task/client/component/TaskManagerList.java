@@ -23,6 +23,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.component.UserRefCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.presenter.TaskProgressUtil;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
@@ -164,7 +165,6 @@ public class TaskManagerList extends Component {
                 // De-selecting one and currently matching all ?
                 selectedTaskProgress.remove(object);
             }
-//            setButtonsEnabled();
         });
 
         // Node.
@@ -240,7 +240,7 @@ public class TaskManagerList extends Component {
     }
 
     /// @return The pager, whose refresh button spins while the tasks are fetched.
-    public PagerPanel getTaskMonitor() {
+    public TaskMonitorFactory getTaskMonitor() {
         return pager;
     }
 
@@ -358,7 +358,6 @@ public class TaskManagerList extends Component {
     interface Binder extends UiBinder<Widget, TaskManagerList> {
 
     }
-
 
     /// Shows a task's info.
     public interface InfoHandler {

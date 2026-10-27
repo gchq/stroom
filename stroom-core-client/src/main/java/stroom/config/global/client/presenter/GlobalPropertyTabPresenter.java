@@ -71,10 +71,12 @@ public class GlobalPropertyTabPresenter
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 GlobalConfigResource.QUICK_FILTER_CONTEXT, this, this));
         manageGlobalPropertyList.getToolbar().setName("Property actions");
-        openButton = manageGlobalPropertyList.getToolbar().button(SvgImage.EDIT, "Edit Selected Property", this::onOpen);
+        openButton = manageGlobalPropertyList.getToolbar().button(SvgImage.EDIT, "Edit Selected Property",
+                this::onOpen);
         openButton.setEnabled(false);
 
-        warningsButton = manageGlobalPropertyList.getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
+        warningsButton = manageGlobalPropertyList.getToolbar().button(SvgImage.ALERT, "Show Warnings",
+                this::showWarnings);
         warningsButton.setVisible(false);
 
         uiConfigCache.get(uiConfig -> {

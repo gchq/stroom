@@ -75,7 +75,6 @@ public class XPathFilterEditor extends Component {
         xPath.setFocus(true);
     }
 
-
     /// @return The XPath to look at: the one entered, or every element for All text.
     public String getXPath() {
         final SearchType selected = searchType.getValue();

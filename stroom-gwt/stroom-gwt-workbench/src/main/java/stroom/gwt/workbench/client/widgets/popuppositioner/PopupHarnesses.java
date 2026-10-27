@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.popuppositioner;
 
 import stroom.annotation.client.SettingBlock;
@@ -95,20 +94,20 @@ final class PopupHarnesses {
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget typeFilter(final StoryPopups popups) {
-        final TypeFilterController presenter = new TypeFilterController(popups.getEventBus(), new TypeFilter());
+        final TypeFilterController typeFilter = new TypeFilterController(popups.getEventBus(), new TypeFilter());
         // Owned by a root of its own, disposed when the story goes
         final ControllerNode root = ControllerNode.root("typeFilter");
-        root.adopt(presenter.getControllerNode());
+        root.adopt(typeFilter.getControllerNode());
         popups.addCleanUp(root::dispose);
         final List<DocumentType> types = Arrays.asList(
                 new DocumentType(DocumentTypeGroup.DATA_PROCESSING, "Feed", "Feed", SvgImage.DOCUMENT_FEED),
                 new DocumentType(DocumentTypeGroup.CONFIGURATION, "Dictionary", "Dictionary",
                         SvgImage.DOCUMENT_DICTIONARY));
-        presenter.setDocumentTypes(new DocumentTypes(types, types));
+        typeFilter.setDocumentTypes(new DocumentTypes(types, types));
         final Button button = triggerButton("Filter Types", "type-filter-trigger");
-        // Stroom's filter button shows the presenter again to toggle it (PopupManager hides a
+        // Stroom's filter button shows the filter again to toggle it (PopupManager hides a
         // popup that is shown twice)
-        button.addClickHandler(event -> presenter.show(button.getElement(), active -> {
+        button.addClickHandler(event -> typeFilter.show(button.getElement(), active -> {
             // The explorer updates its filter icon here
         }));
         return button;

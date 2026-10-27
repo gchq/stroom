@@ -36,6 +36,11 @@ public class FactObject {
     private final String type;
     private final boolean deleted;
 
+    /// Creates a fact object that isn't deleted.
+    ///
+    /// @param key  the fact's temporal-store key
+    /// @param name the display name
+    /// @param type the fact type
     public FactObject(final String key, final String name, final String type) {
         this(key, name, type, false);
     }
@@ -94,14 +99,17 @@ public class FactObject {
         return new FactObject(entry.getKey(), name, type);
     }
 
+    /// @return the fact's temporal-store key
     public String getKey() {
         return key;
     }
 
+    /// @return the display name
     public String getName() {
         return name;
     }
 
+    /// @return the fact type
     public String getType() {
         return type;
     }

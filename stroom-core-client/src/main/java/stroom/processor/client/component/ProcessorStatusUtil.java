@@ -25,6 +25,8 @@ import stroom.widget.customdatebox.client.MomentJs;
 
 class ProcessorStatusUtil {
 
+    /// @param row A processor's or filter's row.
+    /// @return Its status, for the Status column.
     public static String getValue(final ProcessorListRow row) {
         String status = null;
         if (row instanceof ProcessorFilterRow) {

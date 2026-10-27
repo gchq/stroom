@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.gin;
 
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;

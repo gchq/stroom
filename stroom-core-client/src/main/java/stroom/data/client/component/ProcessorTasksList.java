@@ -203,7 +203,6 @@ public class ProcessorTasksList extends Component {
 
     }
 
-
     /// Shows a row's info.
     public interface InfoHandler {
 

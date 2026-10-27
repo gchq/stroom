@@ -272,7 +272,6 @@ public class PipelineReferenceList extends Component {
 
     }
 
-
     /// Whether a reference is inherited, added or removed, which colours it.
     public enum ReferenceState {
         /// Inherited from a parent pipeline.

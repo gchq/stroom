@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.document.client.event.OpenDocumentEvent;

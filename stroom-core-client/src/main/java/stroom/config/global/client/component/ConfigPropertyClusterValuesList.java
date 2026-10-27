@@ -31,14 +31,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /// A property's values across the cluster: a row for each value, which expands to the nodes that
 /// have it, with where each node's value comes from.
@@ -48,7 +44,6 @@ public class ConfigPropertyClusterValuesList extends Component {
 
     @UiField
     DataGrid<ClusterValuesRow> dataGrid;
-
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private final ListDataProvider<ClusterValuesRow> dataProvider;
@@ -65,27 +60,8 @@ public class ConfigPropertyClusterValuesList extends Component {
 
         dataProvider.addDataDisplay(dataGrid);
 
-//         Handle use of the expander column.
+        // Handle use of the expander column.
         dataProvider.setTreeRowHandler(new TreeRowHandler<>(treeAction, dataGrid, expanderColumn));
-    }
-
-    // For DEV testing only, when you don't have two nodes
-    private Map<String, Set<String>> makeDemoData() {
-        final Supplier<String> junkTextSupplier = () ->
-                IntStream.rangeClosed(1, 5)
-                        .boxed()
-                        .map(i -> this.getClass().getCanonicalName())
-                        .collect(Collectors.joining(" "));
-
-        final Map<String, Set<String>> demoMap = new HashMap<>();
-        IntStream.rangeClosed(1, 9)
-                .forEach(i -> {
-                    demoMap.put("value " + i + junkTextSupplier.get(), IntStream.rangeClosed(i * 10, (i * 10) + 9)
-                            .boxed()
-                            .map(j -> "node" + j)
-                            .collect(Collectors.toSet()));
-                });
-        return demoMap;
     }
 
     /// Puts the focus on the list.
@@ -99,7 +75,6 @@ public class ConfigPropertyClusterValuesList extends Component {
     public void setData(final Map<String, Set<NodeSource>> effectiveValueToNodesMap) {
 
         // For DEV testing only, when you don't have two nodes
-//        this.effectiveValueToNodesMap = makeDemoData();
         this.effectiveValueToNodeSourcesMap = effectiveValueToNodesMap;
 
         refresh();

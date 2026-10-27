@@ -24,7 +24,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -46,8 +45,8 @@ import java.util.List;
 /// spins while the list's requests run, when it is their task monitor.
 ///
 /// A template can declare its children, as a [PagerPanel]'s: the list, and the buttons in its
-/// toolbar. A presenter's view as well as a component, until the list presenters become controllers.
-public class HeadedPagerPanel extends Component implements View, TaskMonitorFactory, HasWidgets {
+/// toolbar.
+public class HeadedPagerPanel extends Component implements TaskMonitorFactory, HasWidgets {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -65,7 +64,7 @@ public class HeadedPagerPanel extends Component implements View, TaskMonitorFact
     private final List<Widget> children = new ArrayList<>();
     private int taskCount;
 
-    /// Makes an empty panel with no heading, e.g. one GIN makes for a list presenter.
+    /// Makes an empty panel with no heading, e.g. one a template declares.
     public HeadedPagerPanel() {
         initWidget(BINDER.createAndBindUi(this));
     }

@@ -180,7 +180,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         this.timeField.setValue(partitionTimeField);
     }
 
-
     @Override
     public void setDefaultExtractionPipelineView(final View view) {
         this.defaultExtractionPipeline.setWidget(view.asWidget());

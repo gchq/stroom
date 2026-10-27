@@ -764,7 +764,6 @@ public class AnnotationEditPresenter
                     text.append("\n");
                 }
 
-
             }
             default -> {
                 text.append(dateTimeFormatter.format(entry.getEntryTime()));
@@ -1277,7 +1276,6 @@ public class AnnotationEditPresenter
             return entryUser == null && entryValue == null;
         }
     }
-
 
     // Follows a link in the history: a hyperlink, or an event or annotation reference
     private void followLink(final Element target) {

@@ -121,13 +121,11 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(
                 RecentItemsPresenter.class);
 
-
         // Menu
         bind(MenuManager.class).asEagerSingleton();
         // Stroom's edit menu on text fields, in place of the browser's context menu
         bind(ContextMenuManager.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);
-
 
         // Widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);

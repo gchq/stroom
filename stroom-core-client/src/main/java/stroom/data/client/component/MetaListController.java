@@ -242,6 +242,11 @@ public class MetaListController extends Controller {
         view.setTableName(tableName);
     }
 
+    /// @return The list, for a subclass.
+    protected MetaList getView() {
+        return view;
+    }
+
     /// Gives a stream's place in the tree of streams, for a list with [Columns#LINEAGE].
     ///
     /// @param row A stream.
@@ -736,7 +741,6 @@ public class MetaListController extends Controller {
     private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
                                                      final Selection<Long> selection,
                                                      final boolean removeStatusTerms) {
-//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.
@@ -753,11 +757,7 @@ public class MetaListController extends Controller {
             return MetaExpressionUtil
                     .createDataIdSetExpression(selection.getSet());
         }
-//        else {
         return null;
-//        }
-//
-//        return builder;
     }
 
     private static boolean isNotStatusTerm(final ExpressionItem expressionItem) {

@@ -38,4 +38,3 @@ public class SolrIndexScreenModule extends AbstractPresenterModule {
                 SolrIndexSettingsViewImpl.class);
     }
 }
-

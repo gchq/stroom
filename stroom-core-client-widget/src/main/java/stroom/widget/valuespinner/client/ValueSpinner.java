@@ -341,8 +341,6 @@ public class ValueSpinner
         return (FormGroup) parent;
     }
 
-
-
     /**
      * @return whether this widget is enabled.
      */

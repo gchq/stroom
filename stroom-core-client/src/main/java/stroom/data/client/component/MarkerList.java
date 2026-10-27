@@ -292,14 +292,12 @@ public class MarkerList extends Component {
     }
 
 
-
     // --------------------------------------------------------------------------------
 
 
     interface Binder extends UiBinder<Widget, MarkerList> {
 
     }
-
 
     // A severity's summary, in bold
     interface Template extends SafeHtmlTemplates {

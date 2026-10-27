@@ -60,6 +60,13 @@ public class RuleSetSettingsController extends Controller {
     private Runnable onChange = () -> {
     };
 
+    /// Makes the controller.
+    ///
+    /// @param eventBus           The app's event bus.
+    /// @param view               The screen.
+    /// @param ruleSetList        The list of rules.
+    /// @param expressionTree     Shows the rule chosen's expression.
+    /// @param ruleEditorProvider Makes the dialog that edits a rule.
     @Inject
     public RuleSetSettingsController(final EventBus eventBus,
                                      final RuleSetSettings view,

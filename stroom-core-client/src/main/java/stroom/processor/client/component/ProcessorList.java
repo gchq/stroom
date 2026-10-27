@@ -473,7 +473,6 @@ public class ProcessorList extends Component {
 
     }
 
-
     /// Shows a row's info.
     public interface InfoHandler {
 

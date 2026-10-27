@@ -54,6 +54,7 @@ public class RuleSetSettings extends Component {
     @UiField
     SimplePanel expression;
 
+    /// Makes the screen, with no list or expression yet.
     public RuleSetSettings() {
         initWidget(BINDER.createAndBindUi(this));
     }

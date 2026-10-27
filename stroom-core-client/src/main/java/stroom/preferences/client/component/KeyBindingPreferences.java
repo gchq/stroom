@@ -122,11 +122,6 @@ public class KeyBindingPreferences extends Component {
         return source;
     }
 
-    /// Puts the focus on the character key shortcuts tick box.
-    public void focus() {
-        enableCharacterKeyShortcuts.setFocus(true);
-    }
-
     /// @return Whether character key shortcuts are turned on.
     public boolean isCharacterKeyShortcutsEnabled() {
         return enableCharacterKeyShortcuts.getValue();

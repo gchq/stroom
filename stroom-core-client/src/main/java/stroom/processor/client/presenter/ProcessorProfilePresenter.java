@@ -40,7 +40,6 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     private final Provider<ProcessorProfileEditPresenter> editProvider;
     private final ProcessorProfileClient processorProfileClient;
 
-
     @Inject
     public ProcessorProfilePresenter(
             final EventBus eventBus,

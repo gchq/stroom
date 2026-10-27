@@ -306,7 +306,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 : TAB_LABEL;
     }
 
-
     private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (RULES_TAB.equals(tab)) {
             callback.accept(ruleSetSettingsLayer);

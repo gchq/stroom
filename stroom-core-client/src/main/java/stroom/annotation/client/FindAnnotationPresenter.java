@@ -21,7 +21,6 @@ import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -38,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class FindAnnotationPresenter
         extends MyPresenterWidget<FindView>
-        implements ShowFindAnnotationEvent.Handler, FindUiHandlers, FindDocResultListHandler<Annotation> {
+        implements ShowFindAnnotationEvent.Handler, FindUiHandlers {
 
     private boolean showing;
     private final FindAnnotationListController findAnnotationList;
@@ -62,7 +61,7 @@ public class FindAnnotationPresenter
                 FindAnnotationRequest.QUICK_FILTER_CONTEXT, this, this));
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         getView().focus();
     }
@@ -104,7 +103,9 @@ public class FindAnnotationPresenter
         }
     }
 
-    @Override
+    /// Chooses the annotation found, closing the dialog as OK.
+    ///
+    /// @param match The annotation.
     public void openDocument(final Annotation match) {
         HidePopupRequestEvent.builder(this).action(DialogAction.OK).fire();
     }

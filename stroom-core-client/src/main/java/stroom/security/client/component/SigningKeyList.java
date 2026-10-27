@@ -19,6 +19,7 @@ package stroom.security.client.component;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
@@ -85,7 +86,7 @@ public class SigningKeyList extends Component {
     }
 
     /// @return The pager, whose refresh button spins while the keys are fetched.
-    public PagerPanel getTaskMonitor() {
+    public TaskMonitorFactory getTaskMonitor() {
         return pager;
     }
 
@@ -131,7 +132,6 @@ public class SigningKeyList extends Component {
         return status.getDisplayValue()
                + " (trusted until " + dateFormat.apply(row.getExpiresMs()) + ")";
     }
-
 
 
     // --------------------------------------------------------------------------------

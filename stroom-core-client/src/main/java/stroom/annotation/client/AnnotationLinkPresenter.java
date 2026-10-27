@@ -25,7 +25,6 @@ import stroom.annotation.shared.UnlinkAnnotations;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -40,7 +39,7 @@ import java.util.Collections;
 
 public class AnnotationLinkPresenter
         extends DocPresenter<FindView, Annotation>
-        implements FindUiHandlers, FindDocResultListHandler<Annotation> {
+        implements FindUiHandlers {
 
     private final AnnotationResourceClient annotationResourceClient;
     private final FindAnnotationListController findAnnotationList;
@@ -112,7 +111,7 @@ public class AnnotationLinkPresenter
         }
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         getView().focus();
     }
@@ -136,7 +135,9 @@ public class AnnotationLinkPresenter
         }
     }
 
-    @Override
+    /// Opens an annotation found.
+    ///
+    /// @param match The annotation, or `null` for none.
     public void openDocument(final Annotation match) {
         if (match != null) {
             EditAnnotationEvent.fire(this, match.getId());

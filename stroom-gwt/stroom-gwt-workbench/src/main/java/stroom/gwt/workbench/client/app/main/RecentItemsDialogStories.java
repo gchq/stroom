@@ -153,7 +153,7 @@ public final class RecentItemsDialogStories {
         final RecentItems recentItems = new RecentItems();
         recentItems.getRecentItems().addAll(recent);
 
-        // The presenter, with the views and child presenter that GIN would inject
+        // The presenter, with the view and result list controller that GIN would inject
         final FindDocResultListController resultList = new FindDocResultListController(
                 eventBus,
                 new FindDocResultList(),

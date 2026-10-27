@@ -280,7 +280,6 @@ public class DependencyList extends Component {
     }
 
 
-
     // --------------------------------------------------------------------------------
 
 
@@ -288,14 +287,12 @@ public class DependencyList extends Component {
 
     }
 
-
     // A dependency's status, OK or missing
     interface Template extends SafeHtmlTemplates {
 
         @Template("<span class=\"{0}\">{1}</span>")
         SafeHtml status(String className, String value);
     }
-
 
     /// Shows a document's action menu.
     public interface ActionMenuHandler {

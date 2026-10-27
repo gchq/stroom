@@ -66,4 +66,3 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
                 SourceViewImpl.class);
     }
 }
-

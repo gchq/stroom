@@ -151,15 +151,6 @@ public class ContentTemplateList extends Component {
                         .build(),
                 200);
 
-//        dataGrid.addResizableColumn(
-//                DataGridUtil.textColumnBuilder(ContentTemplate::getDescription)
-//                        .enabledWhen(ContentTemplate::isEnabled)
-//                        .build(),
-//                DataGridUtil.headingBuilder("Description")
-//                        .withToolTip("The description of the template.")
-//                        .build(),
-//                200);
-
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ContentTemplate::getTemplateType))
                         .enabledWhen(ContentTemplate::isEnabled)
@@ -219,16 +210,6 @@ public class ContentTemplateList extends Component {
                         .rightAligned()
                         .build(),
                 130);
-
-//        dataGrid.addAutoResizableColumn(
-//                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ContentTemplate::getExpression))
-//                        .enabledWhen(ContentTemplate::isEnabled)
-//                        .build(),
-//                DataGridUtil.headingBuilder("Expression")
-//                        .withToolTip("The expression to match received data with. " +
-//                                     "Template expressions are tested in Template No. order, lowest first.")
-//                        .build(),
-//                100);
 
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(

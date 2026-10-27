@@ -44,7 +44,6 @@ public class TableModule extends AbstractPresenterModule {
 
         bind(TablePlugin.class).asEagerSingleton();
 
-
         bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
         bindPresenterWidget(
                 BasicTableSettingsPresenter.class,

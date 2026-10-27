@@ -420,14 +420,12 @@ public class NodeStatusList extends Component {
     }
 
 
-
     // --------------------------------------------------------------------------------
 
 
     interface Binder extends UiBinder<Widget, NodeStatusList> {
 
     }
-
 
     /// Shows a node's info.
     public interface InfoHandler {

@@ -129,4 +129,3 @@ public class SecurityScreenModule extends AbstractPresenterModule {
                 EditApiKeyViewImpl.class);
     }
 }
-

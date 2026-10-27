@@ -353,7 +353,6 @@ public class IndexShardList extends Component {
 
     }
 
-
     /// Shows a shard's info.
     public interface InfoHandler {
 

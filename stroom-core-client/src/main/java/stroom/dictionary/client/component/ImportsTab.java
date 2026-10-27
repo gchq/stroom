@@ -68,6 +68,12 @@ public class ImportsTab extends Controller {
     @UiField
     SimplePanel wordsPanel;
 
+    /// Makes the tab: the dictionaries imported, and the words they add up to.
+    ///
+    /// @param eventBus                  The app's event bus.
+    /// @param docRefListProvider        Makes the list of dictionaries imported.
+    /// @param effectiveWords            The words the dictionary and its imports add up to.
+    /// @param docSelectionPopupProvider Makes the popup that picks a dictionary to import.
     @Inject
     public ImportsTab(final EventBus eventBus,
                       final Provider<DocRefListController> docRefListProvider,

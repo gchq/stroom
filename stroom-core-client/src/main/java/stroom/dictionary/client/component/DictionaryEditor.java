@@ -67,6 +67,8 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
     private final LocationManager locationManager;
     private final ToolbarButton downloadButton;
 
+    /// Makes the editor, with its Words, Imports, Effective Words, Documentation and Permissions
+    /// tabs.
     @Inject
     public DictionaryEditor(final EventBus eventBus,
                             final LinkTabPanelView view,

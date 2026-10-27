@@ -50,11 +50,16 @@ public class ProcessorInfoBuilder {
 
     private final DateTimeFormatter dateTimeFormatter;
 
+    /// @param dateTimeFormatter Formats the dates shown.
     @Inject
     public ProcessorInfoBuilder(final DateTimeFormatter dateTimeFormatter) {
         this.dateTimeFormatter = dateTimeFormatter;
     }
 
+    /// Builds a processor's or filter's info, for its tooltip.
+    ///
+    /// @param row The processor's or filter's row.
+    /// @return The info, a table of it.
     public SafeHtml get(final ProcessorListRow row) {
         final TableBuilder tb = new TableBuilder();
         if (row instanceof ProcessorRow) {

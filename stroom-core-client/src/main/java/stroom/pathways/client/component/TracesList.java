@@ -250,7 +250,6 @@ public class TracesList extends Component {
         addTextColumn("Trace Id", 300, valueExtractor);
     }
 
-
     private void addTraceStartColumn(final Function<Long, String> dateTimeFormat) {
         final Function<TraceRoot, NanoTime> valueExtractor = TraceRoot::getStartTime;
         addTimeColumn("Trace Start", 200, valueExtractor, dateTimeFormat);

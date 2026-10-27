@@ -63,26 +63,38 @@ class ClusterValuesRow implements TreeRow {
         return expander;
     }
 
+    /// @param expander The row's expander.
     void setExpander(final Expander expander) {
         this.expander = expander;
     }
 
+    /// @return The value, or `null` on the row of a node under it.
     public String getEffectiveValue() {
         return effectiveValue;
     }
 
+    /// @return The node; on a value's row, its one node, or `null` if several have it.
     public String getNodeName() {
         return nodeName;
     }
 
+    /// @return Where the node's value comes from; on a value's row, its one node's, or `null` if
+    /// several have it.
     public String getSource() {
         return source;
     }
 
+    /// @return How many nodes have the value, or `null` on the row of a node under it.
     public Integer getNodeCount() {
         return nodeCount;
     }
 
+    /// Makes the rows: one for each value, followed, if several nodes have it and it is expanded, by
+    /// one for each of them.
+    ///
+    /// @param effectiveValueToNodesMap Each value, with the nodes that have it and where it comes from.
+    /// @param treeAction               Which values are expanded.
+    /// @return The rows.
     public static List<ClusterValuesRow> buildTree(final Map<String, Set<NodeSource>> effectiveValueToNodesMap,
                                                    final ClusterValuesTreeAction treeAction) {
 

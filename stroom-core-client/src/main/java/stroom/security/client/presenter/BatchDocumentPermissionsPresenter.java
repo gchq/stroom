@@ -99,12 +99,6 @@ public class BatchDocumentPermissionsPresenter
             documentList.setBatchEditEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
 
-//        own(documentList.getSelectionModel().addSelectionHandler(e -> {
-//            docEdit.setEnabled(documentList.getSelected() != null);
-//            if (e.getSelectionType().isDoubleSelect()) {
-//                onEdit();
-//            }
-//        }));
     }
 
     private void onFilter() {
@@ -124,7 +118,6 @@ public class BatchDocumentPermissionsPresenter
     private void onEdit() {
         final FindResult selected = documentList.getSelected();
         if (selected != null) {
-//            ShowDocumentPermissionsEvent.fire(this, selected.getDocRef());
             OpenDocumentEvent.builder(this, selected.getDocRef())
                     .selectedTab(CommonDocLinkTab.PERMISSIONS)
                     .fire();

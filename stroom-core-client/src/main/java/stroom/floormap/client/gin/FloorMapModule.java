@@ -90,8 +90,5 @@ public class FloorMapModule extends PluginModule {
                 FloorMapObjectEditView.class,
                 FloorMapObjectEditViewImpl.class);
 
-
-
-
     }
 }

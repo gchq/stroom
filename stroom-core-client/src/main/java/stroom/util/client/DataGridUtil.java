@@ -129,7 +129,6 @@ public class DataGridUtil {
         };
     }
 
-
     public static <T_ROW, T_CELL> Column<T_ROW, T_CELL> column(
             final Function<T_ROW, T_CELL> cellValueExtractor,
             final Supplier<Cell<T_CELL>> cellProvider) {
@@ -232,7 +231,6 @@ public class DataGridUtil {
 //            final int width) {
 //        view.addResizableColumn(safeHtmlColumn(cellValueExtractor), name, width);
 //    }
-
 
     public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,

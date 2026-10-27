@@ -39,7 +39,6 @@ public class FeedDependencyPresenter
 
     private final FeedDependencyListController feedDependencyList;
 
-
     @Inject
     public FeedDependencyPresenter(final EventBus eventBus,
                                    final FeedDependencyView view,

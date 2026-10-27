@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.gwt.workbench.client.widgets.StoryPopups;

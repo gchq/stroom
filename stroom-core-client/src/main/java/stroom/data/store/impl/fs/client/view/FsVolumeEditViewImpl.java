@@ -51,7 +51,6 @@ public class FsVolumeEditViewImpl extends ViewImpl implements FsVolumeEditView {
         widget = binder.createAndBindUi(this);
     }
 
-
     @Override
     public Widget asWidget() {
         return widget;

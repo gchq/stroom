@@ -16,9 +16,6 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.component.DocRefCell;
-import stroom.data.client.component.FeedRefCell;
-import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;

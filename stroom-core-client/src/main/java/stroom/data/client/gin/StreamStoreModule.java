@@ -76,6 +76,5 @@ public class StreamStoreModule extends PluginModule {
                 SourceView.class,
                 SourceViewImpl.class);
 
-
     }
 }

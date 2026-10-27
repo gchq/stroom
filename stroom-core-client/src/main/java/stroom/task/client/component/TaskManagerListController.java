@@ -275,65 +275,63 @@ public class TaskManagerListController extends Controller implements Refreshable
     // The menu of a task's info, from its text
     private List<Item> getContextMenus(final String taskInfo) {
         final List<Item> menuItems = new ArrayList<>();
-        {
-            int priority = 1;
-            final TaskInfoParser parser = new TaskInfoParser(taskInfo);
+        int priority = 1;
+        final TaskInfoParser parser = new TaskInfoParser(taskInfo);
 
-            final String feedName = parser.getString(TaskInfoKey.FEED_NAME);
-            if (feedName != null) {
-                // The task info only holds the feed's name, so look up its doc ref (a DocRef must
-                // have a UUID) when the item is chosen
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(priority++)
-                        .icon(SvgImage.OPEN)
-                        .text("Open Feed")
-                        .enabled(true)
-                        .command(() -> openFeed(feedName))
-                        .build());
-            }
+        final String feedName = parser.getString(TaskInfoKey.FEED_NAME);
+        if (feedName != null) {
+            // The task info only holds the feed's name, so look up its doc ref (a DocRef must
+            // have a UUID) when the item is chosen
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Open Feed")
+                    .enabled(true)
+                    .command(() -> openFeed(feedName))
+                    .build());
+        }
 
-            final Integer filterId = parser.getInt(TaskInfoKey.FILTER_ID);
-            if (filterId != null) {
-                final ProcessorFilter processorFilter = ProcessorFilter.builder().id(filterId).build();
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(priority++)
-                        .icon(SvgImage.OPEN)
-                        .text("Show Processor Filter Tasks")
-                        .enabled(true)
-                        .command(() -> OpenProcessorTaskEvent.fire(this, processorFilter))
-                        .build());
-            }
+        final Integer filterId = parser.getInt(TaskInfoKey.FILTER_ID);
+        if (filterId != null) {
+            final ProcessorFilter processorFilter = ProcessorFilter.builder().id(filterId).build();
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Show Processor Filter Tasks")
+                    .enabled(true)
+                    .command(() -> OpenProcessorTaskEvent.fire(this, processorFilter))
+                    .build());
+        }
 
-            final String pipelineUuid = parser.getString(TaskInfoKey.PIPELINE_UUID);
-            if (pipelineUuid != null) {
-                final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid, null);
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(priority++)
-                        .icon(SvgImage.OPEN)
-                        .text("Open Pipeline")
-                        .enabled(true)
-                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                        .build());
-            }
+        final String pipelineUuid = parser.getString(TaskInfoKey.PIPELINE_UUID);
+        if (pipelineUuid != null) {
+            final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid, null);
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Open Pipeline")
+                    .enabled(true)
+                    .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                    .build());
+        }
 
-            final Long streamId = parser.getLong(TaskInfoKey.STREAM_ID);
-            if (streamId != null) {
-                final SourceLocation location = SourceLocation.builder(streamId).build();
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(priority++)
-                        .icon(SvgImage.OPEN)
-                        .text("Open Stream")
-                        .enabled(true)
-                        .command(() -> ShowDataEvent.fire(this,
-                                location,
-                                DataViewType.INFO,
-                                DisplayMode.STROOM_TAB))
-                        .build());
-            }
+        final Long streamId = parser.getLong(TaskInfoKey.STREAM_ID);
+        if (streamId != null) {
+            final SourceLocation location = SourceLocation.builder(streamId).build();
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Open Stream")
+                    .enabled(true)
+                    .command(() -> ShowDataEvent.fire(this,
+                            location,
+                            DataViewType.INFO,
+                            DisplayMode.STROOM_TAB))
+                    .build());
+        }
 
-            if (!menuItems.isEmpty()) {
-                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
-            }
+        if (!menuItems.isEmpty()) {
+            menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
         }
         return menuItems;
     }
@@ -419,6 +417,9 @@ public class TaskManagerListController extends Controller implements Refreshable
     }
 
     private void update() {
+        if (isDisposed()) {
+            return;
+        }
         // Combine data from all nodes.
         final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(
                 range,
@@ -426,9 +427,6 @@ public class TaskManagerListController extends Controller implements Refreshable
                 responseMap.values(),
                 treeAction);
 
-        if (isDisposed()) {
-            return;
-        }
         view.retainSelectedTasks(new HashSet<>(resultPage.getValues()));
 
         final String allErrors = errorMap.entrySet()
@@ -478,7 +476,6 @@ public class TaskManagerListController extends Controller implements Refreshable
                 .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
     }
-
 
     private void openFeed(final String feedName) {
         feedClient.getDocRefForName(feedName, docRef -> {

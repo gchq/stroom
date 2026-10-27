@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -33,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class BrowseAnnotationPresenter
         extends MyPresenterWidget<FindView>
-        implements TabData, FindUiHandlers, FindDocResultListHandler<Annotation> {
+        implements TabData, FindUiHandlers {
 
     private final FindAnnotationListController findAnnotationList;
 
@@ -53,14 +52,16 @@ public class BrowseAnnotationPresenter
         findAnnotationList.setOnFocusFilter(this::focus);
     }
 
-    @Override
+    /// Opens an annotation found.
+    ///
+    /// @param match The annotation, or `null` for none.
     public void openDocument(final Annotation match) {
         if (match != null) {
             EditAnnotationEvent.fire(this, match.getId());
         }
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         getView().focus();
     }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.popover;
 
 import stroom.cell.info.client.InfoColumn;

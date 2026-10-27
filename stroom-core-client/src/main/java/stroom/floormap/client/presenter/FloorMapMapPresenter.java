@@ -500,8 +500,6 @@ public class FloorMapMapPresenter
         // This tab's own timeline: the Editor tab has its own, and the tabs must not time-sync
         floorMapTimeline.setOnTimeChange(this::onTimeChange);
 
-
-
         // Re-run the histogram whenever the user changes the visible date range via the settings popup.
         floorMapTimeline.setOnTimeRangeChange(() ->
                 runHistogramQuery(floorMapTimeline.getStartTime(),
@@ -519,7 +517,6 @@ public class FloorMapMapPresenter
                 canvas.setTrackedObjectId(objectId);
             }
         });
-
 
         // Clicking a cluster lists its members, which is what makes entities
         // merged into one glyph reachable at all — until this, the nine users
@@ -540,8 +537,6 @@ public class FloorMapMapPresenter
                         });
             }
         });
-
-
 
         // Drag-editing is performed on the Editor tab; the Map tab is view-focused,
         // so no drag handler is installed here.
@@ -1541,7 +1536,6 @@ public class FloorMapMapPresenter
         floorMapGroups.setRoster(entities, this::entityDisplayName);
     }
 
-
     /// The query column alias for a role, or `null` when the schema does
     /// not map the role (e.g. the area roles on a pre-area document).
     private String columnAliasForRole(final Role role,
@@ -1549,9 +1543,6 @@ public class FloorMapMapPresenter
         final String path = pathForRole(role);
         return path != null ? FloorMapQueryBuilder.buildColumnAlias(path, vf) : null;
     }
-
-
-
 
     /// Initialises the timeline range to ±24 hours around the currently selected time,
     /// then triggers a histogram query to populate the timeline's event density bars.

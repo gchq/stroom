@@ -29,7 +29,6 @@ import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermis
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;

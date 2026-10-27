@@ -170,7 +170,6 @@ public class ProcessorTaskSummaryList extends Component {
 
     }
 
-
     /// Shows a row's info.
     public interface InfoHandler {
 

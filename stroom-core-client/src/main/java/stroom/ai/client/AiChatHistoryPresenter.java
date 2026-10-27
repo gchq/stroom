@@ -44,11 +44,9 @@ public class AiChatHistoryPresenter
         extends MyPresenterWidget<AiChatHistoryView>
         implements AiChatHistoryUiHandlers {
 
-
     private final AiChatHistoryResultListController aiChatHistoryResultList;
     private boolean showing;
     private Consumer<AiChat> selectionConsumer;
-
 
     @Inject
     public AiChatHistoryPresenter(final EventBus eventBus,

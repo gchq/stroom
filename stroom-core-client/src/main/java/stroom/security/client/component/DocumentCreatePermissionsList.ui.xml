@@ -4,9 +4,8 @@
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <!-- The document types a user or group may create in a folder, and how they hold the
-         selected one, below. The details below the rest (addStyleNames, as styleName would replace the
-         split pane's own class) -->
+    <!-- The document types a user or group may create in a folder, and below them how they hold
+         the selected one (the split pane's classes are added, as styleName would replace its own) -->
     <split:SplitPane vertical="true" sizes="*, 200px" names="Create permissions, Details"
                      addStyleNames="max default-min-sizes">
         <g:FlowPanel styleName="max dock-container-vertical">

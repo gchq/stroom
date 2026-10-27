@@ -19,7 +19,6 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.widget.layout.client.SplitPane;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Style.Unit;

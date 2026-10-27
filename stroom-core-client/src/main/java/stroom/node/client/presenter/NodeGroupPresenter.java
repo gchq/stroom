@@ -41,7 +41,6 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private final NodeGroupClient nodeGroupClient;
     private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
-
     @Inject
     public NodeGroupPresenter(
             final EventBus eventBus,
