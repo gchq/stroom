@@ -17,7 +17,8 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
+import stroom.entity.client.presenter.ControllerTabProvider;
+import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
@@ -33,11 +34,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 
-/// The `App/Editors/FloorMapSettings` stories, showing Stroom's real [FloorMapSettingsPresenter] (a
-/// Floor Map's 'Settings' tab) with fake REST replies, for its Value Schema grid: a row per field
-/// mapping, each with a selection box for its role ([stroom.item.client.SelectionBoxCell]) and text
-/// fields for its path, display name and default ([stroom.cell.textfield.client.TextFieldCell]),
-/// each named for its column and the row's path.
+/// The `App/Editors/FloorMapSettings` stories, showing Stroom's real [FloorMapSettingsController] (a
+/// Floor Map's 'Settings' tab, shown as `FloorMapPresenter` shows it) with fake REST replies, for
+/// its Value Schema grid: a row per field mapping, each with a selection box for its role
+/// ([stroom.item.client.SelectionBoxCell]) and text fields for its path, display name and default
+/// ([stroom.cell.textfield.client.TextFieldCell]), each named for its column and the row's path.
 public final class FloorMapSettingsStories {
 
     private static final DocRef DOC_REF = new DocRef(FloorMapDoc.TYPE, "floormap-1", "Office");
@@ -165,7 +166,10 @@ public final class FloorMapSettingsStories {
         return DocEditors.render(context, FIXTURES, readOnly,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getFloorMapSettingsPresenter(),
+                        new ControllerTabProvider<>(harness.getEventBus(),
+                                injector::getFloorMapSettingsController,
+                                FloorMapSettingsController::read,
+                                FloorMapSettingsController::write).getPresenter(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource)
                                         .method(res -> res.fetch(DOC_REF.getUuid())),

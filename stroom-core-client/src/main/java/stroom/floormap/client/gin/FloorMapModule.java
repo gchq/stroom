@@ -29,13 +29,10 @@ import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
 import stroom.floormap.client.presenter.FloorMapPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
-import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
-import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
 import stroom.floormap.client.view.FloorMapEventStoreDataViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapQueryViewImpl;
-import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 
 /// GIN module for the Floor Map feature.
 /// Binds the presenters and views for the floor map components.
@@ -63,9 +60,6 @@ public class FloorMapModule extends PluginModule {
         bindPresenterWidget(FloorMapMapPresenter.class,
                 FloorMapMapView.class,
                 FloorMapMapViewImpl.class);
-        bindPresenterWidget(FloorMapSettingsPresenter.class,
-                FloorMapSettingsView.class,
-                FloorMapSettingsViewImpl.class);
 
         bindPresenterWidget(FloorMapQueryPresenter.class,
                 FloorMapQueryView.class,

@@ -24,9 +24,9 @@ import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.floormap.client.component.FloorMapInitController;
+import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
-import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
@@ -119,7 +119,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     FloorMapMapPresenter getFloorMapMapPresenter();
 
     /// @return A Floor Map's 'Settings' tab, as `FloorMapPresenter` creates it.
-    FloorMapSettingsPresenter getFloorMapSettingsPresenter();
+    FloorMapSettingsController getFloorMapSettingsController();
 
     /// @return A Git Repository's editor tab, as `GitRepoPlugin` creates it.
     GitRepoPresenter getGitRepoPresenter();

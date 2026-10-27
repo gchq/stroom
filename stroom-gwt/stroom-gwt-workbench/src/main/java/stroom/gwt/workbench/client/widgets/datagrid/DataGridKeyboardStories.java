@@ -48,7 +48,7 @@ import java.util.List;
 
 /// The keyboard of a [DataGrid] (its `DataGridKeyboard`): the row focus, Right
 /// into the cells, the controls in them (a tick box and a value spinner, as `ProcessorList`
-/// has, a text field and a selection box, as `FloorMapSettingsPresenter`'s value schema has),
+/// has, a text field and a selection box, as `FloorMapSettings`'s value schema has),
 /// editing with Enter or F2, and Tab from one control to the next while editing.
 ///
 /// The plays press the keys as `userEvent.keyboard` does; the real input checks

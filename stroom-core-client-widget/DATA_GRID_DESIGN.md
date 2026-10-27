@@ -839,7 +839,7 @@ interactive header cells, the context menu, copy, export and AI.
     because the old grid's click ticked a box), the XPath list's inert Ignore Case tick box, and the
     task summary losing its selection when a count changes (the presenter compares whole rows; see
     `ISSUES.md`).
-  * Held back: the floor map settings' Value Schema (`FloorMapSettingsPresenter`): its rows have no
+  * Held back: the floor map settings' Value Schema (`FloorMapSettings`): its rows have no
     stable id, it uses a selection model with no handler, and it restores focus through table rows.
 
 * **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyList`,
@@ -898,7 +898,7 @@ interactive header cells, the context menu, copy, export and AI.
     gives the width back to the fill columns, as `TreeRowHandler` does.
   * The import confirmation (`ImportConfigConfirmController`): one page of up to 100,000 items,
     now `setVirtual(true)`, so only the rows in view are drawn (`MyDataGrid` drew them all).
-  * The floor map settings' Value Schema (`FloorMapSettingsPresenter`): an edit replaces a mapping
+  * The floor map settings' Value Schema (`FloorMapSettings`): an edit replaces a mapping
     with a new, unequal one, so rows are keyed by the mapping they started as (an identity map
     of numbers; a replacement takes the key of the mapping it replaces). Its `SingleSelectionModel`
     becomes the single-select `MultiSelectionModelImpl` with the new grid's manager, so the

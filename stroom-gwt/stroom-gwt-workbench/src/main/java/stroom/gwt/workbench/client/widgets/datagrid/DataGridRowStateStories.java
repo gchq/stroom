@@ -53,7 +53,7 @@ import java.util.List;
 ///
 /// The grid's columns are those of Stroom's grids with controls in their cells: a tick box and a
 /// value spinner (as `ProcessorList`'s), and a text field and a selection box (as
-/// `FloorMapSettingsPresenter`'s value schema).
+/// `FloorMapSettings`'s value schema).
 ///
 /// A row's states are partly pseudo-classes (`:hover`, `:focus-within`, `:focus-visible`), which a
 /// script can't put an element in. So, as `Widgets/Selectors/SelectionListStates` does, the story

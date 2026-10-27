@@ -17,11 +17,16 @@
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
 
+    <!-- A floor map's Settings tab (floor-map-settings.css) -->
     <g:FlowPanel styleName="max dock-container-vertical form-padding form">
         <!-- Events Store (FloorMap Event Store) Reference Selection -->
-        <form:FormGroup label="Events Store">
+        <form:FormGroup label="Events Store" identity="floorMapSettingsEventsStore">
             <form:HelpHTML>
                 <p>The temporal store supplying the map's time-varying <strong>events</strong> —
                     for example people or vehicles whose position changes over time. Events are
@@ -31,10 +36,10 @@
                     that fixes the key encoding the map's point-in-time read needs, and that carries
                     the event expiry. Leave blank if the map has no moving events.</p>
             </form:HelpHTML>
-            <g:SimplePanel ui:field="eventsStoreRefContainer" />
+            <dd:DropDownBox ui:field="eventsStore"/>
         </form:FormGroup>
         <!-- Facts Store (SQL Temporal Store) Reference Selection -->
-        <form:FormGroup label="Facts Store">
+        <form:FormGroup label="Facts Store" identity="floorMapSettingsFactsStore">
             <form:HelpHTML>
                 <p>The temporal store supplying the map's <strong>facts</strong> — the
                     longer-lived content such as background images, gates, desks and rooms, and
@@ -45,10 +50,10 @@
                     types.</p>
                 <p>Must be an <strong>SQL Temporal Store</strong>.</p>
             </form:HelpHTML>
-            <g:SimplePanel ui:field="factsStoreRefContainer" />
+            <dd:DropDownBox ui:field="factsStore"/>
         </form:FormGroup>
         <!-- Value Format -->
-        <form:FormGroup label="Value Format">
+        <form:FormGroup label="Value Format" identity="floorMapSettingsValueFormat">
             <form:HelpHTML>
                 <p>How each stored entry's <em>value</em> is encoded. The <strong>Value
                     Schema</strong> paths below are interpreted against this format.</p>
@@ -62,10 +67,10 @@
                     re-interprets every entry, so only change it if the stored format really
                     changed.</p>
             </form:HelpHTML>
-            <g:SimplePanel ui:field="valueFormatContainer" />
+            <i:SelectionBox ui:field="valueFormat"/>
         </form:FormGroup>
         <!-- Value Schema -->
-        <form:FormGroup label="Value Schema" addStyleNames="stroom-floormap-settings-section">
+        <form:FormGroup label="Value Schema" addStyleNames="floor-map-settings__schema">
             <form:HelpHTML>
                 <p>Tells the map how to read each stored value by mapping a <strong>Role</strong>
                     (what the renderer needs) to a <strong>Path</strong> within the value.
@@ -88,8 +93,13 @@
             </form:HelpHTML>
             <!-- The toolbar and table in a control's box, as other forms' tables are -->
             <g:FlowPanel styleName="stroom-control">
-                <g:SimplePanel ui:field="schemaToolbarContainer" />
-                <g:SimplePanel ui:field="schemaGridContainer" height="250px" />
+                <b:Toolbar name="Field mapping actions">
+                    <b:ToolbarButton ui:field="addMapping" svg="ADD" title="Add Field Mapping"/>
+                    <b:ToolbarButton ui:field="removeMapping" svg="DELETE" title="Remove Field Mapping"
+                                     enabled="false"/>
+                </b:Toolbar>
+                <dg:DataGrid ui:field="schemaGrid" tableName="Value Schema"
+                             addStyleNames="floor-map-settings__schema-grid"/>
             </g:FlowPanel>
         </form:FormGroup>
         <!-- The two generated reads, editable. Everything fragile about them - the store, the

@@ -198,7 +198,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Text field column, as FloorMapSettingsPresenter builds them, in a grid showing Stroom's menus
+    // Text field column, as FloorMapSettings builds them, in a grid showing Stroom's menus
 
     static Widget textFieldGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);

@@ -55,7 +55,7 @@ import java.util.Objects;
 ///
 /// | Tab | Presenter | Purpose |
 /// |---|---|---|
-/// | Settings | `FloorMapSettingsPresenter` | Configures store references, value format, and value schema |
+/// | Settings | `FloorMapSettingsController` | Configures store references, value format, and value schema |
 /// | Events Query | `FloorMapQueryPresenter` | Edits the StroomQL query for the events store |
 /// | Map | `FloorMapMapPresenter` | Read-only (or light-edit) canvas rendering of facts at a point in time |
 /// | Editor | `FloorMapEditorPresenter` | Full authoring environment with staged (pending) saves |

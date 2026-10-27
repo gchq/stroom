@@ -454,22 +454,6 @@
 }
 
 /* ============================================================
- * Settings tab — section separation
- *
- * The Settings tab mixes simple single-control rows (stores, value
- * format) with two much heavier grid controls (Value Schema and Type
- * Styles). Give those heavy sections a subtle top divider plus extra
- * breathing room so they read as distinct blocks rather than just more
- * rows. The compound selector out-specifies the default inter-group
- * spacing (.form-group:not(:first-child), specificity 0,2,0) so this wins.
- * ============================================================ */
-.form .form-group.stroom-floormap-settings-section {
-    margin-top: 1em;
-    padding-top: 1em;
-    border-top: 1px solid var(--border-color);
-}
-
-/* ============================================================
  * Timeline settings popup panel
  * ============================================================ */
 

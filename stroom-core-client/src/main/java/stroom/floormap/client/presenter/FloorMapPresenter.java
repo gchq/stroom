@@ -21,10 +21,12 @@ import stroom.docref.DocRef;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -58,7 +60,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     private final DocumentAssetPresenter<FloorMapDoc> documentAssetPresenter;
     private FloorMapMapPresenter floorMapMapPresenter;
     private FloorMapEditorPresenter floorMapEditorPresenter;
-    private FloorMapSettingsPresenter floorMapSettingsPresenter;
+    private FloorMapSettingsController floorMapSettings;
     private FloorMapQueryPresenter eventsQueryPresenter;
 
     /// Tracks the presenter that was active before the most recent tab switch.
@@ -68,12 +70,12 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
     /// Set when the Editor tab enables area support on this document, so a
     /// Settings tab created *afterwards* still gets its grid patched
-    /// (see [FloorMapSettingsPresenter#applyAreaPatch()]).
+    /// (see [FloorMapSettingsController#applyAreaPatch()]).
     private boolean areaSupportEnabled;
 
     /// Set when the Editor tab enables status support on this document, so a
     /// Settings tab created *afterwards* still gets its grid patched
-    /// (see [FloorMapSettingsPresenter#applyStatusPatch()]).
+    /// (see [FloorMapSettingsController#applyStatusPatch()]).
     private boolean statusSupportEnabled;
 
     /// The initial view `{scale, offsetX, offsetY}` the Map tab zoomed to
@@ -87,7 +89,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                              final LinkTabPanelView view,
                              final Provider<FloorMapMapPresenter> floorMapMapPresenterProvider,
                              final Provider<FloorMapEditorPresenter> floorMapEditorPresenterProvider,
-                             final Provider<FloorMapSettingsPresenter> floorMapSettingsPresenterProvider,
+                             final Provider<FloorMapSettingsController> floorMapSettingsProvider,
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final Provider<FloorMapQueryPresenter> floorMapQueryPresenterProvider,
                              final DocumentUserPermissionsTabProvider<FloorMapDoc> documentUserPermissionsTabProvider,
@@ -128,16 +130,16 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             // onWrite would silently revert the upgrade on save.
             floorMapEditorPresenter.setAreaSupportEnabledListener(() -> {
                 areaSupportEnabled = true;
-                if (floorMapSettingsPresenter != null) {
-                    floorMapSettingsPresenter.applyAreaPatch();
+                if (floorMapSettings != null) {
+                    floorMapSettings.applyAreaPatch();
                 }
             });
             // Likewise when the Editor enables status support (a Status mapping, so
             // facts can be deleted from a point in time).
             floorMapEditorPresenter.setStatusSupportEnabledListener(() -> {
                 statusSupportEnabled = true;
-                if (floorMapSettingsPresenter != null) {
-                    floorMapSettingsPresenter.applyStatusPatch();
+                if (floorMapSettings != null) {
+                    floorMapSettings.applyStatusPatch();
                 }
             });
             // Type styles are owned by the Editor's Layers panel and persisted
@@ -187,18 +189,18 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             }
         });
 
-        addTab(SETTINGS, new DocTabProvider<>(() -> {
-            floorMapSettingsPresenter = make(floorMapSettingsPresenterProvider);
+        addTab(SETTINGS, new ControllerTabProvider<>(getEventBus(), () -> {
+            floorMapSettings = floorMapSettingsProvider.get();
             if (areaSupportEnabled) {
                 // Area support was enabled before this tab was first opened —
                 // keep its grid patched (idempotent; also re-applied on read).
-                floorMapSettingsPresenter.applyAreaPatch();
+                floorMapSettings.applyAreaPatch();
             }
             if (statusSupportEnabled) {
-                floorMapSettingsPresenter.applyStatusPatch();
+                floorMapSettings.applyStatusPatch();
             }
-            return floorMapSettingsPresenter;
-        }));
+            return floorMapSettings;
+        }, FloorMapSettingsController::read, FloorMapSettingsController::write));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
 
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
