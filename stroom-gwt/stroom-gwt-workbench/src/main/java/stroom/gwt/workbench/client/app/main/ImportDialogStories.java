@@ -30,16 +30,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.importexport.client.component.ImportConfigConfirmController;
 import stroom.importexport.client.component.ImportConfigController;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/ImportDialog`, showing Stroom's real [ImportConfigController] (the 'Import'
-/// dialog, which uploads the chosen file) and [ImportConfigConfirmPresenter] (the 'Confirm Import'
+/// dialog, which uploads the chosen file) and [ImportConfigConfirmController] (the 'Confirm Import'
 /// dialog) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -234,9 +234,8 @@ public final class ImportDialogStories {
         // As ImportConfigPlugin's listeners do
         harness.addRegistration(harness.getEventBus().addHandler(ImportConfigEvent.getType(), event ->
                 injector.getImportConfigController().show(harness.getAppRoot())));
-        final ImportConfigConfirmPresenter confirmPresenter = injector.getImportConfigConfirmPresenter();
-        harness.addRegistration(harness.getEventBus().addHandler(ImportConfigConfirmEvent.getType(),
-                confirmPresenter));
+        harness.addRegistration(harness.getEventBus().addHandler(ImportConfigConfirmEvent.getType(), event ->
+                injector.getImportConfigConfirmController().show(harness.getAppRoot(), event.getResponse())));
         // As the main menu's 'Import' item does
         harness.afterStartUp(() -> ImportConfigEvent.fire(harness.getHasHandlers()));
         return harness.asWidget();

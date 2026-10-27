@@ -21,10 +21,7 @@ import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.importexport.client.view.DependenciesTabViewImpl;
-import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 
 public class ImportExportConfigModule extends PluginModule {
 
@@ -32,10 +29,6 @@ public class ImportExportConfigModule extends PluginModule {
     protected void configure() {
         // Import.
         bindPlugin(ImportConfigPlugin.class);
-        bindPresenterWidget(
-                ImportConfigConfirmPresenter.class,
-                ImportConfigConfirmView.class,
-                ImportConfigConfirmViewImpl.class);
 
         // Export.
         bindPlugin(ExportConfigPlugin.class);

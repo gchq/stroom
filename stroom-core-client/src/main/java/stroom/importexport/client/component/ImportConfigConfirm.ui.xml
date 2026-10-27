@@ -1,11 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- What an import will do to each item, with the import's settings -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form overflow-hidden default-min-sizes">
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max form-control-border form-control-background"/>
+        <g:SimplePanel styleName="dock-max form-control-border form-control-background">
+            <!-- An import can hold many thousands of items, all on one page: draw only those in view -->
+            <dg:DataGrid ui:field="dataGrid" tableName="Import Items" pageSize="100000" virtual="true"/>
+        </g:SimplePanel>
         <form:FormGroup helpText="Whether imported processor filters are switched on. When unticked they are imported switched off, so nothing is processed until they are enabled."
                         screenReaderText="When unticked, imported filters are switched off.">
             <tickbox:TickBox ui:field="enableFilters" identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters"/>
@@ -26,7 +32,7 @@
         </form:FormGroup>
         <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder"
                         helpText="The folder that new items are imported into; folders in the import file are created under it. Existing items stay where they are unless Use Import Folders is ticked. Default is System, the top level.">
-            <g:SimplePanel ui:field="rootFolder"/>
+            <dd:DropDownBox ui:field="rootFolder"/>
         </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

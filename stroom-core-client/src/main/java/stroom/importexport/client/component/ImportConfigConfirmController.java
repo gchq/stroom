@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.importexport.client.presenter;
+package stroom.importexport.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -25,32 +25,33 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -61,8 +62,6 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,76 +69,72 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ImportConfigConfirmPresenter extends
-        MyPresenterWidget<ImportConfigConfirmPresenter.ImportConfigConfirmView>
-        implements ImportConfigConfirmEvent.Handler, HidePopupRequestEvent.Handler {
+/// Confirms an import ([ImportConfigConfirm]), in a dialog made for one use: what the import will do
+/// to each item, which can be ticked or unticked, and the import's settings. OK imports the ticked
+/// items; Cancel aborts the import.
+public class ImportConfigConfirmController extends Controller {
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
 
     private final TooltipPresenter tooltipPresenter;
-    private final ImportConfigConfirmView view;
+    private final ImportConfigConfirm view;
     private final DataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
-    private final DocSelectionBoxPresenter rootFolderPresenter;
 
     private final ImportSettings.Builder importSettingsBuilder = ImportSettings.builder();
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The content.
+    /// @param tooltipPresenter              Shows an item's messages.
+    /// @param docSelectionProvider          Makes the root folder picker's controller.
+    /// @param restFactory                   Refreshes, makes and aborts the import.
+    /// @param dateTimeBoxControllerProvider Makes the Process From box's controller.
     @Inject
-    public ImportConfigConfirmPresenter(final EventBus eventBus,
-                                        final ImportConfigConfirmView view,
-                                        final TooltipPresenter tooltipPresenter,
-                                        final DocSelectionBoxPresenter rootFolderPresenter,
-                                        final RestFactory restFactory,
-                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
-        super(eventBus, view);
-        own(tooltipPresenter);
-        own(rootFolderPresenter);
-        make(dateTimeBoxControllerProvider).attach(view.getEnableFromBox());
-        this.rootFolderPresenter = rootFolderPresenter;
-
-        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);
-        rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER_TYPE);
-        rootFolderPresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        rootFolderPresenter.setAllowFolderSelection(true);
-
-        this.tooltipPresenter = tooltipPresenter;
-        this.restFactory = restFactory;
-
+    public ImportConfigConfirmController(final EventBus eventBus,
+                                         final ImportConfigConfirm view,
+                                         final TooltipPresenter tooltipPresenter,
+                                         final Provider<DocSelectionController> docSelectionProvider,
+                                         final RestFactory restFactory,
+                                         final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
         this.view = view;
+        this.tooltipPresenter = own(tooltipPresenter);
+        this.restFactory = restFactory;
+        initWidget(view);
+        make(dateTimeBoxControllerProvider).attach(view.getEnableFromBox());
 
-        dataGrid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
-        dataGrid.setTableName("Import Items");
-        // An import can hold many thousands of items, all on one page: draw only those in view
-        dataGrid.setVirtual(true);
+        final DocSelectionController rootFolder = make(docSelectionProvider);
+        rootFolder.attach(view.getRootFolderBox());
+        rootFolder.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);
+        rootFolder.setIncludedTypes(ExplorerConstants.FOLDER_TYPE);
+        rootFolder.setRequiredPermissions(DocumentPermission.VIEW);
+        rootFolder.setAllowFolderSelection(true);
 
-        view.setDataGrid(dataGrid);
-        view.setRootFolderView(rootFolderPresenter.getView());
-        view.setEnableFilters(false);
+        dataGrid = view.getDataGrid();
         view.setEnableFromDate(System.currentTimeMillis());
-        view.setUseImportNames(false);
-        view.setUseImportFolders(false);
-        view.onUseImportNames(useImportNames -> {
+        view.setOnUseImportNames(useImportNames -> {
             importSettingsBuilder.useImportNames(useImportNames);
             refresh();
         });
-        view.onUseImportFolders(useImportFolders -> {
+        view.setOnUseImportFolders(useImportFolders -> {
             importSettingsBuilder.useImportFolders(useImportFolders);
             refresh();
         });
 
         addColumns();
 
-        own(rootFolderPresenter.addSelectionListener(selected -> {
-            if (selected != null &&
-                selected.compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
-                selected.getUuid().length() > 1) {
+        own(rootFolder.addSelectionListener(selected -> {
+            if (selected != null
+                && selected.compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0
+                && selected.getUuid().length() > 1) {
                 setRootDocRef(selected);
             } else {
                 setRootDocRef(null);
@@ -147,34 +142,30 @@ public class ImportConfigConfirmPresenter extends
         }));
     }
 
+    /// Shows what an import will do in a dialog, owned by `opener` until it is closed.
+    ///
+    /// @param opener   What shows it.
+    /// @param response The import's upload, with what it will do to each item.
+    public void show(final HasControllerNode opener, final ImportConfigResponse response) {
+        resourceKey = response.getResourceKey();
+        confirmList = response.getConfirmList();
+        updateList();
+        ControllerDialog.showOnce(opener, this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
+                .popupSize(PopupSize.resizable(1200, 800, 380, 480))
+                .caption("Confirm Import")
+                .onShow(e -> view.focus())
+                .onHideRequest(this::onHideRequest)
+                .fire();
+    }
+
     private void setRootDocRef(final DocRef rootDocRef) {
         importSettingsBuilder.rootDocRef(rootDocRef);
         refresh();
     }
 
-    @Override
-    public void onConfirmImport(final ImportConfigConfirmEvent event) {
-        resourceKey = event.getResponse().getResourceKey();
-        confirmList = event.getResponse().getConfirmList();
-        updateList();
-        show();
-    }
-
-    private void show() {
-        final PopupSize popupSize = PopupSize.resizable(
-                1200, 800,
-                380, 480);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .modal()
-                .popupSize(popupSize)
-                .caption("Confirm Import")
-                .onShow(e -> getView().focus())
-                .onHideRequest(this)
-                .fire();
-    }
-
-    public void refresh() {
+    private void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
         restFactory
                 .create(CONTENT_RESOURCE)
@@ -190,7 +181,8 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -211,13 +203,12 @@ public class ImportConfigConfirmPresenter extends
         AlertEvent.fireError(this, message, null);
     }
 
-    @Override
-    public void onHideRequest(final HidePopupRequestEvent e) {
+    private void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             boolean warnings = false;
             int count = 0;
-            importSettingsBuilder.enableFilters(getView().isEnableFilters());
-            importSettingsBuilder.enableFiltersFromTime(getView().getEnableFromDate());
+            importSettingsBuilder.enableFilters(view.isEnableFilters());
+            importSettingsBuilder.enableFiltersFromTime(view.getEnableFromDate());
             for (final ImportState importState : confirmList) {
                 if (importState.isAction()) {
                     count++;
@@ -230,14 +221,14 @@ public class ImportConfigConfirmPresenter extends
             if (count == 0) {
                 // Re-enable popup buttons.
                 AlertEvent.fireWarn(
-                        ImportConfigConfirmPresenter.this,
+                        this,
                         "No items are selected for import", e::reset);
             } else {
                 final String ownedDocumentsMsg = checkOwnedDocuments();
                 if (NullSafe.isNonEmptyString(ownedDocumentsMsg)) {
-                    AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, ownedDocumentsMsg, e::reset);
+                    AlertEvent.fireWarn(this, ownedDocumentsMsg, e::reset);
                 } else if (warnings) {
-                    ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
+                    ConfirmEvent.fireWarn(this,
                             "There are warnings in the items selected.  Are you sure you want to import?.",
                             result -> {
                                 if (result) {
@@ -401,7 +392,7 @@ public class ImportConfigConfirmPresenter extends
         return cellIcon.withName(title);
     }
 
-    protected void addInfoColumn() {
+    private void addInfoColumn() {
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
@@ -492,7 +483,7 @@ public class ImportConfigConfirmPresenter extends
         dataGrid.addResizableColumn(column, "Destination Path", 450);
     }
 
-    public void abortImport(final HidePopupRequestEvent e) {
+    private void abortImport(final HidePopupRequestEvent e) {
         // Abort ... use a blank confirm list to perform an import that imports nothing.
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         importSettingsBuilder.useImportNames(false);
@@ -506,18 +497,19 @@ public class ImportConfigConfirmPresenter extends
                     return null;
                 })
                 .onSuccess(ignored -> AlertEvent.fireWarn(
-                        ImportConfigConfirmPresenter.this,
+                        this,
                         "Import Aborted",
                         e::hide))
                 .onFailure(caught -> AlertEvent.fireError(
-                        ImportConfigConfirmPresenter.this,
+                        this,
                         caught.getMessage(),
                         e::hide))
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    public void importData(final HidePopupRequestEvent e) {
+    private void importData(final HidePopupRequestEvent e) {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         restFactory
                 .create(CONTENT_RESOURCE)
@@ -526,10 +518,10 @@ public class ImportConfigConfirmPresenter extends
                         confirmList)))
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
-                                ImportConfigConfirmPresenter.this,
+                                this,
                                 "Import Complete", () -> {
                                     e.hide();
-                                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
+                                    RefreshExplorerTreeEvent.fire(this);
 
                                     // We might have loaded a new visualisation or updated
                                     // an existing one.
@@ -539,13 +531,14 @@ public class ImportConfigConfirmPresenter extends
                     e.hide();
                     // Even if the import was error we should refresh the tree in
                     // case it got part done.
-                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
+                    RefreshExplorerTreeEvent.fire(this);
 
                     // We might have loaded a new visualisation or updated an
                     // existing one.
                     clearCaches();
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -555,32 +548,8 @@ public class ImportConfigConfirmPresenter extends
         // ClearFunctionCacheEvent.fire(this);
     }
 
-    public interface ImportConfigConfirmView extends View, Focus {
-
-        /// @return The enable from box, for a controller to open its dialog.
-        DateTimeBox getEnableFromBox();
-
-        void setDataGrid(Widget widget);
-
-        Long getEnableFromDate();
-
-        void setEnableFromDate(Long date);
-
-        boolean isEnableFilters();
-
-        void setEnableFilters(boolean enableFilters);
-
-        void setUseImportNames(boolean useImportNames);
-
-        void onUseImportNames(Consumer<Boolean> consumer);
-
-        void setUseImportFolders(boolean useImportFolders);
-
-        void onUseImportFolders(Consumer<Boolean> consumer);
-
-        void setRootFolderView(View view);
-
-        Widget getDataGridViewWidget();
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
-
 }

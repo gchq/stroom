@@ -17,10 +17,7 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.importexport.client.view.DependenciesTabViewImpl;
-import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ImportExportConfigModule`
@@ -32,9 +29,6 @@ public class ImportExportScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(ImportConfigConfirmPresenter.class,
-                ImportConfigConfirmView.class,
-                ImportConfigConfirmViewImpl.class);
         bindPresenterWidget(DependenciesTabPresenter.class,
                 DependenciesTabPresenter.DependenciesTabView.class,
                 DependenciesTabViewImpl.class);

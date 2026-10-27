@@ -45,9 +45,9 @@ import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.importexport.client.component.DependenciesInfoController;
+import stroom.importexport.client.component.ImportConfigConfirmController;
 import stroom.importexport.client.component.ImportConfigController;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.pathways.client.presenter.TracesPresenter;
@@ -133,8 +133,8 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     /// @return The 'Dependencies' tab.
     DependenciesTabPresenter getDependenciesTabPresenter();
 
-    /// @return The 'Confirm Import' dialog, shown by firing `ImportConfigConfirmEvent`.
-    ImportConfigConfirmPresenter getImportConfigConfirmPresenter();
+    /// @return The 'Confirm Import' dialog, made for one use when `ImportConfigConfirmEvent` fires.
+    ImportConfigConfirmController getImportConfigConfirmController();
 
     /// @return The 'Import' dialog (choose and upload a file), as `ImportConfigPlugin` shows it for
     /// `ImportConfigEvent`.
