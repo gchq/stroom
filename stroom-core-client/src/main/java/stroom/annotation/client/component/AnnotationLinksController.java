@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.component.FindAnnotationListController;
+import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.ShowFindAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.UnlinkAnnotations;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.explorer.client.presenter.FindView;
+import stroom.explorer.client.component.FindPanel;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -37,37 +41,49 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 
-public class AnnotationLinkPresenter
-        extends DocPresenter<FindView, Annotation>
-        implements FindUiHandlers {
+/// An annotation's Link To or Link From tab ([FindPanel]): the annotations it links to, which can
+/// be added and removed unless the annotation is read only, or those that link to it
+/// ([#setFrom(boolean)]), filtered by a quick filter. Choosing one opens it.
+public class AnnotationLinksController extends Controller {
 
+    private final FindPanel view;
     private final AnnotationResourceClient annotationResourceClient;
     private final FindAnnotationListController findAnnotationList;
 
     private DocRef annotationRef;
-    private AnnotationPresenter parent;
     private boolean from;
+    private boolean readOnly = true;
+    private Runnable onChange = () -> {
+    };
 
     private final ButtonView add;
     private final ButtonView remove;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                  The application's event bus.
+    /// @param view                      The content.
+    /// @param annotationResourceClient  Links and unlinks annotations.
+    /// @param findAnnotationList        Finds the linked annotations, and lists them.
     @Inject
-    public AnnotationLinkPresenter(final EventBus eventBus,
-                                   final FindView view,
-                                   final AnnotationResourceClient annotationResourceClient,
-                                   final FindAnnotationListController findAnnotationList) {
-        super(eventBus, view);
-        own(findAnnotationList);
+    public AnnotationLinksController(final EventBus eventBus,
+                                     final FindPanel view,
+                                     final AnnotationResourceClient annotationResourceClient,
+                                     final FindAnnotationListController findAnnotationList) {
+        super(eventBus);
+        this.view = view;
         this.annotationResourceClient = annotationResourceClient;
-        this.findAnnotationList = findAnnotationList;
+        this.findAnnotationList = own(findAnnotationList);
+        initWidget(view);
 
         // To browse, users only need view permission.
         findAnnotationList.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
         view.setResultView(findAnnotationList);
-        view.setUiHandlers(this);
+        view.setOnFilterChange(this::changeQuickFilter);
+        view.setOnFilterKeyDown(this::onFilterKeyDown);
         findAnnotationList.setOnOpen(this::openDocument);
-        findAnnotationList.setOnFocusFilter(this::focus);
+        findAnnotationList.setOnFocusFilter(view::focus);
 
         findAnnotationList.getToolbar().setName("Link actions");
         add = findAnnotationList.getToolbar().button(SvgImage.ADD, "Add Annotation Link",
@@ -79,6 +95,10 @@ public class AnnotationLinkPresenter
         remove.setVisible(false);
 
         own(findAnnotationList.addSelectionHandler(e -> enableButtons()));
+        watch(Contexts.READ_ONLY, readOnly -> {
+            this.readOnly = readOnly;
+            enableButtons();
+        });
     }
 
     private void onRemove() {
@@ -95,39 +115,28 @@ public class AnnotationLinkPresenter
     private void link(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new LinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, this::onChangeComplete, this);
+        annotationResourceClient.change(request, guard(this::onChangeComplete), taskMonitor());
     }
 
     private void unlink(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new UnlinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, this::onChangeComplete, this);
+        annotationResourceClient.change(request, guard(this::onChangeComplete), taskMonitor());
     }
 
     private void onChangeComplete(final Boolean success) {
         if (success != null && success) {
-            parent.updateHistory();
+            onChange.run();
             findAnnotationList.refresh();
         }
     }
 
-    /// Puts the focus on the filter.
-    public void focus() {
-        getView().focus();
-    }
-
-    public void refresh() {
-        findAnnotationList.refresh();
-    }
-
-    @Override
-    public void changeQuickFilter(final String name) {
+    private void changeQuickFilter(final String name) {
         findAnnotationList.setFilter(name);
         findAnnotationList.refresh();
     }
 
-    @Override
-    public void onFilterKeyDown(final KeyDownEvent event) {
+    private void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             openDocument(findAnnotationList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
@@ -135,17 +144,18 @@ public class AnnotationLinkPresenter
         }
     }
 
-    /// Opens an annotation found.
-    ///
-    /// @param match The annotation, or `null` for none.
-    public void openDocument(final Annotation match) {
+    // Opens an annotation found, if there is one
+    private void openDocument(final Annotation match) {
         if (match != null) {
             EditAnnotationEvent.fire(this, match.getId());
         }
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final Annotation document) {
+    /// Lists the annotations linked to or from an annotation.
+    ///
+    /// @param docRef   The annotation.
+    /// @param document The annotation.
+    public void read(final DocRef docRef, final Annotation document) {
         annotationRef = docRef;
         if (from) {
             findAnnotationList.setDestinationId(document.getId());
@@ -157,22 +167,25 @@ public class AnnotationLinkPresenter
     }
 
     private void enableButtons() {
-        add.setEnabled(!isReadOnly());
-        remove.setEnabled(!isReadOnly() && findAnnotationList.getSelected() != null);
+        add.setEnabled(!readOnly);
+        remove.setEnabled(!readOnly && findAnnotationList.getSelected() != null);
         add.setVisible(!from);
         remove.setVisible(!from);
     }
 
-    @Override
-    protected Annotation onWrite(final Annotation document) {
-        return document;
-    }
-
-    public void setParent(final AnnotationPresenter parent) {
-        this.parent = parent;
-    }
-
+    /// @param from Whether it lists the annotations that link to the annotation, which can't be
+    ///             changed from here, rather than those it links to.
     public void setFrom(final boolean from) {
         this.from = from;
+    }
+
+    /// @param onChange Run when a link is added or removed.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

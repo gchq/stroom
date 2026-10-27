@@ -16,11 +16,13 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationLinksController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -60,28 +62,30 @@ public class AnnotationPresenter
                                final LinkTabPanelView view,
                                final AnnotationResourceClient annotationResourceClient,
                                final AnnotationEditPresenter annotationEditPresenter,
-                               final AnnotationLinkPresenter linkTo,
-                               final AnnotationLinkPresenter linkFrom,
+                               final Provider<AnnotationLinksController> annotationLinksProvider,
                                final LinkedEventPresenter linkedEventPresenter,
                                final Provider<MarkdownEditController> markdownEditProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         own(annotationEditPresenter);
-        own(linkTo);
-        own(linkFrom);
         own(linkedEventPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationEditPresenter = annotationEditPresenter;
         annotationEditPresenter.setParent(this);
         linkedEventPresenter.setParent(this);
-        linkTo.setParent(this);
-        linkFrom.setParent(this);
-        linkFrom.setFrom(true);
 
         addTab(ANNOTATION, new DocTabProvider<>(() -> annotationEditPresenter));
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
-        addTab(LINK_TO, new DocTabProvider<>(() -> linkTo));
-        addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
+        addTab(LINK_TO, new ControllerTabProvider<>(eventBus, () -> {
+            final AnnotationLinksController linkTo = annotationLinksProvider.get();
+            linkTo.setOnChange(this::updateHistory);
+            return linkTo;
+        }, AnnotationLinksController::read));
+        addTab(LINK_FROM, new ControllerTabProvider<>(eventBus, () -> {
+            final AnnotationLinksController linkFrom = annotationLinksProvider.get();
+            linkFrom.setFrom(true);
+            return linkFrom;
+        }, AnnotationLinksController::read));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(getEventBus(), () -> {
             if (markdownEdit == null) {
                 // Owned by the tab that shows it
