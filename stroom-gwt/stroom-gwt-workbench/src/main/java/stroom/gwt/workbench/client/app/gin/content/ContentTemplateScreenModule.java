@@ -16,11 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.receive.content.client.presenter.ContentTemplateEditPresenter;
-import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
-import stroom.receive.content.client.view.ContentTemplateEditViewImpl;
 import stroom.receive.content.client.view.ContentTemplateTabViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -36,9 +33,6 @@ public class ContentTemplateScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ContentTemplateTabPresenter.class,
                 ContentTemplateTabView.class,
                 ContentTemplateTabViewImpl.class);
-        bindPresenterWidget(ContentTemplateEditPresenter.class,
-                ContentTemplateEditView.class,
-                ContentTemplateEditViewImpl.class);
     }
 }
 

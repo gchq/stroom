@@ -27,6 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.client.component.ExpressionTreeController;
+import stroom.receive.content.client.component.ContentTemplateEditController;
 import stroom.receive.content.client.component.ContentTemplateListController;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -37,9 +38,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -76,7 +74,7 @@ public class ContentTemplateTabPresenter
 
     private final ContentTemplateListController contentTemplateList;
     private final ExpressionTreeController expressionTree;
-    private final Provider<ContentTemplateEditPresenter> editPresenterProvider;
+    private final Provider<ContentTemplateEditController> templateEditorProvider;
     private final RestFactory restFactory;
 
     // Immutable list of templates
@@ -102,14 +100,14 @@ public class ContentTemplateTabPresenter
                                        final ContentTemplateTabView view,
                                        final ContentTemplateListController contentTemplateList,
                                        final ExpressionTreeController expressionTree,
-                                       final Provider<ContentTemplateEditPresenter> editPresenterProvider,
+                                       final Provider<ContentTemplateEditController> templateEditorProvider,
                                        final RestFactory restFactory) {
         super(eventBus, view);
         own(contentTemplateList);
         own(expressionTree);
         this.contentTemplateList = contentTemplateList;
         this.expressionTree = expressionTree;
-        this.editPresenterProvider = editPresenterProvider;
+        this.templateEditorProvider = templateEditorProvider;
         this.restFactory = restFactory;
 
         getView().setTableView(contentTemplateList);
@@ -515,32 +513,17 @@ public class ContentTemplateTabPresenter
                 .withTemplateNumber(idx + 1) // idx is zero based, tempNo is 1 based
                 .build();
 
-        final ContentTemplateEditPresenter editRulePresenter = makeDialog(editPresenterProvider);
-        editRulePresenter.read(template);
-
-        final PopupSize popupSize = PopupSize.resizable(1000, 800);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Template")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ContentTemplate rule = editRulePresenter.write();
-                        if (isTemplateValid(rule)) {
-                            contentTemplates.add(idx, rule);
-                            update();
-                            setDirty(true);
-                            setSelected(contentTemplates.get(0));
-                            e.hide();
-                        } else {
-                            e.reset();
-                        }
-                    } else {
-                        e.hide();
-                    }
-                })
-                .fire();
+        // Made for one use, and disposed once it is closed
+        templateEditorProvider.get().edit(this, "Add New Template", template, rule -> {
+            if (!isTemplateValid(rule)) {
+                return false;
+            }
+            contentTemplates.add(idx, rule);
+            update();
+            setDirty(true);
+            setSelected(contentTemplates.get(0));
+            return true;
+        });
     }
 
     private boolean isTemplateValid(final ContentTemplate contentTemplate) {
@@ -576,45 +559,29 @@ public class ContentTemplateTabPresenter
     }
 
     private void edit(final ContentTemplate existingRule) {
-        final ContentTemplateEditPresenter editRulePresenter = makeDialog(editPresenterProvider);
-        editRulePresenter.read(existingRule);
+        // Made for one use, and disposed once it is closed
+        templateEditorProvider.get().edit(this, "Edit Template", existingRule, contentTemplate -> {
+            if (!isTemplateValid(contentTemplate)) {
+                return false;
+            }
+            final int index = contentTemplates.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The template was deleted while it was being "
+                                          + "edited, so the changes can't be kept.", null);
+            } else {
+                contentTemplates.set(index, contentTemplate);
 
-        final PopupSize popupSize = PopupSize.resizable(1000, 800);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Edit Template")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ContentTemplate rule = editRulePresenter.write();
-                        if (isTemplateValid(rule)) {
-                            final ContentTemplate contentTemplate = editRulePresenter.write();
-                            final int index = contentTemplates.indexOf(existingRule);
-                            if (index < 0) {
-                                // Deleted behind the dialog, which isn't modal
-                                AlertEvent.fireWarn(this, "The template was deleted while it was being "
-                                                          + "edited, so the changes can't be kept.", null);
-                            } else {
-                                contentTemplates.set(index, contentTemplate);
+                update();
+                // Only mark the policies as dirty if the rule was actually changed.
+                if (!existingRule.equals(contentTemplate)) {
+                    setDirty(true);
+                }
 
-                                update();
-                                // Only mark the policies as dirty if the rule was actually changed.
-                                if (!existingRule.equals(contentTemplate)) {
-                                    setDirty(true);
-                                }
-
-                                setSelected(contentTemplates.get(index));
-                            }
-                            e.hide();
-                        } else {
-                            e.reset();
-                        }
-                    } else {
-                        e.hide();
-                    }
-                })
-                .fire();
+                setSelected(contentTemplates.get(index));
+            }
+            return true;
+        });
     }
 
     private void update() {

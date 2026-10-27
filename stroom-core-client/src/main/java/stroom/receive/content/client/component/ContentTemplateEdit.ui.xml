@@ -1,10 +1,12 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A content template: what it creates, from which pipeline, for data matching its expression -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
                 identity="contentTemplateName"
@@ -53,7 +55,9 @@
                 identity="contentTemplatePipeline"
                 label="Pipeline"
                 helpText="The pipeline to add the processor filter to, or to inherit from, depending on Template Type.">
-            <g:SimplePanel ui:field="pipeline" styleName="max"/>
+            <g:SimplePanel styleName="max">
+                <dd:DropDownBox ui:field="pipeline" addStyleNames="w-100"/>
+            </g:SimplePanel>
         </form:FormGroup>
 
         <form:FormGroup

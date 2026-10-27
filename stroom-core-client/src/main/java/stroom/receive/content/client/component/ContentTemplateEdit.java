@@ -14,36 +14,38 @@
  * limitations under the License.
  */
 
-package stroom.receive.content.client.view;
+package stroom.receive.content.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.TemplateType;
+import stroom.widget.component.client.Component;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemplateEditView {
+/// A content template: its name and description, what it creates (a processor filter, or a
+/// pipeline inheriting from one), from which pipeline, the new processor's priority and task limit,
+/// and the expression choosing the data it applies to.
+public class ContentTemplateEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -56,23 +58,21 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     @UiField
     TickBox copyDependenciesCheckBox;
     @UiField
-    SimplePanel pipeline;
+    DropDownBox pipeline;
     @UiField
     ValueSpinner processorPriority;
     @UiField
     ValueSpinner processorMaxConcurrent;
-
     @UiField
     SimplePanel expression;
 
-    @Inject
-    public ContentTemplateEditViewImpl(final ContentTemplateEditViewImpl.Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the form, with the processor's defaults.
+    public ContentTemplateEdit() {
+        initWidget(BINDER.createAndBindUi(this));
 
         final List<TemplateType> templateTypes = Arrays.stream(TemplateType.values())
                 .sorted()
                 .collect(Collectors.toList());
-
         templateTypeSelectionBox.addItems(templateTypes);
 
         processorPriority.setMin(ProcessorFilter.MIN_PRIORITY);
@@ -82,76 +82,88 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
         processorMaxConcurrent.setMin(ProcessorFilter.MIN_MAX_PROCESSING_TASKS);
         processorMaxConcurrent.setMax(ProcessorFilter.MAX_MAX_PROCESSING_TASKS);
         processorMaxConcurrent.setValue(ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS);
-
-        // TODO @AT There must be a better way of setting the focus than having to use a timer
-        new Timer() {
-            @Override
-            public void run() {
-                name.setFocus(true);
-                name.setTabIndex(0);
-            }
-        }.schedule(100);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the keyboard focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
-    public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view.asWidget());
+    /// @param expressionEditor The expression editor, a controller of its own.
+    public void setExpressionEditor(final IsWidget expressionEditor) {
+        expression.setWidget(expressionEditor.asWidget());
     }
 
-    @Override
+    /// @return The pipeline picker, for its controller to attach to.
+    public DropDownBox getPipelineBox() {
+        return pipeline;
+    }
+
+    /// @return The name typed.
     public String getName() {
         return name.getText();
     }
 
-    @Override
+    /// @param name The template's name.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
+    /// @return The description typed.
     public String getDescription() {
         return description.getText();
     }
 
-    @Override
+    /// @param description The template's description.
     public void setDescription(final String description) {
         this.description.setText(description);
     }
 
-    @Override
-    public SelectionBox<TemplateType> getTemplateTypeSelectionBox() {
-        return templateTypeSelectionBox;
-    }
-
-    @Override
+    /// @return What the template creates.
     public TemplateType getTemplateType() {
         return templateTypeSelectionBox.getValue();
     }
 
-    @Override
+    /// @param templateType What the template creates; only a pipeline that inherits can copy its
+    ///                     dependencies.
+    public void setTemplateType(final TemplateType templateType) {
+        templateTypeSelectionBox.setValue(templateType);
+        updateCopyDependenciesCheckBox(templateType);
+    }
+
+    /// @return Whether Copy Pipeline Element Dependencies is ticked.
     public boolean isCopyDependencies() {
         return copyDependenciesCheckBox.getValue();
     }
 
-    @Override
+    /// @param copyDependencies Whether to tick Copy Pipeline Element Dependencies.
     public void setCopyDependencies(final boolean copyDependencies) {
         copyDependenciesCheckBox.setValue(copyDependencies);
     }
 
-    @Override
-    public void setTemplateType(final TemplateType templateType) {
-        templateTypeSelectionBox.setValue(templateType);
-        updateCopyDependenciesCheckBox(templateType);
+    /// @return The new processor's priority.
+    public int getProcessorPriority() {
+        return processorPriority.getIntValue();
+    }
+
+    /// @param value The new processor's priority.
+    public void setProcessorPriority(final int value) {
+        processorPriority.setValue(value);
+    }
+
+    /// @return The new processor's most tasks at once, 0 for no limit.
+    public int getProcessorMaxConcurrent() {
+        return processorMaxConcurrent.getIntValue();
+    }
+
+    /// @param value The new processor's most tasks at once, 0 for no limit.
+    public void setProcessorMaxConcurrent(final int value) {
+        processorMaxConcurrent.setValue(value);
+    }
+
+    @UiHandler("templateTypeSelectionBox")
+    void onTemplateTypeChange(final ValueChangeEvent<TemplateType> event) {
+        setTemplateType(event.getValue());
     }
 
     private void updateCopyDependenciesCheckBox(final TemplateType templateType) {
@@ -166,39 +178,11 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
         copyDependenciesFormGroup.setDisabled(!isEnabled);
     }
 
-    @Override
-    public void setPipelineSelector(final View view) {
-        final Widget w = view.asWidget();
-        w.getElement().getStyle().setWidth(100, Unit.PCT);
-        w.getElement().getStyle().setMargin(0, Unit.PX);
-        pipeline.setWidget(w);
-    }
-
-    @Override
-    public int getProcessorPriority() {
-        return processorPriority.getIntValue();
-    }
-
-    @Override
-    public void setProcessorPriority(final int value) {
-        processorPriority.setValue(value);
-    }
-
-    @Override
-    public int getProcessorMaxConcurrent() {
-        return processorMaxConcurrent.getIntValue();
-    }
-
-    @Override
-    public void setProcessorMaxConcurrent(final int value) {
-        processorMaxConcurrent.setValue(value);
-    }
-
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ContentTemplateEditViewImpl> {
+    interface Binder extends UiBinder<Widget, ContentTemplateEdit> {
 
     }
 }
