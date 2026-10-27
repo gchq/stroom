@@ -23,6 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
+import stroom.processor.client.component.FeedDependenciesEditorController;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FeedDependencies;
@@ -75,7 +76,7 @@ public class ProcessorEditPresenter
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
-    private final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider;
+    private final Provider<FeedDependenciesEditorController> feedDependenciesEditorProvider;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
@@ -90,7 +91,7 @@ public class ProcessorEditPresenter
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                   final ClientSecurityContext clientSecurityContext,
-                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
+                                  final Provider<FeedDependenciesEditorController> feedDependenciesEditorProvider,
                                   final ProcessorProfileClient processorProfileClient,
                                   final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
@@ -105,7 +106,7 @@ public class ProcessorEditPresenter
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
-        this.feedDependencyPresenterProvider = feedDependencyPresenterProvider;
+        this.feedDependenciesEditorProvider = feedDependenciesEditorProvider;
         view.setExpressionView(expressionEditor);
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
@@ -279,8 +280,8 @@ public class ProcessorEditPresenter
 
     @Override
     public void onEditFeedDependencies() {
-        final FeedDependencyPresenter feedDependencyPresenter = makeDialog(feedDependencyPresenterProvider);
-        feedDependencyPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
+        feedDependenciesEditorProvider.get().edit(this, feedDependencies,
+                updated -> this.feedDependencies = updated);
     }
 
     // Validates the expression, and if it isn't valid lets the user change it or cancel

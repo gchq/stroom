@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.view;
+package stroom.processor.client.component;
 
-import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyView {
+/// The Set Feed Dependencies dialog's content: the feeds a processor filter's streams wait for (a
+/// list its controller shows here), and the minimum and maximum processing delays, each enabled by
+/// its tick box.
+public class FeedDependenciesEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel feedDependencies;
@@ -47,22 +47,20 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
     @UiField
     DurationPicker maxProcessingDelay;
 
-    @Inject
-    public FeedDependencyViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content, with no list.
+    public FeedDependenciesEditor() {
+        initWidget(BINDER.createAndBindUi(this));
+        minProcessingDelayEnabled.addValueChangeHandler(e -> updateEnabled());
+        maxProcessingDelayEnabled.addValueChangeHandler(e -> updateEnabled());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param view The feed dependencies.
     public void setFeedDependencyList(final IsWidget view) {
-        feedDependencies.setWidget(view.asWidget());
+        feedDependencies.setWidget(view);
     }
 
-    @Override
+    /// @param minProcessingDelay The minimum processing delay, or `null` for none (then the box is
+    ///                           unticked, showing 30 minutes).
     public void setMinProcessingDelay(final SimpleDuration minProcessingDelay) {
         if (minProcessingDelay == null) {
             this.minProcessingDelayEnabled.setValue(false);
@@ -74,7 +72,7 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
         updateEnabled();
     }
 
-    @Override
+    /// @return The minimum processing delay, or `null` if its box is unticked.
     public SimpleDuration getMinProcessingDelay() {
         if (minProcessingDelayEnabled.getValue()) {
             return minProcessingDelay.getValue();
@@ -82,7 +80,8 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
         return null;
     }
 
-    @Override
+    /// @param maxProcessingDelay The maximum processing delay, or `null` for none (then the box is
+    ///                           unticked, showing 1 day).
     public void setMaxProcessingDelay(final SimpleDuration maxProcessingDelay) {
         if (maxProcessingDelay == null) {
             this.maxProcessingDelayEnabled.setValue(false);
@@ -94,7 +93,7 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
         updateEnabled();
     }
 
-    @Override
+    /// @return The maximum processing delay, or `null` if its box is unticked.
     public SimpleDuration getMaxProcessingDelay() {
         if (maxProcessingDelayEnabled.getValue()) {
             return maxProcessingDelay.getValue();
@@ -107,12 +106,11 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
         maxProcessingDelay.setEnabled(maxProcessingDelayEnabled.getValue());
     }
 
-    @UiHandler({"minProcessingDelayEnabled", "maxProcessingDelayEnabled"})
-    public void onChange(final ValueChangeEvent<Boolean> event) {
-        updateEnabled();
-    }
 
-    public interface Binder extends UiBinder<Widget, FeedDependencyViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FeedDependenciesEditor> {
 
     }
 }
