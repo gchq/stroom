@@ -25,8 +25,6 @@ import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.SourcePresenter;
@@ -34,7 +32,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
@@ -88,10 +85,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
                 DataPreviewTabViewImpl.class);
-        bindPresenterWidget(
-                DataPresenter.class,
-                DataView.class,
-                DataViewImpl.class);
         bindPresenterWidget(
                 SourceTabPresenter.class,
                 SourceTabView.class,

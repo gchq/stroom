@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.MetaPresenter;
@@ -29,7 +27,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.MetaViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
@@ -51,9 +48,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
                 DataPreviewTabViewImpl.class);
-        bindPresenterWidget(DataPresenter.class,
-                DataView.class,
-                DataViewImpl.class);
         bindPresenterWidget(ProcessorTaskPresenter.class,
                 StreamTaskView.class,
                 StreamTaskViewImpl.class);

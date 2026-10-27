@@ -24,8 +24,8 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.UnlinkEvents;
+import stroom.data.client.component.DataViewerController;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.SourceLocation;
@@ -56,7 +56,7 @@ public class LinkedEventsController extends Controller {
 
     private final LinkedEvents view;
 
-    private final DataPresenter dataPresenter;
+    private final DataViewerController dataPresenter;
     private final Provider<AddEventLinkController> addEventLinkProvider;
 
     private DocRef annotationRef;
@@ -77,7 +77,7 @@ public class LinkedEventsController extends Controller {
     public LinkedEventsController(final EventBus eventBus,
                                   final LinkedEvents view,
                                   final AnnotationResourceClient annotationResourceClient,
-                                  final DataPresenter dataPresenter,
+                                  final DataViewerController dataPresenter,
                                   final Provider<AddEventLinkController> addEventLinkProvider) {
         super(eventBus);
         this.view = view;
@@ -102,7 +102,7 @@ public class LinkedEventsController extends Controller {
                 case REMOVE -> onRemoveEvent();
             }
         });
-        view.setData(dataPresenter.getView());
+        view.setData(dataPresenter);
 
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.copyTextColumnBuilder(EventId::toString)

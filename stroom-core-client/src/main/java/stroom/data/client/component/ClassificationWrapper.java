@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// owner attaches a [stroom.data.client.view.ClassificationLabelController] to the banner
 /// ([#getClassificationLabel()]) for its colours. Its markup is `ClassificationWrapper.ui.xml`.
 ///
-/// It is a [View] too, as `DataPresenter` shows it as its view until it is converted.
+/// It is a [View] too, as `SourcePresenter` shows it as its view until it is converted.
 public class ClassificationWrapper extends Component implements View {
 
     private static final Binder BINDER = GWT.create(Binder.class);

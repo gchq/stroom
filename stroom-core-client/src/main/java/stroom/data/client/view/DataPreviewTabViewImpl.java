@@ -17,11 +17,11 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -46,8 +46,8 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
     }
 
     @Override
-    public void setContentView(final View view) {
-        container.setWidget(view.asWidget());
+    public void setContentView(final IsWidget view) {
+        container.setWidget(view);
     }
 
     public interface Binder extends UiBinder<Widget, DataPreviewTabViewImpl> {

@@ -16,16 +16,15 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.data.client.component.ClassificationWrapper;
+import stroom.data.client.component.DataViewer;
+import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.ItemNavigator;
 import stroom.data.client.component.ItemNavigatorController;
 import stroom.data.client.component.ItemSelection;
 import stroom.data.client.component.ItemSelectionController;
 import stroom.data.client.component.MarkerList;
 import stroom.data.client.component.MarkerListController;
-import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.view.ClassificationLabelController;
-import stroom.data.client.view.DataViewImpl;
 import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -46,7 +45,6 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.widget.progress.client.component.SourceProgressBar;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -54,10 +52,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/// Stories for Stroom's [DataPresenter] (the data preview of a stream: its Info, Error, Data
+/// Stories for Stroom's [DataViewerController] (the data preview of a stream: its Info, Error, Data
 /// Preview, Meta and Context tabs, the item navigator and the marker list).
 ///
-/// Fixtures answer the requests [DataPresenter] makes:
+/// Fixtures answer the requests [DataViewerController] makes:
 /// the stream's meta (`GET /meta/v1/{id}`), its child stream types
 /// (`GET /data/v1/{id}/parts/{part}/child-types`) and the data (`POST /data/v1/fetch`).
 ///
@@ -205,7 +203,7 @@ public final class SourceViewerStories {
                 .withPlay(play -> {
                     waitForEditorText(play, "line six  TARGET word");
                     // The range is highlighted (an Ace marker). It once never was for a data stream:
-                    // DataPresenter.refreshHighlights compared the stream's type with the location's
+                    // DataViewerController.refreshHighlights compared the stream's type with the location's
                     // child type
                     play.waitFor(() -> play.expect(
                                     play.querySelectorAll(".ace_marker-layer .code-editor__highlight").count())
@@ -227,29 +225,28 @@ public final class SourceViewerStories {
                                  final SourceLocation sourceLocation) {
         // Stroom's MenuManager (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
-        final DataPresenter presenter = dataPresenter(harness);
+        final DataViewerController presenter = dataPresenter(harness);
         harness.own(presenter);
         if (sourceLocation != null) {
             presenter.fetchData(sourceLocation);
         }
 
         // A 460px high frame
-        harness.add(EditorWidgets.frame(presenter.getWidget(), "auto", "460px"));
+        harness.add(EditorWidgets.frame(presenter.asWidget(), "auto", "460px"));
         return harness.asWidget();
     }
 
     /// Creates the presenter and its views, as GIN would.
-    private static DataPresenter dataPresenter(final ScreenHarness harness) {
+    private static DataViewerController dataPresenter(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final ItemNavigatorController itemNavigator = new ItemNavigatorController(
                 new ItemNavigator(),
                 () -> new ItemSelectionController(eventBus, new ItemSelection()));
-        return new DataPresenter(
+        return new DataViewerController(
                 eventBus,
                 new HtmlPane(),
                 itemNavigator,
-                new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
-                new ClassificationWrapper(),
+                new DataViewer(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 EditorWidgets.dataTextPane(eventBus),
                 new SourceProgressBar(),

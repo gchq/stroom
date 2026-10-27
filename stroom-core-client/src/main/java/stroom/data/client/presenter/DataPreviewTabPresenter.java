@@ -18,29 +18,31 @@ package stroom.data.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.DataPreviewKey;
+import stroom.data.client.component.DataViewerController;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabView> {
 
     public static final String TAB_TYPE = "DataPreview";
-    private final DataPresenter dataPresenter;
+    private final DataViewerController dataPresenter;
     private DataPreviewKey dataPreviewKey;
 
     @Inject
     public DataPreviewTabPresenter(final EventBus eventBus,
-                                   final DataPresenter dataPresenter,
+                                   final DataViewerController dataPresenter,
                                    final DataPreviewTabView view) {
         super(eventBus, view);
         own(dataPresenter);
         this.dataPresenter = dataPresenter;
         this.dataPresenter.setDisplayMode(DisplayMode.STROOM_TAB);
-        getView().setContentView(dataPresenter.getView());
+        getView().setContentView(dataPresenter);
     }
 
     @Override
@@ -75,6 +77,6 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
 
     public interface DataPreviewTabView extends View {
 
-        void setContentView(final View sourceView);
+        void setContentView(final IsWidget sourceView);
     }
 }

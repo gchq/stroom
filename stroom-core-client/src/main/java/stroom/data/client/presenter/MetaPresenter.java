@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.component.DataUploadController;
+import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.component.MetaListController;
 import stroom.data.client.component.MetaRelationListController;
@@ -76,7 +77,7 @@ public class MetaPresenter
     private final ExpressionValidator expressionValidator;
     private final MetaListController metaList;
     private final MetaRelationListController metaRelationList;
-    private final DataPresenter dataPresenter;
+    private final DataViewerController dataPresenter;
     private final Provider<DataUploadController> dataUploadProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ButtonView streamListFilter;
@@ -101,7 +102,7 @@ public class MetaPresenter
                          final MetaView view,
                          final MetaListController metaList,
                          final MetaRelationListController metaRelationList,
-                         final DataPresenter dataPresenter,
+                         final DataViewerController dataPresenter,
                          final Provider<ExpressionDialogController> filterDialogProvider,
                          final Provider<DataUploadController> dataUploadProvider,
                          final ClientSecurityContext securityContext,
@@ -124,7 +125,7 @@ public class MetaPresenter
 
         getView().setStreamListView(metaList);
         getView().setStreamRelationListView(metaRelationList);
-        getView().setDataView(dataPresenter.getView());
+        getView().setDataView(dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
 
@@ -581,6 +582,6 @@ public class MetaPresenter
         /// Shows the selected stream's data.
         ///
         /// @param view Its view.
-        void setDataView(View view);
+        void setDataView(IsWidget view);
     }
 }

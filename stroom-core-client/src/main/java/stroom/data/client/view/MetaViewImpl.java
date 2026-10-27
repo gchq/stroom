@@ -17,7 +17,6 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.MetaPresenter.MetaView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -60,7 +59,7 @@ public class MetaViewImpl extends ViewImpl implements MetaView {
     }
 
     @Override
-    public void setDataView(final View view) {
+    public void setDataView(final IsWidget view) {
         view.asWidget().addStyleName("dashboard-panel overflow-hidden");
         data.setWidget(view.asWidget());
     }

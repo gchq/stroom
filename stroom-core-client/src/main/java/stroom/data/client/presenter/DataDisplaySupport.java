@@ -18,21 +18,21 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.client.component.DataViewerController;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class DataDisplaySupport {
 
-    private final Provider<DataPresenter> dataPresenterProvider;
+    private final Provider<DataViewerController> dataPresenterProvider;
     private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
 
     private final Provider<SourcePresenter> sourcePresenterProvider;
@@ -42,7 +42,7 @@ public class DataDisplaySupport {
 
     @Inject
     public DataDisplaySupport(final EventBus eventBus,
-                              final Provider<DataPresenter> dataPresenterProvider,
+                              final Provider<DataViewerController> dataPresenterProvider,
                               final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
                               final Provider<SourcePresenter> sourcePresenterProvider,
                               final Provider<SourceTabPlugin> sourceTabPluginProvider,
@@ -81,35 +81,31 @@ public class DataDisplaySupport {
 
     private void openPopupDialog(final ShowDataEvent showDataEvent) {
         final SourceLocation sourceLocation = showDataEvent.getSourceLocation();
-        final MyPresenterWidget<?> presenter;
-        final String caption;
+        final String caption = "Stream " + sourceLocation.getIdentifierString();
+        final PopupSize popupSize = PopupSize.resizable(1400, 800);
 
-        final Focus focus;
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
                 DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
-            final DataPresenter dataPresenter = appRoot.makeDialog(dataPresenterProvider);
-            dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
-            dataPresenter.setInitDataViewType(showDataEvent.getDataViewType());
-            dataPresenter.fetchData(sourceLocation);
-            presenter = dataPresenter;
-            caption = "Stream "
-                    + sourceLocation.getIdentifierString();
-            focus = dataPresenter;
+            // One per use, the app's until it is hidden
+            final DataViewerController dataViewer = dataPresenterProvider.get();
+            dataViewer.setDisplayMode(showDataEvent.getDisplayMode());
+            dataViewer.setInitDataViewType(showDataEvent.getDataViewType());
+            dataViewer.fetchData(sourceLocation);
+            ControllerDialog.showOnce(appRoot, dataViewer)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(caption)
+                    .onShow(e -> dataViewer.focus())
+                    .fire();
         } else {
             final SourcePresenter sourcePresenter = appRoot.makeDialog(sourcePresenterProvider);
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
-            presenter = sourcePresenter;
-            // Convert to one based for UI;
-            caption = "Stream " + sourceLocation.getIdentifierString();
-            focus = sourcePresenter;
+            ShowPopupEvent.builder(sourcePresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(caption)
+                    .onShow(e -> sourcePresenter.focus())
+                    .fire();
         }
-
-        final PopupSize popupSize = PopupSize.resizable(1400, 800);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(caption)
-                .onShow(e -> focus.focus())
-                .fire();
     }
 }

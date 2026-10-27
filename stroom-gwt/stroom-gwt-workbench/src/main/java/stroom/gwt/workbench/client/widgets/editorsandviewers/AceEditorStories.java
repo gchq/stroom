@@ -92,7 +92,7 @@ public final class AceEditorStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Editors & Viewers/AceEditor", AceEditorStories.class)
                 .layout(StoryLayout.CENTERED)
-                // Read-only XML viewer, the DataPresenter default (gutter on so line numbers show)
+                // Read-only XML viewer, the DataViewerController default (gutter on so line numbers show)
                 .story("XmlReadOnly", context -> {
                     final EditorPresenter editor = editor(context, SAMPLE_XML, AceEditorMode.XML, true);
                     return framed(editor);

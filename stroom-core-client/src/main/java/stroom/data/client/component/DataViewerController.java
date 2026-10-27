@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.data.client.SourceTabPlugin;
-import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.component.DataTextPaneController;
-import stroom.data.client.component.ItemNavigatorController;
-import stroom.data.client.component.MarkerListController;
+import stroom.data.client.presenter.BeginSteppingHandler;
+import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.presenter.DisplayMode;
+import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
@@ -40,7 +42,6 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -51,13 +52,10 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
-import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.progress.client.Progress;
 import stroom.widget.progress.client.component.SourceProgressBar;
-import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.HtmlBuilder;
@@ -66,13 +64,11 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -88,8 +84,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DataPresenter
-        extends MyPresenterWidget<ClassificationWrapper>
+/// A stream's data ([DataViewer]): its Info, Error, Data Preview, Meta and Context, a page or record
+/// at a time with a navigator, its markers (e.g. errors) and its classification; it opens the
+/// stream's source, or begins stepping through it.
+public class DataViewerController
+        extends Controller
         implements Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
@@ -113,8 +112,7 @@ public class DataPresenter
     private final TabData infoTab = new TabDataImpl(INFO_TAB_NAME);
     private final TabData contextTab = new TabDataImpl(CONTEXT_TAB_NAME);
 
-    private final DataView dataView;
-    private final ClassificationWrapper classificationWrapper;
+    private final DataViewer dataView;
     private final HtmlPane htmlPane;
     // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
     private final ControllerLayer htmlLayer;
@@ -163,28 +161,40 @@ public class DataPresenter
 
     private static final List<String> STREAM_ATTRIBUTE_NAMES = List.of("Parent Stream Id", "Stream Id");
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param htmlPane                      Shows the stream's Info.
+    /// @param itemNavigator                 Navigates the stream's parts and records.
+    /// @param dataView                      The content.
+    /// @param classificationLabelController Gives the classification banner its colours.
+    /// @param textPane                      Shows the data.
+    /// @param sourceProgressBar             Shows how far through the data the content is.
+    /// @param markerList                    Shows the stream's markers, e.g. its errors.
+    /// @param sourceTabPlugin               Opens the stream's source in a tab.
+    /// @param uiConfigCache                 Gives how much data to show at a time.
+    /// @param securityContext               Says whether the user may step through the data.
+    /// @param restFactory                   Fetches the data.
     @Inject
-    public DataPresenter(final EventBus eventBus,
-                         final HtmlPane htmlPane,
-                         final ItemNavigatorController itemNavigator,
-                         final DataView dataView,
-                         final ClassificationWrapper classificationWrapper,
-                         final ClassificationLabelController classificationLabelController,
-                         final DataTextPaneController textPane,
-                         final SourceProgressBar sourceProgressBar,
-                         final MarkerListController markerList,
-                         final SourceTabPlugin sourceTabPlugin,
-                         final UiConfigCache uiConfigCache,
-                         final ClientSecurityContext securityContext,
-                         final RestFactory restFactory) {
-        super(eventBus, classificationWrapper);
+    public DataViewerController(final EventBus eventBus,
+                                final HtmlPane htmlPane,
+                                final ItemNavigatorController itemNavigator,
+                                final DataViewer dataView,
+                                final ClassificationLabelController classificationLabelController,
+                                final DataTextPaneController textPane,
+                                final SourceProgressBar sourceProgressBar,
+                                final MarkerListController markerList,
+                                final SourceTabPlugin sourceTabPlugin,
+                                final UiConfigCache uiConfigCache,
+                                final ClientSecurityContext securityContext,
+                                final RestFactory restFactory) {
+        super(eventBus);
+        initWidget(dataView);
         own(itemNavigator);
         own(textPane);
         own(markerList);
-        own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
-        classificationWrapper.setContent(dataView);
+        own(classificationLabelController).attach(dataView.getClassificationLabel());
         this.dataView = dataView;
-        this.classificationWrapper = classificationWrapper;
         this.htmlPane = htmlPane;
         this.htmlLayer = new ControllerLayer(htmlPane);
         this.itemNavigator = itemNavigator;
@@ -213,16 +223,14 @@ public class DataPresenter
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
         itemNavigator.setDisplay(noNavigatorData);
-        dataView.addSourceLinkClickHandler(event ->
-                openSourcePresenter());
+        dataView.setOnSourceLink(this::openSourcePresenter);
         dataView.setSourceLinkVisible(true, true);
-        dataView.setNavigatorView(itemNavigator);
-        dataView.setProgressView(sourceProgressBar);
+        dataView.setNavigator(itemNavigator);
+        dataView.setProgress(sourceProgressBar);
         sourceProgressBar.setVisible(false);
 
-        own(dataView.getTabBar().addSelectionHandler(event ->
-                onNewTabSelected(event.getSelectedItem())));
-        own(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        dataView.setOnSelectTab(this::onNewTabSelected);
+        dataView.setOnShowMenu(this::fireEvent);
         own(htmlPane.addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
         own(OpenLinkUtil.addClickHandler(this, htmlPane));
@@ -264,18 +272,16 @@ public class DataPresenter
             if (uiConfig != null) {
                 action.accept(uiConfig.getSource());
             }
-        }, dataView);
+        }, dataView.getSpinner());
     }
 
     private void addTab(final TabData tab) {
-        dataView.getTabBar()
-                .addTab(tab);
+        dataView.addTab(tab);
         hideTab(tab, true);
     }
 
     private void hideTab(final TabData tab, final boolean hide) {
-        dataView.getTabBar()
-                .setTabHidden(tab, hide);
+        dataView.setTabHidden(tab, hide);
     }
 
     private void onNewTabSelected(final TabData tab) {
@@ -293,14 +299,14 @@ public class DataPresenter
                     fetchMetaInfoData(getCurrentMetaId());
                     dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
-                    dataView.setProgressView(null);
+                    dataView.setProgress(null);
                     itemNavigator.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
 //                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
-                    dataView.setProgressView(sourceProgressBar);
+                    dataView.setProgress(sourceProgressBar);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -482,7 +488,7 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
-                .taskMonitorFactory(dataView)
+                .taskMonitorFactory(dataView.getSpinner())
                 .exec();
     }
 
@@ -519,7 +525,7 @@ public class DataPresenter
                 if (sourceLocation.getDataRange() != null) {
                     // We are displaying a specific range of the data so hide the
                     // nav controls
-                    dataView.setNavigatorView(null);
+                    dataView.setNavigator(null);
                 }
                 highlights = new ArrayList<>();
                 if (sourceLocation.getFirstHighlight() != null) {
@@ -607,7 +613,7 @@ public class DataPresenter
                                 currentAvailableStreamTypes = availableChildStreamTypes;
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
-                            .taskMonitorFactory(dataView)
+                            .taskMonitorFactory(dataView.getSpinner())
                             .exec();
                 } else {
                     showInvalidStreamErrorMsg();
@@ -786,7 +792,7 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigator.setRefreshing(false))
-                                .taskMonitorFactory(dataView)
+                                .taskMonitorFactory(dataView.getSpinner())
                                 .exec();
                     }
                 }
@@ -903,14 +909,14 @@ public class DataPresenter
 
             // Let the classification handler know that the classification has
             // changed.
-            classificationWrapper.setClassification(result.getClassification());
+            dataView.setClassification(result.getClassification());
 
             refresh(result);
             updateAvailableAndSelectedTabs(
                     result.getStreamTypeName(),
                     result.getAvailableChildStreamTypes());
         } else {
-            classificationWrapper.setClassification("");
+            dataView.setClassification("");
 
             refresh(result);
             updateAvailableAndSelectedTabs(null, null);
@@ -974,35 +980,35 @@ public class DataPresenter
             itemNavigator.refreshNavigator();
         }
 
-        if (dataView.getTabBar().getSelectedTab() != null) {
-            lastTabName = dataView.getTabBar().getSelectedTab().getLabel();
+        if (dataView.getSelectedTab() != null) {
+            lastTabName = dataView.getSelectedTab().getLabel();
         }
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
         GWT.log("Setting active tab to " + tab.getLabel());
-        dataView.getTabBar().selectTab(tab);
+        dataView.selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();
     }
 
     private void showHtmlPresenter() {
         itemNavigator.setDisplay(noNavigatorData);
-        dataView.getLayerContainer().show(htmlLayer);
+        dataView.showLayer(htmlLayer);
     }
 
     private void showTextPresenter() {
         itemNavigator.setDisplay(navigatorData);
-        dataView.getLayerContainer().show(textPaneLayer);
+        dataView.showLayer(textPaneLayer);
     }
 
     private void showMarkerPresenter() {
         itemNavigator.setDisplay(navigatorData);
-        dataView.getLayerContainer().show(markerLayer);
+        dataView.showLayer(markerLayer);
     }
 
     private void hidePresenters() {
-        dataView.getLayerContainer().clear();
+        dataView.clearLayers();
     }
 
     private void refresh(final AbstractFetchDataResult result) {
@@ -1019,11 +1025,11 @@ public class DataPresenter
             // Data may be multi-part so one part may have errors but the rest not
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, false);
-            dataView.setProgressView(null);
+            dataView.setProgress(null);
         } else {
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, true);
-            dataView.setProgressView(sourceProgressBar);
+            dataView.setProgress(sourceProgressBar);
             refreshProgressBar(result != null);
             itemNavigator.refreshNavigator();
             refreshHighlights(result);
@@ -1161,9 +1167,9 @@ public class DataPresenter
         // navigate, so its navigator stays hidden (as fetchData hides it)
         final boolean isDataRange = currentSourceLocation != null && currentSourceLocation.getDataRange() != null;
         if (visible && !isDataRange) {
-            dataView.setNavigatorView(itemNavigator);
+            dataView.setNavigator(itemNavigator);
         } else {
-            dataView.setNavigatorView(null);
+            dataView.setNavigator(null);
         }
     }
 
@@ -1173,7 +1179,7 @@ public class DataPresenter
                     .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
-                    .taskMonitorFactory(dataView)
+                    .taskMonitorFactory(dataView.getSpinner())
                     .exec();
         }
     }
@@ -1300,21 +1306,6 @@ public class DataPresenter
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    public interface DataView extends View, Focus, TaskMonitorFactory {
-
-        void addSourceLinkClickHandler(final ClickHandler clickHandler);
-
-        void setSourceLinkVisible(final boolean isVisible, final boolean isEnabled);
-
-        TabBar getTabBar();
-
-        LayerContainer getLayerContainer();
-
-        void setNavigatorView(IsWidget navigator);
-
-        void setProgressView(IsWidget sourceProgressBar);
-    }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

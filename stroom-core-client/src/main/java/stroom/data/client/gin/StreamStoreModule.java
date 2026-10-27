@@ -20,8 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.MetaPresenter;
@@ -33,7 +31,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.MetaViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
@@ -59,10 +56,6 @@ public class StreamStoreModule extends PluginModule {
                 DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
                 DataPreviewTabViewImpl.class);
-        bindPresenterWidget(
-                DataPresenter.class,
-                DataView.class,
-                DataViewImpl.class);
         bindPresenterWidget(
                 ProcessorTaskPresenter.class,
                 StreamTaskView.class,
