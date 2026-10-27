@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.solr.client.component.SolrIndexFieldListController;
+import stroom.search.solr.client.component.SolrIndexSettingsController;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -44,7 +44,7 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
     @Inject
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
+                              final Provider<SolrIndexSettingsController> indexSettingsProvider,
                               final Provider<SolrIndexFieldListController> indexFieldListProvider,
                               final Provider<MarkdownEditController> markdownEditProvider,
                               final DocumentUserPermissionsTabProvider<SolrIndexDoc>
@@ -54,7 +54,9 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
         addTab(FIELDS, new ControllerTabProvider<>(eventBus, indexFieldListProvider::get,
                 SolrIndexFieldListController::read,
                 SolrIndexFieldListController::write));
-        addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
+                SolrIndexSettingsController::read,
+                SolrIndexSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

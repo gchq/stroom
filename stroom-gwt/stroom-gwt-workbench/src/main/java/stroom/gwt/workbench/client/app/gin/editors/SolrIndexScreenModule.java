@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
-import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
-import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `SolrIndexModule`
@@ -33,8 +30,5 @@ public class SolrIndexScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(SolrIndexPresenter.class);
-        bindPresenterWidget(SolrIndexSettingsPresenter.class,
-                SolrIndexSettingsView.class,
-                SolrIndexSettingsViewImpl.class);
     }
 }

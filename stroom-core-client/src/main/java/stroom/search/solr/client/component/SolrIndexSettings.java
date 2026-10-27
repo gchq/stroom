@@ -14,39 +14,36 @@
  * limitations under the License.
  */
 
-package stroom.search.solr.client.view;
+package stroom.search.solr.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Component;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSettingsUiHandlers>
-        implements SolrIndexSettingsView {
+/// A Solr index's Settings tab: its collection, how to reach Solr (a single node's URL, or a cloud's
+/// URLs or ZooKeeper hosts), its main time field, its default extraction pipeline (a picker its
+/// controller attaches), a button to test the connection, and its data retention expression (shown
+/// here by its controller).
+public class SolrIndexSettings extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox collection;
@@ -63,48 +60,48 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextBox timeField;
     @UiField
-    SimplePanel defaultExtractionPipeline;
+    DropDownBox defaultExtractionPipeline;
     @UiField
     Button testConnection;
     @UiField
     SimplePanel retentionExpressionPanel;
 
-    @Inject
-    public SolrIndexSettingsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        testConnection.setIcon(SvgImage.OK);
+    private Runnable onChange = () -> {
+    };
+
+    /// Makes the tab, for a single node.
+    public SolrIndexSettings() {
+        initWidget(BINDER.createAndBindUi(this));
 
         instanceType.addItem(InstanceType.SINGLE_NOOE);
         instanceType.addItem(InstanceType.SOLR_CLOUD);
+
+        // The text fields tell of a change as a key goes down
+        collection.addKeyDownHandler(e -> onChange.run());
+        solrUrls.addKeyDownHandler(e -> onChange.run());
+        zkHosts.addKeyDownHandler(e -> onChange.run());
+        zkPath.addKeyDownHandler(e -> onChange.run());
+        timeField.addKeyDownHandler(e -> onChange.run());
+        instanceType.addValueChangeHandler(e -> onChange.run());
+        useZk.addValueChangeHandler(e -> onChange.run());
     }
 
-    private void fireChange() {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChange();
-        }
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The collection, trimmed.
     public String getCollection() {
         return collection.getText().trim();
     }
 
-    @Override
+    /// @param collection The collection.
     public void setCollection(final String collection) {
         this.collection.setText(collection);
     }
 
-    @Override
+    /// @return The type of Solr installation.
     public InstanceType getInstanceType() {
         return instanceType.getValue();
     }
 
-    @Override
+    /// @param instanceType The type of Solr installation, or `null` for a single node.
     public void setInstanceType(final InstanceType instanceType) {
         if (instanceType == null) {
             this.instanceType.setValue(InstanceType.SINGLE_NOOE);
@@ -113,12 +110,12 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         }
     }
 
-    @Override
+    /// @return The Solr URLs, one per line.
     public List<String> getSolrUrls() {
         return Arrays.stream(solrUrls.getText().split("\n")).collect(Collectors.toList());
     }
 
-    @Override
+    /// @param solrUrls The Solr URLs, shown one per line, or `null` for none.
     public void setSolrUrls(final List<String> solrUrls) {
         if (solrUrls == null) {
             this.solrUrls.setText("");
@@ -127,22 +124,22 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         }
     }
 
-    @Override
+    /// @return Whether the cloud is found through its ZooKeeper hosts.
     public boolean isUseZk() {
         return useZk.getValue();
     }
 
-    @Override
+    /// @param useZk Whether the cloud is found through its ZooKeeper hosts.
     public void setUseZk(final boolean useZk) {
         this.useZk.setValue(useZk);
     }
 
-    @Override
+    /// @return The ZooKeeper hosts, one per line.
     public List<String> getZkHosts() {
         return Arrays.stream(zkHosts.getText().split("\n")).collect(Collectors.toList());
     }
 
-    @Override
+    /// @param zkHosts The ZooKeeper hosts, shown one per line, or `null` for none.
     public void setZkHosts(final List<String> zkHosts) {
         if (zkHosts == null) {
             this.zkHosts.setText("");
@@ -151,12 +148,12 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         }
     }
 
-    @Override
+    /// @return The ZooKeeper path.
     public String getZkPath() {
         return zkPath.getText();
     }
 
-    @Override
+    /// @param zkPath The ZooKeeper path, or `null` for none.
     public void setZkPath(final String zkPath) {
         if (zkPath == null) {
             this.zkPath.setText("");
@@ -165,28 +162,48 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         }
     }
 
-    @Override
+    /// @param view The data retention expression.
     public void setRetentionExpressionView(final IsWidget view) {
-        retentionExpressionPanel.setWidget(view.asWidget());
+        retentionExpressionPanel.setWidget(view);
     }
 
-    @Override
+    /// @return The main time field's name.
     public String getTimeField() {
         return timeField.getValue();
     }
 
-    @Override
-    public void setTimeField(final String partitionTimeField) {
-        this.timeField.setValue(partitionTimeField);
+    /// @param timeField The main time field's name.
+    public void setTimeField(final String timeField) {
+        this.timeField.setValue(timeField);
+    }
+
+    /// @return The box its controller attaches the default extraction pipeline picker to.
+    public DropDownBox getDefaultExtractionPipelineBox() {
+        return defaultExtractionPipeline;
+    }
+
+    /// @param testing Whether the connection is being tested, so Test Connection spins.
+    public void setTestingConnection(final boolean testing) {
+        testConnection.setLoading(testing);
+    }
+
+    /// @return The Test Connection button, which spins while the connection is tested.
+    public TaskMonitorFactory getTestConnectionTaskMonitor() {
+        return testConnection;
+    }
+
+    /// @param onChange Run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    /// @param onTestConnection Run when Test Connection is pressed.
+    public void setOnTestConnection(final Runnable onTestConnection) {
+        testConnection.setOnClick(onTestConnection);
     }
 
     @Override
-    public void setDefaultExtractionPipelineView(final View view) {
-        this.defaultExtractionPipeline.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         instanceType.setReadOnly(readOnly);
         solrUrls.setReadOnly(readOnly);
         useZk.setReadOnly(readOnly);
@@ -196,54 +213,11 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         timeField.setReadOnly(readOnly);
     }
 
-    @UiHandler("testConnection")
-    public void onTestConnectionClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTestConnection(testConnection);
-        }
-    }
 
-    @Override
-    public void setTestingConnection(final boolean testing) {
-        testConnection.setLoading(testing);
-    }
+    // --------------------------------------------------------------------------------
 
-    @UiHandler("collection")
-    public void onCollectionKeyDown(final KeyDownEvent event) {
-        fireChange();
-    }
 
-    @UiHandler("instanceType")
-    public void onInstanceTypeValueChange(final ValueChangeEvent<InstanceType> event) {
-        fireChange();
-    }
-
-    @UiHandler("solrUrls")
-    public void onSolrUrlsKeyDown(final KeyDownEvent event) {
-        fireChange();
-    }
-
-    @UiHandler("useZk")
-    public void onUseZkValueChange(final ValueChangeEvent<Boolean> event) {
-        fireChange();
-    }
-
-    @UiHandler("zkHosts")
-    public void onZKHostsKeyDown(final KeyDownEvent event) {
-        fireChange();
-    }
-
-    @UiHandler("zkPath")
-    public void onZKPathKeyDown(final KeyDownEvent event) {
-        fireChange();
-    }
-
-    @UiHandler("timeField")
-    public void onTimeFieldKeyDown(final KeyDownEvent event) {
-        fireChange();
-    }
-
-    public interface Binder extends UiBinder<Widget, SolrIndexSettingsViewImpl> {
+    interface Binder extends UiBinder<Widget, SolrIndexSettings> {
 
     }
 }
