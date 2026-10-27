@@ -131,9 +131,11 @@ public class ContentTemplateTabPresenter
                 this::onAddBelow);
         editButton = contentTemplateList.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = contentTemplateList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
+        copyButton = contentTemplateList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template",
+                this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = contentTemplateList.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
+        deleteButton = contentTemplateList.getToolbar().button(SvgImage.DELETE, "Delete Selected Template",
+                this::onDelete);
         deleteButton.setEnabled(false);
         moveUpButton = contentTemplateList.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
@@ -308,7 +310,7 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEnabledClickHandler() {
-        contentTemplateList.setEnabledStateHandler(this::setRuleEnabledState);
+        contentTemplateList.setOnEnabledChange(this::setRuleEnabledState);
     }
 
     private void setRuleEnabledState(final ContentTemplate currTemplate, final boolean isEnabled) {
@@ -683,7 +685,6 @@ public class ContentTemplateTabPresenter
         }
     }
 
-
     @Override
     public void onCloseRequest(final CloseContentEvent event) {
         final DirtyMode dirtyMode = event.getDirtyMode();
@@ -722,7 +723,6 @@ public class ContentTemplateTabPresenter
     public String getType() {
         return TAB_TYPE;
     }
-
 
     private MultiSelectionModel<ContentTemplate> getSelectionModel() {
         return contentTemplateList.getSelectionModel();

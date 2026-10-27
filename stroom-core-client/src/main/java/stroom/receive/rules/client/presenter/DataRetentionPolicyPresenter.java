@@ -116,9 +116,11 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 this::onAdd);
         editButton = dataRetentionPolicyList.getToolbar().button(SvgImage.EDIT, "Edit Selected Rule", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = dataRetentionPolicyList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Rule", this::onCopy);
+        copyButton = dataRetentionPolicyList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Rule",
+                this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = dataRetentionPolicyList.getToolbar().button(SvgImage.DELETE, "Delete Selected Rule", this::onDelete);
+        deleteButton = dataRetentionPolicyList.getToolbar().button(SvgImage.DELETE, "Delete Selected Rule",
+                this::onDelete);
         deleteButton.setEnabled(false);
         moveUpButton = dataRetentionPolicyList.getToolbar().button(SvgImage.UP, "Move Rule Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
@@ -137,6 +139,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         addMoveUpButtonHandler();
         addMoveDownButtonHandler();
         addListSelectionHandler();
+        dataRetentionPolicyList.setDefaultRule(DEFAULT_UI_ONLY_RETAIN_ALL_RULE);
         addEnabledClickHandler();
 
         dataRetentionPolicyList.setActionMenuItemProvider(this::buildActionMenuItems);
@@ -307,7 +310,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addEnabledClickHandler() {
-        dataRetentionPolicyList.setEnabledStateHandler((rule, isEnabled) -> {
+        dataRetentionPolicyList.setOnEnabledChange((rule, isEnabled) -> {
             if (visibleRules != null) {
                 if (rule != null && !isDefaultRule(rule)) {
                     final DataRetentionRule newRule = new DataRetentionRule(

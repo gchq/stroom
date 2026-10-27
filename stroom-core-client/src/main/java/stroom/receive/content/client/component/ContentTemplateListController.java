@@ -84,9 +84,9 @@ public class ContentTemplateListController extends Controller implements Focus {
         return view.getToolbar();
     }
 
-    /// @param enabledStateHandler Given a template and whether it is now enabled.
-    public void setEnabledStateHandler(final BiConsumer<ContentTemplate, Boolean> enabledStateHandler) {
-        view.setOnEnabledChange(enabledStateHandler);
+    /// @param onEnabledChange Given a template and whether it is now enabled.
+    public void setOnEnabledChange(final BiConsumer<ContentTemplate, Boolean> onEnabledChange) {
+        view.setOnEnabledChange(onEnabledChange);
     }
 
     /// @param actionMenuItemProvider Gives a template's action menu.

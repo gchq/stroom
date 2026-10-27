@@ -78,9 +78,14 @@ public class DataRetentionPolicyListController extends Controller implements Foc
         return view.getToolbar();
     }
 
-    /// @param enabledStateHandler Given a rule and whether it is now enabled.
-    public void setEnabledStateHandler(final BiConsumer<DataRetentionRule, Boolean> enabledStateHandler) {
-        view.setOnEnabledChange(enabledStateHandler);
+    /// @param onEnabledChange Given a rule and whether it is now enabled.
+    public void setOnEnabledChange(final BiConsumer<DataRetentionRule, Boolean> onEnabledChange) {
+        view.setOnEnabledChange(onEnabledChange);
+    }
+
+    /// @param defaultRule The rule that keeps everything else, which can't be disabled.
+    public void setDefaultRule(final DataRetentionRule defaultRule) {
+        view.setDefaultRuleName(defaultRule.getName());
     }
 
     /// @param actionMenuItemProvider Gives a rule's action menu.

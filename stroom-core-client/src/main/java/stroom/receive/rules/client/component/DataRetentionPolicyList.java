@@ -22,7 +22,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.query.api.ExpressionOperator;
-import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
@@ -34,9 +33,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -66,6 +63,7 @@ public class DataRetentionPolicyList extends Component {
     };
     private BiConsumer<DataRetentionRule, PopupPosition> onShowActionMenu = (rule, popupPosition) -> {
     };
+    private String defaultRuleName;
 
     /// Makes an empty list.
     public DataRetentionPolicyList() {
@@ -74,6 +72,12 @@ public class DataRetentionPolicyList extends Component {
         dataGrid.setKeyProvider(DataRetentionRule::getRuleNumber);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         addColumns();
+    }
+
+    /// @param defaultRuleName The name of the rule that keeps everything else, which can't be
+    ///                        disabled.
+    public void setDefaultRuleName(final String defaultRuleName) {
+        this.defaultRuleName = defaultRuleName;
     }
 
     /// Puts the focus on the list.
@@ -176,14 +180,6 @@ public class DataRetentionPolicyList extends Component {
                         return row;
                     }
 
-                    @Override
-                    public void onBrowserEvent(final Context context,
-                                               final Element elem,
-                                               final DataRetentionRule rule,
-                                               final NativeEvent event) {
-                        super.onBrowserEvent(context, elem, rule, event);
-//                        GWT.log("Rule " + rule.getRuleNumber() + " clicked, event " + event.getType());
-                    }
                 };
         dataGrid.addResizableColumn(expressionColumn, "", width);
     }
@@ -229,9 +225,7 @@ public class DataRetentionPolicyList extends Component {
     }
 
     private boolean isDefaultRule(final DataRetentionRule rule) {
-        return Objects.equals(
-                DataRetentionPolicyPresenter.DEFAULT_UI_ONLY_RETAIN_ALL_RULE.getName(),
-                rule.getName());
+        return Objects.equals(defaultRuleName, rule.getName());
     }
 
 
