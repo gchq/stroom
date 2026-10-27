@@ -22,6 +22,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
+import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.RecordRange;
@@ -128,6 +129,56 @@ class TestStepDemandPlanner {
                 null, DECISION, store, FINGERPRINTS, META_ID, true);
         assertThat(range.lastRecord()).as("the demanded record is the far edge").isEqualTo(5);
         assertThat(range.firstRecord()).as("widened downward over the feed").isEqualTo(0);
+    }
+
+    @Test
+    void testTheForwardTargetIsTheNearEdgeOfItsWindow(@TempDir final Path dir) {
+        // The target is what a caller checks the store for before launching: a step is answered once its
+        // own record is materialised, however much of the widened window beyond it is not.
+        final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        final PipelineStepRequest request = req(StepType.FORWARD, new StepLocation((long) META_ID, 0L, 2L));
+        final StepLocation target = planner.onDemandTargetFor(request, null, DECISION, store, META_ID, true);
+        final RecordRange range = planner.onDemandRangeFor(
+                request, null, DECISION, store, FINGERPRINTS, META_ID, true);
+        assertThat(target).isEqualTo(new StepLocation((long) META_ID, 0L, 3L));
+        assertThat(range.firstRecord()).as("the window starts at the target").isEqualTo(3);
+        assertThat(range.lastRecord()).as("and is widened past it").isGreaterThan(3);
+    }
+
+    @Test
+    void testTheBackwardTargetIsTheTopEdgeOfItsWindow(@TempDir final Path dir) {
+        final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        final PipelineStepRequest request = req(StepType.BACKWARD, new StepLocation((long) META_ID, 0L, 6L));
+        final StepLocation target = planner.onDemandTargetFor(request, null, DECISION, store, META_ID, true);
+        final RecordRange range = planner.onDemandRangeFor(
+                request, null, DECISION, store, FINGERPRINTS, META_ID, true);
+        assertThat(target).isEqualTo(new StepLocation((long) META_ID, 0L, 5L));
+        assertThat(range.lastRecord()).as("the window ends at the target").isEqualTo(5);
+        assertThat(range.firstRecord()).as("and is widened below it").isLessThan(5);
+    }
+
+    @Test
+    void testAFilteredStepHasNoTarget(@TempDir final Path dir) {
+        // A filtered step is answered by scanning a window, so no single record can stand in for it.
+        final StepDataStore store = storeWith(dir, 10, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        final PipelineStepRequest filtered = PipelineStepRequest.builder()
+                .stepType(StepType.FORWARD)
+                .stepLocation(new StepLocation((long) META_ID, 0L, 2L))
+                .stepFilterMap(Map.of(EDITED,
+                        new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
+                .build();
+        final Graph graph = new Graph(List.of(), Map.of(EDITED, List.of(UPSTREAM)));
+        assertThat(planner.onDemandTargetFor(filtered, graph, DECISION, store, META_ID, true)).isNull();
+    }
+
+    @Test
+    void testAStepOffTheEndOfTheStreamHasNoTarget(@TempDir final Path dir) {
+        // Crossing into the next stream is the resolver's job; there is no record here to check for.
+        final StepDataStore store = storeWith(dir, 10, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        assertThat(planner.onDemandTargetFor(
+                req(StepType.FORWARD, new StepLocation((long) META_ID, 0L, 9L)),
+                null, DECISION, store, META_ID, true))
+                .isNull();
     }
 
     @Test

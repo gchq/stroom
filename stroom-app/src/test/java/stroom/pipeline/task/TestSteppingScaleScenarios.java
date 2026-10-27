@@ -524,9 +524,20 @@ class TestSteppingScaleScenarios extends TranslationTest {
         try {
             final long backbones = steppingService.getBackboneLaunchCount();
             final long fullSweeps = steppingService.getFullSweepLaunchCount();
+
+            // Start with LAST because LAST deterministically waits for the backbone to complete. A FIRST
+            // issued straight away is served behind the still-running backbone's frontier, and the prefetch
+            // window is clamped to the feed captured so far - so the size of FIRST's window, and with it the
+            // launch count below, would depend on how far the backbone had got.
+            final SteppingResult last = steppingService.step(base.copy().stepType(StepType.LAST).build());
+            sessionUuid = last.getSessionUuid();
+            assertThat(last.isFoundRecord()).as("LAST resolved once the backbone completed").isTrue();
             final long onDemand = steppingService.getOnDemandLaunchCount();
 
-            final SteppingResult first = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+            final SteppingResult first = steppingService.step(base.copy()
+                    .stepType(StepType.FIRST)
+                    .sessionUuid(sessionUuid)
+                    .build());
             sessionUuid = first.getSessionUuid();
             assertThat(first.isFoundRecord()).as("FIRST resolved on a skeleton-swept stream").isTrue();
             assertThat(first.getStepData().getElementData(EDITED_ELEMENT_ID))

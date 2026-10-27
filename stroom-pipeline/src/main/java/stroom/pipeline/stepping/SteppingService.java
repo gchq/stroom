@@ -461,9 +461,18 @@ public class SteppingService {
                         // gap is ever launched. (This is also what lets a windowed scan advance across
                         // polls: each poll recomputes its window from the frontier, the finished window is
                         // satisfied from the store, and the next one launches.)
+                        // An unfiltered step is satisfied by its OWN record alone. Its range is a prefetch
+                        // window widened past that record, and requiring the whole window to be held would
+                        // mean a step into the previous window - whose far edge is the only part not yet
+                        // materialised - always launched, so the window would never save a launch.
+                        final StepLocation target = demandPlanner.onDemandTargetFor(request, graph, decision,
+                                store, metaId, priorCompleteCapture);
+                        final RecordRange needed = target != null
+                                ? RecordRange.of(target)
+                                : range;
                         final StreamSweep satisfied =
                                 satisfiedFromStore(metaId, store, decision.startElementId(),
-                                        fingerprints, range);
+                                        fingerprints, needed);
                         if (satisfied != null) {
                             return applyStreamMetadata(satisfied, priorSweeps);
                         }
