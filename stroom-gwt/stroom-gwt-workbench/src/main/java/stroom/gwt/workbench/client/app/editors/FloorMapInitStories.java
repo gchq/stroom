@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.floormap.client.presenter.FloorMapInitPresenter;
+import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -34,10 +34,11 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/FloorMapInit` stories, showing Stroom's real [FloorMapInitPresenter]: the
+/// The `App/Editors/FloorMapInit` stories, showing Stroom's real [FloorMapInitController]: the
 /// 'Initialise New Floor Map' dialog that asks for a new Floor Map's facts store (an SQL Temporal
 /// Store) and events store (a Floor Map Event Store), shown as `DocumentPluginEventManager` shows a
 /// plugin's `DocInitialisationHandler` once the document has been created.
@@ -178,11 +179,12 @@ public final class FloorMapInitStories {
         // Registered as the story renders, so a play can check it wasn't called
         context.fn(ON_COMPLETE);
         return DocEditors.render(context, fixtures, false, (harness, injector) -> {
-            final FloorMapInitPresenter presenter = injector.getFloorMapInitPresenter();
-            // As DocumentPluginEventManager does once a new document has been created
-            presenter.showInitialisationDialog(DOC_REF,
+            // As DocumentPluginEventManager does, through FloorMapPlugin's handler, once a new
+            // document has been created
+            injector.getFloorMapInitController().show(harness.getAppRoot(),
+                    DOC_REF,
                     ok -> harness.spy(ON_COMPLETE, String.valueOf(ok)),
-                    presenter);
+                    new DefaultTaskMonitorFactory(harness.getHasHandlers()));
         });
     }
 }

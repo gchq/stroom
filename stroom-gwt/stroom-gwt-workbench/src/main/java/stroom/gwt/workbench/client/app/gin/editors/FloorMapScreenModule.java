@@ -20,8 +20,6 @@ import stroom.floormap.client.presenter.FloorMapClusterPresenter;
 import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.client.presenter.FloorMapInitPresenter;
-import stroom.floormap.client.presenter.FloorMapInitPresenter.FloorMapInitView;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
@@ -30,7 +28,6 @@ import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.view.FloorMapClusterViewImpl;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
-import stroom.floormap.client.view.FloorMapInitViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
@@ -40,7 +37,7 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// (`stroom/floormap/client/gin/FloorMapModule.java`) that a floor map's Editor tab
 /// ([FloorMapEditorPresenter]), Map tab ([FloorMapMapPresenter], with its Tracking, Groups and
 /// cluster member lists) and Settings tab ([FloorMapSettingsPresenter]) need, the dialog that
-/// initialises a new floor map ([FloorMapInitPresenter]), and the document
+/// initialises a new floor map (`FloorMapInitController`), and the document
 /// asset chooser its asset boxes open
 /// (`stroom/document/asset/client/gin/DocumentAssetModule.java`), without their plugins and app
 /// services.
@@ -64,8 +61,5 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapClusterPresenter.class,
                 FloorMapClusterView.class,
                 FloorMapClusterViewImpl.class);
-        bindPresenterWidget(FloorMapInitPresenter.class,
-                FloorMapInitView.class,
-                FloorMapInitViewImpl.class);
     }
 }

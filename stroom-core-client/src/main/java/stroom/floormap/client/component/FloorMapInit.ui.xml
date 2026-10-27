@@ -17,19 +17,20 @@
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max dock-container-vertical form-padding form">
         <!-- Facts Store (SQL Temporal Store) Selection -->
         <form:FormGroup label="Facts Store"
                         identity="floorMapInitFactsStore"
                         helpText="The temporal store supplying the map's facts, such as background images, gates, desks and rooms. The Editor tab reads and writes it. Must be an SQL Temporal Store. Required.">
-            <g:SimplePanel ui:field="factsStoreContainer" />
+            <dd:DropDownBox ui:field="factsStore"/>
         </form:FormGroup>
         <!-- Events Store (FloorMap Event Store) Selection -->
         <form:FormGroup label="Events Store"
                         identity="floorMapInitEventsStore"
                         helpText="The temporal store supplying the map's time-varying events, such as people or vehicles that move as the timeline plays. Must be a FloorMap Event Store. Required.">
-            <g:SimplePanel ui:field="eventsStoreContainer" />
+            <dd:DropDownBox ui:field="eventsStore"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

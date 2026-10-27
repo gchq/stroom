@@ -235,7 +235,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// May be `null` for documents created before the value
     /// schema feature was introduced. New documents are always seeded
     /// with [FloorMapFieldMapping#initialValueSchema()] by
-    /// `FloorMapInitPresenter`.
+    /// `FloorMapInitController`.
     @JsonProperty
     private final List<FloorMapFieldMapping> valueSchema;
 

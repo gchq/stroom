@@ -163,7 +163,7 @@ public class FloorMapFieldMapping {
     /// This method is **not** intended as a runtime fallback.
     /// Once a document is created, its schema is persisted and should be
     /// read from [FloorMapDoc#getValueSchema()]. This method exists
-    /// solely so that `FloorMapInitPresenter` can provide a sensible
+    /// solely so that `FloorMapInitController` can provide a sensible
     /// starting configuration.
     ///
     /// The returned list contains the following mappings:

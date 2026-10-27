@@ -25,12 +25,13 @@ import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.floormap.client.presenter.FloorMapInitPresenter;
+import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.client.presenter.FloorMapPresenter;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -51,20 +52,23 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
     private static final FloorMapResource FLOOR_MAP_RESOURCE = GWT.create(FloorMapResource.class);
 
     private final Provider<FloorMapPresenter> editorProvider;
-    private final Provider<FloorMapInitPresenter> initPresenterProvider;
+    private final Provider<FloorMapInitController> initProvider;
+    private final AppRoot appRoot;
     private final RestFactory restFactory;
 
     @Inject
     public FloorMapPlugin(final EventBus eventBus,
                           final Provider<FloorMapPresenter> editorProvider,
-                          final Provider<FloorMapInitPresenter> initPresenterProvider,
+                          final Provider<FloorMapInitController> initProvider,
+                          final AppRoot appRoot,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
-        this.initPresenterProvider = initPresenterProvider;
+        this.initProvider = initProvider;
+        this.appRoot = appRoot;
         this.restFactory = restFactory;
     }
 
@@ -149,15 +153,14 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     /// {@inheritDoc}
     ///
-    /// Returns a [FloorMapInitPresenter] that prompts the user
-    /// to select Facts Store and Events Store references before the
-    /// FloorMap editor opens.
+    /// Returns a handler that shows a [FloorMapInitController], made for one use, prompting the
+    /// user to select Facts Store and Events Store references before the FloorMap editor opens.
     ///
-    /// @return a non-null initialisation handler; each call returns a
-    ///         new instance from the injected provider
+    /// @return a non-null initialisation handler
     @Override
     public DocInitialisationHandler getInitialisationHandler() {
-        return initPresenterProvider.get();
+        return (docRef, onComplete, taskMonitorFactory) ->
+                initProvider.get().show(appRoot, docRef, onComplete, taskMonitorFactory);
     }
 
     @Override

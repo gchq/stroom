@@ -1570,7 +1570,7 @@ public class FloorMapMapPresenter
     /// The two store references are type-disjoint and enforced as such wherever they can be set:
     /// the facts store is a `SqlTemporalStoreDoc` because the Editor tab writes spatial data
     /// back to it, and the events store is a `FloorMapEventStoreDoc` that is only ever read — see
-    /// [FloorMapInitPresenter]. So the fallback answered a different question (when was the
+    /// `FloorMapInitController`. So the fallback answered a different question (when was the
     /// floor plan last edited) in the place reserved for this one, and its second helper could only
     /// ever run a query with an unresolvable `from` clause. Both are gone.
     ///

@@ -23,8 +23,8 @@ import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
+import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
-import stroom.floormap.client.presenter.FloorMapInitPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.folder.client.FolderTabs;
@@ -113,9 +113,9 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// `FloorMapPresenter` creates it.
     FloorMapEditorPresenter getFloorMapEditorPresenter();
 
-    /// @return The dialog that asks for a new Floor Map's facts and events stores, as
-    /// `FloorMapPlugin` creates it (its `DocInitialisationHandler`).
-    FloorMapInitPresenter getFloorMapInitPresenter();
+    /// @return The dialog that asks for a new Floor Map's facts and events stores, made for one use
+    /// as `FloorMapPlugin`'s `DocInitialisationHandler` makes it.
+    FloorMapInitController getFloorMapInitController();
 
     /// @return A Floor Map's 'Map' tab (the read-only map canvas, its timeline and its Tracking,
     /// Layers and Groups panels), as `FloorMapPresenter` creates it.
