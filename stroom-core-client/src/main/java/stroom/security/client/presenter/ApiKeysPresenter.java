@@ -23,8 +23,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.component.ApiKeysListController;
+import stroom.security.client.component.EditApiKeyController;
+import stroom.security.client.component.EditApiKeyController.Mode;
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
-import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.HashedApiKey;
 import stroom.svg.shared.SvgImage;
@@ -54,7 +55,7 @@ public class ApiKeysPresenter
     public static final String TAB_TYPE = "ApiKeys";
 
     private final ApiKeysListController apiKeysList;
-    private final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider;
+    private final Provider<EditApiKeyController> editApiKeyProvider;
     private final RestFactory restFactory;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -67,12 +68,12 @@ public class ApiKeysPresenter
                             final ApiKeysListController apiKeysList,
                             final RestFactory restFactory,
                             final UiConfigCache uiConfigCache,
-                            final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider) {
+                            final Provider<EditApiKeyController> editApiKeyProvider) {
         super(eventBus, view);
         own(apiKeysList);
         this.apiKeysList = apiKeysList;
         this.restFactory = restFactory;
-        this.editApiKeyPresenterProvider = editApiKeyPresenterProvider;
+        this.editApiKeyProvider = editApiKeyProvider;
 
 //        view.setUiHandlers(this);
         view.setList(apiKeysList);
@@ -129,7 +130,8 @@ public class ApiKeysPresenter
 
     private void createNewKey() {
         final boolean allowOwnerSelection = owner == null;
-        makeDialog(editApiKeyPresenterProvider).showCreateDialog(
+        editApiKeyProvider.get().showCreateDialog(
+                this,
                 Mode.PRE_CREATE,
                 apiKeysList::refresh,
                 allowOwnerSelection);
@@ -137,7 +139,7 @@ public class ApiKeysPresenter
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = getSelectionModel().getSelected();
-        makeDialog(editApiKeyPresenterProvider).showEditDialog(apiKey, Mode.EDIT, apiKeysList::refresh);
+        editApiKeyProvider.get().showEditDialog(this, apiKey, Mode.EDIT, apiKeysList::refresh);
     }
 
     private void deleteSelectedKeys() {

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
-import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
+import stroom.security.client.component.EditApiKeyController.Mode;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.datepicker.client.DateTimeBoxController;
@@ -42,17 +41,18 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
-class TestEditApiKeyPresenter {
+class TestEditApiKeyController {
 
     private final EventBus eventBus = new SimpleEventBus();
     private final List<AlertEvent> alerts = new ArrayList<>();
-    private EditApiKeyView view;
-    private EditApiKeyPresenter presenter;
+    private EditApiKey view;
+    private EditApiKeyController controller;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        // The REST resource is made with GWT.create, which only works in a browser
+        // The REST resource is made with GWT.create, and the form is a widget, which only work in
+        // a browser
         GWTMockUtilities.disarm();
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
         final ExtendedUiConfig uiConfig = Mockito.mock(ExtendedUiConfig.class);
@@ -63,17 +63,19 @@ class TestEditApiKeyPresenter {
             consumer.accept(uiConfig);
             return null;
         }).when(uiConfigCache).get(any(), any());
-        view = Mockito.mock(EditApiKeyView.class);
+        view = Mockito.mock(EditApiKey.class);
         Mockito.when(view.getMode()).thenReturn(Mode.PRE_CREATE);
         Mockito.when(view.getName()).thenReturn("My key");
-        presenter = new EditApiKeyPresenter(
+        final UserRefSelectionController owner = Mockito.mock(UserRefSelectionController.class);
+        final DateTimeBoxController expiresOn = Mockito.mock(DateTimeBoxController.class);
+        controller = new EditApiKeyController(
                 eventBus,
                 view,
                 new FakeRestFactory(),
                 Mockito.mock(ClientSecurityContext.class),
                 uiConfigCache,
-                Mockito.mock(UserRefSelectionBoxPresenter.class),
-                () -> Mockito.mock(DateTimeBoxController.class));
+                () -> owner,
+                () -> expiresOn);
     }
 
     @AfterEach
@@ -112,7 +114,7 @@ class TestEditApiKeyPresenter {
     private HidePopupRequestEvent pressOk() {
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        presenter.onHideRequest(okPressed);
+        controller.onHideRequest(okPressed);
         return okPressed;
     }
 }

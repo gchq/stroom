@@ -1,11 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An API key: its owner, name, hash algorithm, prefix, the key itself just after it is made, and its expiry -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:item="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
         <form:FormGroup identity="owner" label="Owner" required="true">
             <form:HelpHTML>
@@ -16,11 +18,7 @@
                 </p>
             </form:HelpHTML>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <!--
-                <g:Label ui:field="ownerLabel" addStyleNames="w-100"/>
-                <item:SelectionBox ui:field="ownerSelectionBox" addStyleNames="w-100"/>
-                -->
-                <g:SimplePanel ui:field="ownerPanel" addStyleNames="w-100"/>
+                <dd:DropDownBox ui:field="owner" addStyleNames="w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="name" label="API Key Name" required="true"
@@ -49,7 +47,7 @@
                 <p>This is the key's prefix. It can be used to help associate a key that you hold with the
                 API key record in Stroom. Note: though unlikely, multiple keys can share the same prefix.</p>
             </form:HelpHTML>
-            <form:TextBox ui:field="prefixTextBox" addStyleNames="w-100"/>
+            <form:TextBox ui:field="prefixTextBox" enabled="false" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="apiKeyFormGroup" identity="apiKey" label="API Key (you must copy this)"
                         screenReaderText="Copy it now. It cannot be shown again.">
@@ -63,10 +61,12 @@
                     <p>'<code>Bearer sak_0ef90a814d_ArVs6...TRUNCATED...6Edq4</code>'.</p>
             </form:HelpHTML>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <form:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
+                <form:TextArea ui:field="apiKeyTextArea" enabled="false" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions"/>
-                    <g:Label ui:field="copyToClipboardLabel"/>
+                    <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions">
+                        <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy API Key to Clipboard"/>
+                    </b:Toolbar>
+                    <g:Label ui:field="copyToClipboardLabel" text="API Key copied to clipboard" visible="false"/>
                 </g:FlowPanel>
             </g:FlowPanel>
         </form:FormGroup>

@@ -23,7 +23,6 @@ import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter.BatchDocumentPermissionsView;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
-import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.SigningKeyPresenter;
 import stroom.security.client.presenter.UserAccessPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
@@ -39,7 +38,6 @@ import stroom.security.client.view.ApiKeysViewImpl;
 import stroom.security.client.view.AppPermissionsViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
-import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.SigningKeyViewImpl;
 import stroom.security.client.view.UserAccessViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
@@ -88,8 +86,5 @@ public class SecurityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SigningKeyPresenter.class,
                 SigningKeyPresenter.SigningKeyView.class,
                 SigningKeyViewImpl.class);
-        bindPresenterWidget(EditApiKeyPresenter.class,
-                EditApiKeyPresenter.EditApiKeyView.class,
-                EditApiKeyViewImpl.class);
     }
 }
