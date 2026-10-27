@@ -20,9 +20,9 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.pathways.client.component.TracesListTabController;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.client.component.PlanBSettingsController;
@@ -45,20 +45,19 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final TracesListTabPresenter tracesListTabPresenter;
+    private final TracesListTabController tracesListTab;
 
     @Inject
     public TracesPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
-                           final TracesListTabPresenter tracesListTabPresenter,
+                           final TracesListTabController tracesListTab,
                            final Provider<PlanBSettingsController> planBSettingsProvider,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<TracesDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(tracesListTabPresenter);
-        this.tracesListTabPresenter = tracesListTabPresenter;
+        this.tracesListTab = own(tracesListTab);
 
-        addTab(TRACES, new DocTabProvider<>(() -> tracesListTabPresenter));
+        addTab(TRACES, ControllerTabProvider.ofOwned(eventBus, tracesListTab, TracesListTabController::read));
         // Plan B's settings, for traces only
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, () -> {
             final PlanBSettingsController planBSettings = planBSettingsProvider.get();
@@ -111,18 +110,18 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
     }
 
     public void forceRefresh() {
-        tracesListTabPresenter.refresh();
+        tracesListTab.refresh();
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
-        tracesListTabPresenter.setDataSourceRef(dataSourceRef);
+        tracesListTab.setDataSourceRef(dataSourceRef);
     }
 
     public void setFilter(final String filter) {
-        tracesListTabPresenter.setFilter(filter);
+        tracesListTab.setFilter(filter);
     }
 
     public void setPathway(final Pathway pathway) {
-        tracesListTabPresenter.setPathway(pathway);
+        tracesListTab.setPathway(pathway);
     }
 }

@@ -23,8 +23,11 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -33,8 +36,9 @@ import java.util.function.Supplier;
 /// [DocTabPresenter], which takes only presenters: it shows the controller through a small
 /// [DocPresenter] that owns it, as `TabbedController.addTab` does for a document's editor.
 ///
-/// The controller is made when the tab is first shown and read into whenever the document is. It
-/// sees the document as a part of it does: whether it may be changed
+/// The controller is made when the tab is first shown and read into whenever the document is; if it
+/// is a [HasToolbar], its buttons join the document's toolbar. It sees the document as a part of it
+/// does: whether it may be changed
 /// ([stroom.widget.component.client.Contexts#READ_ONLY]), which document it is, and it tells the
 /// document of changes with `markChanged()`.
 ///
@@ -158,7 +162,7 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
     }
 
     // The presenter the document shows the controller through, which owns it unless its document does
-    private final class Host extends DocPresenter<ControllerView, D> {
+    private final class Host extends DocPresenter<ControllerView, D> implements HasToolbar {
 
         private final C content;
 
@@ -177,6 +181,20 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
         @Override
         protected D onWrite(final D document) {
             return writer.apply(content, document);
+        }
+
+        @Override
+        public List<Widget> getDocumentButtons() {
+            return content instanceof final HasToolbar hasToolbar
+                    ? hasToolbar.getDocumentButtons()
+                    : Collections.emptyList();
+        }
+
+        @Override
+        public List<Widget> getToolbars() {
+            return content instanceof final HasToolbar hasToolbar
+                    ? hasToolbar.getToolbars()
+                    : Collections.emptyList();
         }
     }
 }

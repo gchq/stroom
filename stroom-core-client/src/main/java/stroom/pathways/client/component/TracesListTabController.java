@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.pathways.client.component.TracesListController;
-import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
+import stroom.pathways.client.presenter.TraceOverviewWidget;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
@@ -33,19 +31,20 @@ import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.query.client.view.TimeRangeSelectorController;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Controller;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> implements HasToolbar {
+/// A Traces store's Traces tab ([TracesListTab]): its traces in a time range (on the document's
+/// toolbar row), and the selected trace's spans, paged from the server.
+public class TracesListTabController extends Controller implements HasToolbar {
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
 
@@ -62,24 +61,31 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     private final FlowPanel toolbar = new FlowPanel();
     private DocRef dataSourceRef;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        The content.
+    /// @param tracesList                  The traces.
+    /// @param restFactory                 Fetches the selected trace's spans.
+    /// @param timeRangeSelectorController Lets the user choose the time range.
     @Inject
-    public TracesListTabPresenter(final EventBus eventBus,
-                                  final TracesView view,
-                                  final TracesListController tracesList,
-                                  final RestFactory restFactory,
-                                  final TimeRangeSelectorController timeRangeSelectorController) {
-        super(eventBus, view);
+    public TracesListTabController(final EventBus eventBus,
+                                   final TracesListTab view,
+                                   final TracesListController tracesList,
+                                   final RestFactory restFactory,
+                                   final TimeRangeSelectorController timeRangeSelectorController) {
+        super(eventBus);
+        initWidget(view);
         own(tracesList);
         own(timeRangeSelectorController).attach(timeRangeSelector);
         this.tracesList = tracesList;
         this.restFactory = restFactory;
-        traceOverviewWidget = new TraceOverviewWidget();
+        traceOverviewWidget = view.getTraceOverview();
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);
 
-        view.setTopWidget(tracesList);
-        view.setBottomWidget(traceOverviewWidget);
+        view.setTracesList(tracesList);
 
         own(timeRangeSelector.addValueChangeHandler(e -> {
             tracesList.setTimeRange(e.getValue());
@@ -136,6 +142,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                 // stale trace displayed.
                 .onFailure(error -> traceOverviewWidget.setTrace(null))
                 // Spin the span-detail widget's own refresh button, not the traces list's.
+                .owner(this)
                 .taskMonitorFactory(traceOverviewWidget)
                 .exec();
     }
@@ -160,14 +167,18 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                             .onSuccess(onLoaded)
                             .onFailure(error -> onLoaded.accept(null))
                             // Spin the span-list pager's own refresh button, not the traces list's.
-                            .taskMonitorFactory(traceOverviewWidget)
+                            .owner(this)
+                .taskMonitorFactory(traceOverviewWidget)
                             .exec();
                 };
         traceOverviewWidget.setLargeTrace(traceRoot, fetcher);
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final TracesDoc document) {
+    /// Shows a Traces store's traces, today's at first.
+    ///
+    /// @param docRef   The store.
+    /// @param document The store.
+    public void read(final DocRef docRef, final TracesDoc document) {
         if (docRef != null) {
             setDataSourceRef(docRef);
             // Default the time range selector to Today on first open.
@@ -177,32 +188,24 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         }
     }
 
-    @Override
-    protected TracesDoc onWrite(final TracesDoc document) {
-        return document;
-    }
-
+    /// @param dataSourceRef The store whose traces are shown.
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
         tracesList.setDataSourceRef(dataSourceRef);
     }
 
+    /// @param filter The filter of the traces shown.
     public void setFilter(final String filter) {
         tracesList.setFilter(filter);
     }
 
+    /// @param pathway The pathway whose traces are shown, or `null` for all.
     public void setPathway(final Pathway pathway) {
         tracesList.setPathway(pathway);
     }
 
+    /// Fetches the traces again.
     public void refresh() {
         tracesList.refresh();
-    }
-
-    public interface TracesView extends View {
-
-        void setTopWidget(IsWidget view);
-
-        void setBottomWidget(Widget view);
     }
 }
