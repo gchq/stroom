@@ -32,8 +32,8 @@ until `next` says promote. With a task-list tool (Stroom AI: task_list), write t
 it, go on to `next`; end your turn only for the user (a form, a paste, `user_actions`, promotion). A result's
 `user_actions` are the user's steps (enabling a filter, an Elasticsearch request for the cluster admin, a document to
 open), which a client may show as buttons: still say what each is for and wait for the user, and never take one as
-done; the next call reads Stroom to see. Never start with an indexing pipeline for raw data; create_indexing_pipeline refuses
-until the build has an events pipeline or is given existing Events streams; create_processor_filter refuses a
+done; the next call reads Stroom to see. Never start with an indexing pipeline for raw data (a discovery index aside, which indexes it as it is);
+create_indexing_pipeline refuses until the build has an events pipeline or is given existing Events streams; create_processor_filter refuses a
 pipeline with no clean step recorded; create_pipeline refuses another source's XSLT and a template whose parser
 cannot read the sample (replace_parser swaps any template's parser for the one it needs). Only when this Stroom
 has no translation template at all and the user has no pipeline to base it on, create_pipeline standalone='events'

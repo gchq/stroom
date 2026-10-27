@@ -320,6 +320,19 @@ class TestCreateIndexingPipelineTool {
     }
 
     @Test
+    void withNoTemplateItSaysWhereToFindOneNotTheFallback() {
+        final String refused = tool.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", "
+                                                                                                  + "\"name\": \"n\", "
+                                                                                                  + "\"xslt_uuid\": "
+                                                                                                  + "\"x\"}"),
+                PortedToolCalls.context()).text();
+        assertThat(refused).contains("Give template_uuid: an indexing template (find_pipeline_templates "
+                                     + "stage=indexing), or a discovery one")
+                .as("the last resort isn't offered").doesNotContain("standalone");
+        Mockito.verify(pipelines, Mockito.never()).fromTemplate(any(), any(), any());
+    }
+
+    @Test
     void aDiscoveryPipelineOfItsOwnReadsItsParserFromTheDiscoveryPlan() {
         Mockito.when(pipelines.templateNames("discovery")).thenReturn(List.of());
         Mockito.when(pipelines.withoutTemplate(any(), any(), any())).thenReturn(Map.of("type", "Pipeline", "uuid",
