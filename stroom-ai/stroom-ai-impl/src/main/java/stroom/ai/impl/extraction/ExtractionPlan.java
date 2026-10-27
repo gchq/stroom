@@ -37,8 +37,8 @@ import java.util.regex.Pattern;
 /// @param fields      The fields it gives, besides StreamId and EventId; for a change to an XSLT written by hand,
 ///                    the fields added to it (see [ExtractionChange]).
 /// @param newColumns  The fields to add the table columns for: those it didn't give before that no column shows.
-/// @param existing    The table's extraction pipeline, which it changes (or a new child of which it makes), or
-///                    null for a table with none.
+/// @param existing    The table's extraction pipeline, which it changes (or whose XSLT, changed, a new pipeline
+///                    takes), or null for a table with none.
 public record ExtractionPlan(@JsonProperty("component") String component,
                              @JsonProperty("componentId") String componentId,
                              @JsonProperty("sample") Sample sample,

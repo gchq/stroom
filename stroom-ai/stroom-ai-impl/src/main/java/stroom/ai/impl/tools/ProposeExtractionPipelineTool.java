@@ -66,7 +66,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 ///
 /// For a table with an extraction pipeline already, it offers two buttons: one to change that pipeline's XSLT in
 /// place (see [ExtractionChange]), if the user can edit it, shown as a diff with the other dashboards and queries
-/// that use it; and one to save a new pipeline, a child of it with its own XSLT, for this table only.
+/// that use it; and one to save a new pipeline from the Search Extraction template, with its own XSLT (the changed
+/// one), for this table only, leaving the table's pipeline as it is.
 ///
 /// It is checked as preview_extraction checks it, but without stepping: every field the table's columns use must
 /// be given, as turning extraction on fills every value from it.
@@ -119,8 +120,8 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                  + "folder, it is written, and the table set to use it, with a column for each new "
                                  + "field, unsaved. Nothing changes unless they do. For a table with an extraction "
                                  + "pipeline already, it offers to change that pipeline in place, or to save a new "
-                                 + "one (a child of it): give every field, if Stroom AI wrote its XSLT; only those "
-                                 + "to add, if it was written by hand.")
+                                 + "one from the Search Extraction template: give every field, if Stroom AI wrote "
+                                 + "its XSLT; only those to add, if it was written by hand.")
                         .chatOnly(" Give the fields exactly as you last tried them with preview_extraction for this "
                                   + "table (it is refused otherwise), once the user "
                                   + "has seen its preview and agreed them. Tell the user about the button(s) rather "
@@ -335,13 +336,14 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                 ? "two buttons for table '" + tableName + "' on dashboard '" + dashboard.getName() + "', with "
                   + what + ": 'Change extraction pipeline' changes pipeline '" + name(pipeline) + "' in place "
                   + "(they are shown the change as a diff, and the other dashboards and queries that use it, which "
-                  + "change too), and 'Create extraction pipeline' saves a new pipeline, a child of it with its "
-                  + "own XSLT, in a name (suggested '" + name + "') and folder they choose, for this table only. "
+                  + "change too), and 'Create extraction pipeline' saves a new pipeline from the Search Extraction "
+                  + "template, with its own XSLT, in a name (suggested '" + name + "') and folder they choose, for "
+                  + "this table only, leaving pipeline '" + name(pipeline) + "' as it is. "
                 : "a 'Create extraction pipeline' button for table '" + tableName + "' on dashboard '"
-                  + dashboard.getName() + "', with " + what + ": it saves a new pipeline, a child of pipeline '"
-                  + name(pipeline) + "' with its own XSLT, in a name (suggested '" + name + "') and folder they "
-                  + "choose. They can't change pipeline '" + name(pipeline) + "' in place, as they can't edit its "
-                  + "XSLT. ")
+                  + dashboard.getName() + "', with " + what + ": it saves a new pipeline from the Search Extraction "
+                  + "template, with its own XSLT, in a name (suggested '" + name + "') and folder they choose, in "
+                  + "place of pipeline '" + name(pipeline) + "'. They can't change pipeline '" + name(pipeline)
+                  + "' in place, as they can't edit its XSLT. ")
                                                   + "Only once they write the change, or choose the new pipeline's "
                                                   + "name and folder, is anything written, and the table set up to "
                                                   + "use it, unsaved. Tell them about the button(s) rather than "
