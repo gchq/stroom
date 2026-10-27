@@ -21,8 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.UsersAndGroupsPlugin;
-import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.component.CreateUserController;
+import stroom.security.client.component.UserAndGroupActions;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.component.UserRefPopupController;
@@ -62,7 +62,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private final UserListController childrenList;
 
     private final Provider<CreateUserController> createUserProvider;
-    private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
+    private final UserAndGroupActions actions;
     private final Provider<UserRefPopupController> userRefPopupProvider;
     private final RestFactory restFactory;
 
@@ -82,7 +82,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final UserAndGroupsView view,
                                   final Provider<UserListController> userListPresenterProvider,
                                   final Provider<CreateUserController> createUserProvider,
-                                  final Provider<CreateNewGroupController> createNewGroupControllerProvider,
+                                  final UserAndGroupActions actions,
                                   final Provider<UserRefPopupController> userRefPopupProvider,
                                   final UiConfigCache uiConfigCache,
                                   final RestFactory restFactory) {
@@ -114,7 +114,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 
         this.createUserProvider = createUserProvider;
-        this.createNewGroupControllerProvider = createNewGroupControllerProvider;
+        this.actions = own(actions);
         this.userRefPopupProvider = userRefPopupProvider;
         this.restFactory = restFactory;
 
@@ -485,11 +485,11 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private void onEditUserOrGroup() {
         // The edit dialog is this one's, made for one use
-        UserAndGroupHelper.onEditUserOrGroup(userList, createNewGroupControllerProvider, this, this);
+        actions.edit(userList);
     }
 
     private void onDelete() {
-        UserAndGroupHelper.onDelete(userList, restFactory, this);
+        actions.delete(userList);
     }
 
     private static String getDescription(final UserRef userRef) {

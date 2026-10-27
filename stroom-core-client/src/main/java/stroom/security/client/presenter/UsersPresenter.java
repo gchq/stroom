@@ -17,9 +17,8 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.RestFactory;
-import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.component.CreateUserController;
+import stroom.security.client.component.UserAndGroupActions;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
@@ -48,9 +47,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final UserListController userList;
-    private final RestFactory restFactory;
     private final Provider<CreateUserController> createUserProvider;
-    private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
+    private final UserAndGroupActions actions;
 
     //    private final ToolbarButton editButton;
     private final ToolbarButton deleteButton;
@@ -59,15 +57,13 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     public UsersPresenter(final EventBus eventBus,
                           final UsersView view,
                           final UserListController userList,
-                          final RestFactory restFactory,
                           final Provider<CreateUserController> createUserProvider,
-                          final Provider<CreateNewGroupController> createNewGroupControllerProvider) {
+                          final UserAndGroupActions actions) {
         super(eventBus, view);
         own(userList);
         this.userList = userList;
-        this.restFactory = restFactory;
         this.createUserProvider = createUserProvider;
-        this.createNewGroupControllerProvider = createNewGroupControllerProvider;
+        this.actions = own(actions);
 
         view.setUserList(this.userList);
 
@@ -102,11 +98,11 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     private void onEditUserOrGroup() {
         // The edit dialog is this one's, made for one use
-        UserAndGroupHelper.onEditUserOrGroup(userList, createNewGroupControllerProvider, this, this);
+        actions.edit(userList);
     }
 
     private void onDelete() {
-        UserAndGroupHelper.onDelete(userList, restFactory, this);
+        actions.delete(userList);
     }
 
     public void refresh() {

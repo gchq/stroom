@@ -16,16 +16,12 @@
 
 package stroom.security.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.CellIcon;
-import stroom.dispatch.client.RestFactory;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
-import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
@@ -38,11 +34,9 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
-import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.util.client.HtmlBuilder;
@@ -52,7 +46,6 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +54,6 @@ import java.util.function.Consumer;
 
 public class UserAndGroupHelper {
 
-    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     public static final String COL_NAME_DISPLAY_NAME = "Display Name";
     public static final String COL_NAME_FULL_NAME = "Full Name";
@@ -125,63 +117,6 @@ public class UserAndGroupHelper {
                 : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
-    public static void onDelete(final UserListController userList,
-                                final RestFactory restFactory,
-                                final HasHandlers hasHandlers) {
-
-        final User user = userList.getSelectionModel().getSelected();
-        if (user != null) {
-            final String userDescription = getDescription(user);
-            final String msg = "Are you sure you want to permanently delete " + userDescription + "?"
-                               + "\n\nThis will also remove them from any groups that they are currently " +
-                               "a member of and delete any API keys they held. " +
-                               "Any documents that are solely owned by them will then only be " +
-                               "accessible by an administrator."
-                               + "\nYou will not be permitted to delete them if any content has a " +
-                               "dependency on them.";
-            ConfirmEvent.fire(hasHandlers, msg, ok -> {
-                if (ok) {
-                    restFactory
-                            .create(USER_RESOURCE)
-                            .method(resource -> resource.delete(user.getUuid()))
-                            .onSuccess(didDelete -> {
-                                if (didDelete) {
-                                    userList.getSelectionModel().clear(true);
-                                    userList.refresh();
-                                }
-                            })
-                            .onFailure(error ->
-                                    AlertEvent.fireError(
-                                            hasHandlers,
-                                            "Error deleting " + userDescription,
-                                            error.getMessage(),
-                                            null))
-                            .taskMonitorFactory(userList.getTaskMonitor())
-                            .exec();
-                }
-            });
-        }
-    }
-
-    /// Renames the group selected, if a group is, in the Edit User Group dialog.
-    ///
-    /// @param userList                The list of users and groups.
-    /// @param createNewGroupControllerProvider Makes the dialog.
-    /// @param opener                           What shows the dialog, which owns it while shown.
-    /// @param taskMonitorFactory               Shows the progress of the update.
-    public static void onEditUserOrGroup(final UserListController userList,
-                                         final Provider<CreateNewGroupController> createNewGroupControllerProvider,
-                                         final HasControllerNode opener,
-                                         final TaskMonitorFactory taskMonitorFactory) {
-        final User user = userList.getSelectionModel().getSelected();
-        if (user != null && user.isGroup()) {
-            createNewGroupControllerProvider.get().edit(opener,
-                    user,
-                    createAfterChangeConsumer(userList),
-                    taskMonitorFactory);
-        }
-    }
-
     public static Consumer<User> createAfterChangeConsumer(final UserListController userList) {
         return user -> {
             userList.getSelectionModel()
@@ -190,10 +125,6 @@ public class UserAndGroupHelper {
         };
     }
 
-    private static String getDescription(final User user) {
-        return user.getType(CaseType.LOWER)
-               + " '" + user.asRef().toDisplayString() + "'";
-    }
 
     public static List<Item> buildUserActionMenu(final UserRef userRef,
                                                  final boolean isExternalIdp,
