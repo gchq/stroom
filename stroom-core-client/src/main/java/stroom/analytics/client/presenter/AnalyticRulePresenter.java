@@ -18,8 +18,10 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.component.AnalyticSettingsController;
 import stroom.analytics.client.component.DuplicateManagementController;
+import stroom.analytics.client.component.NotificationListController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
@@ -51,14 +53,14 @@ public class AnalyticRulePresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final AnalyticQueryEditPresenter analyticQueryEditPresenter;
-    private final AnalyticNotificationPresenter analyticNotificationPresenter;
+    private final NotificationListController notificationList;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
                                  final Provider<AnalyticSettingsController> settingsProvider,
-                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
+                                 final Provider<NotificationListController> notificationListProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<DuplicateManagementController> duplicateManagementProvider,
@@ -72,7 +74,7 @@ public class AnalyticRulePresenter
         // Created up front rather than by the tab provider, as the notifications tab has to be told when the
         // processing type changes on the execution tab, which can happen before the tab is ever opened.
         // Assigned before the change handler below is registered, as that handler reads it.
-        this.analyticNotificationPresenter = make(notificationPresenterProvider);
+        this.notificationList = make(notificationListProvider);
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = make(processPresenterProvider);
         analyticProcessingPresenter.setDocumentEditPresenter(this);
@@ -82,7 +84,13 @@ public class AnalyticRulePresenter
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 AnalyticSettingsController::read,
                 AnalyticSettingsController::write));
-        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
+        addTab(NOTIFICATIONS, ControllerTabProvider.ofOwned(eventBus, notificationList,
+                (list, docRef, document) -> list.read(docRef, document.getNotifications()),
+                (list, document) -> document
+                        .copy()
+                        .notifications(list.getNotifications())
+                        .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                        .build()));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DUPLICATE_MANAGEMENT, new ControllerTabProvider<>(eventBus, duplicateManagementProvider::get,
@@ -133,7 +141,7 @@ public class AnalyticRulePresenter
         setTabHidden(DUPLICATE_MANAGEMENT, analyticProcessType != AnalyticProcessType.SCHEDULED_QUERY);
         // Some notification settings only apply to one processing type, so the tab has to know about a change
         // made on the execution tab.
-        analyticNotificationPresenter.setAnalyticProcessType(analyticProcessType);
+        notificationList.setAnalyticProcessType(analyticProcessType);
     }
 
     @Override

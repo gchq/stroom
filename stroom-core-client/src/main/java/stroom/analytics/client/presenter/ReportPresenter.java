@@ -16,7 +16,9 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.NotificationListController;
 import stroom.analytics.client.component.ReportSettingsTabController;
+import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
@@ -47,14 +49,14 @@ public class ReportPresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ReportQueryEditPresenter reportQueryEditPresenter;
-    private final ReportNotificationPresenter reportNotificationPresenter;
+    private final NotificationListController notificationList;
 
     @Inject
     public ReportPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final ReportQueryEditPresenter reportQueryEditPresenter,
                            final Provider<ReportSettingsTabController> reportSettingsProvider,
-                           final Provider<ReportNotificationPresenter> notificationPresenterProvider,
+                           final Provider<NotificationListController> notificationListProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
@@ -68,13 +70,19 @@ public class ReportPresenter
 
         // Created up front rather than by the tab provider, so it can be told the processing type whether or
         // not the tab has been opened.
-        this.reportNotificationPresenter = make(notificationPresenterProvider);
+        this.notificationList = make(notificationListProvider);
 
         addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, reportSettingsProvider::get,
                 ReportSettingsTabController::read,
                 ReportSettingsTabController::write));
-        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
+        addTab(NOTIFICATIONS, ControllerTabProvider.ofOwned(eventBus, notificationList,
+                (list, docRef, document) -> list.read(docRef, document.getNotifications()),
+                (list, document) -> document
+                        .copy()
+                        .notifications(list.getNotifications())
+                        .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                        .build()));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
@@ -120,7 +128,7 @@ public class ReportPresenter
         super.onRead(docRef, document);
         // A report is always a scheduled query, but tell the notifications tab explicitly rather than leaving
         // it to infer anything.
-        reportNotificationPresenter.setAnalyticProcessType(document.getAnalyticProcessType());
+        notificationList.setAnalyticProcessType(document.getAnalyticProcessType());
     }
 
     @Override
