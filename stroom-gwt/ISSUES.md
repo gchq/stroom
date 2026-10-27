@@ -1742,13 +1742,17 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 * After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
-  `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListPresenter`).
-* `DocumentUserPermissionsListPresenter` asks the document type cache for its columns
-  (`setupColumns`) before its grid is created; with the cache already filled it would add them to
-  a null grid.
+  `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListController`, was
+  `ProfilePeriodListPresenter`).
+* ~~`DocumentUserPermissionsListPresenter` asked the document type cache for its columns
+  (`setupColumns`) before its grid was created; with the cache already filled it would add them to
+  a null grid.~~ Fixed in wave 10's audit: `DocumentUserPermissionsListController` adds the columns
+  once both the document types and the document are known, whichever comes first (each list has its
+  own `DocumentTypeCache`, unbound in GIN, so its first fetch answers after the document is given;
+  the order no longer matters).
 * The activity chooser highlights the current activity with an object from another fetch
   (`ManageActivityPresenter.setSelected`), which a grid comparing rows can't match.
-* A pathway's constraints list heads its value column "Type" (`ConstraintListPresenter.addValueColumn`),
+* A pathway's constraints list heads its value column "Type" (`ConstraintList.addColumns`, was `ConstraintListPresenter.addValueColumn`),
   a copy of the column before it.
 
 * Rename hides its dialog before the request is sent, and the document permission dialogs

@@ -45,7 +45,6 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -60,7 +59,10 @@ public class DocumentUserPermissionsListController extends Controller {
             new FetchDocumentUserPermissionsRequest.Builder();
     private final DocumentUserPermissionsList view;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
+    private final RefCellsController refCells;
     private DocRef docRef;
+    private DocumentTypes documentTypes;
+    private boolean columnsAdded;
 
     /// Made by GIN, with its content.
     ///
@@ -82,13 +84,13 @@ public class DocumentUserPermissionsListController extends Controller {
                                                  final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         this.restFactory = restFactory;
         initWidget(view);
-        documentTypeCache.fetch(documentTypes -> view.addColumns(
-                refCells.configure(new UserRefCell.Builder<DocumentUserPermissions>()),
-                docRef != null && DocumentTypes.isFolder(docRef),
-                documentTypes.getTypes().size()), view.getTaskMonitor());
+        documentTypeCache.fetch(documentTypes -> {
+            this.documentTypes = documentTypes;
+            addColumnsWhenReady();
+        }, view.getTaskMonitor());
 
         // Not easy to determine if we are dealing in users or groups at this point so just
         // call it Quick Filter
@@ -104,16 +106,6 @@ public class DocumentUserPermissionsListController extends Controller {
         view.setOnFilterChange(this::onFilterChange);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 UserFields.QUICK_FILTER_CONTEXT, this, view.getTaskMonitor()));
-
-//        criteriaBuilder.sortList(List.of(
-//                new CriteriaFieldSort(
-//                        UserFields.DISPLAY_NAME.getFldName(),
-//                        false,
-//                        true),
-//                new CriteriaFieldSort(
-//                        UserFields.UNIQUE_ID.getFldName(),
-//                        false,
-//                        true)));
 
         view.setOnSortChange(this::refresh);
     }
@@ -149,7 +141,6 @@ public class DocumentUserPermissionsListController extends Controller {
                                     .onSuccess(response -> {
                                         view.setFilterError(NullSafe.get(
                                                 response.getFilterError(), TokenError::getText));
-                                        GWT.log("Fetched " + response.size() + " records");
                                         dataConsumer.accept(response);
                                     })
                                     .onFailure(errorHandler)
@@ -176,6 +167,19 @@ public class DocumentUserPermissionsListController extends Controller {
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
         criteriaBuilder.docRef(docRef);
+        addColumnsWhenReady();
+    }
+
+    // The columns depend on whether the document is a folder (its create types are shown) and on
+    // how many document types there are, so they are added once both are known, whichever is first
+    private void addColumnsWhenReady() {
+        if (!columnsAdded && documentTypes != null && docRef != null) {
+            columnsAdded = true;
+            view.addColumns(
+                    refCells.configure(new UserRefCell.Builder<DocumentUserPermissions>()),
+                    DocumentTypes.isFolder(docRef),
+                    documentTypes.getTypes().size());
+        }
     }
 
     /// The toolbar beside the list's pager, for the screen's own buttons.
