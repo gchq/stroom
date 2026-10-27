@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max visualisation-assets-add-dialog">
+    <g:FlowPanel styleName="max">
         <form:FormGroup identity="visualisationAssetsUploadFileTo"
                         label="Upload to"
                         helpText="The folder that the file will be uploaded to.">

@@ -18,9 +18,6 @@ package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
-import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
-import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetViewImpl;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -40,9 +37,6 @@ public class VisualisationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DocumentAssetPresenter.class,
                 DocumentAssetView.class,
                 DocumentAssetViewImpl.class);
-        bindPresenterWidget(DocumentAssetUploadFileDialogPresenter.class,
-                DocumentAssetUploadFileDialogView.class,
-                DocumentAssetUploadFileDialogViewImpl.class);
     }
 }
 

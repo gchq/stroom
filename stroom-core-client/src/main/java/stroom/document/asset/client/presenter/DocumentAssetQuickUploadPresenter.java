@@ -19,6 +19,7 @@ package stroom.document.asset.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.document.asset.client.component.DocumentAssetUploadFileDialogController;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.document.asset.shared.DocumentAssetResource;
@@ -46,7 +47,7 @@ import java.util.function.Consumer;
  * <p>This exists so a dialog that merely <em>references</em> an asset (for
  * example the Floor Map layer appearance dialog, which points a layer at an
  * image) can offer "upload a new one" inline. It reuses the standard
- * {@link DocumentAssetUploadFileDialogPresenter} for the file chooser and the
+ * {@link DocumentAssetUploadFileDialogController} for the file chooser and the
  * standard {@code updateNewUploadedFile} endpoint for the upload, so a file
  * uploaded here is indistinguishable from one added on the Assets tab.</p>
  *
@@ -65,7 +66,7 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final Provider<DocumentAssetUploadFileDialogPresenter> uploadDialogProvider;
+    private final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider;
 
     /** Root-level asset names already in use, so an upload never silently replaces one. */
     private final Set<String> existingRootNames = new HashSet<>();
@@ -80,7 +81,7 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
     public DocumentAssetQuickUploadPresenter(
             final EventBus eventBus,
             final RestFactory restFactory,
-            final Provider<DocumentAssetUploadFileDialogPresenter> uploadDialogProvider,
+            final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider,
             final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.eventBus = eventBus;
@@ -132,7 +133,8 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
     }
 
     private void showUploadDialog() {
-        appRoot.makeDialog(uploadDialogProvider).fireShowPopup(
+        uploadDialogProvider.get().show(
+                appRoot,
                 this,
                 // Always the root of the asset store — no tree to pick a folder from.
                 null,

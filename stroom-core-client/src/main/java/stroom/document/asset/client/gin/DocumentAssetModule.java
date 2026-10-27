@@ -19,9 +19,6 @@ package stroom.document.asset.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
-import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
-import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetViewImpl;
 
 public class DocumentAssetModule extends PluginModule {
@@ -30,8 +27,5 @@ public class DocumentAssetModule extends PluginModule {
     protected void configure() {
         bindPresenterWidget(DocumentAssetPresenter.class, DocumentAssetView.class,
                 DocumentAssetViewImpl.class);
-        bindPresenterWidget(DocumentAssetUploadFileDialogPresenter.class,
-                DocumentAssetUploadFileDialogView.class,
-                DocumentAssetUploadFileDialogViewImpl.class);
     }
 }

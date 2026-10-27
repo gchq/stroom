@@ -25,6 +25,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.document.asset.client.component.DocumentAssetAddItemDialogController;
 import stroom.document.asset.client.component.DocumentAssetAddItemDialogController.DialogType;
 import stroom.document.asset.client.component.DocumentAssetEditAssetDialogController;
+import stroom.document.asset.client.component.DocumentAssetUploadFileDialogController;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
@@ -137,7 +138,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Dialog that appears when user wants to upload a file
      */
-    private final DocumentAssetUploadFileDialogPresenter uploadFileDialog;
+    private final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider;
 
     // Makes the dialog that adds a file or folder
     private final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider;
@@ -183,18 +184,17 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
 
     @Inject
     public DocumentAssetPresenter(final EventBus eventBus,
-                                        final DocumentAssetView view,
-                                        final RestFactory restFactory,
-                                        final DocumentAssetUploadFileDialogPresenter uploadFileDialog,
-                                        final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
-                                        final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
+                                  final DocumentAssetView view,
+                                  final RestFactory restFactory,
+                                  final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider,
+                                  final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
+                                  final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
-        own(uploadFileDialog);
         addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;
-        this.uploadFileDialog = uploadFileDialog;
+        this.uploadFileDialogProvider = uploadFileDialogProvider;
         this.addItemDialogProvider = addItemDialogProvider;
         this.editAssetDialogProvider = editAssetDialogProvider;
         this.editorPresenter = make(editorPresenterProvider);
@@ -629,7 +629,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                     DocumentAssetPresenterUtils.findFolderForSelectedItem(
                             tree.getSelectedItem());
             final String path = DocumentAssetPresenterUtils.getItemPath(folderItem);
-            uploadFileDialog.fireShowPopup(this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
+            uploadFileDialogProvider.get().show(this, this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
         }
     }
 
