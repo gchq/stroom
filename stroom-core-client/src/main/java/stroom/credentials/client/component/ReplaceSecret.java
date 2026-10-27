@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.view;
+package stroom.credentials.client.component;
 
-import stroom.credentials.client.component.SecretForm;
-import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import javax.inject.Inject;
+/// A credential's new secret, under a warning that the old one is lost, and whether and when the
+/// new one expires.
+public class ReplaceSecret extends Component {
 
-/// Backs ReplaceSecretViewImpl.ui.xml.
-public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView {
-
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     Label warning;
@@ -49,64 +48,63 @@ public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView
     @UiField
     DateTimeBox expiryTime;
 
-    private SecretForm secretForm;
-
-    @Inject
-    @SuppressWarnings("unused")
-    public ReplaceSecretViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty form, with no secret form until [#setSecretForm(IsWidget)].
+    public ReplaceSecret() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param name The name of the credential, shown in the warning.
     public void setCredentialName(final String name) {
         warning.setText("The current secret of '" + name + "' will be discarded and cannot be recovered. "
                         + "Everything that uses this credential will use the new secret straight away.");
     }
 
-    @Override
-    public void setSecretForm(final SecretForm form) {
-        this.secretForm = form;
-        secret.setWidget(form.asWidget());
+    /// @param form The form for the secret of the credential's type.
+    public void setSecretForm(final IsWidget form) {
+        secret.setWidget(form);
     }
 
-    @Override
+    /// @return True if the new secret expires.
     public boolean isCredExpire() {
         return credsExpire.getValue();
     }
 
-    @Override
+    /// @param expire True if the new secret expires.
     public void setCredExpire(final boolean expire) {
         credsExpire.setValue(expire);
         updateState();
     }
 
-    @Override
-    public DateTimeBox getExpiryTime() {
+    /// @return The expiry date's box, for its controller to attach to.
+    public DateTimeBox getExpiryTimeBox() {
         return expiryTime;
     }
 
-    @Override
-    public void focus() {
-        if (secretForm != null) {
-            secretForm.focus();
-        }
+    /// @param expiryTime When the new secret expires, in milliseconds since the epoch.
+    public void setExpiryTime(final Long expiryTime) {
+        this.expiryTime.setValue(expiryTime);
     }
 
+    /// @return When the new secret expires, in milliseconds since the epoch.
+    public Long getExpiryTime() {
+        return expiryTime.getValue();
+    }
+
+    /// @return Whether the expiry is a valid date and time.
+    public boolean isExpiryTimeValid() {
+        return expiryTime.isValid();
+    }
+
+    // Expiry is shown either way but only enabled if the tick box is ticked, as in the credential
+    // settings, so the dialog doesn't change shape
     private void updateState() {
-        // Expiry is shown either way but only enabled if the tick box is ticked, as in the
-        // credential settings, so the dialog doesn't change shape
         final boolean expires = credsExpire.getValue();
         expiryTime.setEnabled(expires);
         expiryTimeFormGroup.setDisabled(!expires);
     }
 
     @UiHandler("credsExpire")
-    public void onCredsExpire(final ValueChangeEvent<Boolean> e) {
+    void onCredsExpire(final ValueChangeEvent<Boolean> e) {
         updateState();
     }
 
@@ -114,7 +112,7 @@ public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ReplaceSecretViewImpl> {
+    interface Binder extends UiBinder<Widget, ReplaceSecret> {
 
     }
 }

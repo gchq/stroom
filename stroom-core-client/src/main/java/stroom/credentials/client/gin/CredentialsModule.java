@@ -21,11 +21,8 @@ import stroom.credentials.client.CredentialsPlugin;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
-import stroom.credentials.client.presenter.ReplaceSecretPresenter;
-import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
 import stroom.credentials.client.view.CredentialsManagerViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
-import stroom.credentials.client.view.ReplaceSecretViewImpl;
 
 /**
  * Ensures the GIN injection works in GWT.
@@ -46,9 +43,5 @@ public class CredentialsModule extends PluginModule {
         bindPresenterWidget(CredentialsManagerDialogPresenter.class,
                 CredentialsManagerDialogPresenter.CredentialsManagerDialogView.class,
                 CredentialsManagerViewImpl.class);
-
-        bindPresenterWidget(ReplaceSecretPresenter.class,
-                ReplaceSecretView.class,
-                ReplaceSecretViewImpl.class);
     }
 }

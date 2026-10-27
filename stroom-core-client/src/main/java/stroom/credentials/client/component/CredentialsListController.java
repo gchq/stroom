@@ -20,7 +20,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialEditPresenter;
 import stroom.credentials.client.presenter.CredentialEditPresenter.CreationState;
-import stroom.credentials.client.presenter.ReplaceSecretPresenter;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
@@ -49,7 +48,7 @@ public class CredentialsListController extends Controller {
     private final CredentialsList view;
     private final CredentialClient credentialClient;
     private final Provider<CredentialEditPresenter> credentialEditPresenterProvider;
-    private final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider;
+    private final Provider<ReplaceSecretController> replaceSecretProvider;
     private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> dataProvider;
 
     /// Made by GIN, with its content.
@@ -58,7 +57,7 @@ public class CredentialsListController extends Controller {
     /// @param view                            The content.
     /// @param credentialClient                Finds, makes and deletes the credentials.
     /// @param credentialEditPresenterProvider Makes a credential's editor.
-    /// @param replaceSecretPresenterProvider  Makes the dialog that replaces a credential's secret.
+    /// @param replaceSecretProvider           Makes the dialog that replaces a credential's secret.
     /// @param securityContext                 Tells whether the user may see credentials.
     /// @param expiryFormatter                 Formats when a credential expires.
     @Inject
@@ -66,14 +65,14 @@ public class CredentialsListController extends Controller {
                                      final CredentialsList view,
                                      final CredentialClient credentialClient,
                                      final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
-                                     final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider,
+                                     final Provider<ReplaceSecretController> replaceSecretProvider,
                                      final ClientSecurityContext securityContext,
                                      final ExpiryFormatter expiryFormatter) {
         super(eventBus);
         this.view = view;
         this.credentialClient = credentialClient;
         this.credentialEditPresenterProvider = credentialEditPresenterProvider;
-        this.replaceSecretPresenterProvider = replaceSecretPresenterProvider;
+        this.replaceSecretProvider = replaceSecretProvider;
         initWidget(view);
         view.addColumns(expiryFormatter::formatWithDuration);
         view.setOnAdd(this::handleAddButtonClick);
@@ -209,7 +208,7 @@ public class CredentialsListController extends Controller {
 
         // Check that the user can edit these credentials
         if (cwp != null && cwp.isEdit()) {
-            makeDialog(replaceSecretPresenterProvider).show(cwp.getCredential(), this::afterEdit);
+            replaceSecretProvider.get().show(this, cwp.getCredential(), this::afterEdit);
         }
     }
 }

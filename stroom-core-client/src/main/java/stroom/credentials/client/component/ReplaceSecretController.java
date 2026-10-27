@@ -14,65 +14,76 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.presenter;
+package stroom.credentials.client.component;
 
 import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
-import stroom.credentials.client.component.KeyStoreFileSecretForm;
-import stroom.credentials.client.component.KeyStoreSecretFormController;
-import stroom.credentials.client.component.SecretForm;
-import stroom.credentials.client.component.SecretForms;
-import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
+import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datepicker.client.DateTimeBoxController;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
-/// Dialog to replace the secret held by an existing credential.
+/// Replaces the secret held by an existing credential ([ReplaceSecret]), in a dialog made for one
+/// use.
 ///
 /// Secrets are never sent back to the browser, so they cannot be viewed or edited. Instead the
 /// whole secret is replaced, in place, so everything that refers to the credential carries on
 /// working with the new secret. The expiry is set here as it describes the secret.
-public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView> {
+public class ReplaceSecretController extends Controller {
 
     private static final int DIALOG_WIDTH = 750;
     private static final int DIALOG_HEIGHT = 600;
 
+    private final ReplaceSecret view;
     private final CredentialClient credentialClient;
     private final SecretForms secretForms;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The content.
+    /// @param credentialClient              Replaces the secret.
+    /// @param secretForms                   Gives the form for each credential type's secret.
+    /// @param dateTimeBoxControllerProvider Makes the expiry box's controller.
     @Inject
-    public ReplaceSecretPresenter(final EventBus eventBus,
-                                  final ReplaceSecretView view,
-                                  final CredentialClient credentialClient,
-                                  final SecretForms secretForms,
-                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
-        super(eventBus, view);
-        make(dateTimeBoxControllerProvider).attach(view.getExpiryTime());
+    public ReplaceSecretController(final EventBus eventBus,
+                                   final ReplaceSecret view,
+                                   final CredentialClient credentialClient,
+                                   final SecretForms secretForms,
+                                   final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
+        this.view = view;
         this.credentialClient = credentialClient;
         this.secretForms = secretForms;
+        initWidget(view);
+        make(dateTimeBoxControllerProvider).attach(view.getExpiryTimeBox());
         secretForms.setOwner(this);
     }
 
-    /// Shows the dialog to replace the secret of the given credential.
+    /// Shows the dialog to replace the secret of a credential, owned by `opener` until it is
+    /// closed.
     ///
+    /// @param opener     What shows it.
     /// @param credential The credential whose secret is to be replaced.
     /// @param consumer   Receives the updated credential once the secret has been replaced.
-    public void show(final Credential credential,
+    public void show(final HasControllerNode opener,
+                     final Credential credential,
                      final Consumer<Credential> consumer) {
         final CredentialType credentialType = credential.getCredentialType();
         final SecretForm secretForm = secretForms.get(credentialType);
@@ -91,19 +102,18 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
             keyStoreFileSecretForm.setPath(credential.getKeyStorePath());
         }
 
-        getView().setCredentialName(credential.getName());
-        getView().setSecretForm(secretForm);
+        view.setCredentialName(credential.getName());
+        view.setSecretForm(secretForm);
         // A new secret has a new expiry, so start from no expiry rather than the old secret's
-        getView().setCredExpire(false);
-        getView().getExpiryTime().setValue(System.currentTimeMillis());
+        view.setCredExpire(false);
+        view.setExpiryTime(System.currentTimeMillis());
 
-        ShowPopupEvent
-                .builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(DIALOG_WIDTH, DIALOG_HEIGHT))
                 .caption("Replace " + credentialType.getDisplayValue() + " Secret")
                 .modal(true)
-                .onShow(e -> getView().focus())
+                .onShow(e -> secretForm.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         onOk(secretForm, valid -> {
@@ -111,16 +121,16 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                                 final ReplaceSecretRequest request = new ReplaceSecretRequest(
                                         credential.getUuid(),
                                         secretForm.getSecret(),
-                                        getView().isCredExpire()
-                                                ? getView().getExpiryTime().getValue()
+                                        view.isCredExpire()
+                                                ? view.getExpiryTime()
                                                 : null);
                                 credentialClient.replaceSecret(request,
-                                        result -> {
+                                        guard(result -> {
                                             consumer.accept(result);
                                             e.hide();
-                                        },
+                                        }),
                                         new DefaultErrorHandler(this, e::reset),
-                                        this);
+                                        taskMonitor());
                             } else {
                                 e.reset();
                             }
@@ -136,7 +146,7 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
     // store's file is uploaded); tells the consumer whether the secret can be saved
     private void onOk(final SecretForm secretForm,
                       final Consumer<Boolean> consumer) {
-        final String message = getView().isCredExpire() && !getView().getExpiryTime().isValid()
+        final String message = view.isCredExpire() && !view.isExpiryTimeValid()
                 ? "You must set a valid expiry time"
                 : secretForm.validate();
         if (message != null) {
@@ -146,32 +156,8 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
         }
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    /// View for the replace secret dialog.
-    public interface ReplaceSecretView extends View {
-
-        /// @param name The name of the credential, shown in the warning.
-        void setCredentialName(String name);
-
-        /// @param view The view holding the fields for the new secret.
-        /// Shows the form for the secret of the credential's type.
-        ///
-        /// @param form The form.
-        void setSecretForm(SecretForm form);
-
-        /// @return True if the new secret expires.
-        boolean isCredExpire();
-
-        /// @param expire True if the new secret expires.
-        void setCredExpire(boolean expire);
-
-        /// @return The box holding the expiry date of the new secret.
-        DateTimeBox getExpiryTime();
-
-        /// Gives focus to the first secret field.
-        void focus();
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }
