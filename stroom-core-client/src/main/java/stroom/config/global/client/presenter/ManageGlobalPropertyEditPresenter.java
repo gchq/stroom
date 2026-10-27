@@ -18,6 +18,7 @@ package stroom.config.global.client.presenter;
 
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.client.component.ConfigPropertyClusterValuesController;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
@@ -84,7 +85,7 @@ public final class ManageGlobalPropertyEditPresenter
     // with one value and the rest with another.
     private final Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap = new HashMap<>();
 
-    private final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
+    private final Provider<ConfigPropertyClusterValuesController> clusterValuesProvider;
 
     private final ButtonView effectiveValueWarningsButton;
     private final ButtonView effectiveValueInfoButton;
@@ -103,14 +104,14 @@ public final class ManageGlobalPropertyEditPresenter
             final NodeClient nodeClient,
             final ClientSecurityContext securityContext,
             final UiConfigCache clientPropertyCache,
-            final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
+            final Provider<ConfigPropertyClusterValuesController> clusterValuesProvider) {
 
         super(eventBus, view);
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
-        this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
+        this.clusterValuesProvider = clusterValuesProvider;
 
         this.effectiveValueWarningsButton = view.getEffectiveValueToolbar().button(
                 SvgImage.ALERT, "Show Cluster Values", this::onOpenClusterValues);
@@ -129,10 +130,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void onOpenClusterValues() {
-        if (clusterValuesPresenterProvider != null) {
-            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter =
-                    makeDialog(clusterValuesPresenterProvider);
-
+        if (clusterValuesProvider != null) {
             // Get the position of this popup so we can show the cluster values popup at a slight
             // offset to make it clear it is above the other one. Offsets are not equal to account
             // for the title bar
@@ -153,7 +151,8 @@ public final class ManageGlobalPropertyEditPresenter
                                 .collect(Collectors.toSet()));
             }
 
-            clusterValuesPresenter.show(
+            clusterValuesProvider.get().show(
+                    this,
                     getEntity(),
                     modifiedEffectiveValueToNodeSourcesMap,
                     offsetPopupPosition);
