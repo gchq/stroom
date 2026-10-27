@@ -22,7 +22,7 @@ import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
@@ -46,25 +46,25 @@ public class AnnotationTagEditController extends Controller {
 
     private final AnnotationTagEdit view;
     private final AnnotationResourceClient annotationResourceClient;
-    private final Provider<DocumentUserPermissionsPresenter> documentUserPermissionsPresenterProvider;
+    private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private AnnotationTag annotationTag;
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus                                 The application's event bus.
-    /// @param view                                     The content.
-    /// @param annotationResourceClient                 Saves the tag.
-    /// @param documentUserPermissionsPresenterProvider Makes the tag's permissions dialog.
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The content.
+    /// @param annotationResourceClient Saves the tag.
+    /// @param permissionsProvider      Makes the tag's permissions dialog.
     @Inject
     public AnnotationTagEditController(final EventBus eventBus,
                                        final AnnotationTagEdit view,
                                        final AnnotationResourceClient annotationResourceClient,
-                                       final Provider<DocumentUserPermissionsPresenter>
-                                               documentUserPermissionsPresenterProvider) {
+                                       final Provider<DocumentUserPermissionsTabController>
+                                               permissionsProvider) {
         super(eventBus);
         this.view = view;
         this.annotationResourceClient = annotationResourceClient;
-        this.documentUserPermissionsPresenterProvider = documentUserPermissionsPresenterProvider;
+        this.permissionsProvider = permissionsProvider;
         initWidget(view);
         view.setOnPermissions(this::onPermissions);
     }
@@ -148,9 +148,10 @@ public class AnnotationTagEditController extends Controller {
     }
 
     private void onPermissions() {
-        final DocumentUserPermissionsPresenter presenter = makeDialog(documentUserPermissionsPresenterProvider);
-        presenter.setDocRef(new DocRef(AnnotationTag.TYPE, annotationTag.getUuid(), annotationTag.getName()));
-        ShowPopupEvent.builder(presenter)
+        // Made for one use, and disposed once it is closed
+        final DocumentUserPermissionsTabController permissions = permissionsProvider.get();
+        permissions.setDocRef(new DocRef(AnnotationTag.TYPE, annotationTag.getUuid(), annotationTag.getName()));
+        ControllerDialog.showOnce(this, permissions)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .modal()
                 .popupSize(PopupSize.resizable(800, 800))

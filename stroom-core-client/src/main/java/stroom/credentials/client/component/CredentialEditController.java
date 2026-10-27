@@ -22,7 +22,7 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.PutCredentialRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
@@ -53,7 +53,7 @@ public class CredentialEditController extends Controller {
     private final CredentialEdit view;
     private final CredentialClient credentialClient;
     private final CredentialSettingsController credentialSettings;
-    private final DocumentUserPermissionsPresenter permissionsPresenter;
+    private final DocumentUserPermissionsTabController permissions;
     // The tabs, each with its content
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private TabData selectedTab;
@@ -63,24 +63,24 @@ public class CredentialEditController extends Controller {
     /// @param eventBus             The application's event bus.
     /// @param view                 The tabs.
     /// @param credentialSettings   The Settings tab.
-    /// @param permissionsPresenter The Permissions tab.
+    /// @param permissions          The Permissions tab.
     /// @param credentialClient     Saves the credential.
     @Inject
     public CredentialEditController(final EventBus eventBus,
                                     final CredentialEdit view,
                                     final CredentialSettingsController credentialSettings,
-                                    final DocumentUserPermissionsPresenter permissionsPresenter,
+                                    final DocumentUserPermissionsTabController permissions,
                                     final CredentialClient credentialClient) {
         super(eventBus);
         this.view = view;
         this.credentialSettings = own(credentialSettings);
-        this.permissionsPresenter = own(permissionsPresenter);
+        this.permissions = own(permissions);
         this.credentialClient = credentialClient;
         initWidget(view);
 
         final TabData detailsTab = addTab("Settings", new ControllerLayer(credentialSettings));
         changeSelectedTab(detailsTab);
-        addTab("Permissions", permissionsPresenter);
+        addTab("Permissions", new ControllerLayer(permissions));
 
         view.setOnTabSelected(tab -> {
             if (tab != null && tab != selectedTab) {
@@ -103,7 +103,7 @@ public class CredentialEditController extends Controller {
                      final CreationState creationState,
                      final Consumer<Credential> consumer) {
         credentialSettings.read(docRef, cwp);
-        permissionsPresenter.setDocRef(docRef);
+        permissions.setDocRef(docRef);
 
         ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)

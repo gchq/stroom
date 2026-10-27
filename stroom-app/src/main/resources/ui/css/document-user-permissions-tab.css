@@ -1,0 +1,43 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A document's permissions: the users and groups with them, above the details of the one chosen */
+
+/* The users and groups fill what the pane has left below Permission Visibility, and the list fills
+   what its group has left below its label */
+.document-user-permissions-tab__users,
+.document-user-permissions-tab__list {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+/* In a dialog, the details are framed as a control, and inset to line up with the controls above
+   them (which have form-padding), as the list's table is */
+.dialog__content .document-user-permissions-tab__details {
+    width: auto;
+    margin: 0 var(--control__gap--horizontal);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The details fill what their group has left below its (empty) label row */
+.document-user-permissions-tab__details {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+}

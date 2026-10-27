@@ -1171,31 +1171,15 @@
     overflow-y: scroll;
 }
 
-/* The users and groups fill what the pane has left below Permission Visibility, and the list fills
-   what its group has left below its label */
-.documentUserPermissionsViewImpl-users,
-.documentUserPermissionsViewImpl-list {
-    flex: 1 1 0;
-    min-height: 0;
-}
-
-/* In a dialog, the table (with its toolbar) and the details are framed as controls, and inset to line
-   up with the controls above them (which have form-padding) */
-.dialog__content .documentUserPermissions-table,
-.dialog__content .documentUserPermissions-details {
+/* In a dialog, the table (with its toolbar) is framed as a control, and inset to line up with the
+   controls above it (which have form-padding), as the permissions tab's details are */
+.dialog__content .documentUserPermissions-table {
     width: auto;
     margin: 0 var(--control__gap--horizontal);
     border: 1px solid var(--control__border-color);
     border-radius: .25rem;
     background-color: var(--content-box__background-color);
     overflow: hidden;
-}
-
-/* The details fill what their group has left below its (empty) label row */
-.documentUserPermissions-details {
-    flex: 1 1 0;
-    min-height: 0;
-    height: auto;
 }
 
 .durationSetting {

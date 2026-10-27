@@ -1,4 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A document's permissions: the users and groups with them, above the details of the one chosen -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
@@ -7,7 +8,7 @@
     <!-- The details below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 200px" names="Users and groups, Details"
-                     addStyleNames="max default-min-sizes">
+                     addStyleNames="document-user-permissions-tab max default-min-sizes">
         <g:FlowPanel styleName="max dock-container-vertical">
             <form:FormGroup label="Permission Visibility"
                             addStyleNames="form-padding"
@@ -29,19 +30,19 @@
                 <l:SelectionBox ui:field="permissionVisibility"/>
             </form:FormGroup>
             <form:FormGroup label="Users and Groups"
-                            addStyleNames="form-group--indented documentUserPermissionsViewImpl-users"
+                            addStyleNames="form-group--indented document-user-permissions-tab__users"
                             screenReaderText="Filtered by Permission Visibility. Select one to see and edit its permissions.">
                 <form:HelpHTML>
                     <p>Lists users/groups, optionally filtered based on the value of the
                         <em>Permission Visibility</em> dropdown.</p>
                 </form:HelpHTML>
                 <g:SimplePanel ui:field="docUserPermissionsList"
-                               styleName="documentUserPermissionsViewImpl-list"/>
+                               styleName="document-user-permissions-tab__list"/>
             </form:FormGroup>
         </g:FlowPanel>
         <form:FormGroup ui:field="detailsFormGroup"
                         addStyleNames="form-group--indented">
-            <g:SimplePanel styleName="max form-padding documentUserPermissions-details">
+            <g:SimplePanel styleName="max form-padding document-user-permissions-tab__details">
                 <g:HTML ui:field="details" styleName="max permissionDetails"/>
             </g:SimplePanel>
         </form:FormGroup>

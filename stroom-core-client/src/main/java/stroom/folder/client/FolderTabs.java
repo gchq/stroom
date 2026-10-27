@@ -25,7 +25,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -51,7 +51,7 @@ public class FolderTabs extends TabbedController<DocRef> {
     private final Provider<MetaPresenter> metaPresenterProvider;
     private final Provider<ProcessorPresenter> processorPresenterProvider;
     private final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider;
-    private final Provider<DocumentUserPermissionsPresenter> permissionsPresenterProvider;
+    private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private boolean tabsAdded;
 
     @Inject
@@ -61,13 +61,13 @@ public class FolderTabs extends TabbedController<DocRef> {
                       final Provider<MetaPresenter> metaPresenterProvider,
                       final Provider<ProcessorPresenter> processorPresenterProvider,
                       final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
-                      final Provider<DocumentUserPermissionsPresenter> permissionsPresenterProvider) {
+                      final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;
         this.metaPresenterProvider = metaPresenterProvider;
         this.processorPresenterProvider = processorPresenterProvider;
         this.processorTaskPresenterProvider = processorTaskPresenterProvider;
-        this.permissionsPresenterProvider = permissionsPresenterProvider;
+        this.permissionsProvider = permissionsProvider;
     }
 
     /// @return Whether the user may see a folder's tab at all: they must be able to see its data
@@ -116,7 +116,7 @@ public class FolderTabs extends TabbedController<DocRef> {
 
         if (root || manageProcessors) {
             addTab(PERMISSIONS,
-                    permissionsPresenterProvider::get,
+                    permissionsProvider::get,
                     (permissions, docRef, folder) -> permissions.setDocRef(docRef));
             setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
         }

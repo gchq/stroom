@@ -26,10 +26,9 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -76,7 +75,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                             final Provider<ImportsTab> importsTabProvider,
                             final Provider<EffectiveWordsListController> effectiveWordsListProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
-                            final Provider<DocumentUserPermissionsPresenter> permissionsPresenterProvider,
+                            final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                             final RestFactory restFactory,
                             final LocationManager locationManager) {
         super(eventBus, view);
@@ -114,8 +113,8 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 (documentation, docRef, doc) -> documentation.setText(doc.getDescription()),
                 (documentation, doc) -> doc.copy().description(documentation.getText()).build());
         addTab(PERMISSIONS,
-                () -> PresenterAdapter.of(permissionsPresenterProvider::get),
-                (permissions, docRef, doc) -> permissions.getPresenter().setDocRef(docRef));
+                permissionsProvider::get,
+                (permissions, docRef, doc) -> permissions.setDocRef(docRef));
         setCommonTab(CommonDocLinkTab.DOCUMENTATION, DOCUMENTATION);
         setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
         selectTab(WORDS);

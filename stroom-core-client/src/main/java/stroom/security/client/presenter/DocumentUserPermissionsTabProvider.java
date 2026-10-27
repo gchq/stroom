@@ -17,32 +17,53 @@
 package stroom.security.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
+import stroom.entity.client.presenter.TabContentProvider.TabProvider;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import javax.inject.Provider;
+/// A document's Permissions tab ([DocumentUserPermissionsTabController]), for a document still
+/// shown by a `DocTabPresenter`.
+///
+/// @param <E> The document's type.
+public class DocumentUserPermissionsTabProvider<E> implements TabProvider<E> {
 
-public class DocumentUserPermissionsTabProvider<E> extends AbstractTabProvider<E, DocumentUserPermissionsPresenter> {
+    private final ControllerTabProvider<DocumentUserPermissionsTabController, E> tab;
 
-    private final Provider<DocumentUserPermissionsPresenter> documentUserPermissionsPresenterProvider;
-
+    /// Made by GIN.
+    ///
+    /// @param eventBus            The application's event bus.
+    /// @param permissionsProvider Makes the tab's content when it is first shown.
     @Inject
-    public DocumentUserPermissionsTabProvider(final Provider<DocumentUserPermissionsPresenter>
-                                                      documentUserPermissionsPresenterProvider) {
-        this.documentUserPermissionsPresenterProvider = documentUserPermissionsPresenterProvider;
+    public DocumentUserPermissionsTabProvider(final EventBus eventBus,
+                                              final Provider<DocumentUserPermissionsTabController>
+                                                      permissionsProvider) {
+        tab = new ControllerTabProvider<>(eventBus,
+                permissionsProvider::get,
+                (permissions, docRef, document) -> permissions.setDocRef(docRef));
     }
 
     @Override
-    protected final DocumentUserPermissionsPresenter createPresenter() {
-        return documentUserPermissionsPresenterProvider.get();
+    public MyPresenterWidget<?> getPresenter() {
+        return tab.getPresenter();
     }
 
     @Override
-    public void onRead(final DocumentUserPermissionsPresenter presenter,
-                       final DocRef docRef,
-                       final E document) {
-        presenter.setDocRef(docRef);
+    public void read(final DocRef docRef, final E document) {
+        tab.read(docRef, document);
+    }
+
+    @Override
+    public E write(final E document) {
+        return tab.write(document);
+    }
+
+    @Override
+    public void onClose() {
+        tab.onClose();
     }
 }
