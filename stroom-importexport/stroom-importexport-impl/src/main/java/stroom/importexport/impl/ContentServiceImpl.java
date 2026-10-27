@@ -19,6 +19,7 @@ package stroom.importexport.impl;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.api.ExportSummary;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -31,7 +32,6 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
@@ -135,14 +135,18 @@ class ContentServiceImpl implements ContentService {
 //    }
 
     @Override
-    public ResourceGeneration exportContent(final DocRefs docRefs) {
-        Objects.requireNonNull(docRefs);
+    public ResourceGeneration exportContent(final ExportContentRequest request) {
+        Objects.requireNonNull(request);
+        Objects.requireNonNull(request.getDocRefs());
 
         return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
             final ResourceStore resourceStore = this.resourceStore;
             final ResourceKey resourceKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path tempFile = resourceStore.getTempFile(resourceKey);
-            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), tempFile);
+            final ExportSummary exportSummary = importExportService.exportConfig(
+                    request.getDocRefs(),
+                    request.getIncludedTypes(),
+                    tempFile);
             final List<Message> messageList = exportSummary.getMessages();
 
             return new ResourceGeneration(resourceKey, messageList);

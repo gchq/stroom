@@ -86,4 +86,54 @@ public interface ImportExportSerializer {
                         Set<String> typesToIgnore,
                         boolean omitAuditFields,
                         ImportExportVersion version);
+
+    /// Exports data using the latest version of the export format, restricting
+    /// the export to the included document types.
+    ///
+    /// @param rootNodePath    Path to root node of the export. If null then
+    ///                        starts at the System node.
+    ///                        Otherwise removes these path elements from the start of
+    ///                        the exported path.
+    /// @param dir             Where to serialize the DocRef items to on disk.
+    /// @param docRefs         Set of the DocRefs to serialize.
+    /// @param typesToIgnore   Set of the Doc types that shouldn't be exported, nor
+    ///                        their children. Must not be null.
+    /// @param includedTypes   Set of the Doc types to export. If null then all types
+    ///                        are exported. Folders are always recursed into, whether
+    ///                        or not they are included, but are only exported in
+    ///                        their own right if included.
+    /// @param omitAuditFields Do not export audit fields.
+    /// @return summary of the export.
+    ExportSummary write(List<ExplorerNode> rootNodePath,
+                        Path dir,
+                        Set<DocRef> docRefs,
+                        Set<String> typesToIgnore,
+                        Set<String> includedTypes,
+                        boolean omitAuditFields);
+
+    /// Exports data using the given version of the export format, restricting
+    /// the export to the included document types.
+    ///
+    /// @param rootNodePath    Path to root node of the export. If null then
+    ///                        starts at the System node.
+    ///                        Otherwise removes these path elements from the start of
+    ///                        the exported path.
+    /// @param dir             Where to serialize the DocRef items to on disk.
+    /// @param docRefs         Set of the DocRefs to serialize.
+    /// @param typesToIgnore   Set of the Doc types that shouldn't be exported, nor
+    ///                        their children. Must not be null.
+    /// @param includedTypes   Set of the Doc types to export. If null then all types
+    ///                        are exported. Folders are always recursed into, whether
+    ///                        or not they are included, but are only exported in
+    ///                        their own right if included.
+    /// @param omitAuditFields Do not export audit fields.
+    /// @param version         Version of the export format to use.
+    /// @return summary of the export.
+    ExportSummary write(List<ExplorerNode> rootNodePath,
+                        Path dir,
+                        Set<DocRef> docRefs,
+                        Set<String> typesToIgnore,
+                        Set<String> includedTypes,
+                        boolean omitAuditFields,
+                        ImportExportVersion version);
 }

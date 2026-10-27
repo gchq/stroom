@@ -565,6 +565,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 dir,
                 docRefs,
                 docTypesToIgnore,
+                null,
                 omitAuditFields,
                 ImportExportVersion.V1);
     }
@@ -590,6 +591,39 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                                final Set<String> docTypesToIgnore,
                                final boolean omitAuditFields,
                                final ImportExportVersion version) {
+        return this.write(rootNodePath,
+                dir,
+                docRefs,
+                docTypesToIgnore,
+                null,
+                omitAuditFields,
+                version);
+    }
+
+    @Override
+    public ExportSummary write(final List<ExplorerNode> rootNodePath,
+                               final Path dir,
+                               final Set<DocRef> docRefs,
+                               final Set<String> docTypesToIgnore,
+                               final Set<String> includedTypes,
+                               final boolean omitAuditFields) {
+        return this.write(rootNodePath,
+                dir,
+                docRefs,
+                docTypesToIgnore,
+                includedTypes,
+                omitAuditFields,
+                ImportExportVersion.V1);
+    }
+
+    @Override
+    public ExportSummary write(final List<ExplorerNode> rootNodePath,
+                               final Path dir,
+                               final Set<DocRef> docRefs,
+                               final Set<String> docTypesToIgnore,
+                               final Set<String> includedTypes,
+                               final boolean omitAuditFields,
+                               final ImportExportVersion version) {
 
         if (version != ImportExportVersion.V1) {
             throw new RuntimeException("Invalid version for export: "
@@ -599,7 +633,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         Objects.requireNonNull(docTypesToIgnore);
 
         // Create a set of all entities that we are going to try and export.
-        final Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs, docTypesToIgnore);
+        final Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs, docTypesToIgnore, includedTypes);
         if (expandedDocRefs.isEmpty()) {
             throw new EntityServiceException("No documents were found that could be exported");
         }
@@ -662,17 +696,20 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private Set<DocRef> expandDocRefSet(final Set<DocRef> set,
-                                        final Set<String> docTypesToIgnore) {
+                                        final Set<String> docTypesToIgnore,
+                                        final Set<String> includedTypes) {
         final Set<DocRef> expandedDocRefs = new HashSet<>();
 
         if (set == null) {
             // If the set is null then add the whole tree of exportable items.
-            addDescendants(null, expandedDocRefs, docTypesToIgnore);
+            addDescendants(null, expandedDocRefs, docTypesToIgnore, includedTypes);
         } else {
             for (final DocRef docRef : set) {
                 if (!docTypesToIgnore.contains(docRef.getType())) {
-                    addDocRef(docRef, expandedDocRefs);
-                    addDescendants(docRef, expandedDocRefs, docTypesToIgnore);
+                    if (isIncludedType(docRef.getType(), includedTypes)) {
+                        addDocRef(docRef, expandedDocRefs);
+                    }
+                    addDescendants(docRef, expandedDocRefs, docTypesToIgnore, includedTypes);
                 }
             }
         }
@@ -686,24 +723,29 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
      * @param docRef           The root docref
      * @param expandedDocRefs  The output of the function
      * @param docTypesToIgnore Any types of doc to ignore and not recurse below.
+     * @param includedTypes    The types of doc to add. Folders are recursed into
+     *                         whether they are included or not. Null means all types.
      */
     private void addDescendants(final DocRef docRef,
                                 final Set<DocRef> expandedDocRefs,
-                                final Set<String> docTypesToIgnore) {
+                                final Set<String> docTypesToIgnore,
+                                final Set<String> includedTypes) {
 
         final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
         for (final ExplorerNode child : children) {
-            if (ExplorerConstants.isFolder(child)) {
-                if (!docTypesToIgnore.contains(child.getType())) {
+            if (!docTypesToIgnore.contains(child.getType())) {
+                if (isIncludedType(child.getType(), includedTypes)) {
                     this.addDocRef(child.getDocRef(), expandedDocRefs);
-                    this.addDescendants(child.getDocRef(), expandedDocRefs, docTypesToIgnore);
                 }
-            } else {
-                if (!docTypesToIgnore.contains(child.getType())) {
-                    this.addDocRef(child.getDocRef(), expandedDocRefs);
+                if (ExplorerConstants.isFolder(child)) {
+                    this.addDescendants(child.getDocRef(), expandedDocRefs, docTypesToIgnore, includedTypes);
                 }
             }
         }
+    }
+
+    private static boolean isIncludedType(final String type, final Set<String> includedTypes) {
+        return includedTypes == null || includedTypes.contains(type);
     }
 
     private void addDocRef(final DocRef docRef, final Set<DocRef> docRefs) {
