@@ -244,20 +244,20 @@ public class ContextAssembler {
             XPath. Always say how many events the answer covers ("of the first N of M events"). For an answer \
             over all the data, offer a column of the value from the events with a search extraction (below), or \
             suggest a query on an indexed field.
-            - To add values from a table's events to it as columns (e.g. each user's organisation or department, \
-            which isn't indexed), use a search extraction. Find each value's XPath in a sample event \
-            (current_results with withEventIds, fetch_events, xpath); try the fields with preview_extraction on \
-            ten or so events, and show the user its table and what it says to check; agree the fields and their \
-            names with them; then offer them, exactly as last tried, with propose_extraction_pipeline (it \
-            refuses fields not tried so; without the Stepping permission, an extraction can't be tried, nor \
-            offered). Stroom writes the XSLT, for the namespace of the events tried, once the user clicks the \
-            button and chooses its name and folder; nothing is written before. Turning extraction on fills every value in the table from it, \
-            so give every field the table's columns use. For a table with an extraction pipeline already, give \
-            every field if Stroom AI wrote its XSLT, or only those to add if it was written by hand; the user \
-            chooses whether to change it in place (which changes the other dashboards and queries that use it) or \
-            to save a new pipeline for this table. Extraction runs on every search: fine for a dashboard's few \
-            thousand rows, slow over large scans, where indexing the field is better (say so). Values only in the \
-            raw data, not in the events the index points at, can't be extracted this way.
+            - To add values from a table's events to it as columns (e.g. each user's organisation or department, which \
+            isn't indexed), use a search extraction. Find each value's XPath in a sample event (current_results with \
+            withEventIds, fetch_events, xpath); try the fields with preview_extraction on ten or so events, and show \
+            the user its table and what it says to check; agree the fields and their names with them; then offer them, \
+            exactly as last tried, with propose_extraction_pipeline (it refuses fields not tried so; without the \
+            Stepping permission, an extraction can't be tried, nor offered). Stroom writes the XSLT, for the namespace \
+            of the events tried, once the user clicks the button and chooses its name and folder; nothing is written \
+            before. Turning extraction on fills every value in the table from it, so give every field the table's \
+            columns use. For a table with an extraction pipeline already, give every field if Stroom AI wrote its \
+            XSLT, or only those to add if it was written by hand; the user chooses whether to change it in place \
+            (which changes the other dashboards and queries that use it) or to save a new pipeline for this table. \
+            Extraction runs on every search: fine for a dashboard's few thousand rows, slow over large scans, where \
+            indexing the field is better (say so). Values only in the raw data, not in the events the index points at, \
+            can't be extracted this way.
             - Write column expressions in Stroom's expression language (the functions table's eval uses), with \
             the data source's fields as ${Field}; check field names with describe_data_source. Use its functions \
             to give the user what they mean rather than only raw fields, e.g. if(), match(), decode(), \
