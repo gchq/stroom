@@ -4,7 +4,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:fl="urn:import:stroom.dashboard.client.flexlayout">
     <g:FlowPanel ui:field="root" styleName="DashboardViewImpl max dock-container-vertical">
-        <g:SimplePanel ui:field="content" styleName="dock-max DashboardViewImpl-content">
+        <g:SimplePanel styleName="dock-max DashboardViewImpl-content">
             <fl:FlexLayout ui:field="layout"/>
         </g:SimplePanel>
     </g:FlowPanel>

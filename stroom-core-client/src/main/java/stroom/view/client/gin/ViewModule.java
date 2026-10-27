@@ -27,6 +27,5 @@ public class ViewModule extends PluginModule {
         bindPlugin(ViewPlugin.class);
 
         bind(ViewPresenter.class);
-
     }
 }

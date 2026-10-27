@@ -188,7 +188,7 @@ public class BasicEmbeddedQuerySettingsController
         chooser.showOnce(this, (doc, e) -> {
             if (doc != null) {
                 queryClient.loadQueryDoc(doc,
-                        queryDoc -> {
+                        guard(queryDoc -> {
                             loaded = queryDoc;
                             if (loaded == null) {
                                 AlertEvent.fireError(
@@ -201,7 +201,7 @@ public class BasicEmbeddedQuerySettingsController
                                         "Copy of '" + loaded.getName() + "' complete",
                                         e::hide);
                             }
-                        },
+                        }),
                         new DefaultErrorHandler(this, e::hide),
                         taskMonitor());
             } else {

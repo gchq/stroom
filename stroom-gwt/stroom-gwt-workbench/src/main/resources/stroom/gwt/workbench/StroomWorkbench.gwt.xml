@@ -118,7 +118,7 @@
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.iframe.IFrame"/>
     <inherits name="stroom.meta.Meta"/>
-    <!-- DataPresenter's links (OpenLinkUtil) and SourceTabPlugin -->
+    <!-- DataViewerController's links (OpenLinkUtil) and SourceTabPlugin -->
     <inherits name="stroom.feed.Feed"/>
     <inherits name="stroom.menubar.Menubar"/>
 

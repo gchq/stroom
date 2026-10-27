@@ -24,13 +24,6 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.component.ColumnFilterDialogController;
-import stroom.dashboard.client.component.ColumnFormatController;
-import stroom.dashboard.client.component.ColumnFunctionEditorController;
-import stroom.dashboard.client.component.ColumnValuesFilterController;
-import stroom.dashboard.client.component.DownloadSearchResultsController;
-import stroom.dashboard.client.component.RenameColumnController;
-import stroom.dashboard.client.component.TableSettingsController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -577,6 +570,7 @@ public class TableController extends DashboardComponentController
                             .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                     this,
                                     result))
+                            .owner(this)
                             .taskMonitorFactory(taskMonitor())
                             .exec();
                 });

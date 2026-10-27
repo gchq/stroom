@@ -52,8 +52,6 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
@@ -76,14 +74,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/// Presenter for the Map (visualisation) tab of a [FloorMapDoc].
+/// The Map (visualisation) tab of a [FloorMapDoc] ([FloorMapMap]).
 ///
 /// This presenter coordinates the floor-map canvas and the timeline scrubber. Facts are
 /// loaded by running a StroomQL query via [QueryModel]. Results are parsed by
 /// [#parseFacts(List, List)].
 ///
 /// The Map tab is **read-only**. Unlike
-/// [FloorMapEditorPresenter], it sets no edit mode and installs none of the canvas's
+/// [FloorMapEditorController], it sets no edit mode and installs none of the canvas's
 /// mutation handlers - no drag, geometry, area or scale handler - so nothing here can alter a
 /// fact. Inspection is served by the hover tooltip, the cluster member panel and the Tracking
 /// grid. This paragraph used to claim the presenter coordinated the "object properties
@@ -602,14 +600,11 @@ public class FloorMapMapController
         return Collections.singletonList(mapToolbar);
     }
 
-    /// {@inheritDoc}
-    ///
-    /// Initialises and resets all three query mechanisms — the facts and events
+    /// Shows a floor map: initialises and resets all three query mechanisms — the facts and events
     /// [QueryModel]s and the histogram query helper — then starts the timeline and
     /// triggers an initial time-change to load facts. The timeline range is only initialised on
     /// the first read; save-triggered re-reads preserve it. This tab no longer holds an
     /// object-edit presenter; that form belongs to the Editor tab.
-    /// Shows a floor map.
     ///
     /// @param docRef   The floor map.
     /// @param document The floor map.
@@ -705,13 +700,12 @@ public class FloorMapMapController
         }
     }
 
-    /// {@inheritDoc}
-    ///
     /// Merges any staged Groups-panel edit into the document. Everything else the
     /// Map tab can change (object moves, additions) is persisted directly to the
     /// temporal store via REST calls rather than through the document save
     /// lifecycle, so with no group edit staged the document is returned
     /// unchanged.
+    ///
     /// @param document The floor map.
     /// @return A copy of it with this tab's edits.
     public FloorMapDoc write(final FloorMapDoc document) {
@@ -721,8 +715,9 @@ public class FloorMapMapController
     /// Always returns `false` — the Map tab has no *associated* dirty
     /// state (that flag is about pending temporal-store changes, which the Editor
     /// tab owns). A staged group edit is ordinary document dirt: it reaches the save
-    /// button through [#onChange()] and [#write].
-    /// @return False: the Map tab has no associated dirty state.
+    /// button through `markChanged()` and [#write].
+    ///
+    /// @return False.
     public boolean hasAssociatedDirty() {
         return false;
     }
@@ -1783,15 +1778,5 @@ public class FloorMapMapController
     /// @param listener the callback, or `null` to remove
     public void setInitialViewListener(final java.util.function.Consumer<double[]> listener) {
         canvas.setInitialViewListener(listener);
-    }
-
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
     }
 }

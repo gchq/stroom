@@ -55,7 +55,6 @@ import stroom.query.api.Result;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableResult;
-import stroom.query.client.component.QueryResultVisController;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.QueryTableColumnValuesDataSupplier;
@@ -883,6 +882,7 @@ public class QueryResultTableController
                             .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                     this,
                                     result))
+                            .owner(this)
                             .taskMonitorFactory(taskMonitor())
                             .exec();
                 });
@@ -938,7 +938,7 @@ public class QueryResultTableController
     @Override
     public List<ComponentSelection> getSelection() {
         final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
-        return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
+        return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
     @Override
@@ -971,6 +971,7 @@ public class QueryResultTableController
         onChange.run();
     }
 
+    /// @param queryResultVis The results' visualisation, refreshed with the table, or null for none.
     public void setQueryResultVis(final QueryResultVisController queryResultVis) {
         this.queryResultVis = queryResultVis;
     }
@@ -987,17 +988,6 @@ public class QueryResultTableController
         return currentSelectionFilter;
     }
 
-    private static class ColAndPosition {
-
-        private final int position;
-        private final Column column;
-
-        public ColAndPosition(final int position, final Column column) {
-            this.position = position;
-            this.column = column;
-        }
-    }
-
     @Override
     public ColumnValuesDataSupplier getDataSupplier(final Column column,
                                                     final List<ConditionalFormattingRule> conditionalFormattingRules) {
@@ -1012,6 +1002,7 @@ public class QueryResultTableController
                 .create(QUERY_RESOURCE)
                 .method(res -> res.fetchDataSourceFromQueryString(query))
                 .onSuccess(result -> currentDataSource = result)
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -1098,5 +1089,20 @@ public class QueryResultTableController
                     ? provided.createTaskMonitor()
                     : new DefaultTaskMonitorFactory(this).createTaskMonitor();
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ColAndPosition {
+
+        private final int position;
+        private final Column column;
+
+        public ColAndPosition(final int position, final Column column) {
+            this.position = position;
+            this.column = column;
+        }
     }
 }

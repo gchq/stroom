@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.floormap.client.component.FloorMapQueryController;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.query.api.Column;
@@ -32,9 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Covers what the Events Query column dropdowns offer.
 ///
 /// Before a run the dropdowns were empty, so no role could be changed. They are now seeded from
-/// the mapping's own column names, which is what [FloorMapQueryController#mappedColumnNames] returns.
+/// the mapping's own column names, which is what [FloorMapEventQuery#mappedColumnNames] returns.
 /// After a run they offered the result's hidden special columns too, such as `__event_id__`;
-/// [FloorMapQueryController#selectableColumnNames] leaves those out.
+/// [FloorMapEventQuery#selectableColumnNames] leaves those out.
 class TestFloorMapEventQuery {
 
     @Test

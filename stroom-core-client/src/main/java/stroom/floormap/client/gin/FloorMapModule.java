@@ -23,7 +23,7 @@ import stroom.floormap.client.presenter.FloorMapEventStorePresenter;
 import stroom.floormap.client.presenter.FloorMapPresenter;
 
 /// GIN module for the Floor Map feature.
-/// Binds the presenters and views for the floor map components.
+/// Binds the floor map's plugins and its two documents' editors.
 public class FloorMapModule extends PluginModule {
 
     @Override
@@ -35,11 +35,5 @@ public class FloorMapModule extends PluginModule {
 
         bind(FloorMapPresenter.class);
         bind(FloorMapEventStorePresenter.class);
-
-        // Lists a cluster's members, with a search box and filters over the
-        // app-wide PagerPanel that holds the grid.
-
-
-
     }
 }

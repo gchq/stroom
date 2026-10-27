@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.component.BasicKeyValueInputSettingsController;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

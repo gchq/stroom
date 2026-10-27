@@ -82,7 +82,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/// Presenter for the FloorMap **Editor** tab.
+/// The FloorMap **Editor** tab ([FloorMapEditor]).
 ///
 /// The Editor tab provides a dedicated authoring environment for configuring a
 /// [FloorMapDoc]. It is *always* in edit mode and exposes all
@@ -146,6 +146,10 @@ public class FloorMapEditorController
     // -----------------------------------------------------------------------
 
     private final FloorMapEditor view;
+    // Tells the document of a change, which asks this for its pending changes (the facts staged for
+    // the store, which the written document doesn't hold)
+    private Runnable onChange = () -> {
+    };
     // The document as it was read
     private FloorMapDoc entity;
     private final RestFactory restFactory;
@@ -203,7 +207,7 @@ public class FloorMapEditorController
     /// `onRead`; a save triggers a re-read of every tab, and the timeline
     /// must not re-initialise then — it would discard the user's chosen range and
     /// jump the scrubber (and every panel) to the newest time. Mirrors
-    /// `FloorMapMapPresenter.timelineInitialised`.
+    /// `FloorMapMapController.timelineInitialised`.
     private boolean timelineInitialised;
 
     /// UUID of the document this Editor is showing.
@@ -262,7 +266,7 @@ public class FloorMapEditorController
         showGridButton.setPressed(true);
 
         // Show/hide the right-hand dock (the Layers panel). On by default, to
-        // match FloorMapEditorViewImpl, which starts the dock visible.
+        // match FloorMapEditor, which starts the dock visible.
         dockToggleButton = editorToolbar.toggle(
                 SvgImage.SHOW_MENU, "Toggle Controls", view::setDockVisible);
         dockToggleButton.setPressed(true);
@@ -371,14 +375,12 @@ public class FloorMapEditorController
     }
 
     // -----------------------------------------------------------------------
-    // DocPresenter lifecycle
+    // Reading and writing the document
     // -----------------------------------------------------------------------
 
-    /// Called by the framework when the document is opened or refreshed.
-    ///
-    /// Loads the time range from the server and initialises the timeline,
-    /// then fetches facts at the initial time and populates all panels.
-    /// Shows a floor map.
+    /// Shows a floor map, when its document is opened or read again after a save: loads the time
+    /// range from the server and initialises the timeline, then fetches facts at the initial time
+    /// and populates all panels.
     ///
     /// @param docRef   The floor map.
     /// @param document The floor map.
@@ -431,10 +433,11 @@ public class FloorMapEditorController
                     }
                     loadAtTime(model.getSelectedTime());
                 })
+                .owner(this)
                 .exec();
     }
 
-    /// Called by the framework when the document is saved.
+    /// Writes this tab's edits into the document, as it is saved.
     ///
     /// The Editor tab does not normally write state into the
     /// [FloorMapDoc] itself (temporal store edits are flushed separately
@@ -442,8 +445,9 @@ public class FloorMapEditorController
     /// area-support upgrade, the Layers panel's type-styles list, and a Set Scale
     /// calibration, all of which are merged into the document here. The merge is re-applied to the
     /// *incoming* document (rather than writing the stored lists
-    /// verbatim) so it stays correct regardless of the order the tabs' onWrite
+    /// verbatim) so it stays correct regardless of the order the tabs' write
     /// methods run in.
+    ///
     /// @param document The floor map.
     /// @return A copy of it with this tab's edits.
     public FloorMapDoc write(final FloorMapDoc document) {
@@ -474,6 +478,12 @@ public class FloorMapEditorController
     /// against the pre-upgrade schema until the document is saved.
     private FloorMapDoc sessionEntity() {
         return docSession.sessionEntity(entity);
+    }
+
+    /// @param onChange Tells the document of a change, e.g. a fact staged for the store, so that it
+    ///                 works out again whether it is dirty.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     /// Sets the callback notified when area support is enabled on this document
@@ -509,7 +519,7 @@ public class FloorMapEditorController
         docSession.stageTypeStyles(newTypeStyles);
         canvas.setTypeStyles(newTypeStyles);
         floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-        markChanged();
+        onChange.run();
     }
 
     /// Scans the whole facts store for every distinct type (all keys, all times),
@@ -561,6 +571,7 @@ public class FloorMapEditorController
                         layersPanel.mergeDiscovered(discovered);
                     }
                 })
+                .owner(this)
                 .exec();
     }
 
@@ -660,6 +671,7 @@ public class FloorMapEditorController
                             + "have been kept, please try saving again: "
                             + error.getMessage(), null);
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -813,6 +825,7 @@ public class FloorMapEditorController
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.fetchAtTime(request))
                 .onSuccess(this::onEntriesFetched)
+                .owner(this)
                 .exec();
     }
 
@@ -825,6 +838,7 @@ public class FloorMapEditorController
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.fetchAll(mapName))
                 .onSuccess(this::onAllKeysFetched)
+                .owner(this)
                 .exec();
     }
 
@@ -888,6 +902,7 @@ public class FloorMapEditorController
                         after.run();
                     }
                 })
+                .owner(this)
                 .exec();
     }
 
@@ -1045,7 +1060,7 @@ public class FloorMapEditorController
                     valueSchema(),
                     accessor());
             if (n > 0) {
-                markChanged();
+                onChange.run();
             }
         } catch (final Exception ex) {
             AlertEvent.fireError(this,
@@ -1069,7 +1084,7 @@ public class FloorMapEditorController
                     valueSchema(),
                     accessor());
             if (changed) {
-                markChanged();
+                onChange.run();
             }
         } catch (final Exception ex) {
             AlertEvent.fireError(this,
@@ -1162,7 +1177,7 @@ public class FloorMapEditorController
                     } else {
                         model.stageVersionMove(saved, entry.getEffectiveTimeMs());
                     }
-                    markChanged();
+                    onChange.run();
                     refreshTimeListAtTime(saved.getEffectiveTimeMs());
                     refreshCanvas();
                     return true;
@@ -1211,7 +1226,7 @@ public class FloorMapEditorController
                 newEntry,
                 saved -> {
                     model.stageCreation(saved);
-                    markChanged();
+                    onChange.run();
                     loadAtTime(model.getSelectedTime());
                     refreshTimeListAtTime(model.getSelectedTime());
                 });
@@ -1292,7 +1307,7 @@ public class FloorMapEditorController
                         anyStaged |= model.stageFactDeletionForAllShards(key, forKey);
                     }
                     if (anyStaged) {
-                        markChanged();
+                        onChange.run();
                     }
                     applySelection(new ArrayList<>());
                     loadAtTime(model.getSelectedTime());
@@ -1300,6 +1315,7 @@ public class FloorMapEditorController
                 .onFailure(error -> AlertEvent.fireError(this,
                         "Could not load all versions to delete the "
                         + keys.size() + " selected objects: " + error.getMessage(), null))
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -1321,7 +1337,7 @@ public class FloorMapEditorController
                 .onSuccess(result -> {
                     if (model.stageFactDeletionForAllShards(
                             key, result != null ? result.getValues() : null)) {
-                        markChanged();
+                        onChange.run();
                     }
                     onDone.run();
                 })
@@ -1333,6 +1349,7 @@ public class FloorMapEditorController
                     // stall on a single failed key.
                     onDone.run();
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -1346,7 +1363,7 @@ public class FloorMapEditorController
         // Stage the deletion and compute the row to select afterwards (the item
         // above the deleted one) so the user stays in context.
         final int selectIndex = model.stageTimeEntryDeletion(entry);
-        markChanged();
+        onChange.run();
 
         // Rebuild the Time List optimistically from the same merged view.
         final List<TemporalEntry> merged = model.buildMergedTimeList();
@@ -1637,7 +1654,7 @@ public class FloorMapEditorController
                     entry,
                     saved -> {
                         model.stageCreation(saved);
-                        markChanged();
+                        onChange.run();
                         model.setSelectedFactKey(saved.getKey());
 
                         // Select the new object in the Fact List and canvas
@@ -1696,7 +1713,7 @@ public class FloorMapEditorController
                     // so it resolves the new roles immediately.
                     canvas.setTypeStyles(typeStyles());
                     floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-                    markChanged();
+                    onChange.run();
                     if (areaSupportEnabledListener != null) {
                         areaSupportEnabledListener.run();
                     }
@@ -1733,7 +1750,7 @@ public class FloorMapEditorController
                     // Re-hand the upgraded document to the object-edit dialog so it
                     // resolves the new role immediately.
                     floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-                    markChanged();
+                    onChange.run();
                     if (statusSupportEnabledListener != null) {
                         statusSupportEnabledListener.run();
                     }
@@ -1759,7 +1776,7 @@ public class FloorMapEditorController
                 units -> {
                     docSession.stageMeasurementUnits(units);
                     canvas.setMeasurementUnits(units);
-                    markChanged();
+                    onChange.run();
                 });
     }
 
@@ -1800,7 +1817,7 @@ public class FloorMapEditorController
                     entry,
                     saved -> {
                         model.stageCreation(saved);
-                        markChanged();
+                        onChange.run();
                         model.setSelectedFactKey(saved.getKey());
 
                         canvas.setSelectedObjectId(model.getSelectedFactKey());
@@ -1873,7 +1890,7 @@ public class FloorMapEditorController
                     accessor);
 
             model.stageCreation(newEntry);
-            markChanged();
+            onChange.run();
             model.setSelectedFactKey(newKey);
             return newKey;
         } catch (final Exception ex) {
@@ -1974,6 +1991,7 @@ public class FloorMapEditorController
                         accessor))
                 // Not knowing is no reason to refuse: the confirmation says so instead.
                 .onFailure(error -> confirmEndFacts(endable, skipped, null, schema, accessor))
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -1998,7 +2016,7 @@ public class FloorMapEditorController
                         final Map<String, FloorMapEditorModel.FactEndCheck> outcomes =
                                 model.stageFactEnd(endable, schema, accessor);
                         if (outcomes.containsValue(FloorMapEditorModel.FactEndCheck.OK)) {
-                            markChanged();
+                            onChange.run();
                         }
                         // Ended facts leave the selection, as an erased one does, so the
                         // selection-driven panels are rebuilt from what is left.
@@ -2176,12 +2194,6 @@ public class FloorMapEditorController
     private String pathForRole(final Role role) {
         return FloorMapFieldMapping.requirePath(valueSchema(), role);
     }
-
-    // -----------------------------------------------------------------------
-    // View interface
-    // -----------------------------------------------------------------------
-
-    /// View interface for the Editor tab.
 
     // Lazily, as it is first used after this is owned
     private TaskMonitorFactory taskMonitor() {

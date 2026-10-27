@@ -922,6 +922,7 @@ public class SteppingScreenController extends Controller {
                     AlertEvent.fireErrorFromException(SteppingScreenController.this, restError.getException(), null);
                     busyTranslating = false;
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -951,6 +952,7 @@ public class SteppingScreenController extends Controller {
                     .onSuccess(response -> {
                         // Ignore response, we will assume we have stopped.
                     })
+                    .owner(this)
                     .taskMonitorFactory(taskMonitor())
                     .exec();
         }

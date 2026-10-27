@@ -99,6 +99,8 @@ public final class FloorMapEditorStories {
 
     // The canvas's focusable element (FloorMapCanvas's focus panel)
     private static final String CANVAS = ".stroom-floormap-canvas-focus";
+    // Told when the editor tells its document of a change
+    private static final String ON_CHANGE = "onChange";
 
     // The canvas's context menu with nothing selected, named for what it acts on
     private static final String MAP_ACTIONS = "Map Actions";
@@ -156,6 +158,24 @@ public final class FloorMapEditorStories {
                     play.expect(play.getByRole("grid", "Facts").height()).toBeGreaterThan(50.0);
                     play.expect(play.getByRole("grid", "Fact Times").height()).toBeGreaterThan(50.0);
                     DocEditors.expectNoProblems(play);
+                })
+                // Adding an object stages a fact for the store, which the written document doesn't
+                // hold, so the editor tells its document of the change itself: the document then
+                // asks it for its pending changes, and Save is enabled
+                .story("AddObjectTellsDocument", FloorMapEditorStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.waitFor(() -> play.expect(canvas).toHaveAttribute("role", "group"));
+                    play.run("focus the canvas", () -> canvas.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    expectMenuWithFocus(play, screen);
+                    play.click(screen.getByRole("menuitem", "Add Object Here"));
+                    final Play dialog = screen.within(screen.findByRole("dialog", "Add Object"));
+                    play.type(dialog.getByRole("textbox", "Type"), "desk");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Add Object")).toBeNull());
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled();
                 })
                 // Shift+F10 and the context menu key, the standard keys for a context menu, open the
                 // focused canvas's menu, as Enter and Space do. The menu is named for what it acts
@@ -372,7 +392,12 @@ public final class FloorMapEditorStories {
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
                         // Shown as the document shows its Editor tab
-                        new ControllerTabProvider<>(harness.getEventBus(), injector::getFloorMapEditor,
+                        new ControllerTabProvider<>(harness.getEventBus(), () -> {
+                            final FloorMapEditorController editor = injector.getFloorMapEditor();
+                            harness.fn(ON_CHANGE);
+                            editor.setOnChange(() -> harness.spy(ON_CHANGE, "changed"));
+                            return editor;
+                        },
                                 FloorMapEditorController::read, FloorMapEditorController::write).getPresenter(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource)

@@ -138,6 +138,7 @@ public class QueryDocEditController
                         })
                         .onFailure(restError ->
                                 AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .owner(this)
                         .taskMonitorFactory(taskMonitor())
                         .exec();
             }
@@ -168,6 +169,7 @@ public class QueryDocEditController
                             true,
                             newDocumentConsumer);
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -193,6 +195,7 @@ public class QueryDocEditController
                             createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -298,6 +301,7 @@ public class QueryDocEditController
                         ruleDocRef,
                         true,
                         false))
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -324,6 +328,7 @@ public class QueryDocEditController
                         })
                         .onFailure(restError ->
                                 AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .owner(this)
                         .taskMonitorFactory(taskMonitor())
                         .exec();
             }
@@ -354,6 +359,7 @@ public class QueryDocEditController
                             true,
                             newDocumentConsumer);
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -379,6 +385,7 @@ public class QueryDocEditController
 //                            createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -463,6 +470,7 @@ public class QueryDocEditController
                         ruleDocRef,
                         true,
                         false))
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }

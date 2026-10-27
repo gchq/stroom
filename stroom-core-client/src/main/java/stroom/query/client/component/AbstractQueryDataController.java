@@ -1,5 +1,22 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.component;
 
+import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -17,6 +34,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.query.api.Column;
+import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.QueryDataPane.QueryDataAction;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -89,6 +107,9 @@ public abstract class AbstractQueryDataController<D> extends Controller {
                 resultStoreModel,
                 () -> queryTablePreferences);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tablePresenter);
+        // Destroys the query when the tab is closed, or the browser
+        onDispose(() -> queryModel.reset(DestroyReason.TAB_CLOSE));
+        listen(WindowCloseEvent.getType(), event -> queryModel.reset(DestroyReason.WINDOW_CLOSE));
         queryModel.addSearchErrorListener(errors -> {
             if (errors != null && !errors.isEmpty()) {
                 final String errorMsg = errors.stream()

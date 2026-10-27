@@ -23,7 +23,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A dashboard's body: its layout of panes, drawn for design mode while the dashboard is designed.
@@ -33,8 +32,6 @@ public class DashboardBody extends Component {
 
     @UiField
     FlowPanel root;
-    @UiField
-    SimplePanel content;
     @UiField
     FlexLayout layout;
 
@@ -46,12 +43,6 @@ public class DashboardBody extends Component {
     /// @return The layout of panes, for the controller to fill.
     public FlexLayout getLayout() {
         return layout;
-    }
-
-    /// @param embedded Whether the dashboard is shown on its own, embedded in another page (then
-    ///                 its layout starts at the top).
-    public void setEmbedded(final boolean embedded) {
-        content.setStyleName("dashboard__content--embedded", embedded);
     }
 
     /// @param designMode Whether the dashboard is being designed.

@@ -139,7 +139,7 @@ design rests on.
 ```mermaid
 flowchart TB
     subgraph Browser["Browser (GWT)"]
-        SP["SteppingPresenter<br/><i>holds the durable sessionUuid<br/>long-polls step()</i>"]
+        SP["SteppingScreenController<br/><i>holds the durable sessionUuid<br/>long-polls step()</i>"]
     end
     subgraph Rest["REST"]
         SR["SteppingResourceImpl<br/><i>/stepping/v1/step</i>"]
@@ -197,7 +197,7 @@ One class, one job:
 
 | Layer | Class | Owns |
 |---|---|---|
-| Client | `SteppingPresenter` | The durable session id; long-polls until a step resolves |
+| Client | `SteppingScreenController` | The durable session id; long-polls until a step resolves |
 | REST | `SteppingResourceImpl` | Transport only |
 | Service | `SteppingService` | The way in: permission check, fingerprints, stream list, launch policy |
 | Service | `SteppingSessionRegistry` | Sessions keyed by `(user, id)`; self-heal; idle reap; terminate |
@@ -428,7 +428,7 @@ channels and a temp dir forever. Always go through the session.
 sequenceDiagram
     autonumber
     participant U as User
-    participant SP as SteppingPresenter
+    participant SP as SteppingScreenController
     participant SS as SteppingService
     participant REG as SteppingSessionRegistry
     participant SE as SteppingSession
@@ -1373,7 +1373,7 @@ audit cannot mistake it for accident.
   and no amount of coverage arithmetic later can recover what the run did or did not restore. Pinned both
   ways in `TestSteppingCounterReplay`: the backbone materialisation serves EventId 1 marked, the full-sweep
   and restored-replay counts serve unmarked. The UI renders it (2026-08-03) as an INFO note in the element's
-  console (`SteppingPresenter.displayIndicators`): location-agnostic, so it reaches the log view and lights
+  console (`SteppingScreenController.displayIndicators`): location-agnostic, so it reaches the log view and lights
   the console toggle without inventing a gutter marker for a whole-record property.
 - **Eviction pinning - decided and built** (it was due before stage 3 widened concurrency): the retention LRU
   could evict a fingerprint still being written or read (§ scale scenarios, E). `StepDataStore.pin` returns a

@@ -56,9 +56,9 @@ import java.util.Objects;
 /// | Tab | Presenter | Purpose |
 /// |---|---|---|
 /// | Settings | `FloorMapSettingsController` | Configures store references, value format, and value schema |
-/// | Events Query | `FloorMapQueryPresenter` | Edits the StroomQL query for the events store |
-/// | Map | `FloorMapMapPresenter` | Read-only (or light-edit) canvas rendering of facts at a point in time |
-/// | Editor | `FloorMapEditorPresenter` | Full authoring environment with staged (pending) saves |
+/// | Events Query | `FloorMapQueryController` | Edits the StroomQL query for the events store |
+/// | Map | `FloorMapMapController` | Read-only (or light-edit) canvas rendering of facts at a point in time |
+/// | Editor | `FloorMapEditorController` | Full authoring environment with staged (pending) saves |
 ///
 /// ### Two-Store Architecture
 ///
@@ -189,7 +189,7 @@ public class FloorMapDoc extends AbstractDoc {
 
     /// StroomQL query string for the events store.
     /// Executed by
-    /// `FloorMapMapPresenter` to
+    /// `FloorMapMapController` to
     /// populate the events overlay on the canvas.
     /// May be `null` if not configured.
     @JsonProperty

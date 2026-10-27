@@ -376,7 +376,6 @@ public class DashboardBodyController
     /// @param embedded Whether the dashboard is shown on its own, embedded in another page.
     public void setEmbedded(final boolean embedded) {
         this.embedded = embedded;
-        view.setEmbedded(embedded);
     }
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
@@ -891,6 +890,10 @@ public class DashboardBodyController
         final List<Queryable> queryableComponents = getQueryableComponents();
         if (!queryableComponents.isEmpty()) {
             queryInfo.prompt(() -> {
+                // Not once the dashboard has gone
+                if (isDisposed()) {
+                    return;
+                }
                 for (final Queryable queryable : queryableComponents) {
                     queryable.setDashboardContext(dashboardContext);
                     queryable.start();

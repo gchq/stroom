@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.index;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -99,6 +100,20 @@ public final class IndexEditorStories {
             .post("/index/v2/shard/find", RestReply.json(SHARDS))
             .post("/index/volumeGroup/v2/find", RestReply.json(VOLUME_GROUPS))
             .build();
+
+    // The Data tab's default query: the index, then its stored fields, the time field first
+    private static final String DEFAULT_QUERY = "from \"Events Index\" limit 100 select EventTime";
+
+    // The Data tab's search: one row of the index's fields
+    private static final RestFixtures DATA_FIXTURES = QueryFixtures.editorRoutes(QueryFixtures.resultStoreRoutes(
+            RestFixtures.builder()
+                    .route(QueryFixtures.SEARCH, RestReply.json(QueryFixtures.response(true,
+                            QueryFixtures.tableResult("table", """
+                                    [{"id": "EventTime", "name": "EventTime", "visible": true},
+                                     {"id": "UserId", "name": "UserId", "visible": true}]""", """
+                                    [{"values": ["2024-01-01T00:00:00.000Z", "alice"], "depth": 0}]""", 1))))))
+            .build()
+            .followedBy(FIXTURES);
 
     private IndexEditorStories() {
         // Static utility
@@ -273,7 +288,41 @@ public final class IndexEditorStories {
                 .withPlay(play -> resetData(play, "Index reset. 2 shards are marked for deletion."))
                 // Reset Data on an index with no shards says there were none to delete
                 .story("ResetDataNoShards", context -> renderWithReset(context, "0"))
-                .withPlay(play -> resetData(play, "Index reset. It had no shards to delete."));
+                .withPlay(play -> resetData(play, "Index reset. It had no shards to delete."))
+                // The Data tab starts with a query of the index's stored fields, the time field
+                // first, and its query actions
+                .story("DataTab", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    final Query query = openData(play);
+                    play.expect(play.getByRole("button", "Reset to Default")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Run")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Stop")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Create Dashboard")).toBeInTheDocument();
+                    play.expect(query.value()).toContain(DEFAULT_QUERY);
+                    DocEditors.expectNoProblems(play);
+                })
+                // Run searches with the query, and the table shows the rows
+                .story("DataTabRun", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    openData(play);
+                    play.click(play.getByRole("button", "Run"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.getByText("alice")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Enter in the query runs it, and Reset to Default puts the default query back
+                .story("DataTabEnterAndReset", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    final Query query = openData(play);
+                    play.clear(query);
+                    play.type(query, "from \"Events Index\"{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
+                    play.click(play.getByRole("button", "Reset to Default"));
+                    play.expect(query.value()).toContain(DEFAULT_QUERY);
+                    DocEditors.expectNoProblems(play);
+                });
     }
 
     // Presses Reset Data, accepts the confirmation and expects the reset request and an info alert
@@ -303,6 +352,15 @@ public final class IndexEditorStories {
                 .build()
                 .followedBy(FIXTURES);
         return render(context, false, false, fixtures);
+    }
+
+    // Opens the Data tab and waits for its default query, which it makes once it has the fields
+    private static Query openData(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Data"));
+        final Query query = play.findByRole("textbox", "Query");
+        play.waitFor(() -> play.expect(query.value()).toContain("limit 100"));
+        return query;
     }
 
     // Opens the Settings tab and waits for its form

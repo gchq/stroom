@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapLocationResolver;
 import stroom.floormap.client.model.FloorMapObject;

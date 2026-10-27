@@ -168,7 +168,8 @@ public class QueryResultVisController
         });
 
         getRefreshButton().setOnClick(() -> setPause(!pause, true));
-        onDispose(this::releaseVis);
+        // Its frame is on the page's root, so it is taken off when this goes
+        onDispose(this::onRemove);
     }
 
     /// @param visSelectionModel Given what the user selects in the visualisation.
@@ -275,8 +276,8 @@ public class QueryResultVisController
 
     /// Fetches the latest vis data from the search model and shows it.
     ///
-    /// Does nothing if this presenter has no search model, e.g. once it has been removed.
-    /// A result that arrives after this presenter has been removed is ignored.
+    /// Does nothing if this has no search model, e.g. once it has been removed.
+    /// A result that arrives after this has been removed is ignored.
     public void refresh() {
         final QueryModel searchModel = currentSearchModel;
         if (searchModel == null) {
@@ -300,6 +301,7 @@ public class QueryResultVisController
         });
     }
 
+    /// Clears the visualisation.
     public void clear() {
         currentData = getEmptyData();
         currentError = null;
@@ -461,6 +463,7 @@ public class QueryResultVisController
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
+                .owner(this)
                 .taskMonitorFactory(getRefreshButton())
                 .exec();
     }
@@ -472,6 +475,7 @@ public class QueryResultVisController
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
+                .owner(this)
                 .taskMonitorFactory(getRefreshButton())
                 .exec();
     }

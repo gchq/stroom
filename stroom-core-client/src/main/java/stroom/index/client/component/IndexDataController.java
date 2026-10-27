@@ -84,6 +84,7 @@ public class IndexDataController
                         super.read(docRef, doc);
                     }
                 })
+                .owner(this)
                 .exec();
     }
 

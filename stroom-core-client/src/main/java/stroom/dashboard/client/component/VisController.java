@@ -201,7 +201,8 @@ public class VisController
         onDispose(this::releaseVis);
     }
 
-    // The frame is on the page's root, so it fades with the pane    @Override
+    // The frame is on the page's root, so it fades with the pane
+    @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
         super.setLayerVisible(fade, visible);
         Layer.setLayerVisible(visFrame.getElement(), fade, visible);
@@ -536,6 +537,7 @@ public class VisController
                                             + "has an index.html asset: " + caught.getMessage(),
                                             null);
                                 })
+                                .owner(this)
                                 .taskMonitorFactory(view.getRefreshButton())
                                 .exec();
                     } else {
@@ -544,6 +546,7 @@ public class VisController
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
+                .owner(this)
                 .taskMonitorFactory(view.getRefreshButton())
                 .exec();
     }
@@ -555,6 +558,7 @@ public class VisController
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
+                .owner(this)
                 .taskMonitorFactory(view.getRefreshButton())
                 .exec();
     }

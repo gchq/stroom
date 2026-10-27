@@ -287,8 +287,13 @@ public class QueryEditController
             queryModel.reset(DestroyReason.WINDOW_CLOSE);
         });
         view.setOnSelectTab(this::selectTab);
-        // Destroys the query when its tab is closed, if not before
-        onDispose(this::onClose);
+        // Destroys the query when its tab is closed, and stops a query change waiting to be told
+        onDispose(() -> {
+            if (requestTimer != null) {
+                requestTimer.cancel();
+            }
+            onClose();
+        });
         queryResultPresenter.setOnChange(this::onChange);
     }
 
@@ -391,8 +396,8 @@ public class QueryEditController
         }
     }
 
-    /// Destroys the query on the server, as its tab is closed.
-    public void onClose() {
+    // Destroys the query on the server, as its tab is closed
+    private void onClose() {
         queryModel.reset(DestroyReason.TAB_CLOSE);
         destroyCurrentVis();
     }
@@ -418,19 +423,17 @@ public class QueryEditController
         queryModel.stop();
     }
 
-    /**
-     * Registers a listener notified whenever this query starts or stops searching.
-     *
-     * <p>Needed by consumers that must act only on a <em>finished</em> result set.
-     * Searches here run incrementally, so the result table is updated on every
-     * poll with whatever the store holds at that moment; a consumer that treats
-     * each of those updates as a result set acts on a half-filled store. The
-     * searching-to-idle transition is the only signal that the rows are final.</p>
-     *
-     * @param listener called with {@code true} when a search starts and
-     *                 {@code false} when it completes, is stopped or is reset
-     * @return the registration, to be removed when the caller unbinds
-     */
+    /// Registers a listener notified whenever this query starts or stops searching.
+    ///
+    /// Needed by consumers that must act only on a *finished* result set. Searches here run
+    /// incrementally, so the result table is updated on every poll with whatever the store holds
+    /// at that moment; a consumer that treats each of those updates as a result set acts on a
+    /// half-filled store. The searching-to-idle transition is the only signal that the rows are
+    /// final.
+    ///
+    /// @param listener called with `true` when a search starts and `false` when it completes,
+    ///                 is stopped or is reset
+    /// @return the registration, to be removed when the caller goes
     public HandlerRegistration addSearchStateListener(final SearchStateListener listener) {
         queryModel.addSearchStateListener(listener);
         return () -> queryModel.removeSearchStateListener(listener);
@@ -497,15 +500,13 @@ public class QueryEditController
         queryToolbar.setTimeRange(timeRange);
     }
 
-    /**
-     * Sets query parameters to be made available during query execution.
-     *
-     * <p>They are passed natively as {@link Param}s and the query text is sent unmodified, so a
-     * {@code param('key')} reference resolves server-side wherever it appears — including the
-     * {@code from} clause, which {@code SearchRequestFactory.resolveDataSourceName} handles.</p>
-     *
-     * @param queryVariables parameter key → value map, or {@code null}
-     */
+    /// Sets query parameters to be made available during query execution.
+    ///
+    /// They are passed natively as [Param]s and the query text is sent unmodified, so a
+    /// `param('key')` reference resolves server-side wherever it appears — including the `from`
+    /// clause, which `SearchRequestFactory.resolveDataSourceName` handles.
+    ///
+    /// @param queryVariables parameter key → value map, or `null`
     public void setQueryVariables(final Map<String, String> queryVariables) {
         this.queryVariables = queryVariables;
     }
@@ -570,7 +571,7 @@ public class QueryEditController
     }
 
     /// @return The results table.
-    public QueryResultTableSplitController getQueryResultPresenter() {
+    public QueryResultTableSplitController getQueryResultTable() {
         return queryResultPresenter;
     }
 }

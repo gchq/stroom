@@ -77,7 +77,6 @@ import com.google.gwt.inject.client.GinModules;
         ElasticClusterScreenModule.class,
         ElasticIndexScreenModule.class,
         FeedScreenModule.class,
-        FloorMapScreenModule.class,
         GitRepoScreenModule.class,
         IndexScreenModule.class,
         KafkaConfigScreenModule.class,

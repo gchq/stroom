@@ -31,7 +31,7 @@ import java.util.List;
 /// ### Why anyone cares
 ///
 /// The Map tab reduces each read to one row per entity with
-/// `FloorMapQueryPresenter.latestPerEntity`. Given no time column that reduction takes the
+/// `FloorMapEventQuery.latestPerEntity`. Given no time column that reduction takes the
 /// **last row** per entity, which is correct because the rows arrive oldest-first: Plan B iterates
 /// one LMDB cursor whose key is `<entity><big-endian time>`, an ungrouped search is keyed by a
 /// monotonic insertion id, and neither the write queue nor the result creator reorders.

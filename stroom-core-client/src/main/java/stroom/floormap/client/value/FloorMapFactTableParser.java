@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 
 /// Turns a StroomQL result table into [Fact]s for the canvas.
 ///
-/// This lived as a private method on `FloorMapMapController` — a GWT presenter, so
+/// This lived as a private method on `FloorMapMapPresenter` — a GWT presenter, so
 /// untestable — even though the work is pure: match schema roles to result columns, parse each
 /// row's comma-separated values, and collapse the rows to one fact per key. Moving it here
 /// makes the Map tab's entire ingest path testable on the JVM, which is where the parsing

@@ -35,7 +35,7 @@ The forks shadow GWT 2.13.0. This architecture has several costs:
 * **Header and body are separate tables.** GWT `DataGrid` puts them in a `HeaderPanel` with a
   `CustomScrollPanel`, and keeps their column widths and horizontal scroll in step by hand.
 * **The whole page is always rendered.** The dashboard table allows a page of up to 10,000 rows
-  (`BasicTableSettingsViewImpl.java:72-74`), and `ImportConfigConfirmController` uses a page of
+  (`BasicTableSettings.ui.xml` (`minValue`/`maxValue`)), and `ImportConfigConfirmController` uses a page of
   100,000 (`MASSIVE_LIST_PAGE_SIZE`). Every one of those rows is in the DOM.
 * **Browser events are handled one tick late.** The forked `AbstractHasData.onBrowserEvent`
   (`AbstractHasData.java:744-776`) runs `onBrowserEvent2` inside `scheduleDeferred`. By then the
@@ -116,7 +116,7 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | header tooltips (`withToolTip`) | 35 files, 153 calls |
 | `enabledWhen` (dimmed cells) | 24 files, 121 calls |
 | `setRowStyles` | 3 (dashboard, query results, traces) |
-| `setHeadingListener` (header menu, persisted widths and order) | 2 (dashboard `TablePresenter`, `QueryResultTablePresenter`) |
+| `setHeadingListener` (header menu, persisted widths and order) | 2 (dashboard `TableController`, `QueryResultTableController`) |
 | `setTableName` (for Ask AI and CSV) | 75 files |
 | page size other than 100 | 1000 ×4, 100000 ×1 (`ImportConfigConfirmController`) |
 | dashboard page size | user-configurable, 1–10,000 |
@@ -137,10 +137,10 @@ Usage falls into eight categories:
 
 ### 3.1 The hardest consumers
 
-1. **Dashboard `TablePresenter` and `QueryResultTablePresenter`.**
+1. **Dashboard `TableController` and `QueryResultTableController`.**
    * Pages of up to 10k rows.
    * Variable row heights from per-column wrapping (`Format.wrap` → `white-space: normal`,
-     `TablePresenter.java:862-875`).
+     `TableController.java:862-875`).
    * A server-driven group tree.
    * Conditional-formatting CSS generated at runtime.
    * A live `<input>` and button in each header (`FilterCell`).
@@ -338,7 +338,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-C3 | **Fill column**: `addAutoResizableColumn(col, name/header, [fillWeight=100], initialMinimumWidth)`. Resizable and movable. Takes up the remaining space on the first layout, and that pixel width becomes its starting width. The declared width is a floor: fill only ever grows a column, never shrinks it. Usually the last column. Several fill columns share the space by weight (Dependencies has 4, DocRefList and PropertyList have 2 each). | G `:953-990` |
 | R-C3a | **Percent column** (new): a width given as a percentage of the grid's **initial visible width**. It is converted to pixels once, on the first layout, and is a plain pixel column from then on. It does not track later resizes. | New |
 | R-C4 | **Initial width resolution runs once, on the first layout with a non-zero width**, so a grid built in a hidden tab waits until it is shown. Order: (1) fixed columns use their declared pixels; (2) percent columns become `(int)(outerWidth × pct / 100)`; (3) fill columns share what is left. If steps 1–2 already overflow the grid, fill columns keep their declared floor and the grid scrolls horizontally. `remaining = outerWidth − Σ(widths after steps 1–2, including fill floors)`. If `remaining > 0`, each fill column gets `declared + (int)(remaining / Σweight × weight)`, **truncated, not rounded** (rounding was a source of drift found by the React port). After that, widths belong to the user. A container resize does **not** run the fill again. (Today it runs six times on timers; one run on the first non-zero `ResizeObserver` measurement replaces that.) | G `:1059, :1132-1151` |
-| R-C5 | `resizeTableToFitColumns()` is kept as a public method. Callers use it after rebuilding columns (`TablePresenter`, `QueryResultTablePresenter :731, :917`). | G |
+| R-C5 | `resizeTableToFitColumns()` is kept as a public method. Callers use it after rebuilding columns (`TableController`, `QueryResultTableController :731, :917`). | G |
 | R-C6 | `removeColumn`, `insertColumn`, `moveColumn(from, to)`, `resizeColumn(index, width)`, `setColumnWidth(col, width, unit)`, `getColumnCount`, `getColumn(i)`. Per-column settings move with their column. They are stored **on a column model entry**, not in a parallel list. | G `:1001-1038` |
 | R-C7 | Columns can be rebuilt from scratch: remove all and add all, often. This must not flicker, must keep the vertical scroll position, and must keep the horizontal position when it is still valid. | G (dashboard) |
 | R-C8 | Header contents can be a `String`, which is **treated as HTML** for compatibility (for example the `"<br/>"` headers on icon columns), or a `Header<?>`, including `SafeHtmlHeader` and `CompositeCell` headers. | G |
@@ -366,7 +366,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-CM2 | During the move, a translucent full-height ghost follows the pointer, and a 2px line marks the insertion point, which is worked out from column midpoints. The resize handle is hidden. Dropping a column directly after itself does nothing. | G |
 | R-CM3 | The insertion point cannot be before the first movable column. **Non-movable columns later in the table are not protected today.** Fix this, or match it (§8, D6). | G |
 | R-CM4 | On drop, call `HeadingListener.moveColumn(from, to)` **before** the column model changes (current order), then move the column and its settings. `onMoveStart` / `onMoveEnd` are called around the drag. | G `:1009-1027` |
-| R-CM5 | `setAllowMove(boolean)` can be switched at runtime (dashboard design mode, `TablePresenter.java:1453-1458`). | G |
+| R-CM5 | `setAllowMove(boolean)` can be switched at runtime (dashboard design mode, `TableController.java:1453-1458`). | G |
 
 ### 5.5 Header
 
@@ -398,7 +398,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-R3 | Hover highlight in CSS (`--row__background-color--hovered`). The GWT check for "a floating element is over the row" (`:2021-2050`) is not needed with CSS `:hover`. | G |
 | R-R4 | By default cells do not wrap: `nowrap`, ellipsis, `user-select: text`. | G CSS |
 | R-R5 | `setMultiLine(boolean)` at runtime: adds or removes `multiline`; cells top-aligned and wrapping (header too). Turning it on in a virtual grid suspends virtualisation (§4.4). | G `:174` |
-| R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TablePresenter :862-875` |
+| R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TableController :862-875` |
 | R-R7 | `dataGridDisabledCell` (`enabledWhen`) styling, including on selected rows. | G |
 | R-R8 | `redraw()`, `redrawRow(index)`, `getRowElement(index)` (returns the `data-grid__row` element, or null if not rendered), `getVisibleItem(s)`, `getVisibleItemCount`. | G |
 | R-R9 | **Column span per row** (`MarkerList` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
@@ -418,7 +418,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-S8 | **Superseded** by the grid keyboard (`DataGridKeyboard`, see `COMPONENT_MODEL_DESIGN.md`, Data grid): row focus with the selection following it, cells and headers by the arrows, editing with Enter/F2. What GWT does: **Keys** (`KeyBinding` → `Action`): Up/W/K and Down/S/J move by 1. PageDown moves by 10. Home and End go to the first and last row. Enter selects only the row (`onExecute`). Space selects with the Ctrl/Shift state. Ctrl+A fires `SelectAllEvent`; the grid selects nothing itself. Left/Right, Esc and Alt+ContextMenu do nothing in the grid. Movement skips rows where `isSelectable(item)` is false. Keys from inside `<input>`, `<textarea>` or `contenteditable` are ignored, except Esc. | G `KeyBinding :65-78`, `AbstractSelectionEventManager` |
 | R-S9 | **PageUp** moves up 10 in the grid keyboard (D2 applied). GWT: consumed, but **does nothing** today (`onMovePageUp` is never called, `:62-64`). Match it, or fix it to move up 10 (§8, D2). | G (bug) |
 | R-S10 | Selection works through `SelectionModel` (`SelectionChangeEvent`, plus `MultiSelectEvent(SelectionType)`), unchanged, so the 51 `isDoubleSelect` consumers and the meta browser's id-set selection keep working. | G |
-| R-S11 | Focus: `setFocused(boolean)` (fork addition, `TablePresenter:1379`). Focus is restored after a redraw only if the grid had it before. Clicking the header does not take focus (R-H8). The grid root is in the tab order once a selection model is set. | G fork |
+| R-S11 | Focus: `setFocused(boolean)` (fork addition, `TableController:1379`). Focus is restored after a redraw only if the grid had it before. Clicking the header does not take focus (R-H8). The grid root is in the tab order once a selection model is set. | G fork |
 | R-S12 | The keyboard row after `setRowData` matches GWT (measured in Phase 0, `Widgets/Data Grid/Behaviour` stories). It starts at 0, and is 0 on an empty page. When rows arrive it follows its row's key to the nearest row with that key. If that key has gone (e.g. the row's values changed and there is no key provider), it goes back to row 0. Its style (`dataGridKeyboardSelectedRow`, `dataGridKeyboardSelectedCell`) is shown only while the grid's rows have the focus. Clicking a row focuses it. If the focused row is rewritten or removed, the keyboard row takes the focus. A refresh never takes the focus from outside the grid. | G |
 
 ### 5.8 Context menu, copy, export, AI
@@ -473,7 +473,7 @@ Constructors `(HasHandlers eventBus[, int pageSize])`.
 | Data | the `HasData` methods (R-D1), `addRangeChangeHandler`, `addRowCountChangeHandler`, `addLoadingStateChangeHandler` |
 | Other | `addHyperlinkHandler`, `hasContextMenu`, `setTableName` / `getTableName`, `setEmptyTableWidget`, `setSkipRowHoverCheck` (no-op) |
 
-**Not carried over:** `getTableHeadElement()`, which only widens visibility. `TablePresenter.getFilterButton`
+**Not carried over:** `getTableHeadElement()`, which only widens visibility. `TableController.getFilterButton`
 reaches into `thead > tr > th` (`:755-765`); that needs a supported replacement, `getHeaderCellElement(col)`.
 
 **New:** `addPercentColumn(col, name/header, percent)` (resizable and movable, R-C3a), `setVirtual(boolean)`, `setRowHeight(int)` (virtual mode), `setHideHeader(boolean)`,
@@ -673,7 +673,7 @@ interactive header cells, the context menu, copy, export and AI.
 * Give each screen switched a key provider (rows keyed by their id), so that a row whose values
   change is still the same row: its unsaved cell text, keyboard row and selection survive
   (`Widgets/Data Grid/DataGridRowUpdates`).
-* **Started (2026-10-20) with the dashboard table**, `TablePresenter`, the most demanding consumer
+* **Started (2026-10-20) with the dashboard table**, `TableController`, the most demanding consumer
   (§3.1), switched by type alone and without `setVirtual(true)` for now. Its stories and the
   query screen's (still `MyDataGrid`) pass, and its screenshots match `MyDataGrid`'s but for
   sub-pixel header text and the agreed row colours. Found and fixed on the way:
@@ -696,7 +696,7 @@ interactive header cells, the context menu, copy, export and AI.
     now give each row a key, as the server does.
   * The dashboard plays' header clicks send pointer events as well as mouse events, as a browser
     does (the new grid reads pointer events), and find rows by `tr` or `role="row"`.
-* **Then the query screen's table** (`QueryResultTablePresenter`, 2026-10-21), and both tables
+* **Then the query screen's table** (`QueryResultTableController`, 2026-10-21), and both tables
   with `setVirtual(true)`, each wrapping column declared with `setColumnWraps` (the wrap was an
   inline `white-space: normal` the grid can't see). Found and fixed:
   * `setEmptyText` (`MyDataGrid`'s name) shows the text as `MyDataGrid` did.

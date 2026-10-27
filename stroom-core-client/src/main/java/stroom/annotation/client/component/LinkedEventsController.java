@@ -129,12 +129,12 @@ public class LinkedEventsController extends Controller {
 
     private void linkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new LinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, taskMonitor());
+                new LinkEvents(Collections.singletonList(eventId))), guard(this::onChangeComplete), taskMonitor());
     }
 
     private void unlinkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new UnlinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, taskMonitor());
+                new UnlinkEvents(Collections.singletonList(eventId))), guard(this::onChangeComplete), taskMonitor());
     }
 
     private void onChangeComplete(final Boolean success) {
@@ -180,7 +180,7 @@ public class LinkedEventsController extends Controller {
     }
 
     private void refreshData() {
-        annotationResourceClient.getLinkedEvents(annotationRef, this::setData, taskMonitor());
+        annotationResourceClient.getLinkedEvents(annotationRef, guard(this::setData), taskMonitor());
     }
 
     private void setData(final List<EventId> data) {

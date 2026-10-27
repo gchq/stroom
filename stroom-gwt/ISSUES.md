@@ -436,14 +436,14 @@ tie on that column, e.g. words of one type stay in whatever order they came in. 
 
 ### A duplicated selection handler has the same id as its original
 
-**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersPresenter.onCopy`) copies the
+**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersController.onCopy`) copies the
 handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
 (`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
 may be confused by anything that finds a handler by id. Found while giving the list a row key for
 the new data grid, which copes (rows with one key are told apart by position). Fix: give the copy
 `RandomId.createId(5)`.
 
-* `stroom-core-client/src/main/java/stroom/dashboard/client/query/SelectionHandlersPresenter.java`
+* `stroom-core-client/src/main/java/stroom/dashboard/client/component/SelectionHandlersController.java`
   (`onCopy`)
 
 ### The Replace Secret dialog cuts its warning off
@@ -618,9 +618,9 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Dashboard table format: the date format and time zone controls stay enabled when Use Preferences
   is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).
 * Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
-  (`BasicListInputSettingsViewImpl.ui.xml`).
+  (`component/BasicListInputSettings.ui.xml`).
 * Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
-  unticked (`BasicEmbeddedQuerySettingsViewImpl.ui.xml`).
+  unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).
 * Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
   Notifications is unticked (`AnalyticNotificationEdit.ui.xml`).
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
@@ -874,7 +874,9 @@ can name them.
 those inside a document should use `inScope(...)` so they are released with it. Dialogs shown and
 hidden repeatedly measured nothing kept in the live app (Find), but the workbench probe suggests
 some (data upload, current activity, find in content, Ask Stroom AI configure) keep their children.
-`QueryResultVisPresenter.onRemove()` still calls `onUnbind()` rather than `unbind()`.
+`QueryResultVisPresenter.onRemove()` called `onUnbind()` rather than `unbind()`: fixed in wave 13,
+where `QueryResultVisController` releases its visualisation and takes its frame off the page when it
+is disposed.
 
 **Leak check** (October 2026): `workbenchTest -PworkbenchLeakCheck` (the runner's `--leak-check`;
 see `stroom-gwt-workbench/test-runner/README.md`) closes and reopens each passing story's screen
@@ -1026,7 +1028,7 @@ and each list pane 3 + 5 (its actions and its pager). Found while measuring:
   it, not on the button (`Widgets/Buttons/ButtonGroup` `WithToggle`).
 * A `FabButton` (the Text component's stepping button) is two tab stops, its outer `div` and its
   inner `button` (`App/Editors/DashboardEditor` `ToolbarTabStops`).
-* `TablePresenter` (line 268) adds its Ask Stroom AI button twice.
+* `TableController` adds its Ask Stroom AI button twice.
 
 Done so far: `ButtonPanel` is a group (`ButtonGroupFocus`, which can also be installed on any
 element, merging the groups inside it), so each list's actions, the dictionary's Save buttons and a
@@ -1432,7 +1434,7 @@ Left as they are, on purpose:
   Terminate, `UserTaskViewImpl`'s, is a `ToolbarButton` in a `Toolbar` since wave 3's `UserTask`.)
 * GWT's `Hyperlink` for "Forgot password" (`Login`) and `Anchor` in the content pack
   details (`ContentStoreContentPackDetails`): real links already.
-* "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
+* "View Source" (`DataViewer`, a template `div` with `role="button"` since wave 13), complete (Enter and Space
   press it, and it says when it is disabled).
 * The current selection's `<table>` (`TableBuilder`, from `DashboardContextImpl`): its components'
   names are `<th>`; the name and value rows read in order, and row headers there would need `<th>`'s
@@ -1506,9 +1508,8 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 **Reported.**
 
-* Misleading `identity` values (copied from other views, though unique in their own):
-  * `BasicListInputSettingsViewImpl.ui.xml`: Use Dictionary is `basicListInputSettingsExtractValues`.
-  * `BasicTextInputSettingsViewImpl.ui.xml`: the Id and Name groups use `basicListInputSettings*`.
+* Misleading `identity` values: fixed in wave 13 (the settings tabs' templates name their own,
+  e.g. `basicListInputSettingsUseDictionary`, `basicTextInputSettingsId`).
 * `VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
   fileyou wish to create" (missing space).
 * `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser.".
@@ -1587,6 +1588,35 @@ are a follow-up; the sign-in page has no Stroom menu (no GIN there), so shows th
 old clipboard helpers are gone: `ClipboardUtil`, `DataGridDom.copyToClipboard` and the annotation
 editor's hidden copy box (and its `.annotationHistoryText` rule) use `Clipboard`; the workbench
 framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom dependency.
+
+### Left from wave 13's audit
+
+**Reported** (27 October 2026).
+
+* **A scroll rule that never applied.** `dashboard-settings.css`'s `.dashboard-settings
+  .layer-container { overflow: auto }` matches nothing: `ComponentSettingsDialog.ui.xml` gives its
+  `LayerContainerImpl` `styleName="dock-max"`, which replaces the container's own `layer-container`
+  class (`ColumnFilterDialog.ui.xml` does the same). The rule it replaced,
+  `.settingsPresenter .layer-container`, never applied either, so nothing changed. To decide:
+  `addStyleNames="dock-max"` (the settings tabs then scroll, a look change to check against the
+  screenshots), or drop the rule.
+* **Names that still say presenter.** Fields, parameters and locals holding controllers keep their
+  old names: `tablePresenter` (`AbstractQueryDataController` and its subclasses,
+  `AnalyticDataShardsController`, `ColumnsManager`), `queryEditPresenter` (`QueryDocEditController`,
+  `FloorMapQueryController`), `queryResultPresenter`, `visPresenterProvider` and
+  `currentVisPresenter` (`QueryEditController`), `dataPresenter` (`LinkedEventsController`,
+  `MetaBrowserController`), `sourcePresenter` (`SteppingScreenController`, `SourceTabPresenter`),
+  `steppingPresenter` (`PipelinePresenter`), `metaPresenterProvider` (`FeedPresenter`,
+  `PipelinePresenter`, `FolderTabs`), `annotationManager` (the two tables), `layoutPresenter`
+  (`DashboardBodyController`), the settings dialogs' `settingsPresenterProvider`, and the
+  `*DataPresenterProvider` parameters of the index and store documents. Rename them as the files
+  are next touched.
+* **Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
+  its parts." without an `@param` per part (e.g. `SteppingScreenController`,
+  `MetaBrowserController`, `TableController`, `QueryPaneController`).
+* **The Data tabs' query on close.** Closing an index's or store's Data tab now destroys its query
+  (`TAB_CLOSE`), as the query editor does; no story checks the destroy request, as a story's tab
+  isn't closed.
 
 ### Some components wire their handlers with `@UiHandler`
 
@@ -1874,7 +1904,9 @@ this extends it to every handler. When counted (wave 13), the converted componen
   (`ElasticIndexSettings.ui.xml`).
 * Found in wave 8's audit (26 October 2026; master has each):
   * A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
-    `TableFilterPresenter.focus()` focuses the selected tab's layer, which isn't a `Focus`.
+    `TableFilterPresenter.focus()` focused the selected tab's layer, which wasn't a `Focus`. Its
+    replacement, `ColumnFilterDialogController.focus()`, shows its tabs through `ControllerLayer`,
+    which is a `Focus` now: to check whether that fixed it.
   * `ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
     column.getFilter() != null`, which can't be true (`getColumnFilter` never gives null) and
     compares the wrong filter (the include/exclude one); it works only because the other branch

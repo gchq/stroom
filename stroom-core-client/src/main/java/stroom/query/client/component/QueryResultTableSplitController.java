@@ -122,7 +122,7 @@ public class QueryResultTableSplitController
     }
 
     /// @return The results table.
-    public QueryResultTableController getTablePresenter() {
+    public QueryResultTableController getTable() {
         return tablePresenter;
     }
 

@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaBrowserController] (the stream browser of
 /// a 'Data' tab: the stream list, its relations and the data preview) with fake REST replies, read
-/// with no document (all unlocked streams), as `MetaPresenter.read` does for the data browser.
+/// with no document (all unlocked streams), as `MetaBrowserController.read` does for the data browser.
 ///
 /// | Stroom REST endpoint | Used for |
 /// |---|---|

@@ -508,7 +508,7 @@ RestFixtures.builder()
   with a JSNI method in the story, which ignores Java's access rules, on a real controller, rather
   than by opening the whole parent screen.
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`,
-  `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPresenter.setProcessorLimits`)
+  `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPaneController.setProcessorLimits`)
   are copied into the story's `render`, naming the source, when they only wire up presenters the
   injector can create.
 

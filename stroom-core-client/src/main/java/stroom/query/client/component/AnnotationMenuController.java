@@ -411,7 +411,7 @@ public class AnnotationMenuController extends Controller {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new LinkEvents(eventIdList));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
+            annotationResourceClient.change(request, guard(r -> runnable.run()), taskMonitor());
         }
     }
 
@@ -425,7 +425,7 @@ public class AnnotationMenuController extends Controller {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new LinkAnnotations(annotationIdList));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
+            annotationResourceClient.change(request, guard(r -> runnable.run()), taskMonitor());
         }
     }
 
@@ -439,7 +439,7 @@ public class AnnotationMenuController extends Controller {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new AddAnnotationTable(table));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
+            annotationResourceClient.change(request, guard(r -> runnable.run()), taskMonitor());
         }
     }
 

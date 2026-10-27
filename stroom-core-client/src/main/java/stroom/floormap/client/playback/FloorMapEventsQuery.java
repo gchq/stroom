@@ -66,7 +66,7 @@ public final class FloorMapEventsQuery {
 
     /// Result column holding the entity's kind — person, vehicle, asset.
     ///
-    /// Aliased `Type` because that is the name `FloorMapQueryPresenter.parseRows`
+    /// Aliased `Type` because that is the name `FloorMapEventQuery.parseRows`
     /// matches, case-insensitively, to decide an entity's type. Type is the layer key: it drives
     /// which icon and colour an entity gets, and whether the Layers panel can hide or dim it.
     ///
@@ -100,7 +100,7 @@ public final class FloorMapEventsQuery {
     /// Reads the Plan B temporal-state fields `Key`, `EffectiveTime` and
     /// `Value`, pulling the individual event properties out of the JSON value with
     /// `jq`. The store is referenced as `param('EventStore')`, which
-    /// `FloorMapQueryPresenter.buildQueryVariables` substitutes with the configured store's
+    /// `FloorMapEventQuery.buildQueryVariables` substitutes with the configured store's
     /// name at query time.
     ///
     /// @return the default events query; never null

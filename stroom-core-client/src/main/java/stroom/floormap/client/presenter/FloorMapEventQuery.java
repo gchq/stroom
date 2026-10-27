@@ -69,7 +69,7 @@ public final class FloorMapEventQuery {
     /// Used to seed the dropdowns before any result exists. These are only what the document
     /// currently maps, not columns known to exist: the defaults match the default query's aliases,
     /// but nothing checks any name against an edited query until it is run, when
-    /// [#updateColumnSelections()] unmaps any role whose column the result lacks. Offering only
+    /// `FloorMapQueryController.updateColumnSelections()` unmaps any role whose column the result lacks. Offering only
     /// these means seeding can never introduce a name the mapping does not already hold.
     ///
     /// @param eventColumns the mapping to read; may be `null`
@@ -93,7 +93,7 @@ public final class FloorMapEventQuery {
     ///
     /// The Map tab queries a trailing window rather than an instant, because an instant is
     /// unsatisfiable against a store that applies the time range literally — see
-    /// `FloorMapMapPresenter.runQueryAtSelectedTime`. A window can return several events for
+    /// `FloorMapMapController.runQueryAtSelectedTime`. A window can return several events for
     /// one entity, and the canvas wants exactly one position each, so the extras are dropped here.
     /// A store that already deduplicates server-side returns one row per key anyway, and this then
     /// costs a pass over the rows and changes nothing.
@@ -201,7 +201,7 @@ public final class FloorMapEventQuery {
     /// column mappings.
     ///
     /// Static and package-visible because two callers run the same events
-    /// query: this editor tab, and [FloorMapMapPresenter], which owns the
+    /// query: this editor tab, and [FloorMapMapController], which owns the
     /// timeline-driven playback query feeding the animated entity overlay.
     ///
     /// An entity is positioned outright when its [FloorMapEventRole#LOCATION] column holds

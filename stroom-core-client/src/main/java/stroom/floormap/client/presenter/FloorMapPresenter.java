@@ -126,6 +126,9 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
         editorTab = new ControllerTabProvider<>(getEventBus(), () -> {
             floorMapEditorPresenter = floorMapEditorPresenterProvider.get();
+            // Its staged fact edits aren't in the written document: the document asks it for them
+            // (hasAssociatedDirty), so it is told of each change directly
+            floorMapEditorPresenter.setOnChange(FloorMapPresenter.this::onChange);
             // Adopt the Map tab's initial zoom + translation, if it has fitted
             // already, so the Editor opens on the same view. If the Editor is
             // opened first this is null and it fits its own content locally.

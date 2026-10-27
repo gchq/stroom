@@ -41,7 +41,6 @@ import stroom.gwt.workbench.client.app.gin.query.PipelineScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryExtrasScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.StreamStoreScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.VisScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 
@@ -73,12 +72,9 @@ import com.google.gwt.inject.client.GinModules;
         StreamStoreScreenModule.class,
         AlertScreenModule.class,
         QueryExtrasScreenModule.class,
-        VisScreenModule.class,
         AskStroomAIScreenModule.class,
         DashboardScreenModule.class,
         EmbeddedQueryScreenModule.class,
-        InputScreenModule.class,
-        TextScreenModule.class,
 })
 public interface DashboardScreenGinjector extends ScreenGinjector {
 

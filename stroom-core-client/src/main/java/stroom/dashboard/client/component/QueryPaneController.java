@@ -349,7 +349,12 @@ public class QueryPaneController
         setButtonsEnabled();
 
         // Defer init until all data source load handlers have had a chance to update the loaded data source.
-        Scheduler.get().scheduleDeferred(this::init);
+        Scheduler.get().scheduleDeferred(() -> {
+            // Not once the pane has gone
+            if (!isDisposed()) {
+                init();
+            }
+        });
     }
 
     private void addOperator() {
@@ -410,7 +415,7 @@ public class QueryPaneController
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
-        clientPropertyCache.get(result -> {
+        clientPropertyCache.get(guard(result -> {
             if (result != null) {
                 final long defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
                 final long defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
@@ -426,7 +431,7 @@ public class QueryPaneController
                             createProcessFilter(queryData.copy().limits(limits).build(), pipeline);
                         });
             }
-        }, taskMonitor());
+        }), taskMonitor());
     }
 
     private void createProcessFilter(final QueryData queryData,
@@ -448,6 +453,7 @@ public class QueryPaneController
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
+                .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();
     }
@@ -821,6 +827,7 @@ public class QueryPaneController
                     .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .owner(this)
                     .taskMonitorFactory(taskMonitor())
                     .exec();
         }

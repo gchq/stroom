@@ -19,7 +19,6 @@ package stroom.floormap.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
-import stroom.floormap.client.component.FloorMapEditorController;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
 import stroom.floormap.client.value.FloorMapEntryParser;

@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-/// Presenter for the Floor Map query tab.
+/// The Floor Map query tab ([FloorMapQuery]).
 ///
 /// Embeds a [QueryEditController] for authoring and executing StroomQL
 /// queries, parses the resulting [TableResult] rows into
@@ -60,7 +60,7 @@ public class FloorMapQueryController
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
     /// UUID of the document being queried.
     private String docUuid;
-    /// `true` while this tab's query is running — see [#onBind()].
+    /// `true` while this tab's query is running — see the search state listener in the constructor.
     private boolean searching;
 
     private Runnable onChange = () -> {
@@ -96,7 +96,7 @@ public class FloorMapQueryController
         // Listen to this tab's table's data updates and publish the events (it once heard every
         // query result table's in the application, and needed a source guard)
         final QueryResultTableController tablePresenter =
-                queryEditPresenter.getQueryResultPresenter().getTablePresenter();
+                queryEditPresenter.getQueryResultTable().getTable();
         own(tablePresenter.addUpdateListener(() -> {
             // The dropdowns track whatever columns the table currently has, so
             // they follow every update, partial result set or not.
@@ -117,6 +117,10 @@ public class FloorMapQueryController
         // the rows are the answer to the query rather than a snapshot of
         // progress, so that is when the overlay is published.
         own(queryEditPresenter.addSearchStateListener(searching -> {
+            // Not as the query is destroyed while this tab closes
+            if (isDisposed()) {
+                return;
+            }
             // Only the running-to-idle transition, so that the reset at the start
             // of the next run — which also reports "not searching" — does not
             // republish the result set the previous run left behind.
@@ -129,7 +133,7 @@ public class FloorMapQueryController
         }));
 
         // This tab does NOT follow the timeline. The playback events query is
-        // owned by FloorMapMapPresenter, because this presenter is created
+        // owned by FloorMapMapController, because this presenter is created
         // lazily (only when its tab is first opened) and the Map tab's animated
         // entity overlay must not depend on that. Running it here as well would
         // fire a second, identical query per playback tick.
@@ -138,10 +142,10 @@ public class FloorMapQueryController
     /// Parses the current result table into map objects and publishes them as the
     /// canvas entity overlay.
     ///
-    /// Only ever called for a finished result set (see [#onBind()]).
+    /// Only ever called for a finished result set (see the search state listener in the constructor).
     private void publishMapObjects() {
-        final TableResult tableResult = queryEditPresenter.getQueryResultPresenter()
-                .getTablePresenter()
+        final TableResult tableResult = queryEditPresenter.getQueryResultTable()
+                .getTable()
                 .getCurrentTableResult();
 
         if (tableResult != null) {
@@ -161,8 +165,8 @@ public class FloorMapQueryController
     /// [FloorMapEventQuery#selectableColumnNames].
     private void updateColumnSelections() {
         final List<String> colNames = FloorMapEventQuery.selectableColumnNames(
-                queryEditPresenter.getQueryResultPresenter()
-                        .getTablePresenter()
+                queryEditPresenter.getQueryResultTable()
+                        .getTable()
                         .getCurrentColumns());
 
         if (!colNames.isEmpty()) {
@@ -283,7 +287,6 @@ public class FloorMapQueryController
     public FloorMapEventColumns getEventColumns() {
         return view.getEventColumns();
     }
-
 
     @Override
     public List<Widget> getToolbars() {

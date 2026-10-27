@@ -28,7 +28,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 /// replies: the table's result is the table result of the search's reply
 /// (`POST /query/v1/search/{node}`).
 ///
-/// The dashboard's `TablePresenter` shares the query table's header and cells (`ColumnHeaderCell`
+/// The dashboard's `TableController` shares the query table's header and cells (`ColumnHeaderCell`
 /// with its `FilterCell`, `TableRow` decoration), so these stories use the query's table.
 /// `DashboardExpressionEditor` is in [stroom.gwt.workbench.client.app.dashboard.QueryResultsTableDashboardStories].
 public final class QueryResultsTableStories {

@@ -946,7 +946,7 @@ textarea:where(:not(.text-field))[aria-invalid="true"] {
 /* Radio buttons are styled by radio-button.css */
 
 /* Query data view (Data tab on PlanB, SQL Temporal Store and Lucene index docs). These live here
-   rather than in QueryDataViewImpl.ui.xml because GWT's ui:style parser cannot read var(). */
+   rather than in QueryDataPane.ui.xml because GWT's ui:style parser cannot read var(). */
 .queryDataView-errorContainer {
     margin: 0px 8px 8px 8px;
     padding: 8px 12px;

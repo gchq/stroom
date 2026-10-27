@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.value;
 
-import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.query.api.Column;

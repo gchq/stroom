@@ -15,7 +15,7 @@
  */
 
 /*
-   The stepping screen's layout (SteppingViewImpl), named BEM style (block, block__element,
+   The stepping screen's layout (SteppingScreen), named BEM style (block, block__element,
    block--modifier): a top row of the pipeline bar (see pipeline-path-bar.css) and the stepping
    controls, above the selected element's panes.
 */

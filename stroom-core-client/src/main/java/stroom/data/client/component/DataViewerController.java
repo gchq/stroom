@@ -230,6 +230,11 @@ public class DataViewerController
         sourceProgressBar.setVisible(false);
 
         dataView.setOnSelectTab(this::onNewTabSelected);
+        onDispose(() -> {
+            if (delayedFetchDataTimer != null) {
+                delayedFetchDataTimer.cancel();
+            }
+        });
         dataView.setOnShowMenu(this::fireEvent);
         own(htmlPane.addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
@@ -268,11 +273,11 @@ public class DataViewerController
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get(uiConfig -> {
+        uiConfigCache.get(guard(uiConfig -> {
             if (uiConfig != null) {
                 action.accept(uiConfig.getSource());
             }
-        }, dataView.getSpinner());
+        }), dataView.getSpinner());
     }
 
     private void addTab(final TabData tab) {
@@ -488,6 +493,7 @@ public class DataViewerController
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
+                .owner(this)
                 .taskMonitorFactory(dataView.getSpinner())
                 .exec();
     }
@@ -613,6 +619,7 @@ public class DataViewerController
                                 currentAvailableStreamTypes = availableChildStreamTypes;
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
+                            .owner(this)
                             .taskMonitorFactory(dataView.getSpinner())
                             .exec();
                 } else {
@@ -792,6 +799,7 @@ public class DataViewerController
                                 })
                                 .onFailure(caught ->
                                         itemNavigator.setRefreshing(false))
+                                .owner(DataViewerController.this)
                                 .taskMonitorFactory(dataView.getSpinner())
                                 .exec();
                     }
@@ -1179,6 +1187,7 @@ public class DataViewerController
                     .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
+                    .owner(this)
                     .taskMonitorFactory(dataView.getSpinner())
                     .exec();
         }
@@ -1304,8 +1313,6 @@ public class DataViewerController
     public void setInitDataViewType(final DataViewType initDataViewType) {
         this.initDataViewType = initDataViewType;
     }
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -17,11 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.component.ColumnFilterDialogController;
-import stroom.dashboard.client.component.ColumnFormatController;
-import stroom.dashboard.client.component.ColumnFunctionEditorController;
-import stroom.dashboard.client.component.ColumnValuesFilterController;
-import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.FilterCellManager;

@@ -102,7 +102,7 @@ public final class SpinnerStories {
         text.getElement().getStyle().setProperty("opacity", "0.4");
         box.add(text);
 
-        // As Stroom's views add it in their UiBinder templates, e.g. DataViewImpl
+        // As Stroom's views add it in their UiBinder templates, e.g. DataViewer
         final SpinnerLarge spinner = new SpinnerLarge();
         spinner.addStyleName(SpinnerLarge.CENTRED);
         // A new SpinnerLarge thinks it is visible but has no `busy-spinner--active` style, so is

@@ -17,10 +17,6 @@
 package stroom.data.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.component.DataUploadController;
-import stroom.data.client.component.ExpressionDialogController;
-import stroom.data.client.component.MetaListController;
-import stroom.data.client.component.MetaRelationListController;
 import stroom.data.client.presenter.BeginSteppingHandler;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
@@ -487,6 +483,7 @@ public class MetaBrowserController
                             .onSuccess(selectionSummary -> {
                                 isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
                             })
+                            .owner(this)
                             .taskMonitorFactory(taskMonitor())
                             .exec();
                 } else {
@@ -535,6 +532,7 @@ public class MetaBrowserController
                             .onSuccess(selectionSummary -> {
                                 isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
                             })
+                            .owner(this)
                             .taskMonitorFactory(taskMonitor())
                             .exec();
                 } else {

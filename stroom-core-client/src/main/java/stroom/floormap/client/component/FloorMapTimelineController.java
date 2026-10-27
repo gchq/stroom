@@ -19,7 +19,6 @@ package stroom.floormap.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.component.FloorMapTimelineSettingsController;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.preferences.client.DateTimeFormatter;

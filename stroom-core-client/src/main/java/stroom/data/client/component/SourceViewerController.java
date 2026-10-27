@@ -436,11 +436,11 @@ public class SourceViewerController extends Controller implements Focus {
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get(uiConfig -> {
+        uiConfigCache.get(guard(uiConfig -> {
             if (uiConfig != null) {
                 action.accept(uiConfig.getSource());
             }
-        }, view.getSpinner());
+        }), view.getSpinner());
     }
 
     private void fetchSource(final SourceLocation sourceLocation) {
@@ -461,6 +461,7 @@ public class SourceViewerController extends Controller implements Focus {
                         SourceViewerController.this,
                         caught.getMessage(),
                         null))
+                .owner(this)
                 .taskMonitorFactory(view.getSpinner())
                 .exec();
     }
@@ -900,8 +901,4 @@ public class SourceViewerController extends Controller implements Focus {
             });
         }
     }
-
-
-    // ---------------------------------------------------------------------
-
 }

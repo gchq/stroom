@@ -33,11 +33,6 @@
     display: flex;
 }
 
-/* An embedded dashboard (shown on its own in another page): its layout starts at the top */
-.dashboard__content--embedded {
-    top: 0;
-}
-
 .DashboardViewImpl .tab-bar--link .tab-bar__tab {
     opacity: 0.8 !important;
     color: var(--link-tab__text-color) !important;
@@ -418,9 +413,6 @@
     background-color: blue;
 }
 */
-
-
-
 
 .QueryResultTabsViewImpl-outer {
     padding: 5px 5px 0 5px;

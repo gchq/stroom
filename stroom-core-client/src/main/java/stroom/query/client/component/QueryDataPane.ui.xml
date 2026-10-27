@@ -9,7 +9,7 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal align-center form-padding input-row">
             <g:Label text="Query:" styleName="dock-min"/>
-            <form:TextBox ui:field="query" addStyleNames="dock-max"/>
+            <form:TextBox ui:field="query" addStyleNames="dock-max" ariaLabel="Query"/>
             <b:Toolbar name="Query actions" addStyleNames="dock-min">
                 <b:ToolbarButton ui:field="reset" svg="UNDO" title="Reset to Default"
                                  addStyleNames="query-buttons__button"/>

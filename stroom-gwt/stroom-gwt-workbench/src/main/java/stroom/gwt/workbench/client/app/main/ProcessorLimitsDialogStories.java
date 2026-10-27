@@ -31,7 +31,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/ProcessorLimitsDialog`, showing Stroom's real [ProcessorLimitsController]
-/// (the 'Process Search Results' dialog), shown as `QueryPresenter.setProcessorLimits` shows it,
+/// (the 'Process Search Results' dialog), shown as `QueryPaneController.setProcessorLimits` shows it,
 /// with the UI config's process limits.
 ///
 /// In Stroom the pipeline is chosen first, in its own 'Choose Pipeline To Process Results With'
