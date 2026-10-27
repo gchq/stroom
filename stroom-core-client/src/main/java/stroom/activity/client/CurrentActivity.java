@@ -19,6 +19,7 @@ package stroom.activity.client;
 import stroom.activity.client.component.ManageActivityController;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
@@ -59,6 +60,17 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void getActivity(final Consumer<Activity> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        getActivity(consumer, null, taskMonitorFactory);
+    }
+
+    /// Gets the user's current activity, fetching it the first time.
+    ///
+    /// @param consumer           Given the activity, or `null` for none.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void getActivity(final Consumer<Activity> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
         if (fetched) {
             consumer.accept(currentActivity);
         } else {
@@ -70,6 +82,7 @@ public class CurrentActivity implements HasHandlers {
                         fetched = true;
                         consumer.accept(a);
                     })
+                    .onFailure(errorHandler)
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }

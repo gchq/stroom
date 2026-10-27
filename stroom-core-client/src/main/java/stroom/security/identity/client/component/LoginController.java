@@ -70,6 +70,7 @@ public class LoginController extends SignInPageController {
                 .method(AuthenticationResource::fetchPasswordPolicy)
                 .onSuccess(result -> view.setAllowPasswordResets(result.isAllowPasswordResets()))
                 .onFailure(new DefaultErrorHandler(this, null))
+                .owner(this)
                 .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                 .exec();
     }
@@ -90,6 +91,7 @@ public class LoginController extends SignInPageController {
                         }
                     })
                     .onFailure(new DefaultErrorHandler(this, view::reset))
+                    .owner(this)
                     .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         } else {
@@ -115,6 +117,7 @@ public class LoginController extends SignInPageController {
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, e))
+                    .owner(this)
                     .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         }, () -> {

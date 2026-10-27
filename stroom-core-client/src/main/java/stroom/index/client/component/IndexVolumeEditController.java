@@ -90,7 +90,8 @@ public class IndexVolumeEditController extends Controller {
                             .onHideRequest(e -> onHideRequest(e, volume, consumer, taskMonitorFactory))
                             .fire();
                 }),
-                throwable -> AlertEvent.fireError(this, throwable.getMessage(), null),
+                // Not shown if the nodes can't be listed, so disposed then
+                throwable -> AlertEvent.fireError(this, throwable.getMessage(), this::dispose),
                 taskMonitorFactory);
     }
 

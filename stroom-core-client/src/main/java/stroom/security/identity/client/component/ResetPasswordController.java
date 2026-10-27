@@ -108,6 +108,7 @@ public class ResetPasswordController extends SignInPageController {
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
+                .owner(this)
                 .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                 .exec();
     }

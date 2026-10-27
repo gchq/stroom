@@ -57,7 +57,7 @@ public class DataUploadController extends Controller {
     private final RestFactory restFactory;
     private final FileChooserController fileChooser;
     private DocRef feedRef;
-    private Runnable onUploaded;
+    private Runnable afterUpload;
     private HidePopupRequestEvent currentHideRequest;
 
     /// Made by GIN, with its content.
@@ -86,7 +86,8 @@ public class DataUploadController extends Controller {
         this.fileChooser = own(fileChooser);
         make(dateTimeBoxControllerProvider).attach(view.getEffectiveBox());
         fileChooser.attach(view.getFileChooser());
-        fileChooser.setTaskMonitorFactory(taskMonitor(), "Uploading Data");
+        // Shows the upload's progress as this controller's context does, once it is shown
+        fileChooser.setTaskMonitorFactory(() -> taskMonitor().createTaskMonitor(), "Uploading Data");
     }
 
     /// Loads the feed and shows the dialog. The opener owns the dialog until it is hidden; if the
@@ -98,7 +99,7 @@ public class DataUploadController extends Controller {
     ///                   saying so.
     public void show(final HasControllerNode opener, final DocRef feedRef, final Runnable onUploaded) {
         this.feedRef = feedRef;
-        this.onUploaded = onUploaded;
+        this.afterUpload = onUploaded;
         feedClient.load(feedRef,
                 guard(feedDoc -> showDialog(opener, feedDoc)),
                 error -> {
@@ -180,7 +181,7 @@ public class DataUploadController extends Controller {
                 .method(res -> res.upload(request))
                 .onSuccess(result ->
                         AlertEvent.fireInfo(this, "Uploaded file", () -> {
-                            onUploaded.run();
+                            afterUpload.run();
                             currentHideRequest.hide();
                         }))
                 .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))

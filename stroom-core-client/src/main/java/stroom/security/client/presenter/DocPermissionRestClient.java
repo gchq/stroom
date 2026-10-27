@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocPermissionResource;
@@ -44,12 +45,28 @@ public class DocPermissionRestClient extends AbstractRestClient {
                                             final UserRef userRef,
                                             final Consumer<DocumentUserPermissionsReport> consumer,
                                             final TaskMonitorFactory taskMonitorFactory) {
+        getDocUserPermissionsReport(docRef, userRef, consumer, null, taskMonitorFactory);
+    }
+
+    /// Fetches what permissions a user has on a document, and how.
+    ///
+    /// @param docRef             The document.
+    /// @param userRef            The user.
+    /// @param consumer           Given the report.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void getDocUserPermissionsReport(final DocRef docRef,
+                                            final UserRef userRef,
+                                            final Consumer<DocumentUserPermissionsReport> consumer,
+                                            final RestErrorHandler errorHandler,
+                                            final TaskMonitorFactory taskMonitorFactory) {
         // Fetch permissions.
         final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(docRef, userRef);
         restFactory
                 .create(DOC_PERMISSION_RESOURCE)
                 .method(res -> res.getDocUserPermissionsReport(request))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

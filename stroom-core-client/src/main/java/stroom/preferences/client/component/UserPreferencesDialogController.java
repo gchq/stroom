@@ -17,6 +17,7 @@
 package stroom.preferences.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
@@ -115,7 +116,7 @@ public class UserPreferencesDialogController extends Controller {
     }
 
     /// Fetches the saved preferences and shows them. The opener owns the dialog until it is
-    /// hidden.
+    /// hidden; if they can't be fetched, it says why and the dialog isn't shown.
     ///
     /// @param opener What shows it.
     public void show(final HasControllerNode opener) {
@@ -128,7 +129,7 @@ public class UserPreferencesDialogController extends Controller {
                     .onShow(e -> themePreferences.focus())
                     .onHideRequest(this::onHideRequest)
                     .fire();
-        }), taskMonitor());
+        }), new DefaultErrorHandler(this, this::dispose), taskMonitor());
     }
 
     // Shows the preferences last saved, which Cancel goes back to

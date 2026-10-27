@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.ExpressionOperator;
@@ -112,9 +113,11 @@ public class DocumentUserPermissionsEditController extends Controller {
         relatedDoc = docRef;
         relatedUser = permissions.getUserRef();
 
-        // Fetch detailed permissions report.
+        // Fetch detailed permissions report; not shown if it can't be, so disposed then
         docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, guard(report ->
-                onLoad(opener, report, onClose)), taskMonitorFactory);
+                        onLoad(opener, report, onClose)),
+                new DefaultErrorHandler(this, this::dispose),
+                taskMonitorFactory);
     }
 
     private void onLoad(final HasControllerNode opener,

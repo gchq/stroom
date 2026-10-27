@@ -18,6 +18,7 @@ package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.FindResult;
@@ -106,9 +107,11 @@ public class DocumentUserCreatePermissionsEditController extends Controller {
         relatedDoc = docRef;
         relatedUser = userRef;
 
-        // Fetch detailed permissions report.
+        // Fetch detailed permissions report; not shown if it can't be, so disposed then
         docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, guard(report ->
-                onLoad(opener, report, onClose)), taskMonitorFactory);
+                        onLoad(opener, report, onClose)),
+                new DefaultErrorHandler(this, this::dispose),
+                taskMonitorFactory);
     }
 
     private void onLoad(final HasControllerNode opener,

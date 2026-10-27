@@ -135,10 +135,24 @@ public class NodeGroupClient {
     public void getNodeGroupState(final int id,
                                   final Consumer<NodeGroupState> consumer,
                                   final TaskMonitorFactory taskMonitorFactory) {
+        getNodeGroupState(id, consumer, null, taskMonitorFactory);
+    }
+
+    /// Fetches which nodes a group has.
+    ///
+    /// @param id                 The group's ID.
+    /// @param consumer           Given the group's state.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void getNodeGroupState(final int id,
+                                  final Consumer<NodeGroupState> consumer,
+                                  final RestErrorHandler errorHandler,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.getNodeGroupState(id))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

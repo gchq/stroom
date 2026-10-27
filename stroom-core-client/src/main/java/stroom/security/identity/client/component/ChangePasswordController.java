@@ -75,6 +75,11 @@ public class ChangePasswordController extends Controller {
                 .create(RESOURCE)
                 .method(AuthenticationResource::fetchPasswordPolicy)
                 .onSuccess(policy -> {
+                    if (opener.getControllerNode().isDisposed()) {
+                        // The opener went before the policy came, so there is nothing to show it on
+                        dispose();
+                        return;
+                    }
                     view.setPolicy(policy);
                     ControllerDialog.showOnce(opener, this)
                             .popupType(PopupType.OK_CANCEL_DIALOG)

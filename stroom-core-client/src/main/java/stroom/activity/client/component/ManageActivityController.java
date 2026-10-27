@@ -21,6 +21,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
@@ -165,7 +166,10 @@ public class ManageActivityController extends Controller {
     /// @param opener   What shows it.
     /// @param consumer Given the chosen activity once the chooser closes.
     public void show(final HasControllerNode opener, final Consumer<Activity> consumer) {
-        currentActivity.getActivity(guard(activity -> show(opener, activity, consumer)), taskMonitor());
+        // Not shown if the current activity can't be fetched, so disposed then
+        currentActivity.getActivity(guard(activity -> show(opener, activity, consumer)),
+                new DefaultErrorHandler(this, this::dispose),
+                taskMonitor());
     }
 
     private void show(final HasControllerNode opener,

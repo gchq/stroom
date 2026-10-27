@@ -135,6 +135,11 @@ public class EditApiKeyController extends Controller {
         }
 
         uiConfigCache.get(guard(uiConfig -> {
+            if (uiConfig == null) {
+                // Not shown, so nothing else would dispose it
+                dispose();
+                return;
+            }
             if (Mode.PRE_CREATE.equals(mode)) {
                 view.setHashAlgorithm(Objects.requireNonNullElse(
                         uiConfig.getDefaultApiKeyHashAlgorithm(),

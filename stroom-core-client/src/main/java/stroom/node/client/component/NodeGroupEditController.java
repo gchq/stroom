@@ -16,6 +16,7 @@
 
 package stroom.node.client.component;
 
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.client.NodeGroupClient;
@@ -105,8 +106,13 @@ public class NodeGroupEditController extends Controller {
                 selected.addAll(result.getSelected());
                 nodeGroupStateList.refresh();
                 open(opener, nodeGroup, title, consumer);
-            }), taskMonitor());
-        }), null, new FindNodeStatusCriteria(PageRequest.unlimited(), null), taskMonitor());
+            }), notShown(), taskMonitor());
+        }), notShown(), new FindNodeStatusCriteria(PageRequest.unlimited(), null), taskMonitor());
+    }
+
+    // Says why the dialog can't be shown, then disposes it
+    private RestErrorHandler notShown() {
+        return new DefaultErrorHandler(this, this::dispose);
     }
 
     private void open(final HasControllerNode opener,

@@ -70,10 +70,22 @@ public class UserPreferencesManager {
     }
 
     public void fetch(final Consumer<UserPreferences> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        fetch(consumer, null, taskMonitorFactory);
+    }
+
+    /// Fetches the user's saved preferences.
+    ///
+    /// @param consumer           Given the preferences.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void fetch(final Consumer<UserPreferences> consumer,
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
