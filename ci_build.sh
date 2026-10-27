@@ -358,12 +358,23 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  echo -e "Doing Scout scan of local image with tag ${GREEN}${firstTag}${NC}" \
+  # Ones with no-fix available, so just log them so we can investigate
+  echo -e "Doing Scout un-fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
+    "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
+  docker scout \
+    cves \
+    "${firstTag}" \
+    --only-unfixed \
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+
+  # Ones with a fix available, so error if we find any so we can fix
+  echo -e "Doing Scout fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
     "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
   docker scout \
     cves \
     "${firstTag}" \
     --exit-code \
+    --only-fixed \
     --only-severity "${DOCKER_SCOUT_THRESHOLD}"
 
   if [[ -z "${LOCAL_BUILD}" ]]; then
