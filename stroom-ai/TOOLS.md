@@ -925,7 +925,9 @@ editor does. Templates are inherited (`parentPipeline`), never copied: `copy_pip
 * **`PipelineWrites`**: `element_id` (`elementId`), `swap_parser` (`swapParser`, giving a `Swap`), `merge_layers`'
   view of a template as a child is written over it (`Layout`, with `chain()`: `Source` included where a layer adds
   it), `open_slots` (`openSlots`, which `StroomBuildFacts.openSlots` now uses), `fill_open_slots`
-  (`fillOpenSlots`), `_own_documents` (`ownDocuments`), `_parser_reads_sample` (`parserReadsSample`),
+  (`fillOpenSlots`), `_own_documents` (`ownDocuments`), `_parser_reads_sample` (`parserReadsSample`, which for a
+  build on an existing feed also checks the format its survey found, and for XML fragments under an XMLParser says
+  to call again with `replace_parser='XMLFragmentParser'`),
   `_json_array_parser` (`jsonArrayParser`), `_sample_is_array` (`sampleIsArray`), `typed_properties`
   (`typedProperties`, giving `Typed`), `_value` (`value`), `_template_uuid` (`templateUuid`), `_doc_ref_by_name`
   (`docRefByName`), `reference_entries` (`referenceEntries`), `_keep_validation` (`keepValidation`),
@@ -1107,6 +1109,10 @@ Where they differ from the MCP server:
 * **No configured default convention**: the MCP server's `default_convention` setting has no Stroom counterpart, so
   `get_field_conventions` without a name always puts the choice to the user; its description no longer says "(and
   no configured default)".
+* **Not during stage 1**: `get_field_conventions` with neither a name nor a backend, while the session's build is
+  still on a step of its events pipeline, returns `status: not_yet` with the build's `next`, rather than asking the
+  backend: the backend is stage 2's question (seen in testing: a CSV onboarding's first question was the backend).
+  Given `backend=`, it goes on as before.
 * **create_index_doc's test** is Stroom's connection test of the doc's cluster (`ElasticClusterTests`, as the
   cluster's Test Connection button runs it), as `{"result": {"ok", "message"}}`: the MCP server ran Stroom's
   `/elasticIndex/v1/testIndex`, which also looks for the index (not there yet for a new one); the index test is not
@@ -1233,6 +1239,34 @@ approved as a whole.
 
 Where they differ from the MCP server:
 
+* **`build_data_splitter`'s read buffer**: the converter gets `bufferSize` on `<dataSplitter>` when the sample's
+  longest record (its longest line, or a record over several lines whole: a stack trace, a block, a quoted value
+  holding new lines) is more than half Stroom's default (20,000 characters), at four times that, and `buffer_size=`
+  sets it outright (20,000 to 1,000,000,000); the result says `buffer_size` when set. A record longer than the
+  buffer is lost, Stroom reporting that the buffer was exhausted (seen in testing: CSV lines of about 20,000
+  characters). The MCP server never set it.
+* **`build_data_splitter`'s `stroom_check`**: the converter is also run by Stroom's own Data Splitter parser
+  (`StroomSplitterRun`: `ConfigFilter` and `DS3Parser`, without the schema check, as Stroom's `TestDS3` runs it) on
+  each sample text, and the result gives its errors (with `error_hints` from the error triage rules), record counts
+  that differ from the dry run, and up to 5 records written differently. Errors or a different count (records lost)
+  keep save_as from saving; value differences are reported only. Lines ended by a carriage return alone are
+  refused too (`line_endings`). The MCP server had only its dry run.
+* **The converter `build_data_splitter` writes** is `SplitterXml.converter`: `generateSplitter`'s (still the MCP
+  server's, for the parity fixtures) with an `id` on each part (`header`, `record`, `fields`, `blank_line`, `body`,
+  `unparsed`), which Stroom's errors name, and a top-level regex passing over blank lines, which Stroom otherwise
+  writes as records of empty fields.
+* **Spec options the MCP server didn't have**: `escape` (delimited: the split's escape attribute, cells as `$2`;
+  named columns as a split per column), `spaced_values` (key_value without quote: pairs read from the end, Data
+  Splitter's `reverse`; inferred only when it parses every record the plain reading can't), `catch_all` (a record
+  the spec doesn't match kept as `unparsed`), `blank_line_records` (a block of lines per record) and the `fields`
+  kind (each field by its own regex, `matchOrder="any"`).
+* **`ignoreErrors` refused**: save_text_converter and build_data_splitter's save_as refuse a Data Splitter that adds
+  `ignoreErrors="true"` (one the converter replaced already had is kept): it hides the errors for unmatched text.
+  `error_rules.yaml` classes the Data Splitter's "exhausted the buffer" and unmatched-content errors as blocking,
+  with what to do (buffer_size; spaced_values, escape, catch_all, blank_line_records).
+* **The dry run follows Stroom where they differed**: split cells lose the white space round them, a cell past the
+  heading is kept with no name (`(no name)`), and key=value text with something no pair matches is an unmatched
+  line (the MCP server's dry run stopped there and kept the record). The parity fixtures are unchanged by it.
 * **The event-logging version chosen for a build** is kept in the build's record (`event_logging_version`: `version`
   and `how`) once the build has a folder, and in this node's memory for the session, so a later session doesn't ask
   again; the MCP server kept it per user in its memory only. draft_translation_mapping stays read-only (as check_events

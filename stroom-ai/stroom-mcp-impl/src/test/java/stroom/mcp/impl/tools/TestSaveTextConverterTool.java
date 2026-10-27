@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -36,6 +37,19 @@ class TestSaveTextConverterTool {
 
     private final TranslationWorld world = new TranslationWorld();
     private final SaveTextConverterTool tool = new SaveTextConverterTool(world.docs);
+
+    @Test
+    void aDataSplitterMayNotAddIgnoreErrors() {
+        // It hides the errors for text no expression matches, which is then lost without a word.
+        final String ignoring = SPLITTER.replace("<dataSplitter ", "<dataSplitter ignoreErrors=\"true\" ");
+        assertThat(ignoring).contains("ignoreErrors");
+        assertThatThrownBy(() -> TranslationDocs.checkConverter("DATA_SPLITTER", ignoring))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("ignoreErrors hides the errors")
+                .hasMessageContaining("catch_all");
+        // One the converter it replaces already had is kept.
+        TranslationDocs.checkConverter("DATA_SPLITTER", ignoring, ignoring);
+    }
 
     @Test
     void aTextConverterIsADataSplitterNeverAJsonParser() {

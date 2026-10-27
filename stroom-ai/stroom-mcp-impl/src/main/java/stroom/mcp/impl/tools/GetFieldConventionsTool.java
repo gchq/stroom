@@ -85,6 +85,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     private final Provider<QueryService> queryServiceProvider;
     private final Consent consent;
     private final IndexingMemory memory;
+    private final BuildPlan plan;
 
     @Inject
     GetFieldConventionsTool(final AgentKnowledge knowledge,
@@ -93,7 +94,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                             final DocumentAccess documentAccess,
                             final Provider<QueryService> queryServiceProvider,
                             final Consent consent,
-                            final IndexingMemory memory) {
+                            final IndexingMemory memory,
+                            final BuildPlan plan) {
         this.knowledge = knowledge;
         this.pipelineTemplates = pipelineTemplates;
         this.pipelineIndex = pipelineIndex;
@@ -101,6 +103,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         this.queryServiceProvider = queryServiceProvider;
         this.consent = consent;
         this.memory = memory;
+        this.plan = plan;
     }
 
     @Override
@@ -148,13 +151,39 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
             if (backend != null && !FieldPlans.BACKENDS.contains(backend)) {
                 return JsonResults.refused("backend is 'lucene' or 'elasticsearch', not '" + backend + "'");
             }
-            return JsonResults.of(conventions(call, context, stringArg(call, NAME_ARG), backend,
+            final String name = stringArg(call, NAME_ARG);
+            if (name == null && backend == null) {
+                final Optional<Map<String, Object>> notYet = notYet(context);
+                if (notYet.isPresent()) {
+                    return JsonResults.of(notYet.get());
+                }
+            }
+            return JsonResults.of(conventions(call, context, name, backend,
                     stringArg(call, ECS_FIELDS_ARG)));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
+    }
+
+    // The backend is stage 2's question: while the session's build is still on its events pipeline, it isn't asked.
+    // Seen in testing: onboarding a CSV source, the agent's first question was the indexing backend.
+    private Optional<Map<String, Object>> notYet(final ToolCallContext context) {
+        final Optional<Map<String, Object>> next = plan.currentBuild(context)
+                .flatMap(build -> plan.nextStep(build, null))
+                .filter(step -> BuildPlan.isEventsStep(step.get("step")));
+        return next.map(step -> {
+            final Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "not_yet");
+            result.put("next", step);
+            result.put("hint", "The indexing backend, cluster and field naming are stage 2's decisions, and the "
+                               + "build is still on stage 1 (the events pipeline, step '" + step.get("step")
+                               + "'). Don't ask the user about indexing now: carry on with next, and call "
+                               + "get_field_conventions when next reaches the index step. Only if the user has "
+                               + "already chosen the backend, call again with backend= their answer.");
+            return result;
+        });
     }
 
     /// The conventions, as get_field_conventions gives them; draft_index_mapping puts the same choice to the user.

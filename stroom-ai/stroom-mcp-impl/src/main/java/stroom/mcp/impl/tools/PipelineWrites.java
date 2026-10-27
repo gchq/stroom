@@ -429,6 +429,16 @@ class PipelineWrites {
         final Map<String, Object> format = sample.get();
         final List<String> readers = BuildPlan.PARSER_FOR_FORMAT.get(String.valueOf(format.get("format")));
         if (!NullSafe.isEmptyCollection(readers) && !readers.contains(parser)) {
+            if ("xml fragments".equals(format.get("format")) && "XMLParser".equals(parser)) {
+                // The usual route for fragments: no template has an XMLFragmentParser, so the XMLParser one with
+                // its parser swapped. Said outright, as the general advice below was passed over (seen in testing).
+                throw new ToolRefusal("The build's sample (stream " + format.get("stream_id") + " of feed "
+                                      + format.get("feed") + ") is XML fragments (several root elements), which "
+                                      + "this template's XMLParser cannot read: it would keep only part of each "
+                                      + "record. Call create_pipeline again with replace_parser='XMLFragmentParser': "
+                                      + "its xmlFragmentParser.textConverter is the build's XML fragment wrapper "
+                                      + "(build_data_splitter save_as=<name> saves it first, if the build has none).");
+            }
             throw new ToolRefusal("The build's sample (stream " + format.get("stream_id") + " of feed "
                                   + format.get("feed") + ") is " + format.get("format") + ", which this template's "
                                   + parser + " cannot read; it needs " + readers.getFirst() + " ("

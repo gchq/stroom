@@ -78,11 +78,17 @@ the parser's output in its namespace (records:2 for a Data Splitter; http://www.
 /map for JSON lines, /array for an array), so set xpath-default-namespace to it.
 
 Text formats: write the Data Splitter with build_data_splitter from a spec (delimited, regex, key=value, syslog with a
-parsed body), which runs it on the sample and shows the records and field names; never by hand first.
+parsed body), which runs it on the sample and shows the records and field names; never by hand first. Records
+longer than the Data Splitter's read buffer (bufferSize on <dataSplitter>, 20,000 characters by default) are lost:
+build_data_splitter sets it from the sample, and buffer_size= raises it when the feed holds longer records
+(stroom://guide/data-splitter). build_data_splitter also runs the converter through Stroom's own parser
+(stroom_check): fix the spec until it matches, as processing does what that parser does.
 
 Translation: start from draft_translation_mapping (the user first chooses the event-logging version it writes, from
 those this Stroom holds, the newest recommended, 4.x as much as 3.x (namespace event-logging:3 is every version's):
-a form, or needs_guidance for you to ask; then a valid mapping drafted
+a form, or needs_guidance for you to ask, with its options; never name or offer a version before that result lists
+them, as versions differ between environments (seen: an agent offered 4.1.0, which the cluster didn't hold); then
+a valid mapping drafted
 from the sample: decide the action element per kind of event, the system name and environment; read_document
 type=XMLSchema element= says what an element takes: EventDetail for the action elements, EventDetail/<Action> for its
 children and values), then build_translation_xslt with the edited mapping and the draft's schema_version, the sample
