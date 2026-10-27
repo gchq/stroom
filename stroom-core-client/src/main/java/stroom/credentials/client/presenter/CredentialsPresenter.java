@@ -17,10 +17,12 @@
 package stroom.credentials.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.credentials.client.component.CredentialsListController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -46,10 +48,10 @@ public class CredentialsPresenter
     @Inject
     public CredentialsPresenter(final EventBus eventBus,
                                 final CredentialsView view,
-                                final CredentialsListPresenter credentialsListPresenter) {
+                                final CredentialsListController credentialsListPresenter) {
         super(eventBus, view);
         own(credentialsListPresenter);
-        getView().setCredentialsListView(credentialsListPresenter.getView());
+        getView().setCredentialsListView(credentialsListPresenter);
     }
 
     /**
@@ -92,7 +94,7 @@ public class CredentialsPresenter
         /// Shows the list of credentials.
         ///
         /// @param view Its view.
-        void setCredentialsListView(View view);
+        void setCredentialsListView(IsWidget view);
         // No code
     }
 

@@ -16,6 +16,7 @@
 
 package stroom.credentials.client.presenter;
 
+import stroom.credentials.client.component.CredentialsListController;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -24,6 +25,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -46,13 +48,13 @@ public class CredentialsManagerDialogPresenter
     public CredentialsManagerDialogPresenter(final EventBus eventBus,
                                              final CredentialsManagerDialogView view,
                                              final MarkdownConverter markdownConverter,
-                                             final CredentialsListPresenter credentialsListPresenter) {
+                                             final CredentialsListController credentialsListPresenter) {
         super(eventBus, view);
         own(credentialsListPresenter);
         this.markdownConverter = markdownConverter;
         credentialsListPresenter.setDefaultSelection(false);
         view.setCredentialsList(credentialsListPresenter);
-        getView().setCredentialsListView(credentialsListPresenter.getView());
+        getView().setCredentialsListView(credentialsListPresenter);
     }
 
     /**
@@ -93,12 +95,12 @@ public class CredentialsManagerDialogPresenter
         /// Shows the list of credentials.
         ///
         /// @param view Its view.
-        void setCredentialsListView(View view);
+        void setCredentialsListView(IsWidget view);
 
         /**
          * Hooks up the UI
          */
-        void setCredentialsList(CredentialsListPresenter credentialsList);
+        void setCredentialsList(CredentialsListController credentialsList);
 
         /**
          * Sets the label that tells the user where to get credentials from,

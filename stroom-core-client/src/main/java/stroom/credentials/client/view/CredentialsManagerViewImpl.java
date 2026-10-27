@@ -16,16 +16,16 @@
 
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.CredentialsListPresenter;
+import stroom.credentials.client.component.CredentialsListController;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter.CredentialsManagerDialogView;
 import stroom.credentials.client.presenter.CredentialsManagerDialogUiHandlers;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -42,7 +42,7 @@ public class CredentialsManagerViewImpl
     private final Widget widget;
 
     /** Reference to the credentials list */
-    private CredentialsListPresenter credentialsList;
+    private CredentialsListController credentialsList;
 
     /** Introduces the credentials and tells users where to get the credentials from */
     @UiField
@@ -63,7 +63,7 @@ public class CredentialsManagerViewImpl
      * Called from the Presenter to hook up the UI.
      */
     @Override
-    public void setCredentialsList(final CredentialsListPresenter credentialsListPresenter) {
+    public void setCredentialsList(final CredentialsListController credentialsListPresenter) {
         credentialsList = credentialsListPresenter;
     }
 
@@ -79,7 +79,7 @@ public class CredentialsManagerViewImpl
      * Used to add the list of credentials to the main tab.
      */
     @Override
-    public void setCredentialsListView(final View view) {
+    public void setCredentialsListView(final IsWidget view) {
         pnlCredentialsList.setWidget(view.asWidget());
     }
 
