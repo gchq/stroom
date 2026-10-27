@@ -167,18 +167,17 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         }
     }
 
-    // The backend is stage 2's question: while the session's build is still on its events pipeline, it isn't asked.
-    // Seen in testing: onboarding a CSV source, the agent's first question was the indexing backend.
+    // The backend is stage 2's question: until the session's build has Events (its events pipeline processed the
+    // sample), it isn't asked. Seen in testing: onboarding a CSV source, the agent's first question was the indexing
+    // backend.
     private Optional<Map<String, Object>> notYet(final ToolCallContext context) {
-        final Optional<Map<String, Object>> next = plan.currentBuild(context)
-                .flatMap(build -> plan.nextStep(build, null))
-                .filter(step -> BuildPlan.isEventsStep(step.get("step")));
+        final Optional<Map<String, Object>> next = plan.currentBuild(context).flatMap(plan::nextBeforeEvents);
         return next.map(step -> {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("status", "not_yet");
             result.put("next", step);
             result.put("hint", "The indexing backend, cluster and field naming are stage 2's decisions, and the "
-                               + "build is still on stage 1 (the events pipeline, step '" + step.get("step")
+                               + "build has no Events yet (its events pipeline is at step '" + step.get("step")
                                + "'). Don't ask the user about indexing now: carry on with next, and call "
                                + "get_field_conventions when next reaches the index step. Only if the user has "
                                + "already chosen the backend, call again with backend= their answer.");

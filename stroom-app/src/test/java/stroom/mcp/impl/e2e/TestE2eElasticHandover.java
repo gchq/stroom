@@ -603,8 +603,12 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         return asUser(admin, () -> pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, uuid)));
     }
 
-    // build_status's steps, by step: their state.
+    // build_status's steps, by step: their state (as it gives them since its result was made brief; full=true
+    // gives the list).
     private static Map<String, Object> states(final Map<String, Object> status) {
+        if (status.get("steps") instanceof final Map<?, ?> brief) {
+            return (Map<String, Object>) brief;
+        }
         final Map<String, Object> states = new LinkedHashMap<>();
         for (final Map<String, Object> step : (List<Map<String, Object>>) status.get("steps")) {
             states.put((String) step.get("step"), step.get("state"));

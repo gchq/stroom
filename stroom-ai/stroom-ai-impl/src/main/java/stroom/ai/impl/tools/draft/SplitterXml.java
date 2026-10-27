@@ -49,6 +49,11 @@ public final class SplitterXml {
     /// `unknown text`), as the server offers them.
     public static final Map<String, Map<String, Object>> EXAMPLES = examples();
 
+    /// What the Data Splitter schema (data-splitter-v3.0.xsd, `IdSimpleType`) allows as an element's id. Seen: an
+    /// id with an underscore (`blank_line`) made Stroom refuse every converter built, and no record was stepped,
+    /// though Stroom's parser alone (which [stroom.ai.impl.tools.sample.StroomSplitterRun] runs, without the
+    /// schema) read them.
+    public static final Pattern ID_PATTERN = Pattern.compile("[a-z][a-zA-Z0-9]*");
     /// A blank line at the place the records' split would read the next: white space and its new line, or white
     /// space to the end.
     public static final String BLANK_LINE = "^[^\\S\\n]*\\n|^[^\\S\\n]+$";
@@ -95,7 +100,7 @@ public final class SplitterXml {
     }
 
     /// The Data Splitter build_data_splitter gives Stroom: [#generateSplitter]'s, with an `id` on each of its parts
-    /// (`header`, `record`, `fields`, `blank_line`, `body`, `unparsed`), which Stroom's errors name, so an error in
+    /// (`header`, `record`, `fields`, `blankLine`, `body`, `unparsed`), which Stroom's errors name, so an error in
     /// processing says which part of the spec failed; and blank lines passed over, which Stroom otherwise writes as
     /// records of empty fields, with no error (seen in Stroom: `a,b` then a blank line gave a record `a=""`).
     ///
@@ -145,7 +150,7 @@ public final class SplitterXml {
         return DS_HEAD + body + DS_TAIL;
     }
 
-    // An id attribute, when ids are written.
+    // An id attribute, when ids are written. Each must match ID_PATTERN.
     private static String id(final boolean ids, final String id) {
         return ids
                 ? " id=\"" + id + "\""
@@ -157,7 +162,7 @@ public final class SplitterXml {
     // new line after an empty last cell, and that cell with it.
     private static String blankLineXml(final String indent, final boolean ids) {
         return ids
-                ? indent + "<regex id=\"blank_line\" pattern=\"" + attr(BLANK_LINE) + "\" />\n"
+                ? indent + "<regex id=\"blankLine\" pattern=\"" + attr(BLANK_LINE) + "\" />\n"
                 : "";
     }
 

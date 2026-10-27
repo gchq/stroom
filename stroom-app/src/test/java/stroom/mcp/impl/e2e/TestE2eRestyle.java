@@ -59,6 +59,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("unchecked")
 class TestE2eRestyle extends AbstractE2eTest {
 
+    // Where read_document says a kept mapping too large to show was saved.
+    private static final Pattern SAVED_TO = Pattern.compile("^It is too large to show .*?, so it has been saved to "
+                                                            + "(\\S+): ");
+
     private static final String BUILD = "restyle";
     private static final String FEED = "FW-JSON";
     private static final String PIPELINE = FEED + "-Events";
@@ -165,8 +169,13 @@ class TestE2eRestyle extends AbstractE2eTest {
                 .doesNotContain("\"extract\"");
         assertThat((String) summary.get("how")).as("how to change it").contains("uuid='" + xsltUuid
                                                                                  + "' alone regenerates it");
-        final Map<String, Object> whole = keptSection(readDocument(true));
-        assertThat(list(map(whole, "mapping"), "extract")).as("mapping=true gives it whole, to read").hasSize(24);
+        // mapping=true gives it whole, to read: too large to show, so saved to the workspace, read with jq.
+        final String whole = readDocument(true);
+        final Matcher saved = SAVED_TO.matcher(whole.substring(whole.indexOf("## Kept mapping\n")
+                                                               + "## Kept mapping\n".length()));
+        assertThat(saved.find()).as("the whole mapping saved to the workspace: %s", whole).isTrue();
+        assertThat(McpTestClient.text(client.call("jq", args("path", saved.group(1), "query",
+                ".mapping.extract | length")))).as("its extractions, read back").isEqualTo("24");
     }
 
     // ### 4. regenerated with uuid alone: the current style, the same Events
@@ -385,7 +394,7 @@ class TestE2eRestyle extends AbstractE2eTest {
                 : null)));
     }
 
-    // The ## Kept mapping section of read_document's answer.
+    // The ## Kept mapping section of read_document's answer, shown in it.
     private static Map<String, Object> keptSection(final String described) {
         assertThat(described).as("a kept mapping section").contains("## Kept mapping\n");
         String section = described.substring(described.indexOf("## Kept mapping\n") + "## Kept mapping\n".length());
