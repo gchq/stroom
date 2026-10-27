@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter;
+package stroom.document.asset.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.component.DocumentAssetUploadFileDialogController;
+import stroom.document.asset.client.presenter.DocumentAssetAddFileCallback;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.document.asset.shared.DocumentAssetUpdateNewFile;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResourceKey;
-import stroom.widget.component.client.AppRoot;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,76 +37,64 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * Uploads a single file straight into the <em>root</em> of a document's asset
- * store and hands back the URL to reference it by, without the caller needing the
- * Assets tab's tree UI.
- *
- * <p>This exists so a dialog that merely <em>references</em> an asset (for
- * example the Floor Map layer appearance dialog, which points a layer at an
- * image) can offer "upload a new one" inline. It reuses the standard
- * {@link DocumentAssetUploadFileDialogController} for the file chooser and the
- * standard {@code updateNewUploadedFile} endpoint for the upload, so a file
- * uploaded here is indistinguishable from one added on the Assets tab.</p>
- *
- * <p><strong>The upload lands in the draft asset store.</strong> Like every other
- * asset edit it only becomes servable once the owning document is saved, so a
- * freshly uploaded image is pickable immediately but will not render until save.
- * Callers that display the image should say so.</p>
- */
-public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCallback, HasHandlers {
+/// Uploads a single file straight into the _root_ of a document's asset store and hands back the
+/// URL to reference it by, without the caller needing the Assets tab's tree. It has no view of its
+/// own: its owner makes it (`make(provider)`) and it shows the upload dialog as its own.
+///
+/// This exists so a dialog that merely _references_ an asset (for example the Floor Map layer
+/// appearance dialog, which points a layer at an image) can offer "upload a new one" inline. It
+/// reuses the standard [DocumentAssetUploadFileDialogController] for the file chooser and the
+/// standard `updateNewUploadedFile` endpoint for the upload, so a file uploaded here is
+/// indistinguishable from one added on the Assets tab.
+///
+/// **The upload lands in the draft asset store.** Like every other asset edit it only becomes
+/// servable once the owning document is saved, so a freshly uploaded image is pickable immediately
+/// but will not render until save. Callers that display the image should say so.
+public class DocumentAssetQuickUploadController extends Controller implements DocumentAssetAddFileCallback {
 
     private static final DocumentAssetResource DOCUMENT_ASSET_RESOURCE =
             GWT.create(DocumentAssetResource.class);
 
-    /** Characters that cannot appear in an asset name (mirrors the Assets tab). */
+    // Characters that cannot appear in an asset name (mirrors the Assets tab)
     private static final String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
 
-    private final EventBus eventBus;
     private final RestFactory restFactory;
     private final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider;
 
-    /** Root-level asset names already in use, so an upload never silently replaces one. */
+    // Root-level asset names already in use, so an upload never silently replaces one
     private final Set<String> existingRootNames = new HashSet<>();
 
     private AbstractDoc document;
-    private TaskMonitorFactory taskMonitorFactory;
     private Consumer<String> onUploaded;
 
-    private final AppRoot appRoot;
-
+    /// Made by GIN; its owner makes it with `make(provider)`.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param restFactory          Lists the document's assets and uploads the file.
+    /// @param uploadDialogProvider Makes the dialog that chooses the file.
     @Inject
-    public DocumentAssetQuickUploadPresenter(
+    public DocumentAssetQuickUploadController(
             final EventBus eventBus,
             final RestFactory restFactory,
-            final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider,
-            final AppRoot appRoot) {
-        this.appRoot = appRoot;
-        this.eventBus = eventBus;
+            final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider) {
+        super(eventBus);
         this.restFactory = restFactory;
         this.uploadDialogProvider = uploadDialogProvider;
     }
 
-    /**
-     * Shows the Add File dialog and uploads the chosen file to the root of
-     * {@code document}'s asset store.
-     *
-     * <p>The document's existing root-level names are fetched first so a clashing
-     * filename can be given a numbered suffix rather than overwriting.</p>
-     *
-     * @param document           the asset store's owning document
-     * @param taskMonitorFactory task monitor for the fetch and upload calls
-     * @param onUploaded         called with the {@code /assets/<uuid>/<name>} URL of
-     *                           the uploaded file; not called if the user cancels
-     */
-    public void upload(final AbstractDoc document,
-                       final TaskMonitorFactory taskMonitorFactory,
-                       final Consumer<String> onUploaded) {
+    /// Shows the Add File dialog and uploads the chosen file to the root of `document`'s asset
+    /// store. The document's existing root-level names are fetched first so a clashing filename can
+    /// be given a numbered suffix rather than overwriting. Its owner's task monitor shows the fetch
+    /// and the upload.
+    ///
+    /// @param document   The asset store's owning document.
+    /// @param onUploaded Called with the `/assets/<uuid>/<name>` URL of the uploaded file; not
+    ///                   called if the user cancels.
+    public void upload(final AbstractDoc document, final Consumer<String> onUploaded) {
         if (document == null) {
             return;
         }
         this.document = document;
-        this.taskMonitorFactory = taskMonitorFactory;
         this.onUploaded = onUploaded;
 
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
@@ -128,13 +114,13 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
                 .onFailure(error -> AlertEvent.fireError(this,
                         "Unable to read the document's assets: " + error.getMessage(),
                         null))
-                .taskMonitorFactory(taskMonitorFactory)
+                .owner(this)
                 .exec();
     }
 
     private void showUploadDialog() {
         uploadDialogProvider.get().show(
-                appRoot,
+                this,
                 this,
                 // Always the root of the asset store — no tree to pick a folder from.
                 null,
@@ -142,11 +128,9 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
                 ILLEGAL_ASSET_NAME_CHARACTERS);
     }
 
-    /**
-     * The first path segment of an asset path, i.e. its name when the asset sits
-     * at the root. A nested asset's top-level folder name is returned, which is
-     * exactly what a root-level upload would clash with.
-     */
+    // The first path segment of an asset path, i.e. its name when the asset sits at the root. A
+    // nested asset's top-level folder name is returned, which is exactly what a root-level upload
+    // would clash with.
     private static String rootName(final String path) {
         if (path == null || path.isEmpty()) {
             return null;
@@ -163,13 +147,9 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
                 : name;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>{@code parentItem} is always {@code null} here — this uploader only ever
-     * writes to the root — so the check is against the root names fetched in
-     * {@link #upload}. A clashing {@code name.png} becomes {@code name_2.png}.</p>
-     */
+    /// `parentItem` is always `null` here (this uploader only ever writes to the root), so the
+    /// check is against the root names fetched in [#upload]. A clashing `name.png` becomes
+    /// `name_2.png`.
     @Override
     public String getNonClashingLabel(final DocumentAssetTreeItem parentItem,
                                       final String itemLabel,
@@ -220,12 +200,7 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
                 .onFailure(error -> AlertEvent.fireError(this,
                         "There was an error uploading the file: " + error.getMessage(),
                         null))
-                .taskMonitorFactory(taskMonitorFactory)
+                .owner(this)
                 .exec();
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
     }
 }

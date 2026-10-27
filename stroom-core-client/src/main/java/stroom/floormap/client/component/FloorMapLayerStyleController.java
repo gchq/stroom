@@ -18,13 +18,12 @@ package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.document.asset.client.component.DocumentAssetQuickUploadController;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
-import stroom.document.asset.client.presenter.DocumentAssetQuickUploadPresenter;
 import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -60,7 +59,7 @@ public class FloorMapLayerStyleController extends Controller {
 
     private final FloorMapLayerStyle view;
     private final DocumentAssetSelectionController assetSelection;
-    private final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider;
+    private final DocumentAssetQuickUploadController quickUpload;
 
     /// The document owning the asset store the graphic is picked from.
     private AbstractDoc document;
@@ -80,11 +79,11 @@ public class FloorMapLayerStyleController extends Controller {
     public FloorMapLayerStyleController(final EventBus eventBus,
                                         final FloorMapLayerStyle view,
                                         final Provider<DocumentAssetSelectionController> assetSelectionProvider,
-                                        final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider) {
+                                        final Provider<DocumentAssetQuickUploadController> quickUploadProvider) {
         super(eventBus);
         this.view = view;
-        this.quickUploadProvider = quickUploadProvider;
         initWidget(view);
+        quickUpload = make(quickUploadProvider);
 
         assetSelection = make(assetSelectionProvider).attach(view.getAssetBox());
         view.setOnUpload(this::uploadGraphic);
@@ -167,7 +166,7 @@ public class FloorMapLayerStyleController extends Controller {
         // The upload finishes asynchronously, so remember which showing of the
         // dialog asked for it and ignore the result if that has moved on.
         final int requestedFor = showCount;
-        quickUploadProvider.get().upload(document, getTaskMonitorFactory(), url -> {
+        quickUpload.upload(document, url -> {
             if (requestedFor != showCount || isDisposed()) {
                 return;
             }
@@ -218,13 +217,5 @@ public class FloorMapLayerStyleController extends Controller {
         return FloorMapLayerStyle.DEFAULT_SHAPE_LABEL.equals(name)
                 ? null
                 : Shape.valueOf(name);
-    }
-
-    // What shows the upload: what its owners provide, else the app's own spinner
-    private TaskMonitorFactory getTaskMonitorFactory() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
     }
 }
