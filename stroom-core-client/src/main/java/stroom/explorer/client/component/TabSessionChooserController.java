@@ -64,6 +64,7 @@ public class TabSessionChooserController extends Controller {
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(650, 340))
                 .caption(caption)
+                .onShow(e -> view.focus())
                 .onHideRequest(e -> {
                     final TabSession session = view.getSelected();
                     if (e.isOk() && session != null) {

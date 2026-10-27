@@ -33,6 +33,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
@@ -44,7 +45,7 @@ public class ResultStoreListController extends Controller {
     private final ResultStoreList view;
     private final RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>> dataProvider;
     private final ResultStoreModel resultStoreModel;
-    private final ResultStoreSettingsPresenter resultStoreSettingsPresenter;
+    private final Provider<ResultStoreSettingsPresenter> resultStoreSettingsProvider;
 
     /// Made by GIN, with its content.
     ///
@@ -52,21 +53,20 @@ public class ResultStoreListController extends Controller {
     /// @param view                         The content.
     /// @param resultStoreModel             Fetches, terminates and deletes the stores.
     /// @param dateTimeFormatter            Formats times in the user's preferences.
-    /// @param resultStoreSettingsPresenter Changes a store's settings.
+    /// @param resultStoreSettingsProvider  Makes the dialog that changes a store's settings.
     /// @param refCells                     Lets the owner cells open their users.
     @Inject
     public ResultStoreListController(final EventBus eventBus,
                                      final ResultStoreList view,
                                      final ResultStoreModel resultStoreModel,
                                      final DateTimeFormatter dateTimeFormatter,
-                                     final ResultStoreSettingsPresenter resultStoreSettingsPresenter,
+                                     final Provider<ResultStoreSettingsPresenter> resultStoreSettingsProvider,
                                      final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
         own(refCells);
-        own(resultStoreSettingsPresenter);
         this.resultStoreModel = resultStoreModel;
-        this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
+        this.resultStoreSettingsProvider = resultStoreSettingsProvider;
         initWidget(view);
 
         view.addColumns(dateTimeFormatter::format, refCells.configure(new UserRefCell.Builder<ResultStoreInfo>()));
@@ -129,7 +129,8 @@ public class ResultStoreListController extends Controller {
     private void edit() {
         final ResultStoreInfo selected = getSelectionModel().getSelected();
         if (selected != null) {
-            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> refresh());
+            makeDialog(resultStoreSettingsProvider)
+                    .show(selected, "Change Result Store Settings", ok -> refresh());
         }
     }
 
