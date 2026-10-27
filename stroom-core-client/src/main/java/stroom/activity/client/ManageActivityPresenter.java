@@ -17,6 +17,7 @@
 package stroom.activity.client;
 
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
+import stroom.activity.client.component.ActivityEditController;
 import stroom.activity.client.component.ActivityListController;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
@@ -60,7 +61,7 @@ public class ManageActivityPresenter
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final ActivityListController activityList;
-    private final Provider<ActivityEditPresenter> editProvider;
+    private final Provider<ActivityEditController> editProvider;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final UrlParameters urlParameters;
@@ -77,7 +78,7 @@ public class ManageActivityPresenter
     public ManageActivityPresenter(final EventBus eventBus,
                                    final ManageActivityView view,
                                    final ActivityListController activityList,
-                                   final Provider<ActivityEditPresenter> editProvider,
+                                   final Provider<ActivityEditController> editProvider,
                                    final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
                                    final UrlParameters urlParameters,
@@ -242,14 +243,15 @@ public class ManageActivityPresenter
 
     private void onEdit(final Activity e) {
         if (e != null) {
-            if (editProvider != null) {
-                final ActivityEditPresenter editor = makeDialog(editProvider);
-                editor.show(e, activity -> {
-                    activityList.refresh();
-                    setSelected(activity);
-                    updateQuickFilterTooltipContentSupplier();
-                });
-            }
+            uiConfigCache.get(uiConfig -> {
+                if (uiConfig != null && uiConfig.getActivity().isEnabled()) {
+                    editProvider.get().edit(this, e, uiConfig.getActivity(), activity -> {
+                        activityList.refresh();
+                        setSelected(activity);
+                        updateQuickFilterTooltipContentSupplier();
+                    });
+                }
+            }, this);
         }
     }
 

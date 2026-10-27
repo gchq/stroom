@@ -37,6 +37,15 @@ have no effect unless an administrator saves them as the default.
 * `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.java` and the server's
   use of the default config provider
 
+### Editing an activity didn't save the change (on master too)
+
+**Fixed (27 October 2026, in wave 11), reproduced in a story.** OK on Edit Activity validated what
+was typed, but saved an existing activity with the details it had before, so the change was lost
+(a new activity was saved as typed). The `EditActivity` story of `App/Main/ManageActivityDialog`
+checks the details saved.
+
+* `stroom-core-client/src/main/java/stroom/activity/client/component/ActivityEditController.java`
+
 ### A node group can't be renamed
 
 **Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the

@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.activity.client.ActivityEditPresenter;
-import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
-import stroom.activity.client.ActivityEditViewImpl;
 import stroom.activity.client.ManageActivityPresenter;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.client.ManageActivityViewImpl;
@@ -36,9 +33,6 @@ public class ActivityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ManageActivityPresenter.class,
                 ManageActivityView.class,
                 ManageActivityViewImpl.class);
-        bindPresenterWidget(ActivityEditPresenter.class,
-                ActivityEditView.class,
-                ActivityEditViewImpl.class);
     }
 }
 

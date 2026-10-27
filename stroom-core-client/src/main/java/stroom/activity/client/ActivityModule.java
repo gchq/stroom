@@ -16,7 +16,6 @@
 
 package stroom.activity.client;
 
-import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -25,6 +24,5 @@ public class ActivityModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bindPresenterWidget(ManageActivityPresenter.class, ManageActivityView.class, ManageActivityViewImpl.class);
-        bindPresenterWidget(ActivityEditPresenter.class, ActivityEditView.class, ActivityEditViewImpl.class);
     }
 }

@@ -34,7 +34,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/ManageActivityDialog`, showing Stroom's real [ManageActivityPresenter] (the
-/// 'Choose Activity' dialog, with its `ActivityEditPresenter`) with fake REST replies.
+/// 'Choose Activity' dialog, with its `ActivityEditController`) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `ActivityResource` (`/activity/v1`, see [ActivityFixtures]): the
 /// list (`GET ?filter=`, a sequence where the list changes), creating (`POST`), updating
@@ -117,6 +117,28 @@ public final class ManageActivityDialogStories {
                             .toBeInTheDocument());
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Edit: the chosen activity's form is filled from its properties, and OK saves what
+                // was typed (it saved the activity as it was before, losing the change)
+                .story("EditActivity", context -> render(context, fixtures(
+                        RestReply.json(ActivityFixtures.page(CASE_1, CASE_2)))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByText(TextMatch.containing("CASE-1")));
+                    play.click(screen.getByTitle("Edit Selected Activity"));
+                    play.waitFor(() -> play.expect(screen.querySelector("input[name=\"code\"]"))
+                            .toHaveValue("CASE-1"));
+                    play.clear(screen.querySelector("input[name=\"code\"]"));
+                    play.type(screen.querySelector("input[name=\"code\"]"), "CASE-1B");
+                    play.click(screen.within(screen.getByText("Edit Activity").closest(StroomDom.DIALOG))
+                            .getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(ActivityFixtures.PATH + "/1")
+                                    .withJsonBodyContaining("{\"details\": {\"properties\": [{\"id\": \"code\", "
+                                            + "\"value\": \"CASE-1B\"}, {\"id\": \"description\"}]}}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Activity")).toBeNull());
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // Validation: a too-short description is rejected with the config's
                 // validationMessage
                 .story("ValidationBlocksSave", context -> render(context, fixtures(
@@ -183,6 +205,7 @@ public final class ManageActivityDialogStories {
                 .route(RequestMatcher.get(ActivityFixtures.PATH).withQuery("filter=CASE-2"),
                         RestReply.json(ActivityFixtures.page(CASE_2)))
                 .get(ActivityFixtures.PATH, list, more)
+                .get(ActivityFixtures.PATH + "/1", RestReply.json(CASE_1))
                 .post(ActivityFixtures.PATH, RestReply.json(ActivityFixtures.activity(3)))
                 .delete(ActivityFixtures.PATH + "/1", RestReply.json("true"));
         return ActivityFixtures.common(builder, CASE_1).build();
