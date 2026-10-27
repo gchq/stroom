@@ -1,0 +1,111 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<!-- The events the documents in conditions-docs.json were indexed from, one per document in the same order, so
+     that the event ids match. Each element is a field, whose value conditions-events-to-records.xsl extracts as
+     is. The values are the documents' values, other than the dates, which are in each of the forms a date may be
+     extracted in, and the nested numbers, as an extracted value can only be a single number. -->
+<Events>
+  <Event>
+    <Id>1</Id>
+    <Keyword>apple</Keyword>
+    <ConstantKeyword>fixed</ConstantKeyword>
+    <Wildcard>apple</Wildcard>
+    <Text>The red apple</Text>
+    <MatchOnlyText>The red apple</MatchOnlyText>
+    <MatchOnlyText.keyword>The red apple</MatchOnlyText.keyword>
+    <Boolean>true</Boolean>
+    <Date>2026-01-01T00:00:00.000Z</Date>
+    <DateNanos>2026-01-01T00:00:00.000000000Z</DateNanos>
+    <Ip>10.0.0.1</Ip>
+    <Long>-5</Long>
+    <UnsignedLong>1</UnsignedLong>
+    <Integer>10</Integer>
+    <Short>10</Short>
+    <Byte>1</Byte>
+    <Version>1.0.0</Version>
+    <Float>1.5</Float>
+    <HalfFloat>1.5</HalfFloat>
+    <ScaledFloat>1.25</ScaledFloat>
+    <Double>1.5</Double>
+    <Attributes.Host>apple</Attributes.Host>
+    <Nested.Number>2</Nested.Number>
+  </Event>
+  <Event>
+    <Id>2</Id>
+    <Keyword>banana</Keyword>
+    <ConstantKeyword>fixed</ConstantKeyword>
+    <Wildcard>banana</Wildcard>
+    <Text>A yellow banana</Text>
+    <MatchOnlyText>A yellow banana</MatchOnlyText>
+    <MatchOnlyText.keyword>A yellow banana</MatchOnlyText.keyword>
+    <Boolean>false</Boolean>
+    <!-- Milliseconds since the epoch -->
+    <Date>1767312000000</Date>
+    <DateNanos>2026-01-02T00:00:00.000000001Z</DateNanos>
+    <Ip>10.0.0.2</Ip>
+    <Long>0</Long>
+    <UnsignedLong>42</UnsignedLong>
+    <Integer>20</Integer>
+    <Short>20</Short>
+    <Byte>2</Byte>
+    <Version>1.2.0</Version>
+    <Float>2.5</Float>
+    <HalfFloat>2.5</HalfFloat>
+    <ScaledFloat>2.5</ScaledFloat>
+    <Double>2.5</Double>
+    <Attributes.Host>banana</Attributes.Host>
+    <Nested.Number>3</Nested.Number>
+  </Event>
+  <Event>
+    <Id>3</Id>
+    <Keyword>Cherry</Keyword>
+    <ConstantKeyword>fixed</ConstantKeyword>
+    <Wildcard>Cherry</Wildcard>
+    <Text>The dark cherry</Text>
+    <MatchOnlyText>The dark cherry</MatchOnlyText>
+    <MatchOnlyText.keyword>The dark cherry</MatchOnlyText.keyword>
+    <Boolean>true</Boolean>
+    <!-- No fraction of a second -->
+    <Date>2026-01-03T00:00:00Z</Date>
+    <DateNanos>2026-01-03T00:00:00.000000000Z</DateNanos>
+    <Ip>192.168.0.1</Ip>
+    <Long>5</Long>
+    <UnsignedLong>9223372036854775807</UnsignedLong>
+    <Integer>30</Integer>
+    <Short>30</Short>
+    <Byte>3</Byte>
+    <Version>2.0.0</Version>
+    <Float>3.5</Float>
+    <HalfFloat>3.5</HalfFloat>
+    <ScaledFloat>3.75</ScaledFloat>
+    <Double>3.5</Double>
+    <Attributes.Host>Cherry</Attributes.Host>
+  </Event>
+  <Event>
+    <Id>4</Id>
+    <Keyword>apple pie</Keyword>
+    <ConstantKeyword>fixed</ConstantKeyword>
+    <Wildcard>apple pie</Wildcard>
+    <Text>Apple pie recipe</Text>
+    <MatchOnlyText>Apple pie recipe</MatchOnlyText>
+    <MatchOnlyText.keyword>Apple pie recipe</MatchOnlyText.keyword>
+    <Boolean>false</Boolean>
+    <!-- A zone offset other than UTC -->
+    <Date>2026-01-04T10:00:00.000+10:00</Date>
+    <DateNanos>2026-01-04T00:00:00.000000000Z</DateNanos>
+    <Ip>192.168.1.1</Ip>
+    <Long>10</Long>
+    <UnsignedLong>18446744073709551615</UnsignedLong>
+    <Integer>40</Integer>
+    <Short>40</Short>
+    <Byte>4</Byte>
+    <Version>10.0.0</Version>
+    <Float>4.5</Float>
+    <HalfFloat>4.5</HalfFloat>
+    <ScaledFloat>4.5</ScaledFloat>
+    <Double>4.5</Double>
+    <Attributes.Host>apple pie</Attributes.Host>
+  </Event>
+  <Event>
+    <Id>5</Id>
+  </Event>
+</Events>

@@ -1,0 +1,69 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<!-- Events whose values exercise Elasticsearch field types that need special handling. Elements are mapped
+     directly to JSON properties by typed-events-to-json.xsl. An event with Skip=true becomes an empty
+     document, which the indexing filter skips. -->
+<Events>
+  <Event>
+    <Time>2025-12-31T23:59:59.123456789Z</Time>
+    <Host>alpha</Host>
+    <Ip>10.0.0.1</Ip>
+    <Bytes>18446744073709551615</Bytes>
+    <Message>The quick brown fox</Message>
+    <Year>2025</Year>
+    <Users>
+      <User>
+        <Name>alice</Name>
+        <Role>admin</Role>
+        <Sessions>
+          <Session><Device>laptop</Device></Session>
+        </Sessions>
+      </User>
+      <User>
+        <Name>bob</Name>
+        <Role>user</Role>
+        <Sessions>
+          <Session><Device>phone</Device></Session>
+          <Session><Device>tablet</Device></Session>
+        </Sessions>
+      </User>
+    </Users>
+  </Event>
+  <Event>
+    <Skip>true</Skip>
+  </Event>
+  <Event>
+    <Time>2026-01-01T00:00:00.000000001Z</Time>
+    <Host>beta</Host>
+    <Ip>10.0.0.2</Ip>
+    <Bytes>9223372036854775808</Bytes>
+    <Message>jumps over the lazy dog</Message>
+    <Year>2026</Year>
+    <Users>
+      <User>
+        <Name>alice</Name>
+        <Role>user</Role>
+        <Sessions>
+          <Session><Device>phone</Device></Session>
+        </Sessions>
+      </User>
+      <User>
+        <Name>carol</Name>
+        <Role>admin</Role>
+      </User>
+    </Users>
+  </Event>
+  <Event>
+    <Time>2026-01-01T00:00:00.000000002Z</Time>
+    <Host>gamma</Host>
+    <Ip>192.168.1.1</Ip>
+    <Bytes>42</Bytes>
+    <Message>The lazy fox sleeps</Message>
+    <Year>2026</Year>
+    <Users>
+      <User>
+        <Name>bob</Name>
+        <Role>user</Role>
+      </User>
+    </Users>
+  </Event>
+</Events>

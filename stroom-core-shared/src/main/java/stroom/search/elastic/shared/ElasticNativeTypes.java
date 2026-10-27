@@ -31,7 +31,6 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("integer", FieldType.INTEGER);
         NATIVE_TYPE_MAP.put("short", FieldType.INTEGER);
         NATIVE_TYPE_MAP.put("byte", FieldType.INTEGER);
-        NATIVE_TYPE_MAP.put("version", FieldType.INTEGER);
 
         NATIVE_TYPE_MAP.put("long", FieldType.LONG);
         NATIVE_TYPE_MAP.put("unsigned_long", FieldType.LONG);
@@ -46,8 +45,12 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("date_nanos", FieldType.DATE);
 
         NATIVE_TYPE_MAP.put("text", FieldType.TEXT);
+        // Text without positions or scores, which still supports phrase queries, e.g. ECS's `message`
+        NATIVE_TYPE_MAP.put("match_only_text", FieldType.TEXT);
 
         NATIVE_TYPE_MAP.put("keyword", FieldType.KEYWORD);
+        // A version, e.g. `1.2.0`, is text, though Elasticsearch orders versions by their precedence
+        NATIVE_TYPE_MAP.put("version", FieldType.KEYWORD);
         NATIVE_TYPE_MAP.put("constant_keyword", FieldType.KEYWORD);
         NATIVE_TYPE_MAP.put("wildcard", FieldType.KEYWORD);
 
