@@ -61,6 +61,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `propose_dashboard` | Offers a button to create a dashboard from StroomQL | all | yes | | | Use | yes (button) | `verify_index` (part: it creates a dashboard) |
 | `propose_dashboard_change` | Proposes changes to the attached dashboard's tables and components | all | yes | | | View | yes (attached tab, button) | |
 | `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | all | yes | | | View | yes (button) | `write_documentation` (part: it writes a pipeline's or an index's) |
+| `propose_extraction_pipeline` | Offers a button to create the search extraction tried with `preview_extraction` for the attached dashboard's table, written only once the user confirms it | all | yes | | | View | yes (attached tab, button) | |
 | `propose_query` | Offers a button to create a StroomQL Query document | all | yes | | | Use | yes (button) | |
 | `propose_query_change` | Offers a button to change the query in the attached tab | all | yes | | | View, Use | yes (attached tab, button) | |
 | `propose_visualisation` | Plans a chart of the attached dashboard's (or query's) table, checks its rows can make it, and offers a button to create it there | all | yes | | | | yes (attached tab, button) | |

@@ -281,6 +281,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         final List<Sample> tried = new ArrayList<>();
         final Set<Long> streams = new LinkedHashSet<>();
         String xslt = null;
+        String namespace = null;
         try {
             for (final Long streamId : samples.stream().map(Sample::streamId).distinct().toList()) {
                 streams.add(streamId);
@@ -292,9 +293,9 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                             // The XPaths are in the events' namespace, which the XSLT declares.
                             final SteppingResult probe = walk.refresh(location,
                                     Map.of(trial.element(), ExtractionXslt.NAMESPACE_PROBE));
-                            final String namespace = ExtractionPreview.values(
+                            namespace = NullSafe.string(ExtractionPreview.values(
                                     SteppingWalks.output(probe, trial.element()))
-                                    .get(ExtractionXslt.PROBE_NAMESPACE);
+                                    .get(ExtractionXslt.PROBE_NAMESPACE));
                             xslt = ExtractionXslt.xslt(namespace, fields);
                         }
                         tried.add(step(walk, location, sample, trial.element(), xslt));
@@ -319,7 +320,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
             workspace.write(WorkspacePath.parse(XSLT_OUT), xslt, null);
         }
         final Preview preview = ExtractionPreview.preview(fields, tried, columns, dataSourceFields);
-        return ToolResult.text(describe(tableName, trial, preview, xslt != null));
+        return ToolResult.text(describe(tableName, trial, preview, namespace));
     }
 
     // Steps one event with the extraction's XSLT.
@@ -411,12 +412,14 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
     private static String describe(final String tableName,
                                    final Trial trial,
                                    final Preview preview,
-                                   final boolean written) {
+                                   final String namespace) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Tried the extraction for table '").append(tableName).append("' on ").append(preview.stepped())
                 .append(" event(s), in ").append(trial.description()).append(". Nothing was changed.");
-        if (written) {
-            sb.append(" The XSLT Stroom wrote from the fields is in ").append(XSLT_OUT).append('.');
+        if (namespace != null) {
+            sb.append(" The XSLT Stroom wrote from the fields is in ").append(XSLT_OUT).append("; the events' "
+                                                                                          + "namespace is '")
+                    .append(namespace).append("'.");
         }
         sb.append("\n\n").append(preview.table());
         if (!preview.problems().isEmpty()) {
@@ -426,7 +429,8 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
             sb.append("\n\nTo check:\n- ").append(String.join("\n- ", preview.notes()));
         }
         if (preview.problems().isEmpty()) {
-            sb.append("\n\nShow the user the table and anything to check, and agree the fields with them.");
+            sb.append("\n\nShow the user the table and anything to check, and agree the fields with them; then "
+                      + "offer to make it with propose_extraction_pipeline, with these fields and the namespace.");
         }
         return sb.toString();
     }

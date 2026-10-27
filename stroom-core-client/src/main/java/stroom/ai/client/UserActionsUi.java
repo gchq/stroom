@@ -49,6 +49,9 @@ final class UserActionsUi {
     /// create, then adds to the dashboard (or the query's show clause), unsaved.
     static final String CREATE_VISUALISATION = "create_visualisation";
     static final String CREATE_VISUALISATIONS = "create_visualisations";
+    /// A search extraction the agent proposed for a dashboard table, which the button shows (what would be written,
+    /// with the name and folder the user chooses) for them to confirm, then writes and sets the table up to use.
+    static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
@@ -188,6 +191,8 @@ final class UserActionsUi {
             return "Create visualisation…";
         } else if (CREATE_VISUALISATIONS.equals(action)) {
             return "Create visualisations…";
+        } else if (CREATE_EXTRACTION_PIPELINE.equals(action)) {
+            return "Create extraction pipeline…";
         } else if (APPLY_CODE_CHANGE.equals(action) || APPLY_DOCUMENTATION_CHANGE.equals(action)) {
             return "Review and apply…";
         } else if (APPLY_QUERY_CHANGE.equals(action)) {

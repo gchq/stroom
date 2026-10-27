@@ -16,19 +16,25 @@
 
 package stroom.ai.impl.extraction;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// The pipelines a dashboard table's search extraction runs in: which element of one writes its records, and the
 /// pipeline a new extraction is tried in before one is made.
@@ -41,9 +47,33 @@ public final class ExtractionPipelines {
     /// The types of element that read an extraction's records into a table.
     static final Set<String> OUTPUT_TYPES = Set.of("SearchResultOutputFilter", "DynamicSearchResultOutputFilter");
     static final String XSLT_FILTER = "XSLTFilter";
+    // A data element of an XSLT, with its name given literally: <data name="UserId" ...>.
+    private static final Pattern DATA_NAME = Pattern.compile("<data\\s+name\\s*=\\s*[\"']([^\"'{}]+)[\"']");
+    /// The element of a pipeline of its own that reads the records into the table.
+    static final String OUTPUT_ELEMENT = "searchResultOutputFilter";
 
     private ExtractionPipelines() {
         // Static only.
+    }
+
+    // The elements an extraction pipeline reads its events with, up to its XSLT: an Events stream parsed, split
+    // into events, each given its stream and event ids.
+    private static PipelineDataBuilder elements(final DocRef xslt) {
+        return new PipelineDataBuilder()
+                .addElement(PipelineDataUtil.createElement("Source", "Source", null, null))
+                .addElement(PipelineDataUtil.createElement("xmlParser", "XMLParser", null, null))
+                .addElement(PipelineDataUtil.createElement("splitFilter", "SplitFilter", null, null))
+                .addElement(PipelineDataUtil.createElement("idEnrichmentFilter", "IdEnrichmentFilter", null, null))
+                .addElement(PipelineDataUtil.createElement(XSLT_ELEMENT, XSLT_FILTER, null, null))
+                .addProperty(new PipelineProperty("splitFilter", "splitDepth", new PipelinePropertyValue(1)))
+                .addProperty(PipelineDataUtil.createProperty(XSLT_ELEMENT, "xslt", xslt));
+    }
+
+    private static void links(final PipelineDataBuilder data) {
+        for (final List<String> link : List.of(List.of("Source", "xmlParser"), List.of("xmlParser", "splitFilter"),
+                List.of("splitFilter", "idEnrichmentFilter"), List.of("idEnrichmentFilter", XSLT_ELEMENT))) {
+            data.addLink(link.get(0), link.get(1));
+        }
     }
 
     /// Finds the element of an extraction pipeline whose XSLT writes its records: the last XSLT before the element
@@ -67,6 +97,37 @@ public final class ExtractionPipelines {
         return Optional.empty();
     }
 
+    /// The fields an extraction pipeline gives, as its XSLT that writes its records names them: from the fields
+    /// Stroom AI wrote it from, or, for one written by hand, the names its `data` elements give literally.
+    ///
+    /// @param documentAccess The user's access to documents.
+    /// @param pipeline       An extraction pipeline.
+    /// @return The fields' names; empty if the pipeline or its XSLT can't be read.
+    public static Optional<Set<String>> extractedFields(final DocumentAccess documentAccess, final DocRef pipeline) {
+        final MergedPipeline merged = MergedPipeline.load(documentAccess, pipeline.getUuid()).orElse(null);
+        final DocRef xslt = merged == null
+                ? null
+                : outputXslt(merged).flatMap(element -> xsltOf(merged, element)).orElse(null);
+        final String code = xslt == null
+                ? null
+                : documentAccess.read(xslt, XsltDoc.class).map(XsltDoc::getData).orElse(null);
+        if (code == null) {
+            return Optional.empty();
+        }
+        final Set<String> fields = new LinkedHashSet<>();
+        final Optional<ExtractionXslt.Generated> generated = ExtractionXslt.read(code);
+        if (generated.isPresent()) {
+            fields.addAll(ExtractionField.RESERVED);
+            generated.get().fields().forEach(field -> fields.add(field.name()));
+        } else {
+            final Matcher matcher = DATA_NAME.matcher(code);
+            while (matcher.find()) {
+                fields.add(matcher.group(1).strip());
+            }
+        }
+        return Optional.of(fields);
+    }
+
     /// The XSLT an element of a pipeline uses.
     ///
     /// @param pipeline A pipeline, merged with what it inherits.
@@ -83,6 +144,28 @@ public final class ExtractionPipelines {
         return Optional.empty();
     }
 
+    /// The pipeline data of a new extraction pipeline Stroom makes: a child of the Search Extraction template
+    /// setting only its XSLT, or, without the template, a pipeline of its own as the template makes, writing its
+    /// records to the search result output.
+    ///
+    /// @param template The Search Extraction template, or null if there is none to inherit.
+    /// @param xslt     The pipeline's XSLT.
+    /// @return The pipeline data.
+    public static PipelineData data(final DocRef template, final DocRef xslt) {
+        if (template != null) {
+            return new PipelineDataBuilder()
+                    .addProperty(PipelineDataUtil.createProperty(XSLT_ELEMENT, "xslt", xslt))
+                    .build();
+        }
+        final PipelineDataBuilder data = elements(xslt)
+                .addProperty(new PipelineProperty("splitFilter", "splitCount", new PipelinePropertyValue(100)))
+                .addElement(PipelineDataUtil.createElement(OUTPUT_ELEMENT, "SearchResultOutputFilter", null,
+                        null));
+        links(data);
+        data.addLink(XSLT_ELEMENT, OUTPUT_ELEMENT);
+        return data.build();
+    }
+
     /// A pipeline to try a new extraction in, unsaved: an Events stream parsed, split into events, each given its
     /// stream and event ids, and written as records by [#XSLT_ELEMENT], as the Search Extraction template does. The
     /// XSLT is given as code when stepped; stepping only takes code for an element whose XSLT is set, so it is set
@@ -91,20 +174,10 @@ public final class ExtractionPipelines {
     /// @param placeholder An XSLT the user can view.
     /// @return The pipeline.
     public static PipelineDoc trial(final DocRef placeholder) {
-        final PipelineDataBuilder data = new PipelineDataBuilder()
-                .addElement(PipelineDataUtil.createElement("Source", "Source", null, null))
-                .addElement(PipelineDataUtil.createElement("xmlParser", "XMLParser", null, null))
-                .addElement(PipelineDataUtil.createElement("splitFilter", "SplitFilter", null, null))
-                .addElement(PipelineDataUtil.createElement("idEnrichmentFilter", "IdEnrichmentFilter", null, null))
-                .addElement(PipelineDataUtil.createElement(XSLT_ELEMENT, XSLT_FILTER, null, null))
-                .addProperty(new PipelineProperty("splitFilter", "splitDepth", new PipelinePropertyValue(1)))
-                // One event a record, as each is stepped on its own.
-                .addProperty(new PipelineProperty("splitFilter", "splitCount", new PipelinePropertyValue(1)))
-                .addProperty(PipelineDataUtil.createProperty(XSLT_ELEMENT, "xslt", placeholder));
-        for (final List<String> link : List.of(List.of("Source", "xmlParser"), List.of("xmlParser", "splitFilter"),
-                List.of("splitFilter", "idEnrichmentFilter"), List.of("idEnrichmentFilter", XSLT_ELEMENT))) {
-            data.addLink(link.get(0), link.get(1));
-        }
+        // One event a record, as each is stepped on its own.
+        final PipelineDataBuilder data = elements(placeholder)
+                .addProperty(new PipelineProperty("splitFilter", "splitCount", new PipelinePropertyValue(1)));
+        links(data);
         return PipelineDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("Extraction trial")

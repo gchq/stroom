@@ -69,24 +69,8 @@ public final class ExtractionPreview {
                                   final List<Sample> samples,
                                   final Map<String, String> columns,
                                   final List<String> dataSourceFields) {
-        final List<String> problems = new ArrayList<>();
+        final List<String> problems = new ArrayList<>(blankColumns(fields, columns));
         final List<String> notes = new ArrayList<>();
-        final Set<String> given = new LinkedHashSet<>();
-        ExtractionField.RESERVED.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
-        fields.forEach(field -> given.add(field.name().toLowerCase(Locale.ROOT)));
-
-        // Columns whose fields the extraction wouldn't give would be blank.
-        NullSafe.map(columns).forEach((column, expression) -> {
-            for (final String field : fieldsOf(expression)) {
-                if (!given.contains(field.toLowerCase(Locale.ROOT))) {
-                    problems.add("Column '" + column + "' uses " + field + ", which the extraction doesn't give: "
-                                 + "turning extraction on fills every value in the table from it, so the column "
-                                 + "would be blank. Give " + field + " too, with the XPath of its value (e.g. from "
-                                 + "the XSLT that indexes it, or the table's extraction XSLT now, with "
-                                 + "read_document).");
-                }
-            }
-        });
 
         // Fields the data source has too.
         if (dataSourceFields != null) {
@@ -130,11 +114,36 @@ public final class ExtractionPreview {
         return new Preview(table(fields, samples), problems, notes, stepped.size());
     }
 
+    /// The columns of a table that an extraction would leave blank: those using a field it doesn't give, as turning
+    /// extraction on fills every value in the table from it, the indexed ones included.
+    ///
+    /// @param fields  The fields it gives, besides StreamId and EventId.
+    /// @param columns The table's columns: each one's expression, by column name.
+    /// @return Each such column, said; none if there are none.
+    public static List<String> blankColumns(final List<ExtractionField> fields, final Map<String, String> columns) {
+        final Set<String> given = new LinkedHashSet<>();
+        ExtractionField.RESERVED.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
+        fields.forEach(field -> given.add(field.name().toLowerCase(Locale.ROOT)));
+        final List<String> problems = new ArrayList<>();
+        NullSafe.map(columns).forEach((column, expression) -> {
+            for (final String field : fieldsOf(expression)) {
+                if (!given.contains(field.toLowerCase(Locale.ROOT))) {
+                    problems.add("Column '" + column + "' uses " + field + ", which the extraction doesn't give: "
+                                 + "turning extraction on fills every value in the table from it, so the column "
+                                 + "would be blank. Give " + field + " too, with the XPath of its value (e.g. from "
+                                 + "the XSLT that indexes it, or the table's extraction XSLT now, with "
+                                 + "read_document).");
+                }
+            }
+        });
+        return problems;
+    }
+
     /// The fields an expression names, e.g. `UserId` in `upperCase(${UserId})`, but not an annotation's.
     ///
     /// @param expression A column's expression.
     /// @return The fields it names.
-    static Set<String> fieldsOf(final String expression) {
+    public static Set<String> fieldsOf(final String expression) {
         final Set<String> fields = new LinkedHashSet<>();
         final Matcher matcher = FIELD_REFERENCE.matcher(NullSafe.string(expression));
         while (matcher.find()) {

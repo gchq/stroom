@@ -17,6 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.extraction.ExtractionField;
+import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -97,6 +99,10 @@ public class UserActions {
     /// created, the Visualisation is given a chart the agent planned, drawn with ECharts, and is added to the
     /// dashboard (or the query's `show` clause), unsaved (only from Stroom's own propose_visualisation tool).
     public static final String CREATE_VISUALISATION = "create_visualisation";
+    /// Shows what a search extraction the agent proposed for a dashboard table would write (an XSLT and a pipeline),
+    /// with the name and folder the user chooses, for them to confirm; only then is it written, and the table set
+    /// up to use it, unsaved (only from Stroom's own propose_extraction_pipeline tool).
+    public static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
     /// Creates several planned Visualisations in one folder the user picks, and adds them to a dashboard.
     public static final String CREATE_VISUALISATIONS = "create_visualisations";
     /// The most Visualisations one create_visualisations button creates.
@@ -235,6 +241,9 @@ public class UserActions {
                         : Optional.empty();
                 case CREATE_VISUALISATION -> builtIn.contains(map)
                         ? createVisualisation(id, map, expiresMs)
+                        : Optional.empty();
+                case CREATE_EXTRACTION_PIPELINE -> builtIn.contains(map)
+                        ? createExtraction(id, map, expiresMs)
                         : Optional.empty();
                 default -> Optional.empty();
             };
@@ -460,6 +469,41 @@ public class UserActions {
                         ? null
                         : truncate(summary, MAX_DETAILS_CHARS),
                 null, null, target, plan.toJson(), List.of(), expiresMs, Status.PENDING, null, name));
+    }
+
+    /// A button that shows what a search extraction proposed for a dashboard table the user may see would write, for
+    /// them to confirm. The extraction is kept as JSON in `request` ([ExtractionPlan]), the dashboard in `doc` and
+    /// the suggested name in `name`; it is read and checked again when the button is clicked.
+    private Optional<UserActionRecord> createExtraction(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String name = NullSafe.get(string(map.get("name")), String::strip);
+        final String planJson = string(map.get("plan"));
+        if (named == null || !DashboardDoc.TYPE.equals(named.getType())
+            || name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS || hasControlCharacters(name)
+            || planJson == null || planJson.length() > MAX_REQUEST_CHARS) {
+            return Optional.empty();
+        }
+        final ExtractionPlan plan;
+        try {
+            plan = ExtractionPlan.fromJson(planJson);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> "Dropping an extraction that can't be read: " + e.getMessage());
+            return Optional.empty();
+        }
+        final DocRef dashboard = lookup.find(named).orElse(null);
+        if (dashboard == null || hasControlCharacters(plan.component())
+            || !ID_PATTERN.matcher(plan.componentId()).matches()) {
+            return Optional.empty();
+        }
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Create extraction pipeline '" + name + "' for table '" + plan.component()
+                             + "' on dashboard '" + dashboard.getName() + "', extracting "
+                             + String.join(", ", plan.fields().stream().map(ExtractionField::name).toList());
+        return Optional.of(new UserActionRecord(id, CREATE_EXTRACTION_PIPELINE, truncate(label, MAX_DETAILS_CHARS),
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, dashboard, plan.toJson(), List.of(), expiresMs, Status.PENDING, null, name));
     }
 
     /// A button that creates several charts planned for a dashboard's tables, in one folder the user picks, for a

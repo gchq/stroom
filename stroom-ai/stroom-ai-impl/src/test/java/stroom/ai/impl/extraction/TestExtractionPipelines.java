@@ -16,17 +16,22 @@
 
 package stroom.ai.impl.extraction;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineLayer;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,6 +85,36 @@ class TestExtractionPipelines {
     }
 
     // Elements given as "id:type", each linked to the next.
+    @Test
+    void theFieldsAPipelineExtractsAreReadFromItsXslt() {
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        final PipelineDoc pipeline = PipelineDoc.builder().uuid(CHILD.getUuid()).name(CHILD.getName())
+                .pipelineData(ExtractionPipelines.data(null, XSLT)).build();
+        Mockito.when(documentAccess.findDocRef(CHILD.getUuid())).thenReturn(Optional.of(CHILD));
+        Mockito.when(documentAccess.read(CHILD, PipelineDoc.class)).thenReturn(Optional.of(pipeline));
+
+        // One Stroom AI wrote: its fields, with the ids.
+        xslt(documentAccess, ExtractionXslt.xslt("", List.of(new ExtractionField("UserId", "User/Id", null))));
+        assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD))
+                .hasValue(Set.of("StreamId", "EventId", "UserId"));
+
+        // One written by hand: the names its data elements give.
+        xslt(documentAccess, "<record><data name=\"StreamId\" value=\"{@StreamId}\"/><data name=\"Host\" "
+                             + "value=\"{Host}\"/></record>");
+        assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD)).hasValue(Set.of("StreamId", "Host"));
+
+        // None that can be read.
+        Mockito.when(documentAccess.read(XSLT, XsltDoc.class)).thenReturn(Optional.empty());
+        assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD)).isEmpty();
+        Mockito.when(documentAccess.read(CHILD, PipelineDoc.class)).thenReturn(Optional.empty());
+        assertThat(ExtractionPipelines.extractedFields(documentAccess, CHILD)).isEmpty();
+    }
+
+    private static void xslt(final DocumentAccess documentAccess, final String code) {
+        Mockito.when(documentAccess.read(XSLT, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid(XSLT.getUuid()).name(XSLT.getName()).data(code).build()));
+    }
+
     private static PipelineDataBuilder chain(final PipelineDataBuilder builder, final String... elements) {
         String previous = null;
         for (final String element : elements) {

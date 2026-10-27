@@ -20,17 +20,24 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.UserActionRecord.CodeChange;
 import stroom.ai.impl.UserActionRecord.DashboardChange;
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.extraction.ExtractionActions;
+import stroom.ai.impl.extraction.ExtractionField;
+import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiCreateExtraction;
 import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.ai.shared.AiWriteExtractionRequest;
+import stroom.ai.shared.AiWriteExtractionResult;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.diff.DiffBlock;
 import stroom.util.shared.diff.LineDiff;
@@ -68,6 +75,9 @@ public class UserActionService {
     static final String UNDO_DASHBOARD_COMMAND = "Undo applied dashboard change";
     static final String APPLY_DOCUMENTATION_COMMAND = "Apply proposed documentation change";
     static final String UNDO_DOCUMENTATION_COMMAND = "Undo applied documentation change";
+    static final String WRITE_EXTRACTION_COMMAND = "Write proposed search extraction";
+    /// What a written extraction's card says.
+    static final String WROTE_EXTRACTION = "Written. The table now uses it, unsaved: save the dashboard to keep it.";
     /// Why a proposed documentation change can't be applied, as the documentation was saved since.
     static final String DOCUMENTATION_CHANGED = "The documentation has been saved with other text since this was "
                                                 + "proposed. Ask again for a change to the current documentation.";
@@ -84,6 +94,7 @@ public class UserActionService {
     private final AiAuditLog auditLog;
     private final DashboardBuilder dashboardBuilder;
     private final VisualisationActions visualisationActions;
+    private final ExtractionActions extractionActions;
 
     @Inject
     UserActionService(final AiService aiService,
@@ -93,7 +104,8 @@ public class UserActionService {
                       final ProcessorFilterService processorFilterService,
                       final AiAuditLog auditLog,
                       final DashboardBuilder dashboardBuilder,
-                      final VisualisationActions visualisationActions) {
+                      final VisualisationActions visualisationActions,
+                      final ExtractionActions extractionActions) {
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.userActions = userActions;
@@ -102,6 +114,7 @@ public class UserActionService {
         this.auditLog = auditLog;
         this.dashboardBuilder = dashboardBuilder;
         this.visualisationActions = visualisationActions;
+        this.extractionActions = extractionActions;
     }
 
     /// Does a user action, if it can still be done.
@@ -162,12 +175,96 @@ public class UserActionService {
             case UserActions.CREATE_DASHBOARD -> createDashboard(chatId, action);
             case UserActions.CREATE_VISUALISATION -> createVisualisation(chatId, action);
             case UserActions.CREATE_VISUALISATIONS -> createVisualisations(chatId, action);
+            case UserActions.CREATE_EXTRACTION_PIPELINE -> createExtraction(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
         };
+    }
+
+    /// Writes the search extraction a `create_extraction_pipeline` button proposed (its XSLT and pipeline), once the
+    /// user has confirmed exactly what is written, with the name and folder they chose, as the user. Nothing else is
+    /// written: the hash of what they were shown must be that of what would be written now. The button is claimed
+    /// first, so it writes once; if the write fails, it can be used again. The browser then sets the table up to use
+    /// the pipeline, unsaved.
+    ///
+    /// @param chatId    The chat, which the user must own.
+    /// @param messageId The tool result message the action is in.
+    /// @param actionId  The action's id.
+    /// @param request   The name, folder and hash the user confirmed.
+    /// @return What happened: the new pipeline and the table's changes, or why nothing was written.
+    public AiWriteExtractionResult writeExtraction(final int chatId,
+                                                   final int messageId,
+                                                   final String actionId,
+                                                   final AiWriteExtractionRequest request) {
+        aiService.verifyOwnership(chatId);
+        final AiChatMessage message = findMessage(chatId, messageId);
+        final ToolResultRecord result = message == null
+                ? null
+                : read(message.getMessage());
+        final UserActionRecord action = result == null
+                ? null
+                : find(result, actionId);
+        if (action == null || !UserActions.CREATE_EXTRACTION_PIPELINE.equals(action.action())) {
+            return AiWriteExtractionResult.failed(NOT_IN_CHAT);
+        }
+        if (action.status() != Status.PENDING) {
+            return AiWriteExtractionResult.failed("This has already been done.");
+        }
+        if (System.currentTimeMillis() > action.expiresMs()) {
+            return AiWriteExtractionResult.failed("This button has expired. Ask again for an up-to-date one.");
+        }
+        final String target = "the extraction of " + describeDoc(action);
+        if (action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard no longer exists, or you cannot see it.";
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), WRITE_EXTRACTION_COMMAND, target, problem,
+                    false);
+            return AiWriteExtractionResult.failed(problem);
+        }
+        final ExtractionPlan plan;
+        try {
+            plan = ExtractionPlan.fromJson(action.request());
+        } catch (final IllegalArgumentException e) {
+            return AiWriteExtractionResult.failed(e.getMessage());
+        }
+        // Claimed before anything is written, so a second click writes nothing.
+        final String claimed = update(message, result, action.withStatus(Status.DONE, WROTE_EXTRACTION));
+        if (claimed == null) {
+            return AiWriteExtractionResult.failed("This has already been done.");
+        }
+        final ExtractionActions.Written written;
+        try {
+            written = extractionActions.write(action.doc(), plan, request);
+        } catch (final RuntimeException e) {
+            final String problem = e instanceof IllegalStateException
+                    ? e.getMessage()
+                    : "The extraction couldn't be written: " + NullSafe.nonBlankStringElse(e.getMessage(),
+                            e.getClass().getSimpleName());
+            if (!(e instanceof IllegalStateException)) {
+                LOGGER.error(() -> LogUtil.message("Unable to write the extraction of {}", target), e);
+            }
+            // So the button can be used again.
+            release(chatId, messageId, actionId, claimed, message.getMessage());
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), WRITE_EXTRACTION_COMMAND, target, problem,
+                    false);
+            return AiWriteExtractionResult.failed(problem);
+        }
+        final String fields = String.join(", ", plan.fields().stream().map(ExtractionField::name).toList());
+        auditLog.processed(ToolSession.chat(chatId), written.xslt(), WRITE_EXTRACTION_COMMAND, target,
+                "Created XSLT '" + written.xslt().getName() + "', extracting " + fields, true);
+        auditLog.processed(ToolSession.chat(chatId), written.pipeline(), WRITE_EXTRACTION_COMMAND, target,
+                "Created pipeline '" + written.pipeline().getName() + "' using XSLT '" + written.xslt().getName()
+                + "'", true);
+        // So the model knows on its next turn (or now, if it is working).
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I confirmed the "
+                                                                     + "extraction: Stroom wrote XSLT and pipeline '"
+                                                                     + written.pipeline().getName() + "' ("
+                                                                     + written.pipeline().getUuid() + "), "
+                                                                     + "extracting " + fields + ", and set table '"
+                                                                     + plan.component() + "' to use it, unsaved.");
+        return new AiWriteExtractionResult(true, WROTE_EXTRACTION, written.pipeline(), written.tableChanges());
     }
 
     /// Records that the user undid a proposed code change they had applied to a stepping element's editor with a
@@ -295,6 +392,27 @@ public class UserActionService {
                         ? "Rewrote Visualisation '" + create.getReplaced().getName() + "' for the new chart"
                         : "Opened the New Visualisation dialog", true);
         return AiUserActionResult.createVisualisation(create);
+    }
+
+    /// Says what a proposed search extraction would write, for the browser to show the user with the name and folder
+    /// they choose, and to confirm. Nothing is written here (see [#writeExtraction]), so the button can be used
+    /// again.
+    private AiUserActionResult createExtraction(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard no longer exists, or you can't see it.";
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final AiCreateExtraction create;
+        try {
+            create = extractionActions.prepare(action.doc(), action.name(), ExtractionPlan.fromJson(action.request()));
+        } catch (final IllegalArgumentException | IllegalStateException e) {
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
+            return new AiUserActionResult(false, e.getMessage(), null);
+        }
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
+                "Showed what would be written, to confirm", true);
+        return AiUserActionResult.createExtraction(create);
     }
 
     /// Lets the browser create several planned charts: each one's Visualisation settings, built again from its plan
@@ -659,6 +777,29 @@ public class UserActionService {
     /// Writes the result with the action changed, if the message has not changed since it was read.
     ///
     /// @return The message's new text, or null if it had changed.
+    // Gives back a button claimed for something that then wasn't done: the message as it was, or, if it has changed
+    // since it was claimed, the button made pending again in it as it is now.
+    private void release(final int chatId,
+                         final int messageId,
+                         final String actionId,
+                         final String claimed,
+                         final String original) {
+        if (aiDao.compareAndSetMessageText(messageId, claimed, original)) {
+            return;
+        }
+        final AiChatMessage now = findMessage(chatId, messageId);
+        final ToolResultRecord result = now == null
+                ? null
+                : read(now.getMessage());
+        final UserActionRecord action = result == null
+                ? null
+                : find(result, actionId);
+        if (action == null || update(now, result, action.withStatus(Status.PENDING, null)) == null) {
+            LOGGER.warn("Unable to make user action '{}' of message {} pending again, after it wasn't done", actionId,
+                    messageId);
+        }
+    }
+
     private String update(final AiChatMessage message, final ToolResultRecord result, final UserActionRecord action) {
         final String text = JsonUtil.writeValueAsString(replace(result, action), false);
         return aiDao.compareAndSetMessageText(message.getId(), message.getMessage(), text)
