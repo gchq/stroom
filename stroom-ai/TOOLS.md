@@ -559,6 +559,8 @@ that builds something stands on (the MCP server's `security/guard.py`, `security
   records a clean step (`STEPPED`), a passed verification (`VERIFIED`) or Events that passed check_events
   (`VALIDATED`) for the pipeline's code; `steppedClean`, `verified` and `validated` say whether its saved code has.
   `update(build, ref, change)` changes a document's entry (`copy_of`, `version_of`, `stepped_streams`, ...).
+  Build-level state sits beside the entries: the feeds it works from (`source_feeds`), the event-logging version
+  chosen (`event_logging_version`) and the kind of work it was started as (`kind`).
 * **`Consent`**: before a write, `consent.require(call, context, Request.confirmation(action, summary, details))`
   (or `Request.approval(...)`, with `.withEditable(key, title, proposed)` for a value the user may correct). It
   returns once the user has agreed in a form: go on, and read any correction with `consent.edited(context, key,
@@ -571,7 +573,10 @@ that builds something stands on (the MCP server's `security/guard.py`, `security
   `plan.nextFor(context, ref, result)` for a document whose build the call didn't name: it adds `next` (the plan's
   next step and the one call that does it), `done: false` until promotion, and what the user changed in the call's
   forms (`changed_by_user`). `plan.resolveBuild(context, build, tool)` gives the build a call names, or the one its
-  session last worked on. `status(build, made)` is build_status's answer.
+  session last worked on. `status(build, made)` is build_status's answer; `plannedSteps(build)` the steps its kind of
+  work takes. The checklist runs `1 events` (with `1 reference` between the converter and the translation, for
+  reference data), `2 indexing`, `3 output` and finish; a step the build doesn't need is `not needed` and isn't
+  counted in `next.progress`.
 * **`CallProgress`** (`stroom-ai-impl`): `CallProgress.of(context).say(message)` for each stage of a long call, and
   `nowAndThen(message)` in its loops.
 
@@ -1192,11 +1197,19 @@ Where it differs from the MCP server:
 * **The Lucene index's fields** are read through Stroom's index service (`IndexFields.indexFields`, up to 2,000), the
   MCP server's `/dataSource/v1/findFields` read 500.
 * **The build** is required, as the Python signature had it, and remembered for the session.
+* **`template_uuid` is not required in the schema**, as the MCP server's was: `standalone='discovery'` takes its
+  place (a discovery pipeline of its own, the last resort; see the translation tools' section). Left out with no
+  `standalone`, it is refused as `Give template_uuid: an indexing template (find_pipeline_templates stage=indexing),
+  or a discovery one for raw data indexed as it is (stage=discovery)`, which doesn't name the fallback, so an agent
+  isn't steered to it. `text_converter_uuid` names the Data Splitter a delimited one parses with, when the build has
+  several.
 * **Tests** (`TestCreateIndexingPipelineTool`) port `tests/test_indexing.py`'s create_indexing_pipeline and
   `_missing_index_fields` cases, `tests/test_index_rename.py`'s `test_an_indexing_pipeline_takes_the_index_its_doc_names`
   and `tests/test_authoring_guards.py`'s `test_an_indexing_pipeline_needs_events_first`, with
   `dev/e2e_lucene_indexing.py`'s pipeline (confirmed, then made on create_pipeline's path with the XSLT, the index
-  and the plan's fields) as a test on the pipeline world.
+  and the plan's fields) as a test on the pipeline world; and the refusal with no template, and
+  `standalone='discovery'` (refused while a discovery template exists or with no discovery plan kept with the XSLT;
+  its chain and settings for JSON and delimited text).
 
 ## The translation tools: `save_text_converter`, `save_xslt`, `save_dictionary`, `draft_translation_mapping`, `build_translation_xslt`, `build_data_splitter`, `build_reference_xslt` and `rebuild_mapping`
 
@@ -1390,6 +1403,10 @@ Where they differ from the MCP server:
   place of pydantic's message; `field_descriptions` may be JSON text (read with Python's `json`).
 * **Results' JSON leaves nulls out**, as every ported tool's does: start_build's `next` is absent where the plan has
   none.
+* **start_build's `kind`** (`events`, `discovery`, `reference`), which the MCP server didn't have, is kept in the
+  build's record (`BuildRecords.rememberKind`; a value outside those is refused); given, the result's `plan` is the
+  build's own steps (`BuildPlan.plannedSteps`) rather than the onboarding checklist. start_onboarding takes it the
+  same way, and its `template` then points at `find_pipeline_templates stage=reference` or `stage=discovery`.
 
 Tests port `tests/test_promotion_layout.py` (`TestPromotionLayout`, `TestPromoteBuildTool`),
 `tests/test_surface.py`'s promotion cases, `tests/test_fielddoc.py`'s write_documentation, field_mapping_section,
