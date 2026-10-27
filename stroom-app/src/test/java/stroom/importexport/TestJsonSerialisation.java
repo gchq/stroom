@@ -55,6 +55,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -481,10 +482,17 @@ class TestJsonSerialisation {
                     }
                 }
 
+                // A record's accessors carry the annotations of its components, as the compiler copies them
+                // there: only the annotations written on a method count.
+                final Set<Method> recordAccessors = clazz.isRecord()
+                        ? Arrays.stream(clazz.getRecordComponents())
+                                .map(RecordComponent::getAccessor)
+                                .collect(Collectors.toSet())
+                        : Set.of();
                 final Method[] methods = clazz.getDeclaredMethods();
                 for (final Method method : methods) {
                     final JsonProperty jsonProperty = method.getDeclaredAnnotation(JsonProperty.class);
-                    if (jsonProperty != null) {
+                    if (jsonProperty != null && !recordAccessors.contains(method)) {
                         methodsWithAnnotations.add(method.getName());
                     }
                 }

@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -218,6 +219,7 @@ public class AiCreateVisualisation {
     }
 
     /// @return True if it is for a StroomQL query rather than a dashboard.
+    @JsonIgnore
     public boolean isForQuery() {
         return showArguments != null;
     }
