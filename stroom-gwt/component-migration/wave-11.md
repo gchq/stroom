@@ -18,6 +18,95 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Split the dialogs that call REST, own lists or forms, or make further dialogs into a component dialog plus a controller. Results go back through callbacks, the controller supplies the task monitor from context, and the identity flows hang off ChangePasswordPresenter.
 
+## Audited (27 October 2026)
+
+Five reviewers read the wave's 58 commits against this plan, "Done means" and AGENTS.md (the identity,
+upload, store and user dialogs; the find panels, pickers, filters, tags and properties; the floor
+map, permissions, node, HTTP, processor and volume dialogs; the analytics, annotation, API key,
+credential, import, schedule, preference and AI dialogs; and the last eleven, from the step filters
+to the permissions tab). Fixed, in 4 commits:
+
+- **Regressions on this branch.** The credential editor's tabs had lost their tab panel (`role` and
+  `aria-controls`) and the fade between them, which the shared layout view gave; `CredentialEdit`
+  sets both again. The index volume group dialog opened again each time its list fetched a page
+  (paging or refreshing it), as the old presenter's flags against that went; the list gives its
+  first page only, once (`IndexVolumeStatusListController.init`). The Task Manager opened a second
+  copy, polling as well, when its button was pressed while it was open (it isn't modal); its plugin
+  keeps the one that is open. Editing a user group showed its progress on the list's pager rather
+  than the screen; `UserAndGroupActions` uses the screen's task monitor again.
+- **Dialogs that fetch before they show.** Set Permissions, Set Document Create Permissions, Edit
+  Node Group, the index volume and volume group dialogs, User Preferences and the activity chooser
+  now say why and dispose themselves when their fetch fails (`new DefaultErrorHandler(this,
+  this::dispose)`), instead of staying unowned. The clients they use take an error handler
+  (`DocPermissionRestClient.getDocUserPermissionsReport`, `NodeGroupClient.getNodeGroupState`,
+  `UserPreferencesManager.fetch`, `CurrentActivity.getActivity`). The API key dialog disposes
+  itself on a `null` UI config; Change Password disposes itself if its opener went before the
+  password policy came; the sign-in pages' calls have an owner; Upload looks up its task monitor
+  when the upload starts, not when it is made.
+- **BEM.** The Advanced Query, credential picker, floor map cluster filter bar and annotation tag
+  text rules moved out of shared stylesheets into `advanced-quick-filter.css`,
+  `credentials-manager-dialog.css`, `floor-map-cluster-dialog.css` and `annotation-tag-text.css`;
+  Edit Tags' clear button is `explorer-node-edit-tags__clear`; the roots of Remove Tags, the
+  property editor and Add User Group have their blocks.
+- **Java.** The API key dialog's mode is `EditApiKeyMode`, so the component doesn't import its
+  controller; unused imports, dead `clear()` methods, `/** */` comments, stray blank lines and the
+  empty workbench modules (`ExplorerScreenModule`, `ResultStoreScreenModule`) went; fields still
+  named for presenters are named for what they hold (`columnValuesFilter`, `assignedToPicker`,
+  `userRefPopupProvider`, `currentPasswordProvider`); swapped licence years were put back; the
+  moved tests' helpers say what they do (`pressOk`).
+- **Docs.** The open issues, WRITING-STORIES.md, DATA_GRID_DESIGN.md, COMPONENT_MODEL_DESIGN.md,
+  COMPONENTS.md and the quick filter design record name the new classes; Batch Edit Schedules'
+  `validate` is marked fixed in ISSUES.md.
+
+Left, on purpose:
+
+- **Slots.** Controllers that call `initWidget` (lists, the expression editors and trees, the
+  current selection, the notification destinations, the profile periods) are shown in slots
+  (`setList`, `setExpressionEditor`, ...), as the brief allows.
+- **Wrappers.** The `SimplePanel`s around the processor profile's time zone box, the schedule
+  dialogs' Run As User pickers and the import confirmation's grid stay, keeping the layout the
+  screenshots match; dropping them is a look change, not tried here.
+- **Toolbars in Java.** The volume group dialogs add New, Edit, Delete and Rescan to their slotted
+  list's toolbar, as the list controller owns the toolbar.
+- **Buttons as task monitors.** Configure Ask Stroom AI's two buttons are handed to its controller
+  as task monitors (their spinners), as Send Test Email's is; there is no `setRefreshing` adapter.
+- **Shared classes.** The annotation chooser's list is bordered with the shared
+  `form-control-border form-control-background` (`setBordered`), rather than a modifier of its own.
+- **Licence years.** A component or controller that replaces a view or presenter keeps its year;
+  one made new has 2026.
+- **Recorded in ISSUES.md.** Unused code the wave left (`FloorMapAria`'s label and hide helpers,
+  `FileData`, `ProcessingStatusUiHandlers`); the two dialogs that wait on `UiConfigCache`, which
+  never calls back on a failure; the dialogs with no story; the sign-in pages' old classes.
+- **Not this wave's.** `AGENTS.md`'s "App-wide screens" example still shows `FindPresenter`; the
+  suite's tools and notes keep old names, as before.
+
+## Done (27 October 2026)
+
+All 81 of the plan's units (the 82nd, `FloorMapLayerStylePresenter`, was done in wave 7), in 64
+commits: 58 for the units, 5 for the audit and this record. Each unit's commit ran its stories in a
+copy of the worktree with the leak check and the screenshot diff. The wave's targeted run, after the
+audit (700 stories: the main screens and app shell, the dashboard, query, floor map, pathway,
+annotation and dictionary editors, the data, security, sign-in and AI stories, the pickers and the
+quick filter), passed all 700 with the leak check; of their screenshots, 696 match, the 3 new are the
+document selection dialog's stories (no baseline yet), and `AppShell.OpensDocument` differed (the
+focus race recorded in ISSUES.md) and matched in a run of the app shell's 57 alone. The app and the
+standalone dashboard GWT compile, checkstyle is clean and the client modules' 1,934 JUnit tests
+pass. One bug master has too was fixed on the way, with a regression test and a changelog entry: the
+Upload dialog failed with an unexpected error, instead of saying why, when its feed couldn't be
+loaded (`TestDataUploadController`). What was decided on the way, where it differs from the plans
+below, is in the audit above (Left, on purpose) and:
+
+- **Made for each use, or kept.** Most dialogs are made for each use; the schedule dialogs, Change
+  Step Filters, Edit Pathway, the floor map object properties, Query Favourites and Query History,
+  Find, Find In Content, Search Result Stores and Choose Annotation are kept by their owner and shown
+  again.
+- **Template ARIA.** The floor map object properties name their controls in the template
+  (`AriaPanel` rows, `TextBox` `ariaLabel`), for which `ColourBox` gained `setAriaLabel` and
+  `DateTimeBox` `setRole` and `setAriaLabel`.
+- **The permissions tab.** `DocumentUserPermissionsTab` and its controller are the tab's body
+  everywhere; `DocumentUserPermissionsPresenter` stays as the main content tab's thin shell until
+  wave 15, and the tab provider shows the controller through a `ControllerTabProvider`.
+
 ## CSS and template notes for the wave
 
 - New state class #loading.loading--hidden { opacity: 0; visibility: hidden; } in stroom.css beside #loading (:168). It replaces the inline opacity/visibility in AuthenticationErrorPresenter.java:63-65, LoginPresenter.java:172-174 and ResetPasswordPresenter.java:78-80, through one SignInPageController.hideLoading(). CoreViewImpl.java:55-67 (outside this range) can add and remove the same class

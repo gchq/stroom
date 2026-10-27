@@ -1756,6 +1756,27 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are
   allowed.
+* Unused code met in wave 11 (27 October 2026): `FloorMapAria.label(UIObject, String)`,
+  `label(Element, String)` and `hide` (the floor map object form names its controls in its
+  template now), `stroom.data.client.view.FileData` (only the old upload presenter made one) and
+  `stroom.analytics.client.presenter.ProcessingStatusUiHandlers`. Delete them once removals are
+  allowed.
+* Two dialogs that fetch before they show can't hear that the fetch failed (found 27 October 2026,
+  in wave 11's audit): the API key dialog's create path and the activity chooser at start-up wait
+  for the UI config, and `UiConfigCache` never calls back on a failure (see "UI config failures
+  and annotation changes go nowhere"), so the dialog is never shown or disposed. Both dispose
+  themselves on a `null` config, so fixing that entry fixes them.
+* Wave 11's dialogs with no story (found 27 October 2026, in its audit): Chat History and the AI
+  attachment data dialog; Batch Change All Filtered Processors; Copy and Move document (Create
+  has stories); the floor map cluster dialog's Track; the credential picker's OK with nothing
+  chosen (it warns and stays open) and its Cancel; and Choose Annotation shown a second time
+  through the one controller the app keeps (it should keep its last filter; the stories make a new
+  one each time).
+* The sign-in pages and Change Password keep their old shared classes (found 27 October 2026, in
+  wave 11's audit): `LoginView`, `userNameTextBoxOuter`, `userNameTextBox`, `AuthErrorView*`,
+  `emailTextBox` and `passwordPolicyMessage`, in `Login.css` and `ChangePassword.css`. Give them
+  BEM blocks in kebab-case stylesheets of their own in one pass, as the five pages share the two
+  files.
 
 * ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
   string to a template's `String` attribute, which escapes it again, so an apostrophe shows as
