@@ -14,46 +14,54 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.processor.client.component.ProcessorsController;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class StreamingProcessingPresenter
-        extends MyPresenterWidget<StreamingProcessingView> {
+import java.util.function.BooleanSupplier;
+
+/// A streaming analytic rule's processing ([StreamingProcessing]): the rule's processors and their
+/// filters, a new filter starting with the expression the rule's query gives.
+public class StreamingProcessingController extends Controller {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE = GWT.create(AnalyticProcessResource.class);
 
     private final ProcessorsController processors;
     private final RestFactory restFactory;
-    private DocPresenter<?, ?> documentEditPresenter;
+    private BooleanSupplier isDocumentDirty = () -> false;
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The content.
+    /// @param processors  The rule's processors and their filters.
+    /// @param restFactory Gets the expression a new filter starts with.
     @Inject
-    public StreamingProcessingPresenter(final EventBus eventBus,
-                                        final StreamingProcessingView view,
-                                        final ProcessorsController processors,
-                                        final RestFactory restFactory) {
-        super(eventBus, view);
+    public StreamingProcessingController(final EventBus eventBus,
+                                         final StreamingProcessing view,
+                                         final ProcessorsController processors,
+                                         final RestFactory restFactory) {
+        super(eventBus);
+        initWidget(view);
         own(processors);
         this.processors = processors;
         this.restFactory = restFactory;
-        getView().setProcessors(processors);
+        view.setProcessors(processors);
 
         processors.setEditInterceptor(() -> {
-            if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
+            if (isDocumentDirty.getAsBoolean()) {
                 AlertEvent.fireWarn(
                         this,
                         "Please ensure all settings are correct and save before adding executions",
@@ -65,6 +73,10 @@ public class StreamingProcessingPresenter
         });
     }
 
+    /// Lists a rule's processors.
+    ///
+    /// @param analyticRuleDoc The rule.
+    /// @param query           The rule's query, which gives the expression a new filter starts with.
     public void update(final AbstractAnalyticRuleDoc analyticRuleDoc,
                        final String query) {
         // Read only as its document is
@@ -77,16 +89,19 @@ public class StreamingProcessingPresenter
                     processors.read(analyticRuleDoc.asDocRef(), analyticRuleDoc);
                     processors.setAllowUpdate(!readOnly);
                 })
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
-        this.documentEditPresenter = documentEditPresenter;
+    /// @param isDocumentDirty Whether the document has unsaved changes, which must be saved before a
+    ///                        filter is added or edited.
+    public void setIsDocumentDirty(final BooleanSupplier isDocumentDirty) {
+        this.isDocumentDirty = isDocumentDirty;
     }
 
-    public interface StreamingProcessingView extends View {
-
-        void setProcessors(IsWidget processors);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

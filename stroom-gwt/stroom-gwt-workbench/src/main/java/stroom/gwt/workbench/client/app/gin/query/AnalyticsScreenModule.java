@@ -16,15 +16,10 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.presenter.StreamingProcessingPresenter;
-import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
-import stroom.analytics.client.view.AnalyticProcessingViewImpl;
-import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AnalyticsModule`
@@ -40,11 +35,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);
-        bindPresenterWidget(StreamingProcessingPresenter.class,
-                StreamingProcessingView.class,
-                StreamingProcessingViewImpl.class);
-        bindSharedView(AnalyticProcessingView.class,
-                AnalyticProcessingViewImpl.class);
     }
 }
 

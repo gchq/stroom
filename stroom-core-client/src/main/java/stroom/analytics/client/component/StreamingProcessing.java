@@ -14,43 +14,41 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.view;
+package stroom.analytics.client.component;
 
-import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class StreamingProcessingViewImpl
-        extends ViewImpl
-        implements StreamingProcessingView {
+/// A streaming analytic rule's processing: its processors and their filters (shown here by its
+/// controller).
+public class StreamingProcessing extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel processors;
 
-    @Inject
-    public StreamingProcessingViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes it, with no processors until they are set.
+    public StreamingProcessing() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param processors The rule's processors and their filters.
     public void setProcessors(final IsWidget processors) {
         this.processors.setWidget(processors);
     }
 
-    public interface Binder extends UiBinder<Widget, StreamingProcessingViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, StreamingProcessing> {
 
     }
 }

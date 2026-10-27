@@ -17,15 +17,10 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
-import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.presenter.StreamingProcessingPresenter;
-import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
-import stroom.analytics.client.view.AnalyticProcessingViewImpl;
-import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AnalyticsModule extends PluginModule {
@@ -38,13 +33,6 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);
-        bindPresenterWidget(StreamingProcessingPresenter.class,
-                StreamingProcessingView.class,
-                StreamingProcessingViewImpl.class);
-
-        bindSharedView(
-                AnalyticProcessingView.class,
-                AnalyticProcessingViewImpl.class);
 
     }
 }

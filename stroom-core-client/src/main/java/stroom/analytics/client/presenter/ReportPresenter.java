@@ -16,8 +16,10 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticProcessingController;
 import stroom.analytics.client.component.NotificationListController;
 import stroom.analytics.client.component.ReportSettingsTabController;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
@@ -57,7 +59,7 @@ public class ReportPresenter
                            final ReportQueryEditPresenter reportQueryEditPresenter,
                            final Provider<ReportSettingsTabController> reportSettingsProvider,
                            final Provider<NotificationListController> notificationListProvider,
-                           final Provider<ReportProcessingPresenter> processPresenterProvider,
+                           final Provider<AnalyticProcessingController> analyticProcessingProvider,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
@@ -65,8 +67,9 @@ public class ReportPresenter
         own(reportQueryEditPresenter);
         this.reportQueryEditPresenter = reportQueryEditPresenter;
 
-        final ReportProcessingPresenter analyticProcessingPresenter = make(processPresenterProvider);
-        analyticProcessingPresenter.setDocumentEditPresenter(this);
+        final AnalyticProcessingController analyticProcessing = make(analyticProcessingProvider);
+        analyticProcessing.setProcessingTypes(AnalyticProcessType.SCHEDULED_QUERY);
+        analyticProcessing.setIsDocumentDirty(this::isDirty);
 
         // Created up front rather than by the tab provider, so it can be told the processing type whether or
         // not the tab has been opened.
@@ -83,7 +86,14 @@ public class ReportPresenter
                         .notifications(list.getNotifications())
                         .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                         .build()));
-        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
+        addTab(EXECUTION, ControllerTabProvider.ofOwned(eventBus, analyticProcessing,
+                AnalyticProcessingController::read,
+                (processing, document) -> document
+                        .copy()
+                        .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                        .analyticProcessType(processing.getProcessingType())
+                        .analyticProcessConfig(processing.writeProcessConfig())
+                        .build()));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticProcessingController;
 import stroom.analytics.client.component.AnalyticSettingsController;
 import stroom.analytics.client.component.DuplicateManagementController;
 import stroom.analytics.client.component.NotificationListController;
@@ -61,7 +62,7 @@ public class AnalyticRulePresenter
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
                                  final Provider<AnalyticSettingsController> settingsProvider,
                                  final Provider<NotificationListController> notificationListProvider,
-                                 final Provider<AnalyticProcessingPresenter> processPresenterProvider,
+                                 final Provider<AnalyticProcessingController> analyticProcessingProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<DuplicateManagementController> duplicateManagementProvider,
                                  final Provider<MarkdownEditController> markdownEditProvider,
@@ -76,9 +77,12 @@ public class AnalyticRulePresenter
         // Assigned before the change handler below is registered, as that handler reads it.
         this.notificationList = make(notificationListProvider);
 
-        final AnalyticProcessingPresenter analyticProcessingPresenter = make(processPresenterProvider);
-        analyticProcessingPresenter.setDocumentEditPresenter(this);
-        analyticProcessingPresenter.setOnProcessingTypeChange(this::setRuleType);
+        final AnalyticProcessingController analyticProcessing = make(analyticProcessingProvider);
+        analyticProcessing.setProcessingTypes(AnalyticProcessType.SCHEDULED_QUERY,
+                AnalyticProcessType.STREAMING,
+                AnalyticProcessType.TABLE_BUILDER);
+        analyticProcessing.setIsDocumentDirty(this::isDirty);
+        analyticProcessing.setOnProcessingTypeChange(this::setRuleType);
 
         addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
@@ -91,7 +95,14 @@ public class AnalyticRulePresenter
                         .notifications(list.getNotifications())
                         .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                         .build()));
-        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
+        addTab(EXECUTION, ControllerTabProvider.ofOwned(eventBus, analyticProcessing,
+                AnalyticProcessingController::read,
+                (processing, document) -> document
+                        .copy()
+                        .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                        .analyticProcessType(processing.getProcessingType())
+                        .analyticProcessConfig(processing.writeProcessConfig())
+                        .build()));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DUPLICATE_MANAGEMENT, new ControllerTabProvider<>(eventBus, duplicateManagementProvider::get,
                 DuplicateManagementController::read,
