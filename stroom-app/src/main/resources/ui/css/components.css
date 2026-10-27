@@ -151,11 +151,6 @@
     text-align: center;
 }
 
-.queryViewImpl-expressionTree {
-    position: relative;
-    overflow: auto;
-}
-
 .selectionHandlerViewImpl-bottom {
     padding-top: 5px;
 }

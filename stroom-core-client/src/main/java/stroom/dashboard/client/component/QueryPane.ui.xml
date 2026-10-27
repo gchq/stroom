@@ -1,0 +1,34 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's query pane: the expression's actions, the query's messages and Run above the
+     expression -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:q="urn:import:stroom.query.client.view">
+    <g:FlowPanel styleName="query-pane dock-max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal query-pane__buttons">
+            <b:Toolbar name="Expression actions" addStyleNames="dock-max">
+                <b:ToolbarButton ui:field="addTerm" svg="ADD" title="Add Term"/>
+                <b:ToolbarButton ui:field="addOperator" svg="OPERATOR" title="Add Operator"/>
+                <b:ToolbarButton ui:field="copy" svg="COPY" title="Duplicate Selected Expression Item"
+                                 enabled="false"/>
+                <b:ToolbarButton ui:field="disableItem" svg="DISABLE" title="Disable Selected Expression Item"
+                                 enabled="false"/>
+                <b:ToolbarButton ui:field="deleteItem" svg="DELETE" title="Delete Selected Expression Item"
+                                 enabled="false"/>
+                <b:ToolbarButton ui:field="history" svg="HISTORY" title="Show Query History"/>
+                <b:ToolbarButton ui:field="favourites" svg="FAVOURITES" title="Show Favourite Queries"/>
+                <b:ToolbarButton ui:field="downloadQuery" svg="DOWNLOAD" title="Download Query" enabled="false"/>
+                <b:ToolbarButton ui:field="process" svg="PROCESS" title="Process Query with Pipeline"
+                                 visible="false"/>
+            </b:Toolbar>
+            <b:Toolbar name="Query messages" addStyleNames="dock-min">
+                <!-- Out of sight rather than removed while there are none, so the toolbar doesn't shift -->
+                <b:ToolbarButton ui:field="messages" svg="ERROR" title="Show Errors"
+                                 addStyleNames="toolbar-button--invisible"/>
+            </b:Toolbar>
+            <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="expressionTree" styleName="dock-max query-pane__expression-tree"/>
+    </g:FlowPanel>
+</ui:UiBinder>

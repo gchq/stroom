@@ -119,8 +119,7 @@
     overflow-y: auto;
 }
 
-.TableViewImpl .pager,
-.QueryViewImpl--buttons {
+.TableViewImpl .pager {
     padding: 0 5px;
 }
 

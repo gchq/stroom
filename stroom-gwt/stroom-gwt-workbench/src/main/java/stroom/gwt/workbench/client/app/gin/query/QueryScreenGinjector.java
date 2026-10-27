@@ -55,7 +55,6 @@ import com.google.gwt.inject.client.GinModules;
         QueryScreenModule.class,
         AnnotationScreenModule.class,
         StreamStoreScreenModule.class,
-        DashboardQueryScreenModule.class,
         AlertScreenModule.class,
         QueryExtrasScreenModule.class,
         StatisticsScreenModule.class,

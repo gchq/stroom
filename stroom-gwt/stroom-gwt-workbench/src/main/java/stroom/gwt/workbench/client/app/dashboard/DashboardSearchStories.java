@@ -388,7 +388,7 @@ public final class DashboardSearchStories {
 
     // Runs only the master query (q1), while the detail query (q2) hasn't searched, and checks that
     // its search completes. DashboardPresenter.getCombinedErrors asks every Query for its errors as
-    // any search reports them, and QueryPresenter.getCurrentErrors once threw for a Query that
+    // any search reports them, and QueryPaneController.getCurrentErrors once threw for a Query that
     // hadn't searched, which SearchModel.update swallowed before it marked the search complete, so
     // the master search polled forever
     private static void runMaster(final Play play) {

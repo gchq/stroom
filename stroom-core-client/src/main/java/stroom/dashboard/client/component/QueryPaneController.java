@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.query;
+package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.core.client.messages.ErrorMessageTemplates;
-import stroom.dashboard.client.component.ProcessorLimitsController;
-import stroom.dashboard.client.component.QueryFavouritesController;
-import stroom.dashboard.client.component.QueryHistoryController;
-import stroom.dashboard.client.component.QuerySettingsController;
-import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
+import stroom.dashboard.client.component.QueryPane.QueryPaneAction;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.query.QueryPresenter.QueryView;
+import stroom.dashboard.client.query.QueryInfo;
+import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -59,30 +56,26 @@ import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.query.client.view.QueryButtons;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -92,8 +85,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class QueryPresenter
-        extends AbstractRefreshableComponentPresenter<QueryView>
+/// A dashboard's query pane ([QueryPane]): its expression, which it searches the data source with,
+/// the search's messages, its history and favourites, downloading it and processing it with a
+/// pipeline.
+public class QueryPaneController
+        extends RefreshableDashboardComponentController
         implements SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
@@ -114,41 +110,35 @@ public class QueryPresenter
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
+    private final QueryPane view;
     private final SearchModel searchModel;
-    private final ButtonView addOperatorButton;
-    private final ButtonView addTermButton;
-    private final ButtonView copyButton;
-    private final ButtonView disableItemButton;
-    private final ButtonView deleteItemButton;
-    private final ButtonView historyButton;
-    private final ButtonView favouriteButton;
-    private final ButtonView downloadQueryButton;
-    private final ToolbarButton errorsButton;
     private ErrorMessages currentErrors;
-    private ButtonView processButton;
     private boolean initialised;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
     private ExpressionOperator currentSelectionQuery;
 
+    /// Made by GIN, with its content and its parts.
     @Inject
-    public QueryPresenter(final EventBus eventBus,
-                          final QueryView view,
-                          final Provider<QuerySettingsController> settingsPresenterProvider,
-                          final ExpressionTreeController expressionTree,
-                          final QueryHistoryController history,
-                          final QueryFavouritesController favourites,
-                          final Provider<ExplorerPopupController> pipelineSelection,
-                          final Provider<ProcessorLimitsController> processorLimitsControllerProvider,
-                          final IndexLoader indexLoader,
-                          final RestFactory restFactory,
-                          final ClientSecurityContext securityContext,
-                          final UiConfigCache clientPropertyCache,
-                          final LocationManager locationManager,
-                          final DateTimeSettingsFactory dateTimeSettingsFactory,
-                          final ResultStoreModel resultStoreModel,
-                          final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
-        super(eventBus, view, settingsPresenterProvider);
+    public QueryPaneController(final EventBus eventBus,
+                               final QueryPane view,
+                               final Provider<QuerySettingsController> settingsPresenterProvider,
+                               final ExpressionTreeController expressionTree,
+                               final QueryHistoryController history,
+                               final QueryFavouritesController favourites,
+                               final Provider<ExplorerPopupController> pipelineSelection,
+                               final Provider<ProcessorLimitsController> processorLimitsControllerProvider,
+                               final IndexLoader indexLoader,
+                               final RestFactory restFactory,
+                               final ClientSecurityContext securityContext,
+                               final UiConfigCache clientPropertyCache,
+                               final LocationManager locationManager,
+                               final DateTimeSettingsFactory dateTimeSettingsFactory,
+                               final ResultStoreModel resultStoreModel,
+                               final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
+        super(eventBus, settingsPresenterProvider);
+        this.view = view;
+        initWidget(view);
         own(expressionTree);
         own(history);
         own(favourites);
@@ -162,43 +152,15 @@ public class QueryPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
-        // Shows its requests' progress as this presenter does (its context's)
-        fieldSelectionBoxModel.setTaskMonitorFactory(this);
+        // Shows its requests' progress as this controller's owners do (its context's)
+        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitor());
 
-        view.setExpressionView(expressionTree);
-        view.getQueryButtons().setOnStart(this::onRunPressed);
+        view.setExpressionTree(expressionTree);
+        view.setOnAction(this::onAction);
+        view.setProcessVisible(securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION));
 
         expressionTree.setOnChange(this::onChange);
         expressionTree.setOnSearch(this::promptAndStart);
-
-        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
-        addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
-                this::addOperator);
-        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item",
-                this::copy);
-        copyButton.setEnabled(false);
-        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE,
-                "Disable Selected Expression Item", this::disable);
-        disableItemButton.setEnabled(false);
-        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE,
-                "Delete Selected Expression Item", this::delete);
-        deleteItemButton.setEnabled(false);
-        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "Show Query History",
-                this::onHistory);
-        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES,
-                "Show Favourite Queries", this::onFavourite);
-        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download Query",
-                this::downloadQuery);
-        downloadQueryButton.setEnabled(false);
-
-        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS,
-                    "Process Query with Pipeline", this::choosePipeline);
-        }
-
-        // Its icon and name are set by the messages it shows
-        errorsButton = view.getMessagesToolbar().button(SvgImage.ERROR, "Show Errors", this::showErrors);
-        setErrorsVisible(false);
 
         searchModel = new SearchModel(
                 eventBus,
@@ -206,8 +168,8 @@ public class QueryPresenter
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
-        // Shows its requests' progress as this presenter does (its context's)
-        searchModel.setTaskMonitorFactory(this);
+        // Shows its requests' progress as this controller's owners do (its context's)
+        searchModel.setTaskMonitorFactory(taskMonitor());
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
 
@@ -227,6 +189,32 @@ public class QueryPresenter
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             searchModel.reset(DestroyReason.WINDOW_CLOSE);
         });
+    }
+
+    private void onAction(final QueryPaneAction action) {
+        switch (action) {
+            case ADD_TERM -> addTerm();
+            case ADD_OPERATOR -> addOperator();
+            case COPY -> copy();
+            case DISABLE -> disable();
+            case DELETE -> delete();
+            case HISTORY -> onHistory();
+            case FAVOURITES -> onFavourite();
+            case DOWNLOAD -> downloadQuery();
+            case PROCESS -> choosePipeline();
+            case SHOW_MESSAGES -> showErrors();
+            case RUN -> onRunPressed();
+        }
+    }
+
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
     private void onHistory() {
@@ -316,23 +304,9 @@ public class QueryPresenter
     @Override
     public void onError(final List<ErrorMessage> errors) {
         currentErrors = new ErrorMessages(errors);
-        setErrorsVisible(!currentErrors.isEmpty());
-        if (!currentErrors.isEmpty()) {
-            setErrorSeverity(currentErrors.getHighestSeverity());
-        }
-    }
-
-    private void setErrorSeverity(final Severity severity) {
-        if (Severity.FATAL_ERROR.equals(severity) || Severity.ERROR.equals(severity)) {
-            errorsButton.setSvg(SvgImage.ERROR);
-            errorsButton.setTitle("Show Errors");
-        } else if (Severity.WARNING.equals(severity)) {
-            errorsButton.setSvg(SvgImage.ALERT);
-            errorsButton.setTitle("Show Warnings");
-        } else if (Severity.INFO.equals(severity)) {
-            errorsButton.setSvg(SvgImage.INFO);
-            errorsButton.setTitle("Show Messages");
-        }
+        view.setMessages(!currentErrors.isEmpty(), currentErrors.isEmpty()
+                ? null
+                : currentErrors.getHighestSeverity());
     }
 
     @Override
@@ -346,33 +320,8 @@ public class QueryPresenter
     private void setButtonsEnabled() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
 
-        if (selectedItem == null) {
-            disableItemButton.setEnabled(false);
-            // The title is the button's name, so it stays when the button is disabled
-            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
-
-            deleteItemButton.setEnabled(false);
-
-            copyButton.setEnabled(false);
-        } else {
-            disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
-
-            deleteItemButton.setEnabled(true);
-
-            copyButton.setEnabled(true);
-        }
-
-        final DocRef dataSourceRef = getQuerySettings().getDataSource();
-
-        if (dataSourceRef == null) {
-            downloadQueryButton.setEnabled(false);
-            // The title is the button's name, so it stays, and says why the button is disabled
-            downloadQueryButton.setTitle("Download Query (choose a data source first)");
-        } else {
-            downloadQueryButton.setEnabled(true);
-            downloadQueryButton.setTitle("Download Query");
-        }
+        view.setItemActionsEnabled(selectedItem != null, getEnableDisableText() + " Selected Expression Item");
+        view.setDownloadEnabled(getQuerySettings().getDataSource() != null);
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
@@ -395,7 +344,7 @@ public class QueryPresenter
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
-        getView().setEnabled(dataSourceRef != null);
+        view.setEnabled(dataSourceRef != null);
 
         setButtonsEnabled();
 
@@ -477,7 +426,7 @@ public class QueryPresenter
                             createProcessFilter(queryData.copy().limits(limits).build(), pipeline);
                         });
             }
-        }, this);
+        }, taskMonitor());
     }
 
     private void createProcessFilter(final QueryData queryData,
@@ -494,12 +443,12 @@ public class QueryPresenter
                 .method(res -> res.create(request))
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
-                        CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
+                        CreateProcessorEvent.fire(QueryPaneController.this, streamProcessorFilter);
                     } else {
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -561,7 +510,7 @@ public class QueryPresenter
     }
 
     private void promptAndStart() {
-        queryInfo.prompt(this::start, this);
+        queryInfo.prompt(this::start, taskMonitor());
     }
 
     @Override
@@ -597,7 +546,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionTree.clearSelection();
 
-            setErrorsVisible(false);
+            view.setMessages(false, null);
 
             // Write expression.
             final ExpressionOperator root = expressionTree.write();
@@ -629,7 +578,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionTree.clearSelection();
 
-            setErrorsVisible(false);
+            view.setMessages(false, null);
 
             // Write expression.
             ExpressionOperator root = expressionTree.write();
@@ -766,7 +715,7 @@ public class QueryPresenter
 
     @Override
     public void onSearching(final boolean searching) {
-        getView().onSearching(searching);
+        view.setSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
         if (!searching) {
@@ -872,40 +821,13 @@ public class QueryPresenter
                     .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .taskMonitorFactory(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
-    }
-
-    private void setErrorsVisible(final boolean show) {
-        // Out of sight rather than removed, so the toolbar doesn't shift (toolbar-button.css)
-        errorsButton.asWidget().setStyleName("toolbar-button--invisible", !show);
     }
 
     @Override
     public String getType() {
         return TAB_TYPE;
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface QueryView extends View, SearchStateListener {
-
-        /// The toolbar for the expression's buttons, e.g. Add Term.
-        ///
-        /// @return The toolbar.
-        Toolbar getExpressionToolbar();
-
-        /// The toolbar for the query's messages button, apart from the expression's buttons.
-        ///
-        /// @return The toolbar.
-        Toolbar getMessagesToolbar();
-
-        void setExpressionView(IsWidget view);
-
-        void setEnabled(boolean enabled);
-
-        QueryButtons getQueryButtons();
     }
 }

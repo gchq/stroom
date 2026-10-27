@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.dashboard.client.component.QueryPaneController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -25,7 +26,7 @@ public class QueryPlugin {
 
     @Inject
     public QueryPlugin(final ComponentRegistry componentRegistry,
-                       final Provider<QueryPresenter> provider) {
-        componentRegistry.register(QueryPresenter.TYPE, provider);
+                       final Provider<QueryPaneController> provider) {
+        componentRegistry.register(QueryPaneController.TYPE, provider);
     }
 }

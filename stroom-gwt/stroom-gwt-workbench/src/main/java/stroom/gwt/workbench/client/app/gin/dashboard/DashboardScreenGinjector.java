@@ -37,7 +37,6 @@ import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.AlertScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.AnnotationScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.DashboardQueryScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.PipelineScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryExtrasScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenModule;
@@ -72,7 +71,6 @@ import com.google.gwt.inject.client.GinModules;
         QueryScreenModule.class,
         AnnotationScreenModule.class,
         StreamStoreScreenModule.class,
-        DashboardQueryScreenModule.class,
         AlertScreenModule.class,
         QueryExtrasScreenModule.class,
         VisScreenModule.class,

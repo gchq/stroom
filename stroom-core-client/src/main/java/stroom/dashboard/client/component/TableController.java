@@ -39,7 +39,6 @@ import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ComponentSelection;
@@ -961,7 +960,7 @@ public class TableController extends DashboardComponentController
 
         if (queryId != null) {
             final DashboardPane component = getDashboardContext().getComponents().get(queryId);
-            if (component instanceof final QueryPresenter queryPresenter) {
+            if (component instanceof final QueryPaneController queryPresenter) {
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
                     currentSearchModel.addComponent(getComponentConfig().getId(), this);
@@ -1204,7 +1203,7 @@ public class TableController extends DashboardComponentController
     public void link() {
         String queryId = getTableComponentSettings().getQueryId();
         queryId = getDashboardContext().getComponents().validateOrGetLastComponentId(queryId,
-                QueryPresenter.TYPE.getId());
+                QueryPaneController.TYPE.getId());
         setSettings(getTableComponentSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }

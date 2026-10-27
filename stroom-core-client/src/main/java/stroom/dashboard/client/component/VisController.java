@@ -23,7 +23,6 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisSelectionModel;
@@ -305,7 +304,7 @@ public class VisController
 
         if (queryId != null) {
             final DashboardPane component = getDashboardContext().getComponents().get(queryId);
-            if (component instanceof final QueryPresenter queryPresenter) {
+            if (component instanceof final QueryPaneController queryPresenter) {
                 final SearchModel searchModel = queryPresenter.getSearchModel();
                 currentSearchModel = searchModel;
                 if (searchModel != null) {

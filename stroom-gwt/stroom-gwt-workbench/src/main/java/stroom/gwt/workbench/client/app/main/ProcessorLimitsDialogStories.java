@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// with the UI config's process limits.
 ///
 /// In Stroom the pipeline is chosen first, in its own 'Choose Pipeline To Process Results With'
-/// popup, so this dialog only has the limits. Creating the filter (which `QueryPresenter` does
+/// popup, so this dialog only has the limits. Creating the filter (which `QueryPaneController` does
 /// after OK, as `POST /processorFilter/v1`) isn't reached by the story.
 public final class ProcessorLimitsDialogStories {
 
@@ -97,7 +97,7 @@ public final class ProcessorLimitsDialogStories {
                 .injector(injector)
                 .build();
         final Spy onOk = harness.fn(ON_OK);
-        // As QueryPresenter shows it
+        // As QueryPaneController shows it
         harness.afterStartUp(() -> harness.getUiConfigCache().get(result -> {
             if (result != null) {
                 injector.getProcessorLimitsController().show(harness.getAppRoot(),

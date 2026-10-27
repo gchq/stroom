@@ -99,7 +99,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it.
     ProcessorEditController getProcessorEditController();
 
-    /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.
+    /// @return The 'Process Search Results' dialog, as `QueryPaneController` shows it.
     ProcessorLimitsController getProcessorLimitsController();
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.

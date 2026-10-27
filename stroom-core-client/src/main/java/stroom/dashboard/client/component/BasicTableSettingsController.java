@@ -17,7 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
@@ -191,7 +190,7 @@ public class BasicTableSettingsController extends BasicSettingsTabController<Bas
         super.read(componentConfig);
 
         final List<DashboardPane> list = getDashboardContext()
-                .getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
+                .getComponents().getSortedComponentsByType(QueryPaneController.TYPE.getId());
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
