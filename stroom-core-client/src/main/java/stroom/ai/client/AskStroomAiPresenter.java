@@ -19,6 +19,7 @@ package stroom.ai.client;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.client.component.AiAttachmentDataController;
 import stroom.ai.client.component.AiChatHistoryController;
+import stroom.ai.client.component.AskStroomAiConfigDialogController;
 import stroom.ai.client.component.DownloadChatController;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChat;
@@ -98,7 +99,7 @@ public class AskStroomAiPresenter
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
-    private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
+    private final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider;
     private final Provider<AiChatHistoryController> aiChatHistoryProvider;
     private final Provider<DownloadChatController> downloadChatControllerProvider;
     private final Provider<AiAttachmentDataController> aiAttachmentDataProvider;
@@ -126,7 +127,7 @@ public class AskStroomAiPresenter
                                 final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
-                                final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
+                                final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider,
                                 final Provider<AiChatHistoryController> aiChatHistoryProvider,
                                 final Provider<DownloadChatController> downloadChatControllerProvider,
                                 final Provider<AiAttachmentDataController> aiAttachmentDataProvider,
@@ -136,7 +137,7 @@ public class AskStroomAiPresenter
         own(docSelectionBoxPresenter);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
-        this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
+        this.askStroomAiConfigProvider = askStroomAiConfigProvider;
         this.aiChatHistoryProvider = aiChatHistoryProvider;
         this.downloadChatControllerProvider = downloadChatControllerProvider;
         this.aiAttachmentDataProvider = aiAttachmentDataProvider;
@@ -303,10 +304,9 @@ public class AskStroomAiPresenter
     public void onChangeConfig() {
         askStroomAiClient.getConfig(config -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
-                final AskStroomAiConfigPresenter askStroomAiConfigPresenter =
-                        makeDialog(askStroomAiConfigPresenterProvider);
-                askStroomAiConfigPresenter.show(
-                        config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
+                // Made for one use, and disposed once it is closed
+                askStroomAiConfigProvider.get().show(
+                        this, config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
             });
         }, this);
     }

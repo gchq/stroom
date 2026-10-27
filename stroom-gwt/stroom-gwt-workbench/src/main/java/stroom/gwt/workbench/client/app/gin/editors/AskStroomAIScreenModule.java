@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.ai.client.AskStroomAiConfigPresenter;
-import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
-import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.client.AskStroomAiViewImpl;
@@ -37,9 +34,6 @@ public class AskStroomAIScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AskStroomAiPresenter.class,
                 AskStroomAiView.class,
                 AskStroomAiViewImpl.class);
-        bindPresenterWidget(AskStroomAiConfigPresenter.class,
-                AskStroomAiConfigView.class,
-                AskStroomAiConfigViewImpl.class);
     }
 }
 

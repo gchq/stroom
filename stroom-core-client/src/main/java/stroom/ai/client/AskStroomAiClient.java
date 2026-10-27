@@ -94,8 +94,12 @@ public class AskStroomAiClient {
         });
     }
 
-    void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
-                          final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches the settings every user starts with.
+    ///
+    /// @param consumer           Given the default settings.
+    /// @param taskMonitorFactory Shows the fetch is in progress.
+    public void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
+                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(AskStroomAiResource::getDefaultConfig)
@@ -104,9 +108,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void setDefaultAskStroomAIConfig(final AskStroomAiConfig config,
-                                     final Consumer<Boolean> consumer,
-                                     final TaskMonitorFactory taskMonitorFactory) {
+    /// Saves the settings every user starts with.
+    ///
+    /// @param config             The new default settings.
+    /// @param consumer           Told whether they were saved.
+    /// @param taskMonitorFactory Shows the save is in progress.
+    public void setDefaultAskStroomAIConfig(final AskStroomAiConfig config,
+                                            final Consumer<Boolean> consumer,
+                                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.setDefaultAskStroomAIConfig(config))
