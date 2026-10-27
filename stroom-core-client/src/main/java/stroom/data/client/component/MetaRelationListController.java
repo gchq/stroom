@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
-import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.data.client.component.ProcessChoiceDialogController;
-import stroom.data.client.component.RefCellsController;
-import stroom.data.client.component.SelectionSummaryController;
+import stroom.data.client.component.MetaList.Columns;
+import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.component.ExplorerPopupController;
-import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -31,14 +28,9 @@ import stroom.meta.shared.Status;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.PagerPanel;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,25 +42,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MetaRelationListPresenter extends AbstractMetaListPresenter {
+/// The streams related to the one selected in the data browser ([MetaList], with the tree of streams
+/// each came from): it, the streams it came from and those made from it.
+public class MetaRelationListController extends MetaListController {
 
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private final Set<Long> hasChildren = new HashSet<>();
+    private final MetaList view;
     private int maxDepth = -1;
 
-    private Column<MetaRow, Expander> expanderColumn;
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param view                               The content.
+    /// @param restFactory                        Finds and changes the streams.
+    /// @param locationManager                    Opens a download.
+    /// @param dateTimeFormatter                  Formats the times shown.
+    /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
+    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param pipelineSelection                  Makes the popup that picks a pipeline.
+    /// @param expressionValidator                Checks an expression with the server.
+    /// @param refCells                           Lets the feed and pipeline cells open them.
     @Inject
-    public MetaRelationListPresenter(final EventBus eventBus,
-                                     final PagerPanel view,
-                                     final RestFactory restFactory,
-                                     final LocationManager locationManager,
-                                     final DateTimeFormatter dateTimeFormatter,
-                                     final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
-                                     final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
-                                     final Provider<ExplorerPopupController> pipelineSelection,
-                                     final ExpressionValidator expressionValidator,
-                                     final RefCellsController refCells) {
+    public MetaRelationListController(final EventBus eventBus,
+                                      final MetaList view,
+                                      final RestFactory restFactory,
+                                      final LocationManager locationManager,
+                                      final DateTimeFormatter dateTimeFormatter,
+                                      final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
+                                      final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
+                                      final Provider<ExplorerPopupController> pipelineSelection,
+                                      final ExpressionValidator expressionValidator,
+                                      final RefCellsController refCells) {
         super(eventBus,
                 view,
                 restFactory,
@@ -78,11 +83,17 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 processChoiceDialogProvider,
                 pipelineSelection,
                 expressionValidator,
-                false,
-                refCells);
+                refCells,
+                Columns.LINEAGE);
+        this.view = view;
         setTableName("Related Streams");
     }
 
+    /// Shows the streams related to one.
+    ///
+    /// @param metaRow         The stream, or `null` for none.
+    /// @param fireEvents      Not used.
+    /// @param showSystemFiles Whether to show locked and deleted streams too.
     public void setSelectedStream(final MetaRow metaRow,
                                   final boolean fireEvents,
                                   final boolean showSystemFiles) {
@@ -121,12 +132,8 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         final List<MetaRow> newData = new ArrayList<>();
         addChildren(null, data, newData, 0);
 
-        // Set the width of the expander column so that all expanders
-        // can be seen.
-        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
-        // Give any width the expander column gave up to the fill columns (the grid has sized its
-        // columns before the first rows), as TreeRowHandler does
-        dataGrid.resizeTableToFitColumns(true);
+        // Set the width of the expander column so that all expanders can be seen.
+        view.setExpanderDepth(maxDepth);
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }
@@ -158,64 +165,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     }
 
     @Override
-    protected void addColumns(final boolean allowSelectAll) {
-        addSelectedColumn(allowSelectAll);
-
-        expanderColumn = DataGridUtil.expanderColumn(this::buildExpander);
-        dataGrid.addColumn(expanderColumn, "<br/>", 0);
-
-        addInfoColumn();
-
-        addCreatedColumn();
-        addStreamTypeColumn();
-        addFeedColumn();
-        addPipelineColumn();
-
-        addRightAlignedAttributeColumn(
-                "Raw",
-                MetaFields.RAW_SIZE,
-                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
-                ColumnSizeConstants.SMALL_COL);
-        addRightAlignedAttributeColumn(
-                "Disk",
-                MetaFields.FILE_SIZE,
-                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
-                ColumnSizeConstants.SMALL_COL);
-        addRightAlignedAttributeColumn(
-                "Read",
-                MetaFields.REC_READ,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                ColumnSizeConstants.SMALL_COL);
-        addRightAlignedAttributeColumn(
-                "Write",
-                MetaFields.REC_WRITE,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                ColumnSizeConstants.SMALL_COL);
-        addRightAlignedAttributeColumn(
-                "Fatal",
-                MetaFields.REC_FATAL,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                40);
-        addRightAlignedAttributeColumn(
-                "Error",
-                MetaFields.REC_ERROR,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                40);
-        addRightAlignedAttributeColumn(
-                "Warn", MetaFields.REC_WARN,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                40);
-        addRightAlignedAttributeColumn(
-                "Info", MetaFields.REC_INFO,
-                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-                40);
-        addAttributeColumn(
-                "Retention",
-                DataRetentionFields.RETENTION_AGE_FIELD,
-                ColumnSizeConstants.SMALL_COL);
-    }
-
-    private Expander buildExpander(final MetaRow row) {
+    protected Expander buildExpander(final MetaRow row) {
         return new Expander(getDepth(row), true, !hasChildren.contains(row.getMeta().getId()));
     }
 

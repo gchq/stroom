@@ -20,7 +20,6 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
@@ -29,7 +28,6 @@ import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
-import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.MetaViewImpl;
@@ -66,8 +64,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SourcePresenter.class,
                 SourceView.class,
                 SourceViewImpl.class);
-        bind(MetaListPresenter.class);
-        bind(SteppingMetaListPresenter.class);
     }
 }
 

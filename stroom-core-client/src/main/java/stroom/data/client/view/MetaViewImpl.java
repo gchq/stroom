@@ -22,6 +22,7 @@ import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -47,13 +48,13 @@ public class MetaViewImpl extends ViewImpl implements MetaView {
     }
 
     @Override
-    public void setStreamListView(final View view) {
+    public void setStreamListView(final IsWidget view) {
         view.asWidget().addStyleName("dashboard-panel overflow-hidden");
         streamList.setWidget(view.asWidget());
     }
 
     @Override
-    public void setStreamRelationListView(final View view) {
+    public void setStreamRelationListView(final IsWidget view) {
         view.asWidget().addStyleName("dashboard-panel overflow-hidden");
         streamRelationList.setWidget(view.asWidget());
     }

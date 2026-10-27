@@ -18,6 +18,8 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.MetaListController;
+import stroom.data.client.component.MetaRelationListController;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -51,6 +53,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,8 +73,8 @@ public class MetaPresenter
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ExpressionValidator expressionValidator;
-    private final MetaListPresenter metaListPresenter;
-    private final MetaRelationListPresenter metaRelationListPresenter;
+    private final MetaListController metaListPresenter;
+    private final MetaRelationListController metaRelationListPresenter;
     private final DataPresenter dataPresenter;
     private final Provider<DataUploadPresenter> streamUploadPresenter;
     private final Provider<ExpressionDialogController> filterDialogProvider;
@@ -95,8 +98,8 @@ public class MetaPresenter
     @Inject
     public MetaPresenter(final EventBus eventBus,
                          final MetaView view,
-                         final MetaListPresenter metaListPresenter,
-                         final MetaRelationListPresenter metaRelationListPresenter,
+                         final MetaListController metaListPresenter,
+                         final MetaRelationListController metaRelationListPresenter,
                          final DataPresenter dataPresenter,
                          final Provider<ExpressionDialogController> filterDialogProvider,
                          final Provider<DataUploadPresenter> streamUploadPresenter,
@@ -118,8 +121,8 @@ public class MetaPresenter
         this.expressionValidator = expressionValidator;
         this.securityContext = securityContext;
 
-        getView().setStreamListView(metaListPresenter.getView());
-        getView().setStreamRelationListView(metaRelationListPresenter.getView());
+        getView().setStreamListView(metaListPresenter);
+        getView().setStreamRelationListView(metaRelationListPresenter);
         getView().setDataView(dataPresenter.getView());
 
         dataPresenter.setBeginSteppingHandler(this);
@@ -200,7 +203,7 @@ public class MetaPresenter
                 setStreamRelationListSelectableEnabled(selected)));
     }
 
-    private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
+    private static Meta getMeta(final MetaListController streamListPresenter, final long id) {
         final ResultPage<MetaRow> list = streamListPresenter.getResultPage();
         if (list != null) {
             if (list.getValues() != null) {
@@ -386,7 +389,7 @@ public class MetaPresenter
         }
     }
 
-    public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,
+    public boolean isSomeSelected(final MetaListController streamListPresenter,
                                   final Selection<Long> selectedIdSet) {
         if (streamListPresenter.getResultPage() == null || streamListPresenter.getResultPage().isEmpty()) {
             return false;
@@ -421,7 +424,7 @@ public class MetaPresenter
         }
     }
 
-    private void shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter,
+    private void shouldEnableDelete(final MetaListController metaListPresenter,
                                     final Selection<Long> streamIdSet,
                                     final Consumer<Boolean> isEnabledConsumer) {
 //        if (streamIdSet != null) {
@@ -475,7 +478,7 @@ public class MetaPresenter
         isEnabledConsumer.accept(false);
     }
 
-    private void shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter,
+    private void shouldEnableRestore(final MetaListController metaListPresenter,
                                      final Selection<Long> streamIdSet,
                                      final Consumer<Boolean> isEnabledConsumer) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
@@ -565,12 +568,12 @@ public class MetaPresenter
         /// Shows the list of streams.
         ///
         /// @param view Its view.
-        void setStreamListView(View view);
+        void setStreamListView(IsWidget view);
 
         /// Shows the streams related to the selected one.
         ///
         /// @param view Its view.
-        void setStreamRelationListView(View view);
+        void setStreamRelationListView(IsWidget view);
 
         /// Shows the selected stream's data.
         ///

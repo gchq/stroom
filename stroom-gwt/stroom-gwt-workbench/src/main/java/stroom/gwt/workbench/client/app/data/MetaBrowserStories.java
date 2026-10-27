@@ -215,7 +215,7 @@ public final class MetaBrowserStories {
                 });
     }
 
-    // Before its selection summary, Stroom's AbstractMetaListPresenter.confirmSelection asks 'Are you
+    // Before its selection summary, Stroom's MetaListController.confirmSelection asks 'Are you
     // sure you want to <action> the selected items?' and, for a select all, warns that every stream
     // matching the filter is included; both are answered OK
     private static void confirmSelectAll(final Play play, final Play screen, final String action) {

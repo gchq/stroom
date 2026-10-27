@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /// The `App/Data/ProcessChoiceDialog` stories, showing Stroom's real [ProcessChoiceDialogController] (the
-/// 'Create Processors' dialog), as the data browser's meta list (`AbstractMetaListPresenter`) shows
+/// 'Create Processors' dialog), as the data browser's meta list (`MetaListController`) shows
 /// it for a selection of streams.
 ///
 /// A spy records the dialog's [ProcessChoice]. In Stroom the pipeline is chosen after the dialog's

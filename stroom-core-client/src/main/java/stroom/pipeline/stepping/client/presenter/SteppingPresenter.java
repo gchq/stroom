@@ -19,9 +19,9 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.SteppingMetaListController;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
-import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
@@ -122,7 +122,7 @@ public class SteppingPresenter
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
-    private final SteppingMetaListPresenter steppingMetaListPresenter;
+    private final SteppingMetaListController steppingMetaListPresenter;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
     // elementId => ElementPresenter
@@ -164,7 +164,7 @@ public class SteppingPresenter
                              final StepControlController stepControl,
                              final SteppingFilterPresenter steppingFilterPresenter,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
-                             final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
+                             final Provider<SteppingMetaListController> metaListPresenterProvider,
                              final Provider<ExpressionDialogController> filterDialogProvider,
                              final ExpressionValidator expressionValidator) {
         super(eventBus, view);
@@ -234,7 +234,7 @@ public class SteppingPresenter
         streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter Streams",
                 this::onStreamListFilter);
 
-        sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
+        sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.asWidget());
 
         own(
                 pipelinePathBar.getSelectionModel().addSelectionChangeHandler(event -> {

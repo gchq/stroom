@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.info.client.CellIcon;
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
-import stroom.data.client.component.ProcessChoiceDialogController;
-import stroom.data.client.component.RefCellsController;
-import stroom.data.client.component.SelectionSummaryController;
+import stroom.data.client.component.MetaList.Columns;
+import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.presenter.ExpressionValidator;
+import stroom.data.client.presenter.ProcessChoice;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.shared.DataResource;
-import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -53,29 +51,21 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.shared.SvgImage;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Listeners;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
-import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -83,15 +73,14 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-public abstract class AbstractMetaListPresenter
-        extends MyPresenterWidget<PagerPanel>
-        implements Refreshable {
+/// The data browser's streams ([MetaList]) that match an expression, a page at a time, and what can be
+/// done with those chosen: their summary, download, process or reprocess, delete and restore. The
+/// stepping screen's and the related streams' lists extend it.
+public class MetaListController extends Controller {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -108,21 +97,30 @@ public abstract class AbstractMetaListPresenter
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
+    private final MetaList view;
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
-    final DataGrid<MetaRow> dataGrid;
-    private final MultiSelectionModelImpl<MetaRow> selectionModel;
-    private final DataGridSelectionEventManager<MetaRow> selectionEventManager;
 
     private Consumer<ResultPage<MetaRow>> onResult = resultPage -> {
     };
 
-    private final RefCellsController refCells;
-
     private final Listeners<Selection<Long>> selectionListeners = new Listeners<>();
 
-    AbstractMetaListPresenter(final EventBus eventBus,
-                              final PagerPanel view,
+    /// Made by GIN, with its content, for the data browser's list of streams.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param view                               The content.
+    /// @param restFactory                        Finds and changes the streams.
+    /// @param locationManager                    Opens a download.
+    /// @param dateTimeFormatter                  Formats the times shown.
+    /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
+    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param pipelineSelection                  Makes the popup that picks a pipeline.
+    /// @param expressionValidator                Checks an expression with the server.
+    /// @param refCells                           Lets the feed and pipeline cells open them.
+    @Inject
+    public MetaListController(final EventBus eventBus,
+                              final MetaList view,
                               final RestFactory restFactory,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
@@ -130,10 +128,47 @@ public abstract class AbstractMetaListPresenter
                               final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
                               final Provider<ExplorerPopupController> pipelineSelection,
                               final ExpressionValidator expressionValidator,
-                              final boolean allowSelectAll,
                               final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
+        this(eventBus,
+                view,
+                restFactory,
+                locationManager,
+                dateTimeFormatter,
+                selectionSummaryControllerProvider,
+                processChoiceDialogProvider,
+                pipelineSelection,
+                expressionValidator,
+                refCells,
+                Columns.SELECTABLE);
+    }
+
+    /// Made by a list that extends this, with the columns it shows.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param view                               The content.
+    /// @param restFactory                        Finds and changes the streams.
+    /// @param locationManager                    Opens a download.
+    /// @param dateTimeFormatter                  Formats the times shown.
+    /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
+    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param pipelineSelection                  Makes the popup that picks a pipeline.
+    /// @param expressionValidator                Checks an expression with the server.
+    /// @param refCells                           Lets the feed and pipeline cells open them.
+    /// @param columns                            Which of the optional columns to show.
+    protected MetaListController(final EventBus eventBus,
+                                 final MetaList view,
+                                 final RestFactory restFactory,
+                                 final LocationManager locationManager,
+                                 final DateTimeFormatter dateTimeFormatter,
+                                 final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
+                                 final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
+                                 final Provider<ExplorerPopupController> pipelineSelection,
+                                 final ExpressionValidator expressionValidator,
+                                 final RefCellsController refCells,
+                                 final Columns columns) {
+        super(eventBus);
+        this.view = view;
+        own(refCells);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -142,16 +177,18 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new DataGrid<>();
-        this.dataGrid.setTableName("Streams");
-        selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
-        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
-
-        view.setDataWidget(dataGrid);
+        initWidget(view);
 
         selection.setMatchAll(false);
-        addColumns(allowSelectAll);
+        view.setSelection(selection);
+        view.addColumns(columns,
+                dateTimeFormatter::format,
+                refCells.configure(new FeedRefCell.Builder<>()),
+                refCells.configure(new DocRefCell.Builder<>()),
+                this::buildExpander);
+        view.setOnSelectAll(this::setMatchAll);
+        view.setOnSelectionChange(() -> selectionListeners.fire(selection));
+        view.setOnSortChange(this::refresh);
 
         criteria = new FindMetaCriteria();
         dataProvider = new RestDataProvider<>(eventBus) {
@@ -161,7 +198,7 @@ public abstract class AbstractMetaListPresenter
                                 final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    final ColumnSortList columnSortList = dataGrid.getColumnSortList();
+                    final ColumnSortList columnSortList = view.getSortList();
                     final List<CriteriaFieldSort> sortList = CriteriaUtil.createSortList(columnSortList);
                     // Add the meta id to the sort list otherwise we are never guaranteed rows returned
                     // in same order. It has to be appended to the list actually sent, AFTER the user's
@@ -185,7 +222,8 @@ public abstract class AbstractMetaListPresenter
                                 onResult.accept(resultSet);
                             })
                             .onFailure(errorHandler)
-                            .taskMonitorFactory(view)
+                            .owner(MetaListController.this)
+                            .taskMonitorFactory(view.getTaskMonitor())
                             .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
@@ -197,12 +235,19 @@ public abstract class AbstractMetaListPresenter
                 super.changeData(onProcessData(data));
             }
         };
-
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
-    void setTableName(final String tableName) {
-        dataGrid.setTableName(tableName);
+    /// @param tableName The list's name, for assistive technology.
+    protected void setTableName(final String tableName) {
+        view.setTableName(tableName);
+    }
+
+    /// Gives a stream's place in the tree of streams, for a list with [Columns#LINEAGE].
+    ///
+    /// @param row A stream.
+    /// @return Its place, or `null` when the list has no tree.
+    protected Expander buildExpander(final MetaRow row) {
+        return null;
     }
 
     /// @param onResult What to run with each page of data the list fetches.
@@ -210,6 +255,10 @@ public abstract class AbstractMetaListPresenter
         this.onResult = onResult;
     }
 
+    /// Keeps the streams chosen that are still shown, as the rows change, and tells the listeners.
+    ///
+    /// @param data A page of streams fetched.
+    /// @return The page to show.
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
         boolean equalsList = true;
 
@@ -265,17 +314,15 @@ public abstract class AbstractMetaListPresenter
         // There might have been a selection change so fire a data selection event.
         selectionListeners.fire(selection);
 
-        final MetaRow selected = selectionModel.getSelected();
+        final MetaRow selected = getSelectionModel().getSelected();
         if (selected != null) {
             if (!resultPage.getValues().contains(selected)) {
-                selectionModel.setSelected(selected, false);
+                getSelectionModel().setSelected(selected, false);
             }
         }
 
         return data;
     }
-
-    protected abstract void addColumns(final boolean allowSelectAll);
 
     private void setMatchAll(final boolean select) {
         selection.clear();
@@ -286,275 +333,42 @@ public abstract class AbstractMetaListPresenter
         selectionListeners.fire(selection);
     }
 
-    void addSelectedColumn(final boolean allowSelectAll) {
-        // Select Column
-        final Column<MetaRow, TickBoxState> column = new Column<MetaRow, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final MetaRow object) {
-                return TickBoxState.fromBoolean(selection.isMatch(object.getMeta().getId()));
-            }
-        };
-        if (allowSelectAll) {
-            final Header<TickBoxState> header = new Header<TickBoxState>(
-                    TickBoxCell.create(false, false)) {
-                @Override
-                public TickBoxState getValue() {
-                    if (selection.isMatchAll()) {
-                        return TickBoxState.TICK;
-                    }
-                    if (selection.size() > 0) {
-                        return TickBoxState.HALF_TICK;
-                    }
-                    return TickBoxState.UNTICK;
-                }
-            };
-            dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
-
-            header.setUpdater(value -> {
-                if (value.equals(TickBoxState.UNTICK)) {
-                    setMatchAll(false);
-                } else if (value.equals(TickBoxState.TICK)) {
-                    setMatchAll(true);
-                }
-            });
-
-            own(selectionEventManager.addSelectAllHandler(event ->
-                    setMatchAll(!selection.isMatchAll())));
-
-        } else {
-            dataGrid.addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
-        }
-
-        // Add Handlers
-        column.setFieldUpdater((index, row, value) -> {
-            if (value.toBoolean()) {
-                selection.add(row.getMeta().getId());
-
-            } else {
-                // De-selecting one and currently matching all ?
-                if (selection.isMatchAll()) {
-                    selection.setMatchAll(false);
-
-                    final Set<Long> resultStreamIdSet = getResultStreamIdSet();
-                    selection.addAll(resultStreamIdSet);
-                }
-                selection.remove(row.getMeta().getId());
-            }
-            dataGrid.redrawHeaders();
-            selectionListeners.fire(selection);
-        });
+    /// @return The selection, one stream at most.
+    public MultiSelectionModel<MetaRow> getSelectionModel() {
+        return view.getSelectionModel();
     }
 
-    protected CellIcon getInfoCellState(final MetaRow metaRow) {
-        if (metaRow == null || metaRow.getMeta() == null || metaRow.getMeta().getStatus() == null) {
-            return null;
-        }
-
-        // Should only show unlocked ones by default
-        final Status status = metaRow.getMeta().getStatus();
-        if (Status.UNLOCKED.equals(status)) {
-            // Be default the screen only shows unlocked streams so have no icon for those
-            return null;
-        } else if (Status.DELETED.equals(status)) {
-            return CellIcon.of(SvgImage.DELETE, "Deleted Stream");
-        } else if (Status.LOCKED.equals(status)) {
-            return CellIcon.of(SvgImage.LOCKED, "Locked Stream");
-        } else {
-            throw new RuntimeException("Unknown status " + status);
-        }
-    }
-
-    void addInfoColumn() {
-        DataGridUtil.addStatusIconColumn(dataGrid, this::getInfoCellState);
-    }
-
-    void addCreatedColumn() {
-        final Column<MetaRow, String> col = DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
-                .withSorting(MetaFields.CREATE_TIME)
-                .defaultSortAscending(false)
-                .build();
-        dataGrid.addResizableColumn(col,
-                "Created",
-                ColumnSizeConstants.DATE_COL);
-        // Sort by create time by default.
-        dataGrid.sort(col);
-    }
-
-    void addFeedColumn() {
-        dataGrid.addResizableColumn(
-                DataGridUtil.feedRefColumnBuilder((MetaRow metaRow) ->
-                                        Optional.ofNullable(metaRow)
-                                                .map(this::getFeed)
-                                                .orElse(null),
-                                refCells)
-                        .withSorting(MetaFields.FEED)
-                        .build(),
-                "Feed",
-                ColumnSizeConstants.BIG_COL);
-    }
-
-    void addStreamTypeColumn() {
-        dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                        Optional.ofNullable(metaRow)
-                                                .map(MetaRow::getMeta)
-                                                .map(Meta::getTypeName)
-                                                .orElse(""))
-                        .withSorting(MetaFields.TYPE)
-                        .build(),
-                "Type",
-                80);
-    }
-
-    private String getFeed(final MetaRow metaRow) {
-        return NullSafe.get(metaRow, MetaRow::getMeta, Meta::getFeedName);
-    }
-
-    private DocRef getPipeline(final MetaRow metaRow) {
-        if (NullSafe.nonNull(metaRow, MetaRow::getMeta, Meta::getProcessorUuid)) {
-            return metaRow.getPipeline();
-        }
-        return null;
-    }
-
-    void addPipelineColumn() {
-        dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
-                                        NullSafe.get(metaRow, this::getPipeline),
-                                refCells)
-                        .withSorting(MetaFields.PIPELINE_NAME)
-                        .build(),
-                "Pipeline",
-                ColumnSizeConstants.BIG_COL);
-    }
-
-    protected MultiSelectionModel<MetaRow> getSelectionModel() {
-        return selectionModel;
-    }
-
-    Selection<Long> getSelection() {
+    /// @return The streams chosen with the tick boxes.
+    public Selection<Long> getSelection() {
         return selection;
     }
 
-    private Set<Long> getResultStreamIdSet() {
-        final Set<Long> rtn = new HashSet<>();
-        if (resultPage != null) {
-            for (final MetaRow e : resultPage.getValues()) {
-                rtn.add(e.getMeta().getId());
-            }
-        }
-        return rtn;
-
-    }
-
-    ResultPage<MetaRow> getResultPage() {
+    /// @return The page of streams last fetched, or `null`.
+    public ResultPage<MetaRow> getResultPage() {
         return resultPage;
     }
 
-    void addAttributeColumn(final String name,
-                            final QueryField attribute,
-                            final int size) {
-
-        final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getFldName());
-
-        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, TextCell::new)
-                .build();
-
-        dataGrid.addResizableColumn(
-                column,
-                name,
-                size);
-    }
-
-    void addRightAlignedAttributeColumn(final String name,
-                                        final QueryField attribute,
-                                        final Function<String, String> formatter,
-                                        final int size) {
-
-        final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getFldName());
-            if (value == null) {
-                return null;
-            } else {
-                return formatter.apply(value);
-            }
-        };
-
-        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, TextCell::new)
-                .rightAligned()
-                .build();
-
-        dataGrid.addResizableColumn(
-                column,
-                DataGridUtil.createRightAlignedHeader(name),
-                size);
-    }
-
-    void addColouredSizeAttributeColumn(final String name,
-                                        final QueryField attribute,
-                                        final Function<String, String> formatter,
-                                        final int size) {
-
-        final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getFldName());
-            if (value == null) {
-                return null;
-            } else {
-                return formatter.apply(value);
-            }
-        };
-
-        final Function<String, String> colourFunc = val -> {
-            if (val == null) {
-                return "black";
-            } else if (val.endsWith("B")) {
-                return "blue";
-            } else if (val.endsWith("K")) {
-                return "green";
-            } else if (val.endsWith("M")) {
-                return "#FF7F00";
-            } else if (val.endsWith("G")) {
-                return "red";
-            } else {
-                return "red";
-            }
-        };
-
-        final Column<MetaRow, SafeHtml> column = DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.colouredCellExtractor(extractor, colourFunc))
-                .rightAligned()
-                .build();
-
-        dataGrid.addResizableColumn(
-                column,
-                DataGridUtil.createRightAlignedHeader(name),
-                size);
-    }
-
-    /**
-     * Set an expression this client built itself, with no validation round-trip.
-     * <p>
-     * {@link #setExpression} validates because a user-edited filter can be wrong, and the server's
-     * message is the feedback. A seed expression built from a {@link stroom.docref.DocRef} by
-     * {@code MetaExpressionUtil} cannot be wrong, so validating one spends a
-     * {@code POST /expression/v1/validate} on this client's own output before the {@code meta/find}
-     * it was always going to run. {@code ExpressionValidator} already makes exactly this exemption
-     * for {@code ALL_UNLOCKED_EXPRESSION}; this extends it to the rest of the seeds.
-     *
-     * @param onSetExpression Called after the expression has been set on the criteria. Can be null.
-     */
+    /// Sets an expression this client built itself, with no validation round-trip.
+    ///
+    /// [#setExpression] validates because a user-edited filter can be wrong, and the server's
+    /// message is the feedback. A seed expression built from a [stroom.docref.DocRef] by
+    /// `MetaExpressionUtil` cannot be wrong, so validating one spends a
+    /// `POST /expression/v1/validate` on this client's own output before the `meta/find` it was
+    /// always going to run. `ExpressionValidator` already makes exactly this exemption for
+    /// `ALL_UNLOCKED_EXPRESSION`; this extends it to the rest of the seeds.
+    ///
+    /// @param expression      The expression.
+    /// @param onSetExpression Called after the expression has been set on the criteria. Can be null.
     public void setSeedExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
         this.criteria.setExpression(expression);
         NullSafe.run(onSetExpression);
     }
 
-    /**
-     * @param onSetExpression Called after the expression has been successfully
-     *                        validated and set on the criteria. Can be null.
-     */
+    /// Sets an expression the user built, once the server has validated it.
+    ///
+    /// @param expression      The expression.
+    /// @param onSetExpression Called after the expression has been successfully validated and set
+    ///                        on the criteria. Can be null.
     public void setExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
         validateExpression(expression, expression2 -> {
             this.criteria.setExpression(expression2);
@@ -562,6 +376,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    /// Shows a summary of the streams chosen.
     public void info() {
         final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
         validateExpression(expression, exp -> {
@@ -577,6 +392,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    /// Downloads the streams chosen, once confirmed.
     public void download() {
         confirmSelection("download", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
@@ -594,6 +410,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    /// Processes or reprocesses the streams chosen, as the user chooses.
     public void process() {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
@@ -606,7 +423,7 @@ public abstract class AbstractMetaListPresenter
             });
         } else {
             AlertEvent.fireError(
-                    AbstractMetaListPresenter.this,
+                    this,
                     "You have not selected any items",
                     null);
         }
@@ -661,11 +478,11 @@ public abstract class AbstractMetaListPresenter
                                     final List<QueryField> validFields,
                                     final Consumer<ExpressionOperator> consumer) {
         expressionValidator.validateExpression(
-                AbstractMetaListPresenter.this,
+                this,
                 validFields,
                 expression,
                 consumer,
-                getView());
+                view.getTaskMonitor());
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
@@ -677,14 +494,12 @@ public abstract class AbstractMetaListPresenter
         chooser.showOnce(this, consumer);
     }
 
-    /**
-     * @return The effective criteria taking into account the active filter and any
-     * row selections.
-     */
-    FindMetaCriteria getSelectedCriteria() {
+    /// @return The effective criteria taking into account the active filter and any row selections.
+    public FindMetaCriteria getSelectedCriteria() {
         return expressionToNonPagedCriteria(selectionToExpression(this.criteria, getSelection()));
     }
 
+    /// Deletes the streams chosen, once confirmed.
     public void delete() {
         confirmSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
@@ -702,6 +517,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    /// Restores the deleted streams chosen, once confirmed.
     public void restore() {
         confirmSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
@@ -729,12 +545,13 @@ public abstract class AbstractMetaListPresenter
                     .method(res -> res.updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus)))
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
-                                    AbstractMetaListPresenter.this,
+                                    this,
                                     text + " " + result + " record" + ((result.longValue() > 1)
                                             ? "s"
                                             : ""),
                                     this::refresh))
-                    .taskMonitorFactory(getView())
+                    .owner(this)
+                    .taskMonitorFactory(view.getTaskMonitor())
                     .exec();
         };
     }
@@ -744,7 +561,8 @@ public abstract class AbstractMetaListPresenter
                 .create(DATA_RESOURCE)
                 .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
     }
 
@@ -772,12 +590,13 @@ public abstract class AbstractMetaListPresenter
                 .method(res -> res.create(request))
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
-                        CreateProcessorEvent.fire(AbstractMetaListPresenter.this, processorFilter);
+                        CreateProcessorEvent.fire(this, processorFilter);
                     } else {
                         AlertEvent.fireInfo(this, "Created processor filter", null);
                     }
                 })
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
 
     }
@@ -827,14 +646,14 @@ public abstract class AbstractMetaListPresenter
                             switch (maxSeverity) {
                                 case INFO:
                                     AlertEvent.fireInfo(
-                                            AbstractMetaListPresenter.this,
+                                            MetaListController.this,
                                             "Result Details",
                                             sb.toString().trim(),
                                             null);
                                     break;
                                 case WARNING:
                                     AlertEvent.fireWarn(
-                                            AbstractMetaListPresenter.this,
+                                            MetaListController.this,
                                             "Result Details",
                                             sb.toString().trim(),
                                             null);
@@ -842,7 +661,7 @@ public abstract class AbstractMetaListPresenter
                                 case ERROR:
                                 case FATAL_ERROR:
                                     AlertEvent.fireError(
-                                            AbstractMetaListPresenter.this,
+                                            MetaListController.this,
                                             "Result Details",
                                             sb.toString().trim(),
                                             null);
@@ -853,7 +672,8 @@ public abstract class AbstractMetaListPresenter
                         }
                     }
                 })
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
 
     }
@@ -885,7 +705,7 @@ public abstract class AbstractMetaListPresenter
                     confirm -> {
                         if (confirm) {
                             if (selection.isMatchAll()) {
-                                ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
+                                ConfirmEvent.fireWarn(this,
                                         "You have clicked the select all checkbox.  " +
                                         "If you continue Stroom will " +
                                         actionType + " all items that match the filter, not just those " +
@@ -902,7 +722,7 @@ public abstract class AbstractMetaListPresenter
                     });
         } else {
             AlertEvent.fireError(
-                    AbstractMetaListPresenter.this,
+                    this,
                     "You have not selected any items",
                     null);
         }
@@ -923,7 +743,7 @@ public abstract class AbstractMetaListPresenter
         if (selection.isMatchAll()) {
             if (NullSafe.nonNull(criteria, FindMetaCriteria::getExpression)) {
                 final Predicate<ExpressionItem> termFilter = removeStatusTerms
-                        ? AbstractMetaListPresenter::isNotStatusTerm
+                        ? MetaListController::isNotStatusTerm
                         : null;
                 return ExpressionUtil.copyOperator(criteria.getExpression(), termFilter);
             }
@@ -955,18 +775,19 @@ public abstract class AbstractMetaListPresenter
         return criteria;
     }
 
-    @Override
+    /// Finds the streams again; the first time, starts the list.
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(dataGrid);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }
     }
 
-    MetaRow getSelected() {
-        return selectionModel.getSelected();
+    /// @return The selected stream, or `null`.
+    public MetaRow getSelected() {
+        return getSelectionModel().getSelected();
     }
 
     /// Listens for the user selecting streams, until the registration is removed.
@@ -981,9 +802,10 @@ public abstract class AbstractMetaListPresenter
     ///
     /// @return The toolbar.
     public Toolbar getToolbar() {
-        return getView().getToolbar();
+        return view.getToolbar();
     }
 
+    /// @return The criteria the streams are found by.
     public FindMetaCriteria getCriteria() {
         return criteria;
     }
