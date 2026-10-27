@@ -17,8 +17,6 @@
 package stroom.monitoring.client.gin;
 
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
-import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
-import stroom.config.global.client.view.GlobalPropertyEditViewImpl;
 import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
@@ -89,11 +87,6 @@ public class MonitoringModule extends PluginModule {
                 GlobalPropertyTabPresenter.class,
                 GlobalPropertyTabPresenter.GlobalPropertyTabView.class,
                 GlobalPropertyTabViewImpl.class);
-
-        bindPresenterWidget(
-                ManageGlobalPropertyEditPresenter.class,
-                ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class,
-                GlobalPropertyEditViewImpl.class);
 
         bindPlugin(TaskManagerPlugin.class);
         bindPresenterWidget(

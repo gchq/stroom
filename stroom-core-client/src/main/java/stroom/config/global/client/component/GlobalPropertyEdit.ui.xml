@@ -8,22 +8,23 @@
         <form:FormGroup identity="globalPropertyEditName"  label="Name"
                         helpText="The full name of the property, e.g. stroom.ui.namePattern. Use the copy button to copy it.">
             <g:FlowPanel addStyleNames="inline-label-icon">
-                <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label"/>
-                <b:Toolbar name="Name actions" addStyleNames="globalPropertyEditViewImpl-nameActions">
-                    <b:ToolbarButton ui:field="copyNameButton" title="Copy Property Name" addStyleNames="svgIcon copyNameIcon"/>
+                <g:Label ui:field="name" addStyleNames="stroom-control-label"/>
+                <b:Toolbar name="Name actions" addStyleNames="global-property-edit__name-actions">
+                    <b:ToolbarButton ui:field="copyNameButton" svg="COPY" title="Copy Property Name"
+                                     addStyleNames="svgIcon global-property-edit__copy-name"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDescription" label="Description"
                         helpText="What the property controls.">
-            <form:TextArea ui:field="description"
-                        addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
+            <form:TextArea ui:field="description" readOnly="true"
+                        addStyleNames="global-property-edit__text-area w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDefaultValue" label="Default Value"
                         helpText="The value built into Stroom, used when neither a database nor a YAML value is set."
                         screenReaderText="Used when no database or YAML value is set.">
-            <form:TextArea ui:field="defaultValue"
-                        addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
+            <form:TextArea ui:field="defaultValue" readOnly="true"
+                        addStyleNames="global-property-edit__text-area--short w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Set a cluster-wide value in the database, entered in Database Value, to use instead of the default. A YAML value on a node still takes priority. Unticking removes the database value. Not available when Read Only is ticked.">
             <tickbox:TickBox ui:field="useOverride" identity="globalPropertyEditSetDatabasevalue" label="Set Database value"/>
@@ -34,50 +35,61 @@
                         controlNames="Database Value, Database Value">
             <g:FlowPanel>
                 <form:TextArea ui:field="databaseValue"
-                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
-                <form:PasswordBox ui:field="databaseValuePassword"
-                                  addStyleNames="globalProperties allow-focus w-100"/>
+                            addStyleNames="global-property-edit__text-area--short allow-focus w-100"/>
+                <form:PasswordBox ui:field="databaseValuePassword" visible="false"
+                                  addStyleNames="allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditNodeYAMLValue" label="Node YAML Value"
                         helpText="The value set in the nodes' YAML configuration files, if any. On each node it overrides the database value. If nodes have different YAML values, a message says so."
                         screenReaderText="Read only. Overrides the database value on the nodes where it is set.">
             <g:FlowPanel>
-                <b:Toolbar ui:field="yamlValueToolbar" name="YAML value actions"/>
-                <form:TextArea ui:field="yamlValue"
-                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
+                <b:Toolbar name="YAML value actions"/>
+                <form:TextArea ui:field="yamlValue" readOnly="true"
+                            addStyleNames="global-property-edit__text-area--short allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditNodeEffectiveValue" label="Node Effective Value"
                         helpText="The value the nodes are actually using: the YAML value if set, otherwise the database value, otherwise the default. A warning icon shows if nodes differ in value or source, or a node could not be checked; select it to see each node's value."
                         screenReaderText="Read only. YAML value, else database value, else default.">
             <g:FlowPanel>
-                <b:Toolbar ui:field="effectiveValueToolbar" name="Effective value actions"/>
-                <form:TextArea ui:field="effectiveValue"
-                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
+                <b:Toolbar name="Effective value actions">
+                    <b:ToolbarButton ui:field="effectiveValueWarnings" svg="ALERT" title="Show Cluster Values"
+                                     visible="false"/>
+                    <b:ToolbarButton ui:field="effectiveValueInfo" svg="INFO"
+                                     title="Show Cluster Values (all nodes have the same effective value)"
+                                     visible="false"/>
+                </b:Toolbar>
+                <form:TextArea ui:field="effectiveValue" readOnly="true"
+                            addStyleNames="global-property-edit__text-area--short allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDataType" label="Data Type"
                         helpText="The type of value the property takes, which sets the format to use. The help button beside the type name gives details of each type.">
-            <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-dataType">
-                <g:Label ui:field="dataType" addStyleNames="globalProperties"/>
-                <b:Toolbar ui:field="dataTypeToolbar" name="Data type actions" addStyleNames="helpIcon"/>
+            <g:FlowPanel addStyleNames="global-property-edit__data-type">
+                <g:Label ui:field="dataType"/>
+                <b:Toolbar name="Data type actions" addStyleNames="global-property-edit__help">
+                    <b:ToolbarButton ui:field="dataTypeHelp" svg="HELP" title="Help on Data Types (opens in new tab)"/>
+                </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditSource" label="Source"
                         helpText="Where the effective value comes from: Default, Database or YAML. If nodes use different sources, a message says so.">
-            <g:Label ui:field="source" addStyleNames="globalProperties"/>
+            <g:Label ui:field="source"/>
         </form:FormGroup>
-        <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-attributes">
+        <g:FlowPanel addStyleNames="global-property-edit__attributes">
             <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after the Stroom nodes serving the user interface are restarted.">
-                <tickbox:TickBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Node Restart"/>
+                <tickbox:TickBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh"
+                                 label="Requires UI Node Restart" enabled="false"/>
             </form:FormGroup>
             <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after every Stroom node in the cluster is restarted.">
-                <tickbox:TickBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>
+                <tickbox:TickBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart"
+                                 label="Requires Restart" enabled="false"/>
             </form:FormGroup>
             <form:FormGroup helpText="Read only. Ticked if this property can't be changed here, only in the nodes' YAML configuration files.">
-                <tickbox:TickBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"/>
+                <tickbox:TickBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"
+                                 enabled="false"/>
             </form:FormGroup>
         </g:FlowPanel>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

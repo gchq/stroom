@@ -17,6 +17,7 @@
 package stroom.config.global.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.client.component.GlobalPropertyEditController;
 import stroom.config.global.client.component.ManageGlobalPropertyListController;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -47,7 +48,7 @@ public class GlobalPropertyTabPresenter
     public static final String TAB_TYPE = "Caches";
 
     private final ManageGlobalPropertyListController manageGlobalPropertyList;
-    private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
+    private final Provider<GlobalPropertyEditController> editProvider;
     private final ButtonView openButton;
     private final ButtonView warningsButton;
     private String currentWarnings;
@@ -56,7 +57,7 @@ public class GlobalPropertyTabPresenter
     public GlobalPropertyTabPresenter(final EventBus eventBus,
                                       final GlobalPropertyTabView view,
                                       final ManageGlobalPropertyListController manageGlobalPropertyList,
-                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider,
+                                      final Provider<GlobalPropertyEditController> editProvider,
                                       final UiConfigCache uiConfigCache,
                                       final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
@@ -135,8 +136,7 @@ public class GlobalPropertyTabPresenter
     public void onEdit(final ConfigProperty e) {
         if (e != null) {
             if (editProvider != null) {
-                final ManageGlobalPropertyEditPresenter editor = makeDialog(editProvider);
-                editor.showEntity(e, manageGlobalPropertyList::refresh);
+                editProvider.get().show(this, e, manageGlobalPropertyList::refresh);
             }
         }
     }
