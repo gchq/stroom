@@ -2,9 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client">
+    <!-- A pathways document's Pathways tab: its pathways above the paths of the one selected -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 400px"
                      names="Pathways, Paths" addStyleNames="max default-min-sizes">
-        <g:SimplePanel ui:field="dataGrid" styleName="max"/>
-        <g:SimplePanel ui:field="tree" styleName="max"/>
+        <g:SimplePanel ui:field="pathwayList" styleName="max"/>
+        <g:SimplePanel ui:field="pathwayTree" styleName="max"/>
     </split:SplitPane>
 </ui:UiBinder>

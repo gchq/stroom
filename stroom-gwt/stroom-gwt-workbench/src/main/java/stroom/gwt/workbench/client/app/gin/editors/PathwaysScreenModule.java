@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
-import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `PathwaysModule`
@@ -33,9 +30,6 @@ public class PathwaysScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(PathwaysPresenter.class);
-        bindPresenterWidget(PathwaysSplitPresenter.class,
-                PathwaysSplitView.class,
-                PathwaysSplitViewImpl.class);
     }
 }
 

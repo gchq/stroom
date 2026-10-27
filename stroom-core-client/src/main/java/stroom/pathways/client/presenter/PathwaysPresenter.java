@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pathways.client.component.PathwaysSettingsController;
+import stroom.pathways.client.component.PathwaysSplitController;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -46,13 +46,14 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
     public PathwaysPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
                              final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
-                             final Provider<PathwaysSplitPresenter> pathwaysSplitPresenterProvider,
+                             final Provider<PathwaysSplitController> pathwaysSplitProvider,
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<PathwaysDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view);
 
-        addTab(PATHWAYS, new DocTabProvider<PathwaysDoc>(pathwaysSplitPresenterProvider::get));
+        addTab(PATHWAYS, new ControllerTabProvider<>(eventBus, pathwaysSplitProvider::get,
+                PathwaysSplitController::read));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, pathwaysSettingsProvider::get,
                 PathwaysSettingsController::read,
                 PathwaysSettingsController::write));

@@ -21,12 +21,9 @@ import stroom.pathways.client.PathwaysPlugin;
 import stroom.pathways.client.TracesDocPlugin;
 import stroom.pathways.client.TracesPlugin;
 import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.client.presenter.TracesListTabPresenter;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.client.presenter.TracesPresenter;
-import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.pathways.client.view.TracesViewImpl;
 
 public class PathwaysModule extends PluginModule {
@@ -37,9 +34,6 @@ public class PathwaysModule extends PluginModule {
         bindPlugin(TracesPlugin.class);
         bindPlugin(TracesDocPlugin.class);
         bind(PathwaysPresenter.class);
-        bindPresenterWidget(PathwaysSplitPresenter.class,
-                PathwaysSplitView.class,
-                PathwaysSplitViewImpl.class);
         bind(TracesPresenter.class);
         bindPresenterWidget(TracesListTabPresenter.class,
                 TracesView.class,

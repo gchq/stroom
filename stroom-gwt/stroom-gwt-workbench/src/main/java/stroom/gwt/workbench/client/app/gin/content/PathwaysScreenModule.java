@@ -17,12 +17,9 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.client.presenter.TracesListTabPresenter;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.client.presenter.TracesPresenter;
-import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.pathways.client.view.TracesViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -37,9 +34,6 @@ public class PathwaysScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(PathwaysPresenter.class);
-        bindPresenterWidget(PathwaysSplitPresenter.class,
-                PathwaysSplitView.class,
-                PathwaysSplitViewImpl.class);
         bind(TracesPresenter.class);
         bindPresenterWidget(TracesListTabPresenter.class,
                 TracesView.class,
