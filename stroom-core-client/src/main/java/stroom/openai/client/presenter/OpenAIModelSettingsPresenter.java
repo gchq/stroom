@@ -83,6 +83,10 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Model Validation Successful", result.getMessage(), null);
+                    } else if (result.getDetail() != null) {
+                        // What failed, with more in the detail (the models the endpoint serves, say).
+                        AlertEvent.fireError(this, "Model Validation Failed: " + result.getMessage(),
+                                result.getDetail(), null);
                     } else {
                         AlertEvent.fireError(this, "Model Validation Failed", result.getMessage(), null);
                     }
