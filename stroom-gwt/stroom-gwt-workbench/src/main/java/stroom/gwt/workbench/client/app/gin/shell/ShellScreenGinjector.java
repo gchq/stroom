@@ -81,7 +81,6 @@ import stroom.help.client.HelpPlugin;
 import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.main.client.presenter.MainPresenter.MainView;
@@ -200,9 +199,6 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
-
-    /// @return The 'Export' dialog, shown for `ExportConfigEvent`.
-    ExportConfigPresenter getExportConfigPresenter();
 
     /// @return The 'Edit Tags' dialog, shown for `ShowEditNodeTagsDialogEvent`.
     ExplorerNodeEditTagsPresenter getExplorerNodeEditTagsPresenter();

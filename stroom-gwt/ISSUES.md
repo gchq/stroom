@@ -1674,7 +1674,10 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   its Words link tab; the focus goes to the first tab stop once the screen is shown, a guess that the
   link tabs aren't yet tab stops under load). `AppShell.ToolbarTabStops` did the same, the other way
   round (the focus on the Words link tab), in a run of 102 stories with 16 workers in wave 11, and
-  matched in a run of the app shell's 56 alone.
+  matched in a run of the app shell's 56 alone; `AppShell.OpensDocument` did it too (the focus on
+  the Data link tab), in a run of 56 stories with 8 workers, and matched with 4. Which a newly shown
+  tab focuses, its first link tab or its first toolbar button, seems to depend on timing; worth
+  looking into rather than putting down to load.
 * Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals

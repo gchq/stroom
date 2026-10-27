@@ -931,9 +931,9 @@ public final class AppShellStories {
                             .toBeInTheDocument();
                     final Query typeFilter = play.within(dialog).getByRole("button", "Filter Document Types");
                     play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
-                    // The Filter Document Types button is beside the quick filter, in the same row.
-                    // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
-                    play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
+                    // The Filter Document Types button is beside the quick filter, in the same row
+                    play.expect(play.within(typeFilter.closest(".dock-container-horizontal"))
+                            .getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER)).toBeInTheDocument();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(EXPORT_PATH)
