@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.presenter;
+package stroom.pipeline.structure.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -23,8 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
@@ -33,14 +32,18 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.structure.client.component.NewElementController;
-import stroom.pipeline.structure.client.component.PipelineReferenceListController;
-import stroom.pipeline.structure.client.component.PipelineTree;
-import stroom.pipeline.structure.client.component.PropertyListController;
-import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
+import stroom.pipeline.structure.client.component.PipelineStructure.PipelineStructureAction;
+import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.presenter.SimplePipelineTreeBuilder;
+import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -52,14 +55,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -74,9 +74,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-public class PipelineStructurePresenter
-        extends DocPresenter<PipelineStructureView, PipelineDoc>
-        implements PipelineStructureUiHandlers {
+/// A pipeline's Structure tab ([PipelineStructure]): its elements, which can be added, removed,
+/// edited, restored and moved (in advanced mode, unless the pipeline is read only), the pipeline it
+/// inherits from, the selected element's properties and pipeline references, and its source.
+public class PipelineStructureController extends Controller {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final DocRef NULL_SELECTION = DocRef.builder()
@@ -85,7 +86,8 @@ public class PipelineStructurePresenter
             .type("")
             .build();
 
-    private final DocSelectionBoxPresenter pipelinePresenter;
+    private final PipelineStructure view;
+    private final DocSelectionController pipelinePresenter;
     private final RestFactory restFactory;
     private final Provider<NewElementController> newElementProvider;
     private final PropertyListController propertyList;
@@ -96,39 +98,50 @@ public class PipelineStructurePresenter
     private PipelineModel pipelineModel;
     private DocRef docRef;
     private PipelineDoc pipelineDoc;
+    // The document as read, to tell whether it has been changed since
+    private PipelineDoc readDoc;
     private DocRef parentPipeline;
     private boolean advancedMode;
 
     private List<Item> addMenuItems;
     private List<Item> restoreMenuItems;
 
+    /// Made by GIN, with its tab.
+    ///
+    /// @param eventBus              The application's event bus.
+    /// @param view                  The tab.
+    /// @param docSelectionProvider  Makes the Inherit From picker's controller.
+    /// @param restFactory           Fetches and saves the pipeline's source.
+    /// @param newElementProvider    Makes the dialog that names a new element, or edits one.
+    /// @param propertyList          The selected element's properties.
+    /// @param pipelineReferenceList The selected element's pipeline references.
+    /// @param jsonEditorProvider    Makes the dialog that shows the pipeline's source.
     @Inject
-    public PipelineStructurePresenter(final EventBus eventBus,
-                                      final PipelineStructureView view,
-                                      final PipelineTree pipelineTree,
-                                      final DocSelectionBoxPresenter pipelinePresenter,
-                                      final RestFactory restFactory,
-                                      final Provider<NewElementController> newElementProvider,
-                                      final PropertyListController propertyList,
-                                      final PipelineReferenceListController pipelineReferenceList,
-                                      final Provider<EditorPresenter> jsonEditorProvider) {
-        super(eventBus, view);
-        own(pipelinePresenter);
+    public PipelineStructureController(final EventBus eventBus,
+                                       final PipelineStructure view,
+                                       final Provider<DocSelectionController> docSelectionProvider,
+                                       final RestFactory restFactory,
+                                       final Provider<NewElementController> newElementProvider,
+                                       final PropertyListController propertyList,
+                                       final PipelineReferenceListController pipelineReferenceList,
+                                       final Provider<EditorPresenter> jsonEditorProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(propertyList);
         own(pipelineReferenceList);
-        this.pipelineTree = pipelineTree;
-        this.pipelinePresenter = pipelinePresenter;
+        this.pipelineTree = view.getTree();
+        this.pipelinePresenter = make(docSelectionProvider);
+        pipelinePresenter.attach(view.getInheritBox());
         this.restFactory = restFactory;
         this.newElementProvider = newElementProvider;
         this.propertyList = propertyList;
         this.pipelineReferenceList = pipelineReferenceList;
         this.jsonEditorProvider = jsonEditorProvider;
 
-        getView().setUiHandlers(this);
-        getView().setInheritanceTree(pipelinePresenter.getView());
-        getView().setTreeView(pipelineTree);
-        getView().setProperties(propertyList);
-        getView().setPipelineReferences(pipelineReferenceList);
+        view.setOnAction(this::onAction);
+        view.setProperties(propertyList);
+        view.setPipelineReferences(pipelineReferenceList);
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -142,7 +155,7 @@ public class PipelineStructurePresenter
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
                 if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(
-                            PipelineStructurePresenter.this,
+                            PipelineStructureController.this,
                             "A pipeline cannot inherit from itself",
                             () -> {
                                 // Reset selection.
@@ -173,7 +186,7 @@ public class PipelineStructurePresenter
         // The Delete key removes the selected element (which has the focus), as Remove does
         pipelineTree.setOnRemove(element -> {
             if (isRemoveEnabled()) {
-                onRemove(null);
+                onRemove();
             }
         });
         pipelineTree.setOnMove(this::moveElement);
@@ -192,8 +205,35 @@ public class PipelineStructurePresenter
         }));
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final PipelineDoc document) {
+    private void onAction(final PipelineStructureAction action, final Element element) {
+        switch (action) {
+            case ADD -> onAdd(element);
+            case REMOVE -> onRemove();
+            case EDIT -> onEdit();
+            case RESTORE -> onRestore(element);
+            case VIEW_SOURCE -> viewSource();
+        }
+    }
+
+    // Whether the pipeline may not be changed, as its document says
+    private boolean isReadOnly() {
+        return context(Contexts.READ_ONLY);
+    }
+
+    /// @return Whether the pipeline's structure has been changed since it was read: what this tab
+    /// writes differs from what was read. A read-only pipeline is never changed.
+    public boolean isDirty() {
+        return !isReadOnly()
+               && readDoc != null
+               && !Objects.equals(readDoc, write(readDoc));
+    }
+
+    /// Shows a pipeline's structure. Its model comes separately ([#setPipelineModel(PipelineModel)]).
+    ///
+    /// @param docRef   The pipeline.
+    /// @param document The pipeline.
+    public void read(final DocRef docRef, final PipelineDoc document) {
+        this.readDoc = document;
         pipelinePresenter.setReadOnly(isReadOnly());
         // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
         // that can be changed
@@ -220,6 +260,10 @@ public class PipelineStructurePresenter
         }
     }
 
+    /// Shows a pipeline's model (its elements and their properties, inherited ones included), and
+    /// follows its changes.
+    ///
+    /// @param model The model.
     public void setPipelineModel(final PipelineModel model) {
         if (pipelineModel != model) {
             pipelineModel = model;
@@ -237,7 +281,7 @@ public class PipelineStructurePresenter
         // Re-evaluate whether the document is dirty and redraw the tree. Deliberately does NOT
         // rebuild the model: doing so here would re-enter this handler, and rebuilding on every
         // change is what previously made the tree flash and stepping editors lag.
-        onChange();
+        markChanged();
         refreshTree();
     }
 
@@ -250,12 +294,16 @@ public class PipelineStructurePresenter
                 pipelineTree.getSelectionModel().setSelected(selectedElement, true);
             }
         } catch (final PipelineModelException e) {
-            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+            AlertEvent.fireError(PipelineStructureController.this, e.getMessage(), null);
         }
     }
 
-    @Override
-    public PipelineDoc onWrite(final PipelineDoc document) {
+    /// Writes the pipeline's structure into a copy of it: its parent, and its elements as they
+    /// differ from what it inherits.
+    ///
+    /// @param document The pipeline.
+    /// @return A copy of it with the structure shown.
+    public PipelineDoc write(final PipelineDoc document) {
         final PipelineDoc.Builder builder = document.copy();
 
         // Only write if we have been revealed and therefore created a pipeline model.
@@ -274,22 +322,19 @@ public class PipelineStructurePresenter
         return builder.build();
     }
 
-    @Override
-    public void onAdd(final ClickEvent event) {
+    private void onAdd(final Element element) {
         if (addMenuItems != null && !addMenuItems.isEmpty()) {
-            showMenu(event, "Add Pipeline Element", addMenuItems);
+            showMenu(element, "Add Pipeline Element", addMenuItems);
         }
     }
 
-    @Override
-    public void onRestore(final ClickEvent event) {
+    private void onRestore(final Element element) {
         if (restoreMenuItems != null && !restoreMenuItems.isEmpty()) {
-            showMenu(event, "Restore Pipeline Element", restoreMenuItems);
+            showMenu(element, "Restore Pipeline Element", restoreMenuItems);
         }
     }
 
-    @Override
-    public void onRemove(final ClickEvent event) {
+    private void onRemove() {
         try {
             final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement)) {
@@ -325,8 +370,7 @@ public class PipelineStructurePresenter
                && pipelineModel.getPipelineData().getAddedElements().contains(selectedElement);
     }
 
-    @Override
-    public void onEdit(final ClickEvent event) {
+    private void onEdit() {
         final PipelineElement selected = current(pipelineTree.getSelectionModel().getSelectedObject());
         if (selected != null) {
             final String currentName = selected.getName();
@@ -389,14 +433,14 @@ public class PipelineStructurePresenter
                 .icon(SvgImage.REMOVE)
                 .text("Remove")
                 .enabled(isRemoveEnabled())
-                .command(() -> onRemove(null))
+                .command(this::onRemove)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
                 .icon(SvgImage.EDIT)
                 .text("Edit")
                 .enabled(isEditEnabled())
-                .command(() -> onEdit(null))
+                .command(this::onEdit)
                 .build());
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(3)
@@ -538,8 +582,7 @@ public class PipelineStructurePresenter
         return menuItems;
     }
 
-    private void showMenu(final ClickEvent event, final String name, final List<Item> menuItems) {
-        final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
+    private void showMenu(final Element target, final String name, final List<Item> menuItems) {
         Rect relativeRect = new Rect(target);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
@@ -570,8 +613,7 @@ public class PipelineStructurePresenter
         return existingElements;
     }
 
-    @Override
-    public void setAdvancedMode(final boolean advancedMode) {
+    private void setAdvancedMode(final boolean advancedMode) {
         this.advancedMode = advancedMode;
         // Dragging rearranges the pipeline, so a read-only document can't be dragged
         pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
@@ -582,8 +624,7 @@ public class PipelineStructurePresenter
         }
     }
 
-    @Override
-    public void viewSource() {
+    private void viewSource() {
         if (isDirty()) {
             AlertEvent.fireError(
                     this,
@@ -626,14 +667,15 @@ public class PipelineStructurePresenter
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
 
     private void querySave(final EditorPresenter jsonEditor,
                            final HidePopupRequestEvent event) {
-        ConfirmEvent.fire(PipelineStructurePresenter.this,
+        ConfirmEvent.fire(PipelineStructureController.this,
                 "Are you sure you want to save changes to the underlying JSON?", ok -> {
                     if (ok) {
                         doActualSave(jsonEditor, event);
@@ -651,10 +693,11 @@ public class PipelineStructurePresenter
                     // Hide the popup.
                     event.hide();
                     // Reload the entity.
-                    RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
+                    RefreshDocumentEvent.fire(PipelineStructureController.this, docRef);
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskMonitorFactory(this)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -667,16 +710,22 @@ public class PipelineStructurePresenter
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(!isReadOnly() && NullSafe.hasItems(addMenuItems));
-        getView().setRemoveEnabled(isRemoveEnabled());
-        getView().setEditEnabled(isEditEnabled());
-        getView().setRestoreEnabled(!isReadOnly() && NullSafe.hasItems(restoreMenuItems));
+        view.setAddEnabled(!isReadOnly() && NullSafe.hasItems(addMenuItems));
+        view.setRemoveEnabled(isRemoveEnabled());
+        view.setEditEnabled(isEditEnabled());
+        view.setRestoreEnabled(!isReadOnly() && NullSafe.hasItems(restoreMenuItems));
+    }
+
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 
     private DocRef getParentPipeline() {
         return parentPipeline;
     }
 
+    /// @return The pipeline, with any change to its parent.
     public PipelineDoc getPipelineDoc() {
         return pipelineDoc;
     }
@@ -709,12 +758,13 @@ public class PipelineStructurePresenter
                             pipelineModel.build();
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
-                                    PipelineStructurePresenter.this,
+                                    PipelineStructureController.this,
                                     e.getMessage(),
                                     null);
                         }
                     })
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
@@ -735,24 +785,6 @@ public class PipelineStructurePresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface PipelineStructureView extends View, HasUiHandlers<PipelineStructureUiHandlers> {
-
-        void setInheritanceTree(View view);
-
-        void setTreeView(IsWidget view);
-
-        void setProperties(IsWidget view);
-
-        void setPipelineReferences(IsWidget view);
-
-        void setAddEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-
-        void setEditEnabled(boolean enabled);
-
-        void setRestoreEnabled(boolean enabled);
-    }
 
 
     // --------------------------------------------------------------------------------
@@ -782,7 +814,7 @@ public class PipelineStructurePresenter
                     } while (existingNames.contains(suggestedName));
                 }
 
-                newElementProvider.get().edit(PipelineStructurePresenter.this,
+                newElementProvider.get().edit(PipelineStructureController.this,
                         "Create Element",
                         suggestedName,
                         null,
@@ -801,7 +833,7 @@ public class PipelineStructurePresenter
                                         description);
                                 pipelineTree.getSelectionModel().setSelected(newElement, true);
                             } catch (final RuntimeException ex) {
-                                AlertEvent.fireError(PipelineStructurePresenter.this, ex.getMessage(), null);
+                                AlertEvent.fireError(PipelineStructureController.this, ex.getMessage(), null);
                             }
                         });
             }
@@ -828,7 +860,7 @@ public class PipelineStructurePresenter
                     pipelineModel.addExistingElement(selectedElement, element);
                     pipelineTree.getSelectionModel().setSelected(element, true);
                 } catch (final RuntimeException e) {
-                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                    AlertEvent.fireError(PipelineStructureController.this, e.getMessage(), null);
                 }
             }
         }

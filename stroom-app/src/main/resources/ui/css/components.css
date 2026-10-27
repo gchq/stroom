@@ -101,42 +101,6 @@
 	top: -1px;
 }
 
-.pipelineStructureViewImpl-label {
-    margin-top: 2px;
-    vertical-align: top;
-    white-space: nowrap;
-}
-
-.pipelineStructureViewImpl-bar {
-	display: flex;
-	align-items: top;
-	flex-direction: row;
-}
-
-.pipelineStructureViewImpl-bar-right {
-    padding: 0 4px;
-	display: flex;
-	align-items: center;
-	flex-direction: row;
-	flex-grow: 1;
-}
-
-.pipelineStructureViewImpl-bar div {
-    white-space: nowrap;
-}
-
-.pipelineStructureViewImpl-treeContainer {
-	padding: 10px 5px;
-}
-
-
-.pipelineStructureViewImpl-label {
-	margin: 0 10px 0 15px;
-}
-
-.pipelineStructureViewImpl-viewSource {
-    margin-left: auto;
-}
 
 
 

@@ -146,7 +146,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     /// @return The 'Change Step Filters' dialog, as `SteppingPresenter` shows it.
     SteppingFilterEditorController getSteppingFilterEditorController();
 
-    /// @return A pipeline's element tree, as `PipelineStructurePresenter` shows it.
+    /// @return A pipeline's element tree, as `PipelineStructureController` shows it.
     PipelineTree getPipelineTree();
 
     /// @return The cache of the pipeline element types (`GET /pipeline/v1/propertyTypes`).

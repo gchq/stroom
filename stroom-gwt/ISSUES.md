@@ -962,7 +962,7 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 ### A pipeline property's default value is too faint on its selected row
 
 **Reported** (found in wave 9's audit, 26 October 2026). The pipeline's property grid greys a
-property's default (and inherited) value (`pipelineStructureViewImpl-property-default`, and a
+property's default (and inherited) value (`pipeline-property--default`, and a
 document's `docRefLinkText`); on the selected row's blue it fails axe's `color-contrast`. A story that
 leaves a default property selected fails for it, so `PipelineEditor.PropertySourceAfterChange`
 chooses another element before it ends. Fix: a selected row's default value in the row's own text

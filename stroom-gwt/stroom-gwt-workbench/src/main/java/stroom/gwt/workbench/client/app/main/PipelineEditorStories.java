@@ -686,7 +686,7 @@ public final class PipelineEditorStories {
                     play.findByText("rawWriter");
                     final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
                     final Query boxPanel = play.querySelector(".pipeline-tree__items");
-                    final Query pane = play.querySelector(".pipelineStructureViewImpl-treeContainer");
+                    final Query pane = play.querySelector(".pipeline-structure__tree-container");
                     play.run("narrow the tree's pane, so that it scrolls",
                             () -> pane.element().get().getStyle().setProperty("width", "360px"));
                     play.waitFor(() -> play.expect("the pane's scrollable width",

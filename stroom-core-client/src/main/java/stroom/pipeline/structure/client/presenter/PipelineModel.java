@@ -412,7 +412,13 @@ public class PipelineModel {
         return !linkExists;
     }
 
-    void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
+    /// Adds an element that is already in the pipeline (e.g. one removed, to restore it) as a child
+    /// of another.
+    ///
+    /// @param parent          The element to add it to.
+    /// @param existingElement The element.
+    /// @throws PipelineModelException If the pipeline can't be built with it there.
+    public void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
             throws PipelineModelException {
 //        debugLinks("LINKS 1", pipelineData.getLinks());
 //        debugLinks("LINKS 1", combinedData.getLinks());

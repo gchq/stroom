@@ -179,6 +179,7 @@
 @import url("imports-tab.css");
 @import url("user-and-groups.css");
 @import url("annotation-edit.css");
+@import url("pipeline-structure.css");
 @import url("annotation-tag-text.css");
 /* Last, so a scroll pane fills its parent whatever other classes it has */
 @import url("scroll-pane.css");

@@ -22,8 +22,8 @@ import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
@@ -32,10 +32,10 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.structure.client.component.PipelineStructureController;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
-import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
@@ -67,7 +67,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     private final ProcessorPresenter processorPresenter;
     private final TabProvider<PipelineDoc> structureTabProvider;
     private final TabProvider<PipelineDoc> steppingTabProvider;
-    private final PipelineStructurePresenter pipelineStructurePresenter;
+    private final PipelineStructureController pipelineStructure;
     private final SteppingPresenter steppingPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final PipelineModelFactory pipelineModelFactory;
@@ -86,7 +86,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     public PipelinePresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
                              final Provider<MetaPresenter> metaPresenterProvider,
-                             final Provider<PipelineStructurePresenter> structurePresenterProvider,
+                             final Provider<PipelineStructureController> structureProvider,
                              final ProcessorPresenter processorPresenter,
                              final Provider<ProcessorTaskPresenter> taskPresenterProvider,
                              final Provider<MarkdownEditController> markdownEditProvider,
@@ -121,7 +121,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         }
 
         steppingPresenter = make(steppingPresenterProvider);
-        pipelineStructurePresenter = make(structurePresenterProvider);
+        pipelineStructure = make(structureProvider);
 
         steppingTabProvider = new AbstractTabProvider<PipelineDoc, SteppingPresenter>() {
             @Override
@@ -145,17 +145,14 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             }
         };
 
-        // A DocTabProvider (rather than a hand rolled AbstractTabProvider) so that the structure
-        // presenter's dirty events reach the tab content provider, and from there this presenter's
-        // onChange(). An AbstractTabProvider listens for dirty events fired by itself, which the
-        // structure presenter never does, so its edits used to go unnoticed.
-        structureTabProvider = new DocTabProvider<PipelineDoc>(() -> pipelineStructurePresenter) {
-            @Override
-            public void read(final DocRef docRef, final PipelineDoc document) {
-                super.read(docRef, document);
-                loadPipelineModel(docRef, pipelineStructurePresenter::setPipelineModel);
-            }
-        };
+        // Owned here, as the stepping tab asks it whether the structure is dirty; its edits reach
+        // this presenter's onChange() through its markChanged()
+        structureTabProvider = ControllerTabProvider.ofOwned(eventBus, pipelineStructure,
+                (structure, docRef, document) -> {
+                    structure.read(docRef, document);
+                    loadPipelineModel(docRef, structure::setPipelineModel);
+                },
+                PipelineStructureController::write);
         addTab(STRUCTURE, structureTabProvider);
 
         final boolean hasManageProcessorsPermission = securityContext.hasAppPermission(
@@ -320,7 +317,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     public List<DocRef> getDirtyDocs() {
         final List<DocRef> dirtyDocs = steppingPresenter.getDirtyDocs();
 
-        if (pipelineStructurePresenter.isDirty()) {
+        if (pipelineStructure.isDirty()) {
             dirtyDocs.add(docRef);
         }
 

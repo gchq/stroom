@@ -104,9 +104,25 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
     public static <C extends Controller, D> ControllerTabProvider<C, D> ofOwned(final EventBus eventBus,
                                                                               final C controller,
                                                                               final TabReader<C, D> reader) {
+        return ofOwned(eventBus, controller, reader, (content, document) -> document);
+    }
+
+    /// A tab that shows and changes part of the document, through a controller its document owns
+    /// rather than the tab (see [#ofOwned(EventBus, Controller, TabReader)]).
+    ///
+    /// @param eventBus   The application's event bus.
+    /// @param controller The controller, owned by the document.
+    /// @param reader     Reads the document into it.
+    /// @param writer     Writes what it shows into a copy of the document.
+    /// @param <C>        The controller's type.
+    /// @param <D>        The document's type.
+    /// @return The tab.
+    public static <C extends Controller, D> ControllerTabProvider<C, D> ofOwned(final EventBus eventBus,
+                                                                              final C controller,
+                                                                              final TabReader<C, D> reader,
+                                                                              final BiFunction<C, D, D> writer) {
         Objects.requireNonNull(controller, "controller");
-        return new ControllerTabProvider<>(eventBus, () -> controller, reader, (content, document) -> document,
-                false);
+        return new ControllerTabProvider<>(eventBus, () -> controller, reader, writer, false);
     }
 
     @Override
