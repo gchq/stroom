@@ -14,7 +14,9 @@ open), which a client may show as buttons: still say what each is for and wait f
 done; the next call reads Stroom to see. Never start with an indexing pipeline for raw data; create_indexing_pipeline refuses
 until the build has an events pipeline or is given existing Events streams; create_processor_filter refuses a
 pipeline with no clean step recorded; create_pipeline refuses another source's XSLT and a template whose parser
-cannot read the sample. Templates are inherited (create_pipeline), never copied: copy_pipeline refuses one, and is for a
+cannot read the sample (replace_parser swaps any template's parser for the one it needs). Only when this Stroom
+has no translation template at all and the user has no pipeline to base it on, create_pipeline standalone='events'
+builds the events pipeline on its own: a last resort. Templates are inherited (create_pipeline), never copied: copy_pipeline refuses one, and is for a
 new version or working copy of a source's own pipeline.
 
 Tools: a tool this server names (in `next`, a hint or a refusal) may not be in your tool list yet: some clients

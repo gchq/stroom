@@ -74,7 +74,7 @@ final class PipelineWorld {
     /// @return create_pipeline, on this world.
     CreatePipelineTool createTool() {
         return new CreatePipelineTool(writes, pipelineDocs, world.pipelineShapes, world.guard(), feeds.consent,
-                feeds.plan, world.records());
+                feeds.plan, world.records(), templates);
     }
 
     /// @return copy_pipeline, on this world.
@@ -190,7 +190,9 @@ final class PipelineWorld {
         declared.put("DSParser", Map.of("textConverter", "TextConverter"));
         declared.put("XMLFragmentParser", Map.of("textConverter", "TextConverter"));
         declared.put("CombinedParser", Map.of("textConverter", "TextConverter", "type", "String"));
-        declared.put("SplitFilter", Map.of("splitCount", "int"));
+        declared.put("SplitFilter", Map.of("splitCount", "int", "splitDepth", "int"));
+        declared.put("RecordCountFilter", Map.of("countRead", "boolean"));
+        declared.put("RecordOutputFilter", Map.of());
         declared.put("StreamAppender", Map.of("streamType", "String"));
         declared.put("XSLTFilter", Map.of("xslt", "XSLT"));
         declared.put("SchemaFilter", Map.of("schemaGroup", "String", "namespaceURI", "String",
