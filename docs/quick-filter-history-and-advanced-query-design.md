@@ -1,5 +1,10 @@
 # Quick filter: recent-filter drop-down and Advanced Query — design
 
+**Since 27 October 2026:** the GWT migration made the Advanced Query dialog a component with a
+controller (`AdvancedQuickFilter` and `AdvancedQuickFilterController` in
+`stroom.quickfilter.client.component`, made for each use) and deleted `QuickFilterModule`; the
+column value filter is `ColumnValuesFilter`. The names below are as first built.
+
 **Status:** reviewed 2026-09-18; decisions in §8 taken. **A1–A3 implemented 2026-09-18** on
 `gh-5740_quick_filter` (uncommitted): shared `QuickFilterContext` / `QuickFilterHistoryKey`,
 `quick_filter_history` table + DAO + service + `QuickFilterHistoryResource`, widget `▼` + menu via

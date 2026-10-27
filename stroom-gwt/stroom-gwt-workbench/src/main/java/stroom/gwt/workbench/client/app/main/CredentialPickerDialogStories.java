@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// [CredentialsManagerDialogController] (the 'Credentials' picker) with fake REST replies.
 ///
 /// The controller comes from GIN ([AppScreenGinjector]), as Stroom injects it into
-/// `ContentStoreContentPackDetailsController`, and the story shows it as that presenter does. The
+/// `ContentStoreContentPackDetailsController`, and the story shows it as that controller does. The
 /// credentials come from `POST /credentials/findCredentialsWithPermissions`, and `onPick` is a spy
 /// called from the dialog's OK handler.
 public final class CredentialPickerDialogStories {

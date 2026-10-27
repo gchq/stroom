@@ -817,7 +817,7 @@ public final class DataGridStories {
         return column(buttons, sized(paged(grid), "300px", null), label);
     }
 
-    /// As Stroom's views put a grid in a filling form group, e.g. `DataRetentionRuleViewImpl`'s
+    /// As Stroom's views put a grid in a filling form group, e.g. `DataRetentionRuleEditor`'s
     /// `<form:FormGroup addStyleNames="dock-max"><g:SimplePanel styleName="max"/>`.
     private static Widget fillingFormGroup(final StoryContext context) {
         final DataGrid<Person> grid = personGrid();

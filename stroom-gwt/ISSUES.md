@@ -51,8 +51,8 @@ checks the details saved.
 **Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the
 presenter.
 
-* `stroom-core-client/src/main/resources/stroom/node/client/view/NodeGroupEditViewImpl.ui.xml`
-* `stroom-core-client/src/main/java/stroom/node/client/presenter/NodeGroupEditPresenter.java`
+* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEdit.ui.xml`
+* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEditController.java`
 
 ## Wrong values and failures
 
@@ -108,7 +108,7 @@ isn't one of the options (Comfortable, Compact).
 client durations treat 0 as meaningful ("no timeout", or Keep Alive "close after each request"). It
 isn't clear whether a typed 0 is clamped when saved.
 
-* `stroom-core-client/src/main/resources/stroom/http/client/view/HttpClientConfigViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/http/client/component/HttpClientConfigEditor.ui.xml`
 * `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/DurationPicker.java`
 
 ### Values quietly replaced or dropped
@@ -129,7 +129,7 @@ isn't clear whether a typed 0 is clamped when saved.
 **Reported.** The processor profile's Max Node Threads and Max Cluster Threads spinners go from
 their maximum back to 0.
 
-* `stroom-core-client/src/main/resources/stroom/processor/client/view/ProcessorProfileEditViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/processor/client/component/ProcessorProfileEdit.ui.xml`
 
 ### Analytic notification limit resets on restart
 
@@ -151,9 +151,9 @@ the credentials are saved, including edits that don't change it.
 **Reported.**
 
 * Change Status starts at None, and OK while it shows None sends an empty status, which
-  `AnnotationDaoImpl.setTag` fails on (`ChangeStatusPresenter`).
+  `AnnotationDaoImpl.setTag` fails on (`ChangeStatusDialogController`).
 * Change Assigned To always starts at Nobody, so OK without choosing a user unassigns every selected
-  annotation (`ChangeAssignedToPresenter`).
+  annotation (`ChangeAssignedToDialogController`).
 
 ### Overnight processing periods never match after midnight
 
@@ -179,7 +179,7 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 * Report settings: Send Empty Reports shows unticked for a report with no settings, but
   `ReportSettings` defaults it to true (`ReportSettingsTab`).
 * Batch execution schedule edit: the Run As User picker offers users you can't run as; the server
-  only refuses when the change is applied (`BatchExecutionScheduleEditPresenter`).
+  only refuses when the change is applied (`BatchExecutionScheduleEditController`).
 * Process data: Max Create Time is set to now whenever the Reprocess data tick box changes
   (`ProcessChoiceDialogController`).
 * Date boxes fill in local time (without a Z) unless the user's time zone preference is UTC; the data
@@ -307,7 +307,7 @@ run of 22 October 2026 (1,538 stories).
   `PKCS12`, but #5796 (`62501f0de8`, Key Store File credentials) sends it only in the secret
   (`secret.keyStoreType`), with `credential.keyStoreType` null. The story was last changed before
   #5796. Fails every time. Fix: the story should expect the type in the secret, unless the
-  credential is meant to carry it too (then `CredentialEditPresenter` should set it).
+  credential is meant to carry it too (then `CredentialEditController` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
   full run, with 8 workers, and passes when run alone.
 * **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (13 open: `Embedded`, below, is fixed, and master's
@@ -454,7 +454,7 @@ cannot be recovered. Everything that uses this credential will use t…") runs o
 dialog's edge and is cut off, so the end of the warning, which says what happens, can't be read.
 Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help style).
 
-* `stroom-core-client/src/main/resources/stroom/credentials/client/view/ReplaceSecretViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/credentials/client/component/ReplaceSecret.ui.xml`
   (the `warning` label)
 
 ### A dialog's focus drops to the page when OK disables itself
@@ -622,7 +622,7 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
   unticked (`BasicEmbeddedQuerySettingsViewImpl.ui.xml`).
 * Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
-  Notifications is unticked (`AnalyticNotificationEditViewImpl.ui.xml`).
+  Notifications is unticked (`AnalyticNotificationEdit.ui.xml`).
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
@@ -712,7 +712,7 @@ Fix: look up the pipeline first, and make the chooser only to show it.
 
 **Fixed** (the Phase 5 ownership audit of `COMPONENT_MODEL_DESIGN.md`):
 
-* The Task Manager (`UserTaskManagerPresenter`) took a finished task's row out of its view but kept
+* The Task Manager (`UserTaskManagerController`) took a finished task's row out of its view but kept
   its presenter in `taskPresenterMap` for good, one per finished task while the app ran. It now owns
   each row's presenter and releases it, and drops it from the map, when its task ends. Not unit
   tested: the class can't be loaded in a JVM (`GWT.create` in a static field).
@@ -918,7 +918,7 @@ registered completion providers.
 * The explorer's context menu leaves 14 DOM nodes per time shown (not traced).
 * `HasSaveRegistry` (an eager singleton) keeps every Data Receipt Rules screen ever opened
   (`RuleSetPresenter:119` registers, nothing unregisters), and Save All then saves closed ones.
-* `UserTaskManagerPresenter` (line 65) keeps a presenter per task id ever seen while open.
+* `UserTaskManagerController` (line 65) keeps a presenter per task id ever seen while open.
 * `DelegatingAceCompleter` gains two duplicate completion providers per query tab switch
   (`QueryHelpPresenter:195` registers on detach too).
 * `ElementPresenter.setCode` (line 342) adds another key handler on every stepping Refresh.
@@ -1300,12 +1300,12 @@ Identification):
   didn't read: the focus went to its Close button and the dialog wasn't described by its message.
   The message is now shown under the Name field (`FormGroup.setFeedback`, which marks the field
   `aria-invalid` and described by the message), and the field is focused, so its label and the
-  message are read. The field is also marked required (`CreateDocumentViewImpl`,
+  message are read. The field is also marked required (`CreateDocument`,
   `NameDocumentViewImpl`; the workbench's `App/Main/CreateDocumentDialog` `NoName`).
 * Add External User(s) could be submitted with every field blank: no identity asked the server to
   create a user with none, and no users in Add Multiple closed the dialog as Cancel does. Add User
   Group with no name did the same as no identity. Each now says why under its field and keeps the
-  dialog open (`TestCreateExternalUserPresenter`, `TestCreateMultipleUsersPresenter`,
+  dialog open (`TestCreateExternalUserController`, `TestCreateMultipleUsersController`,
   `TestCreateNewGroupPresenter`; the workbench's `App/Main/UsersScreen` `NoUserIdentity` and
   `NoUsersToAdd`), and the server refuses a blank identity or group name
   (`UserServiceImpl`, `TestUserServiceImpl`).
@@ -1428,7 +1428,7 @@ Left as they are, on purpose:
 * GWT's `Button` for the navigation logo (`NavigationViewImpl`) and the floor map layer grip
   (`FloorMapLayersPresenter`): real buttons already, so only their styling differs. (The task's
   Terminate, `UserTaskViewImpl`'s, is a `ToolbarButton` in a `Toolbar` since wave 3's `UserTask`.)
-* GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`) and `Anchor` in the content pack
+* GWT's `Hyperlink` for "Forgot password" (`Login`) and `Anchor` in the content pack
   details (`ContentStoreContentPackDetails`): real links already.
 * "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
   press it, and it says when it is disabled).
@@ -1645,9 +1645,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * `App/Main/TopBar` `Keyboard`'s screenshot differed in a full run (found 25 October 2026, in wave
   6): the tooltip under the top bar's menu button, beside the focused button, was drawn differently
   (436 pixels). Unchanged alone, twice; a tooltip timing, as for `Tree` `Keyboard` above.
-* Batch Edit Schedules' `validate` (`BatchExecutionScheduleEditPresenter`) tells its caller `false`
-  after every check, even after `true` (found 25 October 2026 in wave 4's audit; older). Harmless
-  today, as `ExecutionScheduleManager` acts only on `true`; fix when the dialog converts.
+* Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
+  (found 25 October 2026 in wave 4's audit; older; harmless, as `ExecutionScheduleManager` acts
+  only on `true`). Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditController`).
 * Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
@@ -1793,7 +1793,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   own `DocumentTypeCache`, unbound in GIN, so its first fetch answers after the document is given;
   the order no longer matters).
 * The activity chooser highlights the current activity with an object from another fetch
-  (`ManageActivityPresenter.setSelected`), which a grid comparing rows can't match.
+  (`ManageActivityController.setSelected`), which a grid comparing rows can't match.
 * A pathway's constraints list heads its value column "Type" (`ConstraintList.addColumns`, was `ConstraintListPresenter.addValueColumn`),
   a copy of the column before it.
 
@@ -1970,7 +1970,7 @@ These were found by the review and fixed in the same change:
 * **Found while adding help to the fields that had none** (2026-10-22):
   * HTTP TLS settings: with no TLS config yet, the dialog left Verify Host Name unticked and OK
     saved it as false, though it defaults to true. It now shows the defaults
-    (`TestHttpTlsConfigPresenter`).
+    (`TestHttpTlsConfigEditorController`).
   * Column format: one `FormatPresenter` served all a table's columns, and a column with no format
     showed the last column's number and date settings. It now shows the defaults
     (`TestFormatPresenter`, now `TestColumnFormatController`).
@@ -1980,7 +1980,7 @@ These were found by the review and fixed in the same change:
   * Table settings: the Maximum String Field Length spinner allowed up to `Long.MAX_VALUE` but was
     read as an int; it is now 1 to `Integer.MAX_VALUE`.
   * Annotation tags: a blank name's error always said "annotation group"; it now names the tag's
-    type, as the create dialog does (`TestAnnotationTagEditPresenter`).
+    type, as the create dialog does (`TestAnnotationTagEditController`).
   * Global property editor: "Requires UI Refresh" is now "Requires UI Node Restart", which is what
     it means (`RestartScope.UI`).
 
@@ -2319,12 +2319,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   as `ResultStoreModel.updateSettings` turned a failure into `false`. A blank duration is now
   refused in the dialog, naming the field ("Store Time To Live must be set, e.g. 10m, 1h or 1d."),
   and a failed save shows the server's error and keeps the dialog open
-  (`TestResultStoreSettingsPresenter`).
+  (`TestResultStoreSettingsEditorController`).
 * #43: a blank API key expiry made OK do nothing (`a2dc7af70c`), and then got "API Key expiry
   date must be less than or equal to <max date>", which didn't say what was wrong (typed text that
   isn't a date gives the same `null`). It now says "A valid expiry date must be provided for the
   API key.", and a date in the past no longer ends with the latest date allowed
-  (`TestEditApiKeyPresenter`).
+  (`TestEditApiKeyController`).
 * #57: placing a duplicated or added dashboard component needed a mouse: the new component
   follows the mouse under a glass over the whole window until a click places it, and no key
   finished or cancelled it, so a keyboard user who chose Duplicate was stuck. Now Escape cancels
@@ -2357,7 +2357,7 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   hide handler and what it passes the request to. Each has a workbench story,
   `…KeepsDialogUsable`, that fails before the fix.
   * #49: Batch Edit Current Processors, when the change failed: `bulkChange` had no failure
-    handler (`TestBatchProcessorFilterEditPresenter`).
+    handler (`TestBatchProcessorFilterEditController`).
   * #50: Filter Schedules, the Data screen's and the stepping filter, and Add/Edit Processor, when
     the expression was invalid or couldn't be validated: `ExpressionValidator` only alerted. It now
     takes an `onInvalid` callback, run when the alert closes, and those dialogs pass `e::reset`;
@@ -2370,19 +2370,19 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   * #52: Add Processor, when creating the filter failed: the create, unlike the update, had no
     failure handler (`TestProcessorEditPresenter`).
   * #53: Add/Edit index volume, when the user declined the validation warning
-    (`TestIndexVolumeEditPresenter`).
+    (`TestIndexVolumeEditController`).
   * #54: Edit Comment, when the change failed: nothing was said either, as the failure handler was
     `ignored -> new DefaultErrorHandler(this, e::reset)`, which made a handler and threw it away
     (the workbench story only).
   * #55: adding several users, when restoring a deleted one failed
-    (`TestCreateMultipleUsersPresenter`).
+    (`TestCreateMultipleUsersController`).
   * #56: a pipeline property set to Embedded, when its document couldn't be created or saved (the
     workbench story only).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
   disabled, Escape ignored), as `UserPreferencesManager.update` had no failure handler; once
   Escape honoured disabled buttons, that made the dialog a trap. OK now passes
   `RestErrorHandler.forPopup(this, e)`, so after the alert the dialog can be used again
-  (`TestUserPreferencesPresenter`). Found by the suite's r8 round, where the read-only guard
+  (`TestUserPreferencesDialogController`). Found by the suite's r8 round, where the read-only guard
   refused the save and the stuck dialog spoiled most of each shard (and caused 10 knock-on
   "Ask Stroom AI did not restore the node" fails).
 * #45: editing or deleting an annotation comment tag saved the change but then failed with a 500
@@ -2409,7 +2409,7 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   filter, and for Batch Edit Permissions For Filtered Documents with no documents in the filter.
   The four messages were fired as the Properties screen's own `ErrorEvent`, which nothing else
   handles. They are now warning alerts, and the dialog can be used again once one is closed
-  (`TestBatchProcessorFilterEditPresenter`, `TestBatchDocumentPermissionsEditPresenter`).
+  (`TestBatchProcessorFilterEditController`, `TestBatchDocumentPermissionsEditController`).
 * #46: Save Tab Session with a blank name did nothing and said nothing: `TextBoxPopup` reset the
   dialog without a message. As `TextBoxPopup` is a shared widget (in `stroom-core-client-widget`,
   which can't fire Stroom's alerts), it now says "You must provide a name" under the Name field,

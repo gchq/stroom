@@ -590,7 +590,7 @@ been tried with a screen reader.
 The document and user pickers (`DocSelectionController` and `UserRefSelectionController`, drawn by
 `DropDownBox`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
 quick filter over the explorer tree (`ExplorerPopupController`) or a grid of users and groups
-(`UserRefPopupPresenter`). Enter or Space on a picker opens it.
+(`UserRefPopupController`). Enter or Space on a picker opens it.
 
 - **Modal.** The dialogs are shown `.modal(true)`: the glass covers the page, they are `aria-modal`,
   and `DialogFocusTrap` keeps the focus in them (Tab from the last tab stop goes to the first, and
@@ -1151,7 +1151,7 @@ The 115 presenters that show themselves as a popup (`ShowPopupEvent.builder(this
 ### Phase 11: The rest, and removal
 
 1. The content tabs (`ContentTabPresenter`: jobs, nodes, caches, properties, users, tasks, data and processing screens), the lists inside them, and the main shell (`CorePresenter`, `MainPresenter`, `NavigationPresenter`, `ContentTabPanePresenter`, `FullScreenPresenter`) become components.
-2. The sign in pages (`SignInPagePresenter`) become components.
+2. The sign in pages (`SignInPagePresenter`) become components (done in wave 11: `SignInPageController`).
 3. The presenter framework is deleted: `MyPresenterWidget`, `View`, `ViewImpl`, `ViewWithUiHandlers`, `UiHandlers`, `HasUiHandlers`, `PresenterAdapter`, `DocumentEditorHost`'s presenter side, and `AbstractPresenterModule`'s presenter bindings (the 717 `bindPresenterWidget` lines in the app and workbench modules).
 
 **Exit:** no presenters; GIN modules bind services and the few singletons, and components are made just in time.

@@ -163,7 +163,7 @@ Also on the harness, for what Stroom's app does around a screen:
 * **`ownPopup(popup)`** owns a popup as `own` does, and asks it to close on re-render as its
   Close button would (`HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides
   the popups still open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
-  cancelled in its `onHideRequest` (`UserTaskManagerPresenter`): the harness's own hiding
+  cancelled in its `onHideRequest` (`UserTaskManagerController`): the harness's own hiding
   (`HidePopupEvent`) skips `onHideRequest`, and the timer would keep polling the disposed
   dispatcher (a `console.warn` per request).
 * `GlobalKeyHandler` is bound to `StoryGlobalKeyHandler`, which ignores the app's keyboard
@@ -504,10 +504,9 @@ RestFixtures.builder()
   `harness.own(presenter)` (or to whatever owns it).
 * Create the injector in `render` (`GWT.create(AppScreenGinjector.class)`), a new one each time:
   the harness refuses an injector another harness has used.
-* **Package-private or private Stroom methods** (e.g. `NodeGroupEditPresenter.show`, called only by
-  `NodeGroupPresenter`; `LoginPresenter.isSameOrigin`) are called with a JSNI method in the story,
-  which ignores Java's access rules, on a real presenter, rather than by opening the whole parent
-  screen.
+* **Package-private or private Stroom methods** (e.g. `LoginController.isSameOrigin`) are called
+  with a JSNI method in the story, which ignores Java's access rules, on a real controller, rather
+  than by opening the whole parent screen.
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`,
   `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPresenter.setProcessorLimits`)
   are copied into the story's `render`, naming the source, when they only wire up presenters the
@@ -517,7 +516,7 @@ RestFixtures.builder()
 
 * Stroom's lists that "poll" (Server Tasks, Nodes, Jobs) refresh when the content pane calls
   `Refreshable.refresh()`, which nothing does in a story, so they make one round of requests.
-* A screen with its own timer (`UserTaskManagerPresenter` polls every second) gets the same reply
+* A screen with its own timer (`UserTaskManagerController` polls every second) gets the same reply
   each poll (a route's single reply repeats); use a sequence (`get(path, first, second)`) when the
   play needs the data to change. Stop the timer on re-render with `ownPopup(popup)` (or
   `addTimer` if the story owns it).
@@ -551,7 +550,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   Permissions tab and doc pickers. The ginjector also gives `HyperlinkEventHandlerImpl` and
   `DataDisplaySupport` (Stroom creates both eagerly), `DateTimeSettingsFactory` and
   `ResultStoreModel`; its `QueryExtrasScreenModule` holds single bindings these screens need
-  (`DataUploadPresenter`, `IFrameContentPresenter`).
+  (`IFrameContentPresenter`).
 * **Searches** (`client/app/query/QueryFixtures`, also for dashboards): a search is a poll of
   `POST /query/v1/search/{node}` (`/dashboard/v1/search/{node}` for a dashboard's `SearchModel`)
   until a reply is `complete` or `null`: route `QueryFixtures.SEARCH` with a reply sequence
@@ -569,7 +568,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `ContentStorySupport` (`expectNoProblems`, `queryParam`, `decorate`, which answers the explorer's
   `decorate` with the document asked about), `ActivityFixtures`, `AnnotationFixtures`.
 * **Security** (`client/app/gin/security/SecurityScreenGinjector`, whose `IdentityScreenModule`
-  mirrors Stroom's `ChangePasswordModule` without the sign-in pages): `CurrentPasswordPresenter`
+  mirrors Stroom's `ChangePasswordModule` without the sign-in pages): `CurrentPasswordController`
   needs Stroom's concrete `CurrentUser` (whose graph GIN can't build here): create it with `new`,
   giving it `new CurrentUser(eventBus, restFactory, null, null)` signed in with
   `setUserAndPermissions(aup, false)`. RestyGWT ignores `@JsonInclude(NON_NULL)`, so a change such

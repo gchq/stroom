@@ -35,7 +35,7 @@ The forks shadow GWT 2.13.0. This architecture has several costs:
 * **Header and body are separate tables.** GWT `DataGrid` puts them in a `HeaderPanel` with a
   `CustomScrollPanel`, and keeps their column widths and horizontal scroll in step by hand.
 * **The whole page is always rendered.** The dashboard table allows a page of up to 10,000 rows
-  (`BasicTableSettingsViewImpl.java:72-74`), and `ImportConfigConfirmPresenter` uses a page of
+  (`BasicTableSettingsViewImpl.java:72-74`), and `ImportConfigConfirmController` uses a page of
   100,000 (`MASSIVE_LIST_PAGE_SIZE`). Every one of those rows is in the DOM.
 * **Browser events are handled one tick late.** The forked `AbstractHasData.onBrowserEvent`
   (`AbstractHasData.java:744-776`) runs `onBrowserEvent2` inside `scheduleDeferred`. By then the
@@ -118,7 +118,7 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | `setRowStyles` | 3 (dashboard, query results, traces) |
 | `setHeadingListener` (header menu, persisted widths and order) | 2 (dashboard `TablePresenter`, `QueryResultTablePresenter`) |
 | `setTableName` (for Ask AI and CSV) | 75 files |
-| page size other than 100 | 1000 ×4, 100000 ×1 (`ImportConfigConfirmPresenter`) |
+| page size other than 100 | 1000 ×4, 100000 ×1 (`ImportConfigConfirmController`) |
 | dashboard page size | user-configurable, 1–10,000 |
 
 Usage falls into eight categories:
@@ -753,14 +753,14 @@ interactive header cells, the context menu, copy, export and AI.
   switch the server-paged lists in two or three batches.
 * **Then** `RuleSetList` (keyed by rule number) and `KeyBindingPreferences` (its
   story, `KeyboardShortcutPreferences`, does exist; rows already compare by all their fields).
-* **Server-paged lists, first batch**: `AiAttachmentDataPresenter` (`setPageStart` is
+* **Server-paged lists, first batch**: `AiAttachmentDataController` (`setPageStart` is
   `setVisibleRange`), `DuplicateManagementList`, `IndexVolumeGroupList`,
   `PathwayList` (keyed by name), `ProcessorProfileList` (id),
   `AnnotationTagList`, `CacheList` (cache name), `FsVolumeGroupList`
   (group id), `UserDependenciesList`, `CacheNodeList` (node name). Held back:
   * `NodeGroupList`, `NodeJobList`, `JobNodeList`: tick boxes and a
     value spinner, so the editable category.
-  * `UserRefPopupPresenter` (the user picker): it uses `DataGridSelectionEventManager`'s
+  * `UserRefPopupController` (the user picker): it uses `DataGridSelectionEventManager`'s
     selection-follows-focus, Up from the first row to the filter and typing into the filter, which
     `DataGridSelectionEventManager` doesn't have yet; a step of its own.
   * `AnalyticDataShardList`: no story opens its grid (needs one first, as do the floor
@@ -896,7 +896,7 @@ interactive header cells, the context menu, copy, export and AI.
     stepping's list): its own `DataGridSelectionEventManager` becomes the new grid's (its select-all
     handler included). The relation list narrows its expander column once rows arrive, so it
     gives the width back to the fill columns, as `TreeRowHandler` does.
-  * The import confirmation (`ImportConfigConfirmPresenter`): one page of up to 100,000 items,
+  * The import confirmation (`ImportConfigConfirmController`): one page of up to 100,000 items,
     now `setVirtual(true)`, so only the rows in view are drawn (`MyDataGrid` drew them all).
   * The floor map settings' Value Schema (`FloorMapSettingsPresenter`): an edit replaces a mapping
     with a new, unequal one, so rows are keyed by the mapping they started as (an identity map
@@ -919,7 +919,7 @@ interactive header cells, the context menu, copy, export and AI.
       them. A selection box marks itself open, and its list's filter takes the focus out of the
       grid; the redraw for that replaced the open box, so it never read as expanded and its list
       was placed against a box no longer in the page. Only the class changes now.
-  * `TypeFilter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
+  * `TypeFilter` and `ColumnValuesFilterController` use only `MyDataGrid`'s
     `DEFAULT_LIST_PAGE_SIZE` (for a `MyCellTable`, session 5); it moves when `MyDataGrid` goes.
 
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
