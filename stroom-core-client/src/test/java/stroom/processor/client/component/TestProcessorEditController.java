@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
@@ -30,11 +30,9 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,7 +40,6 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -50,10 +47,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorEditPresenter {
+class TestProcessorEditController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
     private final List<ProcessorFilter> saved = new ArrayList<>();
     private final FakeRestFactory restFactory = new FakeRestFactory();
@@ -62,7 +58,6 @@ class TestProcessorEditPresenter {
     void setUp() {
         // The REST resources are made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
     }
 
@@ -121,10 +116,10 @@ class TestProcessorEditPresenter {
                 .isEmpty();
     }
 
-    // Shows the dialog for a new filter whose expression has a Feed term, and presses OK.
+    // Prepares the dialog for a new filter whose expression has a Feed term, and presses OK.
     private HidePopupRequestEvent showAndPressOk() {
-        final ProcessorEditView view = Mockito.mock(ProcessorEditView.class, Mockito.RETURNS_DEEP_STUBS);
-        Mockito.when(view.getProfile().getValue()).thenReturn(null);
+        final ProcessorEdit view = Mockito.mock(ProcessorEdit.class);
+        Mockito.when(view.getProfile()).thenReturn(null);
         Mockito.when(view.getMaxTaskCreationDelay()).thenReturn(null);
         // A date-time box can't be made (or mocked) outside a browser; the controllers are mocks
         Mockito.doReturn(null).when(view).getMinMetaCreateTimeBox();
@@ -133,33 +128,33 @@ class TestProcessorEditPresenter {
         Mockito.when(editExpressionPresenter.write()).thenReturn(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.EQUALS).value("TEST").build())
                 .build());
-        final ProcessorEditPresenter presenter = new ProcessorEditPresenter(
+        final ProcessorEditController controller = new ProcessorEditController(
                 eventBus,
                 view,
                 editExpressionPresenter,
                 restFactory,
                 Mockito.mock(DateTimeSettingsFactory.class),
-                Mockito.mock(UserRefSelectionBoxPresenter.class),
+                () -> Mockito.mock(UserRefSelectionController.class),
                 Mockito.mock(ClientSecurityContext.class),
                 () -> null,
                 Mockito.mock(ProcessorProfileClient.class),
                 () -> Mockito.mock(DateTimeBoxController.class));
 
-        // The dialog's size is worked out from the browser window's
-        try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {
-            presenter.show(
-                    ProcessorType.PIPELINE,
-                    DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").build(),
-                    null,
-                    ExpressionOperator.builder().build(),
-                    saved::add);
-        }
-        assertThat(shown)
-                .hasSize(1);
+        // What the dialog shows when it is shown (a dialog can't be shown outside a browser)
+        controller.prepare(
+                ProcessorType.PIPELINE,
+                DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").build(),
+                null,
+                ExpressionOperator.builder().build(),
+                null,
+                null,
+                null,
+                null,
+                saved::add);
 
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+        controller.onHideRequest(okPressed);
         // The expression is validated first
         assertThat(restFactory.getRequests())
                 .hasSize(1);
@@ -171,7 +166,7 @@ class TestProcessorEditPresenter {
         assertThat(alerts)
                 .hasSize(1);
         Mockito.verify(okPressed, Mockito.never()).reset();
-        alerts.getFirst().getCallback().onClose();
+        alerts.get(0).getCallback().onClose();
         Mockito.verify(okPressed).reset();
         Mockito.verify(okPressed, Mockito.never()).hide();
         assertThat(saved)

@@ -7,7 +7,9 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+    <!-- The Add Filter and Edit Filter dialog's content -->
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max"
                         helpText="Selects the streams this filter processes, using stream meta fields such as Feed and Type."
@@ -55,7 +57,9 @@
         </form:FormGroup>
         <form:FormGroup identity="runAsUser" label="Run As User"
                         helpText="The user whose permissions are used when this filter's processing runs. Default is you, for a new filter.">
-            <g:SimplePanel ui:field="runAsUser"/>
+            <g:SimplePanel>
+                <dd:DropDownBox ui:field="runAsUser"/>
+            </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup identity="processorEditFeedDependencies"
                         helpText="Opens a dialog to set the feeds this filter must wait for and the minimum and maximum processing delays.">

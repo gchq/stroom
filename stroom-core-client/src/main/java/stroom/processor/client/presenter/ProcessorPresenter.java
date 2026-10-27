@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.client.component.BatchProcessorFilterEditController;
 import stroom.processor.client.component.ProcessorAction;
+import stroom.processor.client.component.ProcessorEditController;
 import stroom.processor.client.component.ProcessorInfoBuilder;
 import stroom.processor.client.component.ProcessorListController;
 import stroom.processor.shared.ProcessorFields;
@@ -73,7 +74,7 @@ public class ProcessorPresenter
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private final ProcessorListController processorList;
-    private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
+    private final Provider<ProcessorEditController> processorEditProvider;
     private final ExpressionTreeController expressionTree;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
@@ -96,7 +97,7 @@ public class ProcessorPresenter
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
                               final ProcessorListController processorList,
-                              final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
+                              final Provider<ProcessorEditController> processorEditProvider,
                               final ExpressionTreeController expressionTree,
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
@@ -107,7 +108,7 @@ public class ProcessorPresenter
         own(processorList);
         own(expressionTree);
         this.processorList = processorList;
-        this.processorEditPresenterProvider = processorEditPresenterProvider;
+        this.processorEditProvider = processorEditProvider;
         this.expressionTree = expressionTree;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
@@ -338,8 +339,9 @@ public class ProcessorPresenter
                       final ExpressionOperator defaultExpression) {
         if (editInterceptor.get()) {
             if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-                makeDialog(processorEditPresenterProvider)
-                        .show(processorType,
+                processorEditProvider.get()
+                        .show(this,
+                                processorType,
                                 docRef,
                                 null,
                                 defaultExpression,
@@ -354,8 +356,8 @@ public class ProcessorPresenter
                                     }
                                 });
             } else {
-                makeDialog(processorEditPresenterProvider)
-                        .show(processorType, docRef, filter, null, result -> {
+                processorEditProvider.get()
+                        .show(this, processorType, docRef, filter, null, result -> {
                             if (result != null) {
                                 // The runAsUser can't be changed in the editor
                                 refresh(result);

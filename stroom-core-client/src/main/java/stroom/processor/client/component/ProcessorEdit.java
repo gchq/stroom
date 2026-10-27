@@ -14,42 +14,41 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.view;
+package stroom.processor.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
-import stroom.processor.client.presenter.ProcessorEditUiHandlers;
+import stroom.item.client.SelectionListModel;
+import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Objects;
 
-public class ProcessorEditViewImpl
-        extends ViewWithUiHandlers<ProcessorEditUiHandlers>
-        implements ProcessorEditView {
+/// The Add Filter and Edit Filter dialog's content: the expression that selects a processor
+/// filter's streams (shown here by its controller), the create time bounds, how many tasks may
+/// run, its processing profile, its task creation delay, whether it is exported, who it runs as (a
+/// picker its controller attaches) and a button to set its feed dependencies.
+public class ProcessorEdit extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final SimpleDuration DEFAULT_MAX_TASK_CREATION_DELAY =
             new SimpleDuration(30L, TimeUnit.SECONDS);
-
-    private final Widget widget;
 
     @UiField
     SimplePanel expression;
@@ -68,57 +67,66 @@ public class ProcessorEditViewImpl
     @UiField
     TickBox export;
     @UiField
-    SimplePanel runAsUser;
+    DropDownBox runAsUser;
     @UiField
     Button editFeedDependencies;
 
-    @Inject
-    public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content, with no expression.
+    public ProcessorEdit() {
+        initWidget(BINDER.createAndBindUi(this));
         // Zero means unlimited so must remain reachable.
         maxProcessingTasks.setMin(ProcessorFilter.MIN_MAX_PROCESSING_TASKS);
         maxProcessingTasks.setMax(ProcessorFilter.MAX_MAX_PROCESSING_TASKS);
         // Sub second delays make no sense here as task creation only runs periodically anyway.
         maxTaskCreationDelay.setValue(DEFAULT_MAX_TASK_CREATION_DELAY);
         updateEnabled();
+        maxTaskCreationDelayEnabled.addValueChangeHandler(e -> updateEnabled());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param view The expression that selects the filter's streams.
     public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view.asWidget());
+        expression.setWidget(view);
     }
 
-    @Override
+    /// @return The earliest create time of the streams processed, or `null` for none.
     public Long getMinMetaCreateTimeMs() {
         return minMetaCreateTimeMs.getValue();
     }
 
-    @Override
+    /// @param minMetaCreateTimeMs The earliest create time of the streams processed, or `null` for
+    ///                            none.
     public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
         this.minMetaCreateTimeMs.setValue(minMetaCreateTimeMs);
     }
 
-    @Override
+    /// @return The latest create time of the streams processed, or `null` for none.
     public Long getMaxMetaCreateTimeMs() {
         return maxMetaCreateTimeMs.getValue();
     }
 
-    @Override
+    /// @param maxMetaCreateTimeMs The latest create time of the streams processed, or `null` for
+    ///                            none.
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setValue(maxMetaCreateTimeMs);
     }
 
-    @Override
+    /// @return The minimum stream create time box, for a controller to open its dialog.
+    public DateTimeBox getMinMetaCreateTimeBox() {
+        return minMetaCreateTimeMs;
+    }
+
+    /// @return The maximum stream create time box, for a controller to open its dialog.
+    public DateTimeBox getMaxMetaCreateTimeBox() {
+        return maxMetaCreateTimeMs;
+    }
+
+    /// @return The most tasks that may run at once, 0 for no limit.
     public Integer getMaxProcessingTasks() {
         return maxProcessingTasks.getIntValue();
     }
 
-    @Override
+    /// @param maxProcessingTasks The most tasks that may run at once, or `null` for the default (no
+    ///                           limit).
     public void setMaxProcessingTasks(final Integer maxProcessingTasks) {
         // Show the unlimited value rather than leaving the spinner blank if we have no value.
         this.maxProcessingTasks.setValue(Objects.requireNonNullElse(
@@ -126,12 +134,22 @@ public class ProcessorEditViewImpl
                 ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS));
     }
 
-    @Override
-    public SelectionBox<String> getProfile() {
-        return profile;
+    /// @param model The processing profiles that can be chosen.
+    public void setProfileModel(final SelectionListModel<String, SimpleSelectionItemWrapper<String>> model) {
+        profile.setModel(model);
     }
 
-    @Override
+    /// @return The name of the processing profile chosen, or `null` for none.
+    public String getProfile() {
+        return profile.getValue();
+    }
+
+    /// @param profileName The name of the processing profile, or `null` for none.
+    public void setProfile(final String profileName) {
+        profile.setValue(profileName);
+    }
+
+    /// @return The longest wait between checks for new data, or `null` for the cluster's limit.
     public SimpleDuration getMaxTaskCreationDelay() {
         if (maxTaskCreationDelayEnabled.getValue()) {
             return maxTaskCreationDelay.getValue();
@@ -139,7 +157,8 @@ public class ProcessorEditViewImpl
         return null;
     }
 
-    @Override
+    /// @param maxTaskCreationDelay The longest wait between checks for new data, or `null` for the
+    ///                             cluster's limit (the box unticked, showing 30 seconds).
     public void setMaxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
         // A null delay means this filter just uses the cluster wide limit.
         this.maxTaskCreationDelayEnabled.setValue(maxTaskCreationDelay != null);
@@ -153,44 +172,31 @@ public class ProcessorEditViewImpl
         maxTaskCreationDelay.setEnabled(maxTaskCreationDelayEnabled.getValue());
     }
 
-    @UiHandler("maxTaskCreationDelayEnabled")
-    public void onMaxTaskCreationDelayEnabledChange(final ValueChangeEvent<Boolean> event) {
-        updateEnabled();
-    }
-
-    @Override
+    /// @return Whether the filter is exported with its pipeline.
     public boolean isExport() {
         return this.export.getValue();
     }
 
-    @Override
+    /// @param export Whether the filter is exported with its pipeline.
     public void setExport(final boolean export) {
         this.export.setValue(export);
     }
 
-    @Override
-    public void setRunAsUserView(final View view) {
-        this.runAsUser.setWidget(view.asWidget());
+    /// @return The box its controller attaches the Run As User picker to.
+    public DropDownBox getRunAsUserBox() {
+        return runAsUser;
     }
 
-    @UiHandler("editFeedDependencies")
-    public void onEditFeedDependencies(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onEditFeedDependencies();
-        }
+    /// @param onEditFeedDependencies Run when Set Feed Dependencies is pressed.
+    public void setOnEditFeedDependencies(final Runnable onEditFeedDependencies) {
+        editFeedDependencies.setOnClick(onEditFeedDependencies);
     }
 
-    @Override
-    public DateTimeBox getMinMetaCreateTimeBox() {
-        return minMetaCreateTimeMs;
-    }
 
-    @Override
-    public DateTimeBox getMaxMetaCreateTimeBox() {
-        return maxMetaCreateTimeMs;
-    }
+    // --------------------------------------------------------------------------------
 
-    public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
+
+    interface Binder extends UiBinder<Widget, ProcessorEdit> {
 
     }
 }

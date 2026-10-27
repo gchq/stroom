@@ -18,11 +18,8 @@ package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.processor.client.presenter.ProcessorEditPresenter;
-import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -41,9 +38,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorPresenter.class,
                 ProcessorView.class,
                 ProcessorViewImpl.class);
-        bindPresenterWidget(ProcessorEditPresenter.class,
-                ProcessorEditView.class,
-                ProcessorEditViewImpl.class);
     }
 }
 

@@ -44,7 +44,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
-import stroom.processor.client.presenter.ProcessorEditPresenter;
+import stroom.processor.client.component.ProcessorEditController;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorProfilePresenter;
 import stroom.processor.task.client.component.ProcessorFilterTasksController;
@@ -97,7 +97,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorPresenter getProcessorPresenter();
 
     /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it.
-    ProcessorEditPresenter getProcessorEditPresenter();
+    ProcessorEditController getProcessorEditController();
 
     /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.
     ProcessorLimitsController getProcessorLimitsController();

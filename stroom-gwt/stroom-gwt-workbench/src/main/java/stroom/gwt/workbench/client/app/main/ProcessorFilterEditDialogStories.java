@@ -35,7 +35,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.presenter.ProcessorEditPresenter;
+import stroom.processor.client.component.ProcessorEditController;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
@@ -50,7 +50,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditPresenter]
+/// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditController]
 /// (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it) with fake REST
 /// replies.
 ///
@@ -71,7 +71,7 @@ public final class ProcessorFilterEditDialogStories {
 
     private static final String VALIDATE_PATH = "/expression/v1/validate";
 
-    // ProcessorEditPresenter's confirmations
+    // ProcessorEditController's confirmations
     private static final String ALL_FEEDS = "about to process all feeds";
     private static final String UPDATE_EXISTING = "update an existing filter";
 
@@ -370,9 +370,9 @@ public final class ProcessorFilterEditDialogStories {
         harness.fn(ON_SAVED);
         final DocRef pipelineRef = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("My Pipeline").build();
         harness.afterStartUp(() -> {
-            final ProcessorEditPresenter presenter = harness.own(injector.getProcessorEditPresenter());
             // As ProcessorPresenter adds or edits a filter
-            presenter.show(ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
+            injector.getProcessorEditController().show(harness.getAppRoot(),
+                    ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
                     harness.spy(ON_SAVED, result == null
                             ? null
                             : String.valueOf(result.getId())));

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
-import stroom.processor.client.component.FeedDependenciesEditorController;
-import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorProfileClient;
+import stroom.processor.client.presenter.ProcessorProfileListModel;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.ProcessorFilter;
@@ -40,22 +39,21 @@ import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.shared.FindUserContext;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -64,17 +62,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class ProcessorEditPresenter
-        extends MyPresenterWidget<ProcessorEditView>
-        implements ProcessorEditUiHandlers {
+/// The Add Filter and Edit Filter dialog ([ProcessorEdit]): edits a processor filter, or makes a
+/// new one, checking its expression and asking before it processes every feed or stream type.
+/// Made for one use.
+public class ProcessorEditController extends Controller {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
 
+    private final ProcessorEdit view;
     private final ExpressionEditorController expressionEditor;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
-    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private final UserRefSelectionController runAsUser;
     private final ClientSecurityContext clientSecurityContext;
     private final Provider<FeedDependenciesEditorController> feedDependenciesEditorProvider;
 
@@ -82,39 +82,57 @@ public class ProcessorEditPresenter
     private DocRef pipelineRef;
     private FeedDependencies feedDependencies;
     private Consumer<ProcessorFilter> consumer;
+    // What the dialog shows: the filter (or null for a new one) and its query
+    private ProcessorFilter filter;
+    private boolean existingFilter;
+    private QueryData queryData;
+    private List<QueryField> fields;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                       The application's event bus.
+    /// @param view                           The content.
+    /// @param expressionEditor               Edits the expression.
+    /// @param restFactory                    Checks the expression, and saves the filter.
+    /// @param dateTimeSettingsFactory        Gives the user's date and time settings, to check the
+    ///                                       expression.
+    /// @param runAsUserProvider              Makes the Run As User picker's controller.
+    /// @param clientSecurityContext          Says who the user is, a new filter's default Run As User.
+    /// @param feedDependenciesEditorProvider Makes the Set Feed Dependencies dialog.
+    /// @param processorProfileClient         Finds the processing profiles.
+    /// @param dateTimeBoxControllerProvider  Makes the create time boxes' controllers.
     @Inject
-    public ProcessorEditPresenter(final EventBus eventBus,
-                                  final ProcessorEditView view,
-                                  final ExpressionEditorController expressionEditor,
-                                  final RestFactory restFactory,
-                                  final DateTimeSettingsFactory dateTimeSettingsFactory,
-                                  final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                  final ClientSecurityContext clientSecurityContext,
-                                  final Provider<FeedDependenciesEditorController> feedDependenciesEditorProvider,
-                                  final ProcessorProfileClient processorProfileClient,
-                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
-        super(eventBus, view);
-        own(expressionEditor);
-        own(userRefSelectionBoxPresenter);
+    public ProcessorEditController(final EventBus eventBus,
+                                   final ProcessorEdit view,
+                                   final ExpressionEditorController expressionEditor,
+                                   final RestFactory restFactory,
+                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
+                                   final Provider<UserRefSelectionController> runAsUserProvider,
+                                   final ClientSecurityContext clientSecurityContext,
+                                   final Provider<FeedDependenciesEditorController> feedDependenciesEditorProvider,
+                                   final ProcessorProfileClient processorProfileClient,
+                                   final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        this.expressionEditor = own(expressionEditor);
         make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
         make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
-        view.setUiHandlers(this);
 
-        this.expressionEditor = expressionEditor;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
-        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.feedDependenciesEditorProvider = feedDependenciesEditorProvider;
         view.setExpressionView(expressionEditor);
-        view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
-        userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
+        view.setOnEditFeedDependencies(this::onEditFeedDependencies);
+        runAsUser = make(runAsUserProvider);
+        runAsUser.attach(view.getRunAsUserBox());
+        runAsUser.setContext(FindUserContext.RUN_AS);
 
         final ProcessorProfileListModel processorProfileListModel =
                 new ProcessorProfileListModel(eventBus, processorProfileClient);
-        processorProfileListModel.setTaskMonitorFactory(this);
-        view.getProfile().setModel(processorProfileListModel);
+        processorProfileListModel.setTaskMonitorFactory(taskMonitor());
+        view.setProfileModel(processorProfileListModel);
     }
 
     private void read(final ExpressionOperator expression,
@@ -132,15 +150,24 @@ public class ProcessorEditPresenter
         expressionEditor.init(dataSource, selectionBoxModel);
         expressionEditor.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
-        getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
-        getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
-        getView().setMaxProcessingTasks(maxProcessingTasks);
-        getView().getProfile().setValue(profileName);
-        getView().setMaxTaskCreationDelay(maxTaskCreationDelay);
-        getView().setExport(export);
+        view.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
+        view.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+        view.setMaxProcessingTasks(maxProcessingTasks);
+        view.setProfile(profileName);
+        view.setMaxTaskCreationDelay(maxTaskCreationDelay);
+        view.setExport(export);
     }
 
-    public void show(final ProcessorType processorType,
+    /// Shows the dialog for a filter, or a new one, owned by `opener` until it is closed.
+    ///
+    /// @param opener            What shows it.
+    /// @param processorType     The type of processor the filter is for.
+    /// @param pipelineRef       The pipeline the filter is for.
+    /// @param filter            The filter, or `null` for a new one.
+    /// @param defaultExpression A new filter's expression.
+    /// @param consumer          Given the filter saved on OK, or `null` on Cancel.
+    public void show(final HasControllerNode opener,
+                     final ProcessorType processorType,
                      final DocRef pipelineRef,
                      final ProcessorFilter filter,
                      final ExpressionOperator defaultExpression,
@@ -154,19 +181,20 @@ public class ProcessorEditPresenter
             maxMetaCreateTimeMs = null;
             maxProcessingTasks = null;
             profileName = null;
-            userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
+            runAsUser.setSelected(clientSecurityContext.getUserRef());
         } else {
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
             maxProcessingTasks = filter.getMaxProcessingTasks();
             profileName = filter.getProfileName();
             if (filter.getRunAsUser() == null) {
-                userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
+                runAsUser.setSelected(clientSecurityContext.getUserRef());
             } else {
-                userRefSelectionBoxPresenter.setSelected(filter.getRunAsUser());
+                runAsUser.setSelected(filter.getRunAsUser());
             }
         }
         show(
+                opener,
                 processorType,
                 pipelineRef,
                 filter,
@@ -178,7 +206,21 @@ public class ProcessorEditPresenter
                 consumer);
     }
 
-    public void show(final ProcessorType processorType,
+    /// Shows the dialog for a filter, or a new one, with some of its values given, owned by `opener`
+    /// until it is closed.
+    ///
+    /// @param opener              What shows it.
+    /// @param processorType       The type of processor the filter is for.
+    /// @param pipelineRef         The pipeline the filter is for.
+    /// @param filter              The filter, or `null` for a new one.
+    /// @param defaultExpression   A new filter's expression.
+    /// @param minMetaCreateTimeMs The earliest create time of the streams processed, or `null`.
+    /// @param maxMetaCreateTimeMs The latest create time of the streams processed, or `null`.
+    /// @param maxProcessingTasks  The most tasks that may run at once, or `null`.
+    /// @param profileName         The processing profile, or `null`.
+    /// @param consumer            Given the filter saved on OK, or `null` on Cancel.
+    public void show(final HasControllerNode opener,
+                     final ProcessorType processorType,
                      final DocRef pipelineRef,
                      final ProcessorFilter filter,
                      final ExpressionOperator defaultExpression,
@@ -187,13 +229,40 @@ public class ProcessorEditPresenter
                      final Integer maxProcessingTasks,
                      final String profileName,
                      final Consumer<ProcessorFilter> consumer) {
+        prepare(processorType, pipelineRef, filter, defaultExpression, minMetaCreateTimeMs, maxMetaCreateTimeMs,
+                maxProcessingTasks, profileName, consumer);
+
+        // Show the processor creation dialog.
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        ControllerDialog.showOnce(opener, this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(existingFilter
+                        ? "Edit Filter"
+                        : "Add Filter")
+                .onShow(e -> expressionEditor.focus())
+                .onHideRequest(this::onHideRequest)
+                .fire();
+    }
+
+    // Shows the filter's values, ready for the dialog (package-private for its tests)
+    void prepare(final ProcessorType processorType,
+                 final DocRef pipelineRef,
+                 final ProcessorFilter filter,
+                 final ExpressionOperator defaultExpression,
+                 final Long minMetaCreateTimeMs,
+                 final Long maxMetaCreateTimeMs,
+                 final Integer maxProcessingTasks,
+                 final String profileName,
+                 final Consumer<ProcessorFilter> consumer) {
         this.processorType = processorType;
         this.pipelineRef = pipelineRef;
         this.consumer = consumer;
+        this.filter = filter;
 
-        final boolean existingFilter = filter != null && filter.getId() != null;
-        final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
-        final List<QueryField> fields = MetaFields.getProcessorFilterFields();
+        existingFilter = filter != null && filter.getId() != null;
+        queryData = getOrCreateQueryData(filter, defaultExpression);
+        fields = MetaFields.getProcessorFilterFields();
         final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
         final SimpleDuration maxTaskCreationDelay = NullSafe.get(filter, ProcessorFilter::getMaxTaskCreationDelay);
         feedDependencies = NullSafe.get(queryData, QueryData::getFeedDependencies);
@@ -207,79 +276,70 @@ public class ProcessorEditPresenter
                 profileName,
                 maxTaskCreationDelay,
                 export);
-
-        // Show the processor creation dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(existingFilter
-                        ? "Edit Filter"
-                        : "Add Filter")
-                .onShow(e -> expressionEditor.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ExpressionOperator expression = expressionEditor.write();
-                        final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
-                        final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
-                        final Integer maxTasks = getView().getMaxProcessingTasks();
-                        final String profile = getView().getProfile().getValue();
-                        final boolean exportRead = getView().isExport();
-
-                        validateExpression(fields, expression, e, () -> {
-                            try {
-                                final QueryData qd = queryData
-                                        .copy()
-                                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                                        .expression(expression)
-                                        .build();
-
-                                if (existingFilter) {
-                                    ConfirmEvent.fire(
-                                            ProcessorEditPresenter.this,
-                                            "You are about to update an existing filter. Any streams that " +
-                                            "might now be included by this filter but are older than the " +
-                                            "current tracker position will not be processed. " +
-                                            "Are you sure you wish to do this?",
-                                            result -> {
-                                                if (result) {
-                                                    validateFeed(
-                                                            filter,
-                                                            qd,
-                                                            minMetaCreateTime,
-                                                            maxMetaCreateTime,
-                                                            maxTasks,
-                                                            profile,
-                                                            exportRead,
-                                                            e);
-                                                } else {
-                                                    e.reset();
-                                                }
-                                            });
-                                } else {
-                                    validateFeed(null,
-                                            qd,
-                                            minMetaCreateTime,
-                                            maxMetaCreateTime,
-                                            maxTasks,
-                                            profile,
-                                            exportRead,
-                                            e);
-                                }
-                            } catch (final RuntimeException ex) {
-                                AlertEvent.fireError(ProcessorEditPresenter.this, ex.getMessage(), e::reset);
-                            }
-                        });
-                    } else {
-                        consumer.accept(null);
-                        e.hide();
-                    }
-                })
-                .fire();
     }
 
-    @Override
-    public void onEditFeedDependencies() {
+    // OK saves the filter, if its expression is valid and the user is sure; Cancel gives nothing
+    // (package-private for its tests)
+    void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
+            final ExpressionOperator expression = expressionEditor.write();
+            final Long minMetaCreateTime = view.getMinMetaCreateTimeMs();
+            final Long maxMetaCreateTime = view.getMaxMetaCreateTimeMs();
+            final Integer maxTasks = view.getMaxProcessingTasks();
+            final String profile = view.getProfile();
+            final boolean exportRead = view.isExport();
+
+            validateExpression(fields, expression, e, () -> {
+                try {
+                    final QueryData qd = queryData
+                            .copy()
+                            .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                            .expression(expression)
+                            .build();
+
+                    if (existingFilter) {
+                        ConfirmEvent.fire(
+                                ProcessorEditController.this,
+                                "You are about to update an existing filter. Any streams that " +
+                                "might now be included by this filter but are older than the " +
+                                "current tracker position will not be processed. " +
+                                "Are you sure you wish to do this?",
+                                result -> {
+                                    if (result) {
+                                        validateFeed(
+                                                filter,
+                                                qd,
+                                                minMetaCreateTime,
+                                                maxMetaCreateTime,
+                                                maxTasks,
+                                                profile,
+                                                exportRead,
+                                                e);
+                                    } else {
+                                        e.reset();
+                                    }
+                                });
+                    } else {
+                        validateFeed(null,
+                                qd,
+                                minMetaCreateTime,
+                                maxMetaCreateTime,
+                                maxTasks,
+                                profile,
+                                exportRead,
+                                e);
+                    }
+                } catch (final RuntimeException ex) {
+                    AlertEvent.fireError(ProcessorEditController.this, ex.getMessage(), e::reset);
+                }
+            });
+        } else {
+            consumer.accept(null);
+            e.hide();
+        }
+    }
+
+    private void onEditFeedDependencies() {
         feedDependenciesEditorProvider.get().edit(this, feedDependencies,
                 updated -> this.feedDependencies = updated);
     }
@@ -300,12 +360,13 @@ public class ProcessorEditPresenter
                     if (result.isOk()) {
                         onSuccess.run();
                     } else {
-                        AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), event::reset);
+                        AlertEvent.fireError(ProcessorEditController.this, result.getString(), event::reset);
                     }
                 })
                 .onFailure(throwable ->
-                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), event::reset))
-                .taskMonitorFactory(this)
+                        AlertEvent.fireError(ProcessorEditController.this, throwable.getMessage(), event::reset))
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -429,7 +490,7 @@ public class ProcessorEditPresenter
                                          final HidePopupRequestEvent event) {
         // Not threaded through the validation callbacks like the rest as the popup is still
         // showing while they run, so the view is still the source of truth.
-        final SimpleDuration maxTaskCreationDelay = getView().getMaxTaskCreationDelay();
+        final SimpleDuration maxTaskCreationDelay = view.getMaxTaskCreationDelay();
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             final ProcessorFilter updated = filter.copy()
@@ -440,7 +501,7 @@ public class ProcessorEditPresenter
                     .profileName(profileName)
                     .maxTaskCreationDelay(maxTaskCreationDelay)
                     .export(export)
-                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
+                    .runAsUser(runAsUser.getSelected())
                     .build();
 
             restFactory
@@ -448,7 +509,8 @@ public class ProcessorEditPresenter
                     .method(res -> res.update(updated.getId(), updated))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                .taskMonitorFactory(taskMonitor())
                     .exec();
 
         } else {
@@ -466,7 +528,7 @@ public class ProcessorEditPresenter
                     .maxProcessingTasks(maxProcessingTasks)
                     .profileName(profileName)
                     .maxTaskCreationDelay(maxTaskCreationDelay)
-                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
+                    .runAsUser(runAsUser.getSelected())
                     .build();
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
@@ -474,47 +536,20 @@ public class ProcessorEditPresenter
                     .onSuccess(r -> hide(r, event))
                     // If it can't be created, let the user try again or cancel
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
 
 
-    // --------------------------------------------------------------------------------
-
-
-    public interface ProcessorEditView extends View, HasUiHandlers<ProcessorEditUiHandlers> {
-
-        /// @return The minimum stream create time box, for a controller to open its dialog.
-        DateTimeBox getMinMetaCreateTimeBox();
-
-        /// @return The maximum stream create time box, for a controller to open its dialog.
-        DateTimeBox getMaxMetaCreateTimeBox();
-
-        void setExpressionView(IsWidget view);
-
-        Long getMinMetaCreateTimeMs();
-
-        void setMinMetaCreateTimeMs(Long minMetaCreateTimeMs);
-
-        Long getMaxMetaCreateTimeMs();
-
-        void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
-
-        Integer getMaxProcessingTasks();
-
-        void setMaxProcessingTasks(Integer maxProcessingTasks);
-
-        SelectionBox<String> getProfile();
-
-        SimpleDuration getMaxTaskCreationDelay();
-
-        void setMaxTaskCreationDelay(SimpleDuration maxTaskCreationDelay);
-
-        boolean isExport();
-
-        void setExport(boolean export);
-
-        void setRunAsUserView(View view);
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 }
