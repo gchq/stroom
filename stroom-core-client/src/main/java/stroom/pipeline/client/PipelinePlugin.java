@@ -103,7 +103,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
+            pipelinePresenter.getProcessors().refresh(event.getProcessorFilter());
         });
 
         getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping);

@@ -45,7 +45,7 @@ import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
 import stroom.processor.client.component.ProcessorEditController;
-import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.component.ProcessorsController;
 import stroom.processor.client.presenter.ProcessorProfilePresenter;
 import stroom.processor.task.client.component.ProcessorFilterTasksController;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
@@ -94,9 +94,9 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorProfilePresenter getProcessorProfilePresenter();
 
     /// @return A pipeline's 'Processors' tab (the processor and filter tree).
-    ProcessorPresenter getProcessorPresenter();
+    ProcessorsController getProcessors();
 
-    /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it.
+    /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it.
     ProcessorEditController getProcessorEditController();
 
     /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.

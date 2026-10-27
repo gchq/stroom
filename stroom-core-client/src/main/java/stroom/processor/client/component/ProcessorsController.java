@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -26,11 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.component.BatchProcessorFilterEditController;
-import stroom.processor.client.component.ProcessorAction;
-import stroom.processor.client.component.ProcessorEditController;
-import stroom.processor.client.component.ProcessorInfoBuilder;
-import stroom.processor.client.component.ProcessorListController;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
@@ -44,17 +39,17 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.security.shared.DocPermissionResource;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Selection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,13 +61,17 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ProcessorPresenter
-        extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
+/// A pipeline's, analytic rule's or folder's Processors tab ([Processors]): lists the processors
+/// and their filters, shows the selected one's details and filter expression, and adds, edits,
+/// duplicates, deletes, filters and batch edits them.
+public class ProcessorsController
+        extends Controller
         implements HasDocumentRead<Object> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
+    private final Processors view;
     private final ProcessorListController processorList;
     private final Provider<ProcessorEditController> processorEditProvider;
     private final ExpressionTreeController expressionTree;
@@ -93,18 +92,31 @@ public class ProcessorPresenter
     private ExpressionOperator defaultExpression;
     private Supplier<Boolean> editInterceptor = () -> true;
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                         The application's event bus.
+    /// @param view                             The content.
+    /// @param processorList                    The processors and their filters.
+    /// @param processorEditProvider            Makes the Add Filter and Edit Filter dialog.
+    /// @param expressionTree                   Shows the selected filter's expression.
+    /// @param restFactory                      Loads and deletes filters.
+    /// @param processorInfoBuilder             Describes the selected processor or filter.
+    /// @param filterDialogProvider             Makes the dialog that filters the list.
+    /// @param batchProcessorFilterEditProvider Makes the dialog that edits the filters listed.
     @Inject
-    public ProcessorPresenter(final EventBus eventBus,
-                              final ProcessorView view,
-                              final ProcessorListController processorList,
-                              final Provider<ProcessorEditController> processorEditProvider,
-                              final ExpressionTreeController expressionTree,
-                              final RestFactory restFactory,
-                              final ProcessorInfoBuilder processorInfoBuilder,
-                              final Provider<ExpressionDialogController> filterDialogProvider,
-                              final Provider<BatchProcessorFilterEditController>
-                                      batchProcessorFilterEditProvider) {
-        super(eventBus, view);
+    public ProcessorsController(final EventBus eventBus,
+                                final Processors view,
+                                final ProcessorListController processorList,
+                                final Provider<ProcessorEditController> processorEditProvider,
+                                final ExpressionTreeController expressionTree,
+                                final RestFactory restFactory,
+                                final ProcessorInfoBuilder processorInfoBuilder,
+                                final Provider<ExpressionDialogController> filterDialogProvider,
+                                final Provider<BatchProcessorFilterEditController>
+                                        batchProcessorFilterEditProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(processorList);
         own(expressionTree);
         this.processorList = processorList;
@@ -119,7 +131,7 @@ public class ProcessorPresenter
         expressionTree.setSelectionModel(null);
 
         view.setProcessorList(processorList);
-        view.setDetailsView(expressionTree);
+        view.setDetails(expressionTree);
 
         own(processorList.getSelectionModel().addSelectionHandler(event -> {
             updateData();
@@ -129,9 +141,14 @@ public class ProcessorPresenter
                 }
             }
         }));
-        own(OpenLinkUtil.addClickHandler(this, getWidget()));
+        own(OpenLinkUtil.addClickHandler(this, view));
     }
 
+    /// Lists the processors of a pipeline or analytic rule, or of every pipeline in a folder.
+    ///
+    /// @param docRef   The pipeline, analytic rule or folder.
+    /// @param document The pipeline or analytic rule, which says whether processors can be added, or
+    ///                 `null` for a folder.
     @Override
     public void read(final DocRef docRef, final Object document) {
         processorType = ProcessorType.PIPELINE;
@@ -145,10 +162,14 @@ public class ProcessorPresenter
         }
     }
 
+    /// @param isAdmin Whether the user is an administrator.
     public void setIsAdmin(final boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
 
+    /// Shows the buttons that change the processors, if they can be changed.
+    ///
+    /// @param allowUpdate Whether the processors can be changed.
     public void setAllowUpdate(final boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
 
@@ -263,7 +284,7 @@ public class ProcessorPresenter
 
     private void setData(final ProcessorListRow row) {
         final SafeHtml safeHtml = processorInfoBuilder.get(row);
-        getView().setInfo(safeHtml);
+        view.setInfo(safeHtml);
 
         ExpressionOperator expression = null;
         if (row instanceof ProcessorFilterRow) {
@@ -276,6 +297,7 @@ public class ProcessorPresenter
         expressionTree.read(expression);
     }
 
+    /// @return The processors and filters selected.
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {
         return processorList.getSelectionModel();
     }
@@ -286,9 +308,7 @@ public class ProcessorPresenter
         }
     }
 
-    /**
-     * Make a copy of the currently selected processor
-     */
+    // Make a copy of the currently selected processor
     private void duplicateProcessor() {
         if (allowCreate) {
             // Now create the processor filter using the find stream criteria.
@@ -322,14 +342,15 @@ public class ProcessorPresenter
                         .onSuccess(loadedFilter -> {
                             if (loadedFilter == null) {
                                 AlertEvent.fireError(
-                                        ProcessorPresenter.this,
+                                        this,
                                         "Unable to load filter",
                                         null);
                             } else {
                                 edit(loadedFilter, null);
                             }
                         })
-                        .taskMonitorFactory(this)
+                        .owner(this)
+                        .taskMonitorFactory(taskMonitor())
                         .exec();
             }
         }
@@ -392,7 +413,8 @@ public class ProcessorPresenter
                                     .onSuccess(res ->
                                             countDownAndRun.countdown())
                                     .onFailure(new DefaultErrorHandler(this, countDownAndRun::countdown))
-                                    .taskMonitorFactory(this)
+                                    .owner(this)
+                                    .taskMonitorFactory(taskMonitor())
                                     .exec();
                         }
                     }
@@ -411,14 +433,21 @@ public class ProcessorPresenter
 //        }
 //    }
 
+    /// Lists the processors again, keeping the selected one selected.
     public void refresh() {
         refresh(processorList.getSelectionModel().getSelected());
     }
 
+    /// Lists the processors again, selecting a filter.
+    ///
+    /// @param processorFilter The filter to select, or `null` for none.
     public void refresh(final ProcessorFilter processorFilter) {
         refresh(NullSafe.get(processorFilter, ProcessorFilterRow::new));
     }
 
+    /// Lists the processors again, selecting a row.
+    ///
+    /// @param row The row to select, or `null` for none.
     public void refresh(final ProcessorListRow row) {
         processorList.setNextSelection(row);
         processorList.refresh();
@@ -431,23 +460,19 @@ public class ProcessorPresenter
         updateData();
     }
 
+    /// @param defaultExpression The expression a new filter starts with.
     public void setDefaultExpression(final ExpressionOperator defaultExpression) {
         this.defaultExpression = defaultExpression;
     }
 
+    /// @param editInterceptor Asked before a filter is added or edited, and stops it if it answers
+    ///                        `false`.
     public void setEditInterceptor(final Supplier<Boolean> editInterceptor) {
         this.editInterceptor = editInterceptor;
     }
 
-    // --------------------------------------------------------------------------------
-
-
-    public interface ProcessorView extends View {
-
-        void setProcessorList(IsWidget view);
-
-        void setInfo(SafeHtml info);
-
-        void setDetailsView(IsWidget view);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

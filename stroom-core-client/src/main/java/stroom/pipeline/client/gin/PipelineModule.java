@@ -26,9 +26,6 @@ import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
-import stroom.processor.client.presenter.ProcessorPresenter;
-import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 
@@ -48,7 +45,6 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
 
         // Add processor bindings.
-        bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bind(ProcessorTaskPresenter.class);

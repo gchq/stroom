@@ -30,14 +30,14 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.component.ProcessorsController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
-/// Stories of `App/Main/ProcessorFilterList`, showing Stroom's real [ProcessorPresenter] (a
+/// Stories of `App/Main/ProcessorFilterList`, showing Stroom's real [ProcessorsController] (a
 /// pipeline's 'Processors' tab: the processor and filter tree, as `PipelinePresenter` shows it)
 /// with fake REST replies.
 ///
@@ -229,12 +229,12 @@ public final class ProcessorFilterListStories {
         final PipelineDoc pipelineDoc = PipelineDoc.builder().uuid("p1").name("Events Pipeline").build();
         beforeShow.accept(harness);
         harness.afterStartUp(() -> {
-            final ProcessorPresenter presenter = injector.getProcessorPresenter();
+            final ProcessorsController processors = injector.getProcessors();
             // As PipelinePresenter's 'Processors' tab reads it
-            presenter.read(pipelineRef, pipelineDoc);
-            presenter.setIsAdmin(true);
-            presenter.setAllowUpdate(true);
-            harness.show(presenter);
+            processors.read(pipelineRef, pipelineDoc);
+            processors.setIsAdmin(true);
+            processors.setAllowUpdate(true);
+            harness.show(processors);
         });
         return harness.asWidget();
     }

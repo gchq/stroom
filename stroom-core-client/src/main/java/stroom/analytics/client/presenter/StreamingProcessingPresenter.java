@@ -22,12 +22,13 @@ import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.component.ProcessorsController;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -36,22 +37,22 @@ public class StreamingProcessingPresenter
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE = GWT.create(AnalyticProcessResource.class);
 
-    private final ProcessorPresenter processorPresenter;
+    private final ProcessorsController processors;
     private final RestFactory restFactory;
     private DocPresenter<?, ?> documentEditPresenter;
 
     @Inject
     public StreamingProcessingPresenter(final EventBus eventBus,
                                         final StreamingProcessingView view,
-                                        final ProcessorPresenter processorPresenter,
+                                        final ProcessorsController processors,
                                         final RestFactory restFactory) {
         super(eventBus, view);
-        own(processorPresenter);
-        this.processorPresenter = processorPresenter;
+        own(processors);
+        this.processors = processors;
         this.restFactory = restFactory;
-        getView().setProcessorsView(processorPresenter.getView());
+        getView().setProcessors(processors);
 
-        processorPresenter.setEditInterceptor(() -> {
+        processors.setEditInterceptor(() -> {
             if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
                 AlertEvent.fireWarn(
                         this,
@@ -72,9 +73,9 @@ public class StreamingProcessingPresenter
                 .create(ANALYTIC_PROCESS_RESOURCE)
                 .method(res -> res.getDefaultProcessingFilterExpression(query))
                 .onSuccess(expressionOperator -> {
-                    processorPresenter.setDefaultExpression(expressionOperator);
-                    processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc);
-                    processorPresenter.setAllowUpdate(!readOnly);
+                    processors.setDefaultExpression(expressionOperator);
+                    processors.read(analyticRuleDoc.asDocRef(), analyticRuleDoc);
+                    processors.setAllowUpdate(!readOnly);
                 })
                 .taskMonitorFactory(this)
                 .exec();
@@ -86,6 +87,6 @@ public class StreamingProcessingPresenter
 
     public interface StreamingProcessingView extends View {
 
-        void setProcessorsView(View view);
+        void setProcessors(IsWidget processors);
     }
 }

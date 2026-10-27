@@ -23,7 +23,7 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.TabbedController;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.component.ProcessorsController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
@@ -49,7 +49,7 @@ public class FolderTabs extends TabbedController<DocRef> {
 
     private final ClientSecurityContext securityContext;
     private final Provider<MetaPresenter> metaPresenterProvider;
-    private final Provider<ProcessorPresenter> processorPresenterProvider;
+    private final Provider<ProcessorsController> processorsProvider;
     private final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider;
     private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private boolean tabsAdded;
@@ -59,13 +59,13 @@ public class FolderTabs extends TabbedController<DocRef> {
                       final LinkTabPanelView view,
                       final ClientSecurityContext securityContext,
                       final Provider<MetaPresenter> metaPresenterProvider,
-                      final Provider<ProcessorPresenter> processorPresenterProvider,
+                      final Provider<ProcessorsController> processorsProvider,
                       final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;
         this.metaPresenterProvider = metaPresenterProvider;
-        this.processorPresenterProvider = processorPresenterProvider;
+        this.processorsProvider = processorsProvider;
         this.processorTaskPresenterProvider = processorTaskPresenterProvider;
         this.permissionsProvider = permissionsProvider;
     }
@@ -99,7 +99,7 @@ public class FolderTabs extends TabbedController<DocRef> {
         if (manageProcessors) {
             addTab(PROCESSORS,
                     () -> {
-                        final ProcessorPresenter processors = processorPresenterProvider.get();
+                        final ProcessorsController processors = processorsProvider.get();
                         final boolean isAdmin = securityContext.hasAppPermission(AppPermission.ADMINISTRATOR);
                         processors.setIsAdmin(isAdmin);
                         processors.setAllowUpdate(isAdmin);

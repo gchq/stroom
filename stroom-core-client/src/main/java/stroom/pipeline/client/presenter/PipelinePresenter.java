@@ -36,7 +36,7 @@ import stroom.pipeline.structure.client.component.PipelineStructureController;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
-import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.component.ProcessorsController;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -64,7 +64,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ProcessorPresenter processorPresenter;
+    private final ProcessorsController processors;
     private final TabProvider<PipelineDoc> structureTabProvider;
     private final TabProvider<PipelineDoc> steppingTabProvider;
     private final PipelineStructureController pipelineStructure;
@@ -87,7 +87,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                              final LinkTabPanelView view,
                              final Provider<MetaPresenter> metaPresenterProvider,
                              final Provider<PipelineStructureController> structureProvider,
-                             final ProcessorPresenter processorPresenter,
+                             final ProcessorsController processors,
                              final Provider<ProcessorTaskPresenter> taskPresenterProvider,
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<PipelineDoc> documentUserPermissionsTabProvider,
@@ -96,8 +96,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final PipelineModelFactory pipelineModelFactory) {
         super(eventBus, view);
-        own(processorPresenter);
-        this.processorPresenter = processorPresenter;
+        own(processors);
+        this.processors = processors;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.pipelineModelFactory = pipelineModelFactory;
 
@@ -159,21 +159,12 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 AppPermission.MANAGE_PROCESSORS_PERMISSION);
 
         if (hasManageProcessorsPermission) {
-            addTab(PROCESSORS, new AbstractTabProvider<PipelineDoc, ProcessorPresenter>() {
-                @Override
-                protected ProcessorPresenter createPresenter() {
-                    return processorPresenter;
-                }
-
-                @Override
-                public void onRead(final ProcessorPresenter presenter,
-                                   final DocRef docRef,
-                                   final PipelineDoc document) {
-                    presenter.read(docRef, document);
-                    presenter.setIsAdmin(securityContext.hasAppPermission(AppPermission.ADMINISTRATOR));
-                    presenter.setAllowUpdate(!isReadOnly());
-                }
-            });
+            addTab(PROCESSORS, ControllerTabProvider.ofOwned(eventBus, processors,
+                    (controller, docRef, document) -> {
+                        controller.read(docRef, document);
+                        controller.setIsAdmin(securityContext.hasAppPermission(AppPermission.ADMINISTRATOR));
+                        controller.setAllowUpdate(!isReadOnly());
+                    }));
 
             addTab(TASKS, new AbstractTabProvider<PipelineDoc, ProcessorTaskPresenter>() {
                 @Override
@@ -261,8 +252,9 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return PipelineDoc.TYPE;
     }
 
-    public ProcessorPresenter getProcessorPresenter() {
-        return processorPresenter;
+    /// @return The Processors tab's controller.
+    public ProcessorsController getProcessors() {
+        return processors;
     }
 
     @Override

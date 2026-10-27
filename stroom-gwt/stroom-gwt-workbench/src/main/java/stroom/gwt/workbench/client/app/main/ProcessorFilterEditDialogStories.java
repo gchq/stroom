@@ -51,7 +51,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Map;
 
 /// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditController]
-/// (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it) with fake REST
+/// (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it) with fake REST
 /// replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -370,7 +370,7 @@ public final class ProcessorFilterEditDialogStories {
         harness.fn(ON_SAVED);
         final DocRef pipelineRef = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("My Pipeline").build();
         harness.afterStartUp(() -> {
-            // As ProcessorPresenter adds or edits a filter
+            // As ProcessorsController adds or edits a filter
             injector.getProcessorEditController().show(harness.getAppRoot(),
                     ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
                     harness.spy(ON_SAVED, result == null

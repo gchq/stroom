@@ -938,7 +938,7 @@ public final class ExpressionBuilderStories {
         final ScreenHarness harness = harness(context);
         final ExpressionTreeController tree = treeController(harness);
         harness.own(tree);
-        // As Stroom's read only views of an expression (e.g. ProcessorPresenter) do
+        // As Stroom's read only views of an expression (e.g. ProcessorsController) do
         tree.setSelectionModel(null);
         tree.init(DATA_SOURCE, fieldModel(harness, false));
         tree.read(populatedExpression());

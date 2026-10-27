@@ -17,11 +17,11 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -46,8 +46,8 @@ public class StreamingProcessingViewImpl
     }
 
     @Override
-    public void setProcessorsView(final View view) {
-        this.processors.setWidget(view.asWidget());
+    public void setProcessors(final IsWidget processors) {
+        this.processors.setWidget(processors);
     }
 
     public interface Binder extends UiBinder<Widget, StreamingProcessingViewImpl> {
