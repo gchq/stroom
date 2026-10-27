@@ -215,6 +215,7 @@ public class AnnotationEditPresenter
         return (filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(annotationTagType, filter);
             annotationResourceClient.findAnnotationTags(
+                    this,
                     criteria,
                     values -> {
                         if (values != null) {

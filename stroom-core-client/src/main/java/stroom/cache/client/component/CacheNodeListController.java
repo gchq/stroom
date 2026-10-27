@@ -77,6 +77,7 @@ public class CacheNodeListController extends Controller {
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.delayedUpdate = new DelayedUpdate(this::update);
+        onDispose(delayedUpdate::reset);
         initWidget(view);
         view.setOnClear(this::clear);
     }

@@ -85,7 +85,8 @@ public class AnnotationTagListController extends Controller {
                     final FindAnnotationTagCriteria criteria =
                             new FindAnnotationTagCriteria(annotationTagType);
                     CriteriaUtil.setRange(criteria, range);
-                    annotationResourceClient.findAnnotationTags(criteria, dataConsumer, errorHandler,
+                    annotationResourceClient.findAnnotationTags(AnnotationTagListController.this,
+                            criteria, dataConsumer, errorHandler,
                             view.getTaskMonitor());
                 }
             };

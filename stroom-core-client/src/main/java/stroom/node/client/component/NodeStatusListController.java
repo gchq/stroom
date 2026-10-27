@@ -172,6 +172,7 @@ public class NodeStatusListController extends Controller implements Refreshable 
         };
         view.setDataProvider(dataProvider);
         view.setOnSortChange(this::internalRefresh);
+        onDispose(view::cancelRedraw);
     }
 
     private void onAutoRefreshToggled() {

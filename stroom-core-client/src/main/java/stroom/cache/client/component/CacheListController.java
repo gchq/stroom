@@ -71,6 +71,7 @@ public class CacheListController extends Controller {
         this.view = view;
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
+        onDispose(delayedUpdate::reset);
         initWidget(view);
         view.setOnClear(this::clear);
         view.setDataProvider(new RestDataProvider<CacheIdentity, CacheNamesResponse>(eventBus) {

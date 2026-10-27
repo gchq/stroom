@@ -37,6 +37,7 @@ import stroom.docref.DocRef;
 import stroom.security.client.presenter.AbstractRestClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
+import stroom.widget.component.client.HasControllerNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -55,7 +56,15 @@ public class AnnotationResourceClient extends AbstractRestClient {
         super(eventBus, restFactory);
     }
 
-    public void findAnnotations(final FindAnnotationRequest request,
+    /// Finds annotations.
+    ///
+    /// @param owner              Drops the reply if it has gone by the time it comes.
+    /// @param request            What to find.
+    /// @param consumer           Given the page of annotations found.
+    /// @param errorHandler       Told if the request fails.
+    /// @param taskMonitorFactory Shows the request is running.
+    public void findAnnotations(final HasControllerNode owner,
+                                final FindAnnotationRequest request,
                                 final Consumer<ResultPage<Annotation>> consumer,
                                 final RestErrorHandler errorHandler,
                                 final TaskMonitorFactory taskMonitorFactory) {
@@ -64,6 +73,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .method(res -> res.findAnnotations(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .owner(owner)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -196,7 +206,15 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void findAnnotationTags(final FindAnnotationTagCriteria request,
+    /// Finds annotation tags (statuses, labels or collections).
+    ///
+    /// @param owner              Drops the reply if it has gone by the time it comes.
+    /// @param request            What to find.
+    /// @param consumer           Given the page of tags found.
+    /// @param errorHandler       Told if the request fails.
+    /// @param taskMonitorFactory Shows the request is running.
+    public void findAnnotationTags(final HasControllerNode owner,
+                                   final FindAnnotationTagCriteria request,
                                    final Consumer<ResultPage<AnnotationTag>> consumer,
                                    final RestErrorHandler errorHandler,
                                    final TaskMonitorFactory taskMonitorFactory) {
@@ -205,6 +223,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .method(res -> res.findAnnotationTags(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .owner(owner)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

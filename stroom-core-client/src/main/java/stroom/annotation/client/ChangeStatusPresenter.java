@@ -122,7 +122,7 @@ public class ChangeStatusPresenter
         final ChooserController<AnnotationTag> chooser = chooserProvider.get();
         chooser.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values ->
+            annotationResourceClient.findAnnotationTags(this, criteria, values ->
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
         });

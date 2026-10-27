@@ -95,7 +95,7 @@ public class FindAnnotationListController extends Controller {
                         permission,
                         sourceId,
                         destinationId);
-                resourceClient.findAnnotations(request, resultPage -> {
+                resourceClient.findAnnotations(FindAnnotationListController.this, request, resultPage -> {
                     // A rejected filter comes back as an empty page like any other, so surface the
                     // reason on the filter box. See ResultPage.filterError.
                     onFilterError.accept(NullSafe.get(resultPage.getFilterError(), TokenError::getText));

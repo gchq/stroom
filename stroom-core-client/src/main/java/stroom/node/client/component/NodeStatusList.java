@@ -126,6 +126,11 @@ public class NodeStatusList extends Component {
         redrawDelayedUpdate.update();
     }
 
+    /// Cancels a redraw [#scheduleRedraw()] asked for that hasn't happened yet.
+    public void cancelRedraw() {
+        redrawDelayedUpdate.reset();
+    }
+
     /// @param pingLookup Gives a node's latest ping, or `null` if it hasn't one yet.
     public void setPingLookup(final Function<String, NodePing> pingLookup) {
         this.pingLookup = pingLookup;

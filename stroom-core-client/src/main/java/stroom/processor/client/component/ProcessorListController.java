@@ -117,6 +117,7 @@ public class ProcessorListController extends Controller implements Refreshable, 
                             AlertEvent.fireError(ProcessorListController.this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .owner(ProcessorListController.this)
                         .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
@@ -132,6 +133,7 @@ public class ProcessorListController extends Controller implements Refreshable, 
                             AlertEvent.fireError(ProcessorListController.this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .owner(ProcessorListController.this)
                         .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
@@ -147,6 +149,7 @@ public class ProcessorListController extends Controller implements Refreshable, 
                             AlertEvent.fireError(ProcessorListController.this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .owner(ProcessorListController.this)
                         .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
