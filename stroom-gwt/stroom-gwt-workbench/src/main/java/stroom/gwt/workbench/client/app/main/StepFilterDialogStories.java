@@ -29,7 +29,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
+import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/StepFilterDialog`, showing Stroom's real [SteppingFilterPresenter] (the
+/// Stories of `App/Main/StepFilterDialog`, showing Stroom's real [SteppingFilterEditorController] (the
 /// 'Change Step Filters' dialog, as `SteppingPresenter` shows it).
 ///
 /// The element icons come from `GET /pipeline/v1/propertyTypes`. The `onApply` spy records what the
@@ -51,7 +51,7 @@ public final class StepFilterDialogStories {
     static final String ON_APPLY = "onApply";
 
     // The element chooser's cell class for an element with active filters
-    private static final String FILTER_ON = ".pipelineElementChooser-filterOn";
+    private static final String FILTER_ON = ".stepping-filter-editor__filter-icon-cell--on";
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .get(PipelineFixtures.PROPERTY_TYPES_PATH, RestReply.json(PipelineFixtures.PROPERTY_TYPES))
@@ -89,7 +89,7 @@ public final class StepFilterDialogStories {
                     // Per element: xmlWriter has no filters; switching back keeps xsltFilter's.
                     // An empty filter list shows no text, so the list is checked for having no 'Exists'
                     // row
-                    final Play elements = screen.within(screen.querySelector(".pipelineElementChooser"));
+                    final Play elements = screen.within(screen.querySelector(".stepping-filter-editor__elements"));
                     play.click(elements.getByText("xmlWriter"));
                     play.waitFor(() -> play.expect(xpathList.queryByText("Exists")).toBeNull());
                     play.click(elements.getByText("xsltFilter"));
@@ -187,9 +187,8 @@ public final class StepFilterDialogStories {
         final List<PipelineElement> elements = List.of(
                 new PipelineElement("xsltFilter", "XSLTFilter"),
                 new PipelineElement("xmlWriter", "XMLWriter"));
-        final SteppingFilterPresenter presenter = injector.getSteppingFilterPresenter();
-        harness.afterStartUp(() -> presenter.show(elements, elements.get(0), new HashMap<>(), settings ->
-                onApply.call(describe(settings))));
+        harness.afterStartUp(() -> harness.own(injector.getSteppingFilterEditorController())
+                .show(elements, elements.get(0), new HashMap<>(), settings -> onApply.call(describe(settings))));
         return harness.asWidget();
     }
 }

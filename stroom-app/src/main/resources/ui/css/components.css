@@ -633,13 +633,6 @@
     scrollbar-gutter: stable;
 }
 
-.steppingFilterViewImpl {
-}
-
-.steppingFilterViewImpl .pipelineElementChooser-textCell.pipelineElementChooser-filterOff{
-    color: var(--text-color--disabled);
-}
-
 .stepLocationViewImpl-layout {
     white-space: nowrap;
 }
@@ -1046,22 +1039,6 @@
     position: absolute;
     right: 3px;
     top: 3px;
-}
-
-.pipelineElementChooser-iconCell {
-}
-
-.pipelineElementChooser-filterIconCell {
-}
-
-.pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
-}
-
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn {
-}
-
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff {
-    visibility: hidden;
 }
 
 .selectionItemCell {

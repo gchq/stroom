@@ -48,6 +48,7 @@ import stroom.pipeline.stepping.client.component.PipelinePathBar;
 import stroom.pipeline.stepping.client.component.PipelinePathBarController;
 import stroom.pipeline.stepping.client.component.StepControlController;
 import stroom.pipeline.stepping.client.component.StepLocationLinkController;
+import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
@@ -119,7 +120,7 @@ public class SteppingPresenter
     private final Element stepAnnouncement;
     private final StepLocationLinkController stepLocationLink;
     private final StepControlController stepControl;
-    private final SteppingFilterPresenter steppingFilterPresenter;
+    private final SteppingFilterEditorController steppingFilterEditor;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
     private final SteppingMetaListController steppingMetaList;
@@ -162,7 +163,7 @@ public class SteppingPresenter
                              final Provider<ElementPresenter> elementPresenterProvider,
                              final StepLocationLinkController stepLocationLink,
                              final StepControlController stepControl,
-                             final SteppingFilterPresenter steppingFilterPresenter,
+                             final SteppingFilterEditorController steppingFilterEditor,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final Provider<SteppingMetaListController> metaListPresenterProvider,
                              final Provider<ExpressionDialogController> filterDialogProvider,
@@ -171,7 +172,7 @@ public class SteppingPresenter
         own(sourcePresenter);
         own(stepLocationLink);
         own(stepControl);
-        own(steppingFilterPresenter);
+        own(steppingFilterEditor);
         this.restFactory = restFactory;
 
         this.pipelinePathBar = pipelinePathBar;
@@ -180,7 +181,7 @@ public class SteppingPresenter
         this.elementPresenterProvider = elementPresenterProvider;
         this.stepLocationLink = stepLocationLink;
         this.stepControl = stepControl;
-        this.steppingFilterPresenter = steppingFilterPresenter;
+        this.steppingFilterEditor = steppingFilterEditor;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.steppingMetaList = make(metaListPresenterProvider);
         this.filterDialogProvider = filterDialogProvider;
@@ -396,7 +397,7 @@ public class SteppingPresenter
             // Make a note of the selected element as it is lost on refresh
             final PipelineElement selectedObject = pipelinePathBar.getSelectionModel()
                     .getSelectedObject();
-            steppingFilterPresenter.show(
+            steppingFilterEditor.show(
                     elements,
                     getSelectedPipeElement(),
                     pipelineModel.getStepFilterMap(),

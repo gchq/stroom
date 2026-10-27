@@ -883,7 +883,7 @@ public final class DataGridStories {
         return toggleFrame(grid, sized(paged(grid), "280px", null));
     }
 
-    /// As SteppingFilterPresenter's element chooser, but as a [DataGrid] with the header
+    /// As SteppingFilterEditor's element chooser, but as a [DataGrid] with the header
     /// hidden rather than a cell table.
     private static Widget headerless(final StoryContext context) {
         final DataGrid<Note> grid = noteGrid(false);

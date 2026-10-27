@@ -257,7 +257,7 @@ public final class SteppingScreenStories {
                     final Play dialog = screen.within(
                             screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
                     // The element list is the dialog's element chooser table
-                    final Play list = dialog.within(dialog.querySelector(".pipelineElementChooser"));
+                    final Play list = dialog.within(dialog.querySelector(".stepping-filter-editor__elements"));
                     // recordCount returned no step data, yet is listed
                     play.expect(list.getByText("recordCount")).toBeInTheDocument();
                     play.expect(list.getByText("xsltFilter")).toBeInTheDocument();

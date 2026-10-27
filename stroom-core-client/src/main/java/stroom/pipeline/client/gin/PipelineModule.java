@@ -25,12 +25,9 @@ import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
-import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
@@ -65,8 +62,6 @@ public class PipelineModule extends PluginModule {
                 PipelineStructureViewImpl.class);
 
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
-        bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterView.class,
-                SteppingFilterViewImpl.class);
 
         bindPresenterWidget(ElementPresenter.class, ElementView.class, ElementViewImpl.class);
 
