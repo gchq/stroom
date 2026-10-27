@@ -115,7 +115,7 @@ public final class FormGroupStories {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
                     // The group shows the message under its control, which it marks invalid and
-                    // described by the message (as e.g. CreateDocumentViewImpl does). The message
+                    // described by the message (as e.g. CreateDocument does). The message
                     // updates when the text box reports its value, on leaving it.
                     formGroup.setRequired(true);
                     formGroup.add(textBox);

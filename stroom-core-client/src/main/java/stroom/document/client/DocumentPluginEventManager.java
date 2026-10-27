@@ -496,7 +496,7 @@ public class DocumentPluginEventManager extends Plugin {
         // Handle key bind for creating a doc in the selected folder
         getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
-            // TODO The CreateDocumentPresenter has an exp tree picker on it so debatable whether
+            // TODO The CreateDocumentController has an exp tree picker on it so debatable whether
             //  we should just show the dialog regardless of selection/perms and let the dialog
             //  deal with it.
             if (selectedItems.size() == 1) {

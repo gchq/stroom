@@ -31,7 +31,7 @@ import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.core.client.ContentManager;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
+import stroom.entity.client.component.CreateDocumentController;
 import stroom.explorer.client.component.FindController;
 import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.presenter.TabSessionManager;
@@ -147,7 +147,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     // Documents and the explorer
 
     /// @return The 'New ...' / 'Save As' dialog, shown by firing `ShowCreateDocumentDialogEvent`.
-    CreateDocumentPresenter getCreateDocumentPresenter();
+    CreateDocumentController getCreateDocumentController();
 
     /// @return The 'Find' dialog, as `NavigationPlugin` shows it for `ShowFindEvent`.
     FindController getFindController();

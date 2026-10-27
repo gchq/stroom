@@ -16,15 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.entity.client.view.CopyDocumentViewImpl;
-import stroom.entity.client.view.CreateDocumentViewImpl;
-import stroom.entity.client.view.MoveDocumentViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `EntityModule`
@@ -36,15 +27,6 @@ public class EntityScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(CreateDocumentPresenter.class,
-                CreateDocumentView.class,
-                CreateDocumentViewImpl.class);
-        bindPresenterWidget(CopyDocumentPresenter.class,
-                CopyDocumentView.class,
-                CopyDocumentViewImpl.class);
-        bindPresenterWidget(MoveDocumentPresenter.class,
-                MoveDocumentView.class,
-                MoveDocumentViewImpl.class);
     }
 }
 

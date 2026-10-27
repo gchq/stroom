@@ -14,32 +14,38 @@
  * limitations under the License.
  */
 
-package stroom.entity.client.view;
+package stroom.entity.client.component;
 
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
+/// Where to copy documents to: the folder, the copy's name (for one document) and how its
+/// permissions are set.
+public class CopyDocument extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     EntityTree folders;
     @UiField
+    FormGroup nameFormGroup;
+    @UiField
+    TextBox name;
+    @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 
-    @Inject
-    public MoveDocumentViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-
+    /// Makes an empty form, offering every permission inheritance, Destination chosen.
+    public CopyDocument() {
+        initWidget(BINDER.createAndBindUi(this));
         permissionInheritance.addItem(PermissionInheritance.NONE);
         permissionInheritance.addItem(PermissionInheritance.SOURCE);
         permissionInheritance.addItem(PermissionInheritance.DESTINATION);
@@ -47,27 +53,36 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
         permissionInheritance.setValue(PermissionInheritance.DESTINATION);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @return The copy's name.
+    public String getName() {
+        return name.getValue();
     }
 
-    @Override
+    /// @param name The copy's name.
+    public void setName(final String name) {
+        this.name.setValue(name);
+    }
+
+    /// @param visible Whether the name is asked for, as it is for one document.
+    public void setNameVisible(final boolean visible) {
+        nameFormGroup.setVisible(visible);
+    }
+
+    /// @return The folder picker, for its controller to attach to.
     public EntityTree getFolders() {
         return folders;
     }
 
-    @Override
+    /// @return How the copy's permissions are set.
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance.getValue();
     }
 
-    @Override
-    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance.setValue(permissionInheritance);
-    }
 
-    public interface Binder extends UiBinder<Widget, MoveDocumentViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CopyDocument> {
 
     }
 }

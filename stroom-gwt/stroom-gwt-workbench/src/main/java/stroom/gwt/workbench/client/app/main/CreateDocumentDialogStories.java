@@ -18,7 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
+import stroom.entity.client.component.CreateDocumentController;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -36,7 +36,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/CreateDocumentDialog`, showing Stroom's real [CreateDocumentPresenter] (the
+/// Stories of `App/Main/CreateDocumentDialog`, showing Stroom's real [CreateDocumentController] (the
 /// 'New ...' and 'Save As' dialog) with fake REST replies.
 ///
 /// The folder picker's tree comes from `POST /explorer/v2/fetchExplorerNodes` (the shared
@@ -70,7 +70,7 @@ public final class CreateDocumentDialogStories {
                     screen.findByText("Select the parent folder");
                     // GWT's `max form` layout: three form groups, the folder picker growing
                     // (dock-max) while Name / Permissions are natural height (dock-min).
-                    // The dialog is GWT's CreateDocumentViewImpl; its form is found from its caption
+                    // The dialog is Stroom's CreateDocument; its form is found from its caption
                     final Play dialog = screen.within(screen.within(screen.getByText("New Dictionary")
                             .closest(StroomDom.DIALOG)).querySelector(".max.form"));
                     play.expect(dialog.querySelectorAll(":scope > .form-group")).toHaveLength(3);
@@ -148,9 +148,9 @@ public final class CreateDocumentDialogStories {
                 .injector(injector)
                 .build();
         // As DocumentDialogScreens would
-        final CreateDocumentPresenter presenter = injector.getCreateDocumentPresenter();
         harness.addRegistration(harness.getEventBus()
-                .addHandler(ShowCreateDocumentDialogEvent.getType(), presenter));
+                .addHandler(ShowCreateDocumentDialogEvent.getType(), event ->
+                        injector.getCreateDocumentController().show(harness.getAppRoot(), event)));
         harness.afterStartUp(() -> ShowCreateDocumentDialogEvent.fire(harness.getHasHandlers(), caption, selected,
                 "Dictionary", initialName, false, node -> {
                 }));

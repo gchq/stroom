@@ -17,15 +17,6 @@
 package stroom.entity.client.gin;
 
 import stroom.entity.client.DocumentDialogScreens;
-import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.entity.client.view.CopyDocumentViewImpl;
-import stroom.entity.client.view.CreateDocumentViewImpl;
-import stroom.entity.client.view.MoveDocumentViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class EntityModule extends AbstractPresenterModule {
@@ -34,14 +25,5 @@ public class EntityModule extends AbstractPresenterModule {
     protected void configure() {
         // Hear the app-wide events that open its screens, for the life of the app
         bind(DocumentDialogScreens.class).asEagerSingleton();
-        bindPresenter(CreateDocumentPresenter.class,
-                CreateDocumentView.class,
-                CreateDocumentViewImpl.class);
-        bindPresenter(CopyDocumentPresenter.class,
-                CopyDocumentView.class,
-                CopyDocumentViewImpl.class);
-        bindPresenter(MoveDocumentPresenter.class,
-                MoveDocumentView.class,
-                MoveDocumentViewImpl.class);
     }
 }

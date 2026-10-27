@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.entity.client.view;
+package stroom.entity.client.component;
 
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
 import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandlers> implements CreateDocumentView {
+/// A new document: the folder to make it in, its name and how its permissions are set. Enter in
+/// the name submits it.
+public class CreateDocument extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     EntityTree folders;
     @UiField
@@ -46,61 +46,66 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHan
     @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 
-    @Inject
-    public CreateDocumentViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(event -> focus());
+    private Runnable onSubmit = () -> {
+    };
 
+    /// Makes an empty form, offering None and Destination, Destination chosen. The name takes the
+    /// focus once shown.
+    public CreateDocument() {
+        initWidget(BINDER.createAndBindUi(this));
+        addAttachHandler(event -> focus());
         permissionInheritance.addItem(PermissionInheritance.NONE);
         permissionInheritance.addItem(PermissionInheritance.DESTINATION);
         permissionInheritance.setValue(PermissionInheritance.DESTINATION);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// Puts the focus on the name.
+    public void focus() {
+        name.setFocus(true);
     }
 
-    @Override
+    /// @return The name typed.
     public String getName() {
         return name.getText();
     }
 
-    @Override
+    /// @param name The name to start with.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
+    /// @return The folder picker, for its controller to attach to.
     public EntityTree getFolders() {
         return folders;
     }
 
-    @Override
+    /// @return How the new document's permissions are set.
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance.getValue();
     }
 
-    @Override
-    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance.setValue(permissionInheritance);
-    }
-
-    @Override
+    /// Shows why the name is invalid, under the name field, and focuses the field.
+    ///
+    /// @param message What is wrong with the name.
     public void setNameInvalid(final String message) {
         nameGroup.setFeedback(message);
         name.setFocus(true);
     }
 
-    @Override
+    /// Clears any message about the name being invalid.
     public void setNameValid() {
         nameGroup.clearFeedback();
+    }
+
+    /// @param onSubmit Called when Enter is pressed in the name, as OK would be.
+    public void setOnSubmit(final Runnable onSubmit) {
+        this.onSubmit = onSubmit;
     }
 
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onDialogAction(DialogAction.OK);
+            onSubmit.run();
         }
     }
 
@@ -112,12 +117,11 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHan
         }
     }
 
-    @Override
-    public void focus() {
-        name.setFocus(true);
-    }
 
-    public interface Binder extends UiBinder<Widget, CreateDocumentViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CreateDocument> {
 
     }
 }

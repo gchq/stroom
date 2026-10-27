@@ -36,10 +36,10 @@ import stroom.dictionary.client.DictionaryPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.DocumentDialogScreens;
+import stroom.entity.client.component.CopyDocumentController;
+import stroom.entity.client.component.CreateDocumentController;
 import stroom.entity.client.component.InfoDocumentController;
-import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter;
+import stroom.entity.client.component.MoveDocumentController;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
@@ -185,13 +185,13 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     CurrentActivity getCurrentActivity();
 
     /// @return The 'New ...' and 'Save As' dialog, shown for `ShowCreateDocumentDialogEvent`.
-    CreateDocumentPresenter getCreateDocumentPresenter();
+    CreateDocumentController getCreateDocumentController();
 
     /// @return The 'Copy' dialog, shown for `ShowCopyDocumentDialogEvent`.
-    CopyDocumentPresenter getCopyDocumentPresenter();
+    CopyDocumentController getCopyDocumentController();
 
     /// @return The 'Move' dialog, shown for `ShowMoveDocumentDialogEvent`.
-    MoveDocumentPresenter getMoveDocumentPresenter();
+    MoveDocumentController getMoveDocumentController();
 
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
