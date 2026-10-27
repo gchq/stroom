@@ -6,12 +6,16 @@ Which work: what the user has and wants decides the path, before any tool. A new
 Events already in Stroom, to index: stage 2 only. Raw data (JSON, delimited text, XML) to explore as it is, with no
 translation: a discovery index (stroom://guide/indexing), offered when the user wants to see what raw data holds before
 or instead of writing a translation. A table to look values up in (users, assets, codes): reference data
-(stroom://guide/reference-data), on its own or for a translation's lookups. Events sent on to ArcSight: CEF output
+(stroom://guide/reference-data), on its own or for a translation's lookups. Name these when starting
+(start_build or start_onboarding kind=discovery or kind=reference): the plan's steps then follow the work from the
+start, and a reference table gets no translation or index. An events pipeline whose lookups read a table with no
+Reference stream yet is stepped only once that table is processed (Stroom remembers a lookup that found nothing for
+10 minutes). Events sent on to ArcSight: CEF output
 (draft_cef_mapping). A pipeline to fix or change: a new version or working copy of it (copy_pipeline). When what the
 user wants fits more than one, ask which.
 
-A discovery index: the source is a feed already holding raw data (start_build feeds=[it]) or a sample (start_build,
-create_feed, upload_sample); nothing is surveyed, as Elasticsearch maps the fields itself. Ask the user, in one
+A discovery index: the source is a feed already holding raw data (start_build feeds=[it] kind=discovery) or a sample
+(start_build kind=discovery, create_feed, upload_sample); nothing is surveyed, as Elasticsearch maps the fields itself. Ask the user, in one
 message: the cluster, the index name (e.g. stroom-discovery-<source>-v1), the discovery template
 (find_pipeline_templates stage=discovery), the field holding each record's time (and its format if it is not ISO 8601
 or epoch milliseconds), any stream meta to add, any fields to leave out, and an example index template from a sibling

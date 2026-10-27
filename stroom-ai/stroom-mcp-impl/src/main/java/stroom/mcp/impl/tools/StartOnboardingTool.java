@@ -57,6 +57,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
     static final String BUILD_ARG = "build";
     static final String FOLDERS_ARG = "folders";
     static final String STREAM_IDS_ARG = "stream_ids";
+    static final String KIND_ARG = "kind";
 
     private final WriteGuard guard;
     private final BuildPlan plan;
@@ -64,6 +65,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
     private final SampleStreamTexts sampleStreamTexts;
     private final PipelineTemplates pipelineTemplates;
     private final AgentInstructions agentInstructions;
+    private final BuildRecords buildRecords;
 
     @Inject
     StartOnboardingTool(final WriteGuard guard,
@@ -71,13 +73,15 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                         final SampleProfiling sampleProfiler,
                         final SampleStreamTexts sampleStreamTexts,
                         final PipelineTemplates pipelineTemplates,
-                        final AgentInstructions agentInstructions) {
+                        final AgentInstructions agentInstructions,
+                        final BuildRecords buildRecords) {
         this.guard = guard;
         this.plan = plan;
         this.sampleProfiler = sampleProfiler;
         this.sampleStreamTexts = sampleStreamTexts;
         this.pipelineTemplates = pipelineTemplates;
         this.agentInstructions = agentInstructions;
+        this.buildRecords = buildRecords;
     }
 
     @Override
@@ -147,6 +151,11 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                              + "after upload_sample), so the text need not be sent again; the "
                                              + "server reads them itself.")
                                 .build())
+                        .addEnumProperty(KIND_ARG, BuildRecords.BUILD_KINDS, "The kind of work, when it is not an "
+                                                                             + "events pipeline: discovery (raw data "
+                                                                             + "indexed as it is, for exploration) "
+                                                                             + "or reference (a table to look values "
+                                                                             + "up in); the plan's steps follow it.")
                         .required(SOURCE_NAME_ARG)
                         .build())
                 .build();
@@ -164,10 +173,15 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             final List<String> folders = stringListArg(call, FOLDERS_ARG);
             final List<Long> streamIds = streamIds(call, STREAM_IDS_ARG);
             final String build = buildName(sourceName, stringArg(call, BUILD_ARG));
-            if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
-                return JsonResults.of(filesFirst(context, sourceName, files, build, folders));
+            final String kind = stringArg(call, KIND_ARG);
+            if (kind != null && !BuildRecords.BUILD_KINDS.contains(kind)) {
+                return JsonResults.refused("kind is one of " + PyText.list(BuildRecords.BUILD_KINDS) + ", not '"
+                                           + kind + "'");
             }
-            return JsonResults.of(start(context, sourceName, samples, build, folders, streamIds));
+            if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
+                return JsonResults.of(filesFirst(context, sourceName, files, build, folders, kind));
+            }
+            return JsonResults.of(start(context, sourceName, samples, build, folders, streamIds, kind));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }
@@ -178,7 +192,8 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                       final Object samples,
                                       final String build,
                                       final List<String> folders,
-                                      final List<Long> streamIds) {
+                                      final List<Long> streamIds,
+                                      final String kind) {
         List<String> notes = List.of();
         final Map<String, String> named;
         if (!streamIds.isEmpty() && samples == null) {
@@ -194,15 +209,17 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         }
         final WriteGuard.Folder folder = guard.buildFolder(build);
         plan.rememberBuild(context, build);
+        remember(build, kind);
         final Map<String, Object> profiled = sampleProfiler.profileAll(named);
         final Optional<String> tooLong = samples != null
                 ? Optional.ofNullable(SampleTexts.longSamplesNote(named))
                 : Optional.empty();
         final String format = String.valueOf(profiled.get("format"));
         final String parser = BuildPlan.PARSER_FOR_FORMAT.getOrDefault(format, List.of("DSParser")).getFirst();
-        final List<Map<String, Object>> steps = BuildPlan.onboardingChecklist();
-        // Given streams, the feed and samples exist already: the build itself says what is next.
-        final Optional<Map<String, Object>> next = streamIds.isEmpty()
+        final List<Map<String, Object>> steps = steps(build, kind);
+        // Given streams (or a kind), the build itself says what is next: the feed and samples exist already, or the
+        // kind's steps differ from an onboarding's.
+        final Optional<Map<String, Object>> next = streamIds.isEmpty() && kind == null
                 ? Optional.empty()
                 : plan.nextStep(build, null);
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -215,7 +232,15 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("source", sourceName);
         result.put("profile", profiled);
         result.put("parser", parser);
-        result.put("template", templatesReading(format));
+        result.put("template", "reference".equals(kind)
+                ? "find_pipeline_templates stage=reference: the Reference Data template, its parser reading the "
+                  + "table (stroom://guide/reference-data)"
+                : "discovery".equals(kind)
+                        ? "find_pipeline_templates stage=discovery: a template whose parser reads " + format
+                        : templatesReading(format));
+        if (kind != null) {
+            result.put("kind", kind);
+        }
         result.put("text_converter", BuildPlan.TEXT_FORMATS.contains(format)
                 ? "needed: build_data_splitter from a spec, then save_text_converter"
                 : "xml fragments".equals(format)
@@ -245,10 +270,12 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                            final String sourceName,
                                            final List<String> files,
                                            final String build,
-                                           final List<String> folders) {
+                                           final List<String> folders,
+                                           final String kind) {
         final WriteGuard.Folder folder = guard.buildFolder(build);
         plan.rememberBuild(context, build);
-        final List<Map<String, Object>> steps = BuildPlan.onboardingChecklist();
+        remember(build, kind);
+        final List<Map<String, Object>> steps = steps(build, kind);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("build", build);
         result.put("folder", folder.path());
@@ -256,7 +283,9 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("files", files);
         result.put("plan", steps);
         result.put("task_list", BuildPlan.TASK_LIST);
-        result.put("next", firstStep(build, steps));
+        result.put("next", kind == null
+                ? firstStep(build, steps)
+                : plan.nextStep(build, null).orElseGet(() -> firstStep(build, steps)));
         result.put("then", List.of(
                 "upload_sample feed=<the feed> files=" + PyText.list(files) + ": run each command it "
                 + "gives in the user's terminal; each prints the stream_id",
@@ -270,6 +299,20 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                            + "stage 1 needs, not the indexing backend.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
+    }
+
+    // The kind of work the build is, when named: kept in its record, so the plan's steps follow it from the start.
+    private void remember(final String build, final String kind) {
+        if (kind != null) {
+            buildRecords.rememberKind(build, kind);
+        }
+    }
+
+    // A new source's onboarding steps; the build's own, once its kind is named.
+    private List<Map<String, Object>> steps(final String build, final String kind) {
+        return kind == null
+                ? BuildPlan.onboardingChecklist()
+                : plan.plannedSteps(build);
     }
 
     private static Map<String, Object> firstStep(final String build, final List<Map<String, Object>> steps) {
