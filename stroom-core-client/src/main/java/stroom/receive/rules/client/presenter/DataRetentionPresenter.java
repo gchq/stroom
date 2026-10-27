@@ -22,13 +22,13 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.receive.rules.client.component.DataRetentionImpactController;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -37,10 +37,10 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class DataRetentionPresenter
         extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
@@ -52,11 +52,12 @@ public class DataRetentionPresenter
     private static final String TAB_LABEL = "Data Retention";
 
     private final DataRetentionPolicyPresenter retentionPolicyPresenter;
-    private final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider;
+    private final Provider<DataRetentionImpactController> dataRetentionImpactProvider;
 
     private final boolean readOnly = true;
-    private MyPresenterWidget<?> currentContent;
-    private DataRetentionImpactPresenter dataRetentionImpactPresenter;
+    private Layer currentContent;
+    private DataRetentionImpactController dataRetentionImpact;
+    private ControllerLayer dataRetentionImpactLayer;
     private TabData selectedTab;
     private final List<TabData> tabs = new ArrayList<>();
     private boolean dirty;
@@ -67,12 +68,12 @@ public class DataRetentionPresenter
     public DataRetentionPresenter(final EventBus eventBus,
                                   final DataRetentionView view,
                                   final DataRetentionPolicyPresenter retentionPolicyPresenter,
-                                  final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider) {
+                                  final Provider<DataRetentionImpactController> dataRetentionImpactProvider) {
         super(eventBus, view);
         own(retentionPolicyPresenter);
         this.retentionPolicyPresenter = retentionPolicyPresenter;
         this.retentionPolicyPresenter.setParentPresenter(this);
-        this.dataRetentionImpactPresenterProvider = dataRetentionImpactPresenterProvider;
+        this.dataRetentionImpactProvider = dataRetentionImpactProvider;
 
 //        settingsPresenter.addDirtyHandler(event -> {
 //            if (event.isDirty()) {
@@ -89,11 +90,11 @@ public class DataRetentionPresenter
         own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
-    protected void getContent(final TabData tab, final ContentCallback callback) {
+    private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (RULES_TAB.equals(tab)) {
-            callback.onReady(retentionPolicyPresenter);
+            callback.accept(retentionPolicyPresenter);
         } else if (IMPACT_SUMMARY_TAB.equals(tab)) {
-            final DataRetentionImpactPresenter impactPresenter = getOrCreateImpactPresenter();
+            final DataRetentionImpactController impact = getOrCreateImpact();
 
             // Get the current state of the rules saved or dirty
             final DataRetentionRules currentRules = retentionPolicyPresenter.getPolicy();
@@ -101,12 +102,12 @@ public class DataRetentionPresenter
             if (lastPolicyHash == null || currentPolicyHash != lastPolicyHash) {
                 lastPolicyHash = currentPolicyHash;
                 // Rules have changed, so any current data is invalid
-                impactPresenter.setDataRetentionRules(currentRules);
+                impact.setDataRetentionRules(currentRules);
             }
 
-            callback.onReady(impactPresenter);
+            callback.accept(dataRetentionImpactLayer);
         } else {
-            callback.onReady(null);
+            callback.accept(null);
         }
     }
 
@@ -126,13 +127,12 @@ public class DataRetentionPresenter
                         currentContent = content;
 
                         // Set the content.
-                        getView().getLayerContainer().show((Layer) currentContent);
+                        getView().getLayerContainer().show(currentContent);
 
                         // Update the selected tab.
                         getView().getTabBar().selectTab(tab);
                         selectedTab = tab;
 
-                        afterSelectTab(content);
                     }
                 });
             }
@@ -142,9 +142,6 @@ public class DataRetentionPresenter
 
     public TabData getSelectedTab() {
         return selectedTab;
-    }
-
-    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     @Override
@@ -185,11 +182,12 @@ public class DataRetentionPresenter
 //        }
 //    }
 
-    private DataRetentionImpactPresenter getOrCreateImpactPresenter() {
-        if (dataRetentionImpactPresenter == null) {
-            dataRetentionImpactPresenter = make(dataRetentionImpactPresenterProvider);
+    private DataRetentionImpactController getOrCreateImpact() {
+        if (dataRetentionImpact == null) {
+            dataRetentionImpact = make(dataRetentionImpactProvider);
+            dataRetentionImpactLayer = new ControllerLayer(dataRetentionImpact);
         }
-        return dataRetentionImpactPresenter;
+        return dataRetentionImpact;
     }
 
     @Override

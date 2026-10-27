@@ -231,7 +231,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Expander column, as the client-built trees (e.g. DataRetentionImpactPresenter) build them
+    // Expander column, as the client-built trees (e.g. DataRetentionImpactController) build them
 
     static Widget expanderGrid(final StoryContext context) {
         final List<TreeRow> tree = Arrays.asList(

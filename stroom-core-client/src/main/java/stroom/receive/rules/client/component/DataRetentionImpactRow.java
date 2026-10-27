@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.client.presenter;
+package stroom.receive.rules.client.component;
 
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;

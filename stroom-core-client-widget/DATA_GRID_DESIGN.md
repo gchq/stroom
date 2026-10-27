@@ -862,7 +862,7 @@ interactive header cells, the context menu, copy, export and AI.
 
 * **Trees** (2026-10-21): the five grids with an expander column, with all their columns as before:
   `ProcessorList`, `TaskManagerList`, `MarkerList`,
-  `ConfigPropertyClusterValuesList` and `DataRetentionImpactPresenter`.
+  `ConfigPropertyClusterValuesList` and `DataRetentionImpactController`.
   `TreeRowHandler` takes a `DataGridView`.
   * **Tree grid semantics.** A grid with an `ExpanderCell` column is an ARIA `treegrid`: rows carry
     `aria-level` and, unless they're leaves, `aria-expanded`. On a row, Right expands a collapsed
