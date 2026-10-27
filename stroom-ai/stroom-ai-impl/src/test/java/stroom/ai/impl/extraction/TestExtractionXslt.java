@@ -64,6 +64,21 @@ class TestExtractionXslt {
     }
 
     @Test
+    void fieldsAreGivenByTheNamesAnIndexHasForThem() {
+        final String xslt = ExtractionXslt.xslt("event-logging:3", List.of(
+                new ExtractionField("@timestamp", "EventSource/User/Id", null),
+                new ExtractionField("user.name", "EventSource/User/Id", null),
+                new ExtractionField("org (dept)/team", "EventSource/User/Organisation", null)));
+
+        assertThat(ExtractionPreview.values(transform(xslt, EVENT)))
+                .containsEntry("@timestamp", "jsmith")
+                .containsEntry("user.name", "jsmith")
+                .containsEntry("org (dept)/team", "Finance & Ops");
+        // And read back as written.
+        assertThat(ExtractionXslt.read(xslt)).isPresent();
+    }
+
+    @Test
     void eventsWithNoNamespaceAreReadToo() {
         final String xslt = ExtractionXslt.xslt("", List.of(new ExtractionField("Host", "Host", null)));
 
