@@ -22,6 +22,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.component.CreateNewGroupController;
+import stroom.security.client.component.CreateUserController;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
@@ -59,7 +60,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private final UserListController parentsList;
     private final UserListController childrenList;
 
-    private final CreateUserPresenter createUserPresenter;
+    private final Provider<CreateUserController> createUserProvider;
     private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
     private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
     private final RestFactory restFactory;
@@ -79,13 +80,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     public UserAndGroupsPresenter(final EventBus eventBus,
                                   final UserAndGroupsView view,
                                   final Provider<UserListController> userListPresenterProvider,
-                                  final CreateUserPresenter createUserPresenter,
+                                  final Provider<CreateUserController> createUserProvider,
                                   final Provider<CreateNewGroupController> createNewGroupControllerProvider,
                                   final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
                                   final UiConfigCache uiConfigCache,
                                   final RestFactory restFactory) {
         super(eventBus, view);
-        own(createUserPresenter);
         this.userList = make(userListPresenterProvider);
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
@@ -112,7 +112,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 
-        this.createUserPresenter = createUserPresenter;
+        this.createUserProvider = createUserProvider;
         this.createNewGroupControllerProvider = createNewGroupControllerProvider;
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
         this.restFactory = restFactory;
@@ -480,7 +480,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onCreateUserOrGroup() {
-        createUserPresenter.show(
+        createUserProvider.get().show(this,
                 UserAndGroupHelper.createAfterChangeConsumer(userList),
                 true);
     }

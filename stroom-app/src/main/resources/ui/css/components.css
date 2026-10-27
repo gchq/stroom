@@ -1351,16 +1351,6 @@
     margin-top: 0.5em;
 }
 
-/* Bit of space between the selection box and the form groups */
-.createUserViewImpl .createUserViewImpl-selection {
-    margin-bottom: 1em;
-}
-
-.createMultipleUsersViewImpl .createMultipleUsersViewImpl-userBatch {
-    overflow-y: scroll;
-    height: 300px;
-}
-
 .create-document-types-container {
     display: flex;
     flex-direction: row;

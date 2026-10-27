@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.security.client.view;
+package stroom.security.client.component;
 
-import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -30,13 +28,14 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class CreateExternalUserViewImpl
-        extends ViewWithUiHandlers<DialogActionUiHandlers>
-        implements CreateExternalUserView {
+import java.util.Objects;
 
-    private final Widget widget;
+/// One identity provider user to add: their unique identity, and optionally their display and
+/// full names.
+public class CreateExternalUser extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup subjectIdGroup;
@@ -47,46 +46,50 @@ public class CreateExternalUserViewImpl
     @UiField
     TextBox fullName;
 
-    @Inject
-    public CreateExternalUserViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(event -> focus());
+    private Runnable onEnter = () -> {
+    };
+
+    /// Makes an empty form.
+    public CreateExternalUser() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// Focuses the unique identity, once the event being handled is done.
     public void focus() {
         Scheduler.get().scheduleDeferred(() -> subjectId.setFocus(true));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @param onEnter What Enter in any field does, e.g. press OK on the dialog it is shown in.
+    public void setOnEnter(final Runnable onEnter) {
+        this.onEnter = Objects.requireNonNull(onEnter, "onEnter");
     }
 
-    @Override
+    /// @return The user's unique identity, as entered.
     public String getSubjectId() {
         return subjectId.getText();
     }
 
-    @Override
+    /// @return The user's display name, as entered.
     public String getDisplayName() {
         return displayName.getText();
     }
 
-    @Override
+    /// @return The user's full name, as entered.
     public String getFullName() {
         return fullName.getText();
     }
 
-    @Override
+    /// Clears the fields and any message about them being invalid.
     public void clear() {
-        this.subjectId.setText("");
-        this.displayName.setText("");
-        this.fullName.setText("");
+        subjectId.setText("");
+        displayName.setText("");
+        fullName.setText("");
         subjectIdGroup.clearFeedback();
     }
 
-    @Override
+    /// Shows why the unique identity is invalid, under its field, and focuses the field.
+    ///
+    /// @param message What is wrong with the unique identity.
     public void setSubjectIdInvalid(final String message) {
         subjectIdGroup.setFeedback(message);
         subjectId.setFocus(true);
@@ -117,7 +120,7 @@ public class CreateExternalUserViewImpl
 
     private void handleKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onDialogAction(DialogAction.OK);
+            onEnter.run();
         }
     }
 
@@ -125,7 +128,7 @@ public class CreateExternalUserViewImpl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, CreateExternalUserViewImpl> {
+    interface Binder extends UiBinder<Widget, CreateExternalUser> {
 
     }
 }

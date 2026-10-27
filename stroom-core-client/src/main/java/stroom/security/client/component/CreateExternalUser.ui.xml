@@ -3,12 +3,12 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:form="urn:import:stroom.widget.form.client">
 
-  <g:FlowPanel styleName="createExternalUserViewImpl max form flex-column">
+  <g:FlowPanel styleName="max form flex-column">
     <form:FormGroup ui:field="subjectIdGroup"
                     identity="subjectId"
                     label="Unique User Identity"
                     required="true"
-                    addStyleNames="createExternalUserViewImpl-subjectId dock-min form"
+                    addStyleNames="dock-min form"
                     screenReaderText="The user's ID in the identity provider, e.g. a UUID or email address.">
       <form:HelpHTML>
         <p>This is the user's unique identifier on the external identity provider
@@ -24,7 +24,7 @@
 
     <form:FormGroup identity="displayName"
                     label="Display Name (optional)"
-                    addStyleNames="createExternalUserViewImpl-displayName dock-min form"
+                    addStyleNames="dock-min form"
                     screenReaderText="Replaced by the identity provider's value when the user signs in.">
       <form:DescriptionHTML>
         This name will be overwritten by the value obtained from the identity provider when the user signs in.
@@ -42,7 +42,7 @@
 
     <form:FormGroup identity="fullName"
                     label="Full Name (optional)"
-                    addStyleNames="createExternalUserViewImpl-fullName dock-min form"
+                    addStyleNames="dock-min form"
                     screenReaderText="E.g. Joe Bloggs. Replaced by the identity provider's value when the user signs in.">
       <form:DescriptionHTML>
         This name will be overwritten by the value obtained from the identity provider when the user signs in.

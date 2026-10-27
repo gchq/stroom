@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserDesc;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
@@ -35,18 +33,19 @@ import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestCreateExternalUserPresenter {
+class TestCreateExternalUserController {
 
-    private CreateExternalUserView view;
+    private CreateExternalUser view;
     private final FakeRestFactory restFactory = new FakeRestFactory();
-    private CreateExternalUserPresenter presenter;
+    private CreateExternalUserController controller;
 
     @BeforeEach
     void setUp() {
-        // The REST resource is made with GWT.create, which only works in a browser
+        // The REST resource is made with GWT.create, and the form is a widget, which only work in a
+        // browser
         GWTMockUtilities.disarm();
-        view = Mockito.mock(CreateExternalUserView.class);
-        presenter = new CreateExternalUserPresenter(new SimpleEventBus(), view, restFactory);
+        view = Mockito.mock(CreateExternalUser.class);
+        controller = new CreateExternalUserController(new SimpleEventBus(), restFactory).attach(view);
     }
 
     @AfterEach
@@ -62,8 +61,8 @@ class TestCreateExternalUserPresenter {
         Mockito.when(view.getSubjectId()).thenReturn(subjectId);
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
 
-        presenter.create(user -> {
-        }, okPressed, Mockito.mock(TaskMonitorFactory.class));
+        controller.create(user -> {
+        }, okPressed);
 
         Mockito.verify(view).setSubjectIdInvalid("You must provide the user's unique identity");
         Mockito.verify(okPressed).reset();
@@ -79,8 +78,8 @@ class TestCreateExternalUserPresenter {
         Mockito.when(view.getFullName()).thenReturn("Bob Smith");
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
 
-        presenter.create(user -> {
-        }, okPressed, Mockito.mock(TaskMonitorFactory.class));
+        controller.create(user -> {
+        }, okPressed);
 
         // The user is created with the identity trimmed
         final UserResource userResource = Mockito.mock(UserResource.class);

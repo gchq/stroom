@@ -2,15 +2,20 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="createUserViewImpl form max dock-container-vertical">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:sec="urn:import:stroom.security.client.component">
+    <g:FlowPanel styleName="form max dock-container-vertical">
         <form:FormGroup ui:field="createTypesFormGroup"
                         identity="createTypes"
                         label="Action"
                         helpText="Choose whether to add a single identity provider user or several users at once."
                         screenReaderText="Add one identity provider user or several at once.">
-            <i:SelectionBox ui:field="createTypes" addStyleNames="createUserViewImpl-selection dock-min w-100"/>
+            <i:SelectionBox ui:field="createTypes" addStyleNames="create-user__type dock-min w-100"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="panel" addStyleNames="createUserViewImpl-panel dock-max"/>
+        <!-- One of these is shown, for the type chosen; the group's name is added by its controller -->
+        <g:FlowPanel ui:field="panel" addStyleNames="dock-max">
+            <sec:CreateExternalUser ui:field="externalUser" visible="false"/>
+            <sec:CreateMultipleUsers ui:field="multipleUsers" visible="false"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

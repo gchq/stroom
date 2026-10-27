@@ -23,12 +23,6 @@ import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter.BatchDocumentPermissionsView;
-import stroom.security.client.presenter.CreateExternalUserPresenter;
-import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
-import stroom.security.client.presenter.CreateMultipleUsersPresenter;
-import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
-import stroom.security.client.presenter.CreateUserPresenter;
-import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter;
@@ -51,9 +45,6 @@ import stroom.security.client.view.ApiKeysViewImpl;
 import stroom.security.client.view.AppPermissionsViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsEditViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsViewImpl;
-import stroom.security.client.view.CreateExternalUserViewImpl;
-import stroom.security.client.view.CreateMultipleUsersViewImpl;
-import stroom.security.client.view.CreateUserViewImpl;
 import stroom.security.client.view.DocumentUserCreatePermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
@@ -81,15 +72,6 @@ public class SecurityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(UserAndGroupsPresenter.class,
                 UserAndGroupsView.class,
                 UserAndGroupsViewImpl.class);
-        bindPresenterWidget(CreateUserPresenter.class,
-                CreateUserView.class,
-                CreateUserViewImpl.class);
-        bindPresenterWidget(CreateExternalUserPresenter.class,
-                CreateExternalUserView.class,
-                CreateExternalUserViewImpl.class);
-        bindPresenterWidget(CreateMultipleUsersPresenter.class,
-                CreateMultipleUsersView.class,
-                CreateMultipleUsersViewImpl.class);
         bindPresenterWidget(AppPermissionsPresenter.class,
                 AppPermissionsView.class,
                 AppPermissionsViewImpl.class);

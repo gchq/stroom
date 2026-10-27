@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;
@@ -41,7 +39,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestCreateMultipleUsersPresenter {
+class TestCreateMultipleUsersController {
 
     private final EventBus eventBus = new SimpleEventBus();
     private final List<AlertEvent> alerts = new ArrayList<>();
@@ -52,7 +50,8 @@ class TestCreateMultipleUsersPresenter {
 
     @BeforeEach
     void setUp() {
-        // The REST resource is made with GWT.create, which only works in a browser
+        // The REST resource is made with GWT.create, and the form is a widget, which only work in a
+        // browser
         GWTMockUtilities.disarm();
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
         eventBus.addHandler(ConfirmEvent.getType(), confirms::add);
@@ -99,11 +98,12 @@ class TestCreateMultipleUsersPresenter {
     @ValueSource(strings = {"  ", "\n\n"})
     void noUsersSaysSoAndKeepsTheDialogOpen(final String usersCsvData) {
         // Regression test: OK with no users closed the dialog, as Cancel does, saying nothing
-        final CreateMultipleUsersView view = Mockito.mock(CreateMultipleUsersView.class);
+        final CreateMultipleUsers view = Mockito.mock(CreateMultipleUsers.class);
         Mockito.when(view.getUsersCsvData()).thenReturn(usersCsvData);
-        final CreateMultipleUsersPresenter presenter = new CreateMultipleUsersPresenter(eventBus, view, restFactory);
+        final CreateMultipleUsersController controller = new CreateMultipleUsersController(eventBus, restFactory)
+                .attach(view);
 
-        presenter.create(created::add, okPressed, Mockito.mock(TaskMonitorFactory.class));
+        controller.create(created::add, okPressed);
 
         Mockito.verify(view).setUsersCsvDataInvalid("You must provide at least one user");
         Mockito.verify(okPressed).reset();
@@ -114,11 +114,12 @@ class TestCreateMultipleUsersPresenter {
 
     @Test
     void usersAreCreatedFromTheirCsv() {
-        final CreateMultipleUsersView view = Mockito.mock(CreateMultipleUsersView.class);
+        final CreateMultipleUsers view = Mockito.mock(CreateMultipleUsers.class);
         Mockito.when(view.getUsersCsvData()).thenReturn("carol\ndave");
-        final CreateMultipleUsersPresenter presenter = new CreateMultipleUsersPresenter(eventBus, view, restFactory);
+        final CreateMultipleUsersController controller = new CreateMultipleUsersController(eventBus, restFactory)
+                .attach(view);
 
-        presenter.create(created::add, okPressed, Mockito.mock(TaskMonitorFactory.class));
+        controller.create(created::add, okPressed);
 
         final UserResource userResource = Mockito.mock(UserResource.class);
         restFactory.getLastRequest().callOn(userResource);
@@ -129,11 +130,12 @@ class TestCreateMultipleUsersPresenter {
 
     // Creates 'carol', who was deleted, and agrees to restore her.
     private void createAndRestoreCarol() {
-        final CreateMultipleUsersView view = Mockito.mock(CreateMultipleUsersView.class);
+        final CreateMultipleUsers view = Mockito.mock(CreateMultipleUsers.class);
         Mockito.when(view.getUsersCsvData()).thenReturn("carol");
-        final CreateMultipleUsersPresenter presenter = new CreateMultipleUsersPresenter(eventBus, view, restFactory);
+        final CreateMultipleUsersController controller = new CreateMultipleUsersController(eventBus, restFactory)
+                .attach(view);
 
-        presenter.create(created::add, okPressed, Mockito.mock(TaskMonitorFactory.class));
+        controller.create(created::add, okPressed);
         restFactory.getLastRequest().succeed(new ArrayList<>(List.of(
                 User.builder().uuid("u-carol").subjectId("carol").enabled(false).build())));
         assertThat(confirms)

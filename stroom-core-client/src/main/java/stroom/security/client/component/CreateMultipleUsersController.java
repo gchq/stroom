@@ -14,50 +14,65 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultipleUsersView> {
+/// Adds the identity provider users entered in the [CreateMultipleUsers] it is attached to.
+/// Deleted users of the same identities can be restored.
+public class CreateMultipleUsersController extends Controller {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
+    private CreateMultipleUsers view;
 
+    /// Made by GIN; [#attach(CreateMultipleUsers)] gives it its form.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param restFactory Creates and restores the users.
     @Inject
-    public CreateMultipleUsersPresenter(final EventBus eventBus,
-                                        final CreateMultipleUsersView view,
-                                        final RestFactory restFactory) {
-        super(eventBus, view);
+    public CreateMultipleUsersController(final EventBus eventBus, final RestFactory restFactory) {
+        super(eventBus);
         this.restFactory = restFactory;
     }
 
-    public void create(final Consumer<User> consumer,
-                       final HidePopupRequestEvent event,
-                       final TaskMonitorFactory taskMonitorFactory) {
-        final String usersCsvData = getView().getUsersCsvData();
+    /// Attaches this to the form whose users it adds.
+    ///
+    /// @param view The form, e.g. one a template declares.
+    /// @return This, to call on.
+    public CreateMultipleUsersController attach(final CreateMultipleUsers view) {
+        this.view = Objects.requireNonNull(view, "view");
+        return this;
+    }
+
+    /// Adds the users entered, when OK is pressed on the dialog the form is shown in. With no
+    /// users it says so under the field and keeps the dialog open.
+    ///
+    /// @param consumer Given the first user once they are added (or restored).
+    /// @param event    The dialog's OK.
+    public void create(final Consumer<User> consumer, final HidePopupRequestEvent event) {
+        final String usersCsvData = view.getUsersCsvData();
         if (NullSafe.isBlankString(usersCsvData)) {
             // Said under the field, which is focused, so a screen reader reads it
-            getView().setUsersCsvDataInvalid("You must provide at least one user");
+            view.setUsersCsvDataInvalid("You must provide at least one user");
             event.reset();
         } else {
             restFactory
@@ -76,7 +91,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                                         "would you like to restore them?",
                                         ok -> {
                                             if (ok) {
-                                                enable(disabled, consumer, event, nextSelection, taskMonitorFactory);
+                                                enable(disabled, consumer, event, nextSelection);
                                             } else {
                                                 nextSelection.ifPresent(consumer);
                                                 event.hide();
@@ -91,7 +106,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskMonitorFactory(taskMonitorFactory)
+                    .owner(this)
                     .exec();
         }
     }
@@ -99,9 +114,8 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
     private void enable(final List<User> disabled,
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
-                        final Optional<User> nextSelection,
-                        final TaskMonitorFactory taskMonitorFactory) {
-        if (disabled.size() == 0) {
+                        final Optional<User> nextSelection) {
+        if (disabled.isEmpty()) {
             nextSelection.ifPresent(consumer);
             event.hide();
         } else {
@@ -109,28 +123,11 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
             restFactory
                     .create(USER_RESOURCE)
                     .method(res -> res.update(user))
-                    .onSuccess(result -> {
-                        enable(disabled, consumer, event, nextSelection, taskMonitorFactory);
-                    })
+                    .onSuccess(result -> enable(disabled, consumer, event, nextSelection))
                     // If a user can't be restored, let the user try again or cancel
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskMonitorFactory(taskMonitorFactory)
+                    .owner(this)
                     .exec();
         }
-    }
-
-    public interface CreateMultipleUsersView extends View {
-
-        String getUsersCsvData();
-
-        void focus();
-
-        /// Clears the users and any message about them being invalid.
-        void clear();
-
-        /// Shows why the users are invalid, under their field, and focuses the field.
-        ///
-        /// @param message What is wrong with the users.
-        void setUsersCsvDataInvalid(String message);
     }
 }

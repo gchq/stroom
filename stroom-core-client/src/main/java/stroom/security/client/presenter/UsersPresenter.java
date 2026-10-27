@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.component.CreateNewGroupController;
+import stroom.security.client.component.CreateUserController;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
@@ -48,7 +49,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     private final UserListController userList;
     private final RestFactory restFactory;
-    private final CreateUserPresenter createUserPresenter;
+    private final Provider<CreateUserController> createUserProvider;
     private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
 
     //    private final ToolbarButton editButton;
@@ -59,14 +60,13 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
                           final UsersView view,
                           final UserListController userList,
                           final RestFactory restFactory,
-                          final CreateUserPresenter createUserPresenter,
+                          final Provider<CreateUserController> createUserProvider,
                           final Provider<CreateNewGroupController> createNewGroupControllerProvider) {
         super(eventBus, view);
         own(userList);
-        own(createUserPresenter);
         this.userList = userList;
         this.restFactory = restFactory;
-        this.createUserPresenter = createUserPresenter;
+        this.createUserProvider = createUserProvider;
         this.createNewGroupControllerProvider = createNewGroupControllerProvider;
 
         view.setUserList(this.userList);
@@ -97,7 +97,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     }
 
     private void onCreateUserOrGroup() {
-        createUserPresenter.show(UserAndGroupHelper.createAfterChangeConsumer(userList), false);
+        createUserProvider.get().show(this, UserAndGroupHelper.createAfterChangeConsumer(userList), false);
     }
 
     private void onEditUserOrGroup() {

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
 
-    <g:FlowPanel styleName="createMultipleUsersViewImpl dock-container-vertical h-100">
+    <g:FlowPanel styleName="create-multiple-users dock-container-vertical h-100">
 
         <form:FormGroup ui:field="userBatchGroup"
                         identity="userBatch"
@@ -54,7 +54,7 @@
                 </ul>
             </form:HelpHTML>
 
-            <form:TextArea ui:field="userBatch" addStyleNames="dock-max w-100 createMultipleUsersViewImpl-userBatch"/>
+            <form:TextArea ui:field="userBatch" addStyleNames="dock-max w-100 create-multiple-users__batch"/>
 
         </form:FormGroup>
     </g:FlowPanel>

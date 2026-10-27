@@ -14,53 +14,58 @@
  * limitations under the License.
  */
 
-package stroom.security.client.view;
+package stroom.security.client.component;
 
-import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class CreateMultipleUsersViewImpl
-        extends ViewImpl
-        implements CreateMultipleUsersView {
+/// Several identity provider users to add, one per line, as CSV: unique identity, optional display
+/// name and optional full name.
+public class CreateMultipleUsers extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup userBatchGroup;
     @UiField
     TextArea userBatch;
 
-    @Inject
-    public CreateMultipleUsersViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(event -> focus());
+    /// Makes an empty form.
+    public CreateMultipleUsers() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// Focuses the users, once the event being handled is done.
     public void focus() {
         Scheduler.get().scheduleDeferred(() -> userBatch.setFocus(true));
     }
 
-    @Override
+    /// Clears the users and any message about them being invalid.
     public void clear() {
         userBatch.setText(null);
         userBatchGroup.clearFeedback();
     }
 
-    @Override
+    /// Shows why the users are invalid, under their field, and focuses the field.
+    ///
+    /// @param message What is wrong with the users.
     public void setUsersCsvDataInvalid(final String message) {
         userBatchGroup.setFeedback(message);
         userBatch.setFocus(true);
+    }
+
+    /// @return The users, as entered.
+    public String getUsersCsvData() {
+        return userBatch.getText();
     }
 
     @UiHandler("userBatch")
@@ -71,17 +76,11 @@ public class CreateMultipleUsersViewImpl
         }
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    @Override
-    public String getUsersCsvData() {
-        return userBatch.getText();
-    }
+    // --------------------------------------------------------------------------------
 
-    public interface Binder extends UiBinder<Widget, CreateMultipleUsersViewImpl> {
+
+    interface Binder extends UiBinder<Widget, CreateMultipleUsers> {
 
     }
 }
