@@ -22,6 +22,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -49,6 +50,14 @@ public class ClassificationWrapper extends Component implements View {
     /// @param content What is shown above the classification.
     public void setContent(final IsWidget content) {
         this.content.setWidget(content);
+    }
+
+    /// Sets what is shown above the classification, from a template's `<d:content>` child.
+    ///
+    /// @param content What is shown above the classification.
+    @UiChild(tagname = "content", limit = 1)
+    public void addContent(final Widget content) {
+        setContent(content);
     }
 
     /// @param classification The data's classification, or null for none.

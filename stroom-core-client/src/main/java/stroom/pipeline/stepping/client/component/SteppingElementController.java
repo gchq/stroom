@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -31,8 +31,9 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
-import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.ErrorType;
@@ -42,8 +43,7 @@ import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -62,14 +62,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ElementPresenter
-        extends MyPresenterWidget<ElementView> {
+/// One pipeline element's panes on the stepping screen ([SteppingElement]): loads the element's
+/// code (e.g. its XSLT) when first shown, saves it, and shows the element's input, output and log
+/// for each step. Its editors are attached as the element needs them.
+public class SteppingElementController extends Controller {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
-    private final Provider<ClassificationWrapper> classificationWrapperProvider;
+    private final SteppingElement view;
     private final Provider<ClassificationLabelController> classificationLabelControllerProvider;
-    private final Provider<EditorPresenter> editorProvider;
+    private final Provider<CodeEditorController> codeEditorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final RestFactory restFactory;
 
@@ -83,47 +85,59 @@ public class ElementPresenter
     private boolean dirty;
     private DocRef docRef;
     private Document document;
-    private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
+    private final EnumMap<IndicatorType, CodeEditorController> editorMap = new EnumMap<>(IndicatorType.class);
 
     private Indicators indicators;
-    private EditorPresenter codePresenter;
-    private EditorPresenter inputPresenter;
-    private EditorPresenter outputPresenter;
-    private EditorPresenter logPresenter;
+    private CodeEditorController codeEditor;
+    private CodeEditorController inputEditor;
+    private CodeEditorController outputEditor;
+    private CodeEditorController logEditor;
     private boolean desiredLogPanVisibility = true;
 
-    private String classification;
-    private ClassificationWrapper inputView;
-    private ClassificationWrapper outputView;
-    private View logView;
     private Consumer<StepType> stepRequestHandler = null;
 
     private Runnable onChange = () -> {
     };
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                              The application's event bus.
+    /// @param view                                  The content.
+    /// @param classificationLabelControllerProvider Colours the input's and output's
+    ///                                              classification banners.
+    /// @param codeEditorProvider                    Makes the controllers of the editors.
+    /// @param documentPluginRegistry                Loads and saves the element's code.
+    /// @param restFactory                           Finds the document holding the element's code.
     @Inject
-    public ElementPresenter(final EventBus eventBus,
-                            final ElementView view,
-                            final Provider<ClassificationWrapper> classificationWrapperProvider,
-                            final Provider<ClassificationLabelController> classificationLabelControllerProvider,
-                            final Provider<EditorPresenter> editorProvider,
-                            final DocumentPluginRegistry documentPluginRegistry,
-                            final RestFactory restFactory) {
-        super(eventBus, view);
-        this.classificationWrapperProvider = classificationWrapperProvider;
+    public SteppingElementController(
+            final EventBus eventBus,
+            final SteppingElement view,
+            final Provider<ClassificationLabelController> classificationLabelControllerProvider,
+            final Provider<CodeEditorController> codeEditorProvider,
+            final DocumentPluginRegistry documentPluginRegistry,
+            final RestFactory restFactory) {
+        super(eventBus);
+        this.view = view;
         this.classificationLabelControllerProvider = classificationLabelControllerProvider;
-        this.editorProvider = editorProvider;
+        this.codeEditorProvider = codeEditorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
         this.restFactory = restFactory;
+        initWidget(view);
     }
 
+    /// Shows the panes the element needs and loads its code, if it has any, the first time it is
+    /// called (or the first since [#setLoaded(boolean)] was given `false`).
+    ///
+    /// @param consumer Given `true` when it is loaded, or `false` if the code couldn't be.
     public void load(final Consumer<Boolean> consumer) {
         if (!loaded) {
             loaded = true;
             boolean loading = false;
 
-            if (pipelineModel.hasRole(element, PipelineElementType.ROLE_HAS_CODE)) {
-                getView().setCodeView(getCodePresenter(element).getView());
+            final boolean hasCode = pipelineModel.hasRole(element, PipelineElementType.ROLE_HAS_CODE);
+            view.setCodeVisible(hasCode);
+            if (hasCode) {
+                attachCodeEditor();
 
                 try {
                     final FindElementDocRequest findElementDocRequest = FindElementDocRequest.builder()
@@ -142,7 +156,8 @@ public class ElementPresenter
                                 clearAllIndicators();
                                 consumer.accept(false);
                             })
-                            .taskMonitorFactory(this)
+                            .owner(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
 
                     loading = true;
@@ -153,14 +168,15 @@ public class ElementPresenter
 
             // We only care about seeing input if the element mutates the input
             // some how.
-            if (pipelineModel.hasRole(element, PipelineElementType.ROLE_MUTATOR)) {
-                getView().setInputView(getInputView());
+            final boolean isMutator = pipelineModel.hasRole(element, PipelineElementType.ROLE_MUTATOR);
+            view.setInputVisible(isMutator);
+            if (isMutator) {
+                attachInputEditor();
             }
 
             // We always want to see the output of the element.
-            getView().setOutputView(getOutputView());
+            attachOutputEditor();
 
-//            updateLogView(codeIndicators);
             updateLogView();
 
             if (!loading) {
@@ -171,47 +187,37 @@ public class ElementPresenter
         }
     }
 
+    /// @param desiredLogPanVisibility Whether the user wants the log shown when there is one.
     public void setDesiredLogPanVisibility(final boolean desiredLogPanVisibility) {
         this.desiredLogPanVisibility = desiredLogPanVisibility;
     }
 
-    public void setReadOnly(final boolean readOnly) {
-        codePresenter.setReadOnly(readOnly);
-    }
-
+    /// @param isVisible Whether the log pane is shown.
     public void setLogPaneVisibility(final boolean isVisible) {
-        getView().setLogVisible(isVisible);
+        view.setLogVisible(isVisible);
     }
 
+    /// @return Whether the user wants the log shown when there is one.
     public boolean getDesiredLogPanVisibility() {
         return desiredLogPanVisibility;
     }
 
     private void updateLogView() {
-//        GWT.log("updateLogView");
-        getView().setLogView(getLogView());
-        if (logPresenter != null) {
-            if (indicators != null && !indicators.isEmpty()) {
-                final String content = buildLogContent();
-//                GWT.log("content:\n" + content);
-                if (content != null && !content.isEmpty()) {
-//                    GWT.log("updateLogView - found content");
-                    logPresenter.setText(content);
-                    getView().setLogVisible(true);
-                } else {
-//                    GWT.log("updateLogView - empty content");
-                    logPresenter.setText("");
-                    getView().setLogVisible(false);
-                }
+        final CodeEditorController logEditor = getLogEditor();
+        if (indicators != null && !indicators.isEmpty()) {
+            final String content = buildLogContent();
+            if (content != null && !content.isEmpty()) {
+                logEditor.setText(content);
+                view.setLogVisible(true);
             } else {
-//                GWT.log("updateLogView - no indicators");
-                logPresenter.setText("");
-                getView().setLogVisible(false);
+                logEditor.setText("");
+                view.setLogVisible(false);
             }
+        } else {
+            logEditor.setText("");
+            view.setLogVisible(false);
         }
     }
-
-//    private IndicatorType determineIndicatorType()
 
     private String buildLogContent() {
         //noinspection SimplifyStreamApiCallChains // Cos GWT
@@ -243,24 +249,29 @@ public class ElementPresenter
             final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(entityRef.getType(),
                     Document.class);
             documentPlugin.load(entityRef,
-                    result -> {
+                    guard(result -> {
                         docRef = entityRef;
                         document = result;
                         read();
 
                         future.accept(true);
-                    },
+                    }),
                     caught -> {
-                        setCode(caught.getMessage());
-                        clearAllIndicators();
-                        future.accept(false);
+                        if (!isDisposed()) {
+                            setCode(caught.getMessage());
+                            clearAllIndicators();
+                            future.accept(false);
+                        }
                     },
-                    this);
+                    taskMonitor());
         } else {
             Scheduler.get().scheduleDeferred(() -> future.accept(true));
         }
     }
 
+    /// Saves the element's code if it is loaded and has been changed.
+    ///
+    /// @param onComplete Run when it is saved, has failed to save or had nothing to save.
     public void save(final Runnable onComplete) {
         if (loaded && isDirty()) {
             final Document toSave = write();
@@ -280,7 +291,7 @@ public class ElementPresenter
                                 throwable.getMessage(), null);
                         onComplete.run();
                     },
-                    this);
+                    taskMonitor());
         } else {
             onComplete.run();
         }
@@ -310,48 +321,44 @@ public class ElementPresenter
         return document;
     }
 
+    /// @return The element's code as it is in its editor, or `null` if it has none.
     public String getCode() {
-        if (codePresenter == null) {
+        if (codeEditor == null) {
             return null;
         }
-        return codePresenter.getText();
+        return codeEditor.getText();
     }
 
-    public void setCode(final String code) {
-        if (codePresenter != null) {
-            if (!codePresenter.getText().equals(code)) {
-                codePresenter.setText(code);
+    private void setCode(final String code) {
+        if (codeEditor != null) {
+            if (!codeEditor.getText().equals(code)) {
+                codeEditor.setText(code);
             }
 
             // Done here to ensure the editor is attached
-            codePresenter.getBasicAutoCompletionOption().setAvailable();
-            codePresenter.getBasicAutoCompletionOption().setOn();
-            codePresenter.getSnippetsOption().setAvailable();
-            codePresenter.getSnippetsOption().setOn();
-            codePresenter.getLiveAutoCompletionOption().setAvailable();
-            codePresenter.getLiveAutoCompletionOption().setOff();
+            codeEditor.getOptions().getBasicAutoCompletionOption().setAvailable();
+            codeEditor.getOptions().getBasicAutoCompletionOption().setOn();
+            codeEditor.getOptions().getSnippetsOption().setAvailable();
+            codeEditor.getOptions().getSnippetsOption().setOn();
+            codeEditor.getOptions().getLiveAutoCompletionOption().setAvailable();
+            codeEditor.getOptions().getLiveAutoCompletionOption().setOff();
 
-            codePresenter.setMode(getMode(element));
+            codeEditor.setMode(getMode(element));
 
+            // Code embedded in another pipeline can't be changed here
             if (document instanceof final Embeddable embeddable && embeddable.getEmbeddedIn() != null) {
                 final DocRef pipelineDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
                 if (!pipelineDocRef.equals(embeddable.getEmbeddedIn())) {
-                    setReadOnly(true);
+                    codeEditor.setReadOnly(true);
                 }
             }
-
-            own(codePresenter.getView().asWidget().addDomHandler(e -> {
-                if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
-                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
-                    e.preventDefault();
-                    if (stepRequestHandler != null) {
-                        stepRequestHandler.accept(StepType.REFRESH);
-                    }
-                }
-            }, KeyDownEvent.getType()));
         }
     }
 
+    /// Shows the step's errors and warnings against the lines of the panes they are about, and in
+    /// the log.
+    ///
+    /// @param indicators The errors and warnings, or `null` for none.
     public void setIndicators(final Indicators indicators) {
         this.indicators = indicators;
         if (hasCodePane()) {
@@ -370,9 +377,9 @@ public class ElementPresenter
                 indicators,
                 indicators2 -> IndicatorLines.filter(indicators2, false, types));
 
-        final EditorPresenter editorPresenter = presenterMap.get(indicatorType);
-        if (editorPresenter != null) {
-            editorPresenter.setIndicators(indicatorLines);
+        final CodeEditorController editor = editorMap.get(indicatorType);
+        if (editor != null) {
+            editor.setIndicators(indicatorLines);
         }
     }
 
@@ -424,37 +431,47 @@ public class ElementPresenter
         }
     }
 
+    /// Shows the element's input for the step.
+    ///
+    /// @param input            The input.
+    /// @param inputStartLineNo The number of its first line.
+    /// @param formatInput      Whether to format it.
     public void setInput(final String input,
                          final int inputStartLineNo,
                          final boolean formatInput) {
-        setInputOutput(inputPresenter, input, inputStartLineNo, formatInput);
+        setInputOutput(inputEditor, input, inputStartLineNo, formatInput);
     }
 
+    /// Shows the element's output for the step.
+    ///
+    /// @param output            The output.
+    /// @param outputStartLineNo The number of its first line.
+    /// @param formatOutput      Whether to format it.
     public void setOutput(final String output,
                           final int outputStartLineNo,
                           final boolean formatOutput) {
-        setInputOutput(outputPresenter, output, outputStartLineNo, formatOutput);
+        setInputOutput(outputEditor, output, outputStartLineNo, formatOutput);
     }
 
-    private void setInputOutput(final EditorPresenter editorPresenter,
+    private void setInputOutput(final CodeEditorController editor,
                                 final String text,
                                 final int outputStartLineNo,
                                 final boolean formatOutput) {
-        if (editorPresenter != null) {
-            editorPresenter.getStylesOption().setOn(formatOutput);
+        if (editor != null) {
+            editor.getOptions().getStylesOption().setOn(formatOutput);
 
-            if (!editorPresenter.getText().equals(text)) {
-                editorPresenter.setText(text, formatOutput);
+            if (!editor.getText().equals(text)) {
+                editor.setText(text, formatOutput);
             }
 
-            editorPresenter.setFirstLineNumber(outputStartLineNo);
+            editor.setFirstLineNumber(outputStartLineNo);
 
-            editorPresenter.getBasicAutoCompletionOption().setUnavailable();
-            editorPresenter.getBasicAutoCompletionOption().setOff();
-            editorPresenter.getSnippetsOption().setUnavailable();
-            editorPresenter.getSnippetsOption().setOff();
-            editorPresenter.getLiveAutoCompletionOption().setUnavailable();
-            editorPresenter.getLiveAutoCompletionOption().setOff();
+            editor.getOptions().getBasicAutoCompletionOption().setUnavailable();
+            editor.getOptions().getBasicAutoCompletionOption().setOff();
+            editor.getOptions().getSnippetsOption().setUnavailable();
+            editor.getOptions().getSnippetsOption().setOff();
+            editor.getOptions().getLiveAutoCompletionOption().setUnavailable();
+            editor.getOptions().getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -463,44 +480,54 @@ public class ElementPresenter
         this.onChange = onChange;
     }
 
+    /// @return The element.
     public PipelineElement getElement() {
         return element;
     }
 
+    /// @return Whether the element has code, so a code pane.
     public boolean hasCodePane() {
         return NullSafe.test(
                 element,
                 elm -> pipelineModel.hasRole(elm, PipelineElementType.ROLE_HAS_CODE));
     }
 
+    /// @param element The element shown.
     public void setElement(final PipelineElement element) {
         this.element = element;
     }
 
+    /// @param properties The element's properties, used to find its code.
     public void setProperties(final List<PipelineProperty> properties) {
         this.properties = properties;
     }
 
+    /// @return The element's properties.
     public List<PipelineProperty> getProperties() {
         return properties;
     }
 
+    /// @param feedName The name of the feed being stepped, used to find the element's code.
     public void setFeedName(final String feedName) {
         this.feedName = feedName;
     }
 
+    /// @param pipelineName The name of the pipeline, used to find the element's code.
     public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
     }
 
+    /// @return Whether the element's panes are to be refreshed at the next step.
     public boolean isRefreshRequired() {
         return refreshRequired;
     }
 
+    /// @param refreshRequired Whether the element's panes are to be refreshed at the next step.
     public void setRefreshRequired(final boolean refreshRequired) {
         this.refreshRequired = refreshRequired;
     }
 
+    /// @return Whether the element's code has been changed since it was loaded or saved.
     public boolean isDirty() {
         // Returns the verdict cached by refreshDirty(). The enclosing pipeline asks every open
         // element whether it is dirty on each keypress, and reading the editor content to answer is
@@ -508,26 +535,27 @@ public class ElementPresenter
         return dirty;
     }
 
-    /**
-     * Recomputes dirtiness by comparing the current editor content against the loaded/last saved
-     * baseline, mirroring DocPresenter.onChange(). Comparing rather than latching a flag means
-     * reverting an edit (e.g. typing a letter then deleting it) returns to a clean state.
-     */
+    // Recomputes dirtiness by comparing the current editor content against the loaded/last saved
+    // baseline, mirroring DocPresenter.onChange(). Comparing rather than latching a flag means
+    // reverting an edit (e.g. typing a letter then deleting it) returns to a clean state.
     private void refreshDirty() {
         dirty = loaded
                 && document instanceof final HasData hasData
                 && !Objects.equals(hasData.getData(), getCode());
     }
 
+    /// @param loaded Whether the element's code is loaded; `false` loads it again when next shown.
     public void setLoaded(final boolean loaded) {
         this.loaded = loaded;
         refreshDirty();
     }
 
+    /// @return The document holding the element's code, or `null` if it has none.
     public DocRef getDocRef() {
         return docRef;
     }
 
+    /// Clears the errors and warnings from every pane and the log.
     public void clearAllIndicators() {
         this.indicators = null;
         for (final IndicatorType indicatorType : IndicatorType.values()) {
@@ -536,24 +564,35 @@ public class ElementPresenter
         updateLogView();
     }
 
-    private EditorPresenter getCodePresenter(final PipelineElement element) {
-        if (codePresenter == null) {
-            codePresenter = make(editorProvider);
-            presenterMap.put(IndicatorType.CODE, codePresenter);
-            setCommonEditorOptions(codePresenter);
+    private void attachCodeEditor() {
+        if (codeEditor == null) {
+            codeEditor = attachEditor(view.getCode());
+            editorMap.put(IndicatorType.CODE, codeEditor);
+            setCommonEditorOptions(codeEditor);
 
-            codePresenter.setMode(getMode(element));
-            codePresenter.getFormatAction().setAvailable(true);
+            codeEditor.setMode(getMode(element));
+            codeEditor.getFormatAction().setAvailable(true);
 
             // Fire a change event on any edit so the enclosing presenter re-evaluates dirty state via
             // onChange(). This is a "something changed" signal, not a dirty assertion - the actual
             // dirtiness is recomputed by comparison in refreshDirty(), so a reverted edit returns to
             // clean. Note that element code is not part of the pipeline structure, so this must not
             // touch the pipeline model: rebuilding it on each keypress makes the editor lag.
-            own(codePresenter.addValueChangeHandler(event -> onCodeChange()));
-            own(codePresenter.addFormatHandler(event -> onCodeChange()));
+            own(codeEditor.addValueChangeHandler(event -> onCodeChange()));
+            own(codeEditor.addFormatListener(event -> onCodeChange()));
+
+            // Ctrl+Enter or Shift+Enter in the code refreshes the step (added once, not each time
+            // the code is loaded)
+            own(view.getCode().addDomHandler(e -> {
+                if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                    e.preventDefault();
+                    if (stepRequestHandler != null) {
+                        stepRequestHandler.accept(StepType.REFRESH);
+                    }
+                }
+            }, KeyDownEvent.getType()));
         }
-        return codePresenter;
     }
 
     private AceEditorMode getMode(final PipelineElement element) {
@@ -588,109 +627,95 @@ public class ElementPresenter
     ///
     /// @param classification The classification, or null for none.
     public void setClassification(final String classification) {
-        this.classification = classification;
-        if (inputView != null) {
-            inputView.setClassification(classification);
-        }
-        if (outputView != null) {
-            outputView.setClassification(classification);
+        view.setClassification(classification);
+    }
+
+    private void attachInputEditor() {
+        if (inputEditor == null) {
+            inputEditor = attachEditor(view.getInput());
+            editorMap.put(IndicatorType.INPUT, inputEditor);
+            setCommonEditorOptions(inputEditor);
+            setReadOnlyEditorOptions(inputEditor);
+            make(classificationLabelControllerProvider).attach(view.getInputClassificationLabel());
         }
     }
 
-    private View getInputView() {
-        if (inputPresenter == null) {
-            inputPresenter = make(editorProvider);
-            presenterMap.put(IndicatorType.INPUT, inputPresenter);
-            setCommonEditorOptions(inputPresenter);
-            setReadOnlyEditorOptions(inputPresenter);
-            inputView = classificationWrapperProvider.get();
-            make(classificationLabelControllerProvider).attach(inputView.getClassificationLabel());
-            inputView.setContent(inputPresenter.getView());
-            inputView.setClassification(classification);
-        }
-        return inputView;
-    }
+    private void attachOutputEditor() {
+        if (outputEditor == null) {
+            outputEditor = attachEditor(view.getOutput());
+            editorMap.put(IndicatorType.OUTPUT, outputEditor);
+            setCommonEditorOptions(outputEditor);
+            setReadOnlyEditorOptions(outputEditor);
 
-    private View getOutputView() {
-        if (outputPresenter == null) {
-            outputPresenter = make(editorProvider);
-            presenterMap.put(IndicatorType.OUTPUT, outputPresenter);
-            setCommonEditorOptions(outputPresenter);
-            setReadOnlyEditorOptions(outputPresenter);
-
-            // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
-            // validation errors in the gutter.
+            // Turn on line numbers for the output if this is a validation step as the output needs to
+            // show validation errors in the gutter.
             if (element != null && pipelineModel.hasRole(element, PipelineElementType.ROLE_VALIDATOR)) {
-                outputPresenter.getLineNumbersOption().setOn(true);
+                outputEditor.getOptions().getLineNumbersOption().setOn(true);
             }
 
-            outputView = classificationWrapperProvider.get();
-            make(classificationLabelControllerProvider).attach(outputView.getClassificationLabel());
-            outputView.setContent(outputPresenter.getView());
-            outputView.setClassification(classification);
+            make(classificationLabelControllerProvider).attach(view.getOutputClassificationLabel());
         }
-        return outputView;
     }
 
-    private View getLogView() {
-//        GWT.log("Getting console view");
-        if (logPresenter == null) {
-//            GWT.log("Creating consolePresenter");
-            logPresenter = make(editorProvider);
-            setCommonEditorOptions(logPresenter);
-            setReadOnlyEditorOptions(logPresenter);
-            logPresenter.getLineNumbersOption().setOff();
-            logPresenter.getLineWrapOption().setOff();
-            logPresenter.setMode(AceEditorMode.STROOM_STEPPER);
-            logView = logPresenter.getView();
+    private CodeEditorController getLogEditor() {
+        if (logEditor == null) {
+            logEditor = attachEditor(view.getLog());
+            setCommonEditorOptions(logEditor);
+            setReadOnlyEditorOptions(logEditor);
+            logEditor.getOptions().getLineNumbersOption().setOff();
+            logEditor.getOptions().getLineWrapOption().setOff();
+            logEditor.setMode(AceEditorMode.STROOM_STEPPER);
         }
-        return logView;
+        return logEditor;
     }
 
-    private void setReadOnlyEditorOptions(final EditorPresenter editorPresenter) {
-        editorPresenter.setReadOnly(true);
+    private CodeEditorController attachEditor(final CodeEditor editor) {
+        return make(codeEditorProvider).attach(editor);
+    }
+
+    private void setReadOnlyEditorOptions(final CodeEditorController editor) {
+        editor.setReadOnly(true);
         // Default to wrapped lines as a lot of output is un-formatted xml
-        editorPresenter.getLineWrapOption().setOn();
+        editor.getOptions().getLineWrapOption().setOn();
 
-        editorPresenter.getFormatAction().setUnavailable();
+        editor.getFormatAction().setUnavailable();
     }
 
-    private void setCommonEditorOptions(final EditorPresenter editorPresenter) {
-        editorPresenter.getIndicatorsOption().setAvailable(true);
-        editorPresenter.getIndicatorsOption().setOn();
+    private void setCommonEditorOptions(final CodeEditorController editor) {
+        editor.getOptions().getIndicatorsOption().setAvailable(true);
+        editor.getOptions().getIndicatorsOption().setOn();
 
-        editorPresenter.getLineNumbersOption().setAvailable(true);
-        editorPresenter.getLineNumbersOption().setOn();
+        editor.getOptions().getLineNumbersOption().setAvailable(true);
+        editor.getOptions().getLineNumbersOption().setOn();
 
-        editorPresenter.getLineWrapOption().setAvailable(true);
-        editorPresenter.getLineWrapOption().setOff();
+        editor.getOptions().getLineWrapOption().setAvailable(true);
+        editor.getOptions().getLineWrapOption().setOff();
 
-        editorPresenter.getShowInvisiblesOption().setAvailable(true);
-        editorPresenter.getShowInvisiblesOption().setOff();
+        editor.getOptions().getShowInvisiblesOption().setAvailable(true);
+        editor.getOptions().getShowInvisiblesOption().setOff();
 
-        editorPresenter.getUseVimBindingsOption().setAvailable();
+        editor.getOptions().getUseVimBindingsOption().setAvailable();
     }
 
+    /// @param onStepRefreshRequest Given [StepType#REFRESH] when the user asks for the step to be
+    ///                             refreshed from the code (Ctrl+Enter or Shift+Enter).
     public void setStepRequestHandler(final Consumer<StepType> onStepRefreshRequest) {
         this.stepRequestHandler = onStepRefreshRequest;
     }
 
+    /// @param pipelineModel The pipeline the element is in.
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
     }
 
-    public interface ElementView extends View {
-
-        void setCodeView(View view);
-
-        void setInputView(View view);
-
-        void setOutputView(View view);
-
-        void setLogView(View view);
-
-        void setLogVisible(final boolean isVisible);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     enum IndicatorType {
         CODE("Code"),

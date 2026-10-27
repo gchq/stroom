@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
-import stroom.pipeline.stepping.client.presenter.ElementPresenter.IndicatorType;
-import stroom.pipeline.stepping.client.presenter.ElementPresenter.LogPaneEntry;
+import stroom.pipeline.stepping.client.component.SteppingElementController.IndicatorType;
+import stroom.pipeline.stepping.client.component.SteppingElementController.LogPaneEntry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.DefaultLocation;
@@ -29,9 +29,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class TestElementPresenter {
+class TestSteppingElementController {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestElementPresenter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSteppingElementController.class);
 
     @Test
     void test() {

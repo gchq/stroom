@@ -100,7 +100,7 @@ public final class SplitPaneContentStories {
                     play.findByText("Person 1");
                     play.expect(play.getByTestId("grid").width()).toBe(420.0);
                 })
-                // The stepping screen's element layout (ElementViewImpl): code above, log below,
+                // The stepping screen's element layout (SteppingElement): code above, log below,
                 // and input beside output in between, as three nested split panes
                 .story("SteppingLayout", context -> frame(stepping(), "320px"))
                 .withPlay(play -> {
@@ -309,7 +309,7 @@ public final class SplitPaneContentStories {
         return frame;
     }
 
-    // ElementViewImpl's layout: code, the middle and the log stacked, and the middle input beside
+    // SteppingElement's layout: code, the middle and the log stacked, and the middle input beside
     // output
     // The name of the splitter the pointer would find at the centre of an element
     private static native String labelAtCentre(Element element) /*-{

@@ -30,8 +30,8 @@ import java.util.Objects;
 /// Stroom's document plugin machinery for a story, as the app sets it up when its plugins start:
 /// what goes through a document's plugin (found by type in the `DocumentPluginRegistry`) works as in
 /// Stroom, e.g. `OpenDocumentEvent` and the editor's Save (`SaveDocumentEvent`, handled by the
-/// `DocumentPluginEventManager`), a stepping element's code (`ElementPresenter` loads and saves it
-/// with its document's plugin) and an embedded document created from a pipeline property.
+/// `DocumentPluginEventManager`), a stepping element's code (`SteppingElementController` loads and
+/// saves it with its document's plugin) and an embedded document created from a pipeline property.
 ///
 /// A plugin registers itself for its type when it is created (`DocumentPlugin`'s constructor), so
 /// get the event manager and each plugin a story needs from the story's ginjector (where the

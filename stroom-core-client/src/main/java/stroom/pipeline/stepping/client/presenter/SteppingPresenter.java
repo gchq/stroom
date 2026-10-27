@@ -48,6 +48,7 @@ import stroom.pipeline.stepping.client.component.PipelinePathBar;
 import stroom.pipeline.stepping.client.component.PipelinePathBarController;
 import stroom.pipeline.stepping.client.component.StepControlController;
 import stroom.pipeline.stepping.client.component.StepLocationLinkController;
+import stroom.pipeline.stepping.client.component.SteppingElementController;
 import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
@@ -68,6 +69,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -113,7 +115,7 @@ public class SteppingPresenter
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
     private final PipelinePathBar pipelinePathBar;
     private final SourcePresenter sourcePresenter;
-    private final Provider<ElementPresenter> elementPresenterProvider;
+    private final Provider<SteppingElementController> elementProvider;
     private final SimplePanel stepMessage;
     // Tells screen reader users that a step has begun and where it got to (the progress message
     // above changes too often, while searching, to be announced)
@@ -126,8 +128,10 @@ public class SteppingPresenter
     private final SteppingMetaListController steppingMetaList;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
-    // elementId => ElementPresenter
-    private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
+    // elementId => SteppingElementController
+    private final Map<ElementId, SteppingElementController> elementMap = new HashMap<>();
+    // elementId => the layer showing its controller
+    private final Map<ElementId, ControllerLayer> elementLayerMap = new HashMap<>();
     private PipelineModel pipelineModel;
     private final ToolbarButton terminateButton;
     private final ToolbarToggleButton toggleLogPaneButton;
@@ -148,7 +152,7 @@ public class SteppingPresenter
     private String childStreamType;
     private PipelineDoc pipelineDoc;
     private String classification;
-    private ElementPresenter currentElementPresenter = null;
+    private SteppingElementController currentElement = null;
 
     private Runnable onChange = () -> {
     };
@@ -160,7 +164,7 @@ public class SteppingPresenter
                              final Provider<PipelinePathBarController> pathBarControllerProvider,
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
-                             final Provider<ElementPresenter> elementPresenterProvider,
+                             final Provider<SteppingElementController> elementProvider,
                              final StepLocationLinkController stepLocationLink,
                              final StepControlController stepControl,
                              final SteppingFilterEditorController steppingFilterEditor,
@@ -178,7 +182,7 @@ public class SteppingPresenter
         this.pipelinePathBar = pipelinePathBar;
         make(pathBarControllerProvider).attach(pipelinePathBar);
         this.sourcePresenter = sourcePresenter;
-        this.elementPresenterProvider = elementPresenterProvider;
+        this.elementProvider = elementProvider;
         this.stepLocationLink = stepLocationLink;
         this.stepControl = stepControl;
         this.steppingFilterEditor = steppingFilterEditor;
@@ -300,16 +304,16 @@ public class SteppingPresenter
 
     private void setClassification(final String classification) {
         this.classification = classification;
-        for (final ElementPresenter elementPresenter : elementPresenterMap.values()) {
-            elementPresenter.setClassification(classification);
+        for (final SteppingElementController steppingElement : elementMap.values()) {
+            steppingElement.setClassification(classification);
         }
     }
 
     private void onToggleLogPane(final boolean visible) {
-        final ElementPresenter elementPresenter = getCurrentElementPresenter();
-        if (elementPresenter != null) {
-            elementPresenter.setDesiredLogPanVisibility(visible);
-            elementPresenter.setLogPaneVisibility(visible);
+        final SteppingElementController steppingElement = getCurrentElement();
+        if (steppingElement != null) {
+            steppingElement.setDesiredLogPanVisibility(visible);
+            steppingElement.setLogPaneVisibility(visible);
         }
     }
 
@@ -381,8 +385,8 @@ public class SteppingPresenter
         return steppingMetaList.getCriteria();
     }
 
-    private ElementPresenter getCurrentElementPresenter() {
-        return currentElementPresenter;
+    private SteppingElementController getCurrentElement() {
+        return currentElement;
     }
 
     private void showChangeFiltersDialog() {
@@ -499,15 +503,15 @@ public class SteppingPresenter
         }
     }
 
-    private MyPresenterWidget<?> getContent(final PipelineElement element) {
+    private Layer getContent(final PipelineElement element) {
         if (PipelineModel.SOURCE_ELEMENT.getType().equals(element.getType())) {
-            currentElementPresenter = null;
+            currentElement = null;
             updateToggleConsoleBtn(null);
             return sourcePresenter;
         } else {
             final ElementId elementId = element.getElementId();
-            ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
-            if (elementPresenter == null) {
+            SteppingElementController steppingElement = elementMap.get(elementId);
+            if (steppingElement == null) {
                 // Editing element code (e.g. XSLT) calls the element's change callback ("something
                 // changed"), which we relay up as our own so the enclosing pipeline presenter re-evaluates Save
                 // via onChange(). The authoritative dirty verdict is recomputed there by comparison, so a
@@ -518,7 +522,7 @@ public class SteppingPresenter
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                final ElementPresenter presenter = make(elementPresenterProvider);
+                final SteppingElementController presenter = make(elementProvider);
                 presenter.setPipelineModel(pipelineModel);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
@@ -527,7 +531,8 @@ public class SteppingPresenter
                         : meta.getFeedName());
                 presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
-                elementPresenterMap.put(elementId, presenter);
+                elementMap.put(elementId, presenter);
+                elementLayerMap.put(elementId, new ControllerLayer(presenter));
                 presenter.setOnChange(changeEditorHandler);
 
                 // Allow step refresh to be called from the editor
@@ -537,20 +542,20 @@ public class SteppingPresenter
                     }
                 });
 
-                elementPresenter = presenter;
+                steppingElement = presenter;
             }
-            currentElementPresenter = elementPresenter;
+            currentElement = steppingElement;
 
             // Refresh this editor if it needs it.
-            refreshEditor(elementPresenter, elementId);
+            refreshEditor(steppingElement, elementId);
 
-            return elementPresenter;
+            return elementLayerMap.get(elementId);
         }
     }
 
-    private void refreshEditor(final ElementPresenter elementPresenter,
+    private void refreshEditor(final SteppingElementController steppingElement,
                                final ElementId elementId) {
-        elementPresenter.load(result -> {
+        steppingElement.load(result -> {
             final SharedStepData stepData = getEffectiveStepData();
             if (stepData != null) {
                 final SharedElementData elementData = stepData.getElementData(elementId.getId());
@@ -558,20 +563,20 @@ public class SteppingPresenter
                     final Indicators indicators = displayIndicators(elementId, elementData);
 
                     // Update the error indicators for all panes
-                    elementPresenter.setIndicators(indicators);
+                    steppingElement.setIndicators(indicators);
 
                     // Update IO data.
-                    refreshEditorIO(elementPresenter, elementData);
+                    refreshEditorIO(steppingElement, elementData);
 
                     // Update with any errors not specific to an editor pane
-//                            refreshGenericErrors(elementPresenter, elementId);
+//                            refreshGenericErrors(steppingElement, elementId);
 
                     updateToggleConsoleBtnVisibility(indicators, elementId);
                 } else {
-                    clearIndicators(elementPresenter, elementId);
+                    clearIndicators(steppingElement, elementId);
                 }
             } else {
-                clearIndicators(elementPresenter, elementId);
+                clearIndicators(steppingElement, elementId);
             }
         });
     }
@@ -598,9 +603,9 @@ public class SteppingPresenter
         return combined;
     }
 
-    private void clearIndicators(final ElementPresenter elementPresenter,
+    private void clearIndicators(final SteppingElementController steppingElement,
                                  final ElementId elementId) {
-        elementPresenter.clearAllIndicators();
+        steppingElement.clearAllIndicators();
         updateToggleConsoleBtnVisibility(null, elementId);
     }
 
@@ -625,10 +630,10 @@ public class SteppingPresenter
         final Severity maxSeverity = NullSafe.get(indicators, Indicators::getMaxSeverity);
         final boolean isButtonVisible = maxSeverity != null;
 
-        final ElementPresenter elementPresenter = NullSafe.get(elementId, elementPresenterMap::get);
+        final SteppingElementController steppingElement = NullSafe.get(elementId, elementMap::get);
         final boolean isLogPaneVisible = isButtonVisible
-                                         && elementPresenter != null
-                                         && elementPresenter.getDesiredLogPanVisibility();
+                                         && steppingElement != null
+                                         && steppingElement.getDesiredLogPanVisibility();
 
         setLogPaneVisibility(isLogPaneVisible);
 
@@ -664,17 +669,17 @@ public class SteppingPresenter
         }
     }
 
-    private void refreshEditorIO(final ElementPresenter elementPresenter, final SharedElementData elementData) {
+    private void refreshEditorIO(final SteppingElementController steppingElement, final SharedElementData elementData) {
 
         final String input = NullSafe.string(elementData.getInput());
         final String output = NullSafe.string(elementData.getOutput());
 
-        elementPresenter.setInput(
+        steppingElement.setInput(
                 input,
                 1,
                 elementData.isFormatInput());
 
-        elementPresenter.setOutput(
+        steppingElement.setOutput(
                 output,
                 1,
                 elementData.isFormatOutput());
@@ -765,23 +770,23 @@ public class SteppingPresenter
             pipelineModel = model;
             pipelinePathBar.setModel(pipelineModel);
 
-            // Remove elements from the elementPresenterMap if they no longer exist or the doc ref has changed
+            // Remove elements from the elementMap if they no longer exist or the doc ref has changed
             // stops dirty elements being used in stepping when they are out of date
-            final List<ElementId> elementsToRemove = elementPresenterMap.entrySet()
+            final List<ElementId> elementsToRemove = elementMap.entrySet()
                     .stream()
                     .filter(entry -> {
-                        final ElementPresenter elementPresenter = entry.getValue();
-                        if (!pipelineModel.hasElement(elementPresenter.getElement())) {
+                        final SteppingElementController steppingElement = entry.getValue();
+                        if (!pipelineModel.hasElement(steppingElement.getElement())) {
                             return true;
                         }
 
                         final List<PipelineProperty> newProperties = pipelineModel
-                                .getProperties(elementPresenter.getElement())
+                                .getProperties(steppingElement.getElement())
                                 .stream()
                                 .filter(p -> p.getValue().getEntity() != null)
                                 .collect(Collectors.toList());
 
-                        final List<PipelineProperty> currentProperties = elementPresenter.getProperties()
+                        final List<PipelineProperty> currentProperties = steppingElement.getProperties()
                                 .stream()
                                 .filter(p -> p.getValue().getEntity() != null)
                                 .collect(Collectors.toList());
@@ -791,7 +796,7 @@ public class SteppingPresenter
                     .map(Entry::getKey)
                     .collect(Collectors.toList());
 
-            elementsToRemove.forEach(elementPresenterMap::remove);
+            elementsToRemove.forEach(elementMap::remove);
 
             if (selectedElement == null || !pipelineModel.hasElement(selectedElement)) {
                 pipelinePathBar.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
@@ -834,15 +839,15 @@ public class SteppingPresenter
 
     public void save(final List<DocRef> docsToSave, final Runnable onComplete) {
         // Tell editors to save if they are in the list.
-        elementPresenterMap.values().stream()
+        elementMap.values().stream()
                 .filter(ep -> docsToSave.contains(ep.getDocRef()))
                 .forEach(ep -> ep.save(onComplete));
     }
 
     public List<DocRef> getDirtyDocs() {
-        return elementPresenterMap.values().stream()
-                .filter(ElementPresenter::isDirty)
-                .map(ElementPresenter::getDocRef)
+        return elementMap.values().stream()
+                .filter(SteppingElementController::isDirty)
+                .map(SteppingElementController::getDocRef)
                 .collect(Collectors.toList());
     }
 
@@ -886,7 +891,7 @@ public class SteppingPresenter
 
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<>();
-            for (final ElementPresenter editorPresenter : elementPresenterMap.values()) {
+            for (final SteppingElementController editorPresenter : elementMap.values()) {
                 if (editorPresenter.isDirty()) {
                     final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
@@ -902,8 +907,8 @@ public class SteppingPresenter
                     .anyMatch(settings -> settings != null && settings.isFilterApplied());
 
             if (StepType.REFRESH.equals(stepType)) {
-                elementPresenterMap.values().stream()
-                        .filter(Predicate.not(ElementPresenter::isDirty))
+                elementMap.values().stream()
+                        .filter(Predicate.not(SteppingElementController::isDirty))
                         .forEach(e -> e.setLoaded(false));
             }
 
@@ -1066,7 +1071,7 @@ public class SteppingPresenter
             updateElementSeverities();
 
             // Tell all editors that a refresh is required.
-            for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
+            for (final Entry<ElementId, SteppingElementController> entry : elementMap.entrySet()) {
                 entry.getValue().setRefreshRequired(true);
             }
 
@@ -1074,9 +1079,9 @@ public class SteppingPresenter
             final PipelineElement selectedElement = getSelectedPipeElement();
             if (selectedElement != null) {
                 final ElementId elementId = selectedElement.getElementId();
-                final ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
-                if (elementPresenter != null) {
-                    refreshEditor(elementPresenter, elementId);
+                final SteppingElementController steppingElement = elementMap.get(elementId);
+                if (steppingElement != null) {
+                    refreshEditor(steppingElement, elementId);
                 } else {
                     updateToggleConsoleBtn(elementId);
                 }
@@ -1192,10 +1197,10 @@ public class SteppingPresenter
             taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() ->
                     pipelineElementTypesFactory.get(this, elementTypes -> {
-                        final MyPresenterWidget<?> content = getContent(element);
+                        final Layer content = getContent(element);
                         if (content != null) {
                             // Set the content.
-                            getView().getLayerContainer().show((Layer) content);
+                            getView().getLayerContainer().show(content);
 
                             updateElementSeverities();
                         }
@@ -1208,9 +1213,9 @@ public class SteppingPresenter
         final PipelineElement selectedElement = getSelectedPipeElement();
         if (selectedElement != null) {
             final ElementId elementId = selectedElement.getElementId();
-            final ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
-            if (elementPresenter != null) {
-                elementPresenter.setLogPaneVisibility(isVisible);
+            final SteppingElementController steppingElement = elementMap.get(elementId);
+            if (steppingElement != null) {
+                steppingElement.setLogPaneVisibility(isVisible);
             }
         }
     }
