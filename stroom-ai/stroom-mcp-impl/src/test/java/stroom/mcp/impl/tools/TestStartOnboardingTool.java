@@ -199,4 +199,50 @@ class TestStartOnboardingTool {
             return profile;
         }
     }
+
+    @Test
+    void withNoTemplateOfItsParserTheSampleIsOfferedAnotherWithItsParserReplaced() {
+        // Seen: a Stroom with no XMLParser template was told only to ask the user, though a parser can be swapped.
+        Mockito.when(templates.find("translation")).thenReturn(Map.of("candidates", List.of(
+                Map.of("name", "json-in v3", "parser", "JSONParser"),
+                Map.of("name", "Acme text v2", "parser", "DSParser"))));
+
+        assertThat(tool.templatesReading("xml fragments"))
+                .isEqualTo("json-in v3 with replace_parser='XMLFragmentParser' (no template here has a "
+                           + "XMLFragmentParser; its JSONParser is replaced)");
+        assertThat(tool.templatesReading("xml")).startsWith("json-in v3 with replace_parser='XMLParser'");
+        // One that reads it is preferred.
+        assertThat(tool.templatesReading("delimited")).startsWith("Acme text v2 (its parser, DSParser");
+    }
+
+    @Test
+    void forXmlFragmentsAnXmlParserTemplateIsPreferredToSwap() {
+        Mockito.when(templates.find("translation")).thenReturn(Map.of("candidates", List.of(
+                Map.of("name", "json-in v3", "parser", "JSONParser"),
+                Map.of("name", "xml-in", "parser", "XMLParser"))));
+
+        assertThat(tool.templatesReading("xml fragments")).startsWith("xml-in with replace_parser='XMLFragmentParser'");
+    }
+
+    @Test
+    void aTemplateIsTakenForItsParserNotItsName() {
+        // Named for XML fragments, it holds a JSONParser: offered only with its parser replaced.
+        Mockito.when(templates.find("translation")).thenReturn(Map.of("candidates", List.of(
+                Map.of("name", "XML Fragment Events", "parser", "JSONParser"))));
+
+        assertThat(tool.templatesReading("xml fragments"))
+                .contains("XML Fragment Events with replace_parser='XMLFragmentParser'")
+                .contains("its JSONParser is replaced");
+        assertThat(tool.templatesReading("json lines")).startsWith("XML Fragment Events (its parser, JSONParser");
+    }
+
+    @Test
+    void withNoTemplateAtAllAnEventsPipelineOfItsOwnIsTheLastResort() {
+        Mockito.when(templates.find("translation")).thenReturn(Map.of("candidates", List.of()));
+
+        assertThat(tool.templatesReading("delimited"))
+                .startsWith("none found that reads delimited (a DSParser): ask the user which pipeline to base it on")
+                .endsWith("only if they have none, create_pipeline standalone='events' builds one on its own (a "
+                          + "last resort)");
+    }
 }

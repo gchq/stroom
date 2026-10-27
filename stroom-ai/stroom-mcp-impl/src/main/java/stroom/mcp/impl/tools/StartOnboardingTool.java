@@ -307,18 +307,29 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             return String.join(", ", fitting.subList(0, Math.min(3, fitting.size()))) + " (its parser, "
                    + readers.getFirst() + ", reads " + format + "; find_pipeline_templates stage=translation)";
         }
-        if ("xml fragments".equals(format)) {
-            final Optional<String> xml = candidates.stream()
-                    .filter(candidate -> "XMLParser".equals(candidate.get("parser")))
-                    .map(candidate -> String.valueOf(candidate.get("name")))
-                    .findFirst();
-            if (xml.isPresent()) {
-                return xml.get() + " with replace_parser='XMLFragmentParser' (no template here parses XML "
-                       + "fragments)";
+        // No template has the parser: one whose parser can be swapped for it, the XMLParser's first for XML
+        // fragments (seen: a Stroom with no XMLParser template was told only to ask the user).
+        final String reader = readers.getFirst();
+        if (PipelineWrites.PARSERS.contains(reader)) {
+            final List<Map<?, ?>> parsing = candidates.stream()
+                    .filter(candidate -> PipelineWrites.PARSERS.contains(String.valueOf(candidate.get("parser"))))
+                    .toList();
+            Optional<Map<?, ?>> swappable = "xml fragments".equals(format)
+                    ? parsing.stream().filter(candidate -> "XMLParser".equals(candidate.get("parser"))).findFirst()
+                    : Optional.empty();
+            if (swappable.isEmpty()) {
+                swappable = parsing.stream().findFirst();
+            }
+            if (swappable.isPresent()) {
+                return swappable.get().get("name") + " with replace_parser='" + reader + "' (no template here has "
+                       + "a " + reader + "; its " + swappable.get().get("parser") + " is replaced)";
             }
         }
-        return "none found that reads " + format + " (a " + readers.getFirst() + "): ask the user which pipeline to "
-               + "base it on (find_pipeline_templates stage=translation lists what there is)";
+        return "none found that reads " + format + " (a " + reader + "): ask the user which pipeline to base it on "
+               + "(find_pipeline_templates stage=translation lists what there is)" + (candidates.isEmpty()
+                ? "; only if they have none, create_pipeline standalone='events' builds one on its own (a last "
+                  + "resort)"
+                : "");
     }
 
     private Map<String, Object> instructions(final ToolCallContext context, final List<String> folders) {
