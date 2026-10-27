@@ -30,12 +30,20 @@ public class OpenAIModelTestResponse {
     private final boolean ok;
     @JsonProperty
     private final String message;
+    @JsonProperty
+    private final String detail;
+
+    public OpenAIModelTestResponse(final Boolean ok, final String message) {
+        this(ok, message, null);
+    }
 
     @JsonCreator
     public OpenAIModelTestResponse(@JsonProperty("ok") final Boolean ok,
-                                   @JsonProperty("message") final String message) {
+                                   @JsonProperty("message") final String message,
+                                   @JsonProperty("detail") final String detail) {
         this.ok = Objects.requireNonNullElse(ok, false);
         this.message = message;
+        this.detail = detail;
     }
 
     public boolean isOk() {
@@ -44,5 +52,11 @@ public class OpenAIModelTestResponse {
 
     public String getMessage() {
         return message;
+    }
+
+    /// @return More than the message says, for the alert's detail (e.g. the models an endpoint serves when the
+    /// one asked for isn't among them), or null.
+    public String getDetail() {
+        return detail;
     }
 }
