@@ -419,6 +419,11 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                           @JsonProperty("visualisation") DocRef visualisation,
                           @JsonProperty("selections") Map<String, String> selections) {
 
+        /// Reads a chart replaced from JSON, by its components.
+        @JsonCreator
+        public Replace {
+        }
+
         /// A chart replaced whose selection's keys aren't renamed.
         ///
         /// @param componentId   The vis component's id.
