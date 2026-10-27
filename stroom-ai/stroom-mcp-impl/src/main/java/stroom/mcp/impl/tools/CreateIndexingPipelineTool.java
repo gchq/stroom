@@ -222,7 +222,12 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
             plan.rememberBuild(context, build);
             return standaloneDiscovery(call, context, build, name, xsltUuid, indexUuid);
         }
-        final String templateUuid = required(call, TEMPLATE_UUID_ARG);
+        final String templateUuid = stringArg(call, TEMPLATE_UUID_ARG);
+        if (templateUuid == null) {
+            // The template it is a child of: the fallback (standalone) is left unnamed, as a last resort.
+            throw new ToolRefusal("Give template_uuid: an indexing template (find_pipeline_templates stage=indexing), "
+                                  + "or a discovery one for raw data indexed as it is (stage=discovery)");
+        }
         final List<Long> eventsStreamIds = StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG);
         plan.rememberBuild(context, build);
         final Shape shape = pipelineShapes.shape(templateUuid);
