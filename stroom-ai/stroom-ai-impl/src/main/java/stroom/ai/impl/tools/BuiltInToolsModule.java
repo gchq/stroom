@@ -69,6 +69,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ProposeCodeChangeTool.class)
                 .addBinding(StreamMetaTool.class)
                 .addBinding(ProcessorTasksTool.class)
+                .addBinding(ExplainProcessingTool.class)
                 .addBinding(ServerTasksTool.class)
                 .addBinding(DocumentLinksTool.class)
                 .addBinding(FindInContentTool.class)

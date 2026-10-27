@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 51
+Built-in tools: 52
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (51 tool(s))
+### AGENT (52 tool(s))
 ask_user
 config_properties
 current_results
@@ -14,6 +14,7 @@ document_documentation
 document_info
 document_links
 elastic_index_templates
+explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -57,7 +58,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (47 tool(s))
+### ASK (48 tool(s))
 ask_user
 config_properties
 current_results
@@ -66,6 +67,7 @@ document_documentation
 document_info
 document_links
 elastic_index_templates
+explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -106,7 +108,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (47 tool(s))
+### PLAN (48 tool(s))
 ask_user
 config_properties
 current_results
@@ -115,6 +117,7 @@ document_documentation
 document_info
 document_links
 elastic_index_templates
+explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -517,6 +520,41 @@ For administrators reviewing or reproducing the Elasticsearch templates of an El
     }
   },
   "required" : [ "uuid" ],
+  "type" : "object"
+}
+
+================================================================================
+## explain_processing
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Explains why processing isn't happening, or is slow, and in what order filters get work: e.g. 'why is this pipeline (or feed, or stream) not processing?', 'why is this filter starved?', 'is processing healthy?'. Give one of pipeline_uuid, feed or stream_id, or none for the whole cluster. It traces the chain: the nodes (enabled, answering, the master), the processing settings, the jobs processing needs (Processor Task Creator, Data Processor, the reaper and heartbeat: enabled, on which nodes, task limits, last and next runs, asked of every node), each processor filter (enabled, its tracker, stream create time window, feed dependencies, polling), its processor profile (node group, periods, threads each node gets now), its tasks and where they wait (locked streams, limits), and its priority among the filters ahead of it. Each link is ok, blocking, slowing or not checked (the user lacks the permission to see it); 'answer' and 'first_blocker' say what stops it, and each finding's 'fix' what would help. Read-only: it changes nothing. It doesn't explain why a task that ran failed: Stroom keeps no reason for that.
+
+### Parameters
+
+{
+  "properties" : {
+    "feed" : {
+      "description" : "A feed's name: its newest stream's processing is explained.",
+      "type" : "string"
+    },
+    "pipeline_uuid" : {
+      "description" : "A pipeline (or analytic rule) whose processing to explain.",
+      "type" : "string"
+    },
+    "stream_id" : {
+      "description" : "A stream (meta) id whose processing to explain.",
+      "type" : "integer"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 
