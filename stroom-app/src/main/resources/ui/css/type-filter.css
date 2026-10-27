@@ -1,0 +1,36 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The type filter's scrolling list, as big as its types up to the popup's size */
+.type-filter__scroll {
+    min-width: 50px;
+    max-width: 600px;
+    max-height: 600px;
+}
+
+/* The explorer's type filter: its rows' cells draw their own height, but have room at their sides
+   for the focus ring drawn inside the row */
+.data-grid.type-filter .data-grid__cell > div {
+    padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
+}
+
+/* The type filter's line under its All / None row, and the space below it the line it had (an <hr>)
+   left */
+.data-grid__row.type-filter__all {
+    border-bottom: 1px solid var(--text-color);
+    margin-bottom: 0.5em;
+}
