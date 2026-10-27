@@ -21,6 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.dispatch.client.RestFactory.MethodExecutor;
 import stroom.docref.DocRef;
 import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.event.client.StaticEventBus;
@@ -205,6 +207,24 @@ public final class DocEditors {
                         null))
                 .taskMonitorFactory(presenter)
                 .exec();
+    }
+
+    /// Opens a document in its editor, in a [DocumentEditorHost] as its plugin opens it, and shows
+    /// it as the story's content (see [#open(ScreenHarness, DocRef, DocPresenter, DocResource)]).
+    ///
+    /// @param harness  The story's harness.
+    /// @param docRef   The document to open.
+    /// @param editor   The document's editor, from the story's injector.
+    /// @param resource How to fetch and update the document.
+    /// @param <D>      The document type.
+    /// @return The host the editor is shown in.
+    public static <D> DocumentEditorHost<D> open(final ScreenHarness harness,
+                                                 final DocRef docRef,
+                                                 final DocumentEditor<D> editor,
+                                                 final DocResource<D> resource) {
+        final DocumentEditorHost<D> host = new DocumentEditorHost<>(harness.getEventBus(), editor, docRef.getType());
+        open(harness, docRef, host, resource);
+        return host;
     }
 
     // As DocumentPlugin.save

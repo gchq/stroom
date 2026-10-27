@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/SteppingScreen`, showing Stroom's real [SteppingScreenController] (a pipeline's
-/// stepper, as `PipelinePresenter.beginStepping` starts it) with a fake stepping server.
+/// stepper, as `PipelineEditor.beginStepping` starts it) with a fake stepping server.
 ///
 /// | Stroom endpoint | Used for |
 /// |---|---|
@@ -524,7 +524,7 @@ public final class SteppingScreenStories {
         harness.afterStartUp(() -> {
             final SteppingScreenController stepping = injector.getSteppingScreen();
             harness.show(stepping);
-            // As PipelinePresenter loads the model and begins stepping a stream
+            // As PipelineEditor loads the model and begins stepping a stream
             final DefaultTaskMonitorFactory taskMonitor = new DefaultTaskMonitorFactory(stepping);
             injector.getPipelineElementTypesFactory().get(taskMonitor, types ->
                     injector.getPipelineModelFactory().get(taskMonitor, pipeline, types, model -> {

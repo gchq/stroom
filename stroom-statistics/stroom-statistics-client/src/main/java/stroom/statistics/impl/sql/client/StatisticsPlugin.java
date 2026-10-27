@@ -25,9 +25,10 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
+import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticResource;
@@ -54,17 +55,19 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
 
-    private final Provider<StatisticsDataSourcePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<StatisticsDataSourceEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public StatisticsPlugin(final EventBus eventBus,
-                            final Provider<StatisticsDataSourcePresenter> editorProvider,
+                            final Provider<StatisticsDataSourceEditor> editorProvider,
                             final RestFactory restFactory,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager,
                             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
@@ -82,7 +85,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), StatisticStoreDoc.TYPE);
     }
 
     @Override

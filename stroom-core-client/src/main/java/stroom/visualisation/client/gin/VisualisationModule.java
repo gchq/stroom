@@ -18,12 +18,10 @@ package stroom.visualisation.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.visualisation.client.VisualisationPlugin;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
 
 public class VisualisationModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(VisualisationPlugin.class);
-        bind(VisualisationPresenter.class);
     }
 }

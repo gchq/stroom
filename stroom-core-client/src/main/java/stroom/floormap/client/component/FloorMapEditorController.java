@@ -197,7 +197,7 @@ public class FloorMapEditorController
     private final FloorMapDocSession docSession = new FloorMapDocSession();
 
     /// Notified when area support is enabled on this document, so the parent
-    /// [FloorMapPresenter] can refresh the Settings tab's grids — the
+    /// [FloorMapDocEditor] can refresh the Settings tab's grids — the
     /// Settings tab writes `valueSchema` wholesale on save and would
     /// otherwise silently revert the upgrade.
     private Runnable areaSupportEnabledListener;
@@ -586,12 +586,12 @@ public class FloorMapEditorController
     }
 
     // -----------------------------------------------------------------------
-    // Save chain hook (called by FloorMapPresenter)
+    // Save chain hook (called by FloorMapDocEditor)
     // -----------------------------------------------------------------------
 
     /// Returns `true` when there are staged edits awaiting flush.
     ///
-    /// Used by [FloorMapPresenter#hasAssociatedDirty()] to drive the
+    /// Used by [FloorMapDocEditor#hasAssociatedDirty()] to drive the
     /// dirty indicator on the document tab.
     ///
     /// @return `true` when pending changes exist
@@ -601,7 +601,7 @@ public class FloorMapEditorController
 
     /// Pauses the timeline if it is currently playing.
     ///
-    /// Called by [FloorMapPresenter] when the user navigates away from
+    /// Called by [FloorMapDocEditor] when the user navigates away from
     /// the Editor tab, so that background queries are not issued while the tab
     /// is hidden.
     public void pauseTimeline() {
@@ -619,7 +619,7 @@ public class FloorMapEditorController
 
     /// Flushes pending changes to the server as part of the Stroom save chain.
     ///
-    /// Called by [FloorMapPresenter] via `getPostSaveCallback()`
+    /// Called by [FloorMapDocEditor] via `getPostSaveCallback()`
     /// after the [FloorMapDoc] has been saved. Sends all staged operations
     /// in a single `applyChanges` call.
     ///

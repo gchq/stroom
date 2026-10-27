@@ -18,14 +18,11 @@ package stroom.feed.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.feed.client.FeedPlugin;
-import stroom.feed.client.presenter.FeedPresenter;
 
 public class FeedModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(FeedPlugin.class);
-
-        bind(FeedPresenter.class);
     }
 }

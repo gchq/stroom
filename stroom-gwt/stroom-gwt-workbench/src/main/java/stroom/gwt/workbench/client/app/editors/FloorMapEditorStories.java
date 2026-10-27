@@ -44,7 +44,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Floor Map's 'Editor' tab: the map canvas, its timeline and its Layers panel) with fake REST
 /// replies.
 ///
-/// As `FloorMapPresenter` does for its Editor tab, the story fetches the document
+/// As `FloorMapDocEditor` does for its Editor tab, the story fetches the document
 /// (`GET /floormap/v1/{uuid}`) and reads it into the editor ([DocEditors#open]). The editor then
 /// asks the map's facts store (`SqlTemporalStoreResource`, `/sqltemporalstore/v1`) for its
 /// `timeRange`, and the facts at the selected time (`fetchAtTime`, `fetchAll` and `find`), all of

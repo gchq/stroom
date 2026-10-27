@@ -56,7 +56,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The draft assets are the seed (`chart.js`), then the seed and the uploaded file. Each file name
 /// has its own upload reply, with the key `rk-<name>`.
 ///
-/// The controller (from the editors batch's ginjector) is read as `VisualisationPresenter` reads
+/// The controller (from the editors batch's ginjector) is read as `VisualisationEditor` reads
 /// its tabs, and shown with its toolbar above it, as the document's tab shows them, filling the
 /// page.
 ///
@@ -347,7 +347,7 @@ public final class VisualisationAssetsStories {
             content.getElement().getStyle().setProperty("minHeight", "0");
             content.getElement().getStyle().setProperty("position", "relative");
             frame.add(content);
-            // As VisualisationPresenter reads its tabs
+            // As VisualisationEditor reads its tabs
             assetsTab.read(docRef, doc);
         });
         return harness.asWidget();

@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.feed;
 
 import stroom.docref.DocRef;
-import stroom.feed.client.presenter.FeedPresenter;
+import stroom.feed.client.component.FeedEditor;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
@@ -35,7 +35,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Feed/FeedEditor` stories, showing Stroom's real [FeedPresenter] (a Feed's tab: Data,
+/// The `App/Feed/FeedEditor` stories, showing Stroom's real [FeedEditor] (a Feed's tab: Data,
 /// Active Tasks, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `FeedPlugin` does, the story fetches the document (`GET /feed/v1/{uuid}`) and reads it into
@@ -209,7 +209,7 @@ public final class FeedEditorStories {
         return DocEditors.render(context, FIXTURES, readOnly,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getFeedPresenter(),
+                        injector.getFeedEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

@@ -18,7 +18,6 @@ package stroom.index.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.index.client.IndexPlugin;
-import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 
 public class IndexModule extends PluginModule {
@@ -26,7 +25,6 @@ public class IndexModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(IndexPlugin.class);
-        bind(IndexPresenter.class);
 
         bind(IndexVolumeGroupPresenter.class);
     }

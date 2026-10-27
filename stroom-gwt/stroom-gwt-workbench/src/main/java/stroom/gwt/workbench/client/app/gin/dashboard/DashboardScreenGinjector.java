@@ -18,12 +18,12 @@
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
 import stroom.ai.client.AskStroomAiPresenter;
+import stroom.dashboard.client.component.DashboardEditor;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
 import stroom.dashboard.client.input.KeyValueInputPlugin;
 import stroom.dashboard.client.input.ListInputPlugin;
 import stroom.dashboard.client.input.TableFilterPlugin;
 import stroom.dashboard.client.input.TextInputPlugin;
-import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.text.TextPlugin;
@@ -39,7 +39,6 @@ import stroom.gwt.workbench.client.app.gin.query.AlertScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.AnnotationScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.PipelineScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryExtrasScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.QueryScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.StreamStoreScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
@@ -67,20 +66,18 @@ import com.google.gwt.inject.client.GinModules;
         MonitoringScreenModule.class,
         TaskScreenModule.class,
         PipelineScreenModule.class,
-        QueryScreenModule.class,
         AnnotationScreenModule.class,
         StreamStoreScreenModule.class,
         AlertScreenModule.class,
         QueryExtrasScreenModule.class,
         AskStroomAIScreenModule.class,
         DashboardScreenModule.class,
-        EmbeddedQueryScreenModule.class,
 })
 public interface DashboardScreenGinjector extends ScreenGinjector {
 
     /// @return A dashboard's editor tab (Dashboard, Documentation and Permissions), as
     /// `DashboardPlugin` creates it.
-    DashboardSuperPresenter getDashboardSuperPresenter();
+    DashboardEditor getDashboardEditor();
 
     /// @return The 'Ask Stroom AI' chat, shown by firing `AskStroomAiEvent`.
     AskStroomAiPresenter getAskStroomAiPresenter();

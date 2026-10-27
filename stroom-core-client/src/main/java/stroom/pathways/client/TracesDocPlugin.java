@@ -23,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.pathways.client.presenter.TracesPresenter;
+import stroom.pathways.client.component.TracesEditor;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesDocResource;
 import stroom.planb.shared.AbstractPlanBSettings;
@@ -46,25 +47,27 @@ public class TracesDocPlugin extends DocumentPlugin<TracesDoc> {
 
     private static final TracesDocResource TRACES_DOC_RESOURCE = GWT.create(TracesDocResource.class);
 
-    private final Provider<TracesPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<TracesEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public TracesDocPlugin(
             final EventBus eventBus,
-            final Provider<TracesPresenter> editorProvider,
+            final Provider<TracesEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), TracesDoc.TYPE);
     }
 
     @Override

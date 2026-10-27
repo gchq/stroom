@@ -23,10 +23,11 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
+import stroom.xmlschema.client.component.XMLSchemaEditor;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 
@@ -43,24 +44,26 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
 
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
 
-    private final Provider<XMLSchemaPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<XMLSchemaEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public XMLSchemaPlugin(final EventBus eventBus,
-                           final Provider<XMLSchemaPresenter> editorProvider,
+                           final Provider<XMLSchemaEditor> editorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager,
                            final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), XmlSchemaDoc.TYPE);
     }
 
     @Override

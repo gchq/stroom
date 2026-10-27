@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.client.component.VisualisationEditor;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/Editors/VisualisationEditor` stories, showing Stroom's real [VisualisationPresenter] (a
+/// The `App/Editors/VisualisationEditor` stories, showing Stroom's real [VisualisationEditor] (a
 /// Visualisation's tab: Settings, Assets, Documentation and Permissions) with fake REST replies.
 ///
 /// As `VisualisationPlugin` does, the story fetches the document (`GET /visualisation/v1/{uuid}`)
@@ -306,7 +306,7 @@ public final class VisualisationEditorStories {
         final VisualisationResource resource = GWT.create(VisualisationResource.class);
         return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getVisualisationPresenter(),
+                injector.getVisualisationEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

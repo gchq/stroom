@@ -19,10 +19,10 @@ package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.component.ManageActivityController;
-import stroom.annotation.client.AnnotationPresenter;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.AnnotationTagPresenter;
 import stroom.annotation.client.BrowseAnnotationPresenter;
+import stroom.annotation.client.component.AnnotationTabs;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.cache.client.presenter.CachePresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
@@ -48,7 +48,7 @@ import stroom.importexport.client.component.ImportConfigController;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
-import stroom.pathways.client.presenter.TracesPresenter;
+import stroom.pathways.client.component.TracesEditor;
 import stroom.query.client.component.SearchResultStoresController;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.xmlschema.client.XMLSchemaPlugin;
@@ -77,10 +77,7 @@ import com.google.gwt.inject.client.GinModules;
         ContentAppScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,
-        PathwaysScreenModule.class,
-        PlanBScreenModule.class,
         ContentTemplateScreenModule.class,
-        XMLSchemaScreenModule.class,
 })
 public interface ContentScreenGinjector extends ScreenGinjector {
 
@@ -168,7 +165,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     AnnotationTagPresenter getAnnotationTagPresenter();
 
     /// @return An annotation's tab (the editor and its sub-tabs), as `AnnotationEditSupport` creates it.
-    AnnotationPresenter getAnnotationPresenter();
+    AnnotationTabs getAnnotationTabs();
 
     /// @return The 'Choose Annotation' dialog, kept by the app and shown when
     ///         `ShowFindAnnotationEvent` fires.
@@ -186,5 +183,5 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     SearchResultStoresController getSearchResultStoresController();
 
     /// @return The 'Traces' tab, as `TracesPlugin` opens it for `ShowTracesEvent`.
-    TracesPresenter getTracesPresenter();
+    TracesEditor getTracesEditor();
 }

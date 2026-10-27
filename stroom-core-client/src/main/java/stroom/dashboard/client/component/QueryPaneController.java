@@ -311,7 +311,7 @@ public class QueryPaneController
 
     @Override
     public List<ErrorMessage> getCurrentErrors() {
-        // Null until this query has searched, as for EmbeddedQueryPresenter
+        // Null until this query has searched, as for EmbeddedQueryController
         return currentErrors != null
                 ? currentErrors.getErrorMessages()
                 : null;

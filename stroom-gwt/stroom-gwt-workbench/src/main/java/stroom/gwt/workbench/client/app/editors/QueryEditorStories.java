@@ -59,7 +59,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/// The `App/Editors/QueryEditor` stories, showing Stroom's real `QueryDocPresenter` (a Query's
+/// The `App/Editors/QueryEditor` stories, showing Stroom's real `QueryDocEditor` (a Query's
 /// editor tab: Query, Documentation and Permissions, the Query tab being the query help, the
 /// StroomQL editor and the results table) with fake REST replies.
 ///
@@ -1272,7 +1272,7 @@ public final class QueryEditorStories {
         setup.accept(harness, injector);
         final QueryResource resource = GWT.create(QueryResource.class);
         // Opened once Stroom has started, as QueryPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getQueryDocPresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getQueryDocEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }

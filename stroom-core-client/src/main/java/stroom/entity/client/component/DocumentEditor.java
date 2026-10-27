@@ -16,21 +16,25 @@
 
 package stroom.entity.client.component;
 
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.DirtyTracker;
+import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding.Action;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /// A document's editor: its tabs (see [TabbedController]), its toolbar with Save and Save As,
 /// whether it is read only, and whether it has changes that aren't saved. A document type's editor
@@ -46,15 +50,9 @@ import java.util.function.Consumer;
 /// @param <D> The document's type, which must compare by value (`equals`).
 public abstract class DocumentEditor<D> extends TabbedController<D> {
 
-    // Why a document is read only: it is only ever opened read only for a user who can't edit it
-    private static final String READ_ONLY_REASON = "You don't have permission to change this";
-
     private final ContextValue<Boolean> readOnly = ContextValue.of(true);
     private final ToolbarButton saveButton;
     private final ToolbarButton saveAsButton;
-    // Says that the document is read only, at the far right of the tab bar; a polite status, so
-    // screen readers announce it (and why) when a read-only document opens
-    private final HTML readOnlyStatus = new HTML();
 
     private boolean dirty;
     private Consumer<Boolean> onDirtyChange = isDirty -> {
@@ -80,11 +78,10 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
         saveAsButton = getToolbar().button(SvgImage.SAVEAS, "Save As", this::saveAs);
         saveAsButton.setEnabled(false);
 
-        readOnlyStatus.setStyleName("docTab-readOnlyStatus");
-        readOnlyStatus.getElement().setAttribute("role", "status");
-        view.setTabBarStatus(readOnlyStatus);
-
-        watch(Contexts.READ_ONLY, this::showReadOnly);
+        showReadOnlyStatus();
+        watch(Contexts.READ_ONLY, readOnly -> saveButton.setTitle(readOnly
+                ? "Save (read only)"
+                : "Save"));
     }
 
     /// @param readOnly Whether the user may not change the document. Every tab follows it.
@@ -113,12 +110,67 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
         this.onSaveAs = Objects.requireNonNull(onSaveAs, "onSaveAs");
     }
 
+    /// Adds the document's Documentation tab, its description in Markdown, which a link to the
+    /// document's documentation opens.
+    ///
+    /// @param tab             The tab.
+    /// @param provider        Makes the Markdown editor.
+    /// @param description     Gets the description from the document.
+    /// @param withDescription Makes a copy of the document with a description.
+    protected final void addDocumentationTab(final TabData tab,
+                                             final Provider<MarkdownEditController> provider,
+                                             final Function<D, String> description,
+                                             final BiFunction<D, String, D> withDescription) {
+        addTab(tab,
+                () -> {
+                    // It tells the editor of changes itself (Contexts.DIRTY)
+                    final MarkdownEditController documentation = provider.get();
+                    documentation.followReadOnly();
+                    return documentation;
+                },
+                (documentation, docRef, doc) -> documentation.setText(description.apply(doc)),
+                (documentation, doc) -> withDescription.apply(doc, documentation.getText()));
+        setCommonTab(CommonDocLinkTab.DOCUMENTATION, tab);
+    }
+
+    /// Adds the document's Permissions tab, which a link to the document's permissions opens.
+    ///
+    /// @param tab      The tab.
+    /// @param provider Makes the permissions tab.
+    protected final void addPermissionsTab(final TabData tab,
+                                           final Provider<DocumentUserPermissionsTabController> provider) {
+        addTab(tab, provider::get, (permissions, docRef, doc) -> permissions.setDocRef(docRef));
+        setCommonTab(CommonDocLinkTab.PERMISSIONS, tab);
+    }
+
     /// Called by a tab's content when the user changes what it shows, so the editor can tell
     /// whether the document is dirty.
     protected final void onChange() {
         if (getDocument() != null && !context(Contexts.READ_ONLY)) {
-            setDirty(!Objects.equals(getDocument(), write()));
+            // What the document has but doesn't hold first, as comparing the document, on every
+            // key press in an editor, may cost more
+            setDirty(hasAssociatedDirty() || !Objects.equals(getDocument(), write()));
         }
+    }
+
+    /// Whether something that goes with the document but isn't held in it (e.g. its assets, saved
+    /// after it) has changes that aren't saved.
+    ///
+    /// @return False by default.
+    protected boolean hasAssociatedDirty() {
+        return false;
+    }
+
+    /// @return What to run once the document is saved, before it is read again, e.g. to save its
+    /// assets: given the saved document and what to run when it is done; or null for nothing.
+    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+        return null;
+    }
+
+    /// @return What to run once a copy of the document is saved (Save As), before the copy is read,
+    /// as [#getPostSaveCallback()]; or null for nothing.
+    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+        return null;
     }
 
     @Override
@@ -135,41 +187,24 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
         }
     }
 
-    private void save() {
+    /// Saves the document if it has changes, as Save does: once [#beforeSave(Runnable)] lets it,
+    /// the owner saves it ([#setOnSave(Runnable)]).
+    public final void save() {
         if (dirty) {
-            onSave.run();
+            beforeSave(onSave);
         }
+    }
+
+    /// Called when the user asks to save the document, e.g. to ask them to confirm first.
+    ///
+    /// @param save Saves the document; by default it is run straight away.
+    protected void beforeSave(final Runnable save) {
+        save.run();
     }
 
     private void saveAs() {
         if (getDocument() != null) {
             onSaveAs.run();
         }
-    }
-
-    private void showReadOnly(final boolean readOnly) {
-        saveButton.setTitle(readOnly
-                ? "Save (read only)"
-                : "Save");
-        if (readOnly) {
-            final SafeHtmlBuilder html = new SafeHtmlBuilder();
-            html.appendHtmlConstant("<span class=\"docTab-readOnlyNote\">");
-            html.appendHtmlConstant("<span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">");
-            html.append(SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()));
-            html.appendHtmlConstant("</span>");
-            html.appendEscaped("Read only");
-            html.appendHtmlConstant("</span>");
-            // The reason, which a tooltip doesn't give screen readers
-            html.appendHtmlConstant("<span class=\"sr-only\">");
-            html.appendEscaped(". " + READ_ONLY_REASON + ".");
-            html.appendHtmlConstant("</span>");
-            readOnlyStatus.setHTML(html.toSafeHtml());
-            readOnlyStatus.setTitle(READ_ONLY_REASON);
-        } else {
-            readOnlyStatus.setHTML("");
-            readOnlyStatus.setTitle(null);
-        }
-        // The status takes room from the tab bar, so it lays its tabs out again
-        getTabView().getTabBar().refresh();
     }
 }

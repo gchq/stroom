@@ -72,8 +72,8 @@ import java.util.function.Consumer;
 
 /// A document's Assets tab ([DocumentAssetsTab]): its images, CSS, scripts and so on, which the
 /// user adds, uploads, renames, deletes and edits as a draft on the server. The draft becomes the
-/// document's assets when the document is saved: its owner (e.g. `VisualisationPresenter`,
-/// `FloorMapPresenter`) calls [#onSave] or [#onSaveAs] from the document's post-save callback, and
+/// document's assets when the document is saved: its owner (e.g. `VisualisationEditor`,
+/// `FloorMapDocEditor`) calls [#onSave] or [#onSaveAs] from the document's post-save callback, and
 /// counts the tab's [#isDirty()] as its own.
 ///
 /// @param <D> The document's type.
@@ -293,7 +293,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         this.fetchDraftAssets(document);
     }
 
-    /// Called by the owning presenter (e.g. VisualisationPresenter, FloorMapPresenter) via the
+    /// Called by the owning presenter (e.g. VisualisationEditor, FloorMapDocEditor) via the
     /// DocumentPlugin post-save callback, to save the assets.
     /// Requests the server to copy data from the draft area to the live area of the database.
     ///

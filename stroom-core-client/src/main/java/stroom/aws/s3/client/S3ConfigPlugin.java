@@ -16,7 +16,7 @@
 
 package stroom.aws.s3.client;
 
-import stroom.aws.s3.client.presenter.S3ConfigPresenter;
+import stroom.aws.s3.client.component.S3ConfigEditor;
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.aws.s3.shared.S3ConfigResource;
 import stroom.core.client.ContentManager;
@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
@@ -43,25 +44,27 @@ public class S3ConfigPlugin extends DocumentPlugin<S3ConfigDoc> {
 
     private static final S3ConfigResource S3_CONFIG_RESOURCE = GWT.create(S3ConfigResource.class);
 
-    private final Provider<S3ConfigPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<S3ConfigEditor> editorProvider;
 
     private final RestFactory restFactory;
 
     @Inject
     public S3ConfigPlugin(final EventBus eventBus,
-                          final Provider<S3ConfigPresenter> editorProvider,
+                          final Provider<S3ConfigEditor> editorProvider,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), S3ConfigDoc.TYPE);
     }
 
     @Override

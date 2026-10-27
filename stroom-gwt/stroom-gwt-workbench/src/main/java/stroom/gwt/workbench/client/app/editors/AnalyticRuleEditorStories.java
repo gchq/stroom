@@ -38,7 +38,7 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/AnalyticRuleEditor` stories, showing Stroom's real `AnalyticRulePresenter` (an
+/// The `App/Editors/AnalyticRuleEditor` stories, showing Stroom's real `AnalyticRuleEditor` (an
 /// analytic rule's editor tab: Query, Settings, Notifications, Execution, Shards or Duplicate
 /// Management, Documentation and Permissions) with fake REST replies.
 ///
@@ -501,7 +501,7 @@ public final class AnalyticRuleEditorStories {
         harness.getSecurityContext().setDocumentPermission(permission);
         final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
         // Opened once Stroom has started, as AnalyticsPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRuleEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }
@@ -518,7 +518,7 @@ public final class AnalyticRuleEditorStories {
         onShardData = () -> harness.spy(SHARD_DATA, "getData");
         final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
         harness.afterStartUp(() -> {
-            DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
+            DocumentEditors.open(harness, injector.getAnalyticRuleEditor(), DOC_REF,
                     resource, res -> res.fetch(DOC_REF.getUuid()));
             // Another query's table, not shown, as another open rule's Shards tab has
             final QueryResultTableController table = injector.getQueryResultTable();

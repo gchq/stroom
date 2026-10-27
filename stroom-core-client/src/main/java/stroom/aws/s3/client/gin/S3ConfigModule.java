@@ -17,7 +17,6 @@
 package stroom.aws.s3.client.gin;
 
 import stroom.aws.s3.client.S3ConfigPlugin;
-import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.core.client.gin.PluginModule;
 
 public class S3ConfigModule extends PluginModule {
@@ -25,6 +24,5 @@ public class S3ConfigModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(S3ConfigPlugin.class);
-        bind(S3ConfigPresenter.class);
     }
 }

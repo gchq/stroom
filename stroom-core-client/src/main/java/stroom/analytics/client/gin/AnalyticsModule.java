@@ -17,7 +17,6 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
-import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.core.client.gin.PluginModule;
 
 public class AnalyticsModule extends PluginModule {
@@ -25,8 +24,6 @@ public class AnalyticsModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(AnalyticsPlugin.class);
-
-        bind(AnalyticRulePresenter.class);
 
     }
 }

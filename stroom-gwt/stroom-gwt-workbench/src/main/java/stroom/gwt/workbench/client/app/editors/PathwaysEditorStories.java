@@ -29,7 +29,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.pathways.client.presenter.PathwaysPresenter;
+import stroom.pathways.client.component.PathwaysEditor;
 import stroom.pathways.client.presenter.ShowTracesEvent;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.stream.Collectors;
 
-/// The `App/Editors/PathwaysEditor` stories, showing Stroom's real [PathwaysPresenter] (a Pathways
+/// The `App/Editors/PathwaysEditor` stories, showing Stroom's real [PathwaysEditor] (a Pathways
 /// document's tab: Pathways, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PathwaysPlugin` does, the story fetches the document (`GET /pathways/v2/{uuid}`) and reads
@@ -320,7 +320,7 @@ public final class PathwaysEditorStories {
             }));
             DocEditors.open(harness,
                     docRef,
-                    injector.getPathwaysPresenter(),
+                    injector.getPathwaysEditor(),
                     DocResource.of(
                             restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                             (restFactory, doc) -> restFactory.create(resource)

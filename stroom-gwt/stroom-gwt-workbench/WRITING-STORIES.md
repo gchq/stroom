@@ -536,7 +536,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `StaticEventBus` and `HelpManager` (form help buttons) and, after start-up, opens the document as
   `DocumentPlugin` does (fetch, permission check, `read`, the default tab). The toolbar's Save
   (`SaveDocumentEvent`) is answered as `DocumentPlugin.save`: write, `PUT` to `update`, then the
-  editor's post save callback (`VisualisationPresenter` publishes its assets there), then `read`.
+  editor's post save callback (`VisualisationEditor` publishes its assets there), then `read`.
   So a story checks a change by editing, saving and checking the `PUT` body.
   `DocEditors.permissionRoutes(builder)` answers the Permissions tabs (admin is OWNER);
   `DocEditors.docSelectionRoutes(builder)` answers `explorer/v2/decorate` and `getFromDocRef`
@@ -616,7 +616,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   Stroom's uuids (`0`, `1`).
 * **Dashboards** (`app/dashboard/DashboardSupport`, `gin/dashboard/DashboardScreenGinjector`):
   `DashboardSupport.story(docJson, routes, options)` renders Stroom's real
-  `DashboardSuperPresenter` (Dashboard, Documentation, Permissions) as `DashboardPlugin` opens it,
+  `DashboardEditor` (Dashboard, Documentation, Permissions) as `DashboardPlugin` opens it,
   with `realAlerts()`, OWNER permission, the dark theme's preferences
   (`DashboardSupport.DARK_PREFERENCES`) and Save answered as
   `DocumentPlugin.save`. The dashboard is a `DashboardDoc` JSON served from

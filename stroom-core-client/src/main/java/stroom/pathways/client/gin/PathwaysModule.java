@@ -20,8 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pathways.client.PathwaysPlugin;
 import stroom.pathways.client.TracesDocPlugin;
 import stroom.pathways.client.TracesPlugin;
-import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.TracesPresenter;
 
 public class PathwaysModule extends PluginModule {
 
@@ -30,7 +28,5 @@ public class PathwaysModule extends PluginModule {
         bindPlugin(PathwaysPlugin.class);
         bindPlugin(TracesPlugin.class);
         bindPlugin(TracesDocPlugin.class);
-        bind(PathwaysPresenter.class);
-        bind(TracesPresenter.class);
     }
 }

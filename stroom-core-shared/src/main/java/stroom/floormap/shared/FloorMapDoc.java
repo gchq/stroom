@@ -48,7 +48,7 @@ import java.util.Objects;
 /// ### UI Tabs
 ///
 /// When a user opens a Floor Map document in the Stroom UI, the
-/// `FloorMapPresenter`
+/// `FloorMapDocEditor`
 /// builds several tabs, each backed by a sub-presenter:
 ///
 /// Floor Map tabs and their presenters

@@ -18,6 +18,8 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -28,7 +30,6 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.security.shared.DocumentPermission;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import org.fusesource.restygwt.client.DirectRestService;
@@ -92,6 +93,27 @@ public final class DocumentEditors {
                     RestReply.json(docRef));
         }
         return builder;
+    }
+
+    /// Opens a document in its editor, in a [DocumentEditorHost] as its plugin opens it, and shows
+    /// it (see [#open(ScreenHarness, DocPresenter, DocRef, DirectRestService, Function)]).
+    ///
+    /// @param harness  The story's harness.
+    /// @param editor   The document's editor, from the story's injector.
+    /// @param docRef   The document to open.
+    /// @param resource The document's resource.
+    /// @param fetch    Fetches the document with the resource.
+    /// @param <T>      The resource's type.
+    /// @param <D>      The document's type.
+    /// @return The host the editor is shown in.
+    public static <T extends DirectRestService, D> DocumentEditorHost<D> open(final ScreenHarness harness,
+                                                                              final DocumentEditor<D> editor,
+                                                                              final DocRef docRef,
+                                                                              final T resource,
+                                                                              final Function<T, D> fetch) {
+        final DocumentEditorHost<D> host = new DocumentEditorHost<>(harness.getEventBus(), editor, docRef.getType());
+        open(harness, host, docRef, resource, fetch);
+        return host;
     }
 
     /// Opens a document's editor as Stroom's `DocumentPlugin` does: fetches the document, checks

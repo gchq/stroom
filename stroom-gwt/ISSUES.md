@@ -1606,11 +1606,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `FloorMapQueryController`), `queryResultPresenter`, `visPresenterProvider` and
   `currentVisPresenter` (`QueryEditController`), `dataPresenter` (`LinkedEventsController`,
   `MetaBrowserController`), `sourcePresenter` (`SteppingScreenController`, `SourceTabPresenter`),
-  `steppingPresenter` (`PipelinePresenter`), `metaPresenterProvider` (`FeedPresenter`,
-  `PipelinePresenter`, `FolderTabs`), `annotationManager` (the two tables), `layoutPresenter`
-  (`DashboardBodyController`), the settings dialogs' `settingsPresenterProvider`, and the
-  `*DataPresenterProvider` parameters of the index and store documents. Rename them as the files
-  are next touched.
+  `metaPresenterProvider` (`FolderTabs`), `annotationManager` (the two tables), `layoutPresenter`
+  (`DashboardBodyController`) and the settings dialogs' `settingsPresenterProvider`. Rename them
+  as the files are next touched. (Wave 14's editors named theirs afresh.)
 * **Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
   its parts." without an `@param` per part (e.g. `SteppingScreenController`,
   `MetaBrowserController`, `TableController`, `QueryPaneController`).
@@ -2569,7 +2567,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
 * A malformed schema was shown as the partial schema the browser recovers, and the parse error never
   shown (`XSDModel`): `XsdBrowser` `ParseError`.
 * An Embedded Query's static selection filter wasn't sent with its first search
-  (`EmbeddedQueryPresenter`): `DashboardSearch` `EmbeddedQuerySelectionFilter`.
+  (`EmbeddedQueryController`): `DashboardSearch` `EmbeddedQuerySelectionFilter`.
 * A copied query's selection handlers had no data source (`EmbeddedQuerySettingsPresenter`):
   `DashboardComponent` `EmbeddedQuerySettingsFields`.
 * A data preview's highlight was never shown, and a ranged preview showed its item navigator again
@@ -2614,7 +2612,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   (`BatchExecutionScheduleEditViewImpl`), a meta row's attributes (`MetaRow.getAttributeValue`), a
   selection summary's age range (`SelectionSummaryPresenter`), a layout's preferred size
   (`MutableConfigUtil`, which `FlexLayout` needs: `DashboardLayout` `SplitterKeepsThirdPanel`), and
-  an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryPresenter`).
+  an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryController`).
 * A dashboard search whose `update` threw polled forever, and `QueryPresenter.getCurrentErrors` threw
   for a Query that hadn't searched (the dashboard selection stories check every search completes;
   any such failure now ends the search, see below).

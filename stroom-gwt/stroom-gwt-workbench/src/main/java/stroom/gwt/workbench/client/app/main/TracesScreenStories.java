@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -29,12 +30,13 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.pathways.client.presenter.TracesPresenter;
+import stroom.pathways.client.component.TracesEditor;
+import stroom.pathways.shared.TracesDoc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/TracesScreen`, showing Stroom's real [TracesPresenter] (the 'Traces' tab:
+/// Stories of `App/Main/TracesScreen`, showing Stroom's real [TracesEditor] (the 'Traces' tab:
 /// the trace list and the selected trace's span waterfall) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `TracesResource` (`/traces/v2`): the traces
@@ -129,12 +131,12 @@ public final class TracesScreenStories {
                 .build();
         harness.afterStartUp(() -> {
             // As TracesPlugin does for ShowTracesEvent
-            final TracesPresenter presenter = injector.getTracesPresenter();
-            presenter.setDataSourceRef(DATA_SOURCE);
-            presenter.setPathway(null);
-            presenter.setFilter(null);
-            presenter.forceRefresh();
-            harness.show(presenter);
+            final TracesEditor editor = injector.getTracesEditor();
+            editor.setDataSourceRef(DATA_SOURCE);
+            editor.setPathway(null);
+            editor.setFilter(null);
+            editor.forceRefresh();
+            harness.show(new DocumentEditorHost<>(harness.getEventBus(), editor, TracesDoc.TYPE));
         });
         return harness.asWidget();
     }

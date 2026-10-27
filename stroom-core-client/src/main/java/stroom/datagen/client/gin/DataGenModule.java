@@ -18,7 +18,6 @@ package stroom.datagen.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.datagen.client.DataGenPlugin;
-import stroom.datagen.client.presenter.DataGenPresenter;
 
 /**
  * GIN bindings for the data generator's client-side plugin, presenters and views.
@@ -28,7 +27,5 @@ public class DataGenModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(DataGenPlugin.class);
-
-        bind(DataGenPresenter.class);
     }
 }

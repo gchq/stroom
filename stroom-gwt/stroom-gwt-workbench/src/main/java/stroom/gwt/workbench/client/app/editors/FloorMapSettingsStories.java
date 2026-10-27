@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 
 /// The `App/Editors/FloorMapSettings` stories, showing Stroom's real [FloorMapSettingsController] (a
-/// Floor Map's 'Settings' tab, shown as `FloorMapPresenter` shows it) with fake REST replies, for
+/// Floor Map's 'Settings' tab, shown as `FloorMapDocEditor` shows it) with fake REST replies, for
 /// its Value Schema grid: a row per field mapping, each with a selection box for its role
 /// ([stroom.item.client.SelectionBoxCell]) and text fields for its path, display name and default
 /// ([stroom.cell.textfield.client.TextFieldCell]), each named for its column and the row's path.

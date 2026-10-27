@@ -23,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.index.client.presenter.IndexPresenter;
+import stroom.index.client.component.LuceneIndexEditor;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
@@ -43,24 +44,26 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
-    private final Provider<IndexPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<LuceneIndexEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public IndexPlugin(final EventBus eventBus,
-                       final Provider<IndexPresenter> editorProvider,
+                       final Provider<LuceneIndexEditor> editorProvider,
                        final RestFactory restFactory,
                        final ContentManager contentManager,
                        final DocumentPluginEventManager entityPluginEventManager,
                        final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), LuceneIndexDoc.TYPE);
     }
 
     @Override

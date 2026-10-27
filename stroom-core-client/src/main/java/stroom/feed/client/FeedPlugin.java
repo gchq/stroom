@@ -23,9 +23,10 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
-import stroom.feed.client.presenter.FeedPresenter;
+import stroom.feed.client.component.FeedEditor;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -43,17 +44,19 @@ import javax.inject.Singleton;
 @Singleton
 public class FeedPlugin extends DocumentPlugin<FeedDoc> {
 
-    private final Provider<FeedPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FeedEditor> editorProvider;
     private final FeedClient feedClient;
 
     @Inject
     public FeedPlugin(final EventBus eventBus,
-                      final Provider<FeedPresenter> editorProvider,
+                      final Provider<FeedEditor> editorProvider,
                       final FeedClient feedClient,
                       final ContentManager contentManager,
                       final DocumentPluginEventManager entityPluginEventManager,
                       final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.feedClient = feedClient;
 
@@ -85,7 +88,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), FeedDoc.TYPE);
     }
 
     @Override

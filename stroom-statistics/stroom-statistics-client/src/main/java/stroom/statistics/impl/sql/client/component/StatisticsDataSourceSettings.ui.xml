@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A statistic store's Settings tab -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="statisticsSettingsStatisticType" label="Statistic Type"
+                        helpText="Count records the number of events; Value records a numeric value from each event, e.g. a size or duration. Must match the type of the statistic events sent to this store."
+                        screenReaderText="Count of events, or a numeric value per event.">
+            <l:SelectionBox ui:field="statisticType"/>
+        </form:FormGroup>
+        <form:FormGroup identity="statisticsSettingsPrecision" label="Precision"
+                        helpText="The time bucket that events are grouped into when stored: Second, Minute, Hour or Day. Smaller buckets give more detail but use more storage. Default is Hour."
+                        screenReaderText="Smallest time bucket for stored values. Default is Hour.">
+            <l:SelectionBox ui:field="precision"/>
+        </form:FormGroup>
+        <form:FormGroup identity="statisticsSettingsRollUpType" label="Roll Up Type"
+                        helpText="Which tag combinations are also stored with tag values replaced by '*', so they can be queried quickly. None stores no roll-ups, All stores every combination, Custom stores only the combinations you define."
+                        screenReaderText="None, All, or Custom combinations of rolled-up tags.">
+            <l:SelectionBox ui:field="rollUpType"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether statistics are recorded in this store. When unticked, statistics sent to it are dropped, and a pipeline that writes to it fails."
+                        screenReaderText="When unticked, nothing is recorded.">
+            <tickbox:TickBox ui:field="enabled" identity="statisticsSettingsEnabled" label="Enabled"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

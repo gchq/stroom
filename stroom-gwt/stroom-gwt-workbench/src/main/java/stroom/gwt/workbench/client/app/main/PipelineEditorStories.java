@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -37,7 +38,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.pipeline.client.presenter.PipelinePresenter;
+import stroom.pipeline.client.component.PipelineEditor;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.security.shared.DocumentPermission;
@@ -47,7 +48,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories of `App/Main/PipelineEditor`, showing Stroom's real [PipelinePresenter] (a Pipeline's
+/// Stories of `App/Main/PipelineEditor`, showing Stroom's real [PipelineEditor] (a Pipeline's
 /// editor tab: Data, Structure, Processors, Active Tasks, Documentation and Permissions), opened as
 /// `PipelinePlugin` opens a document, with fake REST replies.
 ///
@@ -1315,7 +1316,8 @@ public final class PipelineEditorStories {
         // Opened once Stroom has started, as PipelinePlugin opens a document: load it, check the
         // user may edit it, read it into the editor and show the tab
         harness.afterStartUp(() -> {
-            final PipelinePresenter presenter = injector.getPipelinePresenter();
+            final DocumentEditorHost<PipelineDoc> presenter = new DocumentEditorHost<>(
+                    harness.getEventBus(), injector.getPipelineEditor(), PipelineDoc.TYPE);
             final PipelineResource resource = GWT.create(PipelineResource.class);
             harness.getRestFactory()
                     .create(resource)

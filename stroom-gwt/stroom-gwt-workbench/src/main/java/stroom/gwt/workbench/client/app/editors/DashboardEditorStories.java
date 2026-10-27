@@ -24,7 +24,7 @@ import stroom.gwt.workbench.client.app.dashboard.DashboardSearchStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 /// The `App/Editors/DashboardEditor` stories: Stroom's real dashboard editor
-/// (`DashboardSuperPresenter` with its `DashboardBodyController`, opened as `DashboardPlugin` opens it)
+/// (`DashboardEditor` with its `DashboardBodyController`, opened as `DashboardPlugin` opens it)
 /// with dashboards as Stroom's `DashboardDoc` JSON, and fake REST replies.
 ///
 /// The stories are in the dashboard batch's package (`client.app.dashboard`), by what they show:

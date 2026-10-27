@@ -18,13 +18,11 @@ package stroom.sqlstore.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.sqlstore.client.SqlTemporalStorePlugin;
-import stroom.sqlstore.client.presenter.SqlTemporalStorePresenter;
 
 public class SqlTemporalStoreModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(SqlTemporalStorePlugin.class);
-        bind(SqlTemporalStorePresenter.class);
     }
 }

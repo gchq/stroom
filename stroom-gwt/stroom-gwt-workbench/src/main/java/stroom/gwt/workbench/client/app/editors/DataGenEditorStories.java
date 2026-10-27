@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.datagen.client.component.DataGenEditor;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenResource;
 import stroom.docref.DocRef;
@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/DataGenEditor` stories, showing Stroom's real [DataGenPresenter] (a Data
+/// The `App/Editors/DataGenEditor` stories, showing Stroom's real [DataGenEditor] (a Data
 /// Generator's tab: Settings, Execution, Documentation and Permissions) with fake REST replies.
 ///
 /// As `DataGenPlugin` does, the story fetches the document (`GET /datagen/v1/{uuid}`) and reads it
@@ -194,7 +194,7 @@ public final class DataGenEditorStories {
                                             + StartupFixtures.DEFAULT_UI_CONFIG.trim().substring(1)),
                 (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getDataGenPresenter(),
+                injector.getDataGenEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

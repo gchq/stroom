@@ -20,9 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
-import stroom.pipeline.client.presenter.PipelinePresenter;
-import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 
@@ -31,13 +28,10 @@ public class PipelineModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(TextConverterPlugin.class);
-        bind(TextConverterPresenter.class);
 
         bindPlugin(XsltPlugin.class);
-        bind(XsltPresenter.class);
 
         bindPlugin(PipelinePlugin.class);
-        bind(PipelinePresenter.class);
 
 
         // Add processor bindings.

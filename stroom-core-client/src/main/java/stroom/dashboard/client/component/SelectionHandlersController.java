@@ -19,7 +19,6 @@ package stroom.dashboard.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.component.SelectionHandlers.SelectionHandlersAction;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
@@ -263,10 +262,10 @@ public class SelectionHandlersController extends SettingsTabController implement
             fieldSelectionListModel = createSelectionListModelFromColumns(settings.getColumns());
         } else if (useForFilter) {
             final DashboardPane component = getDashboardContext().getComponents().get(componentConfig.getId());
-            if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
+            if (component instanceof final EmbeddedQueryController embeddedQuery) {
                 List<Column> columns = Collections.emptyList();
                 final QueryResultTableController queryResultTablePresenter =
-                        embeddedQueryPresenter.getCurrentTablePresenter();
+                        embeddedQuery.getCurrentTablePresenter();
                 if (queryResultTablePresenter != null) {
                     columns = NullSafe.list(queryResultTablePresenter.getCurrentColumns());
                 }

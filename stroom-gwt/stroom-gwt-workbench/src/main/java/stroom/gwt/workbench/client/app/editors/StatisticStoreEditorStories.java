@@ -37,7 +37,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/Editors/StatisticStoreEditor` stories, showing Stroom's real
-/// `StatisticsDataSourcePresenter` (a statistic store's editor tab: Settings, Fields, Custom
+/// `StatisticsDataSourceEditor` (a statistic store's editor tab: Settings, Fields, Custom
 /// Roll-ups, Documentation and Permissions) with fake REST replies.
 ///
 /// As `StatisticsPlugin` does, the story fetches the document (`GET /statistic/v1/{uuid}`), checks
@@ -239,7 +239,7 @@ public final class StatisticStoreEditorStories {
                 : DocumentPermission.EDIT);
         final StatisticResource resource = GWT.create(StatisticResource.class);
         // Opened once Stroom has started, as StatisticsPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getStatisticsDataSourcePresenter(),
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getStatisticsDataSourceEditor(),
                 DOC_REF, resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }

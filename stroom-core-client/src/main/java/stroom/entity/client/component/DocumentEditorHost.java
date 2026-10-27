@@ -16,6 +16,7 @@
 
 package stroom.entity.client.component;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
 import stroom.docref.DocRef;
@@ -28,11 +29,14 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerView;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /// Opens a [DocumentEditor], or another [TabbedController] such as a folder's tabs, as a tab of
 /// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents through presenters.
@@ -51,7 +55,7 @@ import java.util.Optional;
 /// ```
 ///
 /// @param <D> The document's type.
-public final class DocumentEditorHost<D>
+public class DocumentEditorHost<D>
         extends DocPresenter<ControllerView, D>
         implements DocumentTabData, HasSave, HasCommonTabs {
 
@@ -69,9 +73,11 @@ public final class DocumentEditorHost<D>
         this.type = Objects.requireNonNull(type, "type");
         if (editor instanceof final DocumentEditor<D> documentEditor) {
             documentEditor.setOnDirtyChange(this::setDirty);
-            documentEditor.setOnSave(this::save);
+            documentEditor.setOnSave(this::fireSave);
             documentEditor.setOnSaveAs(() -> SaveAsDocumentEvent.fire(this, this));
         }
+        listen(ContentTabSelectionChangeEvent.getType(),
+                event -> editor.onContentTabVisible(event.getTabData() == this));
     }
 
     /// @return The controller this shows.
@@ -103,9 +109,38 @@ public final class DocumentEditorHost<D>
 
     @Override
     public void save() {
+        // As the editor's Save button, so the editor may ask first
+        if (editor instanceof final DocumentEditor<D> documentEditor) {
+            documentEditor.save();
+        } else {
+            fireSave();
+        }
+    }
+
+    // Asks DocumentPlugin to save the document
+    private void fireSave() {
         if (isDirty()) {
             SaveDocumentEvent.fire(this, this);
         }
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        return editor.handleKeyAction(action);
+    }
+
+    @Override
+    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+        return editor instanceof final DocumentEditor<D> documentEditor
+                ? documentEditor.getPostSaveCallback()
+                : null;
+    }
+
+    @Override
+    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+        return editor instanceof final DocumentEditor<D> documentEditor
+                ? documentEditor.getPostSaveAsCallback()
+                : null;
     }
 
     @Override
@@ -130,12 +165,28 @@ public final class DocumentEditorHost<D>
 
     @Override
     public String getLabel() {
-        final String name = docRef == null
-                ? ""
-                : docRef.getName();
+        final String name = getName();
         return isDirty()
                 ? "* " + name
                 : name;
+    }
+
+    /// @return What the tab is called, before any mark that it is dirty: the editor's label for it,
+    /// or the document's name.
+    protected String getName() {
+        final String tabLabel = editor.getTabLabel();
+        if (tabLabel != null) {
+            return tabLabel;
+        } else if (docRef != null) {
+            return docRef.getName();
+        } else {
+            return "";
+        }
+    }
+
+    @Override
+    public void onClose() {
+        editor.onClose();
     }
 
     @Override

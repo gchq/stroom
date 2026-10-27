@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.shared.ComponentConfig;
@@ -93,7 +92,7 @@ public class BasicTableFilterInputSettingsController
         final List<DashboardPane> list = getDashboardContext()
                 .getComponents().getSortedComponentsByType(
                         TableController.TYPE.getId(),
-                        EmbeddedQueryPresenter.TYPE.getId());
+                        EmbeddedQueryController.TYPE.getId());
         getView().setTableList(list);
 
         final TableFilterComponentSettings settings = (TableFilterComponentSettings) componentConfig.getSettings();

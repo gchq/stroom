@@ -18,13 +18,11 @@ package stroom.planb.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.planb.client.PlanBPlugin;
-import stroom.planb.client.presenter.PlanBPresenter;
 
 public class PlanBModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(PlanBPlugin.class);
-        bind(PlanBPresenter.class);
     }
 }

@@ -17,38 +17,38 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.ai.client.AskStroomAiPresenter;
-import stroom.aws.s3.client.presenter.S3ConfigPresenter;
-import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.aws.s3.client.component.S3ConfigEditor;
+import stroom.datagen.client.component.DataGenEditor;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
-import stroom.documentation.client.presenter.DocumentationPresenter;
-import stroom.feed.client.presenter.FeedPresenter;
+import stroom.documentation.client.component.DocumentationEditor;
+import stroom.feed.client.component.FeedEditor;
 import stroom.floormap.client.component.FloorMapEditorController;
 import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.folder.client.FolderTabs;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
+import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.index.client.presenter.IndexPresenter;
-import stroom.kafka.client.presenter.KafkaConfigPresenter;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
-import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.script.client.presenter.ScriptPresenter;
-import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.index.client.component.LuceneIndexEditor;
+import stroom.kafka.client.component.KafkaConfigEditor;
+import stroom.openai.client.component.OpenAIModelEditor;
+import stroom.pathways.client.component.PathwaysEditor;
+import stroom.pipeline.client.component.TextConverterEditor;
+import stroom.pipeline.client.component.XsltEditor;
+import stroom.script.client.component.ScriptEditor;
+import stroom.search.elastic.client.component.ElasticClusterEditor;
+import stroom.search.elastic.client.component.ElasticIndexEditor;
+import stroom.search.solr.client.component.SolrIndexEditor;
 import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.client.component.VisualisationEditor;
 import stroom.visualisation.shared.VisualisationDoc;
-import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
+import stroom.xmlschema.client.component.XMLSchemaEditor;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -58,7 +58,7 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final GitRepoPresenter presenter = injector.getGitRepoPresenter();
+/// final GitRepoEditor presenter = injector.getGitRepoEditor();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
@@ -72,39 +72,24 @@ import com.google.gwt.inject.client.GinModules;
         SecurityScreenModule.class,
         AlertScreenModule.class,
         AskStroomAIScreenModule.class,
-        DataGenScreenModule.class,
-        DocumentationScreenModule.class,
-        ElasticClusterScreenModule.class,
-        ElasticIndexScreenModule.class,
-        FeedScreenModule.class,
-        GitRepoScreenModule.class,
         IndexScreenModule.class,
-        KafkaConfigScreenModule.class,
-        OpenAIModelScreenModule.class,
-        PathwaysScreenModule.class,
-        PipelineScreenModule.class,
-        S3ConfigScreenModule.class,
         ScheduleScreenModule.class,
-        ScriptScreenModule.class,
-        SolrIndexScreenModule.class,
         StreamStoreScreenModule.class,
-        VisualisationScreenModule.class,
-        XMLSchemaScreenModule.class,
         SqlTemporalStoreScreenModule.class,
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Data Generator's editor tab, as `DataGenPlugin` creates it.
-    DataGenPresenter getDataGenPresenter();
+    DataGenEditor getDataGenEditor();
 
     /// @return A Documentation document's editor tab, as `DocumentationPlugin` creates it.
-    DocumentationPresenter getDocumentationPresenter();
+    DocumentationEditor getDocumentationEditor();
 
     /// @return An Elastic Cluster's editor tab, as `ElasticClusterPlugin` creates it.
-    ElasticClusterPresenter getElasticClusterPresenter();
+    ElasticClusterEditor getElasticClusterEditor();
 
     /// @return A Floor Map's 'Editor' tab (the map canvas, its timeline and its Layers panel), as
-    /// `FloorMapPresenter` creates it.
+    /// `FloorMapDocEditor` creates it.
     FloorMapEditorController getFloorMapEditor();
 
     /// @return The dialog that asks for a new Floor Map's facts and events stores, made for one use
@@ -112,23 +97,23 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     FloorMapInitController getFloorMapInitController();
 
     /// @return A Floor Map's 'Map' tab (the read-only map canvas, its timeline and its Tracking,
-    /// Layers and Groups panels), as `FloorMapPresenter` creates it.
+    /// Layers and Groups panels), as `FloorMapDocEditor` creates it.
     FloorMapMapController getFloorMapMap();
 
-    /// @return A Floor Map's 'Settings' tab, as `FloorMapPresenter` creates it.
+    /// @return A Floor Map's 'Settings' tab, as `FloorMapDocEditor` creates it.
     FloorMapSettingsController getFloorMapSettingsController();
 
     /// @return A Git Repository's editor tab, as `GitRepoPlugin` creates it.
-    GitRepoPresenter getGitRepoPresenter();
+    GitRepoEditor getGitRepoEditor();
 
     /// @return An OpenAI Model's editor tab, as `OpenAIModelPlugin` creates it.
-    OpenAIModelPresenter getOpenAIModelPresenter();
+    OpenAIModelEditor getOpenAIModelEditor();
 
     /// @return A Pathways document's editor tab, as `PathwaysPlugin` creates it.
-    PathwaysPresenter getPathwaysPresenter();
+    PathwaysEditor getPathwaysEditor();
 
     /// @return A Visualisation's editor tab, as `VisualisationPlugin` creates it.
-    VisualisationPresenter getVisualisationPresenter();
+    VisualisationEditor getVisualisationEditor();
 
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
@@ -144,33 +129,33 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     // Code documents
 
     /// @return An XSLT's editor tab, as `XsltPlugin` creates it.
-    XsltPresenter getXsltPresenter();
+    XsltEditor getXsltEditor();
 
     /// @return A Text Converter's editor tab, as `TextConverterPlugin` creates it.
-    TextConverterPresenter getTextConverterPresenter();
+    TextConverterEditor getTextConverterEditor();
 
     /// @return A Script's editor tab, as `ScriptPlugin` creates it.
-    ScriptPresenter getScriptPresenter();
+    ScriptEditor getScriptEditor();
 
     /// @return A Kafka Config's editor tab, as `KafkaConfigPlugin` creates it.
-    KafkaConfigPresenter getKafkaConfigPresenter();
+    KafkaConfigEditor getKafkaConfigEditor();
 
-    /// @return An S3 Config's editor tab, as `S3ConfigPlugin` creates it.
-    S3ConfigPresenter getS3ConfigPresenter();
+    /// @return An S3 Config's editor, as `S3ConfigPlugin` opens it.
+    S3ConfigEditor getS3ConfigEditor();
 
     /// @return An XML Schema's editor tab, as `XMLSchemaPlugin` creates it.
-    XMLSchemaPresenter getXMLSchemaPresenter();
+    XMLSchemaEditor getXMLSchemaEditor();
 
     // Indexes
 
     /// @return A Lucene index's editor tab, as `IndexPlugin` creates it.
-    IndexPresenter getIndexPresenter();
+    LuceneIndexEditor getLuceneIndexEditor();
 
     /// @return A Solr index's editor tab, as `SolrIndexPlugin` creates it.
-    SolrIndexPresenter getSolrIndexPresenter();
+    SolrIndexEditor getSolrIndexEditor();
 
     /// @return An Elastic index's editor tab, as `ElasticIndexPlugin` creates it.
-    ElasticIndexPresenter getElasticIndexPresenter();
+    ElasticIndexEditor getElasticIndexEditor();
 
     // Folders and feeds
 
@@ -179,7 +164,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     FolderTabs getFolderTabs();
 
     /// @return A Feed's editor tab, as `FeedPlugin` creates it.
-    FeedPresenter getFeedPresenter();
+    FeedEditor getFeedEditor();
 
     // AI
 

@@ -19,7 +19,6 @@ package stroom.query.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.query.client.QueryPlugin;
 import stroom.query.client.ResultStorePlugin;
-import stroom.query.client.presenter.QueryDocPresenter;
 
 public class QueryModule extends PluginModule {
 
@@ -27,8 +26,6 @@ public class QueryModule extends PluginModule {
     protected void configure() {
         bindPlugin(QueryPlugin.class);
         bindPlugin(ResultStorePlugin.class);
-
-        bind(QueryDocPresenter.class);
 
     }
 }

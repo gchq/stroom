@@ -19,11 +19,12 @@ package stroom.gwt.workbench.client.app.dashboard;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
-import stroom.dashboard.client.main.DashboardSuperPresenter;
+import stroom.dashboard.client.component.DashboardEditor;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.docref.DocRef;
 import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.component.MultiInstanceEditorHost;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.dashboard.DashboardScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -48,7 +49,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// What the dashboard batch's stories share: opening a dashboard in Stroom's real editor
-/// (`DashboardSuperPresenter`, as `DashboardPlugin` does), its fixtures and the play helpers.
+/// (`DashboardEditor` in its tab, as `DashboardPlugin` does), its fixtures and the play helpers.
 ///
 /// A story's dashboard is the JSON of a `DashboardDoc`, which [#docRoutes] serves from
 /// `GET /dashboard/v1/{uuid}` (and echoes on `PUT`, the toolbar's Save), so the dashboard is read
@@ -199,12 +200,12 @@ public final class DashboardSupport {
         new HelpManager(harness.getEventBus());
         registerComponentTypes(injector);
         harness.afterStartUp(() -> {
-            final DashboardSuperPresenter presenter = injector.getDashboardSuperPresenter();
+            final DashboardEditor editor = injector.getDashboardEditor();
             if (opts.linkParams != null) {
                 // As DashboardPlugin.openParameterisedDashboard does for a link's params
-                presenter.setParamsFromLink(opts.linkParams);
+                editor.setParamsFromLink(opts.linkParams);
             }
-            open(harness, new DocRef(DashboardDoc.TYPE, uuid, name), presenter, opts.afterOpen);
+            open(harness, new DocRef(DashboardDoc.TYPE, uuid, name), editor, opts.afterOpen);
         });
         return harness.asWidget();
     }
@@ -228,8 +229,10 @@ public final class DashboardSupport {
     // As DashboardPlugin (DocumentPlugin) does: fetch, check EDIT, read, show the tab, select it
     private static void open(final ScreenHarness harness,
                              final DocRef docRef,
-                             final DashboardSuperPresenter presenter,
-                             final Consumer<DashboardSuperPresenter> afterOpen) {
+                             final DashboardEditor editor,
+                             final Consumer<DashboardEditor> afterOpen) {
+        final MultiInstanceEditorHost<DashboardDoc> presenter = new MultiInstanceEditorHost<>(
+                harness.getEventBus(), editor, DashboardDoc.TYPE);
         final DashboardResource resource = GWT.create(DashboardResource.class);
         harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
             if (event.getTabData() == presenter) {
@@ -240,7 +243,6 @@ public final class DashboardSupport {
                 .create(resource)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(doc -> {
-                    presenter.getDefaultTab().ifPresent(presenter::selectTab);
                     harness.getSecurityContext().hasDocumentPermission(
                             docRef,
                             DocumentPermission.EDIT,
@@ -250,7 +252,7 @@ public final class DashboardSupport {
                                 harness.show(presenter);
                                 // As Stroom's content pane does when it selects the tab
                                 ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), presenter);
-                                afterOpen.accept(presenter);
+                                afterOpen.accept(editor);
                             },
                             error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
                             presenter);
@@ -266,7 +268,7 @@ public final class DashboardSupport {
     // As DocumentPlugin.save
     private static void save(final ScreenHarness harness,
                              final DocRef docRef,
-                             final DashboardSuperPresenter presenter,
+                             final MultiInstanceEditorHost<DashboardDoc> presenter,
                              final DashboardResource resource) {
         if (presenter.isDirty()) {
             final DashboardDoc document = presenter.write(presenter.getEntity());
@@ -302,7 +304,7 @@ public final class DashboardSupport {
         private Consumer<ScreenHarness.Builder> harnessOptions = builder -> {
         };
         private String linkParams;
-        private Consumer<DashboardSuperPresenter> afterOpen = presenter -> {
+        private Consumer<DashboardEditor> afterOpen = presenter -> {
         };
         private BiConsumer<ScreenHarness, DashboardScreenGinjector> setup = (harness, injector) -> {
         };
@@ -335,7 +337,7 @@ public final class DashboardSupport {
 
         /// @param afterOpen What to do once the dashboard is open, e.g. handle its events.
         /// @return These options.
-        public Options afterOpen(final Consumer<DashboardSuperPresenter> afterOpen) {
+        public Options afterOpen(final Consumer<DashboardEditor> afterOpen) {
             this.afterOpen = afterOpen;
             return this;
         }

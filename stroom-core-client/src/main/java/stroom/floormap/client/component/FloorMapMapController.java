@@ -592,7 +592,7 @@ public class FloorMapMapController
                 floorMapTracking.getGridElementId());
     }
 
-    /// Returns the Map tab's buttons. [FloorMapPresenter]'s base class
+    /// Returns the Map tab's buttons. [FloorMapDocEditor]'s base class
     /// (`DocTabPresenter`) adds these to the document toolbar, after the
     /// save buttons, whenever this tab is selected.
     @Override
@@ -1698,7 +1698,7 @@ public class FloorMapMapController
 
     /// Pauses the timeline if it is currently playing.
     ///
-    /// Called by [FloorMapPresenter] when the user navigates away from
+    /// Called by [FloorMapDocEditor] when the user navigates away from
     /// the Map tab, so that background queries are not issued while the tab
     /// is hidden.
     public void pauseTimeline() {
@@ -1726,7 +1726,7 @@ public class FloorMapMapController
     /// Re-runs the facts query at the current time so the canvas reflects the
     /// latest persisted state.
     ///
-    /// Called by [FloorMapPresenter] when the user selects the Map tab
+    /// Called by [FloorMapDocEditor] when the user selects the Map tab
     /// and after the Editor tab's staged changes are flushed on save — the Map
     /// tab otherwise only re-queries on its own timeline changes, so edits made
     /// on the Editor tab (moved objects, new icons/backgrounds) would not appear

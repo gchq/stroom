@@ -53,9 +53,9 @@ import com.google.web.bindery.event.shared.EventBus;
 ///
 /// The tabs hold stand-in editors (`DocumentTab`, showing the document's type and name) opened
 /// through Stroom's `ContentManager`; a Dashboard tab is `HasMultipleInstances`, as Stroom's
-/// `DashboardSuperPresenter` is. 'Duplicate Tab' fires `OpenDocumentEvent` with `duplicate` set (for the
-/// document's plugin to open another instance), which the `onOpenDocument` spy records. No requests
-/// are made.
+/// dashboard tab (`MultiInstanceEditorHost`) is. 'Duplicate Tab' fires `OpenDocumentEvent` with
+/// `duplicate` set (for the document's plugin to open another instance), which the
+/// `onOpenDocument` spy records. No requests are made.
 public final class ContentTabPaneStories {
 
     /// The name of the spy recording the documents asked to be opened (Stroom's `OpenDocumentEvent`).

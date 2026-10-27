@@ -24,6 +24,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.FindMetaCriteria;
@@ -32,8 +33,8 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.client.component.DocRefSelectionController;
+import stroom.pipeline.client.component.PipelineEditor;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
@@ -48,6 +49,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -69,13 +71,14 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final AppRoot appRoot;
-    private final Provider<PipelinePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<PipelineEditor> editorProvider;
     private final RestFactory restFactory;
     private final Provider<DocRefSelectionController> docRefSelectionProvider;
 
     @Inject
     public PipelinePlugin(final EventBus eventBus,
-                          final Provider<PipelinePresenter> editorProvider,
+                          final Provider<PipelineEditor> editorProvider,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
@@ -84,6 +87,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                           final Provider<DocRefSelectionController> docRefSelectionProvider,
                           final AppRoot appRoot) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
@@ -95,15 +99,17 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid);
             // Open the item in the content pane.
-            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef,
+            final MyPresenterWidget<?> presenter = open(docRef,
                     true,
                     false,
                     new DefaultTaskMonitorFactory(this));
             // Highlight the item in the explorer tree.
             //            highlight(docRef);
 
-            pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getProcessors().refresh(event.getProcessorFilter());
+            final PipelineEditor pipelineEditor = getEditor(presenter);
+            if (pipelineEditor != null) {
+                pipelineEditor.showProcessorFilter(event.getProcessorFilter());
+            }
         });
 
         getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping);
@@ -111,9 +117,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof final PipelinePresenter pipelinePresenter) {
-            final List<DocRef> dirtyDocs = pipelinePresenter.getDirtyDocs();
-            final DocRef pipeline = pipelinePresenter.getDocRef();
+        final PipelineEditor pipelineEditor = getEditor(tabData);
+        if (pipelineEditor != null) {
+            final List<DocRef> dirtyDocs = pipelineEditor.getDirtyDocs();
+            final DocRef pipeline = pipelineEditor.getDocRef();
 
             if (!(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
                 docRefSelectionProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
@@ -121,10 +128,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                             final AtomicInteger completedSaves = new AtomicInteger(0);
                             final Runnable onSaved = () -> {
                                 if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
-                                    pipelinePresenter.onChange();
+                                    pipelineEditor.refreshDirty();
                                 }
                             };
-                            pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
+                            pipelineEditor.saveDocs(selectedDocRefs, onSaved);
                             if (selectedDocRefs.contains(pipeline)) {
                                 super.save(tabData, onSaved);
                             }
@@ -137,7 +144,15 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), PipelineDoc.TYPE);
+    }
+
+    // The pipeline editor a pipeline's tab shows, or null for another tab
+    private static PipelineEditor getEditor(final Object tab) {
+        return tab instanceof final DocumentEditorHost<?> host
+               && host.getEditor() instanceof final PipelineEditor pipelineEditor
+                ? pipelineEditor
+                : null;
     }
 
     @Override
@@ -253,24 +268,27 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                   final String childStreamType) {
         open(pipeline, true, false,
                 false, presenter -> {
-                    final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
+                    final PipelineEditor pipelineEditor = getEditor(presenter);
+                    if (pipelineEditor == null) {
+                        return;
+                    }
 
-                    if (pipelinePresenter.isSteppingInit()) {
-                        pipelinePresenter.showSteppingMode(true);
-                        pipelinePresenter.setMetaListExpression(
+                    if (pipelineEditor.isSteppingInit()) {
+                        pipelineEditor.showSteppingMode(true);
+                        pipelineEditor.setMetaListExpression(
                                 MetaExpressionUtil.createDataIdExpression(meta.getId()),
-                                () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
+                                () -> pipelineEditor.beginStepping(stepType, stepLocation, meta, childStreamType));
                     } else {
-                        pipelinePresenter.setSteppingMetaExpression(
+                        pipelineEditor.setSteppingMetaExpression(
                                 MetaExpressionUtil.createDataIdExpression(meta.getId()));
-                        pipelinePresenter.showSteppingMode(true);
+                        pipelineEditor.showSteppingMode(true);
                         // Only begin stepping when the pipeline model has been loaded.
                         // Then remove the handler because we dont want it to run again
                         final HandlerRegistration[] registration = new HandlerRegistration[1];
-                        registration[0] = pipelinePresenter.addDataLoadedListener(model -> {
+                        registration[0] = pipelineEditor.addDataLoadedListener(model -> {
                             registration[0].removeHandler();
-                            pipelinePresenter.refreshSteppingMeta(
-                                    () -> pipelinePresenter.beginStepping(stepType,
+                            pipelineEditor.refreshSteppingMeta(
+                                    () -> pipelineEditor.beginStepping(stepType,
                                             stepLocation,
                                             meta,
                                             childStreamType));

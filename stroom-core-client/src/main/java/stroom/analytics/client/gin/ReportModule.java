@@ -17,7 +17,6 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.ReportPlugin;
-import stroom.analytics.client.presenter.ReportPresenter;
 import stroom.core.client.gin.PluginModule;
 
 public class ReportModule extends PluginModule {
@@ -25,7 +24,6 @@ public class ReportModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(ReportPlugin.class);
-        bind(ReportPresenter.class);
 
     }
 }

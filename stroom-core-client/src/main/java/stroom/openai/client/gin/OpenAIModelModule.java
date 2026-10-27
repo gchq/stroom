@@ -18,13 +18,11 @@ package stroom.openai.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.openai.client.OpenAIModelPlugin;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
 
 public class OpenAIModelModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(OpenAIModelPlugin.class);
-        bind(OpenAIModelPresenter.class);
     }
 }

@@ -33,7 +33,6 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardContextImpl;
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.client.main.MutableConfigUtil;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.Refreshable;
@@ -51,6 +50,7 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.query.api.ParamUtil;
@@ -669,8 +669,9 @@ public class DashboardBodyController
                 OpenDocumentEvent.builder(this, dashDocRef)
                         .forceOpen(true)
                         .callbackOnOpen(presenter -> {
-                            if (presenter instanceof final DashboardSuperPresenter dashboardSuperPresenter) {
-                                dashboardSuperPresenter.getDashboardBody()
+                            if (presenter instanceof final DocumentEditorHost<?> host
+                                && host.getEditor() instanceof final DashboardEditor dashboardEditor) {
+                                dashboardEditor.getDashboardBody()
                                         .duplicateTab(tabLayoutConfig, tabConfig, components);
                             }
                         }).fire();

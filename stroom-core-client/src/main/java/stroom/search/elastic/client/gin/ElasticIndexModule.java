@@ -18,12 +18,10 @@ package stroom.search.elastic.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.search.elastic.client.ElasticIndexPlugin;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 
 public class ElasticIndexModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(ElasticIndexPlugin.class);
-        bind(ElasticIndexPresenter.class);
     }
 }

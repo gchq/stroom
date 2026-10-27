@@ -8,48 +8,45 @@
  *
  * <h3>1. Dependency Injection</h3>
  * <p>Inject a {@link stroom.document.asset.client.component.DocumentAssetsTabController} into your
- * document's primary presenter (usually a <code>DocTabPresenter</code>), which owns it. Ensure it is
- * parameterized with your document's shared POJO type.</p>
+ * document's editor (a <code>DocumentEditor</code>), which owns it. Ensure it is parameterized with
+ * your document's shared POJO type.</p>
  * <pre>
  * private final DocumentAssetsTabController&lt;MyDoc&gt; assetsTab;
- * private final DocumentAssetsTabProvider&lt;MyDoc&gt; assetsTabProvider;
  *
  * &#64;Inject
- * public MyPresenter(..., DocumentAssetsTabController&lt;MyDoc&gt; assetsTab, ...) {
+ * public MyDocEditor(..., DocumentAssetsTabController&lt;MyDoc&gt; assetsTab, ...) {
  *     this.assetsTab = own(assetsTab);
- *     this.assetsTabProvider = new DocumentAssetsTabProvider&lt;&gt;(eventBus, assetsTab);
  * }
  * </pre>
  *
  * <h3>2. Add the Asset Tab</h3>
- * <p>Add a new tab to your document view with the {@link DocumentAssetsTabProvider}, which shows the
- * controller and adds its buttons to the document's toolbar.</p>
+ * <p>Add the controller as a tab the editor owns already; the tab adds its buttons to the document's
+ * toolbar. The assets are saved after the document (step 5), so the tab writes nothing.</p>
  * <pre>
  * private static final TabData ASSETS = new TabDataImpl("Assets");
  * ...
- * addTab(ASSETS, assetsTabProvider);
+ * addOwnedTab(ASSETS, assetsTab, DocumentAssetsTabController::read);
  * </pre>
  *
  * <h3>3. Synchronize Tab Selection</h3>
- * <p>Override <code>afterSelectTab</code> to ensure the parent presenter re-evaluates its state when the
+ * <p>Override <code>afterSelectTab</code> to ensure the editor re-evaluates its state when the
  * asset tab is selected.</p>
  * <pre>
  * &#64;Override
- * protected void afterSelectTab(final MyPresenterWidget&lt;?&gt; content) {
- *     if (assetsTabProvider.isPresenter(content)) {
+ * protected void afterSelectTab(final TabData tab) {
+ *     if (ASSETS.equals(tab)) {
  *         onChange();
  *     }
  * }
  * </pre>
  *
  * <h3>4. Aggregate Dirty State</h3>
- * <p>Ensure the parent presenter considers the asset manager's dirty state when determining
- * if the document as a whole has unsaved changes.</p>
+ * <p>Ensure the editor considers the asset manager's dirty state when determining if the document
+ * as a whole has unsaved changes.</p>
  * <pre>
  * &#64;Override
  * protected boolean hasAssociatedDirty() {
- *     return super.hasAssociatedDirty()
- *         || assetsTab.isDirty();
+ *     return assetsTab.isDirty();
  * }
  * </pre>
  *
@@ -59,12 +56,12 @@
  * <pre>
  * &#64;Override
  * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveCallback() {
- *     return (doc, callback) -&gt; assetsTab.onSave(doc, callback);
+ *     return assetsTab::onSave;
  * }
  *
  * &#64;Override
  * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveAsCallback() {
- *     return (doc, callback) -&gt; assetsTab.onSaveAs(doc, callback);
+ *     return assetsTab::onSaveAs;
  * }
  * </pre>
  *

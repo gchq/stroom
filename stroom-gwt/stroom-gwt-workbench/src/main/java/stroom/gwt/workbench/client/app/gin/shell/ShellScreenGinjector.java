@@ -62,9 +62,7 @@ import stroom.gwt.workbench.client.app.gin.content.ContentStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentTemplateScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ImportExportScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.IndexVolumeScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.PathwaysScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.PipelineScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.PlanBScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.StreamStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.AnalyticsScreenModule;
@@ -132,8 +130,6 @@ import com.google.gwt.inject.client.GinModules;
         ContentAppScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,
-        PathwaysScreenModule.class,
-        PlanBScreenModule.class,
         ContentTemplateScreenModule.class,
         AnalyticsScreenModule.class,
         PolicyScreenModule.class,

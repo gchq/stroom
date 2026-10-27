@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -30,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.planb.client.component.PlanBEditor;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
 import stroom.security.shared.DocumentPermission;
@@ -40,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBPresenter` (a Plan B store's
+/// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBEditor` (a Plan B store's
 /// editor tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PlanBPlugin` does, the story fetches the document (`GET /planB/v1/{uuid}`), checks the user
@@ -352,9 +353,9 @@ public final class PlanBEditorStories {
     // Its FormGroup has no identity, so it has no id
     // Reads the shown document again, as DocumentPlugin does, read only or not
     private static void readAgain(final boolean readOnly) {
-        final PlanBPresenter presenter = ScreenHarness.shownContent();
-        presenter.setReadOnly(readOnly);
-        presenter.read(presenter.getDocRef(), presenter.getEntity());
+        final DocumentEditorHost<PlanBDoc> host = ScreenHarness.shownContent();
+        host.setReadOnly(readOnly);
+        host.read(host.getDocRef(), host.getEntity());
     }
 
     // The State Type selection box's text box
@@ -391,7 +392,7 @@ public final class PlanBEditorStories {
         final DocRef docRef = new DocRef(PlanBDoc.TYPE, uuid, uuid);
         final PlanBDocResource resource = GWT.create(PlanBDocResource.class);
         // Opened once Stroom has started, as PlanBPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getPlanBPresenter(), docRef,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getPlanBEditor(), docRef,
                 resource, res -> res.fetch(docRef.getUuid())));
         return harness.asWidget();
     }
@@ -405,7 +406,7 @@ public final class PlanBEditorStories {
         harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
         final DocRef docRef = new DocRef(PlanBDoc.TYPE, uuid, uuid);
         final PlanBDocResource resource = GWT.create(PlanBDocResource.class);
-        harness.afterStartUp(() -> DocEditors.open(harness, docRef, injector.getPlanBPresenter(),
+        harness.afterStartUp(() -> DocEditors.open(harness, docRef, injector.getPlanBEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(uuid)),
                         (restFactory, doc) -> restFactory.create(resource).method(res -> res.update(uuid, doc)))));

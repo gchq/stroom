@@ -17,9 +17,6 @@
 package stroom.dashboard.client.embeddedquery.gin;
 
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -31,7 +28,5 @@ public class EmbeddedQueryModule extends AbstractPresenterModule {
     protected void configure() {
         bind(EmbeddedQueryPlugin.class).asEagerSingleton();
         bind(VisFunctionCache.class).in(Singleton.class);
-
-        bindPresenterWidget(EmbeddedQueryPresenter.class, EmbeddedQueryView.class, EmbeddedQueryViewImpl.class);
     }
 }

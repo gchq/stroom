@@ -31,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.index.client.presenter.IndexPresenter;
+import stroom.index.client.component.LuceneIndexEditor;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.shared.AppPermission;
@@ -39,7 +39,7 @@ import stroom.security.shared.AppPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Index/IndexEditor` stories, showing Stroom's real [IndexPresenter] (a Lucene index's
+/// The `App/Index/IndexEditor` stories, showing Stroom's real [LuceneIndexEditor] (a Lucene index's
 /// tab: Shards for users with Manage Index Shards, Fields, Settings, Documentation and Permissions)
 /// with fake REST replies.
 ///
@@ -395,7 +395,7 @@ public final class IndexEditorStories {
                 },
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getIndexPresenter(),
+                        injector.getLuceneIndexEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

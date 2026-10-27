@@ -31,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.search.solr.client.component.SolrIndexEditor;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// The `App/Index/SolrIndexEditor` stories, showing Stroom's real [SolrIndexPresenter] (a Solr
+/// The `App/Index/SolrIndexEditor` stories, showing Stroom's real [SolrIndexEditor] (a Solr
 /// index's tab: Fields, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `SolrIndexPlugin` does, the story fetches the document (`GET /solrIndex/v1/{uuid}`) and
@@ -261,7 +261,7 @@ public final class SolrIndexEditorStories {
         final SolrIndexResource resource = GWT.create(SolrIndexResource.class);
         return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getSolrIndexPresenter(),
+                injector.getSolrIndexEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

@@ -27,14 +27,14 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
+import stroom.search.elastic.client.component.ElasticIndexEditor;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Index/ElasticIndexEditor` stories, showing Stroom's real [ElasticIndexPresenter] (an
+/// The `App/Index/ElasticIndexEditor` stories, showing Stroom's real [ElasticIndexEditor] (an
 /// Elastic index's tab: Settings, Fields, Documentation and Permissions) with fake REST replies.
 ///
 /// As `ElasticIndexPlugin` does, the story fetches the document (`GET /elasticIndex/v1/{uuid}`) and
@@ -156,7 +156,7 @@ public final class ElasticIndexEditorStories {
         final ElasticIndexResource resource = GWT.create(ElasticIndexResource.class);
         return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getElasticIndexPresenter(),
+                injector.getElasticIndexEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

@@ -35,9 +35,6 @@ import java.util.Objects;
 /// The base of a dashboard pane's controller: it holds the pane's config, shows the pane's settings
 /// dialog, and is shown (its component, given to `initWidget`) as a tab of the dashboard's layout.
 /// A subclass reads the pane's settings into its component and gives the pane's type.
-///
-/// Panes not yet converted extend `AbstractComponentPresenter`, which does the same for a
-/// presenter; it goes once the last of them has moved here.
 public abstract class DashboardComponentController extends LayerController implements DashboardPane {
 
     private final Provider<? extends ComponentSettingsDialogController> settingsProvider;

@@ -301,7 +301,7 @@ public final class DashboardDocs {
     public static String component(final String type, final String id, final String name, final String settings) {
         // An Embedded Query's embedded query document needs its type, UUID and name (as every
         // document, which Stroom's server gives it). Its settings may leave out 'automate' and
-        // 'queryTablePreferences' (EmbeddedQueryPresenter once read them without null checks)
+        // 'queryTablePreferences' (EmbeddedQueryController once read them without null checks)
         final String allSettings = settings.replace("\"embeddedQueryDoc\": {\"query\"",
                 "\"embeddedQueryDoc\": {\"type\": \"Query\", \"uuid\": \"eq-" + id + "\", \"name\": \""
                 + name + "\", \"query\"");

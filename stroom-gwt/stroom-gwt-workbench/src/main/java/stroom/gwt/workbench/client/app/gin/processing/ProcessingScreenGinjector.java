@@ -38,7 +38,7 @@ import stroom.node.client.presenter.NodeGroupPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.component.DocRefSelectionController;
-import stroom.pipeline.client.presenter.PipelinePresenter;
+import stroom.pipeline.client.component.PipelineEditor;
 import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 import stroom.pipeline.stepping.client.component.SteppingScreenController;
 import stroom.pipeline.structure.client.component.PipelineTree;
@@ -106,7 +106,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorTasksListController getProcessorTasksListController();
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
-    /// list), as `FolderPresenter`, `FeedPresenter` and `PipelinePresenter` create it.
+    /// list), as `FolderPresenter`, `FeedEditor` and `PipelineEditor` create it.
     ProcessorTaskPresenter getProcessorTaskPresenter();
 
     /// @return A processor filter's 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
@@ -135,9 +135,9 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Pipelines and stepping
 
     /// @return A Pipeline's editor tab, as `PipelinePlugin` creates it.
-    PipelinePresenter getPipelinePresenter();
+    PipelineEditor getPipelineEditor();
 
-    /// @return A pipeline's stepper, as `PipelinePresenter` shows it in stepping mode.
+    /// @return A pipeline's stepper, as `PipelineEditor` shows it in stepping mode.
     SteppingScreenController getSteppingScreen();
 
     /// @return A document chooser, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).

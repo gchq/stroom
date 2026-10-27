@@ -17,7 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
@@ -248,18 +247,18 @@ public class TabMenuController extends Controller {
             menuItems.add(createRestoreMenu());
         }
 
-        if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
-            final boolean showingVis = embeddedQueryPresenter.isShowingVis();
-            final boolean canShowVis = embeddedQueryPresenter.canShowVis();
+        if (component instanceof final EmbeddedQueryController embeddedQuery) {
+            final boolean showingVis = embeddedQuery.isShowingVis();
+            final boolean canShowVis = embeddedQuery.canShowVis();
             if (showingVis || canShowVis) {
-                menuItems.add(createShowTable(embeddedQueryPresenter, showingVis));
+                menuItems.add(createShowTable(embeddedQuery, showingVis));
             }
 
             final EmbeddedQueryComponentSettings embeddedQueryComponentSettings =
-                    (EmbeddedQueryComponentSettings) embeddedQueryPresenter.getSettings();
+                    (EmbeddedQueryComponentSettings) embeddedQuery.getSettings();
             if (embeddedQueryComponentSettings.getQueryRef() != null || !embeddedQueryComponentSettings.reference()) {
-                menuItems.add(createEditQuery(embeddedQueryPresenter));
-                menuItems.add(createRunQuery(embeddedQueryPresenter));
+                menuItems.add(createEditQuery(embeddedQuery));
+                menuItems.add(createRunQuery(embeddedQuery));
             }
         }
 
@@ -388,7 +387,7 @@ public class TabMenuController extends Controller {
                 .build();
     }
 
-    private Item createShowTable(final EmbeddedQueryPresenter embeddedQueryPresenter,
+    private Item createShowTable(final EmbeddedQueryController embeddedQuery,
                                  final boolean showingVis) {
         return new IconMenuItem.Builder()
                 .priority(12)
@@ -398,26 +397,26 @@ public class TabMenuController extends Controller {
                 .text(showingVis
                         ? "Show Table"
                         : "Show Visualisation")
-                .command(() -> embeddedQueryPresenter.showTable(showingVis))
+                .command(() -> embeddedQuery.showTable(showingVis))
                 .build();
     }
 
-    private Item createEditQuery(final EmbeddedQueryPresenter embeddedQueryPresenter) {
+    private Item createEditQuery(final EmbeddedQueryController embeddedQuery) {
         return new IconMenuItem.Builder()
                 .priority(13)
                 .icon(SvgImage.DOCUMENT_QUERY)
                 .text("Edit Query")
-                .command(embeddedQueryPresenter::editQuery)
+                .command(embeddedQuery::editQuery)
                 .build();
     }
 
-    private Item createRunQuery(final EmbeddedQueryPresenter embeddedQueryPresenter) {
+    private Item createRunQuery(final EmbeddedQueryController embeddedQuery) {
         return new IconMenuItem.Builder()
                 .priority(14)
                 .icon(SvgImage.PLAY)
                 .iconColour(IconColour.GREEN)
                 .text("Run Query")
-                .command(embeddedQueryPresenter::runQuery)
+                .command(embeddedQuery::runQuery)
                 .build();
     }
 

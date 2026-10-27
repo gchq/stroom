@@ -17,7 +17,9 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.annotation.client.AnnotationPresenter;
+import stroom.annotation.client.component.AnnotationTabs;
+import stroom.annotation.shared.Annotation;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -127,7 +129,7 @@ public final class AnnotationFixtures {
     }
 
     /// Opens an annotation's tab as `AnnotationEditSupport` does for `EditAnnotationEvent`: fetches
-    /// the annotation, reads it into a new `AnnotationPresenter` (editable) and shows it.
+    /// the annotation, reads it into new `AnnotationTabs` (editable) and shows it.
     ///
     /// @param injector     The story's injector.
     /// @param harness      The story's harness.
@@ -150,10 +152,11 @@ public final class AnnotationFixtures {
                             final long annotationId,
                             final boolean readOnly) {
         injector.getAnnotationResourceClient().getAnnotationById(annotationId, annotation -> {
-            final AnnotationPresenter presenter = injector.getAnnotationPresenter();
-            presenter.setReadOnly(readOnly);
-            presenter.read(annotation);
-            harness.show(presenter);
+            final DocumentEditorHost<Annotation> tab = new DocumentEditorHost<>(
+                    harness.getEventBus(), injector.getAnnotationTabs(), Annotation.TYPE);
+            tab.setReadOnly(readOnly);
+            tab.read(annotation.asDocRef(), annotation);
+            harness.show(tab);
         }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
     }
 }

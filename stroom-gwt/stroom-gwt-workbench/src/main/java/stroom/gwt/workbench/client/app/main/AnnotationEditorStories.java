@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/AnnotationEditor`, showing Stroom's real [AnnotationPresenter] (an
+/// Stories of `App/Main/AnnotationEditor`, showing Stroom's real [AnnotationTabs] (an
 /// annotation's tab: the editor with its history, settings and choosers, and the Events, Link
 /// To/From, Documentation and Permissions tabs) with fake REST replies.
 ///

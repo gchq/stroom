@@ -28,14 +28,14 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.DocumentPermission;
-import stroom.view.client.presenter.ViewPresenter;
+import stroom.view.client.component.ViewDocEditor;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/ViewEditor` stories, showing Stroom's real [ViewPresenter] (a View's editor
+/// The `App/Editors/ViewEditor` stories, showing Stroom's real [ViewDocEditor] (a View's editor
 /// tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// `ViewPlugin` fetches the document (`GET /view/v1/{uuid}`), checks the user may edit it and reads
@@ -77,7 +77,7 @@ public final class ViewEditorStories {
                 .layout(StoryLayout.FULLSCREEN)
                 .story("Default", context -> render(context, false))
                 .withPlay(play -> {
-                    // GWT ViewPresenter tabs: Settings (default), Documentation and Permissions
+                    // GWT ViewDocEditor tabs: Settings (default), Documentation and Permissions
                     for (final String label : new String[]{"Settings", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(DocumentEditors.tab(play, label)).toBeInTheDocument());
                     }
@@ -135,7 +135,7 @@ public final class ViewEditorStories {
                 : DocumentPermission.EDIT);
         final ViewResource resource = GWT.create(ViewResource.class);
         // Opened once Stroom has started, as ViewPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getViewPresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getViewDocEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }

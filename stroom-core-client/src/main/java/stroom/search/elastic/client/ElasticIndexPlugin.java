@@ -23,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
+import stroom.search.elastic.client.component.ElasticIndexEditor;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -43,25 +44,27 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
-    private final Provider<ElasticIndexPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<ElasticIndexEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public ElasticIndexPlugin(
             final EventBus eventBus,
-            final Provider<ElasticIndexPresenter> editorProvider,
+            final Provider<ElasticIndexEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), ElasticIndexDoc.TYPE);
     }
 
     @Override

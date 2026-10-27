@@ -17,7 +17,6 @@
 package stroom.annotation.client.component;
 
 import stroom.annotation.client.AnnotationChangeEvent;
-import stroom.annotation.client.AnnotationPresenter;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
@@ -43,6 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /// An annotation's Linked Events tab ([LinkedEvents]): the events linked to it, which the user can
 /// link and unlink, and the data of the one selected.
@@ -63,7 +63,8 @@ public class LinkedEventsController extends Controller {
 
     private List<EventId> currentData;
     private EventId nextSelection;
-    private AnnotationPresenter parent;
+    private Runnable onChange = () -> {
+    };
     private boolean readOnly;
 
     /// Made by GIN, with its content and its parts.
@@ -140,7 +141,7 @@ public class LinkedEventsController extends Controller {
     private void onChangeComplete(final Boolean success) {
         if (success != null && success) {
             AnnotationChangeEvent.fire(this, annotationRef);
-            parent.updateHistory();
+            onChange.run();
             refreshData();
         }
     }
@@ -221,9 +222,10 @@ public class LinkedEventsController extends Controller {
         enableButtons();
     }
 
-    /// @param parent The annotation's editor, whose history is updated when an event is linked.
-    public void setParent(final AnnotationPresenter parent) {
-        this.parent = parent;
+    /// @param onChange What to run once an event is linked or unlinked, e.g. to show it in the
+    ///                 annotation's history.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = Objects.requireNonNull(onChange, "onChange");
     }
 
     private void enableButtons() {

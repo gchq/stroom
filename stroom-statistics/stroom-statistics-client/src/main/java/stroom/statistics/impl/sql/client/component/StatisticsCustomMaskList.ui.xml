@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A statistic store's custom roll-ups: a row per permutation, a column per field, with New,
+     Auto-generate, Remove and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Roll-up actions">
+        <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Roll-up Permutation"/>
+        <b:ToolbarButton ui:field="autoGenerateButton" svg="GENERATE" title="Auto-generate Roll-up Permutations"/>
+        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Roll-up Permutation"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Statistics Custom Masks"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

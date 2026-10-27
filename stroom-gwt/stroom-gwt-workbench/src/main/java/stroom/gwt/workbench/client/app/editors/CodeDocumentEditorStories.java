@@ -46,8 +46,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /// The `App/Editors/CodeDocumentEditor` stories, showing Stroom's real code document editors with
-/// fake REST replies: `XsltPresenter`, `TextConverterPresenter`, `ScriptPresenter`,
-/// `KafkaConfigPresenter`, `S3ConfigPresenter` and `XMLSchemaPresenter`.
+/// fake REST replies: `XsltEditor`, `TextConverterEditor`, `ScriptEditor`,
+/// `KafkaConfigEditor`, `S3ConfigEditor` and `XMLSchemaEditor`.
 ///
 /// As their plugins do, each story fetches its document (`GET /xslt/v1/{uuid}`,
 /// `/textConverter/v1/...`, `/script/v1/...`, `/kafkaConfig/v1/...`, `/s3/v1/...`,
@@ -332,7 +332,7 @@ public final class CodeDocumentEditorStories {
         final XsltResource resource = GWT.create(XsltResource.class);
         final RestFixtures fixtures = fixtures("/xslt/v1/xslt-1", XSLT.replace("DATA", data)).build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXsltPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXsltEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -343,7 +343,7 @@ public final class CodeDocumentEditorStories {
         final DocRef docRef = new DocRef(TextConverterDoc.TYPE, "tc-1", "My TC");
         final TextConverterResource resource = GWT.create(TextConverterResource.class);
         return DocEditors.render(context, fixtures("/textConverter/v1/tc-1", TEXT_CONVERTER).build(), readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getTextConverterPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getTextConverterEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -354,7 +354,7 @@ public final class CodeDocumentEditorStories {
         final DocRef docRef = new DocRef(ScriptDoc.TYPE, "script-1", "My Script");
         final ScriptResource resource = GWT.create(ScriptResource.class);
         return DocEditors.render(context, fixtures("/script/v1/script-1", SCRIPT).build(), readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getScriptPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getScriptEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -369,7 +369,7 @@ public final class CodeDocumentEditorStories {
                         RestReply.json(DOWNLOAD_REPLY.replace("NAME", "my-kafka.properties")))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getKafkaConfigPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getKafkaConfigEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -383,7 +383,7 @@ public final class CodeDocumentEditorStories {
                 .post("/s3/v1/download", RestReply.json(DOWNLOAD_REPLY.replace("NAME", "my-s3.properties")))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getS3ConfigPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getS3ConfigEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -398,7 +398,7 @@ public final class CodeDocumentEditorStories {
                 .post("/xmlSchema/v1/validate", RestReply.json("{\"ok\": true}"))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXMLSchemaPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXMLSchemaEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

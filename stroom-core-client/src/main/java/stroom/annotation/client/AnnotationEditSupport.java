@@ -17,10 +17,14 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.annotation.client.component.AnnotationTabs;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.content.client.event.CloseContentTabEvent;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.ContentManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -42,7 +46,7 @@ public class AnnotationEditSupport implements HasHandlers {
 
     @Inject
     public AnnotationEditSupport(final EventBus eventBus,
-                                 final Provider<AnnotationPresenter> presenterProvider,
+                                 final Provider<AnnotationTabs> tabsProvider,
                                  final ContentManager contentManager,
                                  final AnnotationResourceClient annotationResourceClient,
                                  final ClientSecurityContext securityContext,
@@ -65,9 +69,9 @@ public class AnnotationEditSupport implements HasHandlers {
             annotationResourceClient.createAnnotation(request, annotation -> {
                 // Made once there is something to show, and released, with all its presenters, when
                 // its tab is closed
-                final AnnotationPresenter presenter = presenterProvider.get();
-                presenter.setInitialComment(e.getComment());
-                show(presenter, annotation);
+                final AnnotationTabs tabs = tabsProvider.get();
+                tabs.setInitialComment(e.getComment());
+                show(tabs, annotation);
                 AnnotationChangeEvent.fireDeferred(this, annotation.asDocRef());
             }, new DefaultTaskMonitorFactory(this));
         });
@@ -76,7 +80,7 @@ public class AnnotationEditSupport implements HasHandlers {
             annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
                     // Made once there is something to show, and released, with all its presenters,
                     // when its tab is closed
-                    show(presenterProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
+                    show(tabsProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
         });
 
         // The screens it opens, made when first asked for and kept by the app, so they keep
@@ -89,28 +93,32 @@ public class AnnotationEditSupport implements HasHandlers {
         });
     }
 
-    private void show(final AnnotationPresenter presenter,
+    private void show(final AnnotationTabs tabs,
                       final Annotation annotation) {
+        // The tab Stroom shows the annotation in, which owns its tabs
+        final DocumentEditorHost<Annotation> tab = new DocumentEditorHost<>(eventBus, tabs, Annotation.TYPE);
+        tabs.setOnTitleChange(() -> RefreshContentTabEvent.fire(this, tab));
+        tabs.setOnDelete(() -> CloseContentTabEvent.fire(this, tab));
         if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             // Check document permissions and read.
             securityContext.hasDocumentPermission(
                     annotation.asDocRef(),
                     DocumentPermission.EDIT,
                     allowUpdate -> {
-                        presenter.setReadOnly(!allowUpdate);
-                        presenter.read(annotation);
-                        // Closing the tab releases the annotation's presenters
-                        contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
+                        tab.setReadOnly(!allowUpdate);
+                        tab.read(annotation.asDocRef(), annotation);
+                        // Closing the tab releases the annotation's tabs
+                        contentManager.open(e2 -> e2.getCallback().closeTab(true), tab, tab);
                     },
                     throwable -> {
                         // Never shown, so released now
-                        presenter.dispose();
+                        tab.dispose();
                         AlertEvent.fireErrorFromException(this, throwable, null);
                     },
                     new DefaultTaskMonitorFactory(this));
         } else {
             // Never shown, so released now
-            presenter.dispose();
+            tab.dispose();
         }
     }
 

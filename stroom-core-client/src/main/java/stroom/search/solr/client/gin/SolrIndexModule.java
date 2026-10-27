@@ -18,13 +18,11 @@ package stroom.search.solr.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.search.solr.client.SolrIndexPlugin;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
 
 public class SolrIndexModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(SolrIndexPlugin.class);
-        bind(SolrIndexPresenter.class);
     }
 }

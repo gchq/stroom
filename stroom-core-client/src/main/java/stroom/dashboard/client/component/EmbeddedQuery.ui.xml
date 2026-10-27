@@ -1,0 +1,6 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's Embedded Query pane: its query's results, a table or a visualisation -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:SimplePanel ui:field="result" styleName="TableViewImpl max stroom-dashboard-table"/>
+</ui:UiBinder>

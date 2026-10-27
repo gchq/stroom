@@ -28,14 +28,14 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
+import stroom.search.elastic.client.component.ElasticClusterEditor;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/ElasticClusterEditor` stories, showing Stroom's real [ElasticClusterPresenter]
+/// The `App/Editors/ElasticClusterEditor` stories, showing Stroom's real [ElasticClusterEditor]
 /// (an Elastic Cluster's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `ElasticClusterPlugin` does, the story fetches the document
@@ -100,7 +100,7 @@ public final class ElasticClusterEditorStories {
                 .layout(StoryLayout.FULLSCREEN)
                 .story("Default", context -> render(context, true, null, false))
                 .withPlay(play -> {
-                    // ElasticClusterPresenter's tabs: Settings (default), Documentation, Permissions
+                    // ElasticClusterEditor's tabs: Settings (default), Documentation, Permissions
                     for (final String label : new String[]{"Settings", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
                     }
@@ -263,7 +263,7 @@ public final class ElasticClusterEditorStories {
         final ElasticClusterResource resource = GWT.create(ElasticClusterResource.class);
         return DocEditors.render(context, builder.build(), readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getElasticClusterPresenter(),
+                injector.getElasticClusterEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

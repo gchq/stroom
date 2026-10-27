@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -30,7 +29,6 @@ public class IndexScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bind(IndexPresenter.class);
         bind(IndexVolumeGroupPresenter.class);
     }
 }

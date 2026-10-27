@@ -26,4 +26,8 @@ dependencies {
     implementation libs.gin
     implementation libs.gwt.user
     implementation libs.restygwt
+
+    testImplementation libs.gwt.dev
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

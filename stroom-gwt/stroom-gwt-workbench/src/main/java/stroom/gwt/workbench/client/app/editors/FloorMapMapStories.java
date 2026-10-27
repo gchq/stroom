@@ -46,7 +46,7 @@ import java.util.List;
 /// members of a cluster on the map (`FloorMapClusterDialogController`, a dialog opened by clicking the
 /// cluster's glyph).
 ///
-/// As `FloorMapPresenter` does for its Map tab, the story fetches the document
+/// As `FloorMapDocEditor` does for its Map tab, the story fetches the document
 /// (`GET /floormap/v1/{uuid}`) and reads it into the tab ([DocEditors#open]). The document's groups
 /// fill the Groups panel. The tab then runs its StroomQL searches (`POST /query/v1/search/{node}`,
 /// told apart by their component's name): the facts query (`factsHistoryTable`, built from the

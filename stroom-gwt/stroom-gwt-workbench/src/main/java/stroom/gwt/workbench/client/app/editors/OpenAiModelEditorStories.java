@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
+import stroom.openai.client.component.OpenAIModelEditor;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelPresenter] (an
+/// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelEditor] (an
 /// OpenAI Model's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `OpenAIModelPlugin` does, the story fetches the document (`GET /openAIModel/v1/{uuid}`) and
@@ -361,7 +361,7 @@ public final class OpenAiModelEditorStories {
         final OpenAIModelResource resource = GWT.create(OpenAIModelResource.class);
         return DocEditors.render(context, builder.build(), readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getOpenAIModelPresenter(),
+                injector.getOpenAIModelEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

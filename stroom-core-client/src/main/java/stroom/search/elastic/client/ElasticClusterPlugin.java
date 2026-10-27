@@ -23,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
+import stroom.search.elastic.client.component.ElasticClusterEditor;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -43,25 +44,27 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
 
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
 
-    private final Provider<ElasticClusterPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<ElasticClusterEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public ElasticClusterPlugin(
             final EventBus eventBus,
-            final Provider<ElasticClusterPresenter> editorProvider,
+            final Provider<ElasticClusterEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), ElasticClusterDoc.TYPE);
     }
 
     @Override

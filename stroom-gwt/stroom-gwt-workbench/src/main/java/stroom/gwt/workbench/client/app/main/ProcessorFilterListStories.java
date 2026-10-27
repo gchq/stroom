@@ -38,7 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.function.Consumer;
 
 /// Stories of `App/Main/ProcessorFilterList`, showing Stroom's real [ProcessorsController] (a
-/// pipeline's 'Processors' tab: the processor and filter tree, as `PipelinePresenter` shows it)
+/// pipeline's 'Processors' tab: the processor and filter tree, as `PipelineEditor` shows it)
 /// with fake REST replies.
 ///
 /// The rows come from `POST /processorFilter/v1/find` (`ProcessorListRowResultPage`, whose rows are
@@ -230,7 +230,7 @@ public final class ProcessorFilterListStories {
         beforeShow.accept(harness);
         harness.afterStartUp(() -> {
             final ProcessorsController processors = injector.getProcessors();
-            // As PipelinePresenter's 'Processors' tab reads it
+            // As PipelineEditor's 'Processors' tab reads it
             processors.read(pipelineRef, pipelineDoc);
             processors.setIsAdmin(true);
             processors.setAllowUpdate(true);

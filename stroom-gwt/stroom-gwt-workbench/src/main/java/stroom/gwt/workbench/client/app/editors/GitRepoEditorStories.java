@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
+import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.function.Supplier;
 
 /// The `App/Editors/GitRepoEditor` stories, showing Stroom's real
-/// [GitRepoPresenter] (a Git Repository's tab: Settings, Documentation and Permissions) with fake
+/// [GitRepoEditor] (a Git Repository's tab: Settings, Documentation and Permissions) with fake
 /// REST replies.
 ///
 /// As `GitRepoPlugin` does, the story fetches the document (`GET /gitRepo/v1/{uuid}`) and reads it
@@ -355,7 +355,7 @@ public final class GitRepoEditorStories {
                     event -> harness.spy(REFRESH_EXPLORER, "refresh")));
             DocEditors.open(harness,
                     DOC_REF,
-                    injector.getGitRepoPresenter(),
+                    injector.getGitRepoEditor(),
                     DocResource.of(
                             restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                             (restFactory, doc) -> restFactory.create(resource)

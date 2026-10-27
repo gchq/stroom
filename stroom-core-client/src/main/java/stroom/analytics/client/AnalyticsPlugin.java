@@ -17,7 +17,7 @@
 package stroom.analytics.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.analytics.client.presenter.AnalyticRulePresenter;
+import stroom.analytics.client.component.AnalyticRuleEditor;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.core.client.ContentManager;
@@ -27,6 +27,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
@@ -48,24 +49,26 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
 
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
 
-    private final Provider<AnalyticRulePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<AnalyticRuleEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public AnalyticsPlugin(final EventBus eventBus,
-                           final Provider<AnalyticRulePresenter> editorProvider,
+                           final Provider<AnalyticRuleEditor> editorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager,
                            final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), AnalyticRuleDoc.TYPE);
     }
 
     @Override

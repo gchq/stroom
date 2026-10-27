@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.gin.shell;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.view.NavigationViewImpl;
-import stroom.feed.client.presenter.FeedPresenter;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
 import stroom.welcome.client.presenter.WelcomePresenter;
@@ -56,6 +55,5 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
                 WelcomeViewImpl.class);
 
         // FeedModule
-        bind(FeedPresenter.class);
     }
 }

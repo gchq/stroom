@@ -18,13 +18,11 @@ package stroom.gitrepo.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.gitrepo.client.GitRepoPlugin;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
 
 public class GitRepoModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(GitRepoPlugin.class);
-        bind(GitRepoPresenter.class);
     }
 }

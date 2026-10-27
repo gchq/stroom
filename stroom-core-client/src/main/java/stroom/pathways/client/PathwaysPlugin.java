@@ -23,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.pathways.client.presenter.PathwaysPresenter;
+import stroom.pathways.client.component.PathwaysEditor;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -43,24 +44,26 @@ public class PathwaysPlugin extends DocumentPlugin<PathwaysDoc> {
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);
 
-    private final Provider<PathwaysPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<PathwaysEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public PathwaysPlugin(final EventBus eventBus,
-                          final Provider<PathwaysPresenter> editorProvider,
+                          final Provider<PathwaysEditor> editorProvider,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), PathwaysDoc.TYPE);
     }
 
     @Override

@@ -19,8 +19,6 @@ package stroom.floormap.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.floormap.client.FloorMapEventStorePlugin;
 import stroom.floormap.client.FloorMapPlugin;
-import stroom.floormap.client.presenter.FloorMapEventStorePresenter;
-import stroom.floormap.client.presenter.FloorMapPresenter;
 
 /// GIN module for the Floor Map feature.
 /// Binds the floor map's plugins and its two documents' editors.
@@ -32,8 +30,5 @@ public class FloorMapModule extends PluginModule {
         // The events store is a document of its own, creatable from the explorer, so it needs its
         // own plugin and editor rather than appearing inside the floor map's own editor.
         bindPlugin(FloorMapEventStorePlugin.class);
-
-        bind(FloorMapPresenter.class);
-        bind(FloorMapEventStorePresenter.class);
     }
 }

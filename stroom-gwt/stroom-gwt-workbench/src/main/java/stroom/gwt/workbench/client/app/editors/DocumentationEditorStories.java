@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.documentation.client.presenter.DocumentationPresenter;
+import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.component.MarkdownEditController;
@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/DocumentationEditor` stories, showing Stroom's real [DocumentationPresenter] (a
+/// The `App/Editors/DocumentationEditor` stories, showing Stroom's real [DocumentationEditor] (a
 /// Documentation document's tab: Documentation and Permissions, with Save, Save As and Download)
 /// with fake REST replies.
 ///
@@ -134,7 +134,7 @@ public final class DocumentationEditorStories {
         final DocumentationResource resource = GWT.create(DocumentationResource.class);
         return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getDocumentationPresenter(),
+                injector.getDocumentationEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

@@ -18,14 +18,11 @@ package stroom.xmlschema.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.xmlschema.client.XMLSchemaPlugin;
-import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 
 public class XMLSchemaModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(XMLSchemaPlugin.class);
-
-        bind(XMLSchemaPresenter.class);
     }
 }

@@ -37,7 +37,7 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/ReportEditor` stories, showing Stroom's real `ReportPresenter` (a report's
+/// The `App/Editors/ReportEditor` stories, showing Stroom's real `ReportEditor` (a report's
 /// editor tab: Query, Settings, Notifications, Execution, Documentation and Permissions) with fake
 /// REST replies.
 ///
@@ -257,7 +257,7 @@ public final class ReportEditorStories {
         harness.getSecurityContext().setDocumentPermission(permission);
         final ReportResource resource = GWT.create(ReportResource.class);
         // Opened once Stroom has started, as ReportPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getReportPresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getReportEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }

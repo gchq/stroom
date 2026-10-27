@@ -20,8 +20,10 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.entity.client.component.DocumentEditorHost;
+import stroom.pathways.client.component.TracesEditor;
 import stroom.pathways.client.presenter.ShowTracesEvent;
-import stroom.pathways.client.presenter.TracesPresenter;
+import stroom.pathways.shared.TracesDoc;
 import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.inject.Inject;
@@ -31,38 +33,43 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class TracesPlugin extends ContentPlugin<TracesPresenter> {
+public class TracesPlugin extends ContentPlugin<DocumentEditorHost<TracesDoc>> {
 
     private final ClientSecurityContext securityContext;
-    private final Provider<TracesPresenter> tracesPresenterProvider;
+    private final Provider<TracesEditor> tracesEditorProvider;
     private final ContentManager contentManager;
 
     @Inject
     public TracesPlugin(final EventBus eventBus,
-                        final Provider<TracesPresenter> tracesPresenterProvider,
+                        final Provider<TracesEditor> tracesEditorProvider,
                         final ContentManager contentManager,
                         final ClientSecurityContext securityContext,
                         final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, tracesPresenterProvider, documentPluginRegistry);
+        super(eventBus,
+                contentManager,
+                () -> new DocumentEditorHost<>(eventBus, tracesEditorProvider.get(), TracesDoc.TYPE),
+                documentPluginRegistry);
         this.securityContext = securityContext;
-        this.tracesPresenterProvider = tracesPresenterProvider;
+        this.tracesEditorProvider = tracesEditorProvider;
         this.contentManager = contentManager;
 
         getEventBus().addHandler(
                 ShowTracesEvent.getType(), showTracesEvent -> {
 
-                    final TracesPresenter tracesPresenter = tracesPresenterProvider.get();
-                    tracesPresenter.setDataSourceRef(showTracesEvent.getDataSourceRef());
-                    tracesPresenter.setPathway(showTracesEvent.getPathway());
-                    tracesPresenter.setFilter(showTracesEvent.getFilter());
-                    tracesPresenter.forceRefresh();
+                    final TracesEditor tracesEditor = tracesEditorProvider.get();
+                    tracesEditor.setDataSourceRef(showTracesEvent.getDataSourceRef());
+                    tracesEditor.setPathway(showTracesEvent.getPathway());
+                    tracesEditor.setFilter(showTracesEvent.getFilter());
+                    tracesEditor.forceRefresh();
+                    final DocumentEditorHost<TracesDoc> tracesTab = new DocumentEditorHost<>(
+                            eventBus, tracesEditor, TracesDoc.TYPE);
 
                     final CloseContentEvent.Handler closeHandler = (event) -> {
                         event.getCallback().closeTab(true);
                     };
 
                     // Tell the content manager to open the tab.
-                    contentManager.open(closeHandler, tracesPresenter, tracesPresenter);
+                    contentManager.open(closeHandler, tracesTab, tracesTab);
                 });
 
 //        // TODO : TEMPORARY
@@ -70,7 +77,7 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
 //            new Timer() {
 //                @Override
 //                public void run() {
-//                    final TracesPresenter tracesPresenter = tracesPresenterProvider.get();
+//                    final TracesEditor tracesPresenter = tracesPresenterProvider.get();
 //                    tracesPresenter.setDataSourceRef(DocRef.builder().type(PathwaysDoc.TYPE).uuid(
 //                            "ba8df4b8-d03b-484c-bb65-273b35ca56ff").build());
 ////        tracesPresenter.setPathway();
@@ -92,7 +99,7 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
 
     @Override
     public String getType() {
-        return TracesPresenter.TAB_TYPE;
+        return TracesEditor.TAB_TYPE;
     }
 }
 

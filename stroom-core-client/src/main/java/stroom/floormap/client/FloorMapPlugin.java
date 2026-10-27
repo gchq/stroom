@@ -24,9 +24,10 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.floormap.client.component.FloorMapDocEditor;
 import stroom.floormap.client.component.FloorMapInitController;
-import stroom.floormap.client.presenter.FloorMapPresenter;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -51,14 +52,15 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     private static final FloorMapResource FLOOR_MAP_RESOURCE = GWT.create(FloorMapResource.class);
 
-    private final Provider<FloorMapPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FloorMapDocEditor> editorProvider;
     private final Provider<FloorMapInitController> initProvider;
     private final AppRoot appRoot;
     private final RestFactory restFactory;
 
     @Inject
     public FloorMapPlugin(final EventBus eventBus,
-                          final Provider<FloorMapPresenter> editorProvider,
+                          final Provider<FloorMapDocEditor> editorProvider,
                           final Provider<FloorMapInitController> initProvider,
                           final AppRoot appRoot,
                           final RestFactory restFactory,
@@ -66,6 +68,7 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.initProvider = initProvider;
         this.appRoot = appRoot;
@@ -75,7 +78,7 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
     /// {@inheritDoc}
     @Override
     protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), FloorMapDoc.TYPE);
     }
 
     /// Loads a [FloorMapDoc] from the server by fetching it via the

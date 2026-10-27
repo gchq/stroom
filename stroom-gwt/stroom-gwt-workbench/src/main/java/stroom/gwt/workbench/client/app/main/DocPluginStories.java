@@ -28,7 +28,6 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -42,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// server when it is saved, not as it is edited (GWT's `DocPresenter.onWrite`).
 ///
 /// The plugin is Stroom's real XML Schema plugin and editor (`XMLSchemaPlugin`,
-/// `XMLSchemaPresenter`): the story opens the document as the explorer does (`OpenDocumentEvent`,
+/// `XMLSchemaEditor`): the story opens the document as the explorer does (`OpenDocumentEvent`,
 /// handled by Stroom's `DocumentPluginEventManager`, which decorates the reference and asks the
 /// plugin to load it) and shows the tab the plugin opens. Saving goes the same way (the tab's Save
 /// button fires `SaveDocumentEvent`). The stories answer `XmlSchemaResource`:

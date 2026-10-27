@@ -17,8 +17,8 @@
 package stroom.gwt.workbench.client.app.gin.query;
 
 import stroom.ai.client.AskStroomAiPresenter;
-import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.presenter.ReportPresenter;
+import stroom.analytics.client.component.AnalyticRuleEditor;
+import stroom.analytics.client.component.ReportEditor;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
@@ -29,13 +29,13 @@ import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
-import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.planb.client.component.PlanBEditor;
+import stroom.query.client.component.QueryDocEditor;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.ResultStoreModel;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
-import stroom.view.client.presenter.ViewPresenter;
+import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
+import stroom.view.client.component.ViewDocEditor;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -50,40 +50,34 @@ import com.google.gwt.inject.client.GinModules;
         MonitoringScreenModule.class,
         TaskScreenModule.class,
         PipelineScreenModule.class,
-        ViewScreenModule.class,
-        PlanBScreenModule.class,
-        QueryScreenModule.class,
         AnnotationScreenModule.class,
         StreamStoreScreenModule.class,
         AlertScreenModule.class,
         QueryExtrasScreenModule.class,
-        StatisticsScreenModule.class,
-        AnalyticsScreenModule.class,
-        ReportScreenModule.class,
         AskStroomAIScreenModule.class,
 })
 public interface QueryScreenGinjector extends ScreenGinjector {
 
     /// @return A View's editor tab, as `ViewPlugin` creates it.
-    ViewPresenter getViewPresenter();
+    ViewDocEditor getViewDocEditor();
 
     /// @return A Plan B store's editor tab, as `PlanBPlugin` creates it.
-    PlanBPresenter getPlanBPresenter();
+    PlanBEditor getPlanBEditor();
 
     /// @return A Query's editor tab, as `QueryPlugin` creates it.
-    QueryDocPresenter getQueryDocPresenter();
+    QueryDocEditor getQueryDocEditor();
 
     /// @return A statistic store's editor tab, as `StatisticsPlugin` creates it.
-    StatisticsDataSourcePresenter getStatisticsDataSourcePresenter();
+    StatisticsDataSourceEditor getStatisticsDataSourceEditor();
 
     /// @return An analytic rule's editor tab, as `AnalyticsPlugin` creates it.
-    AnalyticRulePresenter getAnalyticRulePresenter();
+    AnalyticRuleEditor getAnalyticRuleEditor();
 
     /// @return A query's result table, as a query pane or an analytic rule's Shards tab has.
     QueryResultTableController getQueryResultTable();
 
     /// @return A report's editor tab, as `ReportPlugin` creates it.
-    ReportPresenter getReportPresenter();
+    ReportEditor getReportEditor();
 
     /// @return The 'Choose Annotation' dialog, kept by the app and shown when
     ///         `ShowFindAnnotationEvent` fires.
