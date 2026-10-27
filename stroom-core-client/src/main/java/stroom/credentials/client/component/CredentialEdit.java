@@ -48,6 +48,8 @@ public class CredentialEdit extends Component {
     /// Makes the tabs, with none until [#addTab(TabData)].
     public CredentialEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        // The tabs control the layer container, as their tab panel
+        tabBar.setTabPanel(layerContainer.getElement());
         tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
         tabBar.addShowMenuHandler(event -> onShowMenu.accept(event));
     }

@@ -133,7 +133,10 @@ public class IndexVolumeGroupEditController extends Controller {
         expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getFldName());
         expressionCriteria.addSort(IndexVolumeFields.PATH.getFldName());
 
-        indexVolumeStatusList.init(expressionCriteria, guard(volumes -> open(opener, volumeGroup, title, consumer)));
+        // Not shown if the volumes can't be found, so disposed then
+        indexVolumeStatusList.init(expressionCriteria,
+                guard(volumes -> open(opener, volumeGroup, title, consumer)),
+                this::dispose);
     }
 
     private void open(final HasControllerNode opener,

@@ -484,7 +484,6 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onEditUserOrGroup() {
-        // The edit dialog is this one's, made for one use
         actions.edit(userList);
     }
 

@@ -43,6 +43,8 @@ import javax.inject.Singleton;
 @Singleton
 public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
 
+    private UserTaskManagerController userTaskManager;
+
     @Inject
     public TaskManagerPlugin(final EventBus eventBus,
                              final ContentManager eventManager,
@@ -62,9 +64,14 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
             });
         });
 
-        // The screens it opens, made when first asked for
-        eventBus.addHandler(OpenUserTaskManagerEvent.getType(), event ->
-                userTaskManagerProvider.get().show(appRoot));
+        // Made for one use, and disposed once it is closed; only one is open at a time, as it isn't
+        // modal and the button that opens it can be pressed again
+        eventBus.addHandler(OpenUserTaskManagerEvent.getType(), event -> {
+            if (userTaskManager == null || userTaskManager.isDisposed()) {
+                userTaskManager = userTaskManagerProvider.get();
+                userTaskManager.show(appRoot);
+            }
+        });
     }
 
     @Override

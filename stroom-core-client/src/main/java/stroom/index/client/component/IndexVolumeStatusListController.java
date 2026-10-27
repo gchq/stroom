@@ -85,9 +85,13 @@ public class IndexVolumeStatusListController extends Controller {
 
     /// Starts the list.
     ///
-    /// @param criteria Finds the volumes.
-    /// @param c        Given the first page found, and no later ones.
-    public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> c) {
+    /// @param criteria       Finds the volumes.
+    /// @param c              Given the first page found, and no later ones.
+    /// @param onFirstFailure Called if the first page can't be found (the failure is reported), so
+    ///                       `c` won't be called.
+    public void init(final ExpressionCriteria criteria,
+                     final Consumer<ResultPage<IndexVolume>> c,
+                     final Runnable onFirstFailure) {
         this.consumer = c;
         dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus()) {
             @Override
@@ -100,11 +104,20 @@ public class IndexVolumeStatusListController extends Controller {
                         .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
-                            if (consumer != null) {
-                                consumer.accept(result);
+                            // Only the first page, not a later page or refresh
+                            final Consumer<ResultPage<IndexVolume>> first = consumer;
+                            consumer = null;
+                            if (first != null) {
+                                first.accept(result);
                             }
                         })
-                        .onFailure(errorHandler)
+                        .onFailure(error -> {
+                            errorHandler.onError(error);
+                            if (consumer != null) {
+                                consumer = null;
+                                onFirstFailure.run();
+                            }
+                        })
                         .owner(IndexVolumeStatusListController.this)
                         .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
