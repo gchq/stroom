@@ -24,8 +24,10 @@ import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,7 +46,6 @@ public class ManageGlobalPropertyList extends Component {
     public static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String ERROR_CSS_COLOUR = "var(--text-color--red)";
 
     @UiField
     PagerPanel pager;
@@ -123,11 +124,8 @@ public class ManageGlobalPropertyList extends Component {
         // Effective Value
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getEffectiveValueAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
-                                        ERROR_CSS_COLOUR))
+                                (ConfigPropertyRow row) -> multipleOrPlain(
+                                        row.getEffectiveValueAsString(), MULTIPLE_VALUES_MSG))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
@@ -136,11 +134,8 @@ public class ManageGlobalPropertyList extends Component {
         // Source
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getSourceAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
-                                        ERROR_CSS_COLOUR))
+                                (ConfigPropertyRow row) -> multipleOrPlain(
+                                        row.getSourceAsString(), MULTIPLE_SOURCES_MSG))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
@@ -156,7 +151,13 @@ public class ManageGlobalPropertyList extends Component {
                 750);
     }
 
-
+    // The text, red if it says the nodes differ
+    private static SafeHtml multipleOrPlain(final String text, final String multipleMessage) {
+        final SafeHtml safeText = SafeHtmlUtil.getSafeHtml(text);
+        return multipleMessage.equals(text)
+                ? SafeHtmlUtil.getTemplate().spanWithClass("manage-global-property-list__multiple", safeText)
+                : safeText;
+    }
 
     // --------------------------------------------------------------------------------
 

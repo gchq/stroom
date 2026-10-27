@@ -276,11 +276,11 @@ public class PipelineReferenceList extends Component {
     /// Whether a reference is inherited, added or removed, which colours it.
     public enum ReferenceState {
         /// Inherited from a parent pipeline.
-        INHERITED("pipelineStructureViewImpl-property-inherited"),
+        INHERITED("pipeline-property pipeline-property--inherited"),
         /// Added on this pipeline.
-        ADDED("pipelineStructureViewImpl-property-added"),
+        ADDED("pipeline-property pipeline-property--added"),
         /// An inherited one removed on this pipeline.
-        REMOVED("pipelineStructureViewImpl-property-removed");
+        REMOVED("pipeline-property pipeline-property--removed");
 
         private final String className;
 

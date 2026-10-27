@@ -203,13 +203,13 @@ public class PropertyList extends Component {
     /// Where a property's value comes from, which colours it.
     public enum PropertyState {
         /// Set on this pipeline.
-        ADDED("pipelineStructureViewImpl-property-added"),
+        ADDED("pipeline-property pipeline-property--added"),
         /// Set back to its default on this pipeline, hiding an inherited value.
-        REMOVED("pipelineStructureViewImpl-property-removed"),
+        REMOVED("pipeline-property pipeline-property--removed"),
         /// Inherited from a parent pipeline.
-        INHERITED("pipelineStructureViewImpl-property-inherited"),
+        INHERITED("pipeline-property pipeline-property--inherited"),
         /// Its default value.
-        DEFAULT("pipelineStructureViewImpl-property-default");
+        DEFAULT("pipeline-property pipeline-property--default");
 
         private final String className;
 

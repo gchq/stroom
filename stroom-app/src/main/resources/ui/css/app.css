@@ -45,8 +45,10 @@
 @import url("tab-session-chooser.css");
 @import url("marker-list.css");
 @import url("dependency-list.css");
+@import url("manage-global-property-list.css");
 @import url("traces-list.css");
 @import url("solr-index-field-list.css");
+@import url("pipeline-property.css");
 @import url("floormap-icon-picker.css");
 @import url("histogram.css");
 @import url("stroom-dashboard.css");

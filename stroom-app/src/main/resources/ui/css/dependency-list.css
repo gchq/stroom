@@ -15,14 +15,14 @@
  */
 
 /* A dependency's status in the dependencies list: OK, or its document missing */
-.dependency-status {
+.dependency-list__status {
     font-weight: bold;
 }
 
-.dependency-status--ok {
+.dependency-list__status--ok {
     color: var(--text-color--green);
 }
 
-.dependency-status--missing {
+.dependency-list__status--missing {
     color: var(--text-color--red);
 }

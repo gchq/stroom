@@ -275,8 +275,8 @@ public class DependencyList extends Component {
 
     private SafeHtml getStatusValue(final Dependency row) {
         return row.isOk()
-                ? TEMPLATE.status("dependency-status dependency-status--ok", "OK")
-                : TEMPLATE.status("dependency-status dependency-status--missing", "Missing");
+                ? TEMPLATE.status("dependency-list__status dependency-list__status--ok", "OK")
+                : TEMPLATE.status("dependency-list__status dependency-list__status--missing", "Missing");
     }
 
 
