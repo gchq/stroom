@@ -130,4 +130,17 @@ interface BuildFacts {
     /// @return The pipelines translating their raw data now (their processor filters read it): each `name` and
     /// `uuid`.
     List<Map<String, Object>> translating(List<String> feeds);
+
+    /// @param build A build.
+    /// @return The kind of work it was started as (`events`, `discovery` or `reference`), or empty when none was
+    /// named.
+    Optional<String> kind(String build);
+
+    /// @param feed A feed's name.
+    /// @return Its Reference streams (a reference-data pipeline's output), newest first; empty when it has none.
+    List<Long> referenceStreams(String feed);
+
+    /// @param pipelineUuid A pipeline.
+    /// @return The feeds its own pipeline references load reference data from, by name.
+    List<String> referencedFeeds(String pipelineUuid);
 }

@@ -43,7 +43,7 @@ class TestStartOnboardingTool {
     private final AgentInstructions instructions = Mockito.mock(AgentInstructions.class);
     private final SampleStreamTexts streamTexts = Mockito.mock(SampleStreamTexts.class);
     private final StartOnboardingTool tool = new StartOnboardingTool(world.guard(), plan, new KeyValueProfiler(),
-            streamTexts, templates, instructions);
+            streamTexts, templates, instructions, world.records());
 
     TestStartOnboardingTool() {
         Mockito.when(instructions.targets(any(), any(), any(), any()))
@@ -244,5 +244,22 @@ class TestStartOnboardingTool {
                 .startsWith("none found that reads delimited (a DSParser): ask the user which pipeline to base it on")
                 .endsWith("only if they have none, create_pipeline standalone='events' builds one on its own (a "
                           + "last resort)");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aReferenceTableIsStartedAsReferenceData() {
+        // Asked for by the user: a table to look values up in was planned as an events onboarding.
+        facts.kind = "reference";
+        final Map<String, Object> started = PortedToolCalls.json(tool.execute(PortedToolCalls.call(
+                StartOnboardingTool.NAME, "{\"source_name\": \"HR users\", \"files\": [\"users.csv\"], "
+                                          + "\"kind\": \"reference\"}"), PortedToolCalls.context()).text());
+
+        assertThat(world.records().kind("onboard-hr-users")).hasValue("reference");
+        assertThat(((List<Map<String, Object>>) started.get("plan")).stream().map(step -> step.get("step")))
+                .contains("reference_pipeline").doesNotContain("translation");
+        assertThat((Map<String, Object>) started.get("next")).containsEntry("step", "feed");
+        assertThat(String.valueOf(((Map<String, Object>) ((Map<String, Object>) started.get("next")).get("call"))
+                .get("arguments"))).as("its feed takes Raw Reference").contains("Raw Reference");
     }
 }

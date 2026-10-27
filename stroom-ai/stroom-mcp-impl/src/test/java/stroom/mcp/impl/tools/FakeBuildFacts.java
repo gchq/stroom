@@ -37,6 +37,13 @@ final class FakeBuildFacts implements BuildFacts {
     boolean verified;
     boolean validated;
     List<Long> ownRaw = List.of();
+    // Raw Reference sample streams of the build's own feed.
+    List<Long> ownRawReference = List.of();
+    String kind;
+    // Each feed's Reference streams, by its name.
+    Map<String, List<Long>> referenceStreams = new LinkedHashMap<>();
+    // Each pipeline's referenced feeds, by its UUID.
+    Map<String, List<String>> referencedFeeds = new LinkedHashMap<>();
     List<Long> events = List.of();
     Map<String, Object> survey;
     List<String> checks = List.of();
@@ -95,6 +102,15 @@ final class FakeBuildFacts implements BuildFacts {
                 final Map<String, Object> meta = new LinkedHashMap<>();
                 meta.put("id", id);
                 meta.put("feed", "F");
+                meta.put("createMs", id);
+                return meta;
+            }).toList());
+        }
+        if (!ownRawReference.isEmpty()) {
+            streams.put("Raw Reference", ownRawReference.stream().map(id -> {
+                final Map<String, Object> meta = new LinkedHashMap<>();
+                meta.put("id", id);
+                meta.put("feed", "REF");
                 meta.put("createMs", id);
                 return meta;
             }).toList());
@@ -200,5 +216,20 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public List<Map<String, Object>> translating(final List<String> feeds) {
         return translating;
+    }
+
+    @Override
+    public Optional<String> kind(final String build) {
+        return Optional.ofNullable(kind);
+    }
+
+    @Override
+    public List<Long> referenceStreams(final String feed) {
+        return referenceStreams.getOrDefault(feed, List.of());
+    }
+
+    @Override
+    public List<String> referencedFeeds(final String pipelineUuid) {
+        return referencedFeeds.getOrDefault(pipelineUuid, List.of());
     }
 }

@@ -47,6 +47,7 @@ class StartBuildTool extends AbstractBuiltInTool {
     static final String BUILD_ARG = "build";
     static final String FEEDS_ARG = "feeds";
     static final String FOLDERS_ARG = "folders";
+    static final String KIND_ARG = "kind";
 
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
@@ -108,6 +109,12 @@ class StartBuildTool extends AbstractBuiltInTool {
                                                                   + "instructions for their folders are included."))
                         .addProperty(FOLDERS_ARG, stringArraySchema("Folders the work will be promoted to, if "
                                                                     + "known."))
+                        .addEnumProperty(KIND_ARG, BuildRecords.BUILD_KINDS, "The kind of work, when it is "
+                                                                             + "known: discovery (raw data indexed as "
+                                                                             + "it is, for exploration) or reference "
+                                                                             + "(a table to look values up in); the "
+                                                                             + "plan's steps follow it. Given again, "
+                                                                             + "it changes the build's.")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -120,8 +127,13 @@ class StartBuildTool extends AbstractBuiltInTool {
             return JsonResults.refused("Give build: the build's name, e.g. 'acme-door-v1.3'.");
         }
         try {
+            final String kind = stringArg(call, KIND_ARG);
+            if (kind != null && !BuildRecords.BUILD_KINDS.contains(kind)) {
+                return JsonResults.refused("kind is one of " + PyText.list(BuildRecords.BUILD_KINDS) + ", not '"
+                                           + kind + "'");
+            }
             return JsonResults.of(start(context, build, stringListArg(call, FEEDS_ARG),
-                    stringListArg(call, FOLDERS_ARG)));
+                    stringListArg(call, FOLDERS_ARG), kind));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }
@@ -130,8 +142,12 @@ class StartBuildTool extends AbstractBuiltInTool {
     private Map<String, Object> start(final ToolCallContext context,
                                       final String build,
                                       final List<String> feeds,
-                                      final List<String> folders) {
+                                      final List<String> folders,
+                                      final String kind) {
         final WriteGuard.Folder folder = guard.buildFolder(build);
+        if (kind != null) {
+            buildRecords.rememberKind(build, kind);
+        }
         // Feeds that exist outside the build are what it works from (an existing feed's data, a production
         // pipeline's feed): recorded, so the plan doesn't send it to create a feed and upload samples (seen in VS
         // Code: a test feed made and a workspace file uploaded though the user chose production streams), and
@@ -168,7 +184,13 @@ class StartBuildTool extends AbstractBuiltInTool {
         result.put("standing_instructions", agentInstructions.applicableInstructions(context.session(),
                 "Standing instructions read by the " + NAME + " tool",
                 agentInstructions.targets(folders, List.of(), feeds, List.of())));
-        result.put("plan", BuildPlan.onboardingChecklist());
+        if (kind != null) {
+            result.put("kind", kind);
+        }
+        // The build's own steps once its kind is known; a new source's onboarding until then.
+        result.put("plan", kind == null
+                ? BuildPlan.onboardingChecklist()
+                : plan.plannedSteps(build));
         result.put("task_list", BuildPlan.TASK_LIST);
         plan.nextStep(build, null).ifPresent(next -> result.put("next", next));
         result.put("done", false);

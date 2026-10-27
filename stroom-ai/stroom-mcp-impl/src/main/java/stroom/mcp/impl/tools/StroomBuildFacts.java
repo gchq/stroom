@@ -250,6 +250,35 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public Optional<String> kind(final String build) {
+        try {
+            return buildRecords.kind(build);
+        } catch (final RuntimeException e) {
+            // Advice: an unreadable record leaves the plan to tell the build's kind from what it holds.
+            LOGGER.debug("Unable to read the kind of build {}", build, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<Long> referenceStreams(final String feed) {
+        return ownStreams(feed, StreamTypeNames.REFERENCE, 5, null).stream()
+                .map(Meta::getId)
+                .toList();
+    }
+
+    @Override
+    public List<String> referencedFeeds(final String pipelineUuid) {
+        return documentAccess.read(new DocRef(PipelineDoc.TYPE, pipelineUuid), PipelineDoc.class)
+                .map(pipeline -> CurrentTranslations.ownReferences(pipeline).stream()
+                        .map(reference -> reference.getFeed().getName())
+                        .filter(NullSafe::isNonBlankString)
+                        .distinct()
+                        .toList())
+                .orElse(List.of());
+    }
+
+    @Override
     public Optional<Map<String, Object>> elasticDestination(final String pipelineUuid) {
         return agreements.elasticDestination(pipelineUuid);
     }
