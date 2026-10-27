@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.analytics.client.component.ScheduledProcessEditController;
 import stroom.analytics.client.component.ScheduledProcessHistoryListController;
 import stroom.analytics.client.component.ScheduledProcessListController;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
@@ -49,7 +50,7 @@ public class ScheduledProcessingPresenter
     private final RestFactory restFactory;
     private final ScheduledProcessListController scheduleList;
     private final ScheduledProcessHistoryListController historyList;
-    private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
+    private final ScheduledProcessEditController scheduledProcessEdit;
     private DocPresenter<?, ?> documentEditPresenter;
     private DocRef ownerDocRef;
     private boolean readOnly;
@@ -60,15 +61,15 @@ public class ScheduledProcessingPresenter
                                         final RestFactory restFactory,
                                         final ScheduledProcessListController scheduleList,
                                         final ScheduledProcessHistoryListController historyList,
-                                        final ScheduledProcessEditPresenter scheduledProcessEditPresenter) {
+                                        final ScheduledProcessEditController scheduledProcessEdit) {
         super(eventBus, view);
         own(scheduleList);
         own(historyList);
-        own(scheduledProcessEditPresenter);
+        own(scheduledProcessEdit);
         this.restFactory = restFactory;
         this.scheduleList = scheduleList;
         this.historyList = historyList;
-        this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
+        this.scheduledProcessEdit = scheduledProcessEdit;
         view.setScheduleList(scheduleList);
         view.setHistoryList(historyList);
         scheduleList.setOnAdd(this::add);
@@ -143,7 +144,7 @@ public class ScheduledProcessingPresenter
                     null);
 
         } else {
-            scheduledProcessEditPresenter.show(newSchedule, executionSchedule -> {
+            scheduledProcessEdit.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                             .create(EXECUTION_SCHEDULE_RESOURCE)
@@ -162,7 +163,7 @@ public class ScheduledProcessingPresenter
     public void edit() {
         final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
-            scheduledProcessEditPresenter.show(selected, executionSchedule -> {
+            scheduledProcessEdit.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                             .create(EXECUTION_SCHEDULE_RESOURCE)

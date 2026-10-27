@@ -24,8 +24,6 @@ import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDat
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
-import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
-import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
@@ -35,7 +33,6 @@ import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.DuplicateManagementViewImpl;
-import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -53,9 +50,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);
-        bindPresenterWidget(ScheduledProcessEditPresenter.class,
-                ScheduledProcessEditView.class,
-                ScheduledProcessEditViewImpl.class);
         bindPresenterWidget(StreamingProcessingPresenter.class,
                 StreamingProcessingView.class,
                 StreamingProcessingViewImpl.class);

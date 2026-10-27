@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.client.component.ExecutionScheduleRunNow.RunNowAction;
 import stroom.analytics.client.component.ExecutionScheduleRunNowController;
+import stroom.analytics.client.component.ScheduledProcessEditController;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleFields;
@@ -92,7 +93,7 @@ public class ExecutionScheduleManager
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final ExecutionScheduleRequest request;
-    private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
+    private final ScheduledProcessEditController scheduledProcessEdit;
     private final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter;
     private final Provider<ExecutionScheduleRunNowController> runNowProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
@@ -114,7 +115,7 @@ public class ExecutionScheduleManager
                                     final PagerPanel view,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final RestFactory restFactory,
-                                    final ScheduledProcessEditPresenter scheduledProcessEditPresenter,
+                                    final ScheduledProcessEditController scheduledProcessEdit,
                                     final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter,
                                     final Provider<ExecutionScheduleRunNowController> runNowProvider,
                                     final Provider<ExpressionDialogController> filterDialogProvider,
@@ -122,11 +123,11 @@ public class ExecutionScheduleManager
                                     final RefCellsController refCells) {
         super(eventBus, view);
         this.refCells = own(refCells);
-        own(scheduledProcessEditPresenter);
+        own(scheduledProcessEdit);
         own(batchExecutionScheduleEditPresenter);
         this.restFactory = restFactory;
 
-        this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
+        this.scheduledProcessEdit = scheduledProcessEdit;
         this.batchExecutionScheduleEditPresenter = batchExecutionScheduleEditPresenter;
         this.runNowProvider = runNowProvider;
         this.filterDialogProvider = filterDialogProvider;
@@ -465,7 +466,7 @@ public class ExecutionScheduleManager
     private void onSingleEdit() {
         final ExecutionSchedule selected = selectionModel.getSelected();
         if (selected != null) {
-            scheduledProcessEditPresenter.show(selected, executionSchedule -> {
+            scheduledProcessEdit.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                         .create(EXECUTION_SCHEDULE_RESOURCE)

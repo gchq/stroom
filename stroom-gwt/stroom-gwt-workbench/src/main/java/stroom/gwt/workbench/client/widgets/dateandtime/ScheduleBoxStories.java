@@ -164,7 +164,7 @@ public final class ScheduleBoxStories {
         final ScheduleBox box = new ScheduleBox();
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Schedule");
-        // As Stroom's presenters attach one, e.g. ScheduledProcessEditPresenter
+        // As Stroom's controllers attach one, e.g. ScheduledProcessEditController
         final ScheduledTimeClient scheduledTimeClient =
                 new ScheduledTimeClient(harness.getEventBus(), harness.getRestFactory());
         harness.own(new ScheduleBoxController(() -> {

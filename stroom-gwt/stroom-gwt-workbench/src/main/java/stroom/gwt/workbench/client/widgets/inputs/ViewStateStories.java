@@ -459,7 +459,7 @@ public final class ViewStateStories {
     }
 
     private static Widget dateTimeBox(final ScreenHarness harness) {
-        // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
+        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditController
         final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         box.setValue(DATE_TIME);
         return box;
