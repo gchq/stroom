@@ -35,6 +35,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.widget.component.client.HasControllerNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -255,15 +256,24 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getAttachmentData(final GetAttachmentDataRequest request,
-                           final Consumer<AiAttachmentDataPage> consumer,
-                           final RestErrorHandler errorHandler,
-                           final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches a page of an attachment's table.
+    ///
+    /// @param owner              What the reply is for: it is dropped once that is disposed.
+    /// @param request            The attachment, and the page of it.
+    /// @param consumer           Given the page.
+    /// @param errorHandler       Told why it failed.
+    /// @param taskMonitorFactory Shows the request's progress.
+    public void getAttachmentData(final HasControllerNode owner,
+                                  final GetAttachmentDataRequest request,
+                                  final Consumer<AiAttachmentDataPage> consumer,
+                                  final RestErrorHandler errorHandler,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.getAttachmentData(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .owner(owner)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

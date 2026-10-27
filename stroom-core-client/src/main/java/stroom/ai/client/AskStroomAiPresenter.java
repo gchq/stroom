@@ -17,6 +17,8 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.component.AiAttachmentDataController;
+import stroom.ai.client.component.AiChatHistoryController;
 import stroom.ai.client.component.DownloadChatController;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChat;
@@ -97,9 +99,9 @@ public class AskStroomAiPresenter
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
-    private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
+    private final Provider<AiChatHistoryController> aiChatHistoryProvider;
     private final Provider<DownloadChatController> downloadChatControllerProvider;
-    private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
+    private final Provider<AiAttachmentDataController> aiAttachmentDataProvider;
     private final LocationManager locationManager;
     private final DateTimeFormatter dateTimeFormatter;
     private AskStroomAiContext data;
@@ -125,9 +127,9 @@ public class AskStroomAiPresenter
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
-                                final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
+                                final Provider<AiChatHistoryController> aiChatHistoryProvider,
                                 final Provider<DownloadChatController> downloadChatControllerProvider,
-                                final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
+                                final Provider<AiAttachmentDataController> aiAttachmentDataProvider,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
@@ -135,9 +137,9 @@ public class AskStroomAiPresenter
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
-        this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
+        this.aiChatHistoryProvider = aiChatHistoryProvider;
         this.downloadChatControllerProvider = downloadChatControllerProvider;
-        this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
+        this.aiAttachmentDataProvider = aiAttachmentDataProvider;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -925,7 +927,7 @@ public class AskStroomAiPresenter
 
     @Override
     public void onShowHistory() {
-        makeDialog(aiChatHistoryPresenterProvider).show(this::loadChat);
+        aiChatHistoryProvider.get().show(this, this::loadChat);
     }
 
     @Override
@@ -947,8 +949,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final AiAttachmentDataPresenter presenter = makeDialog(aiAttachmentDataPresenterProvider);
-        presenter.show(currentChat.getId(), attachmentId, description);
+        aiAttachmentDataProvider.get().show(this, currentChat.getId(), attachmentId, description);
     }
 
     private void onDeleteMessage(final int messageId) {
