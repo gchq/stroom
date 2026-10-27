@@ -20,6 +20,99 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Rename the dashboard Component interface to DashboardPane, give panes and their settings a component-model base, then convert bottom-up through this stack: settings tabs, TextInput, KeyValueInput and ListInput panes, Vis, table rules and filters, ColumnsManager, TablePresenter, QueryResultTable, QueryResultTableSplit, the query-data tabs, QueryEdit, QueryDocEdit, then DashboardPresenter and EmbeddedQuery. The model pushes data through setData and setSearching, not ResultComponent.
 
+## Audited (27 October 2026)
+
+Five reviewers read the wave's 12 unit commits against this plan, "Done means" and AGENTS.md (the
+settings dialog, its tabs and the input panes; the query stack: the vis pane, results tables, data
+tabs and query editor; the dashboard core: the table, query pane, layout, tab menu and body; the
+data viewer, source viewer, data browser and stepping screen; the floor map and what was left).
+Fixed, in 1 commit:
+
+- **The floor map editor's dirty state.** Its 15 `markChanged()` calls went to the tab host, which
+  recomputes dirty from the written document; the editor's staged changes aren't in it, so adding
+  an object never marked the document changed. `FloorMapEditorController` has `setOnChange` now,
+  which `FloorMapPresenter` sets to its own `onChange`. Story
+  `App/Editors/FloorMapEditor AddObjectTellsDocument` (fails with `markChanged()`).
+- **The data tabs' queries.** Closing a document while its Data tab polled never stopped the query
+  (nor did the presenter); `AbstractQueryDataController` resets its query model on dispose and on
+  the window closing. Stories `DataTab`, `DataTabRun` and `DataTabEnterAndReset` on the index; the
+  query box has the label "Query".
+- **Late replies and timers.** `.owner(this)` on 38 REST calls in 12 controllers; the UI config,
+  client property, query document, linked events and annotation menu callbacks guarded; the query
+  pane's deferred start and the dashboard body's prompt check `isDisposed()`; the query editor's
+  debounce timer and the data viewer's fetch timer cancelled on dispose; the floor map query's
+  search state listener stops once disposed; the results visualisation releases its frame on
+  dispose.
+- **Dead code.** The embedded dashboard's `dashboard__content--embedded` and `setEmbedded` (the
+  `top: 0` it replaced set nothing); the workbench's emptied input, text, vis and floor map screen
+  modules and their ginjector entries; the floor map map controller's unused task monitor.
+- **Java, CSS and docs.** Licence years kept from the replaced classes and 2026 headers added;
+  same-package imports; `///` javadoc in the query editor; `ColAndPosition` at the bottom of its
+  class; getters named for what they return (`getQueryResultTable`, `getTable`); the new
+  stylesheets imported before `scroll-pane.css`, as the old classes were; stale class names in
+  comments, stories, WRITING-STORIES.md, DATA_GRID_DESIGN.md, the query filter syntax spec, the
+  stepping design notes, COMPONENT_MODEL_DESIGN.md and COMPONENTS.md (no `DockLayoutPanel` left);
+  ISSUES.md's misleading `identity` values and the results visualisation's `onUnbind` marked fixed.
+
+Left, on purpose:
+
+- **Slots.** Controllers that call `initWidget` (the expression tree, the results tables, the data
+  browser's three panes, the navigators and progress bars set and cleared at runtime, the floor map
+  editor's five and map's three children, the query help and editor) are shown in slots, as before.
+- **Wrappers.** The `w-100` `SimplePanel`s around declared pickers and the bordered panels around
+  the column, rule and selection handler lists stay: dropping them is a look change.
+- **The old bases.** `AbstractComponentPresenter` and `AbstractRefreshableComponentPresenter` stay
+  for `EmbeddedQueryPresenter`, wave 14's.
+- **Recorded in ISSUES.md.** `.dashboard-settings .layer-container`, which matches nothing now (a
+  decision: drop it, or keep the look it was for); fields and constructor `@param` lines still named
+  for presenters; the Data tab's destroy on close, with no story of its own; whether the table
+  filter dialog's focus works now that its tabs are `ControllerLayer`s; handlers wired with
+  `@UiHandler` in older components, to move to Java.
+
+## Done (27 October 2026)
+
+All 69 of the plan's units, in 14 commits: 12 for the units (the vis pane, results tables, data
+tabs, analytic shards and query editor shared one, their callers overlapping; the source viewer
+and data browser another, sharing their GIN modules), the `@UiHandler` decision, 1 for the audit,
+and this record. Each unit's commit ran its stories in a copy of the worktree with the leak check
+and the screenshot diff. The wave's targeted run, after the audit (511 stories: the dashboard, query,
+index, data, feed, stepping and floor map stories, every editor and the app shell), passed all 511
+with the leak check; of their screenshots, 477 match, the 9 new have no baseline yet (the wave's 6 new stories and the document selection dialog's
+three), and of
+the 25 that differ, 14 are the query editor's (its results pane, 17px tall in the stories, shows
+overflow: the old table spilled over the tab bar, the split pane now clips it so the "Table" tab
+shows; at 1000px the tab, pager and grid show as expected), 10 the floor map editor's (the Fact and
+Time lists now show, below) and `DocumentationEditor.TypingEnablesSave` (as in wave 12). The app and
+the standalone dashboard GWT compile, checkstyle is clean and the client and workbench modules'
+2,180 JUnit tests pass. Two bugs master has too were fixed on the way, with changelog entries:
+renaming a Key/Value Input in its settings left its tab with the old name and didn't mark the
+dashboard changed (story `DashboardLayout.KeyValueInputSettingsRename`); and the floor map editor's
+Fact and Time lists never showed, their dock having no height in the split pane (story
+`FloorMapEditor.FactAndTimeLists`, which fails with the old layout). What was decided on the way,
+where it differs from the plans below, is in the audit above (Left, on purpose) and:
+
+- **Bases.** `DashboardPane` (was the dashboard's `Component`) is what a dashboard holds;
+  `DashboardComponentController` and `RefreshableDashboardComponentController` (cancels its refresh
+  timer on dispose) are the panes' base; `LayerController`, `SettingsTabController` and
+  `BasicSettingsTabController` with `BasicSettingsFields` the settings tabs'.
+- **Names.** `ColumnsManager` moved beside the table keeping its name; the query pane's block is
+  `query-pane` (the plan's `dashboard-query` broke the naming rule); the table filter's settings are
+  `TableFilterInputSettingsController`; the source viewer's story keeps its registered title.
+- **Widgetless controllers.** `TabMenuController` (was `TabManager`) takes a `TabActions` callback
+  in place of the dashboard; `AnnotationMenuController` (was `AnnotationManager`) is owned by the
+  tables, and `TableRowCell` takes a function for its menu items.
+- **Layout.** `FlexLayout`, `TabLayout` and `Splitter` have templates and no event bus; a placed
+  pane's geometry is `.flex-layout__item` with custom properties. The floor map editor and map are a
+  flex column with a fixed-height `floormap-timeline-strip`, not a `DockLayoutPanel`.
+- **Models.** The floor map query's static helpers are `FloorMapEventQuery`, a model class beside
+  it.
+- **Dirty state from tabs.** A tab whose staged state isn't in the written document tells the
+  document directly (`setOnChange`), not with `markChanged()`.
+- **Test tools.** `PresenterCoverage` sees only `ShowPopupEvent` dialogs, so its report shrinks as
+  presenters go; its evidence file is empty and its test no longer needs entries.
+- **JSNI.** The workbench GWT compile caught a JSNI reference to a moved class that javac doesn't
+  check; moves should grep for `@stroom.` references.
+
 ## CSS and template notes for the wave
 
 - settingsPresenter (components.css:1280) is added by every SettingsPresenter subclass (QuerySettings, KeyValueInputSettings, ListInputSettings, TableFilterSettings, TextInputSettings, VisSettings, EmbeddedQuerySettings, plus TableSettings and TextSettings outside this range). Put it once on the root of unit 34's Settings.ui.xml, renamed to the BEM dashboard-settings, and delete the seven addStyleName lines.
