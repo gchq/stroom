@@ -1113,9 +1113,10 @@ Where they differ from the MCP server:
 * **No configured default convention**: the MCP server's `default_convention` setting has no Stroom counterpart, so
   `get_field_conventions` without a name always puts the choice to the user; its description no longer says "(and
   no configured default)".
-* **Not during stage 1**: `get_field_conventions` with neither a name nor a backend, while the session's build is
-  still on a step of its events pipeline, returns `status: not_yet` with the build's `next`, rather than asking the
-  backend: the backend is stage 2's question (seen in testing: a CSV onboarding's first question was the backend).
+* **Not before the build has Events**: `get_field_conventions` with neither a name nor a backend, while the session's
+  build is on a step of its events pipeline up to processing, returns `status: not_yet` with the build's `next`,
+  rather than asking the backend: the backend is stage 2's question (seen in testing: a CSV onboarding's first
+  question was the backend). Once the sample is processed into Events, it asks as before.
   Given `backend=`, it goes on as before.
 * **create_index_doc's test** is Stroom's connection test of the doc's cluster (`ElasticClusterTests`, as the
   cluster's Test Connection button runs it), as `{"result": {"ok", "message"}}`: the MCP server ran Stroom's
@@ -1256,7 +1257,7 @@ Where they differ from the MCP server:
   keep save_as from saving; value differences are reported only. Lines ended by a carriage return alone are
   refused too (`line_endings`). The MCP server had only its dry run.
 * **The converter `build_data_splitter` writes** is `SplitterXml.converter`: `generateSplitter`'s (still the MCP
-  server's, for the parity fixtures) with an `id` on each part (`header`, `record`, `fields`, `blank_line`, `body`,
+  server's, for the parity fixtures) with an `id` on each part (`header`, `record`, `fields`, `blankLine`, `body`,
   `unparsed`), which Stroom's errors name, and a top-level regex passing over blank lines, which Stroom otherwise
   writes as records of empty fields.
 * **Spec options the MCP server didn't have**: `escape` (delimited: the split's escape attribute, cells as `$2`;

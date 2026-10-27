@@ -382,19 +382,27 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         return saved;
     }
 
-    /// As the Stroom MCP server behaves (reported, not changed): create_pipeline checks a template's parser against
-    /// the build's own sample streams only (its `_parser_reads_sample`, through `sample_format`), so in a build on
-    /// an existing feed, which has none, a template whose parser can't read the feed is taken without a word; the
-    /// first candidate find_pipeline_templates offers is Event Data (JSON), and every record then fails fatally.
+    /// A template whose parser can't read an existing feed is refused, as for a new source's sample: the feed's
+    /// format is the one its survey found. Seen in testing (and as the Stroom MCP server behaved): create_pipeline
+    /// checked a build's own sample streams only, so a build on an existing feed, which has none, took the XMLParser
+    /// template for XML fragments without a word, and no rule matched what it read. The user may still insist.
     @Test
-    void aTemplateThatCannotReadAnExistingFeedIsNotRefused() {
+    void aTemplateThatCannotReadAnExistingFeedIsRefused() {
         final String source = "FRAG-SRC";
         createFeed(SOURCE_BUILD, source);
         upload(source, TestE2eFragments.SAMPLE);
         json("start_build", args("build", BUILD, "feeds", List.of(source)));
         final Map<String, Object> surveyed = json("survey_feed", args("feed", source, "build", BUILD));
+        final String template = templateUuid("translation", "Event Data (JSON)");
+
+        assertThat(replyText("create_pipeline", args("build", BUILD, "name", source + "-Events", "template_uuid",
+                template)))
+                .contains("of feed " + source + ") is xml fragments, which this template's JSONParser cannot read")
+                .contains("replace_parser");
+
+        // The user insists: taken, and every record then fails in its parser.
         final Map<String, Object> pipeline = json("create_pipeline", args("build", BUILD, "name", source + "-Events",
-                "template_uuid", templateUuid("translation", "Event Data (JSON)")));
+                "template_uuid", template, "accept_parser_mismatch", true));
         assertThat(pipeline).containsEntry("template", "Event Data (JSON)");
         final Map<String, Object> stepped = json("step_records", args("pipeline_uuid", pipeline.get("uuid"),
                 "locations", surveyed.get("locations")));
