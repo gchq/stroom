@@ -25,6 +25,7 @@ import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.vis.VisualisationActions;
+import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiCreateExtraction;
 import stroom.ai.shared.AiCreateVisualisation;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -78,6 +80,10 @@ public class UserActionService {
     static final String WRITE_EXTRACTION_COMMAND = "Write proposed search extraction";
     /// What a written extraction's card says.
     static final String WROTE_EXTRACTION = "Written. The table now uses it, unsaved: save the dashboard to keep it.";
+    // The outcome of an extraction button offered with another for the same extraction, once the other is used.
+    static final String OTHER_EXTRACTION_USED = "Not needed: the other button for this extraction was used.";
+    static final String CHANGED_EXTRACTION = "Written. The pipeline gives the fields now; any new columns are on the "
+                                             + "table, unsaved.";
     /// Why a proposed documentation change can't be applied, as the documentation was saved since.
     static final String DOCUMENTATION_CHANGED = "The documentation has been saved with other text since this was "
                                                 + "proposed. Ask again for a change to the current documentation.";
@@ -152,7 +158,9 @@ public class UserActionService {
             return new AiUserActionResult(false, NOT_IN_CHAT, null);
         }
         if (action.status() != Status.PENDING) {
-            return new AiUserActionResult(false, "This has already been done.", null);
+            return new AiUserActionResult(false, OTHER_EXTRACTION_USED.equals(action.outcome())
+                    ? OTHER_EXTRACTION_USED
+                    : "This has already been done.", null);
         }
         if (System.currentTimeMillis() > action.expiresMs()) {
             return new AiUserActionResult(false, "This button has expired. Ask again for an up-to-date one.", null);
@@ -176,6 +184,7 @@ public class UserActionService {
             case UserActions.CREATE_VISUALISATION -> createVisualisation(chatId, action);
             case UserActions.CREATE_VISUALISATIONS -> createVisualisations(chatId, action);
             case UserActions.CREATE_EXTRACTION_PIPELINE -> createExtraction(chatId, action);
+            case UserActions.CHANGE_EXTRACTION_PIPELINE -> changeExtraction(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
@@ -184,11 +193,12 @@ public class UserActionService {
         };
     }
 
-    /// Writes the search extraction a `create_extraction_pipeline` button proposed (its XSLT and pipeline), once the
-    /// user has confirmed exactly what is written, with the name and folder they chose, as the user. Nothing else is
-    /// written: the hash of what they were shown must be that of what would be written now. The button is claimed
-    /// first, so it writes once; if the write fails, it can be used again. The browser then sets the table up to use
-    /// the pipeline, unsaved.
+    /// Writes the search extraction a `create_extraction_pipeline` button proposed (its XSLT and pipeline), with the
+    /// name and folder the user chose, or the change to a table's extraction pipeline a `change_extraction_pipeline`
+    /// button proposed (its XSLT, in place), once the user has confirmed exactly what is written, as the user.
+    /// Nothing else is written: the hash of what they were shown must be that of what would be written now. The
+    /// button is claimed first, so it writes once; if the write fails, it can be used again. The browser then sets
+    /// the table up, unsaved.
     ///
     /// @param chatId    The chat, which the user must own.
     /// @param messageId The tool result message the action is in.
@@ -207,11 +217,15 @@ public class UserActionService {
         final UserActionRecord action = result == null
                 ? null
                 : find(result, actionId);
-        if (action == null || !UserActions.CREATE_EXTRACTION_PIPELINE.equals(action.action())) {
+        if (action == null || !(UserActions.CREATE_EXTRACTION_PIPELINE.equals(action.action())
+                                || UserActions.CHANGE_EXTRACTION_PIPELINE.equals(action.action()))) {
             return AiWriteExtractionResult.failed(NOT_IN_CHAT);
         }
+        final boolean change = UserActions.CHANGE_EXTRACTION_PIPELINE.equals(action.action());
         if (action.status() != Status.PENDING) {
-            return AiWriteExtractionResult.failed("This has already been done.");
+            return AiWriteExtractionResult.failed(OTHER_EXTRACTION_USED.equals(action.outcome())
+                    ? OTHER_EXTRACTION_USED
+                    : "This has already been done.");
         }
         if (System.currentTimeMillis() > action.expiresMs()) {
             return AiWriteExtractionResult.failed("This button has expired. Ask again for an up-to-date one.");
@@ -229,14 +243,21 @@ public class UserActionService {
         } catch (final IllegalArgumentException e) {
             return AiWriteExtractionResult.failed(e.getMessage());
         }
-        // Claimed before anything is written, so a second click writes nothing.
-        final String claimed = update(message, result, action.withStatus(Status.DONE, WROTE_EXTRACTION));
+        // Claimed before anything is written, so a second click writes nothing; the other button offered for the
+        // same extraction (a change in place, or a new pipeline) with it, so only one is used.
+        final String claimed = update(message, otherExtractionsUsed(result, action), action.withStatus(Status.DONE,
+                change
+                        ? CHANGED_EXTRACTION
+                        : WROTE_EXTRACTION));
         if (claimed == null) {
             return AiWriteExtractionResult.failed("This has already been done.");
         }
         final ExtractionActions.Written written;
         try {
-            written = extractionActions.write(action.doc(), plan, request);
+            written = change
+                    ? extractionActions.writeChange(action.doc(), plan, NullSafe.get(request,
+                    AiWriteExtractionRequest::getContentHash))
+                    : extractionActions.write(action.doc(), plan, request);
         } catch (final RuntimeException e) {
             final String problem = e instanceof IllegalStateException
                     ? e.getMessage()
@@ -252,6 +273,19 @@ public class UserActionService {
             return AiWriteExtractionResult.failed(problem);
         }
         final String fields = String.join(", ", plan.fields().stream().map(ExtractionField::name).toList());
+        if (change) {
+            auditLog.processed(ToolSession.chat(chatId), written.xslt(), WRITE_EXTRACTION_COMMAND, target,
+                    "Changed XSLT '" + written.xslt().getName() + "' of pipeline '" + written.pipeline().getName()
+                    + "' in place, with " + fields, true);
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I confirmed "
+                                                                         + "the change: Stroom changed XSLT '"
+                                                                         + written.xslt().getName() + "' of pipeline '"
+                                                                         + written.pipeline().getName()
+                                                                         + "' in place, with " + fields
+                                                                         + ", and added any new columns to table '"
+                                                                         + plan.component() + "', unsaved.");
+            return new AiWriteExtractionResult(true, CHANGED_EXTRACTION, written.pipeline(), written.tableChanges());
+        }
         auditLog.processed(ToolSession.chat(chatId), written.xslt(), WRITE_EXTRACTION_COMMAND, target,
                 "Created XSLT '" + written.xslt().getName() + "', extracting " + fields, true);
         auditLog.processed(ToolSession.chat(chatId), written.pipeline(), WRITE_EXTRACTION_COMMAND, target,
@@ -413,6 +447,28 @@ public class UserActionService {
         auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
                 "Showed what would be written, to confirm", true);
         return AiUserActionResult.createExtraction(create);
+    }
+
+    /// Shows the user a change to a dashboard table's extraction pipeline in place, to confirm: its XSLT changed, as a
+    /// diff, and the other documents that use it. Nothing is written until they confirm it (see [#writeExtraction]),
+    /// so the button stays pending.
+    private AiUserActionResult changeExtraction(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard no longer exists, or you can't see it.";
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final AiChangeExtraction changeExtraction;
+        try {
+            changeExtraction = extractionActions.prepareChange(action.doc(), ExtractionPlan.fromJson(
+                    action.request()));
+        } catch (final IllegalArgumentException | IllegalStateException e) {
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
+            return new AiUserActionResult(false, e.getMessage(), null);
+        }
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
+                "Showed the change that would be written, to confirm", true);
+        return AiUserActionResult.changeExtraction(changeExtraction);
     }
 
     /// Lets the browser create several planned charts: each one's Visualisation settings, built again from its plan
@@ -794,7 +850,8 @@ public class UserActionService {
         final UserActionRecord action = result == null
                 ? null
                 : find(result, actionId);
-        if (action == null || update(now, result, action.withStatus(Status.PENDING, null)) == null) {
+        if (action == null || update(now, otherExtractionsPending(result), action.withStatus(Status.PENDING, null))
+                              == null) {
             LOGGER.warn("Unable to make user action '{}' of message {} pending again, after it wasn't done", actionId,
                     messageId);
         }
@@ -805,6 +862,36 @@ public class UserActionService {
         return aiDao.compareAndSetMessageText(message.getId(), message.getMessage(), text)
                 ? text
                 : null;
+    }
+
+    // A tool result with the other pending extraction buttons for the same extraction as one being used marked as not
+    // needed.
+    private static ToolResultRecord otherExtractionsUsed(final ToolResultRecord result,
+                                                         final UserActionRecord action) {
+        ToolResultRecord marked = result;
+        for (final UserActionRecord other : NullSafe.list(result.userActions())) {
+            if (!other.id().equals(action.id()) && isExtraction(other) && other.status() == Status.PENDING
+                && Objects.equals(other.request(), action.request())) {
+                marked = replace(marked, other.withStatus(Status.DONE, OTHER_EXTRACTION_USED));
+            }
+        }
+        return marked;
+    }
+
+    // A tool result with the extraction buttons marked as not needed made pending again.
+    private static ToolResultRecord otherExtractionsPending(final ToolResultRecord result) {
+        ToolResultRecord pending = result;
+        for (final UserActionRecord other : NullSafe.list(result.userActions())) {
+            if (isExtraction(other) && OTHER_EXTRACTION_USED.equals(other.outcome())) {
+                pending = replace(pending, other.withStatus(Status.PENDING, null));
+            }
+        }
+        return pending;
+    }
+
+    private static boolean isExtraction(final UserActionRecord action) {
+        return UserActions.CREATE_EXTRACTION_PIPELINE.equals(action.action())
+               || UserActions.CHANGE_EXTRACTION_PIPELINE.equals(action.action());
     }
 
     private static ToolResultRecord replace(final ToolResultRecord result, final UserActionRecord action) {
