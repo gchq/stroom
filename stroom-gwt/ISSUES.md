@@ -84,7 +84,7 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
   left (the tab is written on every change), not only on save; there is no check that it is between
   0 and 1.
 
-* `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticClusterSettingsViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticClusterSettings.ui.xml`
 * `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
 
 ### A rejected column rename may still change conditional formatting
@@ -624,7 +624,7 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
   Notifications is unticked (`AnalyticNotificationEdit.ui.xml`).
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
-  (`SolrIndexSettingsViewImpl.ui.xml`).
+  (`SolrIndexSettings.ui.xml`).
 
 ### The Go to Search Results shortcut did nothing (on master too)
 
@@ -921,7 +921,9 @@ registered completion providers.
 * `UserTaskManagerController` (line 65) keeps a presenter per task id ever seen while open.
 * `DelegatingAceCompleter` gains two duplicate completion providers per query tab switch
   (`QueryHelpPresenter:195` registers on detach too).
-* `ElementPresenter.setCode` (line 342) adds another key handler on every stepping Refresh.
+* ~~`ElementPresenter.setCode` (line 342) adds another key handler on every stepping Refresh.~~
+  Fixed in wave 12: `SteppingElementController` adds the Ctrl+Enter handler once, when it first
+  attaches the code's editor.
 
 **Not leaks:** the workbench's test runner uses a new browser context per story, so stories don't
 add up. One-off timers (a dialog button's 1 s spinner delay, `SpinnerLarge`'s 0.5 s hide) hold the
@@ -1777,6 +1779,27 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `emailTextBox` and `passwordPolicyMessage`, in `Login.css` and `ChangePassword.css`. Give them
   BEM blocks in kebab-case stylesheets of their own in one pass, as the five pages share the two
   files.
+* A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
+  (found 27 October 2026, in wave 12; as on master), before the typed character is in the field, so
+  the change the user sees isn't the one compared; a paste with the mouse marks nothing. Use the
+  fields' value change (or input) events, with a story typing one character and checking Save.
+* Wave 12's screens with no story or no check (found 27 October 2026, in its audit): a Traces
+  store's Settings tab (now `PlanBSettingsController` with its state type locked, which dropped its
+  doubled form padding: no screenshot shows it); the data generator's Execution tab's grids (a
+  stylesheet slip once blanked them and every story still passed); the user Document Permissions
+  filter's help (its missing spaces were fixed in the template, with a changelog entry but no test).
+* Unused CSS met in wave 12 (27 October 2026): `.pipelineStructureViewImpl-buttons`
+  (`components.css`; nothing has the class since the pipeline's Structure tab converted). Delete it
+  once removals are allowed.
+* Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
+  `annotationContainer`, `annotationHistory*`, `annotationButtons`, `annotationTextBox` and the rest
+  (`stroom-annotation.css`; only the button width moved, to `annotation-edit.css`), and the traces
+  list's `traces-toolbar` (`pathways.css`, set in `TracesListTabController`). Rename them with their
+  rules to `annotation-edit__…` and `traces-list-tab__toolbar` in one pass each.
+* Read-only read once rather than followed (found 27 October 2026, in wave 12's audit; as before
+  the wave): the pipeline's Structure tab, a document's Assets tab and the scheduled processing pane
+  take `Contexts.READ_ONLY` when they read, so a lock change without a re-read leaves their buttons
+  as they were. Follow it with `watch(Contexts.READ_ONLY, ...)`, with a `LockChangeWhileOpen` story.
 
 * ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
   string to a template's `String` attribute, which escapes it again, so an apostrophe shows as
@@ -1841,7 +1864,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
     Custom Format text is edited (`TimePreferences`, lines 101-112).
   * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
-    (`AbstractProcessingPresenter`, lines 119-131).
+    (`AnalyticProcessingController.setProcessType`).
   * An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
     paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).
   * The query result's source pane declares a stepping button that nothing shows

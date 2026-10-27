@@ -172,7 +172,7 @@ Also on the harness, for what Stroom's app does around a screen:
 **Document plugins.** Stroom finds a document's plugin (`DocumentPlugin`: load, save, open its
 tab) by type in `DocumentPluginRegistry`, which the app fills as its plugins start; a plugin
 registers itself when it is created. Screens that go through a plugin (`OpenDocumentEvent`, an
-editor's Save via `DocumentPluginEventManager`, a stepping element's code in `ElementPresenter`, an
+editor's Save via `DocumentPluginEventManager`, a stepping element's code in `SteppingElementController`, an
 embedded document created from a pipeline property, `PipelinePlugin`'s 'Save Pipeline' picker) need
 the plugins created from the story's ginjector (which must bind `ContentManager` as a singleton, as
 `AppModule` does). `StoryDocumentPlugins` does the rest: `register(harness, eventManager,
