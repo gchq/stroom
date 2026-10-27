@@ -460,14 +460,22 @@ public class DataGrid<R> extends Widget
     /// Set a column's width programmatically.
     ///
     /// @param column The column.
-    /// @param width  The width. Only pixel widths are supported; other units are treated as pixels.
-    /// @param unit   The unit.
-    public void setColumnWidth(final Column<R, ?> column, final int width, final Unit unit) {
+    /// @param width  The width in pixels.
+    public void setColumnWidth(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
             columnModel.setWidth(index, width);
             scheduleRender();
         }
+    }
+
+    /// Set a column's width programmatically.
+    ///
+    /// @param column The column.
+    /// @param width  The width. Only pixel widths are supported; other units are treated as pixels.
+    /// @param unit   The unit.
+    public void setColumnWidth(final Column<R, ?> column, final int width, final Unit unit) {
+        setColumnWidth(column, width);
     }
 
     /// Set a column's width as its content needs (e.g. a tree's expander column), the fill columns

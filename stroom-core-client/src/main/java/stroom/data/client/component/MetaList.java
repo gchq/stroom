@@ -45,7 +45,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
@@ -220,7 +219,7 @@ public class MetaList extends Component {
     ///
     /// @param maxDepth The depth of the deepest stream, or -1 for none below a root.
     public void setExpanderDepth(final int maxDepth) {
-        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
+        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth));
         // Give any width the expander column gave up to the fill columns (the grid has sized its
         // columns before the first rows), as TreeRowHandler does
         dataGrid.resizeTableToFitColumns(true);

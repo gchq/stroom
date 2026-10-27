@@ -147,6 +147,10 @@ public class PagerPanel extends Component implements View, TaskMonitorFactory, H
         if (!children.remove(widget)) {
             return false;
         }
+        if (widget == pager.getDisplay()) {
+            // The pager stops paging the list it no longer shows
+            pager.setDisplay(null);
+        }
         widget.removeFromParent();
         return true;
     }

@@ -93,8 +93,7 @@ public class ColumnSelection extends Component {
                 .stream()
                 .sorted(Comparator.comparing(ColumnRef::getName))
                 .collect(Collectors.toList());
-        dataGrid.setRowData(0, rows);
-        dataGrid.setRowCount(rows.size(), true);
+        dataGrid.setRowData(rows);
     }
 
     private void addSelectedColumn() {

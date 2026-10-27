@@ -25,11 +25,8 @@ import stroom.docref.DocRef;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Selection;
 import stroom.widget.component.client.Component;
-import stroom.widget.datagrid.client.ColSpec;
-import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 
-import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -67,19 +64,7 @@ public class DocRefSelection extends Component {
     ///
     /// @param cell The document cell's builder, configured to open its documents.
     public void addDocumentColumn(final DocRefCell.Builder<DocRef> cell) {
-        final Column<DocRef, DocRef> column = new ColumnBuilder<DocRef, DocRef, Cell<DocRef>>(Function.identity(),
-                () -> cell
-                        .hasOpenAndCopy(false)
-                        .docRefFunction(Function.identity())
-                        .showIcon(true)
-                        .build())
-                .build();
-        dataGrid.addColumn(new ColSpec.Builder<DocRef>()
-                .column(column)
-                .resizable(true)
-                .name("Document Name")
-                .width(ColumnSizeConstants.BIG_COL)
-                .build());
+        DataGridUtil.addDocRefColumn(cell, dataGrid, "Document Name", Function.identity(), false);
     }
 
     /// @param docRefs The documents, a row each, all ticked.

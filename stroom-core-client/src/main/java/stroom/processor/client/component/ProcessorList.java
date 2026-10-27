@@ -46,7 +46,6 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.datagrid.client.ColSpec;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
@@ -317,18 +316,7 @@ public class ProcessorList extends Component {
             return docRef;
         };
 
-        final Column<ProcessorListRow, ProcessorListRow> column = new ColumnBuilder<ProcessorListRow, ProcessorListRow,
-                Cell<ProcessorListRow>>(Function.identity(), () -> pipelineCell
-                .docRefFunction(extractionFunction)
-                .showIcon(true)
-                .build())
-                .build();
-        dataGrid.addColumn(new ColSpec.Builder<ProcessorListRow>()
-                .column(column)
-                .resizable(true)
-                .name("Pipeline")
-                .width(ColumnSizeConstants.BIG_COL)
-                .build());
+        DataGridUtil.addDocRefColumn(pipelineCell, dataGrid, "Pipeline", extractionFunction, true);
     }
 
     private void addLastPollColumns() {
