@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/StepFilterDialog`, showing Stroom's real [SteppingFilterEditorController] (the
-/// 'Change Step Filters' dialog, as `SteppingPresenter` shows it).
+/// 'Change Step Filters' dialog, as `SteppingScreenController` shows it).
 ///
 /// The element icons come from `GET /pipeline/v1/propertyTypes`. The `onApply` spy records what the
 /// dialog's consumer is given (the element id → settings map), described as

@@ -975,7 +975,7 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     // The other dirty document can only be the code of an element edited while stepping
-                    // (SteppingPresenter.getDirtyDocs), and the pipeline is dirtied by an edit, so the
+                    // (SteppingScreenController.getDirtyDocs), and the pipeline is dirtied by an edit, so the
                     // play makes both dirty first: it removes the xslt element's reference loader, steps
                     // a stream and edits the element's code (the XSLT 'My XSLT', loaded by Stroom's
                     // XsltPlugin)

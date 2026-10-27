@@ -19,9 +19,6 @@ package stroom.gwt.workbench.client.app.gin.content;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
-import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -37,9 +34,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bind(TextConverterPresenter.class);
         bind(XsltPresenter.class);
         bind(PipelinePresenter.class);
-        bindPresenterWidget(SteppingPresenter.class,
-                SteppingView.class,
-                SteppingViewImpl.class);
         bind(ProcessorTaskPresenter.class);
     }
 }

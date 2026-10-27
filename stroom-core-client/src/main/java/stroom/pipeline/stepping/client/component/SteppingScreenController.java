@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -44,20 +44,16 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.stepping.client.component.PipelinePathBar;
-import stroom.pipeline.stepping.client.component.PipelinePathBarController;
-import stroom.pipeline.stepping.client.component.StepControlController;
-import stroom.pipeline.stepping.client.component.StepLocationLinkController;
-import stroom.pipeline.stepping.client.component.SteppingElementController;
-import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.query.api.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
@@ -66,9 +62,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -76,19 +70,10 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -106,22 +91,21 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class SteppingPresenter
-        extends MyPresenterWidget<SteppingPresenter.SteppingView> {
+/// The stepping screen ([SteppingScreen]): steps a pipeline through a stream chosen from a list, a
+/// record at a time or to the next record a filter matches, and shows each element's input,
+/// output, code and log for the step; edits to the elements' code are saved with the pipeline.
+public class SteppingScreenController extends Controller {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final String LOG_PANE_TITLE = "Log Pane";
 
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
+    private final SteppingScreen view;
     private final PipelinePathBar pipelinePathBar;
     private final SourceViewerController sourcePresenter;
     // The source as a layer, kept, as the container tells its layers apart by identity
     private final ControllerLayer sourceLayer;
     private final Provider<SteppingElementController> elementProvider;
-    private final SimplePanel stepMessage;
-    // Tells screen reader users that a step has begun and where it got to (the progress message
-    // above changes too often, while searching, to be announced)
-    private final Element stepAnnouncement;
     private final StepLocationLinkController stepLocationLink;
     private final StepControlController stepControl;
     private final SteppingFilterEditorController steppingFilterEditor;
@@ -135,8 +119,6 @@ public class SteppingPresenter
     // elementId => the layer showing its controller
     private final Map<ElementId, ControllerLayer> elementLayerMap = new HashMap<>();
     private PipelineModel pipelineModel;
-    private final ToolbarButton terminateButton;
-    private final ToolbarToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
     // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
@@ -145,7 +127,6 @@ public class SteppingPresenter
     private boolean searching;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
-    private final Toolbar logPaneButtons;
     private boolean runStepping = true;
 
     final ButtonView streamListFilter;
@@ -154,34 +135,37 @@ public class SteppingPresenter
     private String childStreamType;
     private PipelineDoc pipelineDoc;
     private String classification;
+    private String logPaneTitle = LOG_PANE_TITLE;
     private SteppingElementController currentElement = null;
 
     private Runnable onChange = () -> {
     };
 
+    /// Made by GIN, with its content and its parts.
     @Inject
-    public SteppingPresenter(final EventBus eventBus,
-                             final SteppingView view,
-                             final PipelinePathBar pipelinePathBar,
-                             final Provider<PipelinePathBarController> pathBarControllerProvider,
-                             final RestFactory restFactory,
-                             final SourceViewerController sourcePresenter,
-                             final Provider<SteppingElementController> elementProvider,
-                             final StepLocationLinkController stepLocationLink,
-                             final StepControlController stepControl,
-                             final SteppingFilterEditorController steppingFilterEditor,
-                             final PipelineElementTypesFactory pipelineElementTypesFactory,
-                             final Provider<SteppingMetaListController> metaListPresenterProvider,
-                             final Provider<ExpressionDialogController> filterDialogProvider,
-                             final ExpressionValidator expressionValidator) {
-        super(eventBus, view);
+    public SteppingScreenController(final EventBus eventBus,
+                                    final SteppingScreen view,
+                                    final Provider<PipelinePathBarController> pathBarControllerProvider,
+                                    final RestFactory restFactory,
+                                    final SourceViewerController sourcePresenter,
+                                    final Provider<SteppingElementController> elementProvider,
+                                    final StepLocationLinkController stepLocationLink,
+                                    final StepControlController stepControl,
+                                    final SteppingFilterEditorController steppingFilterEditor,
+                                    final PipelineElementTypesFactory pipelineElementTypesFactory,
+                                    final Provider<SteppingMetaListController> metaListPresenterProvider,
+                                    final Provider<ExpressionDialogController> filterDialogProvider,
+                                    final ExpressionValidator expressionValidator) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(sourcePresenter);
         own(stepLocationLink);
         own(stepControl);
         own(steppingFilterEditor);
         this.restFactory = restFactory;
 
-        this.pipelinePathBar = pipelinePathBar;
+        this.pipelinePathBar = view.getPipelinePathBar();
         make(pathBarControllerProvider).attach(pipelinePathBar);
         this.sourcePresenter = sourcePresenter;
         this.sourceLayer = new ControllerLayer(sourcePresenter);
@@ -194,14 +178,8 @@ public class SteppingPresenter
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
-        final Toolbar buttonPanel = new Toolbar("Stepping");
-        terminateButton = buttonPanel.button(SvgImage.STOP, "Terminate Stepping", this::terminate);
-        terminateButton.setEnabled(false);
-        terminateButton.addStyleName("query-buttons__button query-buttons__button--stop");
+        view.setOnTerminate(this::terminate);
 
-        view.setTreeView(pipelinePathBar);
-
-        sourcePresenter.asWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.asWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
@@ -212,31 +190,11 @@ public class SteppingPresenter
         stepControl.initButtons();
         stepLocationLink.setEnabled(false);
 
-        logPaneButtons = new Toolbar("Log pane");
-        toggleLogPaneButton = logPaneButtons.toggle(SvgImage.EXCLAMATION, LOG_PANE_TITLE, this::onToggleLogPane);
-        toggleLogPaneButton.setOn();
+        view.setOnToggleLogPane(this::onToggleLogPane);
 
         sourcePresenter.setOnClassification(this::setClassification);
 
-        this.stepMessage = new SimplePanel();
-        stepMessage.addStyleName("stepping-screen__progress-message");
-
-        // The log pane toggle and the step's progress, in a slot of a fixed width before the step
-        // location and controls, so that the pipeline's bar beside them doesn't change width as they
-        // come and go
-        final FlowPanel stepToolbar = new FlowPanel();
-        stepToolbar.addStyleName("stepping-screen__progress dock-container-horizontal dock-min");
-        stepToolbar.add(logPaneButtons);
-        stepToolbar.add(stepMessage);
-        stepAnnouncement = Document.get().createDivElement();
-        stepAnnouncement.setClassName("sr-only");
-        stepAnnouncement.setAttribute("role", "status");
-        stepAnnouncement.setAttribute("aria-live", "polite");
-        stepToolbar.getElement().appendChild(stepAnnouncement);
-        view.addWidgetRight(stepToolbar);
-        view.addWidgetRight(stepLocationLink.asWidget());
-        view.addWidgetRight(stepControl.asWidget());
-        view.addWidgetRight(buttonPanel);
+        view.setStepControls(stepLocationLink, stepControl);
 
         steppingMetaList.getToolbar().setName("Stream actions");
         streamListFilter = steppingMetaList.getToolbar().button(SvgImage.FILTER, "Filter Streams",
@@ -329,12 +287,12 @@ public class SteppingPresenter
                 MetaFields.getAllFields(),
                 (expression, e) -> {
                     expressionValidator.validateExpression(
-                            SteppingPresenter.this,
+                            SteppingScreenController.this,
                             MetaFields.getAllFields(),
                             expression, expression2 -> {
                                 if (!expression2.equals(getCriteria().getExpression())) {
                                     if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                        ConfirmEvent.fire(SteppingPresenter.this,
+                                        ConfirmEvent.fire(SteppingScreenController.this,
                                                 "You are setting advanced filters!  It is recommended you constrain " +
                                                 "your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
@@ -358,7 +316,7 @@ public class SteppingPresenter
                             },
                             // If it isn't valid, let the user change it or cancel
                             e::reset,
-                            this);
+                            taskMonitor());
                 });
     }
 
@@ -393,7 +351,7 @@ public class SteppingPresenter
     }
 
     private void showChangeFiltersDialog() {
-        pipelineElementTypesFactory.get(this, elementTypes -> {
+        pipelineElementTypesFactory.get(taskMonitor(), elementTypes -> {
             final List<PipelineElement> elements = new ArrayList<>();
             getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
 //            GWT.log("elements: \n" + NullSafe.stream(elements)
@@ -673,14 +631,11 @@ public class SteppingPresenter
             }
             final String msg = LOG_PANE_TITLE + " ("
                                + count + " " + type + plural + ")";
-            toggleLogPaneButton.setTitle(msg);
+            logPaneTitle = msg;
         }
 
-        toggleLogPaneButton.setVisible(isButtonVisible);
         // Now set the button state based on the desired state from the presenter
-        if (isButtonVisible) {
-            toggleLogPaneButton.setState(isLogPaneVisible);
-        }
+        view.setLogPaneToggle(isButtonVisible, isLogPaneVisible, logPaneTitle);
     }
 
     private void refreshEditorIO(final SteppingElementController steppingElement, final SharedElementData elementData) {
@@ -831,7 +786,7 @@ public class SteppingPresenter
             pipelinePathBar.setDisabledElements(disabledElements);
 
         } catch (final PipelineModelException e) {
-            AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
+            AlertEvent.fireError(SteppingScreenController.this, e.getMessage(), null);
         }
     }
 
@@ -880,8 +835,8 @@ public class SteppingPresenter
             busyTranslating = true;
             setStepMessage("Stepping...");
             announceStep("Stepping");
-            stepMessage.setVisible(true);
-            terminateButton.setEnabled(true);
+            view.setStepMessageVisible(true);
+            view.setTerminateEnabled(true);
 
             // Keep the session UUID from previous steps. The server holds the stepping session - the data it
             // has already captured for this stream selection - against that id, so preserving it across
@@ -964,10 +919,10 @@ public class SteppingPresenter
                     }
                 })
                 .onFailure(restError -> {
-                    AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
+                    AlertEvent.fireErrorFromException(SteppingScreenController.this, restError.getException(), null);
                     busyTranslating = false;
                 })
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -996,7 +951,7 @@ public class SteppingPresenter
                     .onSuccess(response -> {
                         // Ignore response, we will assume we have stopped.
                     })
-                    .taskMonitorFactory(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
@@ -1004,20 +959,18 @@ public class SteppingPresenter
     private void stop() {
         busyTranslating = false;
         setStepMessage("");
-        terminateButton.setEnabled(false);
+        view.setTerminateEnabled(false);
     }
 
     // Shows the step's progress, in full in its hover tip if its slot cuts it short
     private void setStepMessage(final String message) {
-        stepMessage.getElement().setInnerText(message);
-        stepMessage.setTitle(message);
+        view.setStepMessage(message);
     }
 
     // Tells screen reader users about a step, emptying the announcement first so that the same one
     // (e.g. "Stepping" for each step) is announced again
     private void announceStep(final String message) {
-        stepAnnouncement.setInnerText("");
-        Scheduler.get().scheduleDeferred(() -> stepAnnouncement.setInnerText(message));
+        view.announce(message);
     }
 
     // A step's location in words, e.g. "Stream 1, part 1, record 3", as "[1:1:3]" would be read as
@@ -1213,15 +1166,15 @@ public class SteppingPresenter
 
     private void onSelect(final PipelineElement element) {
         if (element != null) {
-            final TaskMonitor taskMonitor = createTaskMonitor();
+            final TaskMonitor taskMonitor = taskMonitor().createTaskMonitor();
             final Task task = new SimpleTask("Stepping");
             taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() ->
-                    pipelineElementTypesFactory.get(this, elementTypes -> {
+                    pipelineElementTypesFactory.get(taskMonitor(), elementTypes -> {
                         final Layer content = getContent(element);
                         if (content != null) {
                             // Set the content.
-                            getView().getLayerContainer().show(content);
+                            view.showContent(content);
 
                             updateElementSeverities();
                         }
@@ -1241,20 +1194,18 @@ public class SteppingPresenter
         }
     }
 
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
+    }
+
     /// @param onChange What to run when the user changes an element while stepping.
     public void setOnChange(final Runnable onChange) {
         this.onChange = onChange;
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface SteppingView extends View {
-
-        void addWidgetRight(Widget widget);
-
-        void setTreeView(IsWidget view);
-
-        LayerContainer getLayerContainer();
     }
 }

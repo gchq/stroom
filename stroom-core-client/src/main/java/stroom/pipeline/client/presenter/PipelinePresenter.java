@@ -31,7 +31,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.stepping.client.component.SteppingScreenController;
 import stroom.pipeline.structure.client.component.PipelineStructureController;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
@@ -68,7 +68,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     private final TabProvider<PipelineDoc> structureTabProvider;
     private final TabProvider<PipelineDoc> steppingTabProvider;
     private final PipelineStructureController pipelineStructure;
-    private final SteppingPresenter steppingPresenter;
+    private final SteppingScreenController steppingPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final PipelineModelFactory pipelineModelFactory;
 
@@ -92,7 +92,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<PipelineDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext,
-                             final Provider<SteppingPresenter> steppingPresenterProvider,
+                             final Provider<SteppingScreenController> steppingPresenterProvider,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final PipelineModelFactory pipelineModelFactory) {
         super(eventBus, view);
@@ -114,27 +114,18 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         steppingPresenter = make(steppingPresenterProvider);
         pipelineStructure = make(structureProvider);
 
-        steppingTabProvider = new AbstractTabProvider<PipelineDoc, SteppingPresenter>() {
-            @Override
-            protected SteppingPresenter createPresenter() {
-                return steppingPresenter;
-            }
+        steppingTabProvider = ControllerTabProvider.ofOwned(eventBus, steppingPresenter,
+                (presenter, docRef, document) -> {
+                    loadPipelineModel(docRef, model -> {
+                        steppingPresenter.setPipelineModel(model);
+                        steppingPresenter.setPipelineDoc(document);
+                    });
 
-            @Override
-            public void onRead(final SteppingPresenter presenter,
-                               final DocRef docRef,
-                               final PipelineDoc document) {
-                loadPipelineModel(docRef, model -> {
-                    steppingPresenter.setPipelineModel(model);
-                    steppingPresenter.setPipelineDoc(document);
+                    if (!steppingMetaListLoaded && steppingMetaExpression == null) {
+                        steppingMetaListLoaded = true;
+                        setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
+                    }
                 });
-
-                if (!steppingMetaListLoaded && steppingMetaExpression == null) {
-                    steppingMetaListLoaded = true;
-                    setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
-                }
-            }
-        };
 
         // Owned here, as the stepping tab asks it whether the structure is dirty; its edits reach
         // this presenter's onChange() through its markChanged()

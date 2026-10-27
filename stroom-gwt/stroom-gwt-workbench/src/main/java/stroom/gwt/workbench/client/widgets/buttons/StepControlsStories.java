@@ -82,7 +82,7 @@ public final class StepControlsStories {
                     stepControls(harness, view, true, report -> {
                     });
                     // The step controls have no busy state. While a step is in flight Stroom's
-                    // SteppingPresenter ignores step events (busyTranslating), but the buttons stay
+                    // SteppingScreenController ignores step events (busyTranslating), but the buttons stay
                     // enabled, and the filter button still works.
                     enableAll(view);
                     harness.add(view);
@@ -93,7 +93,7 @@ public final class StepControlsStories {
     /// Creates the real controller for the buttons, owned by the harness, reporting the steps to the
     /// `onStep`/`onFilter` spies.
     ///
-    /// @param busy   True to ignore steps (not the filter), as `SteppingPresenter` does while it is
+    /// @param busy   True to ignore steps (not the filter), as `SteppingScreenController` does while it is
     ///               busy translating.
     /// @param report Also told each step ("step: forward") and filter request ("filter").
     private static StepControlController stepControls(final ScreenHarness harness,
@@ -109,7 +109,7 @@ public final class StepControlsStories {
                 onStep.call(stepType.name().toLowerCase(Locale.ROOT));
             }
         });
-        // Not guarded: SteppingPresenter opens the filter dialog even while it is busy
+        // Not guarded: SteppingScreenController opens the filter dialog even while it is busy
         controller.setOnFilter(() -> {
             report.accept("filter");
             onFilter.call();

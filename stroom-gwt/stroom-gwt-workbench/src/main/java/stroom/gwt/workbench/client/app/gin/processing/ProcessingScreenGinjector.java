@@ -40,7 +40,7 @@ import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.component.DocRefSelectionController;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.stepping.client.component.SteppingScreenController;
 import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
@@ -138,12 +138,12 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     PipelinePresenter getPipelinePresenter();
 
     /// @return A pipeline's stepper, as `PipelinePresenter` shows it in stepping mode.
-    SteppingPresenter getSteppingPresenter();
+    SteppingScreenController getSteppingScreen();
 
     /// @return A document chooser, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
     ExplorerPopupController getExplorerPopupController();
 
-    /// @return The 'Change Step Filters' dialog, as `SteppingPresenter` shows it.
+    /// @return The 'Change Step Filters' dialog, as `SteppingScreenController` shows it.
     SteppingFilterEditorController getSteppingFilterEditorController();
 
     /// @return A pipeline's element tree, as `PipelineStructureController` shows it.

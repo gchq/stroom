@@ -38,8 +38,9 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.stepping.client.component.SteppingScreenController;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -47,7 +48,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/SteppingScreen`, showing Stroom's real [SteppingPresenter] (a pipeline's
+/// Stories of `App/Main/SteppingScreen`, showing Stroom's real [SteppingScreenController] (a pipeline's
 /// stepper, as `PipelinePresenter.beginStepping` starts it) with a fake stepping server.
 ///
 /// | Stroom endpoint | Used for |
@@ -205,7 +206,7 @@ public final class SteppingScreenStories {
                     play.click(play.getByText("xmlWriter"));
                     play.findByTitle(TextMatch.containing("1 Error"));
                     // GWT doesn't start a new session for each step; the session is dropped only when
-                    // stepping (re)begins on a stream (SteppingPresenter.beginStepping), and each step
+                    // stepping (re)begins on a stream (SteppingScreenController.beginStepping), and each step
                     // polls with the session it has, so the three steps above were all sent with the
                     // server's session
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
@@ -521,11 +522,12 @@ public final class SteppingScreenStories {
         final PipelineDoc pipelineDoc = PipelineDoc.builder().uuid("p1").name("Test Pipeline").build();
         final Meta meta = Meta.builder().id(1L).feedName("MY_FEED").typeName("Raw Events").build();
         harness.afterStartUp(() -> {
-            final SteppingPresenter stepping = injector.getSteppingPresenter();
+            final SteppingScreenController stepping = injector.getSteppingScreen();
             harness.show(stepping);
             // As PipelinePresenter loads the model and begins stepping a stream
-            injector.getPipelineElementTypesFactory().get(stepping, types ->
-                    injector.getPipelineModelFactory().get(stepping, pipeline, types, model -> {
+            final DefaultTaskMonitorFactory taskMonitor = new DefaultTaskMonitorFactory(stepping);
+            injector.getPipelineElementTypesFactory().get(taskMonitor, types ->
+                    injector.getPipelineModelFactory().get(taskMonitor, pipeline, types, model -> {
                         stepping.setPipelineModel(model);
                         stepping.setPipelineDoc(pipelineDoc);
                         stepping.beginStepping(StepType.REFRESH, new StepLocation(1L, 0L, 0L), meta, null);
