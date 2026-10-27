@@ -20,7 +20,6 @@ import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -96,7 +95,7 @@ public final class DocumentEditors {
     }
 
     /// Opens a document in its editor, in a [DocumentEditorHost] as its plugin opens it, and shows
-    /// it (see [#open(ScreenHarness, DocPresenter, DocRef, DirectRestService, Function)]).
+    /// it (see [#open(ScreenHarness, DocumentEditorHost, DocRef, DirectRestService, Function)]).
     ///
     /// @param harness  The story's harness.
     /// @param editor   The document's editor, from the story's injector.
@@ -128,10 +127,9 @@ public final class DocumentEditors {
     /// @param fetch     Fetches the document with the resource, e.g. `res -> res.fetch(uuid)`.
     /// @param <T>       The type of the resource.
     /// @param <D>       The type of the document.
-    /// @param <P>       The type of the editor.
-    public static <T extends DirectRestService, D, P extends DocPresenter<?, D>> void open(
+    public static <T extends DirectRestService, D> void open(
             final ScreenHarness harness,
-            final P presenter,
+            final DocumentEditorHost<D> presenter,
             final DocRef docRef,
             final T resource,
             final Function<T, D> fetch) {

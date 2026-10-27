@@ -17,8 +17,8 @@
 package stroom.view.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.presenter.TabData;
@@ -38,7 +38,7 @@ public class ViewDocEditor extends DocumentEditor<ViewDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public ViewDocEditor(final EventBus eventBus,
-                         final LinkTabPanelView view,
+                         final LinkTabPanel view,
                          final Provider<ViewSettingsController> settingsProvider,
                          final Provider<MarkdownEditController> markdownEditProvider,
                          final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

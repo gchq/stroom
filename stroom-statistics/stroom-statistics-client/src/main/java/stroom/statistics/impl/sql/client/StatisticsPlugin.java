@@ -26,7 +26,6 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
@@ -84,15 +83,15 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), StatisticStoreDoc.TYPE);
     }
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocPresenter<?, ?>) {
-            final DocPresenter<?, StatisticStoreDoc> presenter =
-                    (DocPresenter<?, StatisticStoreDoc>) tabData;
+        if (tabData instanceof DocumentEditorHost<?>) {
+            final DocumentEditorHost<StatisticStoreDoc> presenter =
+                    (DocumentEditorHost<StatisticStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StatisticStoreDoc entity = presenter.getEntity();
 
@@ -108,7 +107,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         }
     }
 
-    private void doConfirmSave(final DocPresenter<?, StatisticStoreDoc> presenter,
+    private void doConfirmSave(final DocumentEditorHost<StatisticStoreDoc> presenter,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -160,7 +159,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         }
     }
 
-    private void doSave(final DocPresenter<?, StatisticStoreDoc> presenter,
+    private void doSave(final DocumentEditorHost<StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->

@@ -18,8 +18,8 @@ package stroom.floormap.client.component;
 
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.floormap.client.presenter.FloorMapEventQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -76,7 +76,7 @@ public class FloorMapDocEditor extends DocumentEditor<FloorMapDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public FloorMapDocEditor(final EventBus eventBus,
-                             final LinkTabPanelView view,
+                             final LinkTabPanel view,
                              final Provider<FloorMapMapController> mapProvider,
                              final Provider<FloorMapEditorController> editorProvider,
                              final Provider<FloorMapSettingsController> settingsProvider,

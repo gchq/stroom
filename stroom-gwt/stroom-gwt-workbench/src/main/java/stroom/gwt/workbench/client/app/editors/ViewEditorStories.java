@@ -43,7 +43,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// `POST /permission/doc/v1/fetchDocumentUserPermissions`; the doc pickers and the explorer aren't
 /// opened.
 ///
-/// Save is enabled by Stroom's own `DocTabPresenter` as the document changes; no story saves.
+/// Save is enabled by Stroom's own `DocumentEditor` as the document changes; no story saves.
 public final class ViewEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(ViewDoc.TYPE, "view-1", "My View");

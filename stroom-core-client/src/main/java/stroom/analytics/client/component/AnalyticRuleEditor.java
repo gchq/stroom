@@ -21,8 +21,8 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -52,7 +52,7 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public AnalyticRuleEditor(final EventBus eventBus,
-                              final LinkTabPanelView view,
+                              final LinkTabPanel view,
                               final AnalyticQueryEditController analyticQueryEdit,
                               final Provider<AnalyticSettingsController> settingsProvider,
                               final Provider<NotificationListController> notificationListProvider,

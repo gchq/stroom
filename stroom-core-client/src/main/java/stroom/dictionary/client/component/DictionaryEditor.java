@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -70,7 +70,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
     /// tabs.
     @Inject
     public DictionaryEditor(final EventBus eventBus,
-                            final LinkTabPanelView view,
+                            final LinkTabPanel view,
                             final Provider<WordsTabController> wordsTabProvider,
                             final Provider<ImportsTabController> importsTabProvider,
                             final Provider<EffectiveWordsListController> effectiveWordsListProvider,

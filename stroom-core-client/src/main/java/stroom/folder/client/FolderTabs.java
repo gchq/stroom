@@ -20,8 +20,8 @@ import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.TabbedController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.component.ProcessorsController;
 import stroom.security.client.api.ClientSecurityContext;
@@ -56,7 +56,7 @@ public class FolderTabs extends TabbedController<DocRef> {
 
     @Inject
     public FolderTabs(final EventBus eventBus,
-                      final LinkTabPanelView view,
+                      final LinkTabPanel view,
                       final ClientSecurityContext securityContext,
                       final Provider<MetaBrowserController> metaPresenterProvider,
                       final Provider<ProcessorsController> processorsProvider,

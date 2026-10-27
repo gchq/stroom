@@ -536,7 +536,7 @@ public class SteppingElementController extends Controller {
     }
 
     // Recomputes dirtiness by comparing the current editor content against the loaded/last saved
-    // baseline, mirroring DocPresenter.onChange(). Comparing rather than latching a flag means
+    // baseline, mirroring DocumentEditor.onChange(). Comparing rather than latching a flag means
     // reverting an edit (e.g. typing a letter then deleting it) returns to a clean state.
     private void refreshDirty() {
         dirty = loaded

@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.client.component.LuceneIndexEditor;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
@@ -62,7 +61,7 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), LuceneIndexDoc.TYPE);
     }
 

@@ -17,7 +17,6 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
@@ -397,8 +396,8 @@ public final class FloorMapMapStories {
             DocEditors.open(harness,
                     DOC_REF,
                     // Shown as the document shows its Map tab
-                    new ControllerTabProvider<>(harness.getEventBus(), () -> presenter,
-                            FloorMapMapController::read, FloorMapMapController::write).getPresenter(),
+                    new TabStory<>(harness.getEventBus(), presenter,
+                            FloorMapMapController::read, FloorMapMapController::write),
                     DocResource.of(
                             restFactory -> restFactory.create(resource)
                                     .method(res -> res.fetch(DOC_REF.getUuid())),

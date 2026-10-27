@@ -17,8 +17,8 @@
 package stroom.floormap.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -43,7 +43,7 @@ public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreD
     @Inject
     public FloorMapEventStoreEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<FloorMapEventStoreSettingsController> settingsProvider,
             final Provider<FloorMapEventStoreDataController> dataProvider,
             final Provider<MarkdownEditController> markdownEditProvider,

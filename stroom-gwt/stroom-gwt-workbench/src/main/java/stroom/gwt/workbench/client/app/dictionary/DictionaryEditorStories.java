@@ -209,7 +209,7 @@ public final class DictionaryEditorStories {
                     play.expect(screen.findByText("Set Permissions")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // Read only (no EDIT permission): DocTabPresenter.onRead retitles the Save button
+                // Read only (no EDIT permission): the editor retitles the Save button
                 .story("ReadOnly", context -> render.apply(context, true))
                 .withPlay(play -> {
                     play.findByRole("button", "Save (read only)");

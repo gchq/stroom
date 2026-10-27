@@ -18,8 +18,8 @@ package stroom.pipeline.client.component;
 
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -45,7 +45,7 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
     /// Makes the editor, with its Conversion, Settings, Documentation and Permissions tabs.
     @Inject
     public TextConverterEditor(final EventBus eventBus,
-                               final LinkTabPanelView view,
+                               final LinkTabPanel view,
                                final Provider<TextConverterSettingsController> settingsProvider,
                                final Provider<CodeTabController> codeTabProvider,
                                final Provider<MarkdownEditController> markdownEditProvider,

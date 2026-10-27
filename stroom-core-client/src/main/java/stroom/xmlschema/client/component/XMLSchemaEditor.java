@@ -22,8 +22,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -75,7 +75,7 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
     /// Makes the editor, with its Graphical, Text, Settings, Documentation and Permissions tabs.
     @Inject
     public XMLSchemaEditor(final EventBus eventBus,
-                           final LinkTabPanelView view,
+                           final LinkTabPanel view,
                            final Provider<XMLSchemaSettingsController> settingsProvider,
                            final Provider<XSDBrowserController> xsdBrowserProvider,
                            final Provider<CodeTabController> codeTabProvider,

@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.feed.client.component.FeedEditor;
 import stroom.feed.shared.FeedDoc;
@@ -87,7 +86,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), FeedDoc.TYPE);
     }
 

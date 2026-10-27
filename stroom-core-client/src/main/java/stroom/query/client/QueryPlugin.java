@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.client.component.QueryDocEditor;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -62,7 +61,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), QueryDoc.TYPE);
     }
 

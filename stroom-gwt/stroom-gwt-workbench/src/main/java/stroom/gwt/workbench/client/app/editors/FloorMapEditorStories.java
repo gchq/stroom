@@ -17,11 +17,11 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.floormap.client.component.FloorMapEditorController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -382,6 +382,16 @@ public final class FloorMapEditorStories {
         play.expect(screen.getAllByRole("menu")).toHaveLength(1);
     }
 
+    // The Editor tab on its own, as the document shows it
+    private static TabStory<FloorMapEditorController, FloorMapDoc> editorTab(final ScreenHarness harness,
+                                                                             final EditorsScreenGinjector injector) {
+        final FloorMapEditorController editor = injector.getFloorMapEditor();
+        harness.fn(ON_CHANGE);
+        editor.setOnChange(() -> harness.spy(ON_CHANGE, "changed"));
+        return new TabStory<>(harness.getEventBus(), editor,
+                FloorMapEditorController::read, FloorMapEditorController::write);
+    }
+
     private static Widget render(final StoryContext context) {
         return render(context, FIXTURES);
     }
@@ -392,13 +402,7 @@ public final class FloorMapEditorStories {
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
                         // Shown as the document shows its Editor tab
-                        new ControllerTabProvider<>(harness.getEventBus(), () -> {
-                            final FloorMapEditorController editor = injector.getFloorMapEditor();
-                            harness.fn(ON_CHANGE);
-                            editor.setOnChange(() -> harness.spy(ON_CHANGE, "changed"));
-                            return editor;
-                        },
-                                FloorMapEditorController::read, FloorMapEditorController::write).getPresenter(),
+                        editorTab(harness, injector),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource)
                                         .method(res -> res.fetch(DOC_REF.getUuid())),

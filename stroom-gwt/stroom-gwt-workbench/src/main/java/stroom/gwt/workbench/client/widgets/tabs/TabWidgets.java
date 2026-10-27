@@ -107,7 +107,7 @@ final class TabWidgets {
         }
 
         /// Marks the tab as dirty, which Stroom's document tabs show with a `* ` prefix on the
-        /// label (e.g. `DocTabPresenter.getLabel()`).
+        /// label (e.g. `DocumentEditorHost.getLabel()`).
         ///
         /// @return This tab.
         StoryTab dirty() {

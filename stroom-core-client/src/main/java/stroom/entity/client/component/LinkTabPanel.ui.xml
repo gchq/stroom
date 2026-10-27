@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A row of link tabs, with a status at its far right (e.g. that the document is read only), then
+     a row of toolbars, and the tab showing -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="linkTabPanelViewImpl-middle"/>
+            <!-- Empty unless it says something; a polite status, so screen readers announce it -->
+            <c:AriaPanel ui:field="status" styleName="docTab-readOnlyStatus" role="status"/>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="toolbarContainer" styleName="dock-min toolbarContainer">
+            <b:Toolbar ui:field="toolbar" name="Document actions" visible="false"/>
+        </g:FlowPanel>
+        <tab:LayerContainerImpl ui:field="layerContainer" addStyleNames="dock-max"/>
+    </g:FlowPanel>
+</ui:UiBinder>

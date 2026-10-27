@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.client.component.TracesEditor;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesDocResource;
@@ -66,7 +65,7 @@ public class TracesDocPlugin extends DocumentPlugin<TracesDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), TracesDoc.TYPE);
     }
 

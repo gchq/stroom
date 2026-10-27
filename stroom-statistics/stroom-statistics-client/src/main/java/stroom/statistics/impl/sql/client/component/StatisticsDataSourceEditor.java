@@ -18,8 +18,8 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.statistics.impl.sql.client.presenter.State;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
@@ -60,7 +60,7 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
     @Inject
     public StatisticsDataSourceEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<StatisticsDataSourceSettingsController> settingsProvider,
             final StatisticsFieldListController fieldList,
             final StatisticsCustomMaskListController customMaskList,

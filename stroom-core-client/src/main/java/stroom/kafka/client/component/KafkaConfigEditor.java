@@ -22,8 +22,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -54,7 +54,7 @@ public class KafkaConfigEditor extends DocumentEditor<KafkaConfigDoc> {
     /// Makes the editor, with its Config, Documentation and Permissions tabs.
     @Inject
     public KafkaConfigEditor(final EventBus eventBus,
-                          final LinkTabPanelView view,
+                          final LinkTabPanel view,
                           final Provider<CodeTabController> codeTabProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,

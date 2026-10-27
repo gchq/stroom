@@ -28,7 +28,6 @@ import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
@@ -61,7 +60,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     }
 
     @Override
-    protected MyPresenterWidget<?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return FolderTabs.canOpen(securityContext)
                 ? new DocumentEditorHost<>(eventBus, folderTabsProvider.get(), ExplorerConstants.FOLDER_TYPE)
                 : null;

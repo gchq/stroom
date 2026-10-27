@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.component.ScriptEditor;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
@@ -62,7 +61,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), ScriptDoc.TYPE);
     }
 

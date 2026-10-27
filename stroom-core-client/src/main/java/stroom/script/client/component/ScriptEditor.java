@@ -21,8 +21,8 @@ import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -48,7 +48,7 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
     /// Makes the editor, with its Script, Settings, Documentation and Permissions tabs.
     @Inject
     public ScriptEditor(final EventBus eventBus,
-                        final LinkTabPanelView view,
+                        final LinkTabPanel view,
                         final Provider<ScriptSettingsController> settingsProvider,
                         final Provider<CodeTabController> codeTabProvider,
                         final Provider<MarkdownEditController> markdownEditProvider,

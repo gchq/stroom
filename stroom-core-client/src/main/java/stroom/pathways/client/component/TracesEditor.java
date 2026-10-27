@@ -18,8 +18,8 @@ package stroom.pathways.client.component;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.client.component.PlanBSettingsController;
@@ -49,7 +49,7 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
     /// Makes the editor, with its Traces, Settings, Documentation and Permissions tabs.
     @Inject
     public TracesEditor(final EventBus eventBus,
-                        final LinkTabPanelView view,
+                        final LinkTabPanel view,
                         final TracesListTabController tracesListTab,
                         final Provider<PlanBSettingsController> planBSettingsProvider,
                         final Provider<MarkdownEditController> markdownEditProvider,

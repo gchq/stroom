@@ -19,8 +19,8 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -45,7 +45,7 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
     /// Makes the editor, with its Dashboard, Documentation and Permissions tabs.
     @Inject
     public DashboardEditor(final EventBus eventBus,
-                           final LinkTabPanelView view,
+                           final LinkTabPanel view,
                            final DashboardBodyController dashboardBody,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

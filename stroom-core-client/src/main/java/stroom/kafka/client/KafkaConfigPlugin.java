@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.kafka.client.component.KafkaConfigEditor;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
@@ -63,7 +62,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), KafkaConfigDoc.TYPE);
     }
 

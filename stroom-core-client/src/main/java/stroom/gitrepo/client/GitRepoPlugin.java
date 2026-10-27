@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoResource;
@@ -62,7 +61,7 @@ public class GitRepoPlugin extends DocumentPlugin<GitRepoDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), GitRepoDoc.TYPE);
     }
 

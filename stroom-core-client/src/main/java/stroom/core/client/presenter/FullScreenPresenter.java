@@ -19,7 +19,7 @@ package stroom.core.client.presenter;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
-import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -51,7 +51,7 @@ public class FullScreenPresenter
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title.trim());
         } else {
-            if (presenterWidget instanceof final DocTabPresenter<?, ?> tabPresenter) {
+            if (presenterWidget instanceof final DocumentEditorHost<?> tabPresenter) {
                 tabPresenter.addDirtyListener(dirty -> Window.setTitle(tabPresenter.getLabel()));
                 Window.addWindowClosingHandler(event -> {
                     if (tabPresenter.isDirty()) {

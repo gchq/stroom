@@ -17,8 +17,8 @@
 package stroom.openai.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -40,7 +40,7 @@ public class OpenAIModelEditor extends DocumentEditor<OpenAIModelDoc> {
     @Inject
     public OpenAIModelEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<OpenAIModelSettingsController> modelSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

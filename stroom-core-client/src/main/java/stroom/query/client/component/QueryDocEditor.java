@@ -17,8 +17,8 @@
 package stroom.query.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -44,7 +44,7 @@ public class QueryDocEditor extends DocumentEditor<QueryDoc> {
     /// Makes the editor, with its Query, Documentation and Permissions tabs.
     @Inject
     public QueryDocEditor(final EventBus eventBus,
-                          final LinkTabPanelView view,
+                          final LinkTabPanel view,
                           final QueryDocEditController queryDocEdit,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

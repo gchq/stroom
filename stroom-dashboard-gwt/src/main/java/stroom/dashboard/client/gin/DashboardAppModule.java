@@ -32,8 +32,6 @@ import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
@@ -87,6 +85,5 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 SourceTabView.class,
                 SourceTabViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
-        bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }
 }

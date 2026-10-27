@@ -17,8 +17,8 @@
 package stroom.search.elastic.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -40,7 +40,7 @@ public class ElasticClusterEditor extends DocumentEditor<ElasticClusterDoc> {
     @Inject
     public ElasticClusterEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<ElasticClusterSettingsController> clusterSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

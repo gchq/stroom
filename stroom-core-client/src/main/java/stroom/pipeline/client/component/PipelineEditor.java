@@ -21,8 +21,8 @@ import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -87,7 +87,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
     /// Makes the editor, with the tabs the user may see.
     @Inject
     public PipelineEditor(final EventBus eventBus,
-                          final LinkTabPanelView view,
+                          final LinkTabPanel view,
                           final Provider<MetaBrowserController> metaBrowserProvider,
                           final Provider<PipelineStructureController> structureProvider,
                           final ProcessorsController processors,

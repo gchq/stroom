@@ -25,7 +25,6 @@ import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.floormap.client.component.FloorMapDocEditor;
 import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.shared.FloorMapDoc;
@@ -77,7 +76,7 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     /// {@inheritDoc}
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), FloorMapDoc.TYPE);
     }
 

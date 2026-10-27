@@ -17,8 +17,8 @@
 package stroom.sqlstore.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.widget.tab.client.presenter.TabData;
@@ -41,7 +41,7 @@ public class SqlTemporalStoreEditor extends DocumentEditor<SqlTemporalStoreDoc> 
     @Inject
     public SqlTemporalStoreEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<SqlTemporalStoreDataController> sqlTemporalStoreDataProvider,
             final Provider<SqlTemporalStoreSettingsController> sqlStoreSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,

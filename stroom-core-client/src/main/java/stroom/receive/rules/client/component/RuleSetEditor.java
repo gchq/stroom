@@ -19,9 +19,9 @@ package stroom.receive.rules.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.TabbedController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -67,7 +67,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
     /// Makes the tabs, and fetches the rules.
     @Inject
     public RuleSetEditor(final EventBus eventBus,
-                         final LinkTabPanelView view,
+                         final LinkTabPanel view,
                          final RuleSetSettingsController ruleSetSettings,
                          final FieldListController fieldList,
                          final Provider<MarkdownEditController> markdownEditProvider,

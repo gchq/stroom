@@ -38,7 +38,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/docPlugin`: a document plugin transforms the document on its way to the
-/// server when it is saved, not as it is edited (GWT's `DocPresenter.onWrite`).
+/// server when it is saved, not as it is edited (GWT's `DocumentEditorHost.write`).
 ///
 /// The plugin is Stroom's real XML Schema plugin and editor (`XMLSchemaPlugin`,
 /// `XMLSchemaEditor`): the story opens the document as the explorer does (`OpenDocumentEvent`,

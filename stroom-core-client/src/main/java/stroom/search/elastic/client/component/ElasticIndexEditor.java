@@ -17,8 +17,8 @@
 package stroom.search.elastic.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -41,7 +41,7 @@ public class ElasticIndexEditor extends DocumentEditor<ElasticIndexDoc> {
     @Inject
     public ElasticIndexEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<ElasticIndexSettingsController> indexSettingsProvider,
             final Provider<ElasticIndexFieldListController> indexFieldListProvider,
             final Provider<MarkdownEditController> markdownEditProvider,

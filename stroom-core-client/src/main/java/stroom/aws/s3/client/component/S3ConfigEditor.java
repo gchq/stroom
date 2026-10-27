@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -54,7 +54,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
     /// Makes the editor, with its Config, Documentation and Permissions tabs.
     @Inject
     public S3ConfigEditor(final EventBus eventBus,
-                          final LinkTabPanelView view,
+                          final LinkTabPanel view,
                           final Provider<CodeTabController> codeTabProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,

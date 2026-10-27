@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.search.solr.client.component.SolrIndexEditor;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
@@ -62,7 +61,7 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), SolrIndexDoc.TYPE);
     }
 

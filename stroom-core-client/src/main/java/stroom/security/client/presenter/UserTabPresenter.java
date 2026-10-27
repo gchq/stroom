@@ -17,7 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.AppPermissionsEditController;
@@ -34,6 +34,7 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
@@ -49,7 +50,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class UserTabPresenter
-        extends ContentTabPresenter<LinkTabPanelView> {
+        extends ContentTabPresenter<View> {
 
     public static final String TAB_TYPE = "User";
 
@@ -92,13 +93,14 @@ public class UserTabPresenter
     private ControllerLayer userAndGroupsLayer;
     private final List<TabData> tabs = new ArrayList<>();
 
+    private final LinkTabPanel tabPanel;
     private UserRef userRef;
     private String label;
     private Layer currentContent;
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
-                            final LinkTabPanelView view,
+                            final LinkTabPanel view,
                             final UserInfoTabController userInfo,
                             final ClientSecurityContext clientSecurityContext,
                             final Provider<UserPermissionReportController> userPermissionReportProvider,
@@ -106,7 +108,9 @@ public class UserTabPresenter
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
                             final Provider<AppPermissionsEditController> appPermissionsEditProvider,
                             final Provider<UserAndGroupsController> userAndGroupsProvider) {
-        super(eventBus, view);
+        // The tabs are shown as this presenter's view until content tabs are controllers
+        super(eventBus, view::asWidget);
+        this.tabPanel = view;
         own(userInfo);
         this.userInfo = userInfo;
         this.userInfoLayer = new ControllerLayer(userInfo);
@@ -157,9 +161,9 @@ public class UserTabPresenter
 
         selectTab(INFO_TAB);
 
-        own(getView().getTabBar().addSelectionHandler(event ->
+        own(tabPanel.getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
-        own(getView().getTabBar().addShowMenuHandler(e ->
+        own(tabPanel.getTabBar().addShowMenuHandler(e ->
                 getEventBus().fireEvent(e)));
     }
 
@@ -173,9 +177,9 @@ public class UserTabPresenter
                     if (content != null) {
                         currentContent = content;
                         // Set the content.
-                        getView().getLayerContainer().show(currentContent);
+                        tabPanel.getLayerContainer().show(currentContent);
                         // Update the selected tab.
-                        getView().getTabBar().selectTab(tab);
+                        tabPanel.getTabBar().selectTab(tab);
                     }
                 });
             }
@@ -211,7 +215,7 @@ public class UserTabPresenter
     }
 
     private void addTab(final TabData tab) {
-        getView().getTabBar().addTab(tab);
+        tabPanel.getTabBar().addTab(tab);
         tabs.add(tab);
     }
 

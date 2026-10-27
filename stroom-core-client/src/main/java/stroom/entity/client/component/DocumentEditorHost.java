@@ -25,13 +25,18 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.ControllerView;
+import stroom.widget.component.client.DirtyTracker;
+import stroom.widget.component.client.Listeners;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -49,19 +54,26 @@ import java.util.function.Consumer;
 ///
 /// ```java
 /// @Override
-/// protected MyPresenterWidget<?> createEditor() {
+/// protected DocumentEditorHost<?> createEditor() {
 ///     return new DocumentEditorHost<>(eventBus, editorProvider.get(), DictionaryDoc.TYPE);
 /// }
 /// ```
 ///
 /// @param <D> The document's type.
 public class DocumentEditorHost<D>
-        extends DocPresenter<ControllerView, D>
+        extends MyPresenterWidget<ControllerView>
         implements DocumentTabData, HasSave, HasCommonTabs {
 
     private final TabbedController<D> editor;
     private final String type;
+    // Provided to everything this owns, however deep, and set as the document is read: which
+    // document it is
+    private final ContextValue<DocRef> documentContext = ContextValue.of(null);
+    // Told when the document becomes dirty or clean, e.g. to show it in a window's title
+    private final Listeners<Boolean> dirtyListeners = new Listeners<>();
     private DocRef docRef;
+    private D document;
+    private boolean dirty;
     private String lastLabel;
 
     /// @param eventBus The application's event bus.
@@ -69,6 +81,10 @@ public class DocumentEditorHost<D>
     /// @param type     The document's type, e.g. `DictionaryDoc.TYPE`, for the tab's icon.
     public DocumentEditorHost(final EventBus eventBus, final TabbedController<D> editor, final String type) {
         super(eventBus, new ControllerView(editor));
+        provide(Contexts.DOCUMENT, documentContext);
+        // What a folder's tabs or an annotation's own tell it of changes (a document editor tells
+        // it itself, below)
+        provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
         this.editor = own(editor);
         this.type = Objects.requireNonNull(type, "type");
         if (editor instanceof final DocumentEditor<D> documentEditor) {
@@ -85,26 +101,80 @@ public class DocumentEditorHost<D>
         return editor;
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final D document) {
-        this.docRef = docRef;
-        if (editor instanceof final DocumentEditor<D> documentEditor) {
-            documentEditor.setReadOnly(isReadOnly());
+    /// Reads the document into the editor, read only or not as [#setReadOnly(boolean)] said.
+    ///
+    /// @param docRef   The document's reference.
+    /// @param document The document.
+    public final void read(final DocRef docRef, final D document) {
+        this.document = document;
+        setDirty(false);
+        documentContext.set(docRef);
+        if (docRef != null && document != null) {
+            this.docRef = docRef;
+            if (editor instanceof final DocumentEditor<D> documentEditor) {
+                documentEditor.setReadOnly(isReadOnly());
+            }
+            editor.read(docRef, document);
+            // The name may have changed (e.g. after a rename or Save As)
+            refreshTabIfLabelChanged();
         }
-        editor.read(docRef, document);
-        // The name may have changed (e.g. after a rename or Save As)
-        refreshTabIfLabelChanged();
     }
 
-    @Override
-    protected D onWrite(final D document) {
-        // Into the document given, which for Save As is the new one
+    /// Writes what the editor shows into a document, which for Save As is the new one.
+    ///
+    /// @param document The document to write into.
+    /// @return A copy of it with what the editor shows.
+    public final D write(final D document) {
         return editor.write(document);
     }
 
+    /// @return The document as it was last read.
+    public D getEntity() {
+        return document;
+    }
+
+    /// @return Whether the document may not be changed: as its opener said, or as its owner's is
+    /// (only ever narrowing it), and read only until either says otherwise.
+    public final boolean isReadOnly() {
+        return context(Contexts.READ_ONLY);
+    }
+
+    /// Says whether the document may be changed, e.g. from the user's permissions and its lock,
+    /// before it is read (again). Everything the editor shows follows it ([Contexts#READ_ONLY]).
+    ///
+    /// @param readOnly Whether it may not be changed.
+    public final void setReadOnly(final boolean readOnly) {
+        getControllerNode().setProvided(Contexts.READ_ONLY, readOnly);
+    }
+
     @Override
-    protected void onDirty() {
-        refreshTabIfLabelChanged();
+    public final boolean isDirty() {
+        return dirty;
+    }
+
+    /// Listens for the document becoming dirty or clean, until this is disposed or the registration
+    /// removed.
+    ///
+    /// @param listener Told whether it is now dirty.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addDirtyListener(final Consumer<Boolean> listener) {
+        return dirtyListeners.add(listener);
+    }
+
+    // What the editor's tabs tell this of changes, when it isn't a document editor (which works
+    // its dirty state out itself)
+    private void onChange() {
+        if (!isReadOnly()) {
+            setDirty(!Objects.equals(document, write(document)));
+        }
+    }
+
+    private void setDirty(final boolean dirty) {
+        if (this.dirty != dirty) {
+            this.dirty = dirty;
+            refreshTabIfLabelChanged();
+            dirtyListeners.fire(dirty);
+        }
     }
 
     @Override
@@ -129,14 +199,16 @@ public class DocumentEditorHost<D>
         return editor.handleKeyAction(action);
     }
 
-    @Override
+    /// @return What to run once the document is saved, before it is read again (see
+    /// [DocumentEditor#getPostSaveCallback()]), or null.
     public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
         return editor instanceof final DocumentEditor<D> documentEditor
                 ? documentEditor.getPostSaveCallback()
                 : null;
     }
 
-    @Override
+    /// @return What to run once a copy of the document is saved (see
+    /// [DocumentEditor#getPostSaveAsCallback()]), or null.
     public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
         return editor instanceof final DocumentEditor<D> documentEditor
                 ? documentEditor.getPostSaveAsCallback()
@@ -184,7 +256,7 @@ public class DocumentEditorHost<D>
         }
     }
 
-    @Override
+    /// Called when the document's tab is closed for good, before it is disposed.
     public void onClose() {
         editor.onClose();
     }

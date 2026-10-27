@@ -17,8 +17,8 @@
 package stroom.search.solr.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -40,7 +40,7 @@ public class SolrIndexEditor extends DocumentEditor<SolrIndexDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public SolrIndexEditor(final EventBus eventBus,
-                              final LinkTabPanelView view,
+                              final LinkTabPanel view,
                               final Provider<SolrIndexSettingsController> indexSettingsProvider,
                               final Provider<SolrIndexFieldListController> indexFieldListProvider,
                               final Provider<MarkdownEditController> markdownEditProvider,

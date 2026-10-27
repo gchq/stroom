@@ -18,8 +18,8 @@ package stroom.pipeline.client.component;
 
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -40,7 +40,7 @@ public class XsltEditor extends DocumentEditor<XsltDoc> {
     /// Makes the editor, with its XSLT, Documentation and Permissions tabs.
     @Inject
     public XsltEditor(final EventBus eventBus,
-                      final LinkTabPanelView view,
+                      final LinkTabPanel view,
                       final Provider<CodeTabController> codeTabProvider,
                       final Provider<MarkdownEditController> markdownEditProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

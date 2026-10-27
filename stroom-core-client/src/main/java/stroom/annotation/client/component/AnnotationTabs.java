@@ -22,9 +22,9 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.TabbedController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -66,7 +66,7 @@ public class AnnotationTabs extends TabbedController<Annotation> {
     /// Makes the tabs.
     @Inject
     public AnnotationTabs(final EventBus eventBus,
-                          final LinkTabPanelView view,
+                          final LinkTabPanel view,
                           final AnnotationResourceClient annotationResourceClient,
                           final AnnotationEditController annotationEdit,
                           final Provider<AnnotationLinksController> annotationLinksProvider,

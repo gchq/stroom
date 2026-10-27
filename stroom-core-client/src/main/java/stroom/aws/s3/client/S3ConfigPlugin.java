@@ -27,7 +27,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -63,7 +62,7 @@ public class S3ConfigPlugin extends DocumentPlugin<S3ConfigDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), S3ConfigDoc.TYPE);
     }
 

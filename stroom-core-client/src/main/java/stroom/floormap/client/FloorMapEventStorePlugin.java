@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.floormap.client.component.FloorMapEventStoreEditor;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapEventStoreResource;
@@ -66,7 +65,7 @@ public class FloorMapEventStorePlugin extends DocumentPlugin<FloorMapEventStoreD
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), FloorMapEventStoreDoc.TYPE);
     }
 

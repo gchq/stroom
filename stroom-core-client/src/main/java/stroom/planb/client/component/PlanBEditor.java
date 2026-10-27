@@ -17,8 +17,8 @@
 package stroom.planb.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -43,7 +43,7 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
     @Inject
     public PlanBEditor(
             final EventBus eventBus,
-            final LinkTabPanelView view,
+            final LinkTabPanel view,
             final Provider<PlanBDataController> planBDataProvider,
             final Provider<PlanBSettingsController> planBSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,

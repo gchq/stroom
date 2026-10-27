@@ -19,8 +19,8 @@ package stroom.feed.client.component;
 import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -46,7 +46,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
     /// Makes the editor, with the tabs the user may see.
     @Inject
     public FeedEditor(final EventBus eventBus,
-                      final LinkTabPanelView view,
+                      final LinkTabPanel view,
                       final ClientSecurityContext securityContext,
                       final Provider<FeedSettingsController> settingsProvider,
                       final Provider<MetaBrowserController> metaBrowserProvider,

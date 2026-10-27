@@ -26,7 +26,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The floor map's dock, which its [FloorMapDockController] fills: a curve-tab bar over a layer
-/// container. Structurally the same as `LinkTabPanelViewImpl`.
+/// container. Structurally the same as `LinkTabPanel`.
 public class FloorMapDock extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);

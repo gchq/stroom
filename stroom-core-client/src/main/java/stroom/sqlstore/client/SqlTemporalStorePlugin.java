@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.sqlstore.client.component.SqlTemporalStoreEditor;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
@@ -65,7 +64,7 @@ public class SqlTemporalStorePlugin extends DocumentPlugin<SqlTemporalStoreDoc> 
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), SqlTemporalStoreDoc.TYPE);
     }
 

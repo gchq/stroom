@@ -17,8 +17,8 @@
 package stroom.gitrepo.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
@@ -39,7 +39,7 @@ public class GitRepoEditor extends DocumentEditor<GitRepoDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public GitRepoEditor(final EventBus eventBus,
-                            final LinkTabPanelView view,
+                            final LinkTabPanel view,
                             final Provider<GitRepoSettingsController> settingsProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

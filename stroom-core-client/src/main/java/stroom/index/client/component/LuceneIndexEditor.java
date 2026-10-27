@@ -17,8 +17,8 @@
 package stroom.index.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -44,7 +44,7 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public LuceneIndexEditor(final EventBus eventBus,
-                             final LinkTabPanelView view,
+                             final LinkTabPanel view,
                              final Provider<IndexSettingsController> indexSettingsProvider,
                              final Provider<IndexFieldListController> indexFieldListProvider,
                              final Provider<IndexShardListController> indexShardListProvider,

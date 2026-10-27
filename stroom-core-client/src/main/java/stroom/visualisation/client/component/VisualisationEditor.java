@@ -18,8 +18,8 @@ package stroom.visualisation.client.component;
 
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
@@ -47,7 +47,7 @@ public class VisualisationEditor extends DocumentEditor<VisualisationDoc> {
     /// Makes the editor, with its Settings, Assets, Documentation and Permissions tabs.
     @Inject
     public VisualisationEditor(final EventBus eventBus,
-                               final LinkTabPanelView view,
+                               final LinkTabPanel view,
                                final Provider<VisualisationSettingsController> settingsProvider,
                                final DocumentAssetsTabController<VisualisationDoc> assetsTab,
                                final Provider<MarkdownEditController> markdownEditProvider,

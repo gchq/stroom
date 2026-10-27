@@ -27,7 +27,6 @@ import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -62,7 +61,7 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), DocumentationDoc.TYPE);
     }
 

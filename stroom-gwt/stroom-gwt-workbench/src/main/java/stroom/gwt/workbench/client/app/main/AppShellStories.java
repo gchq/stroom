@@ -729,8 +729,8 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "new-doc").toSpyMatcher()));
                     // The tab is re-keyed in place: still one tab, labelled with the new document's
-                    // name (it once kept the old label, as DocTabPresenter.onRead didn't refresh the
-                    // tab when the name changed)
+                    // name (it once kept the old label, as the document's tab wasn't refreshed when
+                    // the name changed)
                     play.expect(tabs(play)).toHaveLength(1);
                     play.waitFor(() -> play.expect(tabs(play).nth(0)).toHaveTextContent("Countries Copy"));
                     expectNoProblems(play);
@@ -980,8 +980,7 @@ public final class AppShellStories {
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.queryByLabelText("Name")).toBeNull());
                     // The editor reloads the renamed document, and its tab is relabelled (it once kept
-                    // the old label, as DocTabPresenter.onRead didn't refresh the tab when the name
-                    // changed)
+                    // the old label, as the document's tab wasn't refreshed when the name changed)
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("document fetches", () -> countCalls(requests,
                             "GET " + DICTIONARY_PATH + "dict-countries")).toBe(2));

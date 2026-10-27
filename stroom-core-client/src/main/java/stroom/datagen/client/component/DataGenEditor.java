@@ -19,8 +19,8 @@ package stroom.datagen.client.component;
 import stroom.analytics.client.component.ScheduledProcessingController;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -41,7 +41,7 @@ public class DataGenEditor extends DocumentEditor<DataGenDoc> {
     /// Makes the editor, with its Settings, Execution, Documentation and Permissions tabs.
     @Inject
     public DataGenEditor(final EventBus eventBus,
-                         final LinkTabPanelView view,
+                         final LinkTabPanel view,
                          final Provider<DataGenSettingsController> dataGenSettingsProvider,
                          final Provider<ScheduledProcessingController> scheduledProcessingProvider,
                          final Provider<MarkdownEditController> markdownEditProvider,

@@ -593,7 +593,7 @@ public class FloorMapMapController
     }
 
     /// Returns the Map tab's buttons. [FloorMapDocEditor]'s base class
-    /// (`DocTabPresenter`) adds these to the document toolbar, after the
+    /// (`TabbedController`) adds these to the document toolbar, after the
     /// save buttons, whenever this tab is selected.
     @Override
     public List<Widget> getDocumentButtons() {

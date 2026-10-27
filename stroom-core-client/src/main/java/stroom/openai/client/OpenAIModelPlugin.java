@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.openai.client.component.OpenAIModelEditor;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
@@ -63,7 +62,7 @@ public class OpenAIModelPlugin extends DocumentPlugin<OpenAIModelDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), OpenAIModelDoc.TYPE);
     }
 

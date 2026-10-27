@@ -182,7 +182,7 @@ public final class UserTabScreenStories {
                 });
     }
 
-    /// The tabs (`LinkTabPanelView`) have no role="tab".
+    /// The tabs (`LinkTabPanel`) have no role="tab".
     ///
     /// @return The tab with the label.
     private static Query tab(final Play play, final String label) {

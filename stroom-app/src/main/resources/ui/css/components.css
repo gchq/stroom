@@ -1376,7 +1376,7 @@
     color: var(--text-color--disabled);
 }
 
-/* The "Read only" status at the far right of a read-only document's tab bar (DocTabPresenter) */
+/* The "Read only" status at the far right of a read-only document's tab bar (LinkTabPanel) */
 .docTab-readOnlyStatus {
     display: flex;
     align-items: center;

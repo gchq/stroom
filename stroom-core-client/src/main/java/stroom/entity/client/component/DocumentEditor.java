@@ -17,7 +17,6 @@
 package stroom.entity.client.component;
 
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -64,7 +63,7 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
 
     /// @param eventBus The application's event bus.
     /// @param view     The tab bar, toolbar row and tab content.
-    protected DocumentEditor(final EventBus eventBus, final LinkTabPanelView view) {
+    protected DocumentEditor(final EventBus eventBus, final LinkTabPanel view) {
         super(eventBus, view);
         provide(Contexts.READ_ONLY, readOnly);
         // Its tabs, however deep, may tell it of changes this way (markChanged) rather than

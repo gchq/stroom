@@ -23,8 +23,8 @@ import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -51,7 +51,7 @@ public class DocumentationEditor extends DocumentEditor<DocumentationDoc> {
     /// Makes the editor, with its Documentation and Permissions tabs.
     @Inject
     public DocumentationEditor(final EventBus eventBus,
-                               final LinkTabPanelView view,
+                               final LinkTabPanel view,
                                final Provider<MarkdownEditController> markdownEditProvider,
                                final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                                final RestFactory restFactory,

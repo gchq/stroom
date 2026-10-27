@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -44,7 +42,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
     protected void configure() {
         // AppModule: widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
-        bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         // AppModule: menus and tool tips
 
         // SecurityModule

@@ -25,7 +25,6 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -143,7 +142,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), PipelineDoc.TYPE);
     }
 

@@ -21,8 +21,8 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -50,7 +50,7 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
     /// Permissions tabs.
     @Inject
     public ReportEditor(final EventBus eventBus,
-                        final LinkTabPanelView view,
+                        final LinkTabPanel view,
                         final ReportQueryEditController reportQueryEdit,
                         final Provider<ReportSettingsTabController> reportSettingsProvider,
                         final Provider<NotificationListController> notificationListProvider,

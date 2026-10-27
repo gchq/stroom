@@ -19,8 +19,6 @@ package stroom.entity.client.component;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -29,16 +27,14 @@ import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding.Action;
-import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,11 +55,9 @@ import java.util.function.Supplier;
 ///            if it is written.
 public abstract class TabbedController<D> extends Controller {
 
-    // Why something shown is read only: it is only ever read only for a user who can't change it
-    private static final String READ_ONLY_REASON = "You don't have permission to change this";
 
-    private final LinkTabPanelView view;
-    private final Toolbar toolbar = new Toolbar("Document actions");
+    private final LinkTabPanel view;
+    private final Toolbar toolbar;
     // The buttons the tab showing added to the toolbar, removed when another tab is shown
     private final List<Widget> tabButtons = new ArrayList<>();
     // Each tab's content now
@@ -74,9 +68,8 @@ public abstract class TabbedController<D> extends Controller {
     // The tabs a link can open directly (its Documentation, its Permissions)
     private final Map<CommonDocLinkTab, TabData> commonTabs = new EnumMap<>(CommonDocLinkTab.class);
 
-    // Says that what is shown is read only, at the far right of the tab bar, for those that show it
-    // (showReadOnlyStatus)
-    private HTML readOnlyStatus;
+    // Whether the tab bar says when what is shown is read only (showReadOnlyStatus)
+    private boolean showsReadOnlyStatus;
     private DocRef docRef;
     private D document;
     private TabData selectedTab;
@@ -85,9 +78,10 @@ public abstract class TabbedController<D> extends Controller {
 
     /// @param eventBus The application's event bus.
     /// @param view     The tab bar, toolbar row and tab content.
-    protected TabbedController(final EventBus eventBus, final LinkTabPanelView view) {
+    protected TabbedController(final EventBus eventBus, final LinkTabPanel view) {
         super(eventBus);
         this.view = view;
+        toolbar = view.getToolbar();
         view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem()));
         initWidget(view.asWidget());
         // A tab's buttons may depend on whether what is shown may be changed (e.g. the
@@ -113,7 +107,7 @@ public abstract class TabbedController<D> extends Controller {
         }
         onRead(docRef, document);
         afterRead();
-        if (readOnlyStatus != null) {
+        if (showsReadOnlyStatus) {
             updateReadOnlyStatus(context(Contexts.READ_ONLY));
         }
     }
@@ -265,11 +259,8 @@ public abstract class TabbedController<D> extends Controller {
     /// Shows whether what is shown is read only ([Contexts#READ_ONLY]), and why, at the far right of
     /// the tab bar: a polite status, so screen readers announce it when something read only opens.
     protected final void showReadOnlyStatus() {
-        if (readOnlyStatus == null) {
-            readOnlyStatus = new HTML();
-            readOnlyStatus.setStyleName("docTab-readOnlyStatus");
-            readOnlyStatus.getElement().setAttribute("role", "status");
-            view.setTabBarStatus(readOnlyStatus);
+        if (!showsReadOnlyStatus) {
+            showsReadOnlyStatus = true;
             watch(Contexts.READ_ONLY, this::updateReadOnlyStatus);
         }
     }
@@ -316,7 +307,6 @@ public abstract class TabbedController<D> extends Controller {
             toolbar.remove(widget);
         }
         tabButtons.clear();
-        view.clearToolbar();
         final HasToolbar hasToolbar = selected.getToolbar();
         if (hasToolbar != null) {
             for (final Widget widget : hasToolbar.getDocumentButtons()) {
@@ -324,14 +314,10 @@ public abstract class TabbedController<D> extends Controller {
                 tabButtons.add(widget);
             }
         }
-        if (toolbar.getWidgetCount() > 0) {
-            view.addToolbar(toolbar);
-        }
-        if (hasToolbar != null) {
-            for (final Widget widget : hasToolbar.getToolbars()) {
-                view.addToolbar(widget);
-            }
-        }
+        view.setToolbarVisible(toolbar.getWidgetCount() > 0);
+        view.setTabToolbars(hasToolbar != null
+                ? hasToolbar.getToolbars()
+                : Collections.emptyList());
     }
 
     @Override
@@ -355,7 +341,7 @@ public abstract class TabbedController<D> extends Controller {
     }
 
     /// @return The tab bar, toolbar row and tab content.
-    protected final LinkTabPanelView getTabView() {
+    protected final LinkTabPanel getTabView() {
         return view;
     }
 
@@ -430,29 +416,10 @@ public abstract class TabbedController<D> extends Controller {
         void read(C content, DocRef docRef, D document);
     }
 
-    // Shown once something is read, as until then there is nothing to change (e.g. traces shown
+    // Said once something is read, as until then there is nothing to change (e.g. traces shown
     // without a document)
     private void updateReadOnlyStatus(final boolean readOnly) {
-        if (readOnly && document != null) {
-            final SafeHtmlBuilder html = new SafeHtmlBuilder();
-            html.appendHtmlConstant("<span class=\"docTab-readOnlyNote\">");
-            html.appendHtmlConstant("<span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">");
-            html.append(SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()));
-            html.appendHtmlConstant("</span>");
-            html.appendEscaped("Read only");
-            html.appendHtmlConstant("</span>");
-            // The reason, which a tooltip doesn't give screen readers
-            html.appendHtmlConstant("<span class=\"sr-only\">");
-            html.appendEscaped(". " + READ_ONLY_REASON + ".");
-            html.appendHtmlConstant("</span>");
-            readOnlyStatus.setHTML(html.toSafeHtml());
-            readOnlyStatus.setTitle(READ_ONLY_REASON);
-        } else {
-            readOnlyStatus.setHTML("");
-            readOnlyStatus.setTitle(null);
-        }
-        // The status takes room from the tab bar, so it lays its tabs out again
-        view.getTabBar().refresh();
+        view.setReadOnlyStatus(readOnly && document != null);
     }
 
     // A tab: how to make its content, read into it and write from it, and the content once made

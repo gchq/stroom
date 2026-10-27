@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.client.component.XsltEditor;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
@@ -62,7 +61,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
+    protected DocumentEditorHost<?> createEditor() {
         return new DocumentEditorHost<>(eventBus, editorProvider.get(), XsltDoc.TYPE);
     }
 
