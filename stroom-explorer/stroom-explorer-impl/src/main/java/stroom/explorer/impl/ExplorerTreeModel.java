@@ -162,6 +162,22 @@ class ExplorerTreeModel implements EntityEvent.Handler {
         return model;
     }
 
+    /// Rebuilds the tree model synchronously from the database and makes it the current model,
+    /// regardless of how old the current model is.
+    ///
+    /// This is for a user explicitly asking for the latest tree, e.g. because a document was added
+    /// on another node and the entity event that would trigger a rebuild here may not have arrived yet.
+    ///
+    /// @return The newly built model.
+    UnmodifiableTreeModel rebuildAndGetModel() {
+        synchronized (this) {
+            // Take a new id so the rebuilt model replaces the current one.
+            final long newId = currentId.incrementAndGet();
+            LOGGER.debug("Forced synchronous model build, newId: {}", newId);
+            return updateModel(newId, System.currentTimeMillis());
+        }
+    }
+
     private UnmodifiableTreeModel updateModel(final long id, final long creationTime) {
         return securityContext.asProcessingUserResult(() -> {
             final TreeModel newModel;

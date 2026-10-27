@@ -182,8 +182,13 @@ class ExplorerServiceImpl
         final DurationTimer timer = DurationTimer.start();
         final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
+            // The user may have explicitly asked for the latest tree, e.g. to see a document added on
+            // another node, so rebuild the master model rather than serving a cached one.
+            final UnmodifiableTreeModel masterTreeModel = criteria.isRefresh()
+                    ? explorerTreeModel.rebuildAndGetModel()
+                    : explorerTreeModel.getModel();
             // Get a copy of the master tree model, so we can add the favourites into it.
-            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
+            final TreeModel masterTreeModelClone = masterTreeModel.createMutableCopy();
 
             if (LOGGER.isDebugEnabled()) {
                 logOpenItems(
