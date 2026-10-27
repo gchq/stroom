@@ -29,7 +29,7 @@
             <form:TextArea ui:field="comments" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires"
+        <form:FormGroup identity="accountNeverExpires"
                         helpText="Tick to stop the account being marked inactive when it goes unused. Accounts that are never used, or not signed in to for a set time, are otherwise deactivated automatically."
                         screenReaderText="Stops the account being deactivated when unused.">
             <tickbox:TickBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox" label="Never Deactivate When Unused"/>
@@ -60,6 +60,6 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <b:Button ui:field="changePassword" text="Change Password" width="200px" addStyleNames="allow-focus"/>
+        <b:Button ui:field="changePassword" text="Change Password" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>

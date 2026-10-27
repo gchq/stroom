@@ -18,10 +18,7 @@ package stroom.gwt.workbench.client.app.gin.security;
 
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.presenter.EditAccountPresenter;
-import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
 import stroom.security.identity.client.view.AccountsViewImpl;
-import stroom.security.identity.client.view.EditAccountViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ChangePasswordModule`
@@ -36,9 +33,6 @@ public class IdentityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AccountsPresenter.class,
                 AccountsView.class,
                 AccountsViewImpl.class);
-        bindPresenterWidget(EditAccountPresenter.class,
-                EditAccountView.class,
-                EditAccountViewImpl.class);
     }
 }
 

@@ -29,13 +29,13 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.identity.client.presenter.EditAccountPresenter;
+import stroom.security.identity.client.component.EditAccountController;
 import stroom.security.identity.shared.Account;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/EditAccountDialog`, showing Stroom's real [EditAccountPresenter] (the 'Edit
+/// Stories of `App/Main/EditAccountDialog`, showing Stroom's real [EditAccountController] (the 'Edit
 /// Account' and 'Create Account' dialogs of the 'Manage Accounts' tab) with fake REST replies.
 ///
 /// The stories answer Stroom's `AccountResource`: `PUT /account/v1/{id}` (an update; the changes
@@ -74,7 +74,7 @@ public final class EditAccountDialogStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/EditAccountDialog", EditAccountDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Only the changed values are sent (EditAccountPresenter.updateAccount)
+                // Only the changed values are sent (EditAccountController.updateAccount)
                 .story("SendsOnlyChangedValues", context -> render(context, ACCOUNT, ACCOUNT))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -276,11 +276,11 @@ public final class EditAccountDialogStories {
         // Shown once the user's preferences are loaded, as the lock and activity lines format
         // their times with them
         harness.afterStartUp(() -> {
-            final EditAccountPresenter presenter = injector.getEditAccountPresenter();
+            final EditAccountController dialog = injector.getEditAccountController();
             if (account == null) {
-                presenter.showCreateDialog(onChanged);
+                dialog.create(harness.getAppRoot(), onChanged);
             } else {
-                presenter.showEditDialog(account.toAccount(), onChanged);
+                dialog.edit(harness.getAppRoot(), account.toAccount(), onChanged);
             }
         });
         return harness.asWidget();

@@ -26,7 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
-import stroom.security.identity.client.presenter.EditAccountPresenter;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
@@ -57,7 +56,7 @@ public class AccountsListController extends Controller {
 
     private final AccountsList view;
     private final RestFactory restFactory;
-    private final Provider<EditAccountPresenter> editAccountPresenterProvider;
+    private final Provider<EditAccountController> editAccountProvider;
     private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
 
@@ -67,7 +66,7 @@ public class AccountsListController extends Controller {
     /// @param view                             The content.
     /// @param restFactory                      Finds, and deletes, the accounts.
     /// @param dateTimeFormatter                Formats the times shown.
-    /// @param editAccountPresenterProvider     Makes the account dialog.
+    /// @param editAccountProvider              Makes the account dialog.
     /// @param uiConfigCache                    Gives the quick filter's help link.
     /// @param quickFilterContextHandlerFactory Makes the quick filter's recent filters.
     @Inject
@@ -75,13 +74,13 @@ public class AccountsListController extends Controller {
                                   final AccountsList view,
                                   final RestFactory restFactory,
                                   final DateTimeFormatter dateTimeFormatter,
-                                  final Provider<EditAccountPresenter> editAccountPresenterProvider,
+                                  final Provider<EditAccountController> editAccountProvider,
                                   final UiConfigCache uiConfigCache,
                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
         this.view = view;
         this.restFactory = restFactory;
-        this.editAccountPresenterProvider = editAccountPresenterProvider;
+        this.editAccountProvider = editAccountProvider;
         initWidget(view);
         view.addColumns(this::openUserLink, dateTimeFormatter::format);
         view.setOnNew(this::createNewAccount);
@@ -106,13 +105,13 @@ public class AccountsListController extends Controller {
     }
 
     private void createNewAccount() {
-        makeDialog(editAccountPresenterProvider).showCreateDialog(dataProvider::refresh);
+        editAccountProvider.get().create(this, dataProvider::refresh);
     }
 
     private void editSelectedAccount() {
         final Account account = view.getSelectionModel().getSelected();
         if (account != null) {
-            makeDialog(editAccountPresenterProvider).showEditDialog(account, dataProvider::refresh);
+            editAccountProvider.get().edit(this, account, dataProvider::refresh);
         }
     }
 

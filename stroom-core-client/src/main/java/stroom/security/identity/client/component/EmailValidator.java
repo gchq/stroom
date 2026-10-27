@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.presenter;
+package stroom.security.identity.client.component;
 
 import com.google.gwt.regexp.shared.RegExp;
 

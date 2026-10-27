@@ -16,7 +16,6 @@
 
 package stroom.security.identity.client.component;
 
-import stroom.security.identity.client.presenter.EmailValidator;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextBox;

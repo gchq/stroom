@@ -21,10 +21,7 @@ import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.presenter.EditAccountPresenter;
-import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
 import stroom.security.identity.client.view.AccountsViewImpl;
-import stroom.security.identity.client.view.EditAccountViewImpl;
 
 public class ChangePasswordModule extends PluginModule {
 
@@ -36,8 +33,5 @@ public class ChangePasswordModule extends PluginModule {
         bindPresenterWidget(AccountsPresenter.class,
                 AccountsView.class,
                 AccountsViewImpl.class);
-        bindPresenterWidget(EditAccountPresenter.class,
-                EditAccountView.class,
-                EditAccountViewImpl.class);
     }
 }
