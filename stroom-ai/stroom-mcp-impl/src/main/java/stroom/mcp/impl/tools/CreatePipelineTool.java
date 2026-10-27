@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
@@ -82,6 +83,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             Map.entry("xmlParser", "XMLParser"), Map.entry("splitFilter", "SplitFilter"),
             Map.entry("xsltFilter", "XSLTFilter"), Map.entry("schemaFilter", "SchemaFilter"),
             Map.entry("standardKafkaProducer", "StandardKafkaProducer"));
+    /// The chain of an events pipeline of its own after its parser, as Stroom's standard Event Data templates are
+    /// made: element ids and types, in order.
+    static final List<Map.Entry<String, String>> EVENTS_CHAIN = List.of(
+            Map.entry("readRecordCountFilter", "RecordCountFilter"), Map.entry("splitFilter", "SplitFilter"),
+            Map.entry("translationFilter", "XSLTFilter"), Map.entry("schemaFilter", "SchemaFilter"),
+            Map.entry("recordOutputFilter", "RecordOutputFilter"),
+            Map.entry("writeRecordCountFilter", "RecordCountFilter"), Map.entry("streamAppender", "StreamAppender"));
+    // The parsers that read through a text converter.
+    private static final Set<String> CONVERTER_PARSERS = Set.of("DSParser", "XMLFragmentParser", "CombinedParser");
 
     private final PipelineWrites writes;
     private final PipelineDocs pipelineDocs;
@@ -90,6 +100,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final BuildPlan plan;
     private final BuildRecords records;
+    private final PipelineTemplates templates;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -98,7 +109,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                        final WriteGuard guard,
                        final Consent consent,
                        final BuildPlan plan,
-                       final BuildRecords records) {
+                       final BuildRecords records,
+                       final PipelineTemplates templates) {
         this.writes = writes;
         this.pipelineDocs = pipelineDocs;
         this.pipelineShapes = pipelineShapes;
@@ -106,6 +118,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         this.consent = consent;
         this.plan = plan;
         this.records = records;
+        this.templates = templates;
     }
 
     @Override
@@ -183,7 +196,18 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         .addBooleanProperty(ACCEPT_PARSER_MISMATCH_ARG, "Only when the user says to use this "
                                                                         + "template although the build's sample "
                                                                         + "is not in a format its parser reads.")
-                        .addEnumProperty(STANDALONE_ARG, List.of("kafka"), "Only when no forwarding template "
+                        .addEnumProperty(STANDALONE_ARG, List.of("kafka", "events"), "events: a last resort, only "
+                                                                          + "when this Stroom has no translation "
+                                                                          + "template at all and the user has no "
+                                                                          + "pipeline to base it on: an events "
+                                                                          + "pipeline of its own, as Stroom's "
+                                                                          + "standard Event Data templates are "
+                                                                          + "made, its parser read from the "
+                                                                          + "build's sample; set_properties gives "
+                                                                          + "translationFilter.xslt (and the "
+                                                                          + "parser's textConverter where it has "
+                                                                          + "one). kafka: only when no forwarding "
+                                                                          + "template "
                                                                           + "exists (find_pipeline_templates "
                                                                           + "stage=forwarding, and the standing "
                                                                           + "instructions name none): a pipeline "
@@ -240,7 +264,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 throw new ToolRefusal("standalone is for when there is no template: give it, or a template, not "
                                       + "both");
             }
-            return standaloneKafka(call, context, build, proposed, description, given, reuse);
+            return "events".equals(stringArg(call, STANDALONE_ARG))
+                    ? standaloneEvents(call, context, build, proposed, description, given, reuse)
+                    : standaloneKafka(call, context, build, proposed, description, given, reuse);
         }
         final Object keeping = ToolArgs.raw(call, KEEP_REFERENCES_ARG);
         final Boolean keepReferences = keeping == null
@@ -503,6 +529,117 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         result.put("template", null);
         result.put("chain", chain);
         result.put("sets", sets);
+        return plan.withNext(context, build, result);
+    }
+
+    /// An events pipeline of its own, the last resort where this Stroom has no translation template at all (seen
+    /// asked in testing: what if there are none?). Built as Stroom's standard Event Data templates are: the parser
+    /// the build's sample needs, a record count, one Event a split, the translation XSLT, the schema filter on the
+    /// EVENTS group (validation is kept), and Events written to the stream's feed.
+    private Map<String, Object> standaloneEvents(final ToolCall call,
+                                                 final ToolCallContext context,
+                                                 final String build,
+                                                 final String proposed,
+                                                 final String description,
+                                                 final List<PropertyValue> given,
+                                                 final boolean reuse) {
+        final List<String> existing = templates.find("translation").get("candidates") instanceof final List<?> list
+                ? list.stream().map(candidate -> String.valueOf(JsonValues.map(candidate).get("name"))).toList()
+                : List.of();
+        if (!existing.isEmpty()) {
+            throw new ToolRefusal("standalone='events' is only for a Stroom with no translation template, and this "
+                                  + "one has " + PyText.list(existing) + ": inherit one (create_pipeline "
+                                  + "template=...), with replace_parser= if its parser doesn't read the sample.");
+        }
+        final Map<String, Object> sample = plan.sampleFormat(build)
+                .orElseThrow(() -> new ToolRefusal("standalone='events' reads its parser from the build's sample: "
+                                                   + "upload it first (upload_sample), or survey the feed"));
+        final String parser = BuildPlan.PARSER_FOR_FORMAT.getOrDefault(String.valueOf(sample.get("format")),
+                List.of("DSParser")).getFirst();
+        final String parserId = PipelineWrites.elementId(parser);
+        final Map<String, String> types = new LinkedHashMap<>();
+        types.put("Source", "Source");
+        types.put(parserId, parser);
+        EVENTS_CHAIN.forEach(entry -> types.put(entry.getKey(), entry.getValue()));
+        final Set<String> unknown = new HashSet<>();
+        given.forEach(property -> unknown.add(property.element()));
+        unknown.removeAll(types.keySet());
+        if (!unknown.isEmpty()) {
+            throw new ToolRefusal("The events pipeline has no element(s) " + PyText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
+                    List.copyOf(types.keySet())));
+        }
+        final Set<String> givenKeys = new HashSet<>();
+        given.forEach(property -> givenKeys.add(property.dotted()));
+        final List<String> needed = new ArrayList<>(List.of("translationFilter.xslt"));
+        if (CONVERTER_PARSERS.contains(parser)) {
+            needed.add(parserId + ".textConverter");
+        }
+        final List<String> missing = needed.stream().filter(key -> !givenKeys.contains(key)).toList();
+        if (!missing.isEmpty()) {
+            throw new ToolRefusal("set_properties needs " + PyText.list(missing) + ": the build's translation XSLT "
+                                  + "(build_translation_xslt saved it)" + (CONVERTER_PARSERS.contains(parser)
+                    ? " and its text converter (build_data_splitter save_as=, or save_text_converter)"
+                    : ""));
+        }
+        final Set<String> fixed = Set.of("readRecordCountFilter.countRead", "writeRecordCountFilter.countRead",
+                "splitFilter.splitDepth", "splitFilter.splitCount", "schemaFilter.schemaGroup",
+                "streamAppender.streamType");
+        final List<PropertyValue> properties = new ArrayList<>();
+        properties.add(PropertyValue.plain("readRecordCountFilter", "countRead", true));
+        properties.add(PropertyValue.plain("writeRecordCountFilter", "countRead", false));
+        properties.add(PropertyValue.plain("splitFilter", "splitDepth", 1L));
+        properties.add(PropertyValue.plain("splitFilter", "splitCount", 100L));
+        properties.add(PropertyValue.plain("schemaFilter", "schemaGroup", "EVENTS"));
+        properties.add(PropertyValue.plain("streamAppender", "streamType", "Events"));
+        given.stream()
+                .filter(property -> !fixed.contains(property.dotted()))
+                .forEach(properties::add);
+        writes.jsonArrayParser(types, properties, writes.sampleIsArray(build)).ifPresent(properties::add);
+        writes.ownDocuments(build, properties, reuse);
+        final Typed typed = writes.typedProperties(types, properties);
+        final String chain = String.join(" -> ", types.keySet());
+        final List<String> sets = typed.properties().stream().map(PropertyValue::dotted).toList();
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("build", build);
+        details.put("pipeline name", proposed);
+        details.put("template", "none: this Stroom has no translation template, so a pipeline of its own (a last "
+                                + "resort), made as Stroom's standard Event Data templates are");
+        details.put("chain", chain);
+        details.put("sets", sets);
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                        "Create pipeline '" + proposed + "' with no template: " + chain, details)
+                .withEditable(NAME_ARG, "Pipeline name", proposed));
+        final String name = consent.edited(context, NAME_ARG, proposed);
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        String previous = null;
+        for (final Map.Entry<String, String> element : types.entrySet()) {
+            data.addElement(new PipelineElement(element.getKey(), element.getValue()));
+            if (previous != null) {
+                data.addLink(previous, element.getKey());
+            }
+            previous = element.getKey();
+        }
+        final PipelineDoc doc = guard.createFilled(PipelineDoc.TYPE, name, build, ref -> {
+            PipelineDoc made = described(pipelineDocs.read(ref.getUuid()), description).copy()
+                    .pipelineData(data.build())
+                    .build();
+            for (final PropertyValue property : typed.properties()) {
+                made = PipelineDocs.withProperty(made, property.element(), property.name(),
+                        writes.value(property, typed.keys().get(property.dotted())));
+            }
+            return pipelineDocs.write(made);
+        }, false, PipelineShapes.STAGE_ROLES.get("translation"));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", PipelineDoc.TYPE);
+        result.put("uuid", doc.getUuid());
+        result.put("name", doc.getName());
+        result.put("template", null);
+        result.put("chain", chain);
+        result.put("sets", sets);
+        result.put("note", "A pipeline of its own: it inherits nothing, so a change to the environment's templates "
+                           + "never reaches it. Tell the user, and if a translation template is added later, a "
+                           + "next version can inherit it.");
         return plan.withNext(context, build, result);
     }
 

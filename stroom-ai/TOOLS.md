@@ -1260,6 +1260,13 @@ Where they differ from the MCP server:
   Splitter's `reverse`; inferred only when it parses every record the plain reading can't), `catch_all` (a record
   the spec doesn't match kept as `unparsed`), `blank_line_records` (a block of lines per record) and the `fields`
   kind (each field by its own regex, `matchOrder="any"`).
+* **create_pipeline `standalone='events'`**: a last resort the MCP server didn't have, refused while
+  find_pipeline_templates finds any translation template: an events pipeline of its own, made as Stroom's standard
+  Event Data templates are (Source, the parser the build's sample needs, readRecordCountFilter, splitFilter of 100,
+  translationFilter, schemaFilter on EVENTS, recordOutputFilter, writeRecordCountFilter, streamAppender writing
+  Events), with translationFilter.xslt and the parser's textConverter given. Where no template has the parser the
+  sample needs, start_onboarding and find_pipeline_templates offer any translation template with replace_parser
+  (an XMLParser one first for XML fragments), rather than only asking the user.
 * **`ignoreErrors` refused**: save_text_converter and build_data_splitter's save_as refuse a Data Splitter that adds
   `ignoreErrors="true"` (one the converter replaced already had is kept): it hides the errors for unmatched text.
   `error_rules.yaml` classes the Data Splitter's "exhausted the buffer" and unmatched-content errors as blocking,

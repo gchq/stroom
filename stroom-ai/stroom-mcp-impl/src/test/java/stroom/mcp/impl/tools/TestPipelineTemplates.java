@@ -171,6 +171,30 @@ class TestPipelineTemplates {
     }
 
     @Test
+    void aTemplateIsReadForWhatItHoldsNotWhatItIsCalled() {
+        // Named for XML fragments, holding a JSONParser.
+        add("t", "Event Data (XML Fragments)", "System/Template Pipelines", null);
+        PipelineLayers.given(pipelineService, "t", jsonTranslationTemplate("t"));
+
+        final Map<String, Object> found = templates.find("translation");
+
+        assertThat(candidates(found)).singleElement().satisfies(candidate ->
+                assertThat(candidate).containsEntry("parser", "JSONParser"));
+        // Still no template parses XML fragments: this one, with its parser replaced.
+        assertThat(String.valueOf(found.get("xml_fragments")))
+                .contains("from any translation template (its parser is replaced) (Event Data (XML Fragments) "
+                          + "(JSONParser))")
+                .contains("replace_parser='XMLFragmentParser'");
+    }
+
+    @Test
+    void withNoTranslationTemplateAtAllAnEventsPipelineOfItsOwnIsTheLastResort() {
+        assertThat(String.valueOf(templates.find("translation").get("hint")))
+                .startsWith("No template found for this stage; ask the user which pipeline to base it on.")
+                .contains("Only if they have none, create_pipeline standalone='events'");
+    }
+
+    @Test
     void testCopyingATemplateIsRefusedInFavourOfInheriting() {
         add("t", "Event Data (Text)", "System/Template Pipelines", null);
         add("p", "Acme-V1-Events", "System/Feeds/Acme", "t");
