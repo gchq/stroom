@@ -20,10 +20,9 @@ import stroom.data.client.component.CharacterNavigator;
 import stroom.data.client.component.CharacterNavigatorController;
 import stroom.data.client.component.CharacterRangeSelection;
 import stroom.data.client.component.CharacterRangeSelectionController;
-import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.presenter.SourcePresenter;
+import stroom.data.client.component.SourceViewer;
+import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.view.ClassificationLabelController;
-import stroom.data.client.view.SourceViewImpl;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -40,11 +39,10 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.shared.AppPermission;
 import stroom.widget.progress.client.component.SourceProgressBar;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Stories for Stroom's [SourcePresenter] (the 'Source' view of a stream: title, classification,
+/// Stories for Stroom's [SourceViewerController] (the 'Source' view of a stream: title, classification,
 /// progress bar, character navigator and the read-only editor).
 ///
 /// The data is served by fixtures for `POST /data/v1/fetch`.
@@ -184,7 +182,7 @@ public final class SourcePresenterStories {
         final EventBus eventBus = harness.getEventBus();
         // Stroom's MenuManager (for the source's context menus) is the harness's
 
-        final SourcePresenter presenter = sourcePresenter(harness);
+        final SourceViewerController presenter = sourcePresenter(harness);
         harness.own(presenter);
 
         harness.fn(ON_BEGIN_STEPPING);
@@ -197,23 +195,22 @@ public final class SourcePresenterStories {
                 .withRecordIndex(0L)
                 .build());
 
-        // SourceViewImpl keeps a 300px area at the top for the stepping meta
+        // SourceViewer keeps a 300px area at the top for the stepping meta
         // list, so much of the view is below the frame's fold
-        harness.add(EditorWidgets.frame(presenter.getWidget(), WIDTH, HEIGHT));
+        harness.add(EditorWidgets.frame(presenter.asWidget(), WIDTH, HEIGHT));
         return harness.asWidget();
     }
 
     /// Creates the presenter and its views, as GIN would.
-    static SourcePresenter sourcePresenter(final ScreenHarness harness) {
+    static SourceViewerController sourcePresenter(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final SourceProgressBar sourceProgressBar = new SourceProgressBar();
         final CharacterNavigatorController characterNavigator = new CharacterNavigatorController(
                 new CharacterNavigator(),
                 () -> new CharacterRangeSelectionController(eventBus, new CharacterRangeSelection()));
-        return new SourcePresenter(
+        return new SourceViewerController(
                 eventBus,
-                new SourceViewImpl(GWT.create(SourceViewImpl.Binder.class)),
-                new ClassificationWrapper(),
+                new SourceViewer(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 sourceProgressBar,
                 EditorWidgets.dataTextPane(eventBus),

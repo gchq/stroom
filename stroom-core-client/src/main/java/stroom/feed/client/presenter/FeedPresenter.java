@@ -16,7 +16,7 @@
 
 package stroom.feed.client.presenter;
 
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
@@ -51,7 +51,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
                          final Provider<FeedSettingsController> settingsProvider,
-                         final Provider<MetaPresenter> metaPresenterProvider,
+                         final Provider<MetaBrowserController> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider,
                          final Provider<MarkdownEditController> markdownEditProvider,
                          final DocumentUserPermissionsTabProvider<FeedDoc> documentUserPermissionsTabProvider) {
@@ -60,26 +60,17 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         TabData selectedTab = SETTINGS;
 
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
-            addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>() {
-                @Override
-                protected MetaPresenter createPresenter() {
-                    return metaPresenterProvider.get();
-                }
-
-                @Override
-                public void onRead(final MetaPresenter presenter,
-                                   final DocRef docRef,
-                                   final FeedDoc document) {
-                    presenter.read(docRef, document);
-                    // Refresh any displayed data so it reflects the (now-saved) feed settings, e.g. a
-                    // changed encoding. onRead runs on initial load and after each save (with the saved
-                    // doc, so the server has the new encoding); refreshData() is a no-op unless a stream
-                    // is currently displayed. This was previously in onWrite, which ran on every dirty
-                    // check - many times per edit, for all settings fields, and before the change was
-                    // persisted (so the re-fetch used the pre-save encoding).
-                    presenter.refreshData();
-                }
-            });
+            addTab(DATA, new ControllerTabProvider<>(eventBus, metaPresenterProvider::get,
+                    (presenter, docRef, document) -> {
+                        presenter.read(docRef, document);
+                        // Refresh any displayed data so it reflects the (now-saved) feed settings, e.g. a
+                        // changed encoding. onRead runs on initial load and after each save (with the saved
+                        // doc, so the server has the new encoding); refreshData() is a no-op unless a stream
+                        // is currently displayed. This was previously in onWrite, which ran on every dirty
+                        // check - many times per edit, for all settings fields, and before the change was
+                        // persisted (so the re-fetch used the pre-save encoding).
+                        presenter.refreshData();
+                    }));
             selectedTab = DATA;
         }
 

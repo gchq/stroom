@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.component.CharacterNavigatorController;
-import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.component.DataTextPaneController;
-import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -35,7 +32,6 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -46,8 +42,7 @@ import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 import stroom.widget.progress.client.Progress;
 import stroom.widget.progress.client.component.SourceProgressBar;
 
@@ -55,7 +50,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -68,14 +62,16 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class SourcePresenter extends MyPresenterWidget<SourceView> implements
-        Focus {
+/// A stream's source ([SourceViewer]): its text, a window of characters at a time with a navigator,
+/// as text or a hex dump, with what was asked for highlighted; it begins stepping through it, and
+/// shows the streams being stepped through when stepping.
+public class SourceViewerController extends Controller implements Focus {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
-    private final ClassificationWrapper classificationWrapper;
+    private final SourceViewer view;
     private final SourceProgressBar sourceProgressBar;
     private final DataTextPaneController textPane;
     private final CharacterNavigatorController characterNavigator;
@@ -96,22 +92,33 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     private Consumer<String> onClassification;
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The content.
+    /// @param classificationLabelController Gives the classification banner its colours.
+    /// @param sourceProgressBar             Shows how far through the stream the source is.
+    /// @param textPane                      Shows the source's text.
+    /// @param characterNavigator            Navigates the source's characters.
+    /// @param uiConfigCache                 Gives how much source to show at a time.
+    /// @param restFactory                   Fetches the source.
+    /// @param clientSecurityContext         Says whether the user may step through it.
     @Inject
-    public SourcePresenter(final EventBus eventBus,
-                           final SourceView view,
-                           final ClassificationWrapper classificationWrapper,
-                           final ClassificationLabelController classificationLabelController,
-                           final SourceProgressBar sourceProgressBar,
-                           final DataTextPaneController textPane,
-                           final CharacterNavigatorController characterNavigator,
-                           final UiConfigCache uiConfigCache,
-                           final RestFactory restFactory,
-                           final ClientSecurityContext clientSecurityContext) {
-        super(eventBus, view);
+    public SourceViewerController(final EventBus eventBus,
+                                  final SourceViewer view,
+                                  final ClassificationLabelController classificationLabelController,
+                                  final SourceProgressBar sourceProgressBar,
+                                  final DataTextPaneController textPane,
+                                  final CharacterNavigatorController characterNavigator,
+                                  final UiConfigCache uiConfigCache,
+                                  final RestFactory restFactory,
+                                  final ClientSecurityContext clientSecurityContext) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(textPane);
         own(characterNavigator);
-        own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
-        this.classificationWrapper = classificationWrapper;
+        own(classificationLabelController).attach(view.getClassificationLabel());
         this.sourceProgressBar = sourceProgressBar;
         this.textPane = textPane;
         this.characterNavigator = characterNavigator;
@@ -121,9 +128,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         setEditorOptions();
 
-        classificationWrapper.setContent(textPane);
-        view.setTextView(classificationWrapper);
-        view.setNavigatorView(characterNavigator);
+        view.setText(textPane);
+        view.setNavigator(characterNavigator);
 
         setupProgressBar(view, sourceProgressBar);
 
@@ -173,9 +179,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         textPane.focus();
     }
 
-    private void setupProgressBar(final SourceView view,
+    private void setupProgressBar(final SourceViewer view,
                                   final SourceProgressBar sourceProgressBar) {
-        view.setProgressView(sourceProgressBar);
+        view.setProgress(sourceProgressBar);
         sourceProgressBar.setVisible(false);
     }
 
@@ -408,11 +414,16 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         return result;
     }
 
+    /// @param metaList The streams being stepped through, or null for none.
+    public void setMetaList(final IsWidget metaList) {
+        view.setMetaList(metaList);
+    }
+
     public void setNavigatorControlsVisible(final boolean isVisible) {
         if (isVisible) {
-            getView().setNavigatorView(characterNavigator);
+            view.setNavigator(characterNavigator);
         } else {
-            getView().setNavigatorView(null);
+            view.setNavigator(null);
         }
     }
 
@@ -429,7 +440,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
             if (uiConfig != null) {
                 action.accept(uiConfig.getSource());
             }
-        }, getView());
+        }, view.getSpinner());
     }
 
     private void fetchSource(final SourceLocation sourceLocation) {
@@ -447,10 +458,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 .method(res -> res.fetch(request))
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(
-                        SourcePresenter.this,
+                        SourceViewerController.this,
                         caught.getMessage(),
                         null))
-                .taskMonitorFactory(getView())
+                .taskMonitorFactory(view.getSpinner())
                 .exec();
     }
 
@@ -487,7 +498,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
             refreshProgressBar(true);
         } else {
             AlertEvent.fireError(
-                    SourcePresenter.this,
+                    SourceViewerController.this,
                     "Unexpected type " + result.getClass().getName(),
                     null);
         }
@@ -656,13 +667,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         final String streamType = fetchDataResult.getStreamTypeName();
         final SourceLocation sourceLocation = fetchDataResult.getSourceLocation();
         if (DataType.NON_SEGMENTED.equals(fetchDataResult.getDataType())) {
-            getView().setNonSegmentedTitle(
+            view.setNonSegmentedTitle(
                     fetchDataResult.getFeedName(),
                     sourceLocation.getMetaId(),
                     sourceLocation.getPartIndex() + 1,
                     streamType);
         } else {
-            getView().setSegmentedTitle(
+            view.setSegmentedTitle(
                     fetchDataResult.getFeedName(),
                     sourceLocation.getMetaId(),
                     sourceLocation.getRecordIndex() + 1,
@@ -711,7 +722,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     ///
     /// @param classification The classification, or null for none.
     public void setClassification(final String classification) {
-        classificationWrapper.setClassification(classification);
+        view.setClassification(classification);
         if (onClassification != null) {
             onClassification.accept(classification);
         }
@@ -893,25 +904,4 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     // ---------------------------------------------------------------------
 
-
-    public interface SourceView extends View, TaskMonitorFactory {
-
-        void setProgressView(IsWidget sourceProgressBar);
-
-        void setTextView(final View view);
-
-        void setNavigatorView(IsWidget navigator);
-
-        void setNonSegmentedTitle(final String feedName,
-                                  final long id,
-                                  final long partNo,
-                                  final String type);
-
-        void setSegmentedTitle(final String feedName,
-                               final long id,
-                               final long segmentNo,
-                               final String type);
-
-        void setMetaListContainerView(final Widget widget);
-    }
 }

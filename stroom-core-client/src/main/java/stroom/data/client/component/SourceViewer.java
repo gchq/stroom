@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client.component;
 
-import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitor;
+import stroom.data.client.view.ClassificationLabel;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.FabButton;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.spinner.client.SpinnerLarge;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class SourceViewImpl extends ViewImpl implements SourceView {
+/// A stream's source: the streams being stepped through (when stepping), its feed, id, part or
+/// record and type, its navigator and progress, and its text (shown here by its controller) with
+/// its classification below it, and a spinner while it loads.
+public class SourceViewer extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     Label lblFeed;
@@ -52,8 +52,6 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     Label lblType;
     @UiField
-    FlowPanel container;
-    @UiField
     SimplePanel navigatorContainer;
     @UiField
     SimplePanel progressBarPanel;
@@ -62,22 +60,21 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     SpinnerLarge spinner;
     @UiField
+    ClassificationWrapper classification;
+    @UiField
     SimplePanel metaListContainer;
 
-    @Inject
-    public SourceViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        steppingButton.setIcon(SvgImage.STEPPING);
-        spinner.setVisible(false);
+    /// Makes the viewer, with no source.
+    public SourceViewer() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-
-    @Override
+    /// Shows which part of a stream that isn't split into records is shown.
+    ///
+    /// @param feedName The stream's feed.
+    /// @param id       The stream's id.
+    /// @param partNo   The part, from one.
+    /// @param type     The stream's type.
     public void setNonSegmentedTitle(final String feedName,
                                      final long id,
                                      final long partNo,
@@ -92,7 +89,12 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         lblType.setText(type);
     }
 
-    @Override
+    /// Shows which record of a stream split into records is shown.
+    ///
+    /// @param feedName  The stream's feed.
+    /// @param id        The stream's id.
+    /// @param segmentNo The record, from one.
+    /// @param type      The stream's type.
     public void setSegmentedTitle(final String feedName,
                                   final long id,
                                   final long segmentNo,
@@ -107,44 +109,58 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         lblType.setText(type);
     }
 
-    @Override
-    public void setTextView(final View textView) {
-        container.add(textView.asWidget());
+    /// @param text The source's text.
+    public void setText(final IsWidget text) {
+        classification.setContent(text);
     }
 
-    @Override
-    public void setNavigatorView(final IsWidget navigator) {
+    /// @param classification The data's classification, or blank for none.
+    public void setClassification(final String classification) {
+        this.classification.setClassification(classification);
+    }
+
+    /// @return The classification banner, for a controller to give its colours.
+    public ClassificationLabel getClassificationLabel() {
+        return classification.getClassificationLabel();
+    }
+
+    /// @param navigator The navigator of the source's characters, or null for none.
+    public void setNavigator(final IsWidget navigator) {
         if (navigator != null) {
-            navigatorContainer.setWidget(navigator.asWidget());
+            navigatorContainer.setWidget(navigator);
         } else {
             navigatorContainer.clear();
         }
     }
 
-    @Override
-    public void setMetaListContainerView(final Widget widget) {
-        if (widget != null) {
-            metaListContainer.setWidget(widget);
+    /// @param metaList The streams being stepped through, or null for none.
+    public void setMetaList(final IsWidget metaList) {
+        if (metaList != null) {
+            metaListContainer.setWidget(metaList);
         } else {
             metaListContainer.clear();
         }
     }
 
-    @Override
-    public void setProgressView(final IsWidget sourceProgressBar) {
-        if (sourceProgressBar != null) {
-            progressBarPanel.setWidget(sourceProgressBar.asWidget());
+    /// @param progress How far through the stream the source shown is, or null for none.
+    public void setProgress(final IsWidget progress) {
+        if (progress != null) {
+            progressBarPanel.setWidget(progress);
         } else {
             progressBarPanel.clear();
         }
     }
 
-    @Override
-    public TaskMonitor createTaskMonitor() {
-        return spinner.createTaskMonitor();
+    /// @return The spinner shown while the source loads.
+    public TaskMonitorFactory getSpinner() {
+        return spinner;
     }
 
-    public interface Binder extends UiBinder<Widget, SourceViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SourceViewer> {
 
     }
 }

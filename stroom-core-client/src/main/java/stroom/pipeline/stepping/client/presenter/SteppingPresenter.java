@@ -19,9 +19,9 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.component.SteppingMetaListController;
 import stroom.data.client.presenter.ExpressionValidator;
-import stroom.data.client.presenter.SourcePresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
@@ -114,7 +114,9 @@ public class SteppingPresenter
 
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
     private final PipelinePathBar pipelinePathBar;
-    private final SourcePresenter sourcePresenter;
+    private final SourceViewerController sourcePresenter;
+    // The source as a layer, kept, as the container tells its layers apart by identity
+    private final ControllerLayer sourceLayer;
     private final Provider<SteppingElementController> elementProvider;
     private final SimplePanel stepMessage;
     // Tells screen reader users that a step has begun and where it got to (the progress message
@@ -163,7 +165,7 @@ public class SteppingPresenter
                              final PipelinePathBar pipelinePathBar,
                              final Provider<PipelinePathBarController> pathBarControllerProvider,
                              final RestFactory restFactory,
-                             final SourcePresenter sourcePresenter,
+                             final SourceViewerController sourcePresenter,
                              final Provider<SteppingElementController> elementProvider,
                              final StepLocationLinkController stepLocationLink,
                              final StepControlController stepControl,
@@ -182,6 +184,7 @@ public class SteppingPresenter
         this.pipelinePathBar = pipelinePathBar;
         make(pathBarControllerProvider).attach(pipelinePathBar);
         this.sourcePresenter = sourcePresenter;
+        this.sourceLayer = new ControllerLayer(sourcePresenter);
         this.elementProvider = elementProvider;
         this.stepLocationLink = stepLocationLink;
         this.stepControl = stepControl;
@@ -198,8 +201,8 @@ public class SteppingPresenter
 
         view.setTreeView(pipelinePathBar);
 
-        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
-        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourcePresenter.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourcePresenter.asWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
         pipelinePathBar.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
@@ -239,7 +242,7 @@ public class SteppingPresenter
         streamListFilter = steppingMetaList.getToolbar().button(SvgImage.FILTER, "Filter Streams",
                 this::onStreamListFilter);
 
-        sourcePresenter.getView().setMetaListContainerView(steppingMetaList.asWidget());
+        sourcePresenter.setMetaList(steppingMetaList);
 
         own(
                 pipelinePathBar.getSelectionModel().addSelectionChangeHandler(event -> {
@@ -507,7 +510,7 @@ public class SteppingPresenter
         if (PipelineModel.SOURCE_ELEMENT.getType().equals(element.getType())) {
             setCurrentElement(null);
             updateToggleConsoleBtn(null);
-            return sourcePresenter;
+            return sourceLayer;
         } else {
             final ElementId elementId = element.getElementId();
             SteppingElementController steppingElement = elementMap.get(elementId);

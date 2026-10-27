@@ -1061,7 +1061,7 @@ public class DataViewerController
             textPane.setMode(editorMode);
             textPane.setText(data, shouldFormatData);
             // The data may be a range of the stream, so number its lines from the range's first
-            // line, as SourcePresenter does (a highlight is placed by these numbers)
+            // line, as SourceViewerController does (a highlight is placed by these numbers)
             textPane.setFirstLineNumber(getFirstLineNo(lastResult));
             textPane.setControlsVisible(playButtonVisible);
             // Resets the context menu states to default

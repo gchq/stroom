@@ -16,7 +16,7 @@
 
 package stroom.folder.client;
 
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
@@ -48,7 +48,7 @@ public class FolderTabs extends TabbedController<DocRef> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ClientSecurityContext securityContext;
-    private final Provider<MetaPresenter> metaPresenterProvider;
+    private final Provider<MetaBrowserController> metaPresenterProvider;
     private final Provider<ProcessorsController> processorsProvider;
     private final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider;
     private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
@@ -58,7 +58,7 @@ public class FolderTabs extends TabbedController<DocRef> {
     public FolderTabs(final EventBus eventBus,
                       final LinkTabPanelView view,
                       final ClientSecurityContext securityContext,
-                      final Provider<MetaPresenter> metaPresenterProvider,
+                      final Provider<MetaBrowserController> metaPresenterProvider,
                       final Provider<ProcessorsController> processorsProvider,
                       final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {

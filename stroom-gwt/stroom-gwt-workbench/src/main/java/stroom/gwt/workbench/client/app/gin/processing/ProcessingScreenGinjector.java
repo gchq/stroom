@@ -19,10 +19,10 @@ package stroom.gwt.workbench.client.app.gin.processing;
 import stroom.analytics.client.presenter.ExecutionScheduleManager;
 import stroom.dashboard.client.component.ProcessorLimitsController;
 import stroom.data.client.component.DataUploadController;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.component.ProcessorTasksListController;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
@@ -115,7 +115,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Data
 
     /// @return The stream browser of a 'Data' tab (streams, relations and the data preview).
-    MetaPresenter getMetaPresenter();
+    MetaBrowserController getMetaBrowser();
 
     /// @return A 'Data Preview' tab, as `DataPreviewTabPlugin` opens it.
     DataPreviewTabPresenter getDataPreviewTabPresenter();

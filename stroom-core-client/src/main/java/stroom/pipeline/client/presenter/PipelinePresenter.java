@@ -16,8 +16,8 @@
 
 package stroom.pipeline.client.presenter;
 
+import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.presenter.ExpressionValidator;
-import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
@@ -85,7 +85,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     @Inject
     public PipelinePresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final Provider<MetaPresenter> metaPresenterProvider,
+                             final Provider<MetaBrowserController> metaPresenterProvider,
                              final Provider<PipelineStructureController> structureProvider,
                              final ProcessorsController processors,
                              final Provider<ProcessorTaskPresenter> taskPresenterProvider,
@@ -104,19 +104,10 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         TabData defaultTab = null;
 
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
-            addTab(DATA, new AbstractTabProvider<PipelineDoc, MetaPresenter>() {
-                @Override
-                protected MetaPresenter createPresenter() {
-                    return metaPresenterProvider.get();
-                }
-
-                @Override
-                public void onRead(final MetaPresenter presenter,
-                                   final DocRef docRef,
-                                   final PipelineDoc document) {
-                    presenter.read(docRef, document);
-                }
-            });
+            addTab(DATA, new ControllerTabProvider<>(eventBus, metaPresenterProvider::get,
+                    (presenter, docRef, document) -> {
+                        presenter.read(docRef, document);
+                    }));
             defaultTab = DATA;
         }
 

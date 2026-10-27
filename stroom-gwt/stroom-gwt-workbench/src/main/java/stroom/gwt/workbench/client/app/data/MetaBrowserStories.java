@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.data;
 
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaPresenter] (the stream browser of
+/// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaBrowserController] (the stream browser of
 /// a 'Data' tab: the stream list, its relations and the data preview) with fake REST replies, read
 /// with no document (all unlocked streams), as `MetaPresenter.read` does for the data browser.
 ///
@@ -245,7 +245,7 @@ public final class MetaBrowserStories {
                 .realAlerts()
                 .build();
         harness.afterStartUp(() -> {
-            final MetaPresenter presenter = injector.getMetaPresenter();
+            final MetaBrowserController presenter = injector.getMetaBrowser();
             harness.show(presenter);
             // As the data browser reads it, with no document: all unlocked streams
             presenter.read(null, null);

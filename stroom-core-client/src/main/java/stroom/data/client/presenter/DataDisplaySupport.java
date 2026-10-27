@@ -19,10 +19,10 @@ package stroom.data.client.presenter;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.component.DataViewerController;
+import stroom.data.client.component.SourceViewerController;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -35,7 +35,7 @@ public class DataDisplaySupport {
     private final Provider<DataViewerController> dataPresenterProvider;
     private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
 
-    private final Provider<SourcePresenter> sourcePresenterProvider;
+    private final Provider<SourceViewerController> sourcePresenterProvider;
     private final Provider<SourceTabPlugin> sourceTabPluginProvider;
 
     private final AppRoot appRoot;
@@ -44,7 +44,7 @@ public class DataDisplaySupport {
     public DataDisplaySupport(final EventBus eventBus,
                               final Provider<DataViewerController> dataPresenterProvider,
                               final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
-                              final Provider<SourcePresenter> sourcePresenterProvider,
+                              final Provider<SourceViewerController> sourcePresenterProvider,
                               final Provider<SourceTabPlugin> sourceTabPluginProvider,
                               final AppRoot appRoot) {
         this.appRoot = appRoot;
@@ -98,13 +98,13 @@ public class DataDisplaySupport {
                     .onShow(e -> dataViewer.focus())
                     .fire();
         } else {
-            final SourcePresenter sourcePresenter = appRoot.makeDialog(sourcePresenterProvider);
-            sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
-            ShowPopupEvent.builder(sourcePresenter)
+            final SourceViewerController sourceViewer = sourcePresenterProvider.get();
+            sourceViewer.setSourceLocationUsingHighlight(sourceLocation);
+            ControllerDialog.showOnce(appRoot, sourceViewer)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(caption)
-                    .onShow(e -> sourcePresenter.focus())
+                    .onShow(e -> sourceViewer.focus())
                     .fire();
         }
     }

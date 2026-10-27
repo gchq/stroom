@@ -44,7 +44,7 @@ import java.util.Map;
 ///
 /// As `FolderPlugin` (and `FolderRootPlugin`) do, the story reads the folder's DocRef into the
 /// host, read only, and shows it; there is no document to fetch. The Data tab is Stroom's real
-/// `MetaPresenter` (`POST /meta/v1/findMetaRow`, no streams), the Processors tab asks
+/// `MetaBrowserController` (`POST /meta/v1/findMetaRow`, no streams), the Processors tab asks
 /// `POST /processorFilter/v1/find` (checked with the request spy), Active Tasks
 /// `POST /processorTask/v1/find` and `summary`, and the Permissions tab has its own routes. The
 /// user is `ADMINISTRATOR` (the harness's default), which implies View Data and Manage Processors.
@@ -82,7 +82,7 @@ public final class FolderEditorStories {
                     play.expect(DocEditors.tab(play, "Active Tasks")).toBeInTheDocument();
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
                     // Data is the default tab.
-                    // It is Stroom's real data browser (MetaPresenter), so the play checks its
+                    // It is Stroom's real data browser (MetaBrowserController), so the play checks its
                     // stream list's Feed column
                     play.waitFor(() -> play.expect(play.getAllByText("Feed").nth(0)).toBeVisible());
                     // Processors: an administrator may edit but not add or duplicate (a folder has

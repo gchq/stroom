@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.component.DataUploadController;
-import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.component.MetaListController;
 import stroom.data.client.component.MetaRelationListController;
-import stroom.data.client.presenter.MetaPresenter.MetaView;
+import stroom.data.client.presenter.BeginSteppingHandler;
+import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -47,15 +47,15 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -64,8 +64,11 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class MetaPresenter
-        extends MyPresenterWidget<MetaView>
+/// A data browser ([MetaBrowser]): a document's or all streams, filtered, the streams related to the
+/// one selected, and its data; it processes, deletes, restores, downloads and uploads streams, and
+/// begins stepping through one.
+public class MetaBrowserController
+        extends Controller
         implements HasDocumentRead<Object>,
         BeginSteppingHandler {
 
@@ -97,19 +100,21 @@ public class MetaPresenter
 
     private boolean hasSetCriteria;
 
+    /// Made by GIN, with its content and its parts.
     @Inject
-    public MetaPresenter(final EventBus eventBus,
-                         final MetaView view,
-                         final MetaListController metaList,
-                         final MetaRelationListController metaRelationList,
-                         final DataViewerController dataPresenter,
-                         final Provider<ExpressionDialogController> filterDialogProvider,
-                         final Provider<DataUploadController> dataUploadProvider,
-                         final ClientSecurityContext securityContext,
-                         final RestFactory restFactory,
-                         final DateTimeSettingsFactory dateTimeSettingsFactory,
-                         final ExpressionValidator expressionValidator) {
-        super(eventBus, view);
+    public MetaBrowserController(final EventBus eventBus,
+                                 final MetaBrowser view,
+                                 final MetaListController metaList,
+                                 final MetaRelationListController metaRelationList,
+                                 final DataViewerController dataPresenter,
+                                 final Provider<ExpressionDialogController> filterDialogProvider,
+                                 final Provider<DataUploadController> dataUploadProvider,
+                                 final ClientSecurityContext securityContext,
+                                 final RestFactory restFactory,
+                                 final DateTimeSettingsFactory dateTimeSettingsFactory,
+                                 final ExpressionValidator expressionValidator) {
+        super(eventBus);
+        initWidget(view);
         own(metaList);
         own(metaRelationList);
         own(dataPresenter);
@@ -123,9 +128,9 @@ public class MetaPresenter
         this.expressionValidator = expressionValidator;
         this.securityContext = securityContext;
 
-        getView().setStreamListView(metaList);
-        getView().setStreamRelationListView(metaRelationList);
-        getView().setDataView(dataPresenter);
+        view.setStreamList(metaList);
+        view.setStreamRelationList(metaRelationList);
+        view.setData(dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
 
@@ -231,12 +236,12 @@ public class MetaPresenter
                 MetaFields.getAllFields(),
                 (expression, e) -> {
                     expressionValidator.validateExpression(
-                            MetaPresenter.this,
+                            MetaBrowserController.this,
                             MetaFields.getAllFields(),
                             expression, expression2 -> {
                                 if (!expression2.equals(getCriteria().getExpression())) {
                                     if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                        ConfirmEvent.fire(MetaPresenter.this,
+                                        ConfirmEvent.fire(MetaBrowserController.this,
                                                 "You are setting advanced filters!  It is recommended you constrain " +
                                                 "your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
@@ -260,7 +265,7 @@ public class MetaPresenter
                             },
                             // If it isn't valid, let the user change it or cancel
                             e::reset,
-                            this);
+                            taskMonitor());
                 });
     }
 
@@ -285,6 +290,16 @@ public class MetaPresenter
         } else {
             dataPresenter.fetchData(meta);
         }
+    }
+
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
     public void refresh() {
@@ -472,7 +487,7 @@ public class MetaPresenter
                             .onSuccess(selectionSummary -> {
                                 isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
                             })
-                            .taskMonitorFactory(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
                 } else {
                     isEnabledConsumer.accept(false);
@@ -520,7 +535,7 @@ public class MetaPresenter
                             .onSuccess(selectionSummary -> {
                                 isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
                             })
-                            .taskMonitorFactory(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
                 } else {
                     isEnabledConsumer.accept(false);
@@ -561,27 +576,5 @@ public class MetaPresenter
                 stepType,
                 stepLocation,
                 pipelineRef);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface MetaView extends View {
-
-        /// Shows the list of streams.
-        ///
-        /// @param view Its view.
-        void setStreamListView(IsWidget view);
-
-        /// Shows the streams related to the selected one.
-        ///
-        /// @param view Its view.
-        void setStreamRelationListView(IsWidget view);
-
-        /// Shows the selected stream's data.
-        ///
-        /// @param view Its view.
-        void setDataView(IsWidget view);
     }
 }

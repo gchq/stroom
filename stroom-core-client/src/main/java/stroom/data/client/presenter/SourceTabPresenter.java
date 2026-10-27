@@ -18,29 +18,31 @@ package stroom.data.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.SourceKey;
+import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     public static final String TAB_TYPE = "DataSource";
-    private final SourcePresenter sourcePresenter;
+    private final SourceViewerController sourcePresenter;
     private SourceKey sourceKey;
 
     @Inject
     public SourceTabPresenter(final EventBus eventBus,
-                              final SourcePresenter sourcePresenter,
+                              final SourceViewerController sourcePresenter,
                               final SourceTabView view) {
         super(eventBus, view);
         own(sourcePresenter);
         this.sourcePresenter = sourcePresenter;
 
-        getView().setSourceView(sourcePresenter.getView());
+        getView().setSourceView(sourcePresenter);
 
     }
 
@@ -91,7 +93,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     public interface SourceTabView extends View {
 
-        void setSourceView(final View sourceView);
+        void setSourceView(final IsWidget sourceView);
     }
 
 }

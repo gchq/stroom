@@ -102,7 +102,7 @@ public final class DataScreenStories {
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the data fetched", () -> lastLocation(requests)).not().toBeNull());
                     // No data range window from the link: the range is a highlight only.
-                    // GWT's SourcePresenter still asks for its own page of the stream (from the first
+                    // GWT's SourceViewerController still asks for its own page of the stream (from the first
                     // character)
                     play.expect("the data range's first line", () -> firstLine(lastLocation(requests)))
                             .not().toEqual(JsonValues.parse("2"));

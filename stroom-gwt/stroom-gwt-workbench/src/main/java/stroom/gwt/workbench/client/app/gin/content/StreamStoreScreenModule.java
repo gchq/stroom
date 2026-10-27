@@ -18,18 +18,12 @@ package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.MetaPresenter;
-import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
-import stroom.data.client.presenter.SourcePresenter;
-import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.MetaViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
-import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -42,9 +36,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(MetaPresenter.class,
-                MetaView.class,
-                MetaViewImpl.class);
         bindPresenterWidget(DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
                 DataPreviewTabViewImpl.class);
@@ -54,8 +45,5 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SourceTabPresenter.class,
                 SourceTabView.class,
                 SourceTabViewImpl.class);
-        bindPresenterWidget(SourcePresenter.class,
-                SourceView.class,
-                SourceViewImpl.class);
     }
 }

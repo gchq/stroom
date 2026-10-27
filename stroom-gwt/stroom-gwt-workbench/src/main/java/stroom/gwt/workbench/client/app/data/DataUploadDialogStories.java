@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.data;
 
 import stroom.data.client.component.DataUploadController;
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `POST /data/v1/upload` (checked with the request spy) | adding the uploaded data to the feed |
 /// | the 'Uploaded file' message | its Close refreshes the data and closes the dialog |
 ///
-/// The dialog is shown as the feed's data browser (`MetaPresenter`) shows it, with that browser
+/// The dialog is shown as the feed's data browser (`MetaBrowserController`) shows it, with that browser
 /// (from GIN, not shown) as the presenter it refreshes after an upload.
 public final class DataUploadDialogStories {
 
@@ -147,8 +147,8 @@ public final class DataUploadDialogStories {
         harness.afterStartUp(() -> {
             // The feed's data browser, which the dialog refreshes after an upload. Created after
             // start-up, as it reads the UI config.
-            final MetaPresenter metaPresenter = harness.own(injector.getMetaPresenter());
-            // As MetaPresenter's 'Upload Data to Feed' button shows it
+            final MetaBrowserController metaPresenter = harness.own(injector.getMetaBrowser());
+            // As MetaBrowserController's 'Upload Data to Feed' button shows it
             injector.getDataUploadController().show(metaPresenter, feedRef, metaPresenter::refresh);
         });
         return harness.asWidget();

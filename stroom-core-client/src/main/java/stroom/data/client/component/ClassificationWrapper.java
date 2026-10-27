@@ -18,7 +18,6 @@ package stroom.data.client.component;
 
 import stroom.data.client.view.ClassificationLabel;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,9 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Some content (e.g. the data viewer's) with its data's classification in a banner below it. Its
 /// owner attaches a [stroom.data.client.view.ClassificationLabelController] to the banner
 /// ([#getClassificationLabel()]) for its colours. Its markup is `ClassificationWrapper.ui.xml`.
-///
-/// It is a [View] too, as `SourcePresenter` shows it as its view until it is converted.
-public class ClassificationWrapper extends Component implements View {
+public class ClassificationWrapper extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
