@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.view;
+package stroom.explorer.client.component;
 
 import stroom.item.client.SelectionList;
 import stroom.item.client.SimpleSelectionItemWrapper;

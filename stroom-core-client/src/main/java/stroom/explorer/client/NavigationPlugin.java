@@ -22,6 +22,8 @@ import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
+import stroom.explorer.client.component.ExplorerNodeEditTagsController;
+import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.explorer.client.component.FindController;
 import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.component.RecentItemsController;
@@ -35,8 +37,6 @@ import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
@@ -64,8 +64,8 @@ public class NavigationPlugin extends Plugin {
     @Inject
     public NavigationPlugin(final EventBus eventBus,
                             final DocumentPluginRegistry documentPluginRegistry,
-                            final Provider<ExplorerNodeEditTagsPresenter> explorerNodeEditTagsPresenterProvider,
-                            final Provider<ExplorerNodeRemoveTagsPresenter> explorerNodeRemoveTagsPresenterProvider,
+                            final Provider<ExplorerNodeEditTagsController> editTagsProvider,
+                            final Provider<ExplorerNodeRemoveTagsController> removeTagsProvider,
                             final Provider<FindInContentController> findInContentProvider,
                             final AppRoot appRoot,
                             final Provider<FindController> findProvider,
@@ -82,9 +82,9 @@ public class NavigationPlugin extends Plugin {
 
         // The screens it opens, made when first asked for
         eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
-                explorerNodeEditTagsPresenterProvider.get().onCreate(event));
+                editTagsProvider.get().show(appRoot, event.getExplorerNodes()));
         eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
-                explorerNodeRemoveTagsPresenterProvider.get().onCreate(event));
+                removeTagsProvider.get().show(appRoot, event.getExplorerNodes()));
         // Find, Find In Content and Recent Items are made once and kept, to keep their last filter
         eventBus.addHandler(ShowFindInContentEvent.getType(), event -> {
             if (findInContent == null) {

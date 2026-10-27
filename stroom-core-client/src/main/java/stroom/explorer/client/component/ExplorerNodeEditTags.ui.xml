@@ -4,11 +4,11 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:sl="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="editNodeTags max form flex-column">
+    <g:FlowPanel styleName="explorer-node-edit-tags max form flex-column">
 
         <form:FormGroup identity="editNodeTagsAddTags"
                         label="Add/Filter Tag(s)"
-                        addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form"
+                        addStyleNames="dock-min form"
                         screenReaderText="Space-separated tags, lower case. Enter adds them. Also filters the list.">
             <form:DescriptionHTML>
                 E.g. One tag '<code>extraction-pipeline</code>' or
@@ -20,24 +20,28 @@
                 <p><strong>Note</strong>: All users have visibility of all tags even if they do not have
                     visibility of the document the tag is used on.</p>
             </form:HelpHTML>
-            <g:FlowPanel styleName="editNodeTagsAddTagsInputContainer flex-row dock-min form">
-                <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
+            <g:FlowPanel styleName="explorer-node-edit-tags__input-container flex-row dock-min form">
+                <g:FlowPanel styleName="explorer-node-edit-tags__input-panel flex-row dock-max form">
                     <form:TextBox ui:field="textBox"
-                               addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
-                    <b:Toolbar ui:field="clearButtonPanel"
-                               name="Clear tags"
-                               addStyleNames="align-center dock-min"/>
+                                  addStyleNames="form-control lower-case-input dock-max"
+                                  title="Enter tags manually or filter 'All Known Tags'"/>
+                    <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min">
+                        <!-- Hidden while nothing is entered, never disabled -->
+                        <b:ToolbarButton ui:field="clearInputButton" svg="CLEAR" title="Clear Entered Tags"
+                                         addStyleNames="clear" visible="false"/>
+                    </b:Toolbar>
                 </g:FlowPanel>
-                <b:Toolbar ui:field="inputButtonPanel"
-                           name="Add tags"
-                           addStyleNames="align-center dock-min"/>
+                <b:Toolbar name="Add tags" addStyleNames="align-center dock-min">
+                    <b:ToolbarButton ui:field="addFromInputButton" svg="ADD" title="Add Entered Tags"
+                                     enabled="false"/>
+                </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>
 
-        <g:FlowPanel styleName="editNodeTagsListsContainer form dock-max flex-row">
+        <g:FlowPanel styleName="explorer-node-edit-tags__lists form dock-max flex-row">
             <form:FormGroup identity="editNodeTagsAllTags"
                             ui:field="allTagsFormGroup"
-                            addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max"
+                            addStyleNames="explorer-node-edit-tags__all-tags dock-max max"
                             label="All known tags"
                             screenReaderText="Space selects tags. Enter or double-click adds the selected tags.">
                 <form:HelpHTML>
@@ -45,22 +49,27 @@
                     The list also includes any suggested tags configured using the property
                     <code>stroom.explorer.suggestedTags</code>.
                 </form:HelpHTML>
-                <sl:SelectionList ui:field="allTagsList" addStyleNames="selection-list--field dock-max"/>
+                <sl:SelectionList ui:field="allTagsList" addStyleNames="selection-list--field dock-max" multiSelect="true"
+                                  title="All tags currently in use across all documents"/>
             </form:FormGroup>
 
-            <b:Toolbar ui:field="nodeTagsButtonPanel"
-                       name="Move tags"
-                       addStyleNames="form dock-min flex-column dock-min justify-content-center"/>
+            <b:Toolbar name="Move tags"
+                       addStyleNames="form dock-min flex-column dock-min justify-content-center">
+                <b:ToolbarButton ui:field="addFromAllTagsButton" svg="ARROW_RIGHT"
+                                 title="Add Selected Tags from All Known Tags" enabled="false"/>
+                <b:ToolbarButton ui:field="removeButton" svg="ARROW_LEFT" title="Remove Selected Tags"
+                                 enabled="false"/>
+            </b:Toolbar>
 
             <form:FormGroup identity="editNodeTagsNodeTags"
                             ui:field="nodeTagsFormGroup"
-                            addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max"
+                            addStyleNames="explorer-node-edit-tags__node-tags dock-max"
                             label=""
                             screenReaderText="Space selects tags. Enter, double-click or Delete removes the selected tags.">
                 <form:HelpHTML>
                     A list of all tags currently assigned to this/these document(s).
                 </form:HelpHTML>
-                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max"/>
+                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max" multiSelect="true"/>
             </form:FormGroup>
         </g:FlowPanel>
 

@@ -41,8 +41,8 @@ import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.explorer.client.component.ExplorerNodeEditTagsController;
+import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.feed.client.FeedPlugin;
@@ -200,11 +200,12 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
 
-    /// @return The 'Edit Tags' dialog, shown for `ShowEditNodeTagsDialogEvent`.
-    ExplorerNodeEditTagsPresenter getExplorerNodeEditTagsPresenter();
+    /// @return The 'Edit Tags' dialog, as `NavigationPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
+    ExplorerNodeEditTagsController getExplorerNodeEditTagsController();
 
-    /// @return The 'Remove Tags' dialog, shown for `ShowRemoveNodeTagsDialogEvent`.
-    ExplorerNodeRemoveTagsPresenter getExplorerNodeRemoveTagsPresenter();
+    /// @return The 'Remove Tags' dialog, as `NavigationPlugin` shows it for
+    /// `ShowRemoveNodeTagsDialogEvent`.
+    ExplorerNodeRemoveTagsController getExplorerNodeRemoveTagsController();
 
     // Plugins adding to the main menu (and their keyboard shortcuts)
 

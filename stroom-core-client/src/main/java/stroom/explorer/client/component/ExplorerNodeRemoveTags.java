@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.view;
+package stroom.explorer.client.component;
 
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.item.client.SelectionList;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.util.shared.NullSafe;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.HashSet;
 import java.util.List;
@@ -36,40 +34,35 @@ import java.util.stream.Collectors;
 
 /// Picks tags to remove from several documents: those chosen in a selection list of several
 /// choices ([SelectionList#setMultiSelect]) of the tags they have.
-public class ExplorerNodeRemoveTagsViewImpl
-        extends ViewWithUiHandlers<HideRequestUiHandlers>
-        implements ExplorerNodeRemoveTagsView {
+public class ExplorerNodeRemoveTags extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     private final TagListModel nodeTagsModel = new TagListModel();
 
     @UiField
     SelectionList<String, SimpleSelectionItemWrapper<String>> nodeTagsList;
 
-    @Inject
-    public ExplorerNodeRemoveTagsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(event -> focus());
-        nodeTagsList.setMultiSelect(true);
+    /// Makes an empty list.
+    public ExplorerNodeRemoveTags() {
+        initWidget(BINDER.createAndBindUi(this));
         nodeTagsList.setModel(nodeTagsModel);
     }
 
-    @Override
+    /// Focuses the tags.
     public void focus() {
         nodeTagsList.focus();
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The tags chosen, to remove from all the documents.
     public Set<String> getRemoveTags() {
         return new HashSet<>(TagListModel.getSelectedTags(nodeTagsList));
     }
 
-    @Override
+    /// Shows the documents' tags, none chosen.
+    ///
+    /// @param nodeDocRefs The documents.
+    /// @param nodeTags    The tags they have.
     public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags) {
         final List<String> tagsList = NullSafe.stream(nodeTags)
@@ -84,7 +77,7 @@ public class ExplorerNodeRemoveTagsViewImpl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ExplorerNodeRemoveTagsViewImpl> {
+    interface Binder extends UiBinder<Widget, ExplorerNodeRemoveTags> {
 
     }
 }

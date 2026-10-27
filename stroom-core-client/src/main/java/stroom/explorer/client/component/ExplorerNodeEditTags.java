@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.view;
+package stroom.explorer.client.component;
 
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.item.client.SelectionList;
 import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -39,7 +36,6 @@ import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,18 +53,12 @@ import java.util.stream.Collectors;
 /// double click, on the known tags adds those chosen; Enter, a double click, Delete or Backspace on
 /// the document's tags removes those chosen. Down in the field goes to the known tags, and Up from
 /// their first goes back.
-public class ExplorerNodeEditTagsViewImpl
-        extends ViewWithUiHandlers<HideRequestUiHandlers>
-        implements ExplorerNodeEditTagsView {
+public class ExplorerNodeEditTags extends Component {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final RegExp TAG_SPLIT_REGEX = RegExp.compile(" +");
     private static final Predicate<String> ALWAYS_TRUE_PREDICATE = (str) -> true;
 
-    private final Widget widget;
-    private final ToolbarButton removeButton;
-    private final ToolbarButton addFromInputButton;
-    private final ToolbarButton clearInputButton;
-    private final ToolbarButton addFromAllTagsButton;
     private final KeyPressHandler tagsKeyPressHandler = new TagsKeyPressHandler();
     private final TagListModel allTagsModel = new TagListModel();
     private final TagListModel nodeTagsModel = new TagListModel();
@@ -79,52 +69,33 @@ public class ExplorerNodeEditTagsViewImpl
     @UiField
     TextBox textBox;
     @UiField
-    Toolbar clearButtonPanel;
+    ToolbarButton clearInputButton;
     @UiField
-    Toolbar inputButtonPanel;
+    ToolbarButton addFromInputButton;
     @UiField
     FormGroup allTagsFormGroup;
     @UiField
     SelectionList<String, SimpleSelectionItemWrapper<String>> allTagsList;
     @UiField
-    Toolbar nodeTagsButtonPanel;
+    ToolbarButton addFromAllTagsButton;
+    @UiField
+    ToolbarButton removeButton;
     @UiField
     FormGroup nodeTagsFormGroup;
     @UiField
     SelectionList<String, SimpleSelectionItemWrapper<String>> nodeTagsList;
     private List<DocRef> docRefs;
 
-    @Inject
-    public ExplorerNodeEditTagsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(event -> focus());
+    /// Makes an empty editor.
+    public ExplorerNodeEditTags() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        addFromAllTagsButton = nodeTagsButtonPanel.button(
-                SvgImage.ARROW_RIGHT,
-                "Add Selected Tags from All Known Tags",
-                this::addSelectedTags);
-        addFromAllTagsButton.setEnabled(false);
-
-        removeButton = nodeTagsButtonPanel.button(
-                SvgImage.ARROW_LEFT,
-                "Remove Selected Tags",
-                this::removeSelectedNodeTags);
-        removeButton.setEnabled(false);
-
+        addFromAllTagsButton.setOnClick(this::addSelectedTags);
+        removeButton.setOnClick(this::removeSelectedNodeTags);
         // Hidden/visible, never disabled
-        clearInputButton = clearButtonPanel.button(
-                SvgImage.CLEAR,
-                "Clear Entered Tags",
-                this::onClearInputClicked);
-        clearInputButton.addStyleName("clear");
+        clearInputButton.setOnClick(this::onClearInputClicked);
+        addFromInputButton.setOnClick(this::addTagsFromTextInput);
 
-        addFromInputButton = inputButtonPanel.button(
-                SvgImage.ADD,
-                "Add Entered Tags",
-                this::addTagsFromTextInput);
-        addFromInputButton.setEnabled(false);
-
-        nodeTagsList.setMultiSelect(true);
         nodeTagsList.setModel(nodeTagsModel);
         nodeTagsList.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -137,9 +108,7 @@ public class ExplorerNodeEditTagsViewImpl
 
         textBox.addKeyPressHandler(tagsKeyPressHandler);
         textBox.addKeyUpHandler(this::handleTextBoxKeyUpEvent);
-        textBox.setTitle("Enter tags manually or filter 'All Known Tags'");
 
-        allTagsList.setMultiSelect(true);
         allTagsList.setModel(allTagsModel);
         allTagsList.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -153,7 +122,6 @@ public class ExplorerNodeEditTagsViewImpl
             textBox.setFocus(true);
             textBox.selectAll();
         });
-        allTagsList.setTitle("All tags currently in use across all documents");
     }
 
     private void handleNodeTagsKeyDownEvent(final KeyDownEvent event) {
@@ -245,17 +213,12 @@ public class ExplorerNodeEditTagsViewImpl
                 .toLowerCase();
     }
 
-    @Override
+    /// Focuses the field tags are typed in.
     public void focus() {
         textBox.setFocus(true);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The document's tags, or the tags to add to all the documents.
     public Set<String> getNodeTags() {
         return new HashSet<>(nodeTags);
     }
@@ -318,7 +281,11 @@ public class ExplorerNodeEditTagsViewImpl
         addFromInputButton.setEnabled(!NullSafe.isBlankString(textBox.getText()));
     }
 
-    @Override
+    /// Shows the tags of the documents, and all the tags known.
+    ///
+    /// @param nodeDocRefs The documents.
+    /// @param nodeTags    The document's tags, or none for several documents.
+    /// @param allTags     All the tags known.
     public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags,
                         final Set<String> allTags) {
@@ -345,7 +312,7 @@ public class ExplorerNodeEditTagsViewImpl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ExplorerNodeEditTagsViewImpl> {
+    interface Binder extends UiBinder<Widget, ExplorerNodeEditTags> {
 
     }
 

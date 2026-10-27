@@ -1178,37 +1178,6 @@
     overflow: hidden;
 }
 
-.editNodeTagsAllTagsFrmGrp,
-.editNodeTagsNodeTagsFrmGrp {
-    flex-basis: 200px;
-}
-
-.editNodeTagsAddTagsInputPanel .toolbar {
-    position: absolute;
-    margin-top: 7px;
-    right: 50px;
-}
-
-.editNodeTagsAddTagsInputContainer .clear .toolbar-button__icon {
-    color: var(--control__text-color);
-}
-
-.editNodeTagsListsContainer .form-group{
-    margin-top: 0px;
-}
-
-/* The tag lists' row takes the height left in the dialog, not the height of every tag, so that a
-   long list scrolls within its border rather than squashing the field above */
-.editNodeTagsListsContainer,
-.removeNodeTagsListsContainer {
-    flex-basis: 0;
-    min-height: 0;
-}
-
-.editNodeTags .form-label {
-    margin-bottom: 0px;
-}
-
 .userRefLinkContainer,
 .docRefLinkContainer,
 .commandLinkContainer {

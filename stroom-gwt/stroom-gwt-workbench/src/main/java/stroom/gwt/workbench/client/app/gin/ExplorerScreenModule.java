@@ -16,12 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
-import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
-import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The explorer presenter and view bindings of Stroom's `AppModule`
@@ -33,11 +27,5 @@ public class ExplorerScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(ExplorerNodeEditTagsPresenter.class,
-                ExplorerNodeEditTagsView.class,
-                ExplorerNodeEditTagsViewImpl.class);
-        bindPresenterWidget(ExplorerNodeRemoveTagsPresenter.class,
-                ExplorerNodeRemoveTagsView.class,
-                ExplorerNodeRemoveTagsViewImpl.class);
     }
 }

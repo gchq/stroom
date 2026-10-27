@@ -17,10 +17,9 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -40,8 +39,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories of `App/Main/EditTagsDialog`, showing Stroom's real [ExplorerNodeEditTagsPresenter]
-/// ('Edit Tags'/'Add Tags') and [ExplorerNodeRemoveTagsPresenter] ('Remove Tags') with fake REST
+/// Stories of `App/Main/EditTagsDialog`, showing Stroom's real [ExplorerNodeEditTagsController]
+/// ('Edit Tags'/'Add Tags') and [ExplorerNodeRemoveTagsController] ('Remove Tags') with fake REST
 /// replies.
 ///
 /// The stories answer Stroom's `ExplorerResource`: all tags
@@ -341,12 +340,12 @@ public final class EditTagsDialogStories {
 
     // The options of the document tags list box (the last list box in the dialog)
     private static Query nodeTags(final Play screen) {
-        return screen.querySelectorAll(".editNodeTagsNodeTagsFrmGrp [role=\"option\"]");
+        return screen.querySelectorAll(".explorer-node-edit-tags__node-tags [role=\"option\"]");
     }
 
     // The options of the known tags list box
     private static Query knownTags(final Play screen) {
-        return screen.querySelectorAll(".editNodeTagsAllTagsFrmGrp [role=\"option\"]");
+        return screen.querySelectorAll(".explorer-node-edit-tags__all-tags [role=\"option\"]");
     }
 
     // A JSON array of that many tags, 'tag-000' onwards
@@ -398,9 +397,9 @@ public final class EditTagsDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures(nodeTags, allTags))
                 .injector(injector)
                 .build();
-        // As NavigationPlugin would
-        final ExplorerNodeEditTagsPresenter presenter = injector.getExplorerNodeEditTagsPresenter();
-        harness.addRegistration(harness.getEventBus().addHandler(ShowEditNodeTagsDialogEvent.getType(), presenter));
+        // As NavigationPlugin does
+        harness.addRegistration(harness.getEventBus().addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
+                injector.getExplorerNodeEditTagsController().show(harness.getAppRoot(), event.getExplorerNodes())));
         // As the explorer's 'Edit Tags'/'Add Tags' menu item does
         ShowEditNodeTagsDialogEvent.fire(harness.getHasHandlers(), nodes);
         return harness.asWidget();
@@ -413,9 +412,8 @@ public final class EditTagsDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures(nodeTags, "[]"))
                 .injector(injector)
                 .build();
-        final ExplorerNodeRemoveTagsPresenter presenter = injector.getExplorerNodeRemoveTagsPresenter();
-        harness.addRegistration(harness.getEventBus()
-                .addHandler(ShowRemoveNodeTagsDialogEvent.getType(), presenter));
+        harness.addRegistration(harness.getEventBus().addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
+                injector.getExplorerNodeRemoveTagsController().show(harness.getAppRoot(), event.getExplorerNodes())));
         // As the explorer's 'Remove Tags' menu item does
         ShowRemoveNodeTagsDialogEvent.fire(harness.getHasHandlers(), nodes);
         return harness.asWidget();

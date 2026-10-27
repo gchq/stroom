@@ -30,14 +30,8 @@ import stroom.core.client.view.FullScreenViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
-import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
-import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -97,15 +91,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(ContentTabPanePresenter.class);
 
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
-
-        bindPresenter(
-                ExplorerNodeEditTagsPresenter.class,
-                ExplorerNodeEditTagsView.class,
-                ExplorerNodeEditTagsViewImpl.class);
-        bindPresenter(
-                ExplorerNodeRemoveTagsPresenter.class,
-                ExplorerNodeRemoveTagsView.class,
-                ExplorerNodeRemoveTagsViewImpl.class);
 
 
         // Menu

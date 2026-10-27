@@ -20,8 +20,8 @@ package stroom.gwt.workbench.client.app.gin;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dictionary.client.component.DictionaryEditor;
 import stroom.entity.client.component.InfoDocumentController;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.explorer.client.component.ExplorerNodeEditTagsController;
+import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.node.client.presenter.NodePresenter;
@@ -71,11 +71,12 @@ public interface AppScreenGinjector extends ScreenGinjector {
     /// @return The document 'Info' dialog, shown by firing `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
 
-    /// @return The 'Edit Tags' dialog, shown by firing `ShowEditNodeTagsDialogEvent`.
-    ExplorerNodeEditTagsPresenter getExplorerNodeEditTagsPresenter();
+    /// @return The 'Edit Tags' dialog, as `NavigationPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
+    ExplorerNodeEditTagsController getExplorerNodeEditTagsController();
 
-    /// @return The 'Remove Tags' dialog, shown by firing `ShowRemoveNodeTagsDialogEvent`.
-    ExplorerNodeRemoveTagsPresenter getExplorerNodeRemoveTagsPresenter();
+    /// @return The 'Remove Tags' dialog, as `NavigationPlugin` shows it for
+    /// `ShowRemoveNodeTagsDialogEvent`.
+    ExplorerNodeRemoveTagsController getExplorerNodeRemoveTagsController();
 
     // Monitoring
 

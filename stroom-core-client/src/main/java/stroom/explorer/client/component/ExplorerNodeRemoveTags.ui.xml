@@ -3,16 +3,16 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:sl="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="removeNodeTags max form flex-column">
-        <g:FlowPanel styleName="removeNodeTagsListsContainer form dock-max flex-row">
+    <g:FlowPanel styleName="max form flex-column">
+        <g:FlowPanel styleName="explorer-node-remove-tags__lists form dock-max flex-row">
             <form:FormGroup identity="removeNodeTagsNodeTags"
-                            addStyleNames="removeNodeTagsNodeTagsFrmGrp dock-max"
+                            addStyleNames="dock-max"
                             label="Existing Tags"
                             screenReaderText="Space selects tags to remove.">
                 <form:HelpHTML>
                     Select the tag(s) to remove from the documents.
                 </form:HelpHTML>
-                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max"/>
+                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max" multiSelect="true"/>
             </form:FormGroup>
         </g:FlowPanel>
     </g:FlowPanel>

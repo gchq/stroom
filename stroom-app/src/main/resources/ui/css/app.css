@@ -126,6 +126,8 @@
 @import url("components.css");
 @import url("find-panel.css");
 @import url("column-values-filter.css");
+@import url("explorer-node-edit-tags.css");
+@import url("explorer-node-remove-tags.css");
 @import url("classification-label.css");
 @import url("item-navigator.css");
 @import url("item-selection.css");
