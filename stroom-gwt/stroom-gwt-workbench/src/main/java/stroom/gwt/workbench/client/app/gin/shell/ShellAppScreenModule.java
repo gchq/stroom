@@ -22,9 +22,6 @@ import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
-import stroom.preferences.client.UserPreferencesPresenter;
-import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
-import stroom.preferences.client.UserPreferencesViewImpl;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 import stroom.welcome.client.view.WelcomeViewImpl;
@@ -52,9 +49,6 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
                 NavigationViewImpl.class);
 
         // UserPreferencesModule
-        bindPresenterWidget(UserPreferencesPresenter.class,
-                UserPreferencesView.class,
-                UserPreferencesViewImpl.class);
 
         // WelcomeModule
         bindPresenterWidget(WelcomePresenter.class,

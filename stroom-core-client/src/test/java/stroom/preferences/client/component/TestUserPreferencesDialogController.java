@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.preferences.client;
+package stroom.preferences.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
-import stroom.preferences.client.component.EditorPreferencesController;
-import stroom.preferences.client.component.KeyBindingPreferencesController;
-import stroom.preferences.client.component.ThemePreferencesController;
-import stroom.preferences.client.component.TimePreferencesController;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,7 +33,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -50,10 +43,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-class TestUserPreferencesPresenter {
+class TestUserPreferencesDialogController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
     private UserPreferencesManager userPreferencesManager;
 
@@ -62,7 +54,6 @@ class TestUserPreferencesPresenter {
         // The manager makes its REST resource with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
         userPreferencesManager = Mockito.mock(UserPreferencesManager.class);
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
     }
 
@@ -87,7 +78,7 @@ class TestUserPreferencesPresenter {
         // The failure is reported, and once the alert is closed the dialog's buttons work again
         assertThat(alerts).hasSize(1);
         Mockito.verify(okPressed, Mockito.never()).reset();
-        alerts.getFirst().getCallback().onClose();
+        alerts.get(0).getCallback().onClose();
         Mockito.verify(okPressed).reset();
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
@@ -109,36 +100,26 @@ class TestUserPreferencesPresenter {
         Mockito.verify(okPressed, Mockito.never()).reset();
     }
 
-    // Shows the dialog with preferences that differ from those last saved, so that OK saves them,
-    // and presses OK.
+    // Reads preferences that differ from those last saved, so that OK saves them, and presses OK.
     private HidePopupRequestEvent showAndPressOk() {
         final UserPreferences saved = UserPreferences.builder().theme("Light").build();
         final UserPreferences changed = UserPreferences.builder().theme("Dark").build();
-        Mockito.doAnswer(invocation -> {
-            final Consumer<UserPreferences> consumer = invocation.getArgument(0);
-            consumer.accept(saved);
-            return null;
-        }).when(userPreferencesManager).fetch(any(), any());
         Mockito.when(userPreferencesManager.getCurrentUserPreferences()).thenReturn(changed);
 
-        final UserPreferencesPresenter presenter = new UserPreferencesPresenter(
+        final UserPreferencesDialogController controller = new UserPreferencesDialogController(
                 eventBus,
-                Mockito.mock(UserPreferencesView.class, Mockito.RETURNS_DEEP_STUBS),
+                Mockito.mock(UserPreferencesDialog.class),
                 userPreferencesManager,
                 Mockito.mock(ThemePreferencesController.class),
                 Mockito.mock(EditorPreferencesController.class),
                 Mockito.mock(TimePreferencesController.class),
                 Mockito.mock(KeyBindingPreferencesController.class),
                 Mockito.mock(ClientSecurityContext.class));
-        // The dialog's size is worked out from the browser window's
-        try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {
-            presenter.show();
-        }
-        assertThat(shown).hasSize(1);
+        controller.read(saved);
 
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+        controller.onHideRequest(okPressed);
         Mockito.verify(userPreferencesManager).setCurrentPreferences(eq(changed));
         return okPressed;
     }

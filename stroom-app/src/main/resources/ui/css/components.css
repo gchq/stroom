@@ -657,10 +657,6 @@
 	gap: var(--control__gap--horizontal);
 }
 
-.preferencesViewImpl-buttons button {
-    width: 250px;
-}
-
 /* The list of keyboard shortcuts fills what the tab has left below the filter, framed as a control */
 .keyBindingPreferences-list {
     min-height: 0;
