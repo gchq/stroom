@@ -57,9 +57,11 @@ import java.util.regex.Pattern;
 /// - next to a word for its type, e.g. `the feed ACME-EVENTS` or `ACME-EVENTS pipeline`; or
 /// - anywhere, if its name can't be mistaken for an ordinary word, e.g. `ACME-EVENTS` or `Event Data (Text)`.
 ///
-/// Where documents of different types share the name, only a word for the type tells which one is meant, and
-/// without one the name is left alone. Each document and stream is linked once a line. Code blocks, inline code
-/// that isn't exactly a name, and links already written are left as they are.
+/// A name written with typographic stand-ins for its hyphens or spaces (e.g. `Twitter‑Events‑V1.1`, with
+/// non-breaking hyphens) is still the name, and is linked under the name itself. Where documents of different types
+/// share the name, only a word for the type tells which one is meant, and without one the name is left alone. Each
+/// document and stream is linked once a line. Code blocks, inline code that isn't exactly a name, and links already
+/// written are left as they are.
 public class AnswerLinks {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnswerLinks.class);
@@ -275,6 +277,8 @@ public class AnswerLinks {
                                    final LongPredicate knownStream) {
         final List<Replacement> replacements = new ArrayList<>();
         final List<int[]> leftAlone = new ArrayList<>();
+        // Names are found in the line with its hyphens and spaces made plain, at the same positions.
+        final String plain = plainPunctuation(line);
         final Set<String> linkedOnLine = new HashSet<>();
         final Matcher leave = LEAVE_ALONE.matcher(line);
         while (leave.find()) {
@@ -285,7 +289,7 @@ public class AnswerLinks {
                     : null;
             final DocRef docRef = code == null
                     ? null
-                    : choose(documents.get(code.strip()), line, leave.start(), leave.end());
+                    : choose(documents.get(plainPunctuation(code).strip()), plain, leave.start(), leave.end());
             if (docRef != null && linkedOnLine.add(docRef.getUuid())) {
                 replacements.add(new Replacement(leave.start(), leave.end(), docLink(leave.group(), docRef)));
             }
@@ -317,24 +321,24 @@ public class AnswerLinks {
         for (final String name : names) {
             int from = 0;
             while (true) {
-                final int start = line.indexOf(name, from);
+                final int start = plain.indexOf(name, from);
                 if (start < 0) {
                     break;
                 }
                 final int end = start + name.length();
                 from = start + 1;
-                if (!isWholeName(line, start, end)
+                if (!isWholeName(plain, start, end)
                     || overlaps(leftAlone, start, end)
                     || replacements.stream().anyMatch(r -> r.start < end && start < r.end)) {
                     continue;
                 }
-                final DocRef docRef = choose(documents.get(name), line, start, end);
+                final DocRef docRef = choose(documents.get(name), plain, start, end);
                 if (docRef == null) {
                     continue;
                 }
                 if (!isOrdinaryWords(name)
-                    || isFormattedAsName(line, start, end)
-                    || typeNamedNextTo(line, start, end, docRef.getType())) {
+                    || isFormattedAsName(plain, start, end)
+                    || typeNamedNextTo(plain, start, end, docRef.getType())) {
                     if (linkedOnLine.add(docRef.getUuid())) {
                         replacements.add(new Replacement(start, end, docLink(escape(name), docRef)));
                     }
@@ -356,6 +360,23 @@ public class AnswerLinks {
             at = replacement.end;
         }
         return sb.append(line.substring(at)).toString();
+    }
+
+    // The text with the typographic stand-ins for a hyphen or a space a model writes in a name made plain, one
+    // character for one, so a name is found where it was written (seen: a table of pipelines written with
+    // non-breaking hyphens, e.g. 'Twitter‑Events‑V1.1', not linked). An em dash is left, as it parts words.
+    private static String plainPunctuation(final String text) {
+        final char[] chars = text.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            chars[i] = switch (chars[i]) {
+                // Hyphen, non-breaking hyphen, figure dash, en dash, minus sign.
+                case '\u2010', '\u2011', '\u2012', '\u2013', '\u2212' -> '-';
+                // No-break space, figure space, narrow no-break space.
+                case '\u00A0', '\u2007', '\u202F' -> ' ';
+                default -> chars[i];
+            };
+        }
+        return new String(chars);
     }
 
     // The one document meant: the only one by the name, or the one whose type is named next to it.
