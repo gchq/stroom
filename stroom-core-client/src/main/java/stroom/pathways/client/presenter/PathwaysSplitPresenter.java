@@ -22,7 +22,6 @@ import stroom.pathways.client.component.PathwayListController;
 import stroom.pathways.client.component.PathwayTreeController;
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.pathways.shared.pathway.Pathway;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -47,10 +46,7 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
         view.setTable(pathwayList);
         view.setTree(pathwayTree);
 
-        own(pathwayList.getSelectionModel().addSelectionHandler(e -> {
-            final Pathway selected = pathwayList.getSelectionModel().getSelected();
-            pathwayTree.read(getEntity(), selected);
-        }));
+        pathwayList.setOnSelectionChange(selected -> pathwayTree.read(getEntity(), selected));
     }
 
     @Override

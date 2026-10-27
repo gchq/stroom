@@ -37,7 +37,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
@@ -62,6 +61,8 @@ public class PathwayListController extends Controller {
     private String filter;
     private DocRef docRef;
     private PathwaysDoc pathwaysDoc;
+    private Consumer<Pathway> onSelectionChange = pathway -> {
+    };
 
     /// Made by GIN, with its content.
     ///
@@ -88,11 +89,14 @@ public class PathwayListController extends Controller {
         view.setOnRemove(this::onRemove);
         view.setOnSortChange(this::refresh);
         watch(Contexts.READ_ONLY, view::setReadOnly);
+        own(view.getSelectionModel().addSelectionHandler(event ->
+                onSelectionChange.accept(view.getSelectionModel().getSelected())));
     }
 
-    /// @return The selection.
-    public MultiSelectionModelImpl<Pathway> getSelectionModel() {
-        return view.getSelectionModel();
+    /// @param onSelectionChange Given the pathway chosen, or `null` for none, each time the choice
+    ///                          changes.
+    public void setOnSelectionChange(final Consumer<Pathway> onSelectionChange) {
+        this.onSelectionChange = onSelectionChange;
     }
 
     private void onFilterChange(final String text) {
