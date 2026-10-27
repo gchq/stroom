@@ -193,14 +193,15 @@ public class McpElicitations {
             final long expiresMs = System.currentTimeMillis() + config.getElicitationTimeout().toMillis();
             final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, server,
                     tool, withLinks(chatId, request.message()), request.requestedSchema(), expiresMs, null, null);
-            final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
-                    JsonUtil.writeValueAsString(record, false));
-            // The chat needs the user, but the run keeps its thread, so it is not carried on by anything else.
+            // The chat needs the user, but the run keeps its thread, so it is not carried on by anything else. It
+            // waits before the form is shown: an answer to the form is only taken while the run waits for it.
             final AiChatRun run = runDao.getActive(chatId).orElse(null);
             final boolean paused = run != null && runDao.compareAndSetStatus(run.getId(),
                     List.of(AiChatRunStatus.RUNNING), AiChatRunStatus.WAITING_FOR_USER,
                     AiChatRunStopReason.NEEDS_INPUT, null);
             try {
+                final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
+                        JsonUtil.writeValueAsString(record, false));
                 return await(chatId, message.getId(), expiresMs, stop);
             } finally {
                 if (paused) {
