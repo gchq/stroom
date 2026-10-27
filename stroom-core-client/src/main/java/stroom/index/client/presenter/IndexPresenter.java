@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.index.client.component.IndexFieldListController;
 import stroom.index.client.component.IndexSettingsController;
 import stroom.index.client.component.IndexShardListController;
 import stroom.index.shared.LuceneIndexDoc;
@@ -50,7 +51,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
     public IndexPresenter(final EventBus eventBus,
                           final LinkTabPanelView view,
                           final Provider<IndexSettingsController> indexSettingsProvider,
-                          final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
+                          final Provider<IndexFieldListController> indexFieldListProvider,
                           final Provider<IndexShardListController> indexShardListProvider,
                           final Provider<IndexDataPresenter> indexDataPresenterProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
@@ -66,7 +67,8 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                     IndexShardListController::read));
         }
 
-        addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(FIELDS, new ControllerTabProvider<>(eventBus, indexFieldListProvider::get,
+                IndexFieldListController::read));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
                 IndexSettingsController::read,
                 IndexSettingsController::write));
