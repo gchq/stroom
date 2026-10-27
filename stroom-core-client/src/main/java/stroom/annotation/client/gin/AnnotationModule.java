@@ -32,7 +32,6 @@ import stroom.annotation.client.AnnotationTagCreateViewImpl;
 import stroom.annotation.client.AnnotationTagEditPresenter;
 import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 import stroom.annotation.client.AnnotationTagEditViewImpl;
-import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
@@ -61,8 +60,5 @@ public class AnnotationModule extends PluginModule {
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindSharedView(FindView.class, FindPanel.class);
 
-
-        bindPresenter(
-                FindAnnotationPresenter.class);
     }
 }

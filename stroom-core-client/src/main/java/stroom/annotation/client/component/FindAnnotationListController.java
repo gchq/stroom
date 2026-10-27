@@ -175,6 +175,11 @@ public class FindAnnotationListController extends Controller {
         this.onFilterError = onFilterError;
     }
 
+    /// @param bordered Whether the list has a field's border and background, as in a dialog.
+    public void setBordered(final boolean bordered) {
+        view.setBordered(bordered);
+    }
+
     /// @param filter The filter's text, for the next find.
     public void setFilter(final String filter) {
         this.filter = filter;

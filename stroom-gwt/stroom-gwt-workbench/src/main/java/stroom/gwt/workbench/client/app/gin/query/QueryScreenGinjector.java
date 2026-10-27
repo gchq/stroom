@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.gin.query;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.ReportPresenter;
-import stroom.annotation.client.FindAnnotationPresenter;
+import stroom.annotation.client.component.FindAnnotationController;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
@@ -89,8 +89,9 @@ public interface QueryScreenGinjector extends ScreenGinjector {
     /// @return A report's editor tab, as `ReportPlugin` creates it.
     ReportPresenter getReportPresenter();
 
-    /// @return The 'Choose Annotation' dialog, shown by firing `ShowFindAnnotationEvent`.
-    FindAnnotationPresenter getFindAnnotationPresenter();
+    /// @return The 'Choose Annotation' dialog, kept by the app and shown when
+    ///         `ShowFindAnnotationEvent` fires.
+    FindAnnotationController getFindAnnotationController();
 
     /// @return Stroom's handler of `HyperlinkEvent`s (a table's links), which Stroom creates eagerly.
     HyperlinkEventHandlerImpl getHyperlinkEventHandler();

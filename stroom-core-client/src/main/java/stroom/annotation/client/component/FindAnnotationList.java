@@ -117,6 +117,12 @@ public class FindAnnotationList extends Component {
         this.onUpFromFirst = onUpFromFirst;
     }
 
+    /// @param bordered Whether the list has a field's border and background, as in a dialog.
+    public void setBordered(final boolean bordered) {
+        pager.setStyleName("form-control-border", bordered);
+        pager.setStyleName("form-control-background", bordered);
+    }
+
 
     // --------------------------------------------------------------------------------
 

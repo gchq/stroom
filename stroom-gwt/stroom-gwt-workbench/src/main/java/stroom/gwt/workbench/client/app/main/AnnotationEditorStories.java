@@ -17,7 +17,6 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.ShowFindAnnotationEvent;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
@@ -52,7 +51,7 @@ import java.util.Map;
 public final class AnnotationEditorStories {
 
     private static final String CHANGE_PATH = "/annotation/v1/change";
-    // FindAnnotationPresenter's warning for OK with no annotation selected
+    // FindAnnotationController's warning for OK with no annotation selected
     private static final String NOTHING_SELECTED = "No annotation has been selected";
     // The comment entry's actions button, and the menu it opens
     private static final String COMMENT_ACTIONS = "Actions for history entry 'Comment' by Alice";
@@ -599,9 +598,11 @@ public final class AnnotationEditorStories {
                 .realAlerts()
                 .build();
         // The annotation chooser, as AnnotationEditSupport would show it
-        final FindAnnotationPresenter findAnnotationPresenter = injector.getFindAnnotationPresenter();
+        // Made when asked for, so that the story's root, which owns it, is made once the screen is
+        // open (the leak probe's close disposes only what its opening registered)
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(),
-                findAnnotationPresenter));
+                event -> harness.own(injector.getFindAnnotationController())
+                        .show(event.getAnnotationConsumer())));
         harness.afterStartUp(() -> AnnotationFixtures.open(injector, harness, 42L, readOnly));
         return harness.asWidget();
     }

@@ -141,7 +141,10 @@ screen. A tab's content (a component or a presenter) is shown with `harness.show
 fills the canvas (the full page height, as Stroom's content pane does); a page shown on its own
 (sign in) with `harness.showPage(page)`. Anything else the story makes and shows itself (in a frame
 of its own, or as a dialog) is given to `harness.own(screen)`. A screen opened by an event is shown
-by adding a handler for the event and firing it, as its area's plugin would.
+by adding a handler for the event and firing it, as its area's plugin would. Own nothing before
+`afterStartUp`: the first `own` makes the story's root, and the leak probe's close disposes only
+what was registered once the screen opened, so a root made earlier keeps every screen the probe
+opens (e.g. make a dialog in its event's handler, `event -> harness.own(injector.getX()).show(...)`).
 
 Also on the harness, for what Stroom's app does around a screen:
 

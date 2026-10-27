@@ -23,7 +23,7 @@ import stroom.annotation.client.AnnotationPresenter;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.AnnotationTagPresenter;
 import stroom.annotation.client.BrowseAnnotationPresenter;
-import stroom.annotation.client.FindAnnotationPresenter;
+import stroom.annotation.client.component.FindAnnotationController;
 import stroom.cache.client.presenter.CachePresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter;
@@ -177,8 +177,9 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     /// @return An annotation's tab (the editor and its sub-tabs), as `AnnotationEditSupport` creates it.
     AnnotationPresenter getAnnotationPresenter();
 
-    /// @return The 'Choose Annotation' dialog, shown by firing `ShowFindAnnotationEvent`.
-    FindAnnotationPresenter getFindAnnotationPresenter();
+    /// @return The 'Choose Annotation' dialog, kept by the app and shown when
+    ///         `ShowFindAnnotationEvent` fires.
+    FindAnnotationController getFindAnnotationController();
 
     /// @return The annotation REST client, e.g. to fetch an annotation as `AnnotationEditSupport` does.
     AnnotationResourceClient getAnnotationResourceClient();

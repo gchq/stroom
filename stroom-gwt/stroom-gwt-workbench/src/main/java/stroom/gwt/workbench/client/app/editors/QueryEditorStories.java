@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.editors;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
-import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.ShowFindAnnotationEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.docref.DocRef;
@@ -95,7 +94,7 @@ public final class QueryEditorStories {
               "description": "# Query docs"
             }""";
 
-    // FindAnnotationPresenter's warning for OK with no annotation selected
+    // FindAnnotationController's warning for OK with no annotation selected
     private static final String NOTHING_SELECTED = "No annotation has been selected";
 
     // One table result with four columns and two rows, the second annotated
@@ -1330,8 +1329,11 @@ public final class QueryEditorStories {
     // As annotationSpies, with the 'Choose Annotation' dialog shown by ShowFindAnnotationEvent
     private static void findAnnotation(final ScreenHarness harness, final QueryScreenGinjector injector) {
         annotationSpies(harness, injector);
-        final FindAnnotationPresenter presenter = injector.getFindAnnotationPresenter();
-        harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(), presenter);
+        // Made when asked for, so that the story's root, which owns it, is made once the screen is
+        // open (the leak probe's close disposes only what its opening registered)
+        harness.addRegistration(harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(),
+                event -> harness.own(injector.getFindAnnotationController())
+                        .show(event.getAnnotationConsumer())));
     }
 
     // Stroom's handler of a table's links, with spies on the events it fires

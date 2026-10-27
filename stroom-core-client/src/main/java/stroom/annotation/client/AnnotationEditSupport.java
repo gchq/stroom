@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.annotation.client.component.FindAnnotationController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.core.client.ContentManager;
@@ -24,19 +25,20 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class AnnotationEditSupport implements HasHandlers {
 
     private final EventBus eventBus;
     private final ContentManager contentManager;
     private final ClientSecurityContext securityContext;
+    private FindAnnotationController findAnnotation;
 
     @Inject
     public AnnotationEditSupport(final EventBus eventBus,
@@ -44,7 +46,8 @@ public class AnnotationEditSupport implements HasHandlers {
                                  final ContentManager contentManager,
                                  final AnnotationResourceClient annotationResourceClient,
                                  final ClientSecurityContext securityContext,
-                                 final Provider<FindAnnotationPresenter> findAnnotationPresenterProvider) {
+                                 final Provider<FindAnnotationController> findAnnotationProvider,
+                                 final AppRoot appRoot) {
         this.eventBus = eventBus;
         this.contentManager = contentManager;
         this.securityContext = securityContext;
@@ -76,9 +79,14 @@ public class AnnotationEditSupport implements HasHandlers {
                     show(presenterProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
         });
 
-        // The screens it opens, made when first asked for
-        eventBus.addHandler(ShowFindAnnotationEvent.getType(), event ->
-                findAnnotationPresenterProvider.get().onShow(event));
+        // The screens it opens, made when first asked for and kept by the app, so they keep
+        // their filters
+        eventBus.addHandler(ShowFindAnnotationEvent.getType(), event -> {
+            if (findAnnotation == null) {
+                findAnnotation = appRoot.make(findAnnotationProvider);
+            }
+            findAnnotation.show(event.getAnnotationConsumer());
+        });
     }
 
     private void show(final AnnotationPresenter presenter,
