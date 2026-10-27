@@ -24,6 +24,7 @@ import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.dashboard.client.component.ProcessorLimitsController;
 import stroom.dashboard.client.component.QueryFavouritesController;
 import stroom.dashboard.client.component.QueryHistoryController;
+import stroom.dashboard.client.component.QuerySettingsController;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -133,7 +134,7 @@ public class QueryPresenter
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final Provider<QuerySettingsPresenter> settingsPresenterProvider,
+                          final Provider<QuerySettingsController> settingsPresenterProvider,
                           final ExpressionTreeController expressionTree,
                           final QueryHistoryController history,
                           final QueryFavouritesController favourites,

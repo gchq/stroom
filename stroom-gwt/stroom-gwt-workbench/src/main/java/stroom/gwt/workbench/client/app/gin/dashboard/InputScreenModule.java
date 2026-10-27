@@ -16,33 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter;
-import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter.BasicKeyValueInputSettingsView;
-import stroom.dashboard.client.input.BasicKeyValueInputSettingsViewImpl;
-import stroom.dashboard.client.input.BasicListInputSettingsPresenter;
-import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
-import stroom.dashboard.client.input.BasicListInputSettingsViewImpl;
-import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter;
-import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter.BasicTableFilterSettingsView;
-import stroom.dashboard.client.input.BasicTableFilterSettingsViewImpl;
-import stroom.dashboard.client.input.BasicTextInputSettingsPresenter;
-import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
-import stroom.dashboard.client.input.BasicTextInputSettingsViewImpl;
-import stroom.dashboard.client.input.KeyValueInputPresenter;
-import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
-import stroom.dashboard.client.input.KeyValueInputViewImpl;
-import stroom.dashboard.client.input.ListInputPresenter;
-import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
-import stroom.dashboard.client.input.ListInputViewImpl;
-import stroom.dashboard.client.input.MultiRulesPresenter;
-import stroom.dashboard.client.input.MultiRulesPresenter.MultiRulesView;
-import stroom.dashboard.client.input.MultiRulesViewImpl;
-import stroom.dashboard.client.input.TableFilterPresenter;
-import stroom.dashboard.client.input.TableFilterPresenter.TableFilterView;
-import stroom.dashboard.client.input.TableFilterViewImpl;
-import stroom.dashboard.client.input.TextInputPresenter;
-import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
-import stroom.dashboard.client.input.TextInputViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `InputModule`
@@ -54,33 +27,6 @@ public class InputScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(KeyValueInputPresenter.class,
-                KeyValueInputView.class,
-                KeyValueInputViewImpl.class);
-        bindPresenterWidget(BasicKeyValueInputSettingsPresenter.class,
-                BasicKeyValueInputSettingsView.class,
-                BasicKeyValueInputSettingsViewImpl.class);
-        bindPresenterWidget(ListInputPresenter.class,
-                ListInputView.class,
-                ListInputViewImpl.class);
-        bindPresenterWidget(BasicListInputSettingsPresenter.class,
-                BasicListInputSettingsView.class,
-                BasicListInputSettingsViewImpl.class);
-        bindPresenterWidget(TextInputPresenter.class,
-                TextInputView.class,
-                TextInputViewImpl.class);
-        bindPresenterWidget(BasicTextInputSettingsPresenter.class,
-                BasicTextInputSettingsView.class,
-                BasicTextInputSettingsViewImpl.class);
-        bindPresenterWidget(TableFilterPresenter.class,
-                TableFilterView.class,
-                TableFilterViewImpl.class);
-        bindPresenterWidget(BasicTableFilterSettingsPresenter.class,
-                BasicTableFilterSettingsView.class,
-                BasicTableFilterSettingsViewImpl.class);
-        bindPresenterWidget(MultiRulesPresenter.class,
-                MultiRulesView.class,
-                MultiRulesViewImpl.class);
     }
 }
 

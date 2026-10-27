@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter;
-import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView;
-import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsViewImpl;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryViewImpl;
@@ -36,9 +33,6 @@ public class EmbeddedQueryScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(EmbeddedQueryPresenter.class,
                 EmbeddedQueryView.class,
                 EmbeddedQueryViewImpl.class);
-        bindPresenterWidget(BasicEmbeddedQuerySettingsPresenter.class,
-                BasicEmbeddedQuerySettingsView.class,
-                BasicEmbeddedQuerySettingsViewImpl.class);
     }
 }
 

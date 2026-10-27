@@ -16,14 +16,9 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
-import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
-import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
-import stroom.dashboard.client.query.SelectionHandlersPresenter;
-import stroom.dashboard.client.query.SelectionHandlersViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `QueryModule`
@@ -38,12 +33,6 @@ public class DashboardQueryScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(QueryPresenter.class,
                 QueryView.class,
                 QueryViewImpl.class);
-        bindPresenterWidget(BasicQuerySettingsPresenter.class,
-                BasicQuerySettingsView.class,
-                BasicQuerySettingsViewImpl.class);
-        bindPresenterWidget(SelectionHandlersPresenter.class,
-                SelectionHandlersPresenter.SelectionHandlersView.class,
-                SelectionHandlersViewImpl.class);
     }
 }
 

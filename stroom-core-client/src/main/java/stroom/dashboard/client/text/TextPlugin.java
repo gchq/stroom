@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.text;
 
+import stroom.dashboard.client.component.TextPaneController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -26,7 +27,7 @@ public class TextPlugin {
 
     @Inject
     public TextPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-                      final Provider<TextPresenter> provider) {
-        componentRegistry.register(TextPresenter.TYPE, provider);
+                      final Provider<TextPaneController> provider) {
+        componentRegistry.register(TextPaneController.TYPE, provider);
     }
 }

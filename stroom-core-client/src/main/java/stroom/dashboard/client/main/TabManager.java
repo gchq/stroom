@@ -69,7 +69,7 @@ public class TabManager {
         this.flexLayout = flexLayout;
         this.tabLayout = tabLayout;
 
-        final Component component = components.get(tabConfig.getId());
+        final DashboardPane component = components.get(tabConfig.getId());
         if (component != null) {
             if (Objects.equals(currentTabConfig, tabConfig)) {
                 HideMenuEvent.builder().fire(dashboardPresenter);
@@ -121,7 +121,7 @@ public class TabManager {
     }
 
     public void showSettings(final MutableTabConfig tabConfig) {
-        final Component component = components.get(tabConfig.getId());
+        final DashboardPane component = components.get(tabConfig.getId());
         if (component != null) {
             component.showSettings();
         }
@@ -175,7 +175,7 @@ public class TabManager {
 
     private List<Item> updateMenuItems(final MutableTabLayoutConfig tabLayoutConfig,
                                        final MutableTabConfig tabConfig,
-                                       final Component component) {
+                                       final DashboardPane component) {
         final ComponentConfig componentConfig = component.getComponentConfig();
         final Consumer<String> nameChangeConsumer = component::setComponentName;
 
@@ -266,7 +266,7 @@ public class TabManager {
         int i = 0;
         for (final MutableTabConfig tc : tabLayoutConfig.getTabs()) {
             if (!tc.isVisible()) {
-                final Component component = components.get(tc.getId());
+                final DashboardPane component = components.get(tc.getId());
                 if (component != null) {
                     final Item item2 = new IconMenuItem.Builder()
                             .priority(i++)

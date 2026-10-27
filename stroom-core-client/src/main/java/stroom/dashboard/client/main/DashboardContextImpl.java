@@ -73,7 +73,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     private DocRef dashboardDocRef;
 
     // The components that follow the dashboard's components and context
-    private final Listeners<Component> componentChangeListeners = new Listeners<>();
+    private final Listeners<DashboardPane> componentChangeListeners = new Listeners<>();
     private final Listeners<DashboardContext> contextChangeListeners = new Listeners<>();
 
     public DashboardContextImpl(final EventBus eventBus,
@@ -123,7 +123,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     @Override
     public List<Param> getParams() {
         final List<Param> combinedParams = new ArrayList<>();
-        for (final Component component : components) {
+        for (final DashboardPane component : components) {
             if (component instanceof HasParams) {
                 final List<Param> params = ((HasParams) component).getParams();
                 combinedParams.addAll(params);
@@ -179,12 +179,12 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
             }
 
             final Components components = dashboardContext.getComponents();
-            final Collection<Component> componentList = components
+            final Collection<DashboardPane> componentList = components
                     .getComponents()
                     .stream()
-                    .sorted(Comparator.comparing(Component::getDisplayValue))
+                    .sorted(Comparator.comparing(DashboardPane::getDisplayValue))
                     .collect(Collectors.toList());
-            for (final Component component : componentList) {
+            for (final DashboardPane component : componentList) {
                 List<Param> paramList = new ArrayList<>();
                 final List<List<Param>> selectionList = new ArrayList<>();
                 final List<ColumnSelectionFilter> filterList = new ArrayList<>();
@@ -526,7 +526,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public HandlerRegistration addComponentChangeListener(final Consumer<Component> listener) {
+    public HandlerRegistration addComponentChangeListener(final Consumer<DashboardPane> listener) {
         return componentChangeListeners.add(listener);
     }
 
@@ -536,7 +536,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public void fireComponentChangeEvent(final Component component) {
+    public void fireComponentChangeEvent(final DashboardPane component) {
         componentChangeListeners.fire(component);
         fireContextChangeEvent();
     }

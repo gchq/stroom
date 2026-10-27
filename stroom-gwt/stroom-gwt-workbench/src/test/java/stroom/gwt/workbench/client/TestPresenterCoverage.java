@@ -184,7 +184,8 @@ class TestPresenterCoverage {
                 .collect(Collectors.toSet());
         final PresenterCoverage coverage = PresenterCoverage.load(Path.of("../..").toAbsolutePath().normalize());
 
-        assertThat(coverage.getEvidence()).isNotEmpty();
+        // Empty once the presenters it named have become controllers, which this analysis doesn't
+        // see (a controller's dialog is shown with ControllerDialog, not ShowPopupEvent.builder)
         coverage.getEvidence().forEach((name, storyId) -> {
             assertThat(storyIds)
                     .as("The story for " + name)

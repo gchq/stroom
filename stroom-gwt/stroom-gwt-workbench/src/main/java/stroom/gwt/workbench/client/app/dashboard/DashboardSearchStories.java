@@ -235,8 +235,8 @@ public final class DashboardSearchStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("param name = alpha")).toBeInTheDocument());
                     // A plain parameter change applies to the next search
-                    play.clear(play.querySelector(".TextInputView input"));
-                    play.type(play.querySelector(".TextInputView input"), "omega");
+                    play.clear(play.querySelector(".dashboard-input input"));
+                    play.type(play.querySelector(".dashboard-input input"), "omega");
                     // The text box reports its value when it loses the focus
                     play.tab();
                     DashboardPlays.runQuery(play, 0);
@@ -320,7 +320,7 @@ public final class DashboardSearchStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
                     // A selection box that allows free text opens with its drop down button
-                    play.click(play.querySelector(".ListInputView .icon-box__icon"));
+                    play.click(play.querySelector(".dashboard-input .icon-box__icon"));
                     screen.findByText("red", ".selection-popup *");
                     play.expect(screen.getByText("blue", ".selection-popup *")).toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);
@@ -333,10 +333,10 @@ public final class DashboardSearchStories {
                     DashboardPlays.opened(play);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
-                    play.waitFor(() -> play.expect(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX))
+                    play.waitFor(() -> play.expect(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX))
                             .toHaveValue(""));
-                    play.type(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX), "teal");
-                    play.waitFor(() -> play.expect(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX))
+                    play.type(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX), "teal");
+                    play.waitFor(() -> play.expect(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX))
                             .toHaveValue("teal"));
                     DashboardPlays.expectNoProblems(play);
                 })

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.TabManager;
 import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
@@ -59,7 +59,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
             registerHandler(settings.addDomHandler(event -> {
                 if (MouseUtil.isPrimary(event)) {
                     final TabData selectedTab = tabBar.getSelectedTab();
-                    if (selectedTab instanceof final Component component) {
+                    if (selectedTab instanceof final DashboardPane component) {
 //                        component.showSettings();
                         tabManager.showMenu(settings.getElement(),
                                 flexLayout,
@@ -135,7 +135,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         eventBinder.unbind();
     }
 
-    public void addTab(final MutableTabConfig tabConfig, final Component component) {
+    public void addTab(final MutableTabConfig tabConfig, final DashboardPane component) {
         tabBar.addTab(component);
 
         component.setTabLayout(this);
@@ -153,9 +153,9 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
     public void selectTab(final TabData tabData) {
         tabBar.selectTab(tabData);
-        Component component = null;
-        if (tabData instanceof Component) {
-            component = (Component) tabData;
+        DashboardPane component = null;
+        if (tabData instanceof DashboardPane) {
+            component = (DashboardPane) tabData;
         }
 
         layerContainer.show(component);

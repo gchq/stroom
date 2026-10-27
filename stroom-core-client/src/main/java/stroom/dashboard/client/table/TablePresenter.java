@@ -24,17 +24,19 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.component.ColumnFilterDialogController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnFunctionEditorController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
+import stroom.dashboard.client.component.TableSettingsController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
@@ -205,8 +207,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
-                          final TableFilterPresenter tableFilterPresenter,
-                          final Provider<TableSettingsPresenter> settingsPresenterProvider,
+                          final ColumnFilterDialogController columnFilterDialog,
+                          final Provider<TableSettingsController> settingsPresenterProvider,
                           final DownloadSearchResultsController downloadOptions,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
@@ -218,7 +220,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ColumnValuesFilterController columnValuesFilter,
                           final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
-        own(tableFilterPresenter);
+        own(columnFilterDialog);
         own(downloadOptions);
         own(columnValuesFilter);
         this.eventBus = eventBus;
@@ -280,7 +282,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnControllerProvider,
                 expressionProvider,
                 columnFormatProvider,
-                tableFilterPresenter,
+                columnFilterDialog,
                 columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
 
@@ -955,7 +957,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         cleanupSearchModelAssociation();
 
         if (queryId != null) {
-            final Component component = getDashboardContext().getComponents().get(queryId);
+            final DashboardPane component = getDashboardContext().getComponents().get(queryId);
             if (component instanceof final QueryPresenter queryPresenter) {
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {

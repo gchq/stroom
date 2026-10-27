@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.component.TableFilterInputController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -27,7 +28,7 @@ public class TableFilterPlugin {
     @Inject
     public TableFilterPlugin(final EventBus eventBus,
                              final ComponentRegistry componentRegistry,
-                             final Provider<TableFilterPresenter> provider) {
-        componentRegistry.register(TableFilterPresenter.TYPE, provider);
+                             final Provider<TableFilterInputController> provider) {
+        componentRegistry.register(TableFilterInputController.TYPE, provider);
     }
 }

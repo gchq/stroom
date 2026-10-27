@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.dashboard.client.vis.BasicVisSettingsPresenter;
-import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
-import stroom.dashboard.client.vis.BasicVisSettingsViewImpl;
 import stroom.dashboard.client.vis.VisPresenter;
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.dashboard.client.vis.VisViewImpl;
@@ -36,9 +33,6 @@ public class VisScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(VisPresenter.class,
                 VisView.class,
                 VisViewImpl.class);
-        bindPresenterWidget(BasicVisSettingsPresenter.class,
-                BasicVisSettingsView.class,
-                BasicVisSettingsViewImpl.class);
     }
 }
 

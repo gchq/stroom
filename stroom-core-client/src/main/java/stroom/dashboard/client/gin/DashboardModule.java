@@ -21,8 +21,6 @@ import stroom.dashboard.client.DashboardPlugin;
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardViewImpl;
-import stroom.dashboard.client.unknown.HTMLView;
-import stroom.dashboard.client.unknown.HTMLViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
@@ -45,6 +43,5 @@ public class DashboardModule extends PluginModule {
                 DashboardViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
-        bindSharedView(HTMLView.class, HTMLViewImpl.class);
     }
 }

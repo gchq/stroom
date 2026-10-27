@@ -499,7 +499,7 @@ public final class DashboardComponentStories {
                     // The selection query's handlers are a tab of the settings
                     play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
                     // The grid's Enabled column has no header text, and the toolbar's buttons are
-                    // SelectionHandlersPresenter's, each named for what it acts on
+                    // SelectionHandlersController's, each named for what it acts on
                     play.waitFor(() -> play.expect(settings.getByText("Expression", "th, [data-hcol], [data-hcol] *"))
                             .toBeInTheDocument());
                     play.expect(settings.querySelectorAll("th, [data-hcol]")).toHaveLength(2);
@@ -600,7 +600,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.expectNoProblems(play);
                 })
                 // GWT-only: a component of a type Stroom doesn't know is shown as a placeholder
-                // naming its type (UnknownComponentPresenter), and the rest of the dashboard works
+                // naming its type (UnknownComponentController), and the rest of the dashboard works
                 .story("UnknownComponent", DashboardSupport.story(DashboardDocs.UNKNOWN_COMPONENT_DASHBOARD,
                         routes -> {
                         }))

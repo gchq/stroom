@@ -16,12 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.dashboard.client.text.BasicTextSettingsPresenter;
-import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
-import stroom.dashboard.client.text.BasicTextSettingsViewImpl;
-import stroom.dashboard.client.text.TextPresenter;
-import stroom.dashboard.client.text.TextPresenter.TextView;
-import stroom.dashboard.client.text.TextViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `TextModule`
@@ -33,12 +27,6 @@ public class TextScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(TextPresenter.class,
-                TextView.class,
-                TextViewImpl.class);
-        bindPresenterWidget(BasicTextSettingsPresenter.class,
-                BasicTextSettingsView.class,
-                BasicTextSettingsViewImpl.class);
     }
 }
 

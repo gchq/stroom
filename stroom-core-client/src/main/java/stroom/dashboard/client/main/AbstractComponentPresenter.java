@@ -16,12 +16,13 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.component.ComponentSettingsDialogController;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -34,13 +35,13 @@ import java.util.Objects;
 
 public abstract class AbstractComponentPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements Component {
+        implements DashboardPane {
 
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private ComponentConfig componentConfig;
     private MutableTabConfig tabConfig;
-    private SettingsPresenter settingsPresenter;
+    private ComponentSettingsDialogController settingsPresenter;
     private DashboardContext dashboardContext;
     protected boolean designMode;
 
@@ -114,14 +115,14 @@ public abstract class AbstractComponentPresenter<V extends View>
         if (settingsPresenterProvider != null) {
             if (settingsPresenter == null) {
                 // Owned, so that it goes with the component and sees its dashboard's context
-                settingsPresenter = own((SettingsPresenter) settingsPresenterProvider.get());
+                settingsPresenter = own((ComponentSettingsDialogController) settingsPresenterProvider.get());
             }
 
             settingsPresenter.setDashboardContext(dashboardContext);
             settingsPresenter.read(componentConfig);
 
             final PopupSize popupSize = PopupSize.resizable(800, 700);
-            ShowPopupEvent.builder(settingsPresenter)
+            ControllerDialog.show(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption("Settings")
@@ -186,6 +187,7 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     /// @param onChange What to run when the user changes the component's settings.
+    @Override
     public void setOnChange(final Runnable onChange) {
         this.onChange = onChange;
     }

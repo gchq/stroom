@@ -818,10 +818,6 @@
     margin-bottom: 0.3em;
 }
 
-.settingsPresenter .layer-container {
-    overflow: auto;
-}
-
 /*
 .timeRange-button {
     background-color: var(--primary);

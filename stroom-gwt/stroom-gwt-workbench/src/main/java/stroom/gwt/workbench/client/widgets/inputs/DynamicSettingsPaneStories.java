@@ -114,7 +114,7 @@ public final class DynamicSettingsPaneStories {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
         final Spy onChange = context.fn(ON_CHANGE);
         final DynamicSettingsPane pane = new DynamicSettingsPane();
-        // As its owner (BasicVisSettingsPresenter) does
+        // As its owner (BasicVisSettingsController) does
         pane.setOnDateTimeBoxAdded(box -> DateTimeWidgets.withPicker(harness, box));
         pane.setOnChange(onChange::call);
         pane.setReadOnly(readOnly == ReadOnly.BEFORE_CONTROLS);

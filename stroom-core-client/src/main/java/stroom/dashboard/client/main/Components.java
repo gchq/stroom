@@ -16,8 +16,8 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.component.UnknownComponentController;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.unknown.UnknownComponentPresenter;
 import stroom.docref.HasDisplayValue;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
@@ -35,14 +35,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class Components implements Iterable<Component> {
+public class Components implements Iterable<DashboardPane> {
 
     private final ComponentRegistry componentRegistry;
 
-    private final Map<String, Component> idMap = new HashMap<>();
-    private final Map<String, List<Component>> typeMap = new HashMap<>();
+    private final Map<String, DashboardPane> idMap = new HashMap<>();
+    private final Map<String, List<DashboardPane>> typeMap = new HashMap<>();
 
-    private final Provider<UnknownComponentPresenter> unknownComponentProvider;
+    private final Provider<UnknownComponentController> unknownComponentProvider;
 
     private final JavaScriptObject context;
     // What owns the components made (the dashboard), so that closing it releases them
@@ -50,7 +50,7 @@ public class Components implements Iterable<Component> {
 
     @Inject
     public Components(final ComponentRegistry componentRegistry,
-                      final Provider<UnknownComponentPresenter> unknownComponentProvider) {
+                      final Provider<UnknownComponentController> unknownComponentProvider) {
         this.componentRegistry = componentRegistry;
         this.unknownComponentProvider = unknownComponentProvider;
         this.context = new JSONObject().getJavaScriptObject();
@@ -61,18 +61,18 @@ public class Components implements Iterable<Component> {
         this.owner = owner.getControllerNode();
     }
 
-    public Component add(final String type,
+    public DashboardPane add(final String type,
                          final String id) {
-        final Component component = addComponent(type, id);
+        final DashboardPane component = addComponent(type, id);
         if (owner != null && component instanceof final HasControllerNode hasComponentNode) {
             owner.adopt(hasComponentNode.getControllerNode());
         }
         return component;
     }
 
-    private Component addComponent(final String type,
+    private DashboardPane addComponent(final String type,
                                    final String id) {
-        Component component = componentRegistry.getComponent(type);
+        DashboardPane component = componentRegistry.getComponent(type);
         if (component == null) {
             component = unknownComponentProvider.get();
             idMap.put(id, component);
@@ -85,17 +85,17 @@ public class Components implements Iterable<Component> {
     }
 
     public void onClose(final String id) {
-        final Component component = idMap.remove(id);
+        final DashboardPane component = idMap.remove(id);
         if (component != null) {
             component.onClose();
         }
     }
 
-    public Component remove(final String id) {
-        final Component component = idMap.remove(id);
+    public DashboardPane remove(final String id) {
+        final DashboardPane component = idMap.remove(id);
         if (component != null) {
             final String type = component.getComponentType().getId();
-            final List<Component> list = typeMap.get(type);
+            final List<DashboardPane> list = typeMap.get(type);
             if (list != null) {
                 list.remove(component);
                 if (list.isEmpty()) {
@@ -127,18 +127,18 @@ public class Components implements Iterable<Component> {
         }
     }
 
-    public Collection<Component> getComponents() {
+    public Collection<DashboardPane> getComponents() {
         return idMap.values();
     }
 
-    public Component get(final String id) {
+    public DashboardPane get(final String id) {
         return idMap.get(id);
     }
 
-    public List<Component> getSortedComponentsByType(final String... type) {
-        final List<Component> list = new ArrayList<>();
+    public List<DashboardPane> getSortedComponentsByType(final String... type) {
+        final List<DashboardPane> list = new ArrayList<>();
         for (final String t : type) {
-            final List<Component> components = typeMap.get(t);
+            final List<DashboardPane> components = typeMap.get(t);
             if (components != null) {
                 list.addAll(components);
             }
@@ -152,7 +152,7 @@ public class Components implements Iterable<Component> {
 
         if (id != null) {
             // See if we can find this component.
-            final Component component = get(id);
+            final DashboardPane component = get(id);
             // If we have found the component check that it is the right type.
             if (component != null && typeId.equals(component.getComponentType().getId())) {
                 // Set the id as this is a valid component.
@@ -163,7 +163,7 @@ public class Components implements Iterable<Component> {
         if (newId == null) {
             // If we didn't find the component or it has an invalid type then just choose the last component of the
             // required type if we can find one.
-            final List<Component> list = typeMap.get(typeId);
+            final List<DashboardPane> list = typeMap.get(typeId);
             if (list != null && !list.isEmpty()) {
                 newId = list.get(list.size() - 1).getId();
             }
@@ -182,7 +182,7 @@ public class Components implements Iterable<Component> {
     }
 
     @Override
-    public Iterator<Component> iterator() {
+    public Iterator<DashboardPane> iterator() {
         return idMap.values().iterator();
     }
 

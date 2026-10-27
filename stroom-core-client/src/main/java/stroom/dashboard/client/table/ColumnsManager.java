@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.component.ColumnFilterDialogController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnFunctionEditorController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
@@ -68,7 +69,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
-    private final TableFilterPresenter tableFilterPresenter;
+    private final ColumnFilterDialogController columnFilterDialog;
     private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
@@ -82,14 +83,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
-                          final TableFilterPresenter tableFilterPresenter,
+                          final ColumnFilterDialogController columnFilterDialog,
                           final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
-        this.tableFilterPresenter = tableFilterPresenter;
+        this.columnFilterDialog = columnFilterDialog;
         this.columnValuesFilter = columnValuesFilter;
     }
 
@@ -350,7 +351,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     private void filterColumn(final Column column) {
-        tableFilterPresenter.show(column, (oldField, newField) -> {
+        columnFilterDialog.show(column, (oldField, newField) -> {
             // The dialog isn't modal, so the column may have been changed or removed while it was
             // open: the filters go on the column as it is now
             final Column current = getColumns().stream()

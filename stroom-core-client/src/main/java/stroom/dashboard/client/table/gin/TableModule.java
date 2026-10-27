@@ -16,15 +16,10 @@
 
 package stroom.dashboard.client.table.gin;
 
-import stroom.dashboard.client.table.BasicTableSettingsPresenter;
-import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
-import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.cf.RulesPresenter;
-import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.query.client.presenter.TimeZones;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -37,10 +32,5 @@ public class TableModule extends AbstractPresenterModule {
         bind(TablePlugin.class).asEagerSingleton();
 
         bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
-        bindPresenterWidget(
-                BasicTableSettingsPresenter.class,
-                BasicTableSettingsView.class,
-                BasicTableSettingsViewImpl.class);
-        bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
     }
 }

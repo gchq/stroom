@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.dashboard.client.table.cf.RulesPresenter;
-import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.view.QueryResultTableViewImpl;
@@ -35,8 +33,5 @@ public class QueryResultTableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(QueryResultTablePresenter.class,
                 QueryResultTableView.class,
                 QueryResultTableViewImpl.class);
-        bindPresenterWidget(RulesPresenter.class,
-                RulesPresenter.RulesView.class,
-                RulesViewImpl.class);
     }
 }

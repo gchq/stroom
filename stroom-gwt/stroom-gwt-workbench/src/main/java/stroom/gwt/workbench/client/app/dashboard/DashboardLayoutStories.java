@@ -79,9 +79,28 @@ public final class DashboardLayoutStories {
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Params")).toBeInTheDocument());
                     play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument();
                     // The input has no id; it is the Key/Value Input's text box
-                    final Query input = play.querySelector(".KeyValueInputView input");
+                    final Query input = play.querySelector(".dashboard-input input");
                     play.expect(input).toBeInTheDocument();
                     play.expect(input).toHaveValue("user=jbloggs feed=MY_FEED");
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A Key/Value Input renamed in its settings shows its new name on its tab (it kept the old
+                // one, and the dashboard stayed unchanged, before)
+                .story("KeyValueInputSettingsRename", DashboardSupport.story(DashboardDocs.LEGACY_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Params")).toBeInTheDocument());
+                    DashboardPlays.openTabMenu(play, "Params");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Settings");
+                    final Query name = dialog.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Renamed Params");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Renamed Params")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The editor's tabs, the component's tab and the dashboard's time range

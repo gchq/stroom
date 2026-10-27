@@ -17,7 +17,7 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
-import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.DashboardPane;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -115,7 +115,7 @@ final class FocusMemory {
     }
 
     private static MutableTabConfig getSelectedTabConfig(final TabLayout tabLayout) {
-        if (tabLayout.getTabBar().getSelectedTab() instanceof final Component component) {
+        if (tabLayout.getTabBar().getSelectedTab() instanceof final DashboardPane component) {
             return component.getTabConfig();
         }
         return null;

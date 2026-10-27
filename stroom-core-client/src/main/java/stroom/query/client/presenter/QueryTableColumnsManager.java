@@ -20,9 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
+import stroom.dashboard.client.component.RulesController;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
@@ -31,6 +31,7 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.datagrid.client.Heading;
 import stroom.widget.datagrid.client.HeadingListener;
 import stroom.widget.datagrid.client.SortIcon;
@@ -39,7 +40,6 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -65,7 +65,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private final EventBus eventBus;
     private final QueryResultTablePresenter tablePresenter;
     private final Provider<ColumnFormatController> columnFormatProvider;
-    private final Provider<RulesPresenter> rulesPresenterProvider;
+    private final Provider<RulesController> rulesProvider;
     private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
     private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
@@ -76,13 +76,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     public QueryTableColumnsManager(final EventBus eventBus,
                                     final QueryResultTablePresenter tablePresenter,
                                     final Provider<ColumnFormatController> columnFormatProvider,
-                                    final Provider<RulesPresenter> rulesPresenterProvider,
+                                    final Provider<RulesController> rulesProvider,
                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                     final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.columnFormatProvider = columnFormatProvider;
-        this.rulesPresenterProvider = rulesPresenterProvider;
+        this.rulesProvider = rulesProvider;
         this.columnFilterEditorProvider = columnFilterEditorProvider;
         this.columnValuesFilter = columnValuesFilter;
     }
@@ -787,25 +787,25 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .text("Edit Conditional Formatting for Table")
                 .command(() -> {
                     final QueryTablePreferences queryTablePreferences = tablePresenter.getQueryTablePreferences();
-                    final RulesPresenter rulesPresenter =
-                            rulesPresenterProvider.get();
-                    rulesPresenter.read(queryTablePreferences);
+                    // Made for one use, and owned by the table until it is closed
+                    final RulesController rules = rulesProvider.get();
+                    rules.read(queryTablePreferences);
 
                     final PopupSize popupSize = PopupSize.resizable(800, 650);
-                    ShowPopupEvent.builder(rulesPresenter)
+                    ControllerDialog.showOnce(tablePresenter, rules)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .popupSize(popupSize)
                             .caption("Settings")
-                            .onShow(e -> rulesPresenter.focus())
+                            .onShow(e -> rules.focus())
                             .onHideRequest(e -> {
                                 if (e.isOk()) {
-                                    if (rulesPresenter.validate()) {
+                                    if (rules.validate()) {
                                         // The dialog isn't modal, so the table may have changed
                                         // while it was open: the rules go on its preferences as
                                         // they are now
                                         final QueryTablePreferences current =
                                                 tablePresenter.getQueryTablePreferences();
-                                        final QueryTablePreferences updated = rulesPresenter
+                                        final QueryTablePreferences updated = rules
                                                 .write(current);
                                         if (!Objects.equals(updated, current)) {
                                             tablePresenter.setQueryTablePreferences(updated);

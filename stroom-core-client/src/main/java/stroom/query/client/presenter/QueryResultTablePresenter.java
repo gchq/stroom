@@ -28,6 +28,7 @@ import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
+import stroom.dashboard.client.component.RulesController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
@@ -36,7 +37,6 @@ import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
-import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
@@ -170,7 +170,7 @@ public class QueryResultTablePresenter
                                      final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,
                                      final Provider<ColumnFormatController> columnFormatProvider,
-                                     final Provider<RulesPresenter> rulesPresenterProvider,
+                                     final Provider<RulesController> rulesProvider,
                                      final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                      final ColumnValuesFilterController columnValuesFilter,
                                      final UserPreferencesManager userPreferencesManager) {
@@ -201,7 +201,7 @@ public class QueryResultTablePresenter
         columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
                 columnFormatProvider,
-                () -> makeDialog(rulesPresenterProvider),
+                rulesProvider,
                 columnFilterEditorProvider,
                 columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);

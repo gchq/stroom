@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.component.ListInputController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -26,7 +27,7 @@ public class ListInputPlugin {
 
     @Inject
     public ListInputPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-                           final Provider<ListInputPresenter> provider) {
-        componentRegistry.register(ListInputPresenter.TYPE, provider);
+                           final Provider<ListInputController> provider) {
+        componentRegistry.register(ListInputController.TYPE, provider);
     }
 }

@@ -43,23 +43,23 @@ public class ComponentRegistry {
         return types;
     }
 
-    public Component getComponent(final ComponentType componentType) {
+    public DashboardPane getComponent(final ComponentType componentType) {
         final Provider<?> provider = providers.get(componentType);
         if (provider != null) {
             final Object component = provider.get();
-            if (component != null && component instanceof Component) {
-                return (Component) component;
+            if (component != null && component instanceof DashboardPane) {
+                return (DashboardPane) component;
             }
         }
         return null;
     }
 
-    public Component getComponent(final String type) {
+    public DashboardPane getComponent(final String type) {
         final Provider<?> provider = providersByTypeString.get(type);
         if (provider != null) {
             final Object component = provider.get();
-            if (component != null && component instanceof Component) {
-                return (Component) component;
+            if (component != null && component instanceof DashboardPane) {
+                return (DashboardPane) component;
             }
         }
         return null;

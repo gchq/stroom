@@ -17,8 +17,8 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.TabManager;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConstraints;
@@ -101,8 +101,8 @@ public class FlexLayout extends Composite {
     private final LayoutSizes layoutSizes = new LayoutSizes(positionAndSizeMap);
     private final FocusMemory focusMemory;
 
-    private List<Component> newComponents;
-    private Component addedComponent;
+    private List<DashboardPane> newComponents;
+    private DashboardPane addedComponent;
     private double[] placementStart;
     private final PlacementKeys placementKeys = new PlacementKeys();
 
@@ -341,7 +341,7 @@ public class FlexLayout extends Composite {
 
                     final List<MutableTabConfig> tabGroup = new ArrayList<>();
                     for (final TabData tabData : selection.tabs) {
-                        tabGroup.add(((Component) tabData).getTabConfig());
+                        tabGroup.add(((DashboardPane) tabData).getTabConfig());
                     }
 
                     // Add all invisible tabs, so we can move them all together if this is the only tab.
@@ -438,8 +438,8 @@ public class FlexLayout extends Composite {
     }
 
     public void enterNewComponentDestinationMode(
-            final Component addedComponent,
-            final List<Component> newComponents,
+            final DashboardPane addedComponent,
+            final List<DashboardPane> newComponents,
             final double x,
             final double y) {
         this.addedComponent = addedComponent;
@@ -493,7 +493,7 @@ public class FlexLayout extends Composite {
 
     // Abandons placing the new components and has the dashboard remove them.
     private void cancelPlacement() {
-        final List<Component> unplaced = newComponents;
+        final List<DashboardPane> unplaced = newComponents;
         if (selection != null && selection.tabWidget != null) {
             selection.tabWidget.setHighlight(false);
         }
@@ -1764,7 +1764,7 @@ public class FlexLayout extends Composite {
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final MutableTabConfig tabConfig : tabLayoutConfig.getTabs()) {
                             if (tabConfig.isVisible()) {
-                                final Component component = components.get(tabConfig.getId());
+                                final DashboardPane component = components.get(tabConfig.getId());
                                 if (component != null) {
                                     tabLayout.addTab(tabConfig, component);
                                 }
@@ -1840,9 +1840,9 @@ public class FlexLayout extends Composite {
 
             final MutableTabLayoutConfig tabLayoutConfig = new MutableTabLayoutConfig();
             components.getComponents().stream()
-                    .sorted(Comparator.comparing((Component c) -> c.getComponentConfig().getName())
+                    .sorted(Comparator.comparing((DashboardPane c) -> c.getComponentConfig().getName())
                             .thenComparing(c -> c.getComponentConfig().getId()))
-                    .map(Component::getTabConfig)
+                    .map(DashboardPane::getTabConfig)
                     .filter(Objects::nonNull)
                     .filter(MutableTabConfig::isVisible)
                     .forEach(tabLayoutConfig::add);

@@ -18,6 +18,7 @@ package stroom.dashboard.client.embeddedquery;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.dashboard.client.component.EmbeddedQuerySettingsController;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
@@ -121,7 +122,7 @@ public class EmbeddedQueryPresenter
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
                                   final EmbeddedQueryView view,
-                                  final Provider<EmbeddedQuerySettingsPresenter> settingsPresenterProvider,
+                                  final Provider<EmbeddedQuerySettingsController> settingsPresenterProvider,
                                   final Provider<QueryResultTablePresenter> tablePresenterProvider,
                                   final Provider<QueryResultVisPresenter> visPresenterProvider,
                                   final Provider<QueryDocPresenter> queryDocPresenterProvider,

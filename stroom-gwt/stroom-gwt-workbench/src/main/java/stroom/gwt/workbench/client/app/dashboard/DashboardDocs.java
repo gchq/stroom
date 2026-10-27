@@ -145,7 +145,7 @@ public final class DashboardDocs {
             table("t1", "T", "q1", NAME_FIELD, ""));
 
     /// GWT-only: a component of a type Stroom doesn't know (e.g. from a newer version), with no
-    /// settings, which Stroom shows as an `UnknownComponentPresenter`.
+    /// settings, which Stroom shows as an `UnknownComponentController`.
     public static final String UNKNOWN_COMPONENT_DASHBOARD = doc("dash-unknown", "Unknown Component", null,
             "\"designMode\": false",
             tabs(0, "m1"),

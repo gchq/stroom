@@ -376,9 +376,8 @@
     min-height: 0;
 }
 
-.KeyValueInputView,
-.ListInputView,
-.TextInputView {
+/* A dashboard input pane's padding (TextInput, KeyValueInput and ListInput) */
+.dashboard-input {
     padding: 0 0.4rem 0.4rem 0.4rem;
 }
 

@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dashboard.client.component.CurrentSelectionController;
+import stroom.dashboard.client.component.KeyValueInputController;
 import stroom.dashboard.client.component.LayoutConstraintController;
 import stroom.dashboard.client.component.RenameTabController;
 import stroom.dashboard.client.flexlayout.FlexLayout;
@@ -30,7 +31,6 @@ import stroom.dashboard.client.flexlayout.MutableSize;
 import stroom.dashboard.client.flexlayout.MutableSplitLayoutConfig;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
-import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
@@ -73,7 +73,6 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
@@ -407,7 +406,7 @@ public class DashboardPresenter
 
                     componentConfigList
                             .add(new ComponentConfig(
-                                    KeyValueInputPresenter.TYPE.getId(),
+                                    KeyValueInputController.TYPE.getId(),
                                     DEFAULT_PARAMS_INPUT,
                                     DEFAULT_PARAMS_INPUT,
                                     new KeyValueInputComponentSettings(params)));
@@ -430,7 +429,7 @@ public class DashboardPresenter
                         addComponent(componentConfig.getType(), componentConfig);
                     }
                     for (final ComponentConfig componentConfig : componentConfigList) {
-                        final Component component = components.get(componentConfig.getId());
+                        final DashboardPane component = components.get(componentConfig.getId());
                         if (component != null) {
                             component.link();
                         }
@@ -495,7 +494,7 @@ public class DashboardPresenter
             layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
 
             // Tell all queryable components whether we want them to query on open.
-            for (final Component component : components) {
+            for (final DashboardPane component : components) {
                 if (component instanceof Queryable) {
                     if (resultStoreInfo != null) {
                         final SearchRequestSource searchRequestSource = resultStoreInfo.getSearchRequestSource();
@@ -514,10 +513,10 @@ public class DashboardPresenter
             // can find one.
             if (externalLinkParameters != null) {
                 // Try to find a Key/Value component to put the params in called "Params".
-                for (final Component component : components.getComponents()) {
-                    if (component instanceof final KeyValueInputPresenter keyValueInputPresenter) {
-                        if (keyValueInputPresenter.getLabel().equals(DEFAULT_PARAMS_INPUT)) {
-                            keyValueInputPresenter.setValue(externalLinkParameters);
+                for (final DashboardPane component : components.getComponents()) {
+                    if (component instanceof final KeyValueInputController keyValueInput) {
+                        if (keyValueInput.getLabel().equals(DEFAULT_PARAMS_INPUT)) {
+                            keyValueInput.setValue(externalLinkParameters);
                             // If we found one then we don't need to treat external parameters as a special case.
                             this.externalLinkParameters = null;
                             break;
@@ -548,15 +547,13 @@ public class DashboardPresenter
         selectionInfoButton.setEnabled(!isReadOnly() && !embedded);
     }
 
-    private Component addComponent(final String type, final ComponentConfig componentConfig) {
-        final Component component = components.add(type, componentConfig.getId());
+    private DashboardPane addComponent(final String type, final ComponentConfig componentConfig) {
+        final DashboardPane component = components.add(type, componentConfig.getId());
         if (component != null) {
             component.setDashboardContext(dashboardContext);
 //            component.setDesignMode(designMode);
 
-            if (component instanceof final AbstractComponentPresenter<?> presenter) {
-                presenter.setOnChange(this::onChange);
-            }
+            component.setOnChange(this::onChange);
 
             // Set params on the component if it needs them.
             if (component instanceof final Queryable queryable) {
@@ -604,7 +601,7 @@ public class DashboardPresenter
     @Override
     protected DashboardDoc onWrite(final DashboardDoc dashboard) {
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
-        for (final Component component : components) {
+        for (final DashboardPane component : components) {
             final ComponentConfig componentConfig = component.write();
             componentDataList.add(componentConfig);
         }
@@ -679,7 +676,7 @@ public class DashboardPresenter
         if (tabs != null) {
             for (final MutableTabConfig tabConfig : tabs) {
                 // Duplicate the referenced component.
-                final Component originalComponent = orginalComponents.get(tabConfig.getId());
+                final DashboardPane originalComponent = orginalComponents.get(tabConfig.getId());
                 originalComponent.write();
                 final ComponentType type = originalComponent.getComponentType();
 
@@ -731,9 +728,9 @@ public class DashboardPresenter
         }
 
         // Now try and add all the duplicated components.
-        final List<Component> duplicatedComponents = new ArrayList<>();
+        final List<DashboardPane> duplicatedComponents = new ArrayList<>();
         for (final ComponentConfig componentConfig : modifiedComponents) {
-            final Component component = addComponent(componentConfig.getType(), componentConfig);
+            final DashboardPane component = addComponent(componentConfig.getType(), componentConfig);
             if (component != null) {
                 final MutableTabConfig newTabConfig = newTabConfigMap.get(component.getId());
                 component.setTabConfig(newTabConfig);
@@ -742,7 +739,7 @@ public class DashboardPresenter
         }
 
         // Now link all the components.
-        for (final Component component : duplicatedComponents) {
+        for (final DashboardPane component : duplicatedComponents) {
             component.link();
         }
 
@@ -763,8 +760,8 @@ public class DashboardPresenter
     ///
     /// @param unplaced The components that were not placed.
     @Override
-    public void cancelNewComponents(final List<Component> unplaced) {
-        for (final Component component : unplaced) {
+    public void cancelNewComponents(final List<DashboardPane> unplaced) {
+        for (final DashboardPane component : unplaced) {
             if (component instanceof final Queryable queryable) {
                 queryable.removeSearchStateListener(this);
                 queryable.removeSearchErrorListener(this);
@@ -811,7 +808,7 @@ public class DashboardPresenter
                 if (ok) {
                     for (final MutableTabConfig tab : tabs) {
                         layoutPresenter.closeTab(tab);
-                        final Component component = components.get(tab.getId());
+                        final DashboardPane component = components.get(tab.getId());
                         if (component != null) {
                             if (component instanceof final Queryable queryable) {
                                 queryable.removeSearchStateListener(this);
@@ -874,7 +871,7 @@ public class DashboardPresenter
     private List<Queryable> getQueryableComponents() {
         // Get a sub list of components that can be queried.
         final List<Queryable> queryableComponents = new ArrayList<>();
-        for (final Component component : components) {
+        for (final DashboardPane component : components) {
             if (component instanceof Queryable) {
                 queryableComponents.add((Queryable) component);
             }
@@ -939,7 +936,7 @@ public class DashboardPresenter
                     .name(componentId.name)
                     .build();
 
-            final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
+            final DashboardPane componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
                 final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
@@ -977,10 +974,9 @@ public class DashboardPresenter
 
     private Element getFirstComponentElement(final MutableTabConfig firstTabConfig) {
         if (firstTabConfig != null) {
-            final Component component = components.get(firstTabConfig.getId());
+            final DashboardPane component = components.get(firstTabConfig.getId());
             if (component != null) {
-                final MyPresenterWidget<?> myPresenterWidget = (MyPresenterWidget<?>) component;
-                return myPresenterWidget.getWidget().getElement();
+                return component.asWidget().getElement();
             }
         }
         return getWidget().getElement();
@@ -1055,7 +1051,7 @@ public class DashboardPresenter
         private final Set<String> currentNameSet = new HashSet<>();
 
         public ComponentNameSet(final Components components) {
-            for (final Component component : components.getComponents()) {
+            for (final DashboardPane component : components.getComponents()) {
                 currentIdSet.add(component.getId());
                 currentNameSet.add(component.getLabel());
             }

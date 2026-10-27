@@ -54,7 +54,7 @@ public interface DashboardContext extends ParamValues {
     ///
     /// @param listener Told the component.
     /// @return The registration, for the listener's owner to own.
-    HandlerRegistration addComponentChangeListener(Consumer<Component> listener);
+    HandlerRegistration addComponentChangeListener(Consumer<DashboardPane> listener);
 
     /// Listens for anything the context gives changing (its parameters, time range or
     /// selections), until the registration is removed.
@@ -63,7 +63,7 @@ public interface DashboardContext extends ParamValues {
     /// @return The registration, for the listener's owner to own.
     HandlerRegistration addContextChangeListener(Runnable listener);
 
-    void fireComponentChangeEvent(Component component);
+    void fireComponentChangeEvent(DashboardPane component);
 
     void fireContextChangeEvent();
 

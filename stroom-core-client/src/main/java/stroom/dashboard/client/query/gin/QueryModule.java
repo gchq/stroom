@@ -16,15 +16,10 @@
 
 package stroom.dashboard.client.query.gin;
 
-import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
-import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
-import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
 import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
-import stroom.dashboard.client.query.SelectionHandlersPresenter;
-import stroom.dashboard.client.query.SelectionHandlersViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class QueryModule extends AbstractPresenterModule {
@@ -33,12 +28,5 @@ public class QueryModule extends AbstractPresenterModule {
     protected void configure() {
         bind(QueryPlugin.class).asEagerSingleton();
         bindPresenterWidget(QueryPresenter.class, QueryView.class, QueryViewImpl.class);
-        bindPresenterWidget(BasicQuerySettingsPresenter.class, BasicQuerySettingsView.class,
-                BasicQuerySettingsViewImpl.class);
-
-        bindPresenterWidget(
-                SelectionHandlersPresenter.class,
-                SelectionHandlersPresenter.SelectionHandlersView.class,
-                SelectionHandlersViewImpl.class);
     }
 }

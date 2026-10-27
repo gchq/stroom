@@ -1,7 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel styleName="max form">
-        <g:SimplePanel ui:field="table" styleName="max form-control-border form-control-background"/>
-    </g:SimplePanel>
-</ui:UiBinder> 

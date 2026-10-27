@@ -19,11 +19,12 @@ package stroom.dashboard.client.vis;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.VisFrame;
 import stroom.dashboard.client.component.VisFrameController;
+import stroom.dashboard.client.component.VisSettingsController;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -143,7 +144,7 @@ public class VisPresenter
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
-                        final Provider<VisSettingsPresenter> settingsPresenterProvider,
+                        final Provider<VisSettingsController> settingsPresenterProvider,
                         final RestFactory restFactory,
                         final CurrentPreferences currentPreferences,
                         final DateTimeFormatter dateTimeFormatter,
@@ -274,7 +275,7 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getDashboardContext().getComponents().get(tableId);
+        final DashboardPane component = getDashboardContext().getComponents().get(tableId);
         if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
@@ -301,7 +302,7 @@ public class VisPresenter
         cleanupSearchModelAssociation();
 
         if (queryId != null) {
-            final Component component = getDashboardContext().getComponents().get(queryId);
+            final DashboardPane component = getDashboardContext().getComponents().get(queryId);
             if (component instanceof final QueryPresenter queryPresenter) {
                 final SearchModel searchModel = queryPresenter.getSearchModel();
                 currentSearchModel = searchModel;
