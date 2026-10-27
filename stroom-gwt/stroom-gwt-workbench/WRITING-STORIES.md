@@ -530,11 +530,12 @@ RestFixtures.builder()
 Each area has its own ginjector in `client/app/gin/<area>` and helpers for its screens. Reuse them.
 
 * **Document editors** (`client/app/editors/DocEditors`): `DocEditors.render(context, fixtures,
-  readOnly, (harness, injector) -> DocEditors.open(harness, docRef, injector.getXxxPresenter(),
+  readOnly, (harness, injector) -> DocEditors.open(harness, docRef, injector.getXxxEditor(),
   DocResource.of(fetch, update)))` creates the `EditorsScreenGinjector` and a harness with
   `realAlerts()`, gives the user OWNER (or VIEW) on every document, sets up Stroom's
   `StaticEventBus` and `HelpManager` (form help buttons) and, after start-up, opens the document as
-  `DocumentPlugin` does (fetch, permission check, `read`, the default tab). The toolbar's Save
+  `DocumentPlugin` does, in a `DocumentEditorHost` (fetch, permission check, `read`; the editor shows
+  its default tab once it is on the page). One tab on its own is opened as a `TabStory` (no Save). The toolbar's Save
   (`SaveDocumentEvent`) is answered as `DocumentPlugin.save`: write, `PUT` to `update`, then the
   editor's post save callback (`VisualisationEditor` publishes its assets there), then `read`.
   So a story checks a change by editing, saving and checking the `PUT` body.
@@ -543,7 +544,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   (document selection boxes) with the document asked about.
 * **Query, rule, report, View, Plan B and statistic store editors**
   (`client/app/gin/query/QueryScreenGinjector`, `client/app/query`):
-  `DocumentEditors.open(harness, presenter, docRef, resource, res -> res.fetch(uuid))` does what a
+  `DocumentEditors.open(harness, editor, docRef, resource, res -> res.fetch(uuid))` does what a
   `DocumentPlugin` does and then fires `ContentTabSelectionChangeEvent` for the editor, as the
   content pane does when it selects a tab (the query table only reacts to annotation changes while
   its tab is visible); `ownerPermissions(builder)` and `decorated(builder, docRefJson...)` answer the

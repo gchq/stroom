@@ -71,30 +71,6 @@ public class TracesPlugin extends ContentPlugin<DocumentEditorHost<TracesDoc>> {
                     // Tell the content manager to open the tab.
                     contentManager.open(closeHandler, tracesTab, tracesTab);
                 });
-
-//        // TODO : TEMPORARY
-//        registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), e -> {
-//            new Timer() {
-//                @Override
-//                public void run() {
-//                    final TracesEditor tracesPresenter = tracesPresenterProvider.get();
-//                    tracesPresenter.setDataSourceRef(DocRef.builder().type(PathwaysDoc.TYPE).uuid(
-//                            "ba8df4b8-d03b-484c-bb65-273b35ca56ff").build());
-////        tracesPresenter.setPathway();
-////        tracesPresenter.setFilter();
-//                    tracesPresenter.refresh();
-//
-//                    final CloseContentEvent.Handler closeHandler = (event) -> {
-//                        event.getCallback().closeTab(true);
-//                    };
-//
-//                    // Tell the content manager to open the tab.
-//                    contentManager.open(closeHandler, tracesPresenter, tracesPresenter);
-//                }
-//            }.schedule(1000);
-//        }));
-
-
     }
 
     @Override

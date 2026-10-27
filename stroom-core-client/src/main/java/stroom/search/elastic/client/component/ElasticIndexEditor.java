@@ -60,6 +60,6 @@ public class ElasticIndexEditor extends DocumentEditor<ElasticIndexDoc> {
                 ElasticIndexDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

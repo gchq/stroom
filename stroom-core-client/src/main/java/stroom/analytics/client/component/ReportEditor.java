@@ -93,7 +93,7 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
                 ReportDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(QUERY);
+        setDefaultTab(QUERY);
     }
 
     @Override

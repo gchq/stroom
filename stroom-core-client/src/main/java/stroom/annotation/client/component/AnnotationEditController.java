@@ -1560,6 +1560,13 @@ public class AnnotationEditController extends Controller implements Focus {
         view.setComment(initialComment);
     }
 
+    /// @return The annotation's title as it now is (after any change), or null before one is read.
+    public String getAnnotationTitle() {
+        return annotation == null
+                ? null
+                : annotation.getName();
+    }
+
     /// @param onTitleChange Run when the annotation's title changes, e.g. to retitle its tab.
     public void setOnTitleChange(final Runnable onTitleChange) {
         this.onTitleChange = onTitleChange;

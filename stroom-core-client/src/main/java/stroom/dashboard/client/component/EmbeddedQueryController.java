@@ -343,14 +343,19 @@ public class EmbeddedQueryController
 //        }
 //    }
 
+    /// @return Whether the pane shows its query's visualisation, rather than its table.
     public boolean isShowingVis() {
         return getQuerySettings().getShowTable() != Boolean.TRUE && currentVisPresenter != null;
     }
 
+    /// @return Whether the pane's query has a visualisation to show.
     public boolean canShowVis() {
         return currentVisPresenter != null;
     }
 
+    /// Shows the query's table, or its visualisation if it has one.
+    ///
+    /// @param show Whether to show the table.
     public void showTable(final boolean show) {
         if (show) {
             setSettings(getQuerySettings().copy().showTable(Boolean.TRUE).build());
@@ -363,6 +368,8 @@ public class EmbeddedQueryController
         }
     }
 
+    /// Opens the pane's query: the query document it refers to, or, for one held in the dashboard,
+    /// a tab whose Save puts it back into the dashboard.
     public void editQuery() {
         if (getQuerySettings().reference()) {
             OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
@@ -406,6 +413,7 @@ public class EmbeddedQueryController
                 .build();
     }
 
+    /// Runs the pane's query.
     public void runQuery() {
         run(true, true);
     }
@@ -488,6 +496,9 @@ public class EmbeddedQueryController
             currentVisPresenter.refresh();
         } else if (currentTablePresenter != null) {
             view.setResult(currentTablePresenter);
+        } else {
+            // A released table isn't left on show
+            view.setResult(null);
         }
     }
 

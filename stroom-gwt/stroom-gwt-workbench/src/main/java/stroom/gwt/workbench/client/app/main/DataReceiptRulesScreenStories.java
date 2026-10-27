@@ -16,6 +16,10 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.core.client.HasSave;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.SaveDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -31,6 +35,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 
@@ -158,6 +163,17 @@ public final class DataReceiptRulesScreenStories {
                                     .withBody("'Drop everything else' as rule 1",
                                             DataReceiptRulesScreenStories::hasNewFirstRule)
                                     .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // Saving another document (with changes) leaves the rules alone: they were once saved
+                // whenever any dirty document was
+                .story("SavingAnotherDocument", context -> render(context, false))
+                .withPlay(play -> {
+                    play.findByText("Reject test feeds");
+                    play.run("save another document, with changes", () -> SaveDocumentEvent.fire(
+                            ScreenHarness.<RuleSetPresenter>shownContent(), new OtherDocument()));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(RULES_PATH).toSpyMatcher());
                     expectNoProblems(play);
                 })
                 // The Fields tab: Add Field -> dialog (Name + Type) -> the field is added and saved
@@ -383,5 +399,44 @@ public final class DataReceiptRulesScreenStories {
             harness.show(presenter);
         });
         return harness.asWidget();
+    }
+
+    // Another open document, with changes, as far as a save is concerned
+    private static final class OtherDocument implements DocumentTabData, HasSave {
+
+        @Override
+        public DocRef getDocRef() {
+            return new DocRef("XSLT", "other-1", "Other");
+        }
+
+        @Override
+        public SvgImage getIcon() {
+            return SvgImage.DOCUMENT_XSLT;
+        }
+
+        @Override
+        public String getLabel() {
+            return "Other";
+        }
+
+        @Override
+        public boolean isCloseable() {
+            return true;
+        }
+
+        @Override
+        public String getType() {
+            return "XSLT";
+        }
+
+        @Override
+        public void save() {
+            // Saved elsewhere
+        }
+
+        @Override
+        public boolean isDirty() {
+            return true;
+        }
     }
 }

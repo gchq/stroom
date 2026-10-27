@@ -104,7 +104,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
                 },
                 (documentation, docRef, rules) -> documentation.setText(rules.getDescription()),
                 (documentation, rules) -> rules.copy().description(documentation.getText()).build());
-        selectTab(RULES_TAB);
+        setDefaultTab(RULES_TAB);
         // A tab's menu (e.g. to close others) is the app's
         own(getTabView().getTabBar().addShowMenuHandler(this::fireEvent));
 

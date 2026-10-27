@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -89,6 +90,10 @@ public final class AnnotationEditorStories {
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"title\", "
                                             + "\"title\": \"Investigate CPU alert\"}}")
                                     .toSpyMatcher()));
+                    // The tab is labelled with the new title (it once kept the old one)
+                    play.waitFor(() -> play.expect("the tab's label",
+                                    () -> ScreenHarness.<DocumentEditorHost<?>>shownContent().getLabel())
+                            .toBe("#42 Investigate CPU alert"));
                     // GWT's chooser button reads 'Choose Comment' and the comment
                     // box's label 'Add a comment'
                     play.click(play.getByRole("button", StroomDom.button("Choose Comment")));

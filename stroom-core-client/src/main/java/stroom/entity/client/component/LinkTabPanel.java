@@ -27,8 +27,8 @@ import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,9 +41,11 @@ import com.google.gwt.user.client.ui.Widget;
 public class LinkTabPanel extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final Template TEMPLATE = GWT.create(Template.class);
     // Why something shown is read only: it is only ever read only for a user who can't change it
     private static final String READ_ONLY_REASON = "You don't have permission to change this";
-    private static final SafeHtml READ_ONLY_CHIP = readOnlyChip();
+    private static final SafeHtml READ_ONLY_CHIP = TEMPLATE.readOnlyChip(
+            SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()), ". " + READ_ONLY_REASON + ".");
 
     @UiField
     LinkTabBar tabBar;
@@ -112,22 +114,15 @@ public class LinkTabPanel extends Component {
         tabBar.refresh();
     }
 
-    private static SafeHtml readOnlyChip() {
-        final SafeHtmlBuilder html = new SafeHtmlBuilder();
-        html.appendHtmlConstant("<span class=\"docTab-readOnlyNote\">");
-        html.appendHtmlConstant("<span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">");
-        html.append(SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()));
-        html.appendHtmlConstant("</span>");
-        html.appendEscaped("Read only");
-        html.appendHtmlConstant("</span>");
-        // The reason, which a tooltip doesn't give screen readers
-        html.appendHtmlConstant("<span class=\"sr-only\">");
-        html.appendEscaped(". " + READ_ONLY_REASON + ".");
-        html.appendHtmlConstant("</span>");
-        return html.toSafeHtml();
-    }
-
     interface Binder extends UiBinder<Widget, LinkTabPanel> {
 
+    }
+
+    // "Read only" with a lock, and the reason for screen readers, which a tooltip doesn't give them
+    interface Template extends SafeHtmlTemplates {
+
+        @Template("<span class=\"docTab-readOnlyNote\"><span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">"
+                  + "{0}</span>Read only</span><span class=\"sr-only\">{1}</span>")
+        SafeHtml readOnlyChip(SafeHtml lock, String reason);
     }
 }

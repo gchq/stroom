@@ -199,7 +199,7 @@ public class FloorMapDocEditor extends DocumentEditor<FloorMapDoc> {
                 FloorMapDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(MAP);
+        setDefaultTab(MAP);
     }
 
     /// Reacts to this document's tab being shown or hidden.

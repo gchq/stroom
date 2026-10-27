@@ -59,6 +59,6 @@ public class SqlTemporalStoreEditor extends DocumentEditor<SqlTemporalStoreDoc> 
                 SqlTemporalStoreDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

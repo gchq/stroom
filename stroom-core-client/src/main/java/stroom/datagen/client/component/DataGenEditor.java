@@ -63,6 +63,6 @@ public class DataGenEditor extends DocumentEditor<DataGenDoc> {
                 DataGenDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

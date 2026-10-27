@@ -72,7 +72,7 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
                 ScriptDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SCRIPT);
+        setDefaultTab(SCRIPT);
     }
 
     @Override

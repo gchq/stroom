@@ -1616,6 +1616,44 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   (`TAB_CLOSE`), as the query editor does; no story checks the destroy request, as a story's tab
   isn't closed.
 
+### Left from wave 14's audit
+
+**Reported** (28 October 2026).
+
+* **Visualisation and floor map Save As without the Assets tab.** `DocumentAssetsTabController.onSaveAs`
+  reads its document's uuid, which is null until the Assets tab has been shown, so Save As of a
+  visualisation or floor map whose Assets tab was never opened fails. As before the wave (the old
+  tab provider read the tab only once shown too). To fix: skip the asset copy when nothing was read,
+  or read the owned assets tab on every read.
+* **The text converter's highlighting on a type change.** The plan has the Settings tab's converter
+  type tell the Conversion tab, so the code is highlighted for the new type at once; it is still
+  chosen only when the converter is read (after a save), as before. `TextConverterSettingsController`
+  would need a `setOnTypeChange`.
+* **No stories for two editors.** `SqlTemporalStoreEditor` and `FloorMapEventStoreEditor` have no
+  workbench stories (default, read only, leak check), as before the wave.
+* **No unit tests for the document host.** `TestDocPresenter` went with `DocPresenter`; the read-only
+  narrowing and dirty rules now in `DocumentEditorHost` and `DocumentEditor` are covered only by
+  stories (a `Composite` can't be made on the JVM). To do: move the rules into a plain helper and
+  test it.
+* **Traces shown without a document.** Opened from a pathway (`ShowTracesEvent`), the traces editor
+  still shows its Settings, Documentation and Permissions tabs, which have nothing to read.
+* **A query opened from an embedded query pane closes with it.** `EmbeddedQueryController.editQuery`
+  owns the query's tab, so removing the pane, or closing the dashboard, disposes it while it is open
+  (as before the wave).
+* **A store's first view of its roll-ups makes it dirty.** Showing a statistic store's Custom
+  Roll-ups tab adds the "no roll-up" row to a store with none, so undoing an edit leaves the store
+  dirty (as before).
+* **Unused now.** `HasDocumentRead` (six controllers implement it; nothing reads through it since
+  `TabContentProvider` went) and `ChangeUiHandlers` (only the unimplemented
+  `ProcessingStatusUiHandlers` names it). `HasCommonTabs` is implemented only by `DocumentEditorHost`.
+* **Class names after the deleted view.** `linkTabPanelViewImpl`, `linkTabPanelViewImpl-middle` and
+  `toolbarContainer` (`components.css`), used by `LinkTabPanel.ui.xml` and four other templates, and
+  the `docTab-readOnly*` classes are to become a `link-tab-panel` BEM block.
+* **One task monitor helper, copied.** About two dozen controllers carry the same lazy `taskMonitor()`
+  (the provided monitor, or one of their own); it could be a `Controller` method.
+* **The story helpers.** `DocEditors.open` and `DocumentEditors.open` do much the same, and neither
+  owns the editor's host until its document is fetched (a failed fetch leaves it unowned).
+
 ### Some components wire their handlers with `@UiHandler`
 
 **Deferred** (agreed 27 October 2026; a clean-up pass after the waves). Every component wires its
@@ -2567,7 +2605,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
 * A malformed schema was shown as the partial schema the browser recovers, and the parse error never
   shown (`XSDModel`): `XsdBrowser` `ParseError`.
 * An Embedded Query's static selection filter wasn't sent with its first search
-  (`EmbeddedQueryController`): `DashboardSearch` `EmbeddedQuerySelectionFilter`.
+  (`EmbeddedQueryPresenter`): `DashboardSearch` `EmbeddedQuerySelectionFilter`.
 * A copied query's selection handlers had no data source (`EmbeddedQuerySettingsPresenter`):
   `DashboardComponent` `EmbeddedQuerySettingsFields`.
 * A data preview's highlight was never shown, and a ranged preview showed its item navigator again
@@ -2612,7 +2650,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   (`BatchExecutionScheduleEditViewImpl`), a meta row's attributes (`MetaRow.getAttributeValue`), a
   selection summary's age range (`SelectionSummaryPresenter`), a layout's preferred size
   (`MutableConfigUtil`, which `FlexLayout` needs: `DashboardLayout` `SplitterKeepsThirdPanel`), and
-  an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryController`).
+  an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryPresenter`).
 * A dashboard search whose `update` threw polled forever, and `QueryPresenter.getCurrentErrors` threw
   for a Query that hadn't searched (the dashboard selection stories check every search completes;
   any such failure now ends the search, see below).

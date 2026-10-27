@@ -32,8 +32,6 @@ import com.google.web.bindery.event.shared.EventBus;
 /// [DocumentEditor]).
 public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreDoc> {
 
-    public static final String TAB_TYPE = "FloorMapEventStore";
-
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -62,6 +60,6 @@ public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreD
                 FloorMapEventStoreDoc::getDescription,
                 (doc, description) -> doc.copyEventStore().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

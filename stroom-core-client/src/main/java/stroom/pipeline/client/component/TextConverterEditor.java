@@ -71,7 +71,7 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
                 TextConverterDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(CONVERSION);
+        setDefaultTab(CONVERSION);
     }
 
     /// The language a converter's code is highlighted as: its type's, or, if it has none, the one

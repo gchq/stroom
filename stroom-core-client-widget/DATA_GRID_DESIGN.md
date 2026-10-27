@@ -723,7 +723,7 @@ interactive header cells, the context menu, copy, export and AI.
   `addDocRefColumn`, `addFeedColumn`) and `JobNodeColumns`, so the job and node screens can
   move one at a time. `MetaListController`'s grid moves with the meta browser.
 * **Small lists, first batch** (2026-10-21): 14 client-side lists, switched by type:
-  * `LinkedEventPresenter`, `ScriptDependencyList`, `StatisticsFieldListPresenter`,
+  * `LinkedEventPresenter`, `ScriptDependencyList`, `StatisticsFieldList`,
     `ElasticIndexFieldList`, `SolrIndexFieldList`, `DocRefList`,
     `SelectionHandlerList`, `SigningKeyList`, receive rules'
     `FieldList`, `RuleList` (conditional formatting),
@@ -817,7 +817,7 @@ interactive header cells, the context menu, copy, export and AI.
 * **Editable lists** (2026-10-21): 15 grids with tick boxes, spinners and select-all headers, switched
   by type: `NodeJobList`, `JobNodeList`, `NodeStatusList`,
   `IndexShard`, `ColumnSelection`, `NodeGroupStateList`,
-  `StatisticsCustomMaskListPresenter`, `UserList`, `ConstraintList`,
+  `StatisticsCustomMaskList`, `UserList`, `ConstraintList`,
   `NodeGroupList`, `ContentTemplateList`, `DataRetentionPolicyList`,
   `XPathList`, `DocRefSelection`, and `ProcessorTaskSummary` (given
   stories first, `App/Main/ProcessorTaskSummary`).

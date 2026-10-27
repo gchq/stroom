@@ -254,7 +254,8 @@ public final class DocEditors {
 
             @Override
             public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
-                return tab.getPostSaveCallback();
+                // A tab on its own has no Save
+                return null;
             }
         }, resource);
     }
@@ -285,11 +286,14 @@ public final class DocEditors {
                                  final Opened<D> editor,
                                  final DocResource<D> resource) {
         final TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(harness.getHasHandlers());
-        harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
-            if (event.getTabData() == shown) {
-                save(harness, docRef, editor, resource, taskMonitorFactory);
-            }
-        }));
+        // A whole editor's Save (a tab on its own has none)
+        if (shown instanceof DocumentEditorHost) {
+            harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+                if (event.getTabData() == shown) {
+                    save(harness, docRef, editor, resource, taskMonitorFactory);
+                }
+            }));
+        }
         resource.fetch(harness.getRestFactory())
                 .onSuccess(doc -> harness.getSecurityContext().hasDocumentPermission(
                         docRef,

@@ -26,9 +26,7 @@ import stroom.widget.component.client.DirtyTracker;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 /// One tab of a document's editor shown on its own, for a story of that tab: it reads the document
 /// into the tab, and writes it, as the editor does, and works out whether the document is dirty as
@@ -93,11 +91,6 @@ public final class TabStory<C extends Controller, D> extends Controller {
     /// @return Whether the tab shows changes that aren't saved.
     public boolean isDirty() {
         return dirty;
-    }
-
-    /// @return Nothing to run after a save: a tab alone has no assets of its own.
-    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
-        return null;
     }
 
     private void onChange() {

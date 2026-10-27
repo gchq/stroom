@@ -134,7 +134,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     // Pipelines and stepping
 
-    /// @return A Pipeline's editor tab, as `PipelinePlugin` creates it.
+    /// @return A Pipeline's editor, as `PipelinePlugin` opens it.
     PipelineEditor getPipelineEditor();
 
     /// @return A pipeline's stepper, as `PipelineEditor` shows it in stepping mode.

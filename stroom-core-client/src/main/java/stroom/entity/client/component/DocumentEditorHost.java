@@ -145,6 +145,9 @@ public class DocumentEditorHost<D>
     /// @param readOnly Whether it may not be changed.
     public final void setReadOnly(final boolean readOnly) {
         getControllerNode().setProvided(Contexts.READ_ONLY, readOnly);
+        if (editor instanceof final DocumentEditor<D> documentEditor) {
+            documentEditor.setReadOnly(isReadOnly());
+        }
     }
 
     @Override

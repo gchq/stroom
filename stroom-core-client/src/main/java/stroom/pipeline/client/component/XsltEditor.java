@@ -59,6 +59,6 @@ public class XsltEditor extends DocumentEditor<XsltDoc> {
                 XsltDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(XSLT);
+        setDefaultTab(XSLT);
     }
 }

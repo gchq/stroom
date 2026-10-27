@@ -111,7 +111,7 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
                 AnalyticRuleDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(QUERY);
+        setDefaultTab(QUERY);
     }
 
     @Override

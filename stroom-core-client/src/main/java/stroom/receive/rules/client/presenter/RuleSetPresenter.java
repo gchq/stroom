@@ -65,7 +65,8 @@ public class RuleSetPresenter extends ContentTabPresenter<ControllerView>
         // The registry is shared, so it would keep this closed screen (and Save All would save it)
         onDispose(() -> hasSaveRegistry.unregister(this));
         listen(SaveDocumentEvent.getType(), event -> {
-            if (event.getTabData() instanceof final HasSave hasSave && hasSave.isDirty()) {
+            // Only when this tab is asked to save, not when any other dirty document is
+            if (event.getTabData() == this && isDirty()) {
                 save();
             }
         });

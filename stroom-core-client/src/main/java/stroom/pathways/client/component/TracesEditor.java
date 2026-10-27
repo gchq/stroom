@@ -77,7 +77,15 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
                 TracesDoc::getDescription,
                 (doc, description) -> doc.copyTraces().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(TRACES);
+        setDefaultTab(TRACES);
+    }
+
+    @Override
+    public String getTabLabel() {
+        // Opened on its own (e.g. a pathway's traces) there is no store to name it after
+        return getDocRef() == null
+                ? "Traces"
+                : null;
     }
 
     /// Finds the traces again.

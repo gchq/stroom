@@ -65,7 +65,7 @@ public class VisualisationEditor extends DocumentEditor<VisualisationDoc> {
                 VisualisationDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 
     @Override

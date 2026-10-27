@@ -117,7 +117,7 @@ public class AnnotationTabs extends TabbedController<Annotation> {
                 (permissions, docRef, annotation) -> permissions.setDocRef(docRef));
         setCommonTab(CommonDocLinkTab.DOCUMENTATION, DOCUMENTATION);
         setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
-        selectTab(ANNOTATION);
+        setDefaultTab(ANNOTATION);
     }
 
     /// Shows an annotation.
@@ -146,9 +146,14 @@ public class AnnotationTabs extends TabbedController<Annotation> {
     @Override
     public String getTabLabel() {
         final Annotation annotation = getDocument();
-        return annotation == null
-                ? null
-                : "#" + annotation.getId() + " " + annotation.getName();
+        if (annotation == null) {
+            return null;
+        }
+        // Its title as it now is: it may have been changed since it was read
+        final String title = annotationEdit.getAnnotationTitle();
+        return "#" + annotation.getId() + " " + (title != null
+                ? title
+                : annotation.getName());
     }
 
     private void updateHistory() {

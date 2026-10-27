@@ -82,6 +82,6 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                 FeedDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(selectedTab);
+        setDefaultTab(selectedTab);
     }
 }

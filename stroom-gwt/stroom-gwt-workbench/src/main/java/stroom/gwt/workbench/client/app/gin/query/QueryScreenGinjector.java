@@ -58,25 +58,25 @@ import com.google.gwt.inject.client.GinModules;
 })
 public interface QueryScreenGinjector extends ScreenGinjector {
 
-    /// @return A View's editor tab, as `ViewPlugin` creates it.
+    /// @return A View's editor, as `ViewPlugin` opens it.
     ViewDocEditor getViewDocEditor();
 
-    /// @return A Plan B store's editor tab, as `PlanBPlugin` creates it.
+    /// @return A Plan B store's editor, as `PlanBPlugin` opens it.
     PlanBEditor getPlanBEditor();
 
-    /// @return A Query's editor tab, as `QueryPlugin` creates it.
+    /// @return A Query's editor, as `QueryPlugin` opens it.
     QueryDocEditor getQueryDocEditor();
 
-    /// @return A statistic store's editor tab, as `StatisticsPlugin` creates it.
+    /// @return A statistic store's editor, as `StatisticsPlugin` opens it.
     StatisticsDataSourceEditor getStatisticsDataSourceEditor();
 
-    /// @return An analytic rule's editor tab, as `AnalyticsPlugin` creates it.
+    /// @return An analytic rule's editor, as `AnalyticsPlugin` opens it.
     AnalyticRuleEditor getAnalyticRuleEditor();
 
     /// @return A query's result table, as a query pane or an analytic rule's Shards tab has.
     QueryResultTableController getQueryResultTable();
 
-    /// @return A report's editor tab, as `ReportPlugin` creates it.
+    /// @return A report's editor, as `ReportPlugin` opens it.
     ReportEditor getReportEditor();
 
     /// @return The 'Choose Annotation' dialog, kept by the app and shown when

@@ -18,6 +18,7 @@ package stroom.entity.client.component;
 
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
+import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
@@ -65,19 +66,15 @@ public class CodeTabController extends Controller {
         editor.setMode(mode);
     }
 
-    /// @param text The text to show, or null to leave what is shown.
+    /// @param text The text to show; null shows none.
     public void setText(final String text) {
-        if (text != null) {
-            editor.setText(text);
-        }
+        editor.setText(NullSafe.string(text));
     }
 
-    /// @param text   The text to show, or null to leave what is shown.
+    /// @param text   The text to show; null shows none.
     /// @param format Whether to format it first, as Format does.
     public void setText(final String text, final boolean format) {
-        if (text != null) {
-            editor.setText(text, format);
-        }
+        editor.setText(NullSafe.string(text), format);
     }
 
     /// @return The text shown.

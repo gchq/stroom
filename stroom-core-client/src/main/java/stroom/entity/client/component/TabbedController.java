@@ -55,7 +55,6 @@ import java.util.function.Supplier;
 ///            if it is written.
 public abstract class TabbedController<D> extends Controller {
 
-
     private final LinkTabPanel view;
     private final Toolbar toolbar;
     // The buttons the tab showing added to the toolbar, removed when another tab is shown
@@ -73,8 +72,8 @@ public abstract class TabbedController<D> extends Controller {
     private DocRef docRef;
     private D document;
     private TabData selectedTab;
-    // A tab asked for before this is on the page, shown once it is (as its content may measure itself)
-    private TabData pendingTab;
+    // The tab shown once this is on the page, unless another is shown first
+    private TabData defaultTab;
 
     /// @param eventBus The application's event bus.
     /// @param view     The tab bar, toolbar row and tab content.
@@ -82,7 +81,7 @@ public abstract class TabbedController<D> extends Controller {
         super(eventBus);
         this.view = view;
         toolbar = view.getToolbar();
-        view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem()));
+        own(view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
         initWidget(view.asWidget());
         // A tab's buttons may depend on whether what is shown may be changed (e.g. the
         // Documentation tab's Edit), so they are shown again when that changes, once the tab has
@@ -289,11 +288,6 @@ public abstract class TabbedController<D> extends Controller {
     /// @param tab The tab.
     protected final void selectTab(final TabData tab) {
         final Tab<?> selected = Objects.requireNonNull(tabs.get(tab), "tab");
-        if (!asWidget().isAttached()) {
-            // Its content is made, and read, once this is on the page, as it was before
-            pendingTab = tab;
-            return;
-        }
         view.getLayerContainer().show(selected.getLayer());
         showToolbars(selected);
         view.getTabBar().selectTab(tab);
@@ -320,12 +314,31 @@ public abstract class TabbedController<D> extends Controller {
                 : Collections.emptyList());
     }
 
+    /// Says which tab to show once this is on the page, unless another is shown first (e.g. a
+    /// link to the documentation, or a pipeline's stepping): its content is made, and read, only
+    /// then.
+    ///
+    /// @param tab The tab, added with `addTab` or `addOwnedTab`.
+    protected final void setDefaultTab(final TabData tab) {
+        if (!tabs.containsKey(tab)) {
+            throw new IllegalArgumentException("No tab " + tab.getLabel());
+        }
+        defaultTab = tab;
+        if (selectedTab == null && asWidget().isAttached()) {
+            selectTab(tab);
+        }
+    }
+
+    /// @param tab A tab.
+    /// @return Whether this has the tab (some are added only for users with a permission).
+    protected final boolean hasTab(final TabData tab) {
+        return tabs.containsKey(tab);
+    }
+
     @Override
     protected void onAttach() {
-        if (pendingTab != null) {
-            final TabData tab = pendingTab;
-            pendingTab = null;
-            selectTab(tab);
+        if (selectedTab == null && defaultTab != null) {
+            selectTab(defaultTab);
         }
     }
 
@@ -398,9 +411,15 @@ public abstract class TabbedController<D> extends Controller {
         // Nothing by default
     }
 
-    // For DocumentEditor, after onRead
+    /// Called after [#onRead(DocRef, Object)], for [DocumentEditor] to enable its buttons.
     void afterRead() {
         // Nothing by default
+    }
+
+    // Said once something is read, as until then there is nothing to change (e.g. traces shown
+    // without a document)
+    private void updateReadOnlyStatus(final boolean readOnly) {
+        view.setReadOnlyStatus(readOnly && document != null);
     }
 
     /// Reads what is shown into a tab's content.
@@ -414,12 +433,6 @@ public abstract class TabbedController<D> extends Controller {
         /// @param docRef   The reference of what is shown.
         /// @param document What is shown.
         void read(C content, DocRef docRef, D document);
-    }
-
-    // Said once something is read, as until then there is nothing to change (e.g. traces shown
-    // without a document)
-    private void updateReadOnlyStatus(final boolean readOnly) {
-        view.setReadOnlyStatus(readOnly && document != null);
     }
 
     // A tab: how to make its content, read into it and write from it, and the content once made

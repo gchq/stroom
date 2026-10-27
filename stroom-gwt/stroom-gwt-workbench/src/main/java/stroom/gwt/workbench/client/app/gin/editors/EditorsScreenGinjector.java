@@ -58,7 +58,7 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final GitRepoEditor presenter = injector.getGitRepoEditor();
+/// final GitRepoEditor editor = injector.getGitRepoEditor();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
@@ -79,13 +79,13 @@ import com.google.gwt.inject.client.GinModules;
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
 
-    /// @return A Data Generator's editor tab, as `DataGenPlugin` creates it.
+    /// @return A Data Generator's editor, as `DataGenPlugin` opens it.
     DataGenEditor getDataGenEditor();
 
-    /// @return A Documentation document's editor tab, as `DocumentationPlugin` creates it.
+    /// @return A Documentation document's editor, as `DocumentationPlugin` opens it.
     DocumentationEditor getDocumentationEditor();
 
-    /// @return An Elastic Cluster's editor tab, as `ElasticClusterPlugin` creates it.
+    /// @return An Elastic Cluster's editor, as `ElasticClusterPlugin` opens it.
     ElasticClusterEditor getElasticClusterEditor();
 
     /// @return A Floor Map's 'Editor' tab (the map canvas, its timeline and its Layers panel), as
@@ -103,16 +103,16 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// @return A Floor Map's 'Settings' tab, as `FloorMapDocEditor` creates it.
     FloorMapSettingsController getFloorMapSettingsController();
 
-    /// @return A Git Repository's editor tab, as `GitRepoPlugin` creates it.
+    /// @return A Git Repository's editor, as `GitRepoPlugin` opens it.
     GitRepoEditor getGitRepoEditor();
 
-    /// @return An OpenAI Model's editor tab, as `OpenAIModelPlugin` creates it.
+    /// @return An OpenAI Model's editor, as `OpenAIModelPlugin` opens it.
     OpenAIModelEditor getOpenAIModelEditor();
 
-    /// @return A Pathways document's editor tab, as `PathwaysPlugin` creates it.
+    /// @return A Pathways document's editor, as `PathwaysPlugin` opens it.
     PathwaysEditor getPathwaysEditor();
 
-    /// @return A Visualisation's editor tab, as `VisualisationPlugin` creates it.
+    /// @return A Visualisation's editor, as `VisualisationPlugin` opens it.
     VisualisationEditor getVisualisationEditor();
 
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
@@ -128,33 +128,33 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     // Code documents
 
-    /// @return An XSLT's editor tab, as `XsltPlugin` creates it.
+    /// @return An XSLT's editor, as `XsltPlugin` opens it.
     XsltEditor getXsltEditor();
 
-    /// @return A Text Converter's editor tab, as `TextConverterPlugin` creates it.
+    /// @return A Text Converter's editor, as `TextConverterPlugin` opens it.
     TextConverterEditor getTextConverterEditor();
 
-    /// @return A Script's editor tab, as `ScriptPlugin` creates it.
+    /// @return A Script's editor, as `ScriptPlugin` opens it.
     ScriptEditor getScriptEditor();
 
-    /// @return A Kafka Config's editor tab, as `KafkaConfigPlugin` creates it.
+    /// @return A Kafka Config's editor, as `KafkaConfigPlugin` opens it.
     KafkaConfigEditor getKafkaConfigEditor();
 
     /// @return An S3 Config's editor, as `S3ConfigPlugin` opens it.
     S3ConfigEditor getS3ConfigEditor();
 
-    /// @return An XML Schema's editor tab, as `XMLSchemaPlugin` creates it.
+    /// @return An XML Schema's editor, as `XMLSchemaPlugin` opens it.
     XMLSchemaEditor getXMLSchemaEditor();
 
     // Indexes
 
-    /// @return A Lucene index's editor tab, as `IndexPlugin` creates it.
+    /// @return A Lucene index's editor, as `IndexPlugin` opens it.
     LuceneIndexEditor getLuceneIndexEditor();
 
-    /// @return A Solr index's editor tab, as `SolrIndexPlugin` creates it.
+    /// @return A Solr index's editor, as `SolrIndexPlugin` opens it.
     SolrIndexEditor getSolrIndexEditor();
 
-    /// @return An Elastic index's editor tab, as `ElasticIndexPlugin` creates it.
+    /// @return An Elastic index's editor, as `ElasticIndexPlugin` opens it.
     ElasticIndexEditor getElasticIndexEditor();
 
     // Folders and feeds
@@ -163,7 +163,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// `FolderRootPlugin`) open in a `DocumentEditorHost`.
     FolderTabs getFolderTabs();
 
-    /// @return A Feed's editor tab, as `FeedPlugin` creates it.
+    /// @return A Feed's editor, as `FeedPlugin` opens it.
     FeedEditor getFeedEditor();
 
     // AI

@@ -40,11 +40,11 @@ public class PathwaysEditor extends DocumentEditor<PathwaysDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public PathwaysEditor(final EventBus eventBus,
-                             final LinkTabPanel view,
-                             final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
-                             final Provider<PathwaysSplitController> pathwaysSplitProvider,
-                             final Provider<MarkdownEditController> markdownEditProvider,
-                             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
+                          final LinkTabPanel view,
+                          final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
+                          final Provider<PathwaysSplitController> pathwaysSplitProvider,
+                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
         addTab(PATHWAYS,
@@ -59,6 +59,6 @@ public class PathwaysEditor extends DocumentEditor<PathwaysDoc> {
                 PathwaysDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(PATHWAYS);
+        setDefaultTab(PATHWAYS);
     }
 }

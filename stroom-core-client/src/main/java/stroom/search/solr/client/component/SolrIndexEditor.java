@@ -40,11 +40,11 @@ public class SolrIndexEditor extends DocumentEditor<SolrIndexDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public SolrIndexEditor(final EventBus eventBus,
-                              final LinkTabPanel view,
-                              final Provider<SolrIndexSettingsController> indexSettingsProvider,
-                              final Provider<SolrIndexFieldListController> indexFieldListProvider,
-                              final Provider<MarkdownEditController> markdownEditProvider,
-                              final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
+                           final LinkTabPanel view,
+                           final Provider<SolrIndexSettingsController> indexSettingsProvider,
+                           final Provider<SolrIndexFieldListController> indexFieldListProvider,
+                           final Provider<MarkdownEditController> markdownEditProvider,
+                           final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
         addTab(FIELDS,
@@ -60,6 +60,6 @@ public class SolrIndexEditor extends DocumentEditor<SolrIndexDoc> {
                 SolrIndexDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(FIELDS);
+        setDefaultTab(FIELDS);
     }
 }

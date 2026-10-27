@@ -156,15 +156,18 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
         // press makes the tree flash and the editor lag.
         stepping.setOnChange(this::onChange);
 
-        selectTab(defaultTab);
+        setDefaultTab(defaultTab);
     }
 
-    /// Shows the Processors tab with a processor filter, e.g. one just made.
+    /// Shows the Processors tab with a processor filter, e.g. one just made, if the user may
+    /// manage processors (only they have the tab).
     ///
     /// @param processorFilter The filter, to show and select.
     public void showProcessorFilter(final ProcessorFilter processorFilter) {
-        selectTab(PROCESSORS);
-        processors.refresh(processorFilter);
+        if (hasTab(PROCESSORS)) {
+            selectTab(PROCESSORS);
+            processors.refresh(processorFilter);
+        }
     }
 
     /// Shows the stepping screen in place of the structure, or the structure again.

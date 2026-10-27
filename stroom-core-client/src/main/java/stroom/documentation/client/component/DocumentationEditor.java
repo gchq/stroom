@@ -67,7 +67,7 @@ public class DocumentationEditor extends DocumentEditor<DocumentationDoc> {
                 DocumentationDoc::getData,
                 (doc, data) -> doc.copy().data(data).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(DOCUMENTATION);
+        setDefaultTab(DOCUMENTATION);
     }
 
     @Override

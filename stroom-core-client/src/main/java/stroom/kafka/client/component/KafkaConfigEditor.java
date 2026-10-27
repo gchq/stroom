@@ -54,12 +54,12 @@ public class KafkaConfigEditor extends DocumentEditor<KafkaConfigDoc> {
     /// Makes the editor, with its Config, Documentation and Permissions tabs.
     @Inject
     public KafkaConfigEditor(final EventBus eventBus,
-                          final LinkTabPanel view,
-                          final Provider<CodeTabController> codeTabProvider,
-                          final Provider<MarkdownEditController> markdownEditProvider,
-                          final Provider<DocumentUserPermissionsTabController> permissionsProvider,
-                          final RestFactory restFactory,
-                          final LocationManager locationManager) {
+                             final LinkTabPanel view,
+                             final Provider<CodeTabController> codeTabProvider,
+                             final Provider<MarkdownEditController> markdownEditProvider,
+                             final Provider<DocumentUserPermissionsTabController> permissionsProvider,
+                             final RestFactory restFactory,
+                             final LocationManager locationManager) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -80,7 +80,7 @@ public class KafkaConfigEditor extends DocumentEditor<KafkaConfigDoc> {
                 KafkaConfigDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(CONFIG);
+        setDefaultTab(CONFIG);
     }
 
     @Override

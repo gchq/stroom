@@ -57,7 +57,7 @@ public class QueryDocEditor extends DocumentEditor<QueryDoc> {
                 QueryDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(QUERY);
+        setDefaultTab(QUERY);
     }
 
     /// @param saveInterceptor What to run in place of saving the query, e.g. to put it in the

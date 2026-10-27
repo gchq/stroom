@@ -39,10 +39,10 @@ public class GitRepoEditor extends DocumentEditor<GitRepoDoc> {
     /// Makes the editor, with its tabs.
     @Inject
     public GitRepoEditor(final EventBus eventBus,
-                            final LinkTabPanel view,
-                            final Provider<GitRepoSettingsController> settingsProvider,
-                            final Provider<MarkdownEditController> markdownEditProvider,
-                            final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
+                         final LinkTabPanel view,
+                         final Provider<GitRepoSettingsController> settingsProvider,
+                         final Provider<MarkdownEditController> markdownEditProvider,
+                         final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS,
@@ -54,6 +54,6 @@ public class GitRepoEditor extends DocumentEditor<GitRepoDoc> {
                 GitRepoDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

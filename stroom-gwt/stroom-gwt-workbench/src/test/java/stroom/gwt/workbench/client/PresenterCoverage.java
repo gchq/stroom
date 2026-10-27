@@ -58,6 +58,7 @@ public final class PresenterCoverage {
     static final Set<String> SCREEN_BASE_TYPES = Set.of(
             "ContentTabPresenter",
             "DocTabPresenter",
+            "DocumentEditor",
             "TabData",
             "DocumentTabData");
 

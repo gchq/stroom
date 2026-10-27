@@ -80,7 +80,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
                 S3ConfigDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(CONFIG);
+        setDefaultTab(CONFIG);
     }
 
     @Override

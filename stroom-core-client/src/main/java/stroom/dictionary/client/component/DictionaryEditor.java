@@ -117,7 +117,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 (permissions, docRef, doc) -> permissions.setDocRef(docRef));
         setCommonTab(CommonDocLinkTab.DOCUMENTATION, DOCUMENTATION);
         setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
-        selectTab(WORDS);
+        setDefaultTab(WORDS);
     }
 
     @Override

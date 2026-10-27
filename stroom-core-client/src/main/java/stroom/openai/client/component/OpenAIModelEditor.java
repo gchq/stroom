@@ -55,6 +55,6 @@ public class OpenAIModelEditor extends DocumentEditor<OpenAIModelDoc> {
                 OpenAIModelDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

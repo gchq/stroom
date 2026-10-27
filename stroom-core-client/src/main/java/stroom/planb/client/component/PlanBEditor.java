@@ -62,6 +62,6 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
                 PlanBDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(SETTINGS);
+        setDefaultTab(SETTINGS);
     }
 }

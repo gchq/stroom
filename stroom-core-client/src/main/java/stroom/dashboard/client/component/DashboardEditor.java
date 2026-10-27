@@ -18,6 +18,7 @@ package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
@@ -57,7 +58,7 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
                 DashboardDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(DASHBOARD);
+        setDefaultTab(DASHBOARD);
     }
 
     /// @return The dashboard itself, its Dashboard tab.
@@ -90,6 +91,13 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
     /// @param resultStoreInfo The results of an earlier search to show, reopening it.
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
         dashboardBody.setResultStoreInfo(resultStoreInfo);
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final DashboardDoc doc) {
+        // As soon as the document is, not only once its tab is first shown, so that its title
+        // labels the tab and duplicated tabs go into a dashboard that is read (it reads once)
+        dashboardBody.read(docRef, doc);
     }
 
     @Override

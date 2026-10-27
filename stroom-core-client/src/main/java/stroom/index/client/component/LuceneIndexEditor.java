@@ -78,6 +78,6 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
                 LuceneIndexDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(selectFirst);
+        setDefaultTab(selectFirst);
     }
 }

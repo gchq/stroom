@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /// Stories for Stroom's link tab panel ([LinkTabPanel]): a link tab bar, an optional
 /// toolbar and the selected tab's content.
@@ -123,16 +124,16 @@ public final class LinkTabPanelStories {
                                 final boolean narrow) {
         final ScreenHarness harness = TabWidgets.menuHarness(context);
         final EventBus eventBus = harness.getEventBus();
-        final Map<TabData, MyPresenterWidget<?>> contents = new HashMap<>();
+        final Map<TabData, Supplier<MyPresenterWidget<?>>> contents = new HashMap<>();
         final List<TabData> tabs = new ArrayList<>();
         for (final String label : labels) {
             final TabData tab = new StoryTab(label, label, null, null, false);
             tabs.add(tab);
             final Widget pane = TabWidgets.pane(text(label, extraToolbarTab != null), PANE_PADDING, PANE_FONT_SIZE);
             if (label.equals(extraToolbarTab)) {
-                contents.put(tab, new ToolbarContentPresenter(eventBus, pane));
+                contents.put(tab, () -> new ToolbarContentPresenter(eventBus, pane));
             } else {
-                contents.put(tab, TabWidgets.content(eventBus, pane));
+                contents.put(tab, () -> TabWidgets.content(eventBus, pane));
             }
         }
 
@@ -170,7 +171,7 @@ public final class LinkTabPanelStories {
         private StoryTabs(final EventBus eventBus,
                           final LinkTabPanel view,
                           final List<TabData> tabs,
-                          final Map<TabData, MyPresenterWidget<?>> contents,
+                          final Map<TabData, Supplier<MyPresenterWidget<?>>> contents,
                           final List<SvgImage> toolbar) {
             super(eventBus, view);
             if (toolbar != null) {
@@ -183,7 +184,7 @@ public final class LinkTabPanelStories {
                 }
             }
             for (final TabData tab : tabs) {
-                addTab(tab, () -> contents.get(tab), (content, docRef, text) -> {
+                addTab(tab, contents.get(tab), (content, docRef, text) -> {
                 });
             }
             selectTab(tabs.get(0));

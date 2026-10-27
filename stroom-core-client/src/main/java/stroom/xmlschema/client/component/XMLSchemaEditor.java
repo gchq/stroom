@@ -127,7 +127,7 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
                 XmlSchemaDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
-        selectTab(GRAPHICAL);
+        setDefaultTab(GRAPHICAL);
     }
 
     @Override
