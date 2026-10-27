@@ -28,6 +28,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.security.client.component.BatchDocumentPermissionsEditController;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.shared.SvgImage;
@@ -55,7 +56,7 @@ public class BatchDocumentPermissionsPresenter
 
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final DocumentListController documentList;
-    private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
+    private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
     private ExpressionOperator filterExpression;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResult> docs;
@@ -65,8 +66,8 @@ public class BatchDocumentPermissionsPresenter
                                              final QuickFilterPageView view,
                                              final Provider<ExpressionDialogController> filterDialogProvider,
                                              final DocumentListController documentList,
-                                             final Provider<BatchDocumentPermissionsEditPresenter>
-                                                     batchDocumentPermissionsEditPresenterProvider,
+                                             final Provider<BatchDocumentPermissionsEditController>
+                                                     batchDocumentPermissionsEditProvider,
                                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(documentList);
@@ -77,7 +78,7 @@ public class BatchDocumentPermissionsPresenter
         documentList.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
-        this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
+        this.batchDocumentPermissionsEditProvider = batchDocumentPermissionsEditProvider;
         this.filterDialogProvider = filterDialogProvider;
 
         view.setDataView(documentList);
@@ -125,10 +126,10 @@ public class BatchDocumentPermissionsPresenter
     }
 
     private void onBatchEdit() {
-        final BatchDocumentPermissionsEditPresenter presenter =
-                makeDialog(batchDocumentPermissionsEditPresenterProvider);
-        presenter.show(combinedExpression, NullSafe.get(docs, ResultPage::getPageResponse), () ->
-                documentList.refresh());
+        batchDocumentPermissionsEditProvider.get().show(this,
+                combinedExpression,
+                NullSafe.get(docs, ResultPage::getPageResponse),
+                documentList::refresh);
     }
 
     private void refresh() {

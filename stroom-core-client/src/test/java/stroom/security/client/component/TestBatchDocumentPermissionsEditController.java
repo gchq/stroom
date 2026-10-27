@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent.Level;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.util.shared.PageResponse;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,24 +39,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-class TestBatchDocumentPermissionsEditPresenter {
+class TestBatchDocumentPermissionsEditController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
-    private BatchDocumentPermissionsEditPresenter presenter;
+    private BatchDocumentPermissionsEditController controller;
 
     @BeforeEach
     void setUp() {
         // The pickers and REST resources are made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
-        presenter = new BatchDocumentPermissionsEditPresenter(
+        final DocSelectionController docSelection = Mockito.mock(DocSelectionController.class);
+        final UserRefSelectionController userRefSelection = Mockito.mock(UserRefSelectionController.class);
+        controller = new BatchDocumentPermissionsEditController(
                 eventBus,
-                Mockito.mock(BatchDocumentPermissionsEditView.class),
-                Mockito.mock(DocSelectionBoxPresenter.class),
-                Mockito.mock(UserRefSelectionBoxPresenter.class),
+                Mockito.mock(BatchDocumentPermissionsEdit.class),
+                () -> docSelection,
+                () -> userRefSelection,
                 Mockito.mock(RestFactory.class),
                 Mockito.mock(DocumentTypeCache.class));
     }
@@ -97,19 +95,16 @@ class TestBatchDocumentPermissionsEditPresenter {
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
 
-    // Shows the dialog for a filter matching the given number of documents, and presses OK.
+    // Presses OK in the dialog for a filter matching the given number of documents.
     private HidePopupRequestEvent showAndPressOk(final long documentCount) {
-        presenter.show(
+        final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
+        Mockito.when(okPressed.isOk()).thenReturn(true);
+        controller.onHideRequest(
+                okPressed,
                 ExpressionOperator.builder().build(),
                 PageResponse.builder().total(documentCount).build(),
                 () -> {
                 });
-        assertThat(shown)
-                .hasSize(1);
-
-        final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
-        Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
         return okPressed;
     }
 }

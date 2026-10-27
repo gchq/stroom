@@ -14,80 +14,97 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docstore.shared.DocumentType;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
-import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
 
-public class BatchDocumentPermissionsEditPresenter
-        extends MyPresenterWidget<BatchDocumentPermissionsEditView> {
+/// Changes the permissions of every document a filter matches ([BatchDocumentPermissionsEdit]), in
+/// a dialog made for one use. OK asks first, saying how many documents will change.
+public class BatchDocumentPermissionsEditController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
-    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private final BatchDocumentPermissionsEdit view;
+    private final DocSelectionController docSelection;
+    private final UserRefSelectionController userRefSelection;
     private final RestFactory restFactory;
-    private ExpressionOperator expression;
-    private PageResponse currentResultPageResponse;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The content.
+    /// @param docSelectionProvider     Makes the From Document picker.
+    /// @param userRefSelectionProvider Makes the user or group picker.
+    /// @param restFactory              Makes the change.
+    /// @param documentTypeCache        Gives the document types.
     @Inject
-    public BatchDocumentPermissionsEditPresenter(final EventBus eventBus,
-                                                 final BatchDocumentPermissionsEditView view,
-                                                 final DocSelectionBoxPresenter docSelectionBoxPresenter,
-                                                 final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                                 final RestFactory restFactory,
-                                                 final DocumentTypeCache documentTypeCache) {
-        super(eventBus, view);
-        own(docSelectionBoxPresenter);
-        own(userRefSelectionBoxPresenter);
+    public BatchDocumentPermissionsEditController(
+            final EventBus eventBus,
+            final BatchDocumentPermissionsEdit view,
+            final Provider<DocSelectionController> docSelectionProvider,
+            final Provider<UserRefSelectionController> userRefSelectionProvider,
+            final RestFactory restFactory,
+            final DocumentTypeCache documentTypeCache) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
-        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
-        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
+        initWidget(view);
+        docSelection = make(docSelectionProvider);
+        docSelection.attach(view.getDocRefBox());
+        userRefSelection = make(userRefSelectionProvider);
+        userRefSelection.attach(view.getUserRefBox());
 
-        documentTypeCache.fetch(types -> getView().setDocTypes(types.getTypes()), this);
-        getView().setDocRefSelection(docSelectionBoxPresenter.getView());
-        getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());
+        documentTypeCache.fetch(guard(types -> view.setDocTypes(types.getTypes())), taskMonitor());
     }
 
-    public void show(final ExpressionOperator expression,
+    /// @param userRef The user or group the change is for, chosen to start with.
+    public void setUser(final UserRef userRef) {
+        userRefSelection.setSelected(userRef);
+    }
+
+    /// Shows the dialog, owned by `opener` until it is closed.
+    ///
+    /// @param opener                    What shows it.
+    /// @param expression                The filter whose documents change.
+    /// @param currentResultPageResponse The filter's results, saying how many documents it
+    ///                                  matches.
+    /// @param onClose                   Called once the change is made, or on Cancel.
+    public void show(final HasControllerNode opener,
+                     final ExpressionOperator expression,
                      final PageResponse currentResultPageResponse,
                      final Runnable onClose) {
-        this.expression = expression;
-        this.currentResultPageResponse = currentResultPageResponse;
-
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
@@ -102,75 +119,65 @@ public class BatchDocumentPermissionsEditPresenter
                         .resizable(true)
                         .build())
                 .build();
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .modal()
                 .popupSize(popupSize)
-                .onShow(e -> getView().focus())
+                .onShow(e -> view.focus())
                 .caption("Batch Change Permissions For All Filtered Documents")
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        apply(e, onClose);
-                    } else {
-                        onClose.run();
-                        e.hide();
-                    }
-                })
+                .onHideRequest(e -> onHideRequest(e, expression, currentResultPageResponse, onClose))
                 .fire();
     }
 
-    private BulkDocumentPermissionChangeRequest createRequest() {
-        final DocumentPermissionChange change = getView().getChange();
-        Objects.requireNonNull(change, "Change is null");
-
-        return new BulkDocumentPermissionChangeRequest(expression, createChange());
+    // Package-private for the tests
+    void onHideRequest(final HidePopupRequestEvent event,
+                       final ExpressionOperator expression,
+                       final PageResponse currentResultPageResponse,
+                       final Runnable onClose) {
+        if (event.isOk()) {
+            apply(event, expression, currentResultPageResponse, onClose);
+        } else {
+            onClose.run();
+            event.hide();
+        }
     }
 
     private AbstractDocumentPermissionsChange createChange() {
-        final DocumentPermissionChange change = getView().getChange();
+        final DocumentPermissionChange change = view.getChange();
         Objects.requireNonNull(change, "Change is null");
 
         switch (change) {
             case SET_PERMISSION: {
                 return new AbstractDocumentPermissionsChange.SetPermission(
-                        userRefSelectionBoxPresenter.getSelected(),
-                        getView().getPermission());
+                        userRefSelection.getSelected(),
+                        view.getPermission());
             }
-//            case REMOVE_PERMISSION: {
-//                return new AbstractDocumentPermissionsChange.RemovePermission(
-//                        userRefSelectionBoxPresenter.getSelected());
-//            }
             case ADD_DOCUMENT_CREATE_PERMISSION: {
                 return new AddDocumentUserCreatePermission(
-                        userRefSelectionBoxPresenter.getSelected(),
-                        getView().getDocType().getType());
+                        userRefSelection.getSelected(),
+                        view.getDocType().getType());
             }
             case REMOVE_DOCUMENT_CREATE_PERMISSION: {
                 return new RemoveDocumentUserCreatePermission(
-                        userRefSelectionBoxPresenter.getSelected(),
-                        getView().getDocType().getType());
+                        userRefSelection.getSelected(),
+                        view.getDocType().getType());
             }
-
-
             case ADD_ALL_DOCUMENT_CREATE_PERMISSIONS: {
                 return new AddAllDocumentUserCreatePermissions(
-                        userRefSelectionBoxPresenter.getSelected());
+                        userRefSelection.getSelected());
             }
             case REMOVE_ALL_DOCUMENT_CREATE_PERMISSIONS: {
                 return new RemoveAllDocumentUserCreatePermissions(
-                        userRefSelectionBoxPresenter.getSelected());
+                        userRefSelection.getSelected());
             }
-
-
             case ADD_ALL_PERMISSIONS_FROM: {
                 return new AbstractDocumentPermissionsChange.AddAllPermissionsFrom(
-                        docSelectionBoxPresenter.getSelectedEntityReference());
+                        docSelection.getSelectedEntityReference());
             }
             case SET_ALL_PERMISSIONS_FROM: {
                 return new AbstractDocumentPermissionsChange.SetAllPermissionsFrom(
-                        docSelectionBoxPresenter.getSelectedEntityReference());
+                        docSelection.getSelectedEntityReference());
             }
-
             case REMOVE_ALL_PERMISSIONS: {
                 return new AbstractDocumentPermissionsChange.RemoveAllPermissions();
             }
@@ -179,10 +186,11 @@ public class BatchDocumentPermissionsEditPresenter
     }
 
     private void apply(final HidePopupRequestEvent event,
+                       final ExpressionOperator expression,
+                       final PageResponse currentResultPageResponse,
                        final Runnable onClose) {
         final long docCount;
-        if (currentResultPageResponse != null &&
-            currentResultPageResponse.getTotal() != null) {
+        if (currentResultPageResponse != null && currentResultPageResponse.getTotal() != null) {
             docCount = currentResultPageResponse.getTotal();
         } else {
             docCount = 0;
@@ -198,65 +206,42 @@ public class BatchDocumentPermissionsEditPresenter
             if (docCount > 1) {
                 message = "Are you sure you want to change permissions for " + docCount + " documents?";
             }
-            ConfirmEvent.fire(
-                    this,
-                    message,
-                    ok -> {
-                        if (ok) {
-                            doApply(this, event, onClose);
-                        } else {
-                            event.reset();
-                        }
-                    }
-            );
+            ConfirmEvent.fire(this, message, ok -> {
+                if (ok) {
+                    doApply(event, expression, onClose);
+                } else {
+                    event.reset();
+                }
+            });
         }
     }
 
-    private void doApply(final TaskMonitorFactory taskMonitorFactory,
-                         final HidePopupRequestEvent event,
+    private void doApply(final HidePopupRequestEvent event,
+                         final ExpressionOperator expression,
                          final Runnable onClose) {
-        final BulkDocumentPermissionChangeRequest request = createRequest();
+        final BulkDocumentPermissionChangeRequest request =
+                new BulkDocumentPermissionChangeRequest(expression, createChange());
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.changeDocumentPermissions(request))
                 .onSuccess(result -> {
                     if (result) {
-                        AlertEvent.fireInfo(
-                                this,
-                                "Successfully changed permissions.",
-                                () -> {
-                                    event.hide();
-                                    onClose.run();
-                                });
+                        AlertEvent.fireInfo(this, "Successfully changed permissions.", () -> {
+                            event.hide();
+                            onClose.run();
+                        });
                     } else {
-                        AlertEvent.fireError(
-                                this,
-                                "Failed to change permissions.",
-                                event::reset);
+                        AlertEvent.fireError(this, "Failed to change permissions.", event::reset);
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskMonitorFactory(taskMonitorFactory)
+                .owner(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
-    public UserRefSelectionBoxPresenter getUserRefSelectionBoxPresenter() {
-        return userRefSelectionBoxPresenter;
-    }
-
-    public interface BatchDocumentPermissionsEditView
-            extends View, Focus {
-
-        DocumentPermissionChange getChange();
-
-        void setUserRefSelection(View view);
-
-        void setDocRefSelection(View view);
-
-        void setDocTypes(List<DocumentType> docTypes);
-
-        DocumentType getDocType();
-
-        DocumentPermission getPermission();
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

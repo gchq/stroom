@@ -25,6 +25,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.security.client.component.BatchDocumentPermissionsEditController;
 import stroom.security.client.component.DocumentUserPermissionsEditController;
 import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.shared.DocumentPermission;
@@ -55,7 +56,7 @@ public class UserPermissionReportPresenter
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final DocumentPermissionsListController documentPermissionsList;
     private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
-    private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
+    private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
     private ExpressionOperator filterExpression;
     private String quickFilter;
@@ -71,14 +72,14 @@ public class UserPermissionReportPresenter
                                          final DocumentPermissionsListController documentPermissionsList,
                                          final Provider<DocumentUserPermissionsEditController>
                                                  documentUserPermissionsEditProvider,
-                                         final Provider<BatchDocumentPermissionsEditPresenter>
-                                                 batchDocumentPermissionsEditPresenterProvider,
+                                         final Provider<BatchDocumentPermissionsEditController>
+                                                 batchDocumentPermissionsEditProvider,
                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(documentPermissionsList);
         this.documentPermissionsList = documentPermissionsList;
         this.documentUserPermissionsEditProvider = documentUserPermissionsEditProvider;
-        this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
+        this.batchDocumentPermissionsEditProvider = batchDocumentPermissionsEditProvider;
         this.filterDialogProvider = filterDialogProvider;
 
         view.setPermissionListView(quickFilterPageView);
@@ -147,10 +148,10 @@ public class UserPermissionReportPresenter
     }
 
     private void onBatchEdit() {
-        final BatchDocumentPermissionsEditPresenter presenter =
-                makeDialog(batchDocumentPermissionsEditPresenterProvider);
-        presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
-        presenter.show(combinedExpression,
+        final BatchDocumentPermissionsEditController batchEdit = batchDocumentPermissionsEditProvider.get();
+        batchEdit.setUser(userRef);
+        batchEdit.show(this,
+                combinedExpression,
                 NullSafe.get(docs, ResultPage::getPageResponse),
                 documentPermissionsList::refresh);
     }
