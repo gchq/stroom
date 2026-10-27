@@ -20,13 +20,10 @@ import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
-import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -46,9 +43,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(StreamingProcessingPresenter.class,
                 StreamingProcessingView.class,
                 StreamingProcessingViewImpl.class);
-        bindPresenterWidget(ScheduledProcessingPresenter.class,
-                ScheduledProcessingView.class,
-                ScheduledProcessingViewImpl.class);
         bindSharedView(AnalyticProcessingView.class,
                 AnalyticProcessingViewImpl.class);
     }

@@ -14,50 +14,48 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.view;
+package stroom.analytics.client.component;
 
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ScheduledProcessingViewImpl
-        extends ViewImpl
-        implements ScheduledProcessingView {
+/// A document's scheduled executions: its schedules above the history of the one selected, each a
+/// list its controller shows here.
+public class ScheduledProcessing extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel executionScheduleList;
+    SimplePanel scheduleList;
     @UiField
-    SimplePanel executionHistoryList;
+    SimplePanel historyList;
 
-    @Inject
-    public ScheduledProcessingViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the panes, with no lists.
+    public ScheduledProcessing() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param view The schedules.
     public void setScheduleList(final IsWidget view) {
-        this.executionScheduleList.setWidget(view.asWidget());
+        scheduleList.setWidget(view);
     }
 
-    @Override
+    /// @param view The history of the schedule selected.
     public void setHistoryList(final IsWidget view) {
-        this.executionHistoryList.setWidget(view.asWidget());
+        historyList.setWidget(view);
     }
 
-    public interface Binder extends UiBinder<Widget, ScheduledProcessingViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ScheduledProcessing> {
 
     }
 }

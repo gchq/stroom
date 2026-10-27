@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.datagen.client.presenter.DataGenPresenter;
-import stroom.datagen.client.presenter.DataGenProcessingPresenter;
-import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
-import stroom.datagen.client.view.DataGenProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `DataGenModule`
@@ -33,9 +30,6 @@ public class DataGenScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(DataGenPresenter.class);
-        bindPresenterWidget(DataGenProcessingPresenter.class,
-                DataGenProcessingView.class,
-                DataGenProcessingViewImpl.class);
     }
 }
 

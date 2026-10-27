@@ -1094,10 +1094,6 @@
     border-radius: .25rem;
 }
 
-.ScheduledProcessingViewImpl {
-    border-top: 1px solid var(--border-color);
-}
-
 .documentPermissionChangeControls {
     display: flex;
     gap: 5px;

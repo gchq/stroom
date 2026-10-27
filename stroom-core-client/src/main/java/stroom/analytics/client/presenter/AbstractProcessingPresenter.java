@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.ScheduledProcessingController;
 import stroom.analytics.client.component.TableBuilderProcessingController;
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
@@ -40,7 +41,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         extends DocPresenter<AnalyticProcessingView, D>
         implements AnalyticProcessingUiHandlers {
 
-    private final ScheduledProcessingPresenter scheduledProcessingPresenter;
+    private final ScheduledProcessingController scheduledProcessing;
     private final TableBuilderProcessingController tableBuilderProcessing;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
     private final UiConfigCache uiConfigCache;
@@ -51,18 +52,18 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Inject
     public AbstractProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final ScheduledProcessingPresenter scheduledProcessingPresenter,
+                                       final ScheduledProcessingController scheduledProcessing,
                                        final TableBuilderProcessingController tableBuilderProcessing,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
-        own(scheduledProcessingPresenter);
+        own(scheduledProcessing);
         own(tableBuilderProcessing);
         own(streamingProcessingPresenter);
         this.uiConfigCache = uiConfigCache;
-        this.scheduledProcessingPresenter = scheduledProcessingPresenter;
+        this.scheduledProcessing = scheduledProcessing;
         this.tableBuilderProcessing = tableBuilderProcessing;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
@@ -71,7 +72,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     }
 
     public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
-        scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
+        scheduledProcessing.setIsDocumentDirty(documentEditPresenter::isDirty);
         streamingProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
     }
 
@@ -98,7 +99,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                 setProcessType(analyticProcessType);
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
-                    scheduledProcessingPresenter
+                    scheduledProcessing
                             .read(docRef);
                 } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
                     streamingProcessingPresenter
@@ -122,8 +123,8 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                 break;
             }
             case SCHEDULED_QUERY: {
-                scheduledProcessingPresenter.read(getEntity().asDocRef());
-                getView().setProcessSettings(scheduledProcessingPresenter.getView());
+                scheduledProcessing.read(getEntity().asDocRef());
+                getView().setProcessSettings(scheduledProcessing);
                 break;
             }
             case TABLE_BUILDER: {

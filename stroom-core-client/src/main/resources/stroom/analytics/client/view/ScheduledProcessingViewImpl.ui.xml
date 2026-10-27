@@ -1,9 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client">
-    <split:SplitPane vertical="true" thin="true" sizes="400px, *"
-                     names="Schedules, History" addStyleNames="ScheduledProcessingViewImpl max">
-        <g:SimplePanel ui:field="executionScheduleList" styleName="max dashboard-panel overflow-hidden"/>
-        <g:SimplePanel ui:field="executionHistoryList" styleName="max dashboard-panel overflow-hidden"/>
-    </split:SplitPane>
-</ui:UiBinder>

@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.ScheduledProcessingController;
 import stroom.analytics.client.component.TableBuilderProcessingController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -32,13 +33,13 @@ public class AnalyticProcessingPresenter
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final ScheduledProcessingPresenter scheduledProcessingPresenter,
+                                       final ScheduledProcessingController scheduledProcessing,
                                        final TableBuilderProcessingController tableBuilderProcessing,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus,
                 view,
-                scheduledProcessingPresenter,
+                scheduledProcessing,
                 tableBuilderProcessing,
                 streamingProcessingPresenter,
                 uiConfigCache);

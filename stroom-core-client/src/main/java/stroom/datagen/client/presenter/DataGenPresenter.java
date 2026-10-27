@@ -16,13 +16,13 @@
 
 package stroom.datagen.client.presenter;
 
+import stroom.analytics.client.component.ScheduledProcessingController;
 import stroom.datagen.client.component.DataGenSettingsController;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -49,18 +49,20 @@ public class DataGenPresenter
     public DataGenPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final Provider<DataGenSettingsController> dataGenSettingsProvider,
-                            final Provider<DataGenProcessingPresenter> dataGenProcessingPresenterProvider,
+                            final Provider<ScheduledProcessingController> scheduledProcessingProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        final DataGenProcessingPresenter dataGenProcessingPresenter = make(dataGenProcessingPresenterProvider);
-        dataGenProcessingPresenter.setDocumentEditPresenter(this);
+        // Its schedules are saved straight away, not with the document
+        final ScheduledProcessingController scheduledProcessing = make(scheduledProcessingProvider);
+        scheduledProcessing.setIsDocumentDirty(this::isDirty);
 
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, dataGenSettingsProvider::get,
                 DataGenSettingsController::read,
                 DataGenSettingsController::write));
-        addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
+        addTab(EXECUTION, ControllerTabProvider.ofOwned(eventBus, scheduledProcessing,
+                (processing, docRef, document) -> processing.read(docRef)));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

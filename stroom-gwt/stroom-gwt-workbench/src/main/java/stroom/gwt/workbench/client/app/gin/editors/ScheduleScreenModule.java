@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
-import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AnalyticsModule`
@@ -31,9 +28,6 @@ public class ScheduleScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(ScheduledProcessingPresenter.class,
-                ScheduledProcessingView.class,
-                ScheduledProcessingViewImpl.class);
     }
 }
 

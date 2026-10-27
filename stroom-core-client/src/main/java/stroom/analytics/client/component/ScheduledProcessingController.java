@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.analytics.client.component.ScheduledProcessEditController;
-import stroom.analytics.client.component.ScheduledProcessHistoryListController;
-import stroom.analytics.client.component.ScheduledProcessListController;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ScheduledProcessingPresenter
-        extends MyPresenterWidget<ScheduledProcessingView> {
+import java.util.function.BooleanSupplier;
+
+/// A document's scheduled executions ([ScheduledProcessing]): its schedules, which can be added
+/// (also by replaying an execution), edited and deleted unless it is read only, and the history of
+/// the one selected. A data generator's Execution tab, and a rule's or report's when scheduled.
+public class ScheduledProcessingController extends Controller {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -51,18 +50,28 @@ public class ScheduledProcessingPresenter
     private final ScheduledProcessListController scheduleList;
     private final ScheduledProcessHistoryListController historyList;
     private final ScheduledProcessEditController scheduledProcessEdit;
-    private DocPresenter<?, ?> documentEditPresenter;
+    // Whether the document has unsaved changes, which must be saved before a schedule is added
+    private BooleanSupplier isDocumentDirty = () -> false;
     private DocRef ownerDocRef;
     private boolean readOnly;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 The content.
+    /// @param restFactory          Creates, changes and deletes schedules.
+    /// @param scheduleList         The schedules.
+    /// @param historyList          The history of the schedule selected.
+    /// @param scheduledProcessEdit The dialog that edits a schedule.
     @Inject
-    public ScheduledProcessingPresenter(final EventBus eventBus,
-                                        final ScheduledProcessingView view,
-                                        final RestFactory restFactory,
-                                        final ScheduledProcessListController scheduleList,
-                                        final ScheduledProcessHistoryListController historyList,
-                                        final ScheduledProcessEditController scheduledProcessEdit) {
-        super(eventBus, view);
+    public ScheduledProcessingController(final EventBus eventBus,
+                                         final ScheduledProcessing view,
+                                         final RestFactory restFactory,
+                                         final ScheduledProcessListController scheduleList,
+                                         final ScheduledProcessHistoryListController historyList,
+                                         final ScheduledProcessEditController scheduledProcessEdit) {
+        super(eventBus);
+        initWidget(view);
         own(scheduleList);
         own(historyList);
         own(scheduledProcessEdit);
@@ -93,11 +102,13 @@ public class ScheduledProcessingPresenter
         scheduleList.read(ownerDocRef);
     }
 
-    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
-        this.documentEditPresenter = documentEditPresenter;
+    /// @param isDocumentDirty Whether the document has unsaved changes, which must be saved before a
+    ///                        schedule is added.
+    public void setIsDocumentDirty(final BooleanSupplier isDocumentDirty) {
+        this.isDocumentDirty = isDocumentDirty;
     }
 
-    public void add() {
+    private void add() {
         final ExecutionSchedule newSchedule = ExecutionSchedule
                 .builder()
                 .name("Daily")
@@ -116,7 +127,7 @@ public class ScheduledProcessingPresenter
         add(newSchedule);
     }
 
-    public void replay(final ExecutionHistory executionHistory) {
+    private void replay(final ExecutionHistory executionHistory) {
         if (executionHistory != null && executionHistory.getExecutionSchedule() != null) {
             final ExecutionSchedule newSchedule = executionHistory
                     .getExecutionSchedule()
@@ -137,7 +148,7 @@ public class ScheduledProcessingPresenter
         if (readOnly) {
             return;
         }
-        if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
+        if (isDocumentDirty.getAsBoolean()) {
             AlertEvent.fireWarn(
                     this,
                     "Please ensure all settings are correct and save before adding executions",
@@ -153,14 +164,15 @@ public class ScheduledProcessingPresenter
                                 scheduleList.refresh();
                                 scheduleList.setSelected(created);
                             })
-                            .taskMonitorFactory(this)
+                            .owner(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
                 }
             });
         }
     }
 
-    public void edit() {
+    private void edit() {
         final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
             scheduledProcessEdit.show(selected, executionSchedule -> {
@@ -172,14 +184,15 @@ public class ScheduledProcessingPresenter
                                 scheduleList.refresh();
                                 scheduleList.setSelected(updated);
                             })
-                            .taskMonitorFactory(this)
+                            .owner(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
                 }
             });
         }
     }
 
-    public void remove() {
+    private void remove() {
         final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
             // Deleting a schedule can't be undone, so ask first
@@ -191,7 +204,8 @@ public class ScheduledProcessingPresenter
                                     .create(EXECUTION_SCHEDULE_RESOURCE)
                                     .method(res -> res.deleteExecutionSchedule(selected))
                                     .onSuccess(success -> scheduleList.refresh())
-                                    .taskMonitorFactory(this)
+                                    .owner(this)
+                            .taskMonitorFactory(taskMonitor())
                                     .exec();
                         }
                     });
@@ -199,13 +213,8 @@ public class ScheduledProcessingPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
-
-
-    public interface ScheduledProcessingView extends View {
-
-        void setScheduleList(IsWidget view);
-
-        void setHistoryList(IsWidget view);
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }
