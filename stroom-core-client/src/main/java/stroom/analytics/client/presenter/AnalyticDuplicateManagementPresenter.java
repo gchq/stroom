@@ -30,8 +30,8 @@ public class AnalyticDuplicateManagementPresenter
     public AnalyticDuplicateManagementPresenter(final EventBus eventBus,
                                                 final DuplicateManagementView view,
                                                 final DuplicateManagementListController
-                                                        duplicateManagementListPresenter) {
-        super(eventBus, view, duplicateManagementListPresenter);
+                                                        duplicateManagementList) {
+        super(eventBus, view, duplicateManagementList);
     }
 
     @Override

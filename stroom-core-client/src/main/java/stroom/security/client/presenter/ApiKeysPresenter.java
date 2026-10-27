@@ -53,7 +53,7 @@ public class ApiKeysPresenter
 
     public static final String TAB_TYPE = "ApiKeys";
 
-    private final ApiKeysListController listPresenter;
+    private final ApiKeysListController apiKeysList;
     private final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider;
     private final RestFactory restFactory;
     private final ButtonView addButton;
@@ -64,25 +64,25 @@ public class ApiKeysPresenter
     @Inject
     public ApiKeysPresenter(final EventBus eventBus,
                             final ApiKeysView view,
-                            final ApiKeysListController listPresenter,
+                            final ApiKeysListController apiKeysList,
                             final RestFactory restFactory,
                             final UiConfigCache uiConfigCache,
                             final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
+        own(apiKeysList);
+        this.apiKeysList = apiKeysList;
         this.restFactory = restFactory;
         this.editApiKeyPresenterProvider = editApiKeyPresenterProvider;
 
 //        view.setUiHandlers(this);
-        view.setList(listPresenter);
+        view.setList(apiKeysList);
 
-        listPresenter.getToolbar().setName("API key actions");
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected API Key",
+        apiKeysList.getToolbar().setName("API key actions");
+        addButton = apiKeysList.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);
+        editButton = apiKeysList.getToolbar().button(SvgImage.EDIT, "Edit Selected API Key",
                 this::editSelectedKey);
         editButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key",
+        deleteButton = apiKeysList.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key",
                 this::deleteSelectedKeys);
         deleteButton.setEnabled(false);
 
@@ -120,24 +120,24 @@ public class ApiKeysPresenter
     }
 
     private List<HashedApiKey> getSelectedItems() {
-        return listPresenter.getSelectionModel().getSelectedItems();
+        return apiKeysList.getSelectionModel().getSelectedItems();
     }
 
     private MultiSelectionModelImpl<HashedApiKey> getSelectionModel() {
-        return listPresenter.getSelectionModel();
+        return apiKeysList.getSelectionModel();
     }
 
     private void createNewKey() {
         final boolean allowOwnerSelection = owner == null;
         makeDialog(editApiKeyPresenterProvider).showCreateDialog(
                 Mode.PRE_CREATE,
-                listPresenter::refresh,
+                apiKeysList::refresh,
                 allowOwnerSelection);
     }
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = getSelectionModel().getSelected();
-        makeDialog(editApiKeyPresenterProvider).showEditDialog(apiKey, Mode.EDIT, listPresenter::refresh);
+        makeDialog(editApiKeyPresenterProvider).showEditDialog(apiKey, Mode.EDIT, apiKeysList::refresh);
     }
 
     private void deleteSelectedKeys() {
@@ -230,12 +230,12 @@ public class ApiKeysPresenter
 
     @Override
     public void changeQuickFilterInput(final String userInput) {
-        listPresenter.setQuickFilter(userInput);
+        apiKeysList.setQuickFilter(userInput);
     }
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
+        apiKeysList.refresh();
     }
 
     @Override
@@ -254,12 +254,12 @@ public class ApiKeysPresenter
     }
 
     public void showOwner(final UserRef owner) {
-        listPresenter.showUser(owner);
+        apiKeysList.showUser(owner);
     }
 
     public void setOwner(final UserRef owner) {
         this.owner = owner;
-        listPresenter.setOwner(owner);
+        apiKeysList.setOwner(owner);
     }
 
 

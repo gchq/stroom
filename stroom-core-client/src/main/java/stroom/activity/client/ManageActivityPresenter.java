@@ -59,7 +59,7 @@ public class ManageActivityPresenter
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
-    private final ActivityListController listPresenter;
+    private final ActivityListController activityList;
     private final Provider<ActivityEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
@@ -76,7 +76,7 @@ public class ManageActivityPresenter
     @Inject
     public ManageActivityPresenter(final EventBus eventBus,
                                    final ManageActivityView view,
-                                   final ActivityListController listPresenter,
+                                   final ActivityListController activityList,
                                    final Provider<ActivityEditPresenter> editProvider,
                                    final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
@@ -84,8 +84,8 @@ public class ManageActivityPresenter
                                    final CurrentActivity currentActivity,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
+        own(activityList);
+        this.activityList = activityList;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
@@ -94,25 +94,25 @@ public class ManageActivityPresenter
 
         getView().setUiHandlers(this);
 
-        getView().setListView(listPresenter);
+        getView().setListView(activityList);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        activityList.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ActivityResource.QUICK_FILTER_CONTEXT, this, this));
 
-        listPresenter.getToolbar().setName("Activity actions");
-        newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Activity", this::onNew);
-        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Activity", this::onOpen);
+        activityList.getToolbar().setName("Activity actions");
+        newButton = activityList.getToolbar().button(SvgImage.ADD, "New Activity", this::onNew);
+        openButton = activityList.getToolbar().button(SvgImage.EDIT, "Edit Selected Activity", this::onOpen);
         openButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity", this::onDelete);
+        deleteButton = activityList.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity", this::onDelete);
         deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();
 
         getView().setTooltipContentSupplier(this::getQuickFilterTooltipSupplier);
 
-        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(activityList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 hide();
@@ -183,7 +183,7 @@ public class ManageActivityPresenter
             // Avoid the refresh on first show as this causes the data to be fetched twice
             isFirstShow = false;
         } else {
-            listPresenter.refresh();
+            activityList.refresh();
         }
 
         uiConfigCache.get(uiConfig -> {
@@ -245,7 +245,7 @@ public class ManageActivityPresenter
             if (editProvider != null) {
                 final ActivityEditPresenter editor = makeDialog(editProvider);
                 editor.show(e, activity -> {
-                    listPresenter.refresh();
+                    activityList.refresh();
                     setSelected(activity);
                     updateQuickFilterTooltipContentSupplier();
                 });
@@ -265,8 +265,8 @@ public class ManageActivityPresenter
                                     .create(ACTIVITY_RESOURCE)
                                     .method(res -> res.delete(entity.getId()))
                                     .onSuccess(success -> {
-                                        listPresenter.refresh();
-                                        listPresenter.getSelectionModel().clear();
+                                        activityList.refresh();
+                                        activityList.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
                                     .taskMonitorFactory(this)
@@ -292,14 +292,14 @@ public class ManageActivityPresenter
     }
 
     private void setSelected(final Activity activity) {
-        listPresenter.getSelectionModel().clear();
+        activityList.getSelectionModel().clear();
         if (activity != null) {
-            listPresenter.getSelectionModel().setSelected(activity);
+            activityList.getSelectionModel().setSelected(activity);
         }
     }
 
     private Activity getSelected() {
-        return listPresenter.getSelectionModel().getSelected();
+        return activityList.getSelectionModel().getSelected();
     }
 
     public SafeHtml getQuickFilterTooltipSupplier() {
@@ -338,10 +338,10 @@ public class ManageActivityPresenter
                 }
             }
 
-            if (!Objects.equals(filter, listPresenter.getCriteria())) {
+            if (!Objects.equals(filter, activityList.getCriteria())) {
 
-                listPresenter.setCriteria(name);
-                listPresenter.refresh();
+                activityList.setCriteria(name);
+                activityList.refresh();
             }
         }
 

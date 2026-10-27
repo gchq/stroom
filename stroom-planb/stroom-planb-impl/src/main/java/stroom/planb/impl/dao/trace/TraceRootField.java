@@ -18,7 +18,7 @@ package stroom.planb.impl.dao.trace;
 
 /**
  * Sort-field identifier constants for the traces list UI, matching the
- * {@code .withSorting(name)} calls in {@code TracesListPresenter}.
+ * {@code .withSorting(name)} calls in {@code TracesList}.
  *
  * <p>These values are carried by {@link stroom.util.shared.CriteriaFieldSort#getId()}
  * and used by {@link TraceDb#findTraces} to select the appropriate LMDB secondary

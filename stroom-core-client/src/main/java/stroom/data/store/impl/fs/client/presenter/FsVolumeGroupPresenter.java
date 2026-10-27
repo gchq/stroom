@@ -43,7 +43,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final FsVolumeGroupListController volumeStatusListPresenter;
+    private final FsVolumeGroupListController fsVolumeGroupList;
     private final Provider<FsVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider;
@@ -56,31 +56,31 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     public FsVolumeGroupPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final FsVolumeGroupListController volumeStatusListPresenter,
+            final FsVolumeGroupListController fsVolumeGroupList,
             final Provider<FsVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
             final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider) {
 
         super(eventBus, view);
-        own(volumeStatusListPresenter);
-        this.volumeStatusListPresenter = volumeStatusListPresenter;
+        own(fsVolumeGroupList);
+        this.fsVolumeGroupList = fsVolumeGroupList;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.newFsVolumeGroupControllerProvider = newFsVolumeGroupControllerProvider;
 
-        volumeStatusListPresenter.getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
+        fsVolumeGroupList.getToolbar().setName("Volume group actions");
+        newButton = fsVolumeGroupList.getToolbar().button(SvgImage.ADD,
                 "New Data Volume Group", this::add);
-        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
+        openButton = fsVolumeGroupList.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Data Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
+        deleteButton = fsVolumeGroupList.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Data Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
-        view.setView(volumeStatusListPresenter);
+        view.setView(fsVolumeGroupList);
 
-        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(fsVolumeGroupList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
@@ -96,7 +96,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit() {
-        final FsVolumeGroupRow selected = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final FsVolumeGroupRow selected = fsVolumeGroupList.getSelectionModel().getSelected();
         if (selected != null) {
             final FsVolumeGroup volumeGroup = selected.getGroup();
             restFactory
@@ -118,7 +118,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void delete() {
-        final List<FsVolumeGroupRow> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<FsVolumeGroupRow> list = fsVolumeGroupList.getSelectionModel().getSelectedItems();
         if (NullSafe.hasItems(list)) {
             String message = "Are you sure you want to delete the selected volume group?";
             if (list.size() > 1) {
@@ -127,7 +127,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
                     result -> {
                         if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
+                            fsVolumeGroupList.getSelectionModel().clear();
                             for (final FsVolumeGroupRow row : list) {
                                 final FsVolumeGroup volume = row.getGroup();
                                 restFactory
@@ -143,13 +143,13 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void enableButtons() {
-        final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;
+        final boolean enabled = fsVolumeGroupList.getSelectionModel().getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
 
     public void refresh() {
-        volumeStatusListPresenter.refresh();
+        fsVolumeGroupList.refresh();
     }
 
     @Override

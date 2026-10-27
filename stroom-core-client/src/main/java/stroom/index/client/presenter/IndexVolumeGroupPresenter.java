@@ -41,7 +41,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
-    private final IndexVolumeGroupListController volumeStatusListPresenter;
+    private final IndexVolumeGroupListController indexVolumeGroupList;
     private final Provider<IndexVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider;
@@ -54,31 +54,31 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     public IndexVolumeGroupPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final IndexVolumeGroupListController volumeStatusListPresenter,
+            final IndexVolumeGroupListController indexVolumeGroupList,
             final Provider<IndexVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
             final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider) {
 
         super(eventBus, view);
-        own(volumeStatusListPresenter);
-        this.volumeStatusListPresenter = volumeStatusListPresenter;
+        own(indexVolumeGroupList);
+        this.indexVolumeGroupList = indexVolumeGroupList;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.newIndexVolumeGroupControllerProvider = newIndexVolumeGroupControllerProvider;
 
-        volumeStatusListPresenter.getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
+        indexVolumeGroupList.getToolbar().setName("Volume group actions");
+        newButton = indexVolumeGroupList.getToolbar().button(SvgImage.ADD,
                 "New Index Volume Group", this::add);
-        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
+        openButton = indexVolumeGroupList.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Index Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
+        deleteButton = indexVolumeGroupList.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Index Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
-        view.setView(volumeStatusListPresenter);
+        view.setView(indexVolumeGroupList);
 
-        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(indexVolumeGroupList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
@@ -117,7 +117,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit() {
-        final IndexVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final IndexVolumeGroup volume = indexVolumeGroupList.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -136,7 +136,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void delete() {
-        final List<IndexVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<IndexVolumeGroup> list = indexVolumeGroupList.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected volume group?";
             if (list.size() > 1) {
@@ -145,7 +145,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
             ConfirmEvent.fire(IndexVolumeGroupPresenter.this, message,
                     result -> {
                         if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
+                            indexVolumeGroupList.getSelectionModel().clear();
                             for (final IndexVolumeGroup volume : list) {
                                 restFactory
                                         .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -160,13 +160,13 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void enableButtons() {
-        final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;
+        final boolean enabled = indexVolumeGroupList.getSelectionModel().getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
 
     public void refresh() {
-        volumeStatusListPresenter.refresh();
+        indexVolumeGroupList.refresh();
     }
 
     @Override

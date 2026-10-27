@@ -59,7 +59,7 @@ public class IndexVolumeGroupEditPresenter
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
-    private final IndexVolumeStatusListController volumeStatusListPresenter;
+    private final IndexVolumeStatusListController indexVolumeStatusList;
     private final Provider<IndexVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -78,33 +78,33 @@ public class IndexVolumeGroupEditPresenter
     @Inject
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
                                          final IndexVolumeGroupEditView view,
-                                         final IndexVolumeStatusListController volumeStatusListPresenter,
+                                         final IndexVolumeStatusListController indexVolumeStatusList,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
                                          final NodeClient nodeClient) {
         super(eventBus, view);
-        own(volumeStatusListPresenter);
-        this.volumeStatusListPresenter = volumeStatusListPresenter;
+        own(indexVolumeStatusList);
+        this.indexVolumeStatusList = indexVolumeStatusList;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        volumeStatusListPresenter.getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
+        indexVolumeStatusList.getToolbar().setName("Volume actions");
+        newButton = indexVolumeStatusList.getToolbar().button(SvgImage.ADD,
                 "New Index Volume", this::create);
-        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
+        openButton = indexVolumeStatusList.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Index Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
+        deleteButton = indexVolumeStatusList.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Index Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes",
+        rescanButton = indexVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes",
                 this::onRescan);
 
-        view.setListView(volumeStatusListPresenter);
-        delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
+        view.setListView(indexVolumeStatusList);
+        delayedUpdate = new DelayedUpdate(indexVolumeStatusList::refresh);
 
-        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(indexVolumeStatusList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
@@ -127,7 +127,7 @@ public class IndexVolumeGroupEditPresenter
                         ),
                 throwable -> {
                 },
-                volumeStatusListPresenter.getTaskListener());
+                indexVolumeStatusList.getTaskListener());
     }
 
     private void create() {
@@ -136,13 +136,13 @@ public class IndexVolumeGroupEditPresenter
     }
 
     private void edit() {
-        final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final IndexVolume volume = indexVolumeStatusList.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Index Volume"))
-                    .taskMonitorFactory(volumeStatusListPresenter.getTaskListener())
+                    .taskMonitorFactory(indexVolumeStatusList.getTaskListener())
                     .exec();
         }
     }
@@ -151,13 +151,13 @@ public class IndexVolumeGroupEditPresenter
         final IndexVolumeEditPresenter editor = makeDialog(editProvider);
         editor.show(indexVolume, caption, result -> {
             if (result != null) {
-                volumeStatusListPresenter.refresh();
+                indexVolumeStatusList.refresh();
             }
-        }, volumeStatusListPresenter.getTaskListener());
+        }, indexVolumeStatusList.getTaskListener());
     }
 
     private void delete() {
-        final List<IndexVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<IndexVolume> list = indexVolumeStatusList.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected volume?";
             if (list.size() > 1) {
@@ -166,12 +166,12 @@ public class IndexVolumeGroupEditPresenter
             ConfirmEvent.fire(IndexVolumeGroupEditPresenter.this, message,
                     result -> {
                         if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
+                            indexVolumeStatusList.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
                                 restFactory
                                         .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .onSuccess(response -> indexVolumeStatusList.refresh())
                                         .taskMonitorFactory(this)
                                         .exec();
                             }
@@ -181,7 +181,7 @@ public class IndexVolumeGroupEditPresenter
     }
 
     private void enableButtons() {
-        final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;
+        final boolean enabled = indexVolumeStatusList.getSelectionModel().getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
@@ -198,7 +198,7 @@ public class IndexVolumeGroupEditPresenter
             expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getFldName());
             expressionCriteria.addSort(IndexVolumeFields.PATH.getFldName());
 
-            volumeStatusListPresenter.init(expressionCriteria, volumes ->
+            indexVolumeStatusList.init(expressionCriteria, volumes ->
                     open(volumeGroup, title, consumer));
         }
     }

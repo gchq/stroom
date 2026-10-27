@@ -45,22 +45,22 @@ public class TaskManagerPresenter
         implements Refreshable, TaskManagerUiHandlers {
 
     public static final String TAB_TYPE = "ServerTasks";
-    private final TaskManagerListController listPresenter;
+    private final TaskManagerListController taskManagerList;
 
     @Inject
     public TaskManagerPresenter(final EventBus eventBus,
                                 final TaskManagerView view,
-                                final TaskManagerListController listPresenter,
+                                final TaskManagerListController taskManagerList,
                                 final UiConfigCache uiConfigCache,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
+        own(taskManagerList);
+        this.taskManagerList = taskManagerList;
         view.setUiHandlers(this);
-        view.setList(listPresenter.asWidget());
+        view.setList(taskManagerList.asWidget());
         // A rejected filter comes back as an empty list like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        taskManagerList.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindTaskProgressCriteria.QUICK_FILTER_CONTEXT, this, this));
 
@@ -100,13 +100,13 @@ public class TaskManagerPresenter
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
+        taskManagerList.refresh();
     }
 
     @Override
     public void changeNameFilter(final String name) {
         getView().setNameFilter(name);
-        listPresenter.setNameFilter(name);
+        taskManagerList.setNameFilter(name);
     }
 
     public void changeNameFilter(final String nodeName, final String taskName, final String userName) {

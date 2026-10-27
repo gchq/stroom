@@ -48,13 +48,13 @@ public class CredentialsManagerDialogPresenter
     public CredentialsManagerDialogPresenter(final EventBus eventBus,
                                              final CredentialsManagerDialogView view,
                                              final MarkdownConverter markdownConverter,
-                                             final CredentialsListController credentialsListPresenter) {
+                                             final CredentialsListController credentialsList) {
         super(eventBus, view);
-        own(credentialsListPresenter);
+        own(credentialsList);
         this.markdownConverter = markdownConverter;
-        credentialsListPresenter.setDefaultSelection(false);
-        view.setCredentialsList(credentialsListPresenter);
-        getView().setCredentialsListView(credentialsListPresenter);
+        credentialsList.setDefaultSelection(false);
+        view.setCredentialsList(credentialsList);
+        getView().setCredentialsListView(credentialsList);
     }
 
     /**

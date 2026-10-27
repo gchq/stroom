@@ -37,22 +37,22 @@ import java.util.function.Consumer;
 public class FeedDependencyPresenter
         extends MyPresenterWidget<FeedDependencyPresenter.FeedDependencyView> {
 
-    private final FeedDependencyListController feedDependencyListPresenter;
+    private final FeedDependencyListController feedDependencyList;
 
 
     @Inject
     public FeedDependencyPresenter(final EventBus eventBus,
                                    final FeedDependencyView view,
-                                   final FeedDependencyListController feedDependencyListPresenter) {
+                                   final FeedDependencyListController feedDependencyList) {
         super(eventBus, view);
-        own(feedDependencyListPresenter);
-        this.feedDependencyListPresenter = feedDependencyListPresenter;
-        view.setFeedDependencyList(feedDependencyListPresenter);
+        own(feedDependencyList);
+        this.feedDependencyList = feedDependencyList;
+        view.setFeedDependencyList(feedDependencyList);
     }
 
     public void show(final FeedDependencies feedDependencies,
                      final Consumer<FeedDependencies> consumer) {
-        feedDependencyListPresenter
+        feedDependencyList
                 .setFeedDependencies(NullSafe.get(feedDependencies, FeedDependencies::getFeedDependencies));
         getView().setMinProcessingDelay(NullSafe.get(feedDependencies, FeedDependencies::getMinProcessingDelay));
         getView().setMaxProcessingDelay(NullSafe.get(feedDependencies, FeedDependencies::getMaxProcessingDelay));
@@ -64,10 +64,10 @@ public class FeedDependencyPresenter
                 .popupSize(popupSize)
                 .caption("Set Feed Dependencies")
                 .modal(true)
-                .onShow(e -> feedDependencyListPresenter.focus())
+                .onShow(e -> feedDependencyList.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final List<FeedDependency> list = feedDependencyListPresenter.getFeedDependencies();
+                        final List<FeedDependency> list = feedDependencyList.getFeedDependencies();
                         consumer.accept(FeedDependencies
                                 .builder()
                                 .feedDependencies(list)

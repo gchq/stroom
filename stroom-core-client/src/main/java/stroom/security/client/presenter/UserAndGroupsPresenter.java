@@ -340,7 +340,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private void addUserToGroup(final UserRef user,
                                 final UserRef group,
-                                final UserListController userListPresenter,
+                                final UserListController targetList,
                                 final UserRef selection) {
         if (group != null && user != null) {
             restFactory
@@ -350,10 +350,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
                         // Add a consumer to monitor the new result list when there is a refresh.
                         // This allows us to try to select the newly added item.
-                        userListPresenter.setResultPageConsumer(resultPage -> {
-                            userListPresenter.setResultPageConsumer(null);
+                        targetList.setResultPageConsumer(resultPage -> {
+                            targetList.setResultPageConsumer(null);
                             if (selection == null) {
-                                userListPresenter.getSelectionModel().clear();
+                                targetList.getSelectionModel().clear();
                             } else {
                                 if (resultPage != null && resultPage.getValues() != null) {
                                     final Optional<User> optional = resultPage
@@ -362,9 +362,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                             .filter(u -> u.getUuid().equals(selection.getUuid()))
                                             .findAny();
                                     if (optional.isPresent()) {
-                                        userListPresenter.getSelectionModel().setSelected(optional.get());
+                                        targetList.getSelectionModel().setSelected(optional.get());
                                     } else {
-                                        userListPresenter.getSelectionModel().clear();
+                                        targetList.getSelectionModel().clear();
                                     }
                                 }
                             }
@@ -374,16 +374,16 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         parentsList.refresh();
                         childrenList.refresh();
                     })
-                    .taskMonitorFactory(userListPresenter.getTaskMonitor())
+                    .taskMonitorFactory(targetList.getTaskMonitor())
                     .exec();
         }
     }
 
     private void removeUserFromGroup(final User user,
                                      final User group,
-                                     final UserListController userListPresenter) {
+                                     final UserListController targetList) {
         if (NullSafe.allNonNull(user, group)) {
-            final User nextSelection = getNextSelection(userListPresenter);
+            final User nextSelection = getNextSelection(targetList);
 
             restFactory
                     .create(USER_RESOURCE)
@@ -394,12 +394,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         childrenList.refresh();
 
                         if (nextSelection == null) {
-                            userListPresenter.getSelectionModel().clear();
+                            targetList.getSelectionModel().clear();
                         } else {
-                            userListPresenter.getSelectionModel().setSelected(nextSelection);
+                            targetList.getSelectionModel().setSelected(nextSelection);
                         }
                     })
-                    .taskMonitorFactory(userListPresenter.getTaskMonitor())
+                    .taskMonitorFactory(targetList.getTaskMonitor())
                     .exec();
         }
     }
@@ -431,10 +431,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                     .onSuccess(user -> {
                         // Add a consumer to monitor the new result list when there is a refresh.
                         // This allows us to try to select the newly added item.
-//                        userListPresenter.setResultPageConsumer(resultPage -> {
-//                            userListPresenter.setResultPageConsumer(null);
+//                        targetList.setResultPageConsumer(resultPage -> {
+//                            targetList.setResultPageConsumer(null);
 //                            if (selection == null) {
-//                                userListPresenter.getSelectionModel().clear();
+//                                targetList.getSelectionModel().clear();
 //                            } else {
 //                                if (resultPage != null && resultPage.getValues() != null) {
 //                                    final Optional<User> optional = resultPage
@@ -443,9 +443,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 //                                            .filter(u -> u.getUuid().equals(selection.getUuid()))
 //                                            .findAny();
 //                                    if (optional.isPresent()) {
-//                                        userListPresenter.getSelectionModel().setSelected(optional.get());
+//                                        targetList.getSelectionModel().setSelected(optional.get());
 //                                    } else {
-//                                        userListPresenter.getSelectionModel().clear();
+//                                        targetList.getSelectionModel().clear();
 //                                    }
 //                                }
 //                            }
@@ -459,10 +459,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }
     }
 
-    private User getNextSelection(final UserListController userListPresenter) {
-        final User currentSelection = userListPresenter.getSelectionModel().getSelected();
+    private User getNextSelection(final UserListController targetList) {
+        final User currentSelection = targetList.getSelectionModel().getSelected();
         User nextSelection = null;
-        final ResultPage<User> resultPage = userListPresenter.getCurrentData();
+        final ResultPage<User> resultPage = targetList.getCurrentData();
         if (resultPage != null) {
             final List<User> list = resultPage.getValues();
             if (currentSelection != null && list != null) {

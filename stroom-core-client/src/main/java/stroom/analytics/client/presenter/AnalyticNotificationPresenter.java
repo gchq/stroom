@@ -29,8 +29,8 @@ public class AnalyticNotificationPresenter
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
                                          final AnalyticNotificationView view,
-                                         final NotificationListController notificationListPresenter) {
-        super(eventBus, view, notificationListPresenter);
+                                         final NotificationListController notificationList) {
+        super(eventBus, view, notificationList);
     }
 
     @Override

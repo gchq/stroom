@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class RuleSetSettingsController extends Controller {
 
     private final RuleSetSettings view;
-    private final RuleSetListController listPresenter;
+    private final RuleSetListController ruleSetList;
     private final ExpressionTreeController expressionTree;
     private final Provider<RuleEditorController> ruleEditorProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
@@ -63,17 +63,17 @@ public class RuleSetSettingsController extends Controller {
     @Inject
     public RuleSetSettingsController(final EventBus eventBus,
                                      final RuleSetSettings view,
-                                     final RuleSetListController listPresenter,
+                                     final RuleSetListController ruleSetList,
                                      final ExpressionTreeController expressionTree,
                                      final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
         this.view = view;
-        this.listPresenter = own(listPresenter);
+        this.ruleSetList = own(ruleSetList);
         this.expressionTree = own(expressionTree);
         this.ruleEditorProvider = ruleEditorProvider;
 
         initWidget(view);
-        view.setRuleList(listPresenter.asWidget(), listPresenter.getToolbar());
+        view.setRuleList(ruleSetList.asWidget(), ruleSetList.getToolbar());
         view.setExpression(expressionTree.asWidget());
         view.setOnAction(this::onAction);
 
@@ -118,7 +118,7 @@ public class RuleSetSettingsController extends Controller {
     }
 
     private MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
-        return listPresenter.getSelectionModel();
+        return ruleSetList.getSelectionModel();
     }
 
     private void onAction(final RuleAction action) {
@@ -276,7 +276,7 @@ public class RuleSetSettingsController extends Controller {
                     rule.getExpression(),
                     rule.getAction()));
         }
-        listPresenter.setData(rules);
+        ruleSetList.setData(rules);
         updateButtons();
     }
 

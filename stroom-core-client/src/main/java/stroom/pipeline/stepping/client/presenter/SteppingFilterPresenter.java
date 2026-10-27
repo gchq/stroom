@@ -62,7 +62,7 @@ public class SteppingFilterPresenter extends
 
     protected static final String BASE_CLASS = "pipelineElementChooser";
     private static final int ICON_COL_WIDTH = 22;
-    private final XPathList xPathListPresenter;
+    private final XPathList xPathList;
     private final Provider<XPathFilterEditorController> xPathFilterEditorProvider;
     private List<XPathFilter> xPathFilters;
 
@@ -80,19 +80,19 @@ public class SteppingFilterPresenter extends
     @Inject
     public SteppingFilterPresenter(final EventBus eventBus,
                                    final SteppingFilterView view,
-                                   final XPathList xPathListPresenter,
+                                   final XPathList xPathList,
                                    final Provider<XPathFilterEditorController> xPathFilterEditorProvider,
                                    final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
-        this.xPathListPresenter = xPathListPresenter;
+        this.xPathList = xPathList;
         this.xPathFilterEditorProvider = xPathFilterEditorProvider;
 
-        xPathListPresenter.getToolbar().setName("XPath actions");
-        addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
-        editXPath = xPathListPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter",
+        xPathList.getToolbar().setName("XPath actions");
+        addXPath = xPathList.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
+        editXPath = xPathList.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter",
                 this::editXPathFilter);
         editXPath.setEnabled(false);
-        removeXPath = xPathListPresenter.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters",
+        removeXPath = xPathList.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters",
                 this::removeXPathFilter);
         removeXPath.setEnabled(false);
         editXPath.setEnabled(false);
@@ -152,10 +152,10 @@ public class SteppingFilterPresenter extends
         });
 
         getView().setElementChooser(elementChooser);
-        getView().setXPathList(xPathListPresenter);
+        getView().setXPathList(xPathList);
 
-        own(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+        own(xPathList.getSelectionModel().addSelectionHandler(event -> {
+            final List<XPathFilter> list = xPathList.getSelectionModel().getSelectedItems();
             editXPath.setEnabled(list.size() == 1);
             removeXPath.setEnabled(list.size() > 0);
 
@@ -180,27 +180,27 @@ public class SteppingFilterPresenter extends
 
         xPathFilterEditorProvider.get().edit(this, "Add XPath Filter", xPathFilter, () -> {
             xPathFilters.add(xPathFilter);
-            xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
+            xPathList.getSelectionModel().setSelected(xPathFilter);
             updateLocalActiveFilterState();
         });
     }
 
     private void editXPathFilter() {
-        final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+        final List<XPathFilter> list = xPathList.getSelectionModel().getSelectedItems();
         if (list.size() == 1) {
             xPathFilterEditorProvider.get().edit(this, "Edit XPath Filter", list.get(0),
-                    xPathListPresenter::refresh);
+                    xPathList::refresh);
         }
     }
 
     private void removeXPathFilter() {
         // If there is a selected filter remove it from the set of filters and
         // the display.
-        final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+        final List<XPathFilter> list = xPathList.getSelectionModel().getSelectedItems();
         if (list.size() > 0) {
             xPathFilters.removeAll(list);
-            xPathListPresenter.refresh();
-            xPathListPresenter.getSelectionModel().clear();
+            xPathList.refresh();
+            xPathList.getSelectionModel().clear();
             updateLocalActiveFilterState();
         }
     }
@@ -264,7 +264,7 @@ public class SteppingFilterPresenter extends
         if (currentElementId != null) {
             final boolean hasActiveFilters = getView().getSkipToErrors() != null
                                              || getView().getSkipToOutput() != null
-                                             || xPathListPresenter.getDataProvider().getList()
+                                             || xPathList.getDataProvider().getList()
                                                      .stream()
                                                      .anyMatch(Objects::nonNull);
             elementIdToHasActiveFilterMap.put(currentElementId, hasActiveFilters);
@@ -284,7 +284,7 @@ public class SteppingFilterPresenter extends
         final String elementId = NullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
             getView().setName(element.getDisplayName());
-            xPathFilters = xPathListPresenter.getDataProvider().getList();
+            xPathFilters = xPathList.getDataProvider().getList();
             xPathFilters.clear();
 
             final SteppingFilterSettings settings = settingsMap.get(element.getId());

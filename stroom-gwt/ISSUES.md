@@ -266,7 +266,7 @@ basic use:
   `null`. Fix: only add and draw nodes when `pathway.getRoot() != null`. The workbench has no
   New Pathway story until this is fixed (`PathwaysEditorStories`).
 * A node with no constraints can never get one: `ConstraintListController` (was
-  `ConstraintListPresenter`) starts with `readOnly = true`, and `setData` updates it but never
+  `ConstraintList`) starts with `readOnly = true`, and `setData` updates it but never
   brings the buttons up to date (`ConstraintList.updateActions`), so New, Edit and Remove stay
   disabled ("New constraint disabled as read only") until a constraint is selected, which only then
   enables them (the selection handler). Wave 10 keeps this as it is.
@@ -754,7 +754,7 @@ of them must go:
    `unbind()` doesn't cascade to children. `AbstractEditorPresenter` (line 58) registers a
    preferences handler in its constructor; with the document presenter unbound and Ace's listener
    removed, that handler on the shared event bus is what still holds a closed dictionary. Child
-   presenters' `registerHandler` registrations (e.g. a feed's `MetaListPresenter`) hold the rest.
+   presenters' `registerHandler` registrations (e.g. a feed's `MetaList`) hold the rest.
 3. **Handlers added to a child "as source" whose registration is thrown away**
    (`addDirtyHandler`, `addChangeHandler`, `addDataSelectionHandler` through
    `MyPresenterWidget.addHandlerToSource`) stay on the shared event bus for good, keyed by the
@@ -1358,8 +1358,8 @@ header is named after what its icons show (e.g. "Info", "Actions"), visually hid
 
 **Fixed**: buttons that open menus say so and whether the menu is open (`ShowMenuEvent.Builder.opener`
 with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a grid row,
-`RowActions.menuButton`). Left: the row action menus of the data retention rules (`DataRetentionPolicyListPresenter`) and content templates
-(`ContentTemplateListPresenter`), whose `showActionMenu` is never called (dead code).
+`RowActions.menuButton`). Left: the row action menus of the data retention rules (`DataRetentionPolicyList`) and content templates
+(`ContentTemplateList`), whose `showActionMenu` is never called (dead code).
 
 ### Controls with no accessible name
 
@@ -1743,7 +1743,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
   `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListController`, was
-  `ProfilePeriodListPresenter`).
+  `ProfilePeriodList`).
 * ~~`DocumentUserPermissionsListPresenter` asked the document type cache for its columns
   (`setupColumns`) before its grid was created; with the cache already filled it would add them to
   a null grid.~~ Fixed in wave 10's audit: `DocumentUserPermissionsListController` adds the columns
@@ -1794,7 +1794,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
-  been selected" (`FindAnnotationListPresenter`).
+  been selected" (`FindAnnotationList`).
 * Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
   as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
   until both are entered again, even to change only the name. Nothing in the dialog says the

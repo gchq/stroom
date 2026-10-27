@@ -37,21 +37,21 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
 
     public static final String TAB_TYPE = "Jobs";
     private final JobListController jobList;
-    private final JobNodeListController jobNodeListPresenter;
+    private final JobNodeListController jobNodeList;
 
     @Inject
     public JobPresenter(final EventBus eventBus,
                         final JobView view,
                         final JobListController jobList,
-                        final JobNodeListController jobNodeListPresenter) {
+                        final JobNodeListController jobNodeList) {
         super(eventBus, view);
         own(jobList);
-        own(jobNodeListPresenter);
+        own(jobNodeList);
         this.jobList = jobList;
-        this.jobNodeListPresenter = jobNodeListPresenter;
+        this.jobNodeList = jobNodeList;
 
         getView().setJobListView(jobList);
-        getView().setJobNodeListView(jobNodeListPresenter);
+        getView().setJobNodeListView(jobNodeList);
 
         own(jobList.getSelectionModel().addSelectionHandler(event -> {
             final Job row = NullSafe.get(
@@ -59,7 +59,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
                     JobListController::getSelectionModel,
                     MultiSelectionModel::getSelected,
                     JobWrapper::getJob);
-            jobNodeListPresenter.read(row);
+            jobNodeList.read(row);
         }));
     }
 
@@ -85,17 +85,17 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
 
     public void setSelected(final Job job) {
         jobList.setSelected(job);
-        jobNodeListPresenter.setSelected(null);
+        jobNodeList.setSelected(null);
     }
 
     public void setSelected(final JobNode jobNode) {
         jobList.setSelected(NullSafe.get(jobNode, JobNode::getJob));
-        jobNodeListPresenter.setSelected(jobNode);
+        jobNodeList.setSelected(jobNode);
     }
 
     @Override
     public void refresh() {
-        jobNodeListPresenter.refresh();
+        jobNodeList.refresh();
     }
 
 

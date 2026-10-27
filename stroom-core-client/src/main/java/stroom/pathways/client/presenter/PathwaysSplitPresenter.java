@@ -31,31 +31,31 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, PathwaysDoc> {
 
-    private final PathwayListController pathwayListPresenter;
+    private final PathwayListController pathwayList;
     private final PathwayTreeController pathwayTree;
 
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
                                   final PathwaysSplitView view,
-                                  final PathwayListController pathwayListPresenter,
+                                  final PathwayListController pathwayList,
                                   final PathwayTreeController pathwayTree) {
         super(eventBus, view);
-        own(pathwayListPresenter);
+        own(pathwayList);
         own(pathwayTree);
-        this.pathwayListPresenter = pathwayListPresenter;
+        this.pathwayList = pathwayList;
         this.pathwayTree = pathwayTree;
-        view.setTable(pathwayListPresenter);
+        view.setTable(pathwayList);
         view.setTree(pathwayTree);
 
-        own(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final Pathway selected = pathwayListPresenter.getSelectionModel().getSelected();
+        own(pathwayList.getSelectionModel().addSelectionHandler(e -> {
+            final Pathway selected = pathwayList.getSelectionModel().getSelected();
             pathwayTree.read(getEntity(), selected);
         }));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final PathwaysDoc document) {
-        pathwayListPresenter.read(docRef, document);
+        pathwayList.read(docRef, document);
     }
 
     @Override

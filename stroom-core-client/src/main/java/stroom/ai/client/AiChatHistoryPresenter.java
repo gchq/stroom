@@ -45,7 +45,7 @@ public class AiChatHistoryPresenter
         implements AiChatHistoryUiHandlers {
 
 
-    private final AiChatHistoryResultListController findResultListPresenter;
+    private final AiChatHistoryResultListController aiChatHistoryResultList;
     private boolean showing;
     private Consumer<AiChat> selectionConsumer;
 
@@ -53,19 +53,19 @@ public class AiChatHistoryPresenter
     @Inject
     public AiChatHistoryPresenter(final EventBus eventBus,
                          final AiChatHistoryView view,
-                         final AiChatHistoryResultListController findResultListPresenter,
+                         final AiChatHistoryResultListController aiChatHistoryResultList,
                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(findResultListPresenter);
-        this.findResultListPresenter = findResultListPresenter;
+        own(aiChatHistoryResultList);
+        this.aiChatHistoryResultList = aiChatHistoryResultList;
 
-        view.setResultView(findResultListPresenter);
-        findResultListPresenter.setOnFilterError(view::setFilterError);
+        view.setResultView(aiChatHistoryResultList);
+        aiChatHistoryResultList.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindAiChatHistoryCriteria.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);
-        findResultListPresenter.setOnOpen(this::openDocument);
-        findResultListPresenter.setOnFocusFilter(this::focus);
+        aiChatHistoryResultList.setOnOpen(this::openDocument);
+        aiChatHistoryResultList.setOnFocusFilter(this::focus);
     }
 
     private void openDocument(final AiChat match) {
@@ -81,7 +81,7 @@ public class AiChatHistoryPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        if (findResultListPresenter.setFilter(name)) {
+        if (aiChatHistoryResultList.setFilter(name)) {
             refresh();
         }
     }
@@ -89,14 +89,14 @@ public class AiChatHistoryPresenter
     @Override
     public void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            openDocument(findResultListPresenter.getSelected());
+            openDocument(aiChatHistoryResultList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            findResultListPresenter.setKeyboardSelectedRow(0, true);
+            aiChatHistoryResultList.setKeyboardSelectedRow(0, true);
         }
     }
 
     public void refresh() {
-        findResultListPresenter.refresh();
+        aiChatHistoryResultList.refresh();
     }
 
     private void hide() {
@@ -159,7 +159,7 @@ public class AiChatHistoryPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final AiChat selected = findResultListPresenter.getSelected();
+                        final AiChat selected = aiChatHistoryResultList.getSelected();
                         if (selected != null && selectionConsumer != null) {
                             selectionConsumer.accept(selected);
                         }

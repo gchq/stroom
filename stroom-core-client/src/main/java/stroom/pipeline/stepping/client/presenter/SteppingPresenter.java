@@ -122,7 +122,7 @@ public class SteppingPresenter
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
-    private final SteppingMetaListController steppingMetaListPresenter;
+    private final SteppingMetaListController steppingMetaList;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
     // elementId => ElementPresenter
@@ -182,7 +182,7 @@ public class SteppingPresenter
         this.stepControl = stepControl;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
-        this.steppingMetaListPresenter = make(metaListPresenterProvider);
+        this.steppingMetaList = make(metaListPresenterProvider);
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
@@ -230,11 +230,11 @@ public class SteppingPresenter
         view.addWidgetRight(stepControl.asWidget());
         view.addWidgetRight(buttonPanel);
 
-        steppingMetaListPresenter.getToolbar().setName("Stream actions");
-        streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter Streams",
+        steppingMetaList.getToolbar().setName("Stream actions");
+        streamListFilter = steppingMetaList.getToolbar().button(SvgImage.FILTER, "Filter Streams",
                 this::onStreamListFilter);
 
-        sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.asWidget());
+        sourcePresenter.getView().setMetaListContainerView(steppingMetaList.asWidget());
 
         own(
                 pipelinePathBar.getSelectionModel().addSelectionChangeHandler(event -> {
@@ -244,15 +244,15 @@ public class SteppingPresenter
         stepLocationLink.setOnStepLocation(stepLocation -> {
             step(StepType.REFRESH, stepLocation);
             final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
-            steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
+            steppingMetaList.getSelectionModel().setSelected(new MetaRow(meta, null, null));
         });
         // The step controls step from the current location
         stepControl.setOnStep(stepType -> step(stepType, null));
         stepControl.setOnFilter(this::showChangeFiltersDialog);
 
-        own(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(steppingMetaList.getSelectionModel().addSelectionHandler(event -> {
             if (runStepping) {
-                final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
+                final MetaRow selectedRow = steppingMetaList.getSelected();
                 if (selectedRow != null) {
 
                     final Meta selectedMeta = selectedRow.getMeta();
@@ -264,10 +264,10 @@ public class SteppingPresenter
             }
         }));
 
-        steppingMetaListPresenter.setOnResult(resultPage -> {
+        steppingMetaList.setOnResult(resultPage -> {
             if (resultPage.size() == 1) {
                 final MetaRow metaRow = resultPage.getFirst();
-                steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
+                steppingMetaList.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
                 stepLocationLink.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
                 // Begin stepping if not already stepping on this stream. This handles the case where the user
                 // changes the filter expression and a single result is auto-selected
@@ -294,7 +294,7 @@ public class SteppingPresenter
             }
         }));
 
-//        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
+//        steppingMetaList.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
     private void setClassification(final String classification) {
@@ -361,23 +361,23 @@ public class SteppingPresenter
         getCriteria().obtainPageRequest().setOffset(0);
 
         // Clear the current selection and get a new list of streams.
-        steppingMetaListPresenter.getSelectionModel().clear();
+        steppingMetaList.getSelectionModel().clear();
         refreshMetaList();
     }
 
     public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
-        steppingMetaListPresenter.setExpression(expressionOperator, () -> {
+        steppingMetaList.setExpression(expressionOperator, () -> {
             refreshMetaList();
             NullSafe.run(afterSet);
         });
     }
 
     public ResultPage<MetaRow> getMetaList() {
-        return steppingMetaListPresenter.getResultPage();
+        return steppingMetaList.getResultPage();
     }
 
     private FindMetaCriteria getCriteria() {
-        return steppingMetaListPresenter.getCriteria();
+        return steppingMetaList.getCriteria();
     }
 
     private ElementPresenter getCurrentElementPresenter() {
@@ -688,21 +688,21 @@ public class SteppingPresenter
     }
 
     public void refreshMetaList() {
-        steppingMetaListPresenter.refresh();
+        steppingMetaList.refresh();
     }
 
     public void beginStepping() {
         if (this.meta == null) {
-            if (steppingMetaListPresenter.getSelected() == null) {
+            if (steppingMetaList.getSelected() == null) {
                 sourcePresenter.clear();
 
-                if (steppingMetaListPresenter.getResultPage() == null) {
+                if (steppingMetaList.getResultPage() == null) {
                     refreshMetaList();
                 }
 
                 return;
             }
-            this.meta = steppingMetaListPresenter.getSelected().getMeta();
+            this.meta = steppingMetaList.getSelected().getMeta();
         }
 
         beginStepping(StepType.REFRESH,
@@ -734,8 +734,8 @@ public class SteppingPresenter
 
         // Set the stream id on the stepping action.
         final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(this.meta);
-        findMetaCriteria.setSortList(steppingMetaListPresenter.getCriteria().getSortList());
-        findMetaCriteria.setExpression(steppingMetaListPresenter.getCriteria().getExpression());
+        findMetaCriteria.setSortList(steppingMetaList.getCriteria().getSortList());
+        findMetaCriteria.setExpression(steppingMetaList.getCriteria().getExpression());
         requestBuilder.criteria(findMetaCriteria);
         // A step request needs the criteria, so a refresh or new location is only possible from now.
         stepControl.setRefreshEnabled(true);
@@ -1112,11 +1112,11 @@ public class SteppingPresenter
                 final Meta meta = Meta.builder().id(result.getFoundLocation().getMetaId()).build();
                 // If the returned meta doesnt match the current selected meta then make sure the stepping doesnt run
                 // again when we change the selected meta list row
-                final MetaRow selectedMetaRow = steppingMetaListPresenter.getSelectionModel().getSelected();
+                final MetaRow selectedMetaRow = steppingMetaList.getSelectionModel().getSelected();
                 if (selectedMetaRow != null && !selectedMetaRow.getMeta().equals(meta)) {
                     runStepping = false;
                 }
-                steppingMetaListPresenter.getSelectionModel().setSelected(
+                steppingMetaList.getSelectionModel().setSelected(
                         new MetaRow(meta, null, null));
             }
 
@@ -1145,8 +1145,8 @@ public class SteppingPresenter
             return;
         }
         if (pipelineModel.getCombinedData().getElements().size() > 1) {
-            final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
-            final ResultPage<MetaRow> metaResultPage = steppingMetaListPresenter.getResultPage();
+            final MetaRow selectedRow = steppingMetaList.getSelected();
+            final ResultPage<MetaRow> metaResultPage = steppingMetaList.getResultPage();
             final boolean isFirstStream = metaResultPage != null && metaResultPage.isFirst(selectedRow);
             final boolean isLastStream = metaResultPage != null && metaResultPage.isLast(selectedRow);
             stepControl.setEnabledButtons(

@@ -108,7 +108,7 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | multi-select / single-select / no selection | 30 / ~35 / ~11 |
 | server sort (`addColumnSortHandler` + `CriteriaUtil`) / client sort | 33 / ~7 |
 | server-paged (`RestDataProvider`) / client list (`setRowData`) | 46 / ~30 |
-| `setMultiLine(true)` | 16 (`TaskManagerListPresenter` toggles it at runtime) |
+| `setMultiLine(true)` | 16 (`TaskManagerList` toggles it at runtime) |
 | tick-box columns / select-all header | 21 / 7 |
 | in-cell editors (`TickBoxCell`, `ValueSpinnerCell`) | 21 / 3 |
 | expander (tree) columns | 8 |
@@ -152,7 +152,7 @@ Usage falls into eight categories:
    command links must not select the row (the `EventCell` / consumed-events rules,
    `DataGridSelectionEventManager.java:89-149`).
 3. **Meta browser.** Id-set selection kept across pages; a tri-state header; `redrawHeaders()`.
-4. **Server Tasks** (`TaskManagerListPresenter`). Pages of 1000 rows, auto-refresh, tree expanders,
+4. **Server Tasks** (`TaskManagerList`). Pages of 1000 rows, auto-refresh, tree expanders,
    and multi-line switched on and off at runtime.
 5. **ImportConfigConfirm.** A page of 100k rows with a select-all header.
 
@@ -378,7 +378,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-H4 | `sort(col)` pushes the column onto the sort list **without** firing an event (initial sort, 14 sites). Calling it again on the current first column flips its direction (GWT `push` semantics). `clearColumnSortList()`. | G `:940, :1174` |
 | R-H4a | **Sorting stays in the data model; the grid only fires sort actions (decided, §10).** The grid owns the `ColumnSortList` (what is sorted and in which direction) and fires `ColumnSortEvent`. Ordering the rows is the job of whatever supplies the data: server sort through `CriteriaUtil` + `RestDataProvider`, and client sort through the presenter's `ListDataProvider` + `DataGridComparatorFactory`. Both use the same mechanism. The grid has **no** built-in client-side sorting. | G |
 | R-H4b | **Default sort (D10).** `setDefaultSort(ColumnSortInfo...)` declares a screen's default sort on visible columns. It is (1) shown in the header from the start without firing an event, (2) used for the first request, and (3) **restored when the user's clicks leave the sort list empty** (the third click on the only sorted column). On a restore, the grid fires `ColumnSortEvent` with the default list, so what the header shows is always what the data model applies. Ctrl+click removing one of several sorted columns does not restore the default. Grids with no default go back to an empty list, and the data model then uses its natural order (D7). | changed |
-| R-H4c | **Tie-breaker sorts on hidden fields** (e.g. the meta browser's Id) are not part of the grid's sort state. The presenter appends them when building the request, as `AbstractMetaListPresenter` does today. They are never shown in a header and can never be clicked. | G |
+| R-H4c | **Tie-breaker sorts on hidden fields** (e.g. the meta browser's Id) are not part of the grid's sort state. The presenter appends them when building the request, as `MetaListController` does today. They are never shown in a header and can never be clicked. | G |
 | R-H5 | Header classes must be kept (CSS and tests depend on them): `dataGridHeader`, `dataGridFirstColumnHeader`, `dataGridLastColumnHeader`, `dataGridSortableHeader`, `dataGridSortedHeaderAscending/Descending`, `dataGridSortableHeaderOuterDiv`, `dataGridSortableHeaderNameHolder`, plus `Header.getHeaderStyleNames()`. | G |
 | R-H6 | **Header click menu:** a primary-button press and release on a header that did not turn into a resize or move calls `HeadingListener.onShowMenu(event, headingSupplier)`. Requires `allowHeaderSelection` and a listener. The event target must let the listener hit-test the value-filter icon and the filter-disable button (`ColumnsManager.java:137-213`). | G `:749-756` |
 | R-H7 | `setAllowHeaderSelection(boolean)` toggles `allow-header-selection` on the header (header text becomes selectable, plus the dashboard styling hooks). | G `:1188` |
@@ -401,7 +401,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TablePresenter :862-875` |
 | R-R7 | `dataGridDisabledCell` (`enabledWhen`) styling, including on selected rows. | G |
 | R-R8 | `redraw()`, `redrawRow(index)`, `getRowElement(index)` (returns the `data-grid__row` element, or null if not rendered), `getVisibleItem(s)`, `getVisibleItemCount`. | G |
-| R-R9 | **Column span per row** (`MarkerListPresenter` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
+| R-R9 | **Column span per row** (`MarkerList` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
 | R-R10 | Expander and tree cells (`ExpanderCell`: indent 20px per level, DOT / ARROW icons) work unchanged. An expander column width of `maxDepth×20+25`, or 0, is set by `TreeRowHandler` or the presenter, and the grid applies it immediately (R-L5). | G |
 
 ### 5.7 Selection and keyboard
@@ -720,15 +720,15 @@ interactive header cells, the context menu, copy, export and AI.
   `addColumn(ColSpec)` (new to `DataGrid`, sized by `ColumnSizing.fromColSettings`) and
   `getHeaderCellElement` (new to `MyDataGrid`). The code several screens share takes it rather
   than `MyDataGrid`: `DataGridUtil`'s column helpers (`addExpanderColumn`, `addStatusIconColumn`,
-  `addDocRefColumn`, `addFeedColumn`) and `JobNodeListHelper`, so the job and node screens can
-  move one at a time. `AbstractMetaListPresenter`'s grid moves with the meta browser.
+  `addDocRefColumn`, `addFeedColumn`) and `JobNodeColumns`, so the job and node screens can
+  move one at a time. `MetaListController`'s grid moves with the meta browser.
 * **Small lists, first batch** (2026-10-21): 14 client-side lists, switched by type:
-  * `LinkedEventPresenter`, `ScriptListPresenter`, `StatisticsFieldListPresenter`,
-    `ElasticIndexFieldListPresenter`, `SolrIndexFieldListPresenter`, `DocRefListPresenter`,
-    `SelectionHandlerListPresenter`, `SigningKeyListPresenter`, receive rules'
-    `FieldListPresenter`, `RuleListPresenter` (conditional formatting),
-    `UserSessionsListPresenter`, `WordListPresenter`, and the floor map editor's
-    `FloorMapTimeListPresenter` and `FloorMapFactListPresenter`.
+  * `LinkedEventPresenter`, `ScriptDependencyList`, `StatisticsFieldListPresenter`,
+    `ElasticIndexFieldList`, `SolrIndexFieldList`, `DocRefList`,
+    `SelectionHandlerList`, `SigningKeyList`, receive rules'
+    `FieldList`, `RuleList` (conditional formatting),
+    `UserSessionsList`, `WordListPresenter`, and the floor map editor's
+    `FloorMapTimeList` and `FloorMapFactList`.
   * Key providers where the row's `equals` is not already its id: index fields by name, word by
     word, selection handler, signing key and formatting rule by id (a rule with no id falls back to
     the row itself), session by handle, floor map time entry by time (the list holds one fact's).
@@ -745,25 +745,25 @@ interactive header cells, the context menu, copy, export and AI.
   * Differences kept: a play's click on a row left it scrolled to a different place (the Solr field
     paging story); the conditional formatting dialog opens sooner without `MyDataGrid`'s resize
     timers, so its own focus on show lands before the play's tab click rather than after.
-  * Held back at first: receive rules' `RuleSetListPresenter` (no stable row id) and the floor
+  * Held back at first: receive rules' `RuleSetList` (no stable row id) and the floor
     map's tracking, groups and cluster lists (no story renders them).
 * **Decisions** (2026-10-21, the user): fix the workbench frame now and take the screenshot
   baseline again; key the receive rules by position (`getRuleNumber`: an edited rule keeps its
   row, a moved one is a new row); write a story for a screen that has none before switching it;
   switch the server-paged lists in two or three batches.
-* **Then** `RuleSetListPresenter` (keyed by rule number) and `KeyBindingPreferencesPresenter` (its
+* **Then** `RuleSetList` (keyed by rule number) and `KeyBindingPreferences` (its
   story, `KeyboardShortcutPreferences`, does exist; rows already compare by all their fields).
 * **Server-paged lists, first batch**: `AiAttachmentDataPresenter` (`setPageStart` is
-  `setVisibleRange`), `DuplicateManagementListPresenter`, `IndexVolumeGroupListPresenter`,
-  `PathwayListPresenter` (keyed by name), `ProcessorProfileListPresenter` (id),
-  `AnnotationTagListPresenter`, `CacheListPresenter` (cache name), `FsVolumeGroupListPresenter`
-  (group id), `UserDependenciesListPresenter`, `CacheNodeListPresenter` (node name). Held back:
-  * `NodeGroupListPresenter`, `NodeJobListPresenter`, `JobNodeListPresenter`: tick boxes and a
+  `setVisibleRange`), `DuplicateManagementList`, `IndexVolumeGroupList`,
+  `PathwayList` (keyed by name), `ProcessorProfileList` (id),
+  `AnnotationTagList`, `CacheList` (cache name), `FsVolumeGroupList`
+  (group id), `UserDependenciesList`, `CacheNodeList` (node name). Held back:
+  * `NodeGroupList`, `NodeJobList`, `JobNodeList`: tick boxes and a
     value spinner, so the editable category.
   * `UserRefPopupPresenter` (the user picker): it uses `DataGridSelectionEventManager`'s
     selection-follows-focus, Up from the first row to the filter and typing into the filter, which
     `DataGridSelectionEventManager` doesn't have yet; a step of its own.
-  * `AnalyticDataShardListPresenter`: no story opens its grid (needs one first, as do the floor
+  * `AnalyticDataShardList`: no story opens its grid (needs one first, as do the floor
     map's three lists).
 * In the workbench, a full-screen app screen is 48px taller than the window
   (`StroomThemeDecorator` pads every story by 24px around the screen's `100vh`), so the bottom of
@@ -815,18 +815,18 @@ interactive header cells, the context menu, copy, export and AI.
     following the focus it had asked for is every single-choice grid's.
 
 * **Editable lists** (2026-10-21): 15 grids with tick boxes, spinners and select-all headers, switched
-  by type: `NodeJobListPresenter`, `JobNodeListPresenter`, `NodeStatusListPresenter`,
-  `IndexShardPresenter`, `ColumnSelectionPresenter`, `NodeGroupStateListPresenter`,
-  `StatisticsCustomMaskListPresenter`, `UserListPresenter`, `ConstraintListPresenter`,
-  `NodeGroupListPresenter`, `ContentTemplateListPresenter`, `DataRetentionPolicyListPresenter`,
-  `XPathListPresenter`, `DocRefSelectionPresenter`, and `ProcessorTaskSummaryPresenter` (given
+  by type: `NodeJobList`, `JobNodeList`, `NodeStatusList`,
+  `IndexShard`, `ColumnSelection`, `NodeGroupStateList`,
+  `StatisticsCustomMaskListPresenter`, `UserList`, `ConstraintList`,
+  `NodeGroupList`, `ContentTemplateList`, `DataRetentionPolicyList`,
+  `XPathList`, `DocRefSelection`, and `ProcessorTaskSummary` (given
   stories first, `App/Main/ProcessorTaskSummary`).
   * Key providers where a tick or refresh brings new, unequal rows: node groups and index shards
     by id, content templates and retention rules by number (their position), constraints by name,
     task summaries by their group (not their count).
   * The select-all headers (anonymous `Header`s with an updater) work as they are: the new grid
     gives header cells their events.
-  * `UserListPresenter.getDataGrid()` returns a `DataGridView`; `DocRefSelectionView.setDataWidget`
+  * `UserList.getDataGrid()` returns a `DataGridView`; `DocRefSelection.setDataWidget`
     takes a `Widget`.
   * The plays find rows, cells and headers with `StroomDom.GRID_ROW`, `GRID_HEADER_CELL`,
     `GRID_HEADER_TEXT` and `GRID_CELL_TEXT` (new), which match either grid.
@@ -842,12 +842,12 @@ interactive header cells, the context menu, copy, export and AI.
   * Held back: the floor map settings' Value Schema (`FloorMapSettingsPresenter`): its rows have no
     stable id, it uses a selection model with no handler, and it restores focus through table rows.
 
-* **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyListPresenter`,
-  `ProfilePeriodListPresenter`, `FeedDependencyListPresenter`, `PipelineReferenceListPresenter`,
-  `ManageGlobalPropertyListPresenter`, `ActivityListPresenter`, `CredentialsListPresenter`,
-  `ContentStoreContentPackListPresenter`, `DocumentUserPermissionsListPresenter`,
-  `AppUserPermissionsListPresenter`, `ScheduledProcessHistoryListPresenter`,
-  `AppPermissionsEditPresenter`, `JobListPresenter`.
+* **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyList`,
+  `ProfilePeriodList`, `FeedDependencyList`, `PipelineReferenceList`,
+  `ManageGlobalPropertyList`, `ActivityList`, `CredentialsList`,
+  `ContentStoreContentPackList`, `DocumentUserPermissionsList`,
+  `AppUserPermissionsList`, `ScheduledProcessHistoryList`,
+  `AppPermissionsEdit`, `JobList`.
   * Key providers where an edit, refresh or node reply brings new rows: profile periods by uuid,
     pipeline properties by element and name, activities by id, global properties by name,
     content packs by their pack.
@@ -861,8 +861,8 @@ interactive header cells, the context menu, copy, export and AI.
     grid's tables hid.
 
 * **Trees** (2026-10-21): the five grids with an expander column, with all their columns as before:
-  `ProcessorListPresenter`, `TaskManagerListPresenter`, `MarkerListPresenter`,
-  `ConfigPropertyClusterValuesListPresenter` and `DataRetentionImpactPresenter`.
+  `ProcessorList`, `TaskManagerList`, `MarkerList`,
+  `ConfigPropertyClusterValuesList` and `DataRetentionImpactPresenter`.
   `TreeRowHandler` takes a `DataGridView`.
   * **Tree grid semantics.** A grid with an `ExpanderCell` column is an ARIA `treegrid`: rows carry
     `aria-level` and, unless they're leaves, `aria-expanded`. On a row, Right expands a collapsed
@@ -877,9 +877,9 @@ interactive header cells, the context menu, copy, export and AI.
     up was left as a gap at the right (Server Tasks' Info column stopped 199px short). The handler
     now asks the grid to give spare width to the fill columns (`resizeTableToFitColumns(true)`).
 
-* **Lists with their own selection manager** (2026-10-21): `ApiKeysListPresenter`,
-  `ScheduledProcessListPresenter`, `DocumentCreatePermissionsListPresenter` and
-  `AbstractNotificationListPresenter` (the analytic rule and report notifications). The three that
+* **Lists with their own selection manager** (2026-10-21): `ApiKeysList`,
+  `ScheduledProcessList`, `DocumentCreatePermissionsList` and
+  `NotificationList` (the analytic rule and report notifications). The three that
   made a `DataGridSelectionEventManager` make the new grid's. API keys are keyed by id and
   notifications by uuid, as their `equals` compares every field, so a tick or edit brings an
   unequal row.
@@ -892,7 +892,7 @@ interactive header cells, the context menu, copy, export and AI.
     now waits for columns, and the grid resolves when it draws as well as on a resize
     (`TestColumnModel.testResolveWaitsForColumns`).
 * **The last three** (2026-10-21):
-  * The meta browser (`AbstractMetaListPresenter`, and so the stream list, the relation list and
+  * The meta browser (`MetaListController`, and so the stream list, the relation list and
     stepping's list): its own `DataGridSelectionEventManager` becomes the new grid's (its select-all
     handler included). The relation list narrows its expander column once rows arrive, so it
     gives the width back to the fill columns, as `TreeRowHandler` does.
@@ -919,7 +919,7 @@ interactive header cells, the context menu, copy, export and AI.
       them. A selection box marks itself open, and its list's filter takes the focus out of the
       grid; the redraw for that replaced the open box, so it never read as expanded and its list
       was placed against a box no longer in the page. Only the class changes now.
-  * `TypeFilterPresenter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
+  * `TypeFilter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
     `DEFAULT_LIST_PAGE_SIZE` (for a `MyCellTable`, session 5); it moves when `MyDataGrid` goes.
 
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and

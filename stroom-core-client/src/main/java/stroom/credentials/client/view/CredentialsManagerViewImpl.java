@@ -63,8 +63,8 @@ public class CredentialsManagerViewImpl
      * Called from the Presenter to hook up the UI.
      */
     @Override
-    public void setCredentialsList(final CredentialsListController credentialsListPresenter) {
-        credentialsList = credentialsListPresenter;
+    public void setCredentialsList(final CredentialsListController credentialsList) {
+        this.credentialsList = credentialsList;
     }
 
     /**

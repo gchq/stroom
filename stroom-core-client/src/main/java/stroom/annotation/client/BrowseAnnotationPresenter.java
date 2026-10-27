@@ -35,22 +35,22 @@ public class BrowseAnnotationPresenter
         extends MyPresenterWidget<FindView>
         implements TabData, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
-    private final FindAnnotationListController findResultListPresenter;
+    private final FindAnnotationListController findAnnotationList;
 
     @Inject
     public BrowseAnnotationPresenter(final EventBus eventBus,
                                      final FindView view,
-                                     final FindAnnotationListController findResultListPresenter) {
+                                     final FindAnnotationListController findAnnotationList) {
         super(eventBus, view);
-        own(findResultListPresenter);
-        this.findResultListPresenter = findResultListPresenter;
+        own(findAnnotationList);
+        this.findAnnotationList = findAnnotationList;
         // To browse, users only need view permission.
-        findResultListPresenter.setPermission(DocumentPermission.VIEW);
+        findAnnotationList.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(findResultListPresenter);
+        view.setResultView(findAnnotationList);
         view.setUiHandlers(this);
-        findResultListPresenter.setOnOpen(this::openDocument);
-        findResultListPresenter.setOnFocusFilter(this::focus);
+        findAnnotationList.setOnOpen(this::openDocument);
+        findAnnotationList.setOnFocusFilter(this::focus);
     }
 
     @Override
@@ -66,21 +66,21 @@ public class BrowseAnnotationPresenter
     }
 
     public void refresh() {
-        findResultListPresenter.refresh();
+        findAnnotationList.refresh();
     }
 
     @Override
     public void changeQuickFilter(final String name) {
-        findResultListPresenter.setFilter(name);
-        findResultListPresenter.refresh();
+        findAnnotationList.setFilter(name);
+        findAnnotationList.refresh();
     }
 
     @Override
     public void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            openDocument(findResultListPresenter.getSelected());
+            openDocument(findAnnotationList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            findResultListPresenter.setKeyboardSelectedRow(0, true);
+            findAnnotationList.setKeyboardSelectedRow(0, true);
         }
     }
 

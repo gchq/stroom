@@ -46,23 +46,23 @@ public class TableFilterPresenter
 
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final ColumnFilterEditorController columnFilterEditor;
-    private final IncludeExcludeFilterEditorController includeExcludeFilterPresenter;
+    private final IncludeExcludeFilterEditorController includeExcludeFilterEditor;
     private TabData selectedTab;
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
                                 final LinkTabsLayoutView view,
                                 final ColumnFilterEditorController columnFilterEditor,
-                                final IncludeExcludeFilterEditorController includeExcludeFilterPresenter) {
+                                final IncludeExcludeFilterEditorController includeExcludeFilterEditor) {
         super(eventBus, view);
         own(columnFilterEditor);
-        own(includeExcludeFilterPresenter);
+        own(includeExcludeFilterEditor);
         this.columnFilterEditor = columnFilterEditor;
-        this.includeExcludeFilterPresenter = includeExcludeFilterPresenter;
+        this.includeExcludeFilterEditor = includeExcludeFilterEditor;
         getWidget().getElement().addClassName("default-min-sizes");
 
         final TabData tabData = addTab("Filter", new ControllerLayer(columnFilterEditor));
-        addTab("Include Exclude", new ControllerLayer(includeExcludeFilterPresenter));
+        addTab("Include Exclude", new ControllerLayer(includeExcludeFilterEditor));
         changeSelectedTab(tabData);
 
         own(getView().getTabBar().addSelectionHandler(event -> {
@@ -77,7 +77,7 @@ public class TableFilterPresenter
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
         columnFilterEditor.setColumnFilter(column.getColumnFilter());
-        includeExcludeFilterPresenter.setFilter(column.getFilter());
+        includeExcludeFilterEditor.setFilter(column.getFilter());
 
         final PopupSize popupSize = PopupSize.resizable(1085, 500, 1085, 500);
         ShowPopupEvent.builder(this)
@@ -88,7 +88,7 @@ public class TableFilterPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ColumnFilter columnFilter = columnFilterEditor.getColumnFilter(column);
-                        final IncludeExcludeFilter includeExcludeFilter = includeExcludeFilterPresenter.getFilter();
+                        final IncludeExcludeFilter includeExcludeFilter = includeExcludeFilterEditor.getFilter();
                         if ((!Objects.equals(columnFilter, column.getColumnFilter()) ||
                              (!Objects.equals(includeExcludeFilter, column.getFilter())))) {
                             columnChangeConsumer.accept(column, column

@@ -51,7 +51,7 @@ public class AnalyticDataShardsPresenter
             GWT.create(AnalyticDataShardResource.class);
 
     private final QueryToolbarController queryToolbar;
-    private final AnalyticDataShardListController analyticDataShardListPresenter;
+    private final AnalyticDataShardListController analyticDataShardList;
     private final QueryResultTablePresenter tablePresenter;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
@@ -63,27 +63,27 @@ public class AnalyticDataShardsPresenter
     public AnalyticDataShardsPresenter(final EventBus eventBus,
                                        final AnalyticDataShardsView view,
                                        final QueryToolbarController queryToolbar,
-                                       final AnalyticDataShardListController analyticDataShardListPresenter,
+                                       final AnalyticDataShardListController analyticDataShardList,
                                        final QueryResultTablePresenter tablePresenter,
                                        final RestFactory restFactory,
                                        final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view);
         own(queryToolbar);
-        own(analyticDataShardListPresenter);
+        own(analyticDataShardList);
         own(tablePresenter);
         this.queryToolbar = queryToolbar;
-        this.analyticDataShardListPresenter = analyticDataShardListPresenter;
+        this.analyticDataShardList = analyticDataShardList;
         this.tablePresenter = tablePresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
-        view.setListView(analyticDataShardListPresenter);
+        view.setListView(analyticDataShardList);
         view.setTable(tablePresenter.getView());
         tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
         tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
 
         queryToolbar.setOnStart(this::update);
         queryToolbar.setOnTimeRangeChange(this::update);
-        own(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
+        own(analyticDataShardList.getSelectionModel().addSelectionHandler(e -> update()));
         tablePresenter.setOnRefreshRequest(this::update);
     }
 
@@ -95,7 +95,7 @@ public class AnalyticDataShardsPresenter
     private void update() {
         queryToolbar.setEnabled(true);
         queryToolbar.onSearching(false);
-        final AnalyticDataShard selected = analyticDataShardListPresenter.getSelectionModel().getSelected();
+        final AnalyticDataShard selected = analyticDataShardList.getSelectionModel().getSelected();
         if (selected == null) {
             tablePresenter.reset();
         } else {
@@ -130,7 +130,7 @@ public class AnalyticDataShardsPresenter
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc document) {
         this.analyticRuleUuid = docRef.getUuid();
-        analyticDataShardListPresenter.read(docRef);
+        analyticDataShardList.read(docRef);
     }
 
     @Override

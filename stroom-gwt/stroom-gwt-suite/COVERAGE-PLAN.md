@@ -441,8 +441,8 @@ whoever fires its event, not the Ginjector that holds an `AsyncProvider` for it.
 | a `docType` seed for `Folder` and the `System` root | 2 | `FolderPresenter`, `FolderRootPresenter` (`FolderPlugin` is a `DocumentPlugin`) |
 | the Welcome tab, which every run has open | 1 | `WelcomePresenter` — a `content-tab` seed, attribution only |
 | a dashboard/query table WITH RESULTS | 4+ | `ColumnFilter`, `RulesPresenter`, `ColumnValuesFilter`, `DownloadPresenter`, `ChangeStatus`/`ChangeAssignedTo` (rows carrying annotation ids) — whether `Execute Query` runs under the guard decides if this is a seed or data |
-| DATA that does not exist here (a mutation to seed) | 5 | `NodeGroupEdit`, `ProcessorProfileEdit`, `ResultStoreSettings` (empty grids), `TabSessionChooserPresenter` (needs ≥2 saved tab sessions — with none it is the alert the walk saw), `SelectionSummary`/`ProcessChoice` (a stream) |
-| a MUTATION path | 2 | `DocRefSelectionPresenter` (`PipelinePlugin.save` with several dirty documents), `GitRepoCommitDialogPresenter` (Push) |
+| DATA that does not exist here (a mutation to seed) | 5 | `NodeGroupEdit`, `ProcessorProfileEdit`, `ResultStoreSettings` (empty grids), `TabSessionChooser` (needs ≥2 saved tab sessions — with none it is the alert the walk saw), `SelectionSummary`/`ProcessChoice` (a stream) |
+| a MUTATION path | 2 | `DocRefSelection` (`PipelinePlugin.save` with several dirty documents), `GitRepoCommitDialogPresenter` (Push) |
 | a PERMISSION or config | 1 | `CredentialsManagerDialogPresenter` (`AppPermission.CREDENTIALS` AND a content pack whose git needs auth) |
 
 Everything in the first seven rows is one directed pass — three small walker capabilities (row
@@ -645,7 +645,7 @@ row". What it creates, and the door each row opened:
 | seeded | how | door |
 | --- | --- | --- |
 | a node group | `POST /node/nodeGroup/v2` — a bare `String` body, which Jersey reads as TEXT whatever the media type: JSON-encoding the name stored it with its quotes | `NodeGroupEditPresenter` (Node Groups › select › Edit) |
-| two tab sessions | `POST /tabSession/v1`, each naming two seed documents — `Open Tab Session` is disabled with none and opens the ONE without asking; the chooser needs two | `TabSessionChooserPresenter` |
+| two tab sessions | `POST /tabSession/v1`, each naming two seed documents — `Open Tab Session` is disabled with none and opens the ONE without asking; the chooser needs two | `TabSessionChooser` |
 | one annotation tag of each type | `createAnnotationTag` — Status, Label, Collection, and a Comment with its canned text | `AnnotationTagEditPresenter` (the four tag screens › select › Edit) |
 | an annotation with a COMMENT entry | `create` writes no comment entry whatever its `comment` field says (AnnotationDaoImpl); the comment is a `change` of type `comment`, the way the Create dialog's own box sends it | `CommentEditPresenter` (the entry's mousedown menu › Edit Entry) |
 | a visualisation with an asset | its own document in the seed folder + `visualisationAssets/updateNewFile` + `saveDraftToLive` (so it is not left dirty) — none of the thirty visualisations here had one | `VisualisationAssetsEditAssetDialogPresenter` (Assets › select › Rename) |

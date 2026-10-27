@@ -42,16 +42,16 @@ public class CredentialsPresenter
      * Injected constructor.
      * @param eventBus Passed to superclass
      * @param view Passed to superclass
-     * @param credentialsListPresenter The list of credentials to show within this top-level tab.
+     * @param credentialsList The list of credentials to show within this top-level tab.
      */
     @SuppressWarnings("unused")
     @Inject
     public CredentialsPresenter(final EventBus eventBus,
                                 final CredentialsView view,
-                                final CredentialsListController credentialsListPresenter) {
+                                final CredentialsListController credentialsList) {
         super(eventBus, view);
-        own(credentialsListPresenter);
-        getView().setCredentialsListView(credentialsListPresenter);
+        own(credentialsList);
+        getView().setCredentialsListView(credentialsList);
     }
 
     /**

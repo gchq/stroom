@@ -42,25 +42,25 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
     private Pathway pathway;
     private final PathwayTreeController pathwayTree;
-    private final ConstraintListController constraintListPresenter;
+    private final ConstraintListController constraintList;
     private boolean readOnly = true;
 
     @Inject
     public PathwayEditPresenter(final EventBus eventBus,
                                 final PathwayEditView view,
                                 final PathwayTreeController pathwayTree,
-                                final ConstraintListController constraintListPresenter) {
+                                final ConstraintListController constraintList) {
         super(eventBus, view);
         own(pathwayTree);
-        own(constraintListPresenter);
+        own(constraintList);
         this.pathwayTree = pathwayTree;
-        this.constraintListPresenter = constraintListPresenter;
+        this.constraintList = constraintList;
         view.setTree(pathwayTree);
-        view.setConstraints(constraintListPresenter);
+        view.setConstraints(constraintList);
 
         own(pathwayTree.getSelectionModel().addSelectionChangeHandler(e -> {
             final PathNode selected = pathwayTree.getSelectionModel().getSelectedObject();
-            constraintListPresenter.setData(selected, readOnly);
+            constraintList.setData(selected, readOnly);
         }));
 
 //        own(getView().getDetails().addClickHandler(e -> {
@@ -110,7 +110,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 ////                    getView().setConstraints(HtmlBuilder.builder().div(d -> d.append(getConstraintsHtml(pathNode)),
 ////                            Attribute.className("pathway-constraints")).toSafeHtml());
 //
-//                    constraintListPresenter.setData(getConstraintList(pathNode), readOnly);
+//                    constraintList.setData(getConstraintList(pathNode), readOnly);
 //
 //
 ////                    getView().setSpans(HtmlBuilder.builder().div(d -> d.append(spanDetails.toSafeHtml()),
@@ -259,7 +259,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //
 //        getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
         pathwayTree.read(pathwaysDoc, pathway);
-        constraintListPresenter.setData(null, readOnly);
+        constraintList.setData(null, readOnly);
 //        getView().setConstraints(SafeHtmlUtils.EMPTY_SAFE_HTML);
 //        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);
 

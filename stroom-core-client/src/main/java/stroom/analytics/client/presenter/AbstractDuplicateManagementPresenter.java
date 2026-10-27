@@ -39,20 +39,20 @@ import java.util.stream.Collectors;
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<DuplicateManagementView, D> {
 
-    private final DuplicateManagementListController duplicateManagementListPresenter;
+    private final DuplicateManagementListController duplicateManagementList;
 
     @Inject
     public AbstractDuplicateManagementPresenter(final EventBus eventBus,
                                                 final DuplicateManagementView view,
                                                 final DuplicateManagementListController
-                                                        duplicateManagementListPresenter) {
+                                                        duplicateManagementList) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
-        own(duplicateManagementListPresenter);
+        own(duplicateManagementList);
         view.setUiHandlers(this);
-        this.duplicateManagementListPresenter = duplicateManagementListPresenter;
-        view.setListView(duplicateManagementListPresenter);
+        this.duplicateManagementList = duplicateManagementList;
+        view.setListView(duplicateManagementList);
     }
 
     @Override
@@ -62,7 +62,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
         getView().setSuppressDuplicateNotifications(duplicateNotificationConfig.isSuppressDuplicateNotifications());
         getView().setChooseColumns(duplicateNotificationConfig.isChooseColumns());
         getView().setColumns(String.join(", ", duplicateNotificationConfig.getColumnNames()));
-        duplicateManagementListPresenter.read(docRef);
+        duplicateManagementList.read(docRef);
     }
 
     protected DuplicateNotificationConfig writeDuplicateNotificationConfig() {

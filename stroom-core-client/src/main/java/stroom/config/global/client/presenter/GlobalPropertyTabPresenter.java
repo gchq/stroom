@@ -46,7 +46,7 @@ public class GlobalPropertyTabPresenter
 
     public static final String TAB_TYPE = "Caches";
 
-    private final ManageGlobalPropertyListController listPresenter;
+    private final ManageGlobalPropertyListController manageGlobalPropertyList;
     private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
     private final ButtonView openButton;
     private final ButtonView warningsButton;
@@ -55,26 +55,26 @@ public class GlobalPropertyTabPresenter
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
                                       final GlobalPropertyTabView view,
-                                      final ManageGlobalPropertyListController listPresenter,
+                                      final ManageGlobalPropertyListController manageGlobalPropertyList,
                                       final Provider<ManageGlobalPropertyEditPresenter> editProvider,
                                       final UiConfigCache uiConfigCache,
                                       final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
+        own(manageGlobalPropertyList);
+        this.manageGlobalPropertyList = manageGlobalPropertyList;
         this.editProvider = editProvider;
         view.setUiHandlers(this);
-        getView().setListView(listPresenter);
+        getView().setListView(manageGlobalPropertyList);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        manageGlobalPropertyList.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 GlobalConfigResource.QUICK_FILTER_CONTEXT, this, this));
-        listPresenter.getToolbar().setName("Property actions");
-        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Property", this::onOpen);
+        manageGlobalPropertyList.getToolbar().setName("Property actions");
+        openButton = manageGlobalPropertyList.getToolbar().button(SvgImage.EDIT, "Edit Selected Property", this::onOpen);
         openButton.setEnabled(false);
 
-        warningsButton = listPresenter.getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
+        warningsButton = manageGlobalPropertyList.getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         uiConfigCache.get(uiConfig -> {
@@ -87,14 +87,14 @@ public class GlobalPropertyTabPresenter
             }
         }, this);
 
-        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(manageGlobalPropertyList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
             }
         }));
-        listPresenter.setOnErrors(this::setErrors);
-        listPresenter.refresh();
+        manageGlobalPropertyList.setOnErrors(this::setErrors);
+        manageGlobalPropertyList.refresh();
         getView().focusFilter();
     }
 
@@ -121,12 +121,12 @@ public class GlobalPropertyTabPresenter
     }
 
     private void enableButtons() {
-        final boolean enabled = listPresenter.getSelectedItem() != null;
+        final boolean enabled = manageGlobalPropertyList.getSelectedItem() != null;
         openButton.setEnabled(enabled);
     }
 
     private void onOpen() {
-        final ConfigProperty e = listPresenter.getSelectedItem();
+        final ConfigProperty e = manageGlobalPropertyList.getSelectedItem();
         onEdit(e);
     }
 
@@ -134,7 +134,7 @@ public class GlobalPropertyTabPresenter
         if (e != null) {
             if (editProvider != null) {
                 final ManageGlobalPropertyEditPresenter editor = makeDialog(editProvider);
-                editor.showEntity(e, listPresenter::refresh);
+                editor.showEntity(e, manageGlobalPropertyList::refresh);
             }
         }
     }
@@ -143,9 +143,9 @@ public class GlobalPropertyTabPresenter
     public void changeNameFilter(final String name) {
         if (NullSafe.isNonEmptyString(name)) {
             // This will initiate a timer to refresh the data
-            listPresenter.setPartialName(name);
+            manageGlobalPropertyList.setPartialName(name);
         } else {
-            listPresenter.clearFilter();
+            manageGlobalPropertyList.clearFilter();
         }
     }
 

@@ -56,8 +56,8 @@ public class UserAccessPresenter
 
     public static final String TAB_TYPE = "UserAccess";
 
-    private final UserAccessListController listPresenter;
-    private final UserSessionsListController sessionsListPresenter;
+    private final UserAccessListController userAccessList;
+    private final UserSessionsListController userSessionsList;
     private final RestFactory restFactory;
     private final ButtonView revokeButton;
     private final ButtonView openUserButton;
@@ -67,27 +67,27 @@ public class UserAccessPresenter
     @Inject
     public UserAccessPresenter(final EventBus eventBus,
                                final UserAccessView view,
-                               final UserAccessListController listPresenter,
-                               final UserSessionsListController sessionsListPresenter,
+                               final UserAccessListController userAccessList,
+                               final UserSessionsListController userSessionsList,
                                final RestFactory restFactory,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        own(listPresenter);
-        own(sessionsListPresenter);
-        this.listPresenter = listPresenter;
-        this.sessionsListPresenter = sessionsListPresenter;
+        own(userAccessList);
+        own(userSessionsList);
+        this.userAccessList = userAccessList;
+        this.userSessionsList = userSessionsList;
         this.restFactory = restFactory;
 
-        view.setList(listPresenter);
-        view.setSessionList(sessionsListPresenter);
+        view.setList(userAccessList);
+        view.setSessionList(userSessionsList);
 
         // Named for exactly what it does. "Revoke this user's access" was the earlier wording and claimed
         // more than the action delivers: nothing about the user's access is withdrawn, and they can sign
         // straight back in. The confirmation said so, but only once it had been clicked, which is too late
         // for an administrator scanning the toolbar for the containment action. "Revoke" is kept for the
         // tokens, where it is literally true - those never work again.
-        listPresenter.getToolbar().setName("User access actions");
-        revokeButton = listPresenter.getToolbar().button(
+        userAccessList.getToolbar().setName("User access actions");
+        revokeButton = userAccessList.getToolbar().button(
                 SvgImage.DELETE,
                 "End Sessions and Revoke Tokens for Selected User",
                 this::revokeSelected);
@@ -95,7 +95,7 @@ public class UserAccessPresenter
         // Revoking does not stop someone coming back, and under an external identity provider it barely
         // slows them down. Disabling is what does, so it belongs next to it rather than on a screen an
         // administrator has to know to go and find.
-        openUserButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Open Selected User (to disable them)",
+        openUserButton = userAccessList.getToolbar().button(SvgImage.EDIT, "Open Selected User (to disable them)",
                 this::openSelectedUser);
         openUserButton.setEnabled(false);
 
@@ -115,9 +115,9 @@ public class UserAccessPresenter
     private void showSessionsForSelectedUser() {
         final UserAccessRow row = getSelectionModel().getSelected();
         if (row == null) {
-            sessionsListPresenter.setUser(null, null);
+            userSessionsList.setUser(null, null);
         } else {
-            sessionsListPresenter.setUser(row.getSubjectId(), row.getDisplayName());
+            userSessionsList.setUser(row.getSubjectId(), row.getDisplayName());
         }
     }
 
@@ -135,7 +135,7 @@ public class UserAccessPresenter
     }
 
     private MultiSelectionModelImpl<UserAccessRow> getSelectionModel() {
-        return listPresenter.getSelectionModel();
+        return userAccessList.getSelectionModel();
     }
 
     private void revokeSelected() {
@@ -152,7 +152,7 @@ public class UserAccessPresenter
                             getSelectionModel().clear();
                             refresh();
                             // The sessions we were showing have just been ended.
-                            sessionsListPresenter.setUser(null, null);
+                            userSessionsList.setUser(null, null);
                         })
                         .onFailure(restError -> {
                             AlertEvent.fireError(this, restError.getMessage(), null);
@@ -207,14 +207,14 @@ public class UserAccessPresenter
 
     public void showUser(final String displayName) {
         if (!NullSafe.isBlankString(displayName)) {
-            listPresenter.setQuickFilter(displayName);
+            userAccessList.setQuickFilter(displayName);
         }
     }
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
-        sessionsListPresenter.refresh();
+        userAccessList.refresh();
+        userSessionsList.refresh();
     }
 
     @Override

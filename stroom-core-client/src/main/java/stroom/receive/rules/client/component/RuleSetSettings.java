@@ -22,7 +22,6 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -65,7 +64,6 @@ public class RuleSetSettings extends Component {
     /// @param toolbar  The list's toolbar.
     public void setRuleList(final IsWidget ruleList, final Toolbar toolbar) {
         table.setWidget(ruleList);
-        ruleList.asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
         toolbar.setName("Receipt rule actions");
         addButton(toolbar, RuleAction.ADD, SvgImage.ADD, "New Rule");
         addButton(toolbar, RuleAction.EDIT, SvgImage.EDIT, "Edit Selected Rule");

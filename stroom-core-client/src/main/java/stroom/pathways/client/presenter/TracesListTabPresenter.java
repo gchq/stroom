@@ -53,7 +53,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     // loaded whole; below it the whole trace is fetched and rendered as before.
     private static final int LARGE_TRACE_THRESHOLD = 10_000;
 
-    private final TracesListController listPresenter;
+    private final TracesListController tracesList;
     private final TraceOverviewWidget traceOverviewWidget;
     private final RestFactory restFactory;
     // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
@@ -65,31 +65,31 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     @Inject
     public TracesListTabPresenter(final EventBus eventBus,
                                   final TracesView view,
-                                  final TracesListController listPresenter,
+                                  final TracesListController tracesList,
                                   final RestFactory restFactory,
                                   final TimeRangeSelectorController timeRangeSelectorController) {
         super(eventBus, view);
-        own(listPresenter);
+        own(tracesList);
         own(timeRangeSelectorController).attach(timeRangeSelector);
-        this.listPresenter = listPresenter;
+        this.tracesList = tracesList;
         this.restFactory = restFactory;
         traceOverviewWidget = new TraceOverviewWidget();
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);
 
-        view.setTopWidget(listPresenter);
+        view.setTopWidget(tracesList);
         view.setBottomWidget(traceOverviewWidget);
 
         own(timeRangeSelector.addValueChangeHandler(e -> {
-            listPresenter.setTimeRange(e.getValue());
-            listPresenter.refresh();
+            tracesList.setTimeRange(e.getValue());
+            tracesList.refresh();
         }));
-        listPresenter.setHistogramZoomHandler((fromMs, toMs) ->
+        tracesList.setHistogramZoomHandler((fromMs, toMs) ->
                 timeRangeSelector.setValue(new TimeRange(
                         null, ClientDateUtil.toISOString(fromMs), ClientDateUtil.toISOString(toMs)), true));
-        own(listPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
+        own(tracesList.getSelectionModel().addSelectionHandler(e -> {
+            final TraceRoot traceRoot = tracesList.getSelectionModel().getSelected();
             if (traceRoot == null) {
                 return;
             }
@@ -172,7 +172,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
             setDataSourceRef(docRef);
             // Default the time range selector to Today on first open.
             timeRangeSelector.setValue(TimeRanges.TODAY);
-            listPresenter.setTimeRange(TimeRanges.TODAY);
+            tracesList.setTimeRange(TimeRanges.TODAY);
             refresh();
         }
     }
@@ -184,19 +184,19 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
-        listPresenter.setDataSourceRef(dataSourceRef);
+        tracesList.setDataSourceRef(dataSourceRef);
     }
 
     public void setFilter(final String filter) {
-        listPresenter.setFilter(filter);
+        tracesList.setFilter(filter);
     }
 
     public void setPathway(final Pathway pathway) {
-        listPresenter.setPathway(pathway);
+        tracesList.setPathway(pathway);
     }
 
     public void refresh() {
-        listPresenter.refresh();
+        tracesList.refresh();
     }
 
     public interface TracesView extends View {

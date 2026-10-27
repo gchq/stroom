@@ -46,19 +46,19 @@ public class BasicTableFilterSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableFilterSettingsPresenter.BasicTableFilterSettingsView>
         implements BasicTableFilterSettingsUiHandlers, Focus {
 
-    private final ColumnSelection columnSelectionPresenter;
+    private final ColumnSelection columnSelection;
     private MultiRulesPresenter multiRulesPresenter;
 
     @Inject
     public BasicTableFilterSettingsPresenter(final EventBus eventBus,
                                              final BasicTableFilterSettingsView view,
-                                             final ColumnSelection columnSelectionPresenter) {
+                                             final ColumnSelection columnSelection) {
         super(eventBus, view);
-        this.columnSelectionPresenter = columnSelectionPresenter;
-        view.setColumnList(columnSelectionPresenter);
+        this.columnSelection = columnSelection;
+        view.setColumnList(columnSelection);
         view.setUiHandlers(this);
 
-        columnSelectionPresenter.setOnChange(selected -> multiRulesPresenter.setSelectedColumns(selected));
+        columnSelection.setOnChange(selected -> multiRulesPresenter.setSelectedColumns(selected));
     }
 
     @Override
@@ -83,15 +83,15 @@ public class BasicTableFilterSettingsPresenter
             }
         }
 
-        final Set<ColumnRef> selectedColumns = new HashSet<>(columnSelectionPresenter.getSelectedColumns());
+        final Set<ColumnRef> selectedColumns = new HashSet<>(columnSelection.getSelectedColumns());
         final Set<ColumnRef> allColumnRefs = allColumns.keySet();
         selectedColumns.retainAll(allColumnRefs);
-        columnSelectionPresenter.setAllColumns(allColumnRefs);
-        columnSelectionPresenter.setSelectedColumns(selectedColumns);
-        columnSelectionPresenter.refresh();
+        columnSelection.setAllColumns(allColumnRefs);
+        columnSelection.setSelectedColumns(selectedColumns);
+        columnSelection.refresh();
 
         multiRulesPresenter.setAllColumns(allColumns);
-        multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns());
+        multiRulesPresenter.setSelectedColumns(columnSelection.getSelectedColumns());
     }
 
     @Override
@@ -106,7 +106,7 @@ public class BasicTableFilterSettingsPresenter
 
         final TableFilterComponentSettings settings = (TableFilterComponentSettings) componentConfig.getSettings();
         getView().setTable(getDashboardContext().getComponents().get(settings.getTableId()));
-        columnSelectionPresenter.setSelectedColumns(new HashSet<>(NullSafe.list(settings.getColumns())));
+        columnSelection.setSelectedColumns(new HashSet<>(NullSafe.list(settings.getColumns())));
         updateFieldNames(getView().getTable());
     }
 
@@ -122,7 +122,7 @@ public class BasicTableFilterSettingsPresenter
         return settings
                 .copy()
                 .tableId(getTableId())
-                .columns(new ArrayList<>(columnSelectionPresenter.getSelectedColumns()))
+                .columns(new ArrayList<>(columnSelection.getSelectedColumns()))
                 .build();
     }
 

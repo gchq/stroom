@@ -126,11 +126,11 @@ public class UserAndGroupHelper {
                 : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
-    public static void onDelete(final UserListController userListPresenter,
+    public static void onDelete(final UserListController userList,
                                 final RestFactory restFactory,
                                 final HasHandlers hasHandlers) {
 
-        final User user = userListPresenter.getSelectionModel().getSelected();
+        final User user = userList.getSelectionModel().getSelected();
         if (user != null) {
             final String userDescription = getDescription(user);
             final String msg = "Are you sure you want to permanently delete " + userDescription + "?"
@@ -147,8 +147,8 @@ public class UserAndGroupHelper {
                             .method(resource -> resource.delete(user.getUuid()))
                             .onSuccess(didDelete -> {
                                 if (didDelete) {
-                                    userListPresenter.getSelectionModel().clear(true);
-                                    userListPresenter.refresh();
+                                    userList.getSelectionModel().clear(true);
+                                    userList.refresh();
                                 }
                             })
                             .onFailure(error ->
@@ -157,7 +157,7 @@ public class UserAndGroupHelper {
                                             "Error deleting " + userDescription,
                                             error.getMessage(),
                                             null))
-                            .taskMonitorFactory(userListPresenter.getTaskMonitor())
+                            .taskMonitorFactory(userList.getTaskMonitor())
                             .exec();
                 }
             });
@@ -166,28 +166,28 @@ public class UserAndGroupHelper {
 
     /// Renames the group selected, if a group is, in the Edit User Group dialog.
     ///
-    /// @param userListPresenter                The list of users and groups.
+    /// @param userList                The list of users and groups.
     /// @param createNewGroupControllerProvider Makes the dialog.
     /// @param opener                           What shows the dialog, which owns it while shown.
     /// @param taskMonitorFactory               Shows the progress of the update.
-    public static void onEditUserOrGroup(final UserListController userListPresenter,
+    public static void onEditUserOrGroup(final UserListController userList,
                                          final Provider<CreateNewGroupController> createNewGroupControllerProvider,
                                          final HasControllerNode opener,
                                          final TaskMonitorFactory taskMonitorFactory) {
-        final User user = userListPresenter.getSelectionModel().getSelected();
+        final User user = userList.getSelectionModel().getSelected();
         if (user != null && user.isGroup()) {
             createNewGroupControllerProvider.get().edit(opener,
                     user,
-                    createAfterChangeConsumer(userListPresenter),
+                    createAfterChangeConsumer(userList),
                     taskMonitorFactory);
         }
     }
 
-    public static Consumer<User> createAfterChangeConsumer(final UserListController userListPresenter) {
+    public static Consumer<User> createAfterChangeConsumer(final UserListController userList) {
         return user -> {
-            userListPresenter.getSelectionModel()
+            userList.getSelectionModel()
                     .clear(true);
-            userListPresenter.refresh();
+            userList.refresh();
         };
     }
 

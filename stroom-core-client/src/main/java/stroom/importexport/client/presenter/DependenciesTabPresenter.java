@@ -42,22 +42,22 @@ public class DependenciesTabPresenter
 
     public static final String TAB_TYPE = "Dependencies";
 
-    private final DependencyListController dependenciesPresenter;
+    private final DependencyListController dependencyList;
 
     @Inject
     public DependenciesTabPresenter(final EventBus eventBus,
                                     final DependenciesTabView view,
-                                    final DependencyListController dependenciesPresenter,
+                                    final DependencyListController dependencyList,
                                     final UiConfigCache uiConfigCache,
                                     final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(dependenciesPresenter);
-        this.dependenciesPresenter = dependenciesPresenter;
+        own(dependencyList);
+        this.dependencyList = dependencyList;
         view.setUiHandlers(this);
-        getView().setListView(dependenciesPresenter);
+        getView().setListView(dependencyList);
         // A rejected filter comes back as an empty grid like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        dependenciesPresenter.setFilterErrorConsumer(view::setFilterError);
+        dependencyList.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 DependencyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
@@ -91,11 +91,11 @@ public class DependenciesTabPresenter
     @Override
     public void changeQuickFilter(final String name) {
         if (NullSafe.isNonEmptyString(name)) {
-            dependenciesPresenter.setFilterInput(name);
+            dependencyList.setFilterInput(name);
         } else {
-            dependenciesPresenter.clearFilterInput();
+            dependencyList.clearFilterInput();
         }
-        dependenciesPresenter.refresh();
+        dependencyList.refresh();
     }
 
     public void setQuickFilterText(final String text) {

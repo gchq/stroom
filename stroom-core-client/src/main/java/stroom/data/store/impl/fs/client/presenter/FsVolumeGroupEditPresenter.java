@@ -54,7 +54,7 @@ public class FsVolumeGroupEditPresenter
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final FsVolumeStatusListController volumeStatusListPresenter;
+    private final FsVolumeStatusListController fsVolumeStatusList;
     private final Provider<FsVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
 
@@ -72,31 +72,31 @@ public class FsVolumeGroupEditPresenter
     @Inject
     public FsVolumeGroupEditPresenter(final EventBus eventBus,
                                       final FsVolumeGroupEditView view,
-                                      final FsVolumeStatusListController volumeStatusListPresenter,
+                                      final FsVolumeStatusListController fsVolumeStatusList,
                                       final Provider<FsVolumeEditPresenter> editProvider,
                                       final RestFactory restFactory) {
         super(eventBus, view);
-        own(volumeStatusListPresenter);
-        this.volumeStatusListPresenter = volumeStatusListPresenter;
+        own(fsVolumeStatusList);
+        this.fsVolumeStatusList = fsVolumeStatusList;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
 
-        volumeStatusListPresenter.getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
+        fsVolumeStatusList.getToolbar().setName("Volume actions");
+        newButton = fsVolumeStatusList.getToolbar().button(SvgImage.ADD,
                 "New Data Volume", this::create);
-        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
+        openButton = fsVolumeStatusList.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Data Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
+        deleteButton = fsVolumeStatusList.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Data Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes",
+        rescanButton = fsVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes",
                 this::onRescan);
 
-        view.setListView(volumeStatusListPresenter);
-        delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
+        view.setListView(fsVolumeStatusList);
+        delayedUpdate = new DelayedUpdate(fsVolumeStatusList::refresh);
 
-        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(fsVolumeStatusList.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
@@ -124,7 +124,7 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void edit() {
-        final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final FsVolume volume = fsVolumeStatusList.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
                     .create(FS_VOLUME_RESOURCE)
@@ -139,13 +139,13 @@ public class FsVolumeGroupEditPresenter
         final FsVolumeEditPresenter editor = makeDialog(editProvider);
         editor.show(fsVolume, caption, result -> {
             if (result != null) {
-                volumeStatusListPresenter.refresh();
+                fsVolumeStatusList.refresh();
             }
         });
     }
 
     private void delete() {
-        final List<FsVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<FsVolume> list = fsVolumeStatusList.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected volume?";
             if (list.size() > 1) {
@@ -154,12 +154,12 @@ public class FsVolumeGroupEditPresenter
             ConfirmEvent.fire(FsVolumeGroupEditPresenter.this, message,
                     result -> {
                         if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
+                            fsVolumeStatusList.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
                                 restFactory
                                         .create(FS_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .onSuccess(response -> fsVolumeStatusList.refresh())
                                         .taskMonitorFactory(this)
                                         .exec();
                             }
@@ -169,7 +169,7 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void enableButtons() {
-        final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;
+        final boolean enabled = fsVolumeStatusList.getSelectionModel().getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
@@ -186,7 +186,7 @@ public class FsVolumeGroupEditPresenter
 //            expressionCriteria.setSort(FsVolumeFields.NODE_NAME.getName());
 //            expressionCriteria.addSort(FsVolumeFields.PATH.getName());
 //
-//            volumeStatusListPresenter.init(expressionCriteria, volumes ->
+//            fsVolumeStatusList.init(expressionCriteria, volumes ->
 //                    open(volumeGroup, title, consumer));
         }
     }
@@ -198,7 +198,7 @@ public class FsVolumeGroupEditPresenter
             open = true;
 
             this.volumeGroup = volumeGroup;
-            volumeStatusListPresenter.setGroup(volumeGroup);
+            fsVolumeStatusList.setGroup(volumeGroup);
             getView().setName(volumeGroup.getName());
 
             final PopupSize popupSize = PopupSize.resizable(1400, 600);

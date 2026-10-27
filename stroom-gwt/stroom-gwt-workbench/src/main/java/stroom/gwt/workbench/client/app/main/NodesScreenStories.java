@@ -102,7 +102,7 @@ public final class NodesScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/NodesScreen", NodesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // GWT NodeStatusListPresenter sorts on the server: CriteriaUtil.setSortList puts the
+                // GWT NodeStatusList sorts on the server: CriteriaUtil.setSortList puts the
                 // grid's column sort into FindNodeStatusCriteria on every load
                 .story("ServerSideSorting", context -> render(context, null))
                 .withPlay(play -> {

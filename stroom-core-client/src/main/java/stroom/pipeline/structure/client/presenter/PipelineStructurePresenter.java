@@ -88,8 +88,8 @@ public class PipelineStructurePresenter
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final Provider<NewElementController> newElementProvider;
-    private final PropertyListController propertyListPresenter;
-    private final PipelineReferenceListController pipelineReferenceListPresenter;
+    private final PropertyListController propertyList;
+    private final PipelineReferenceListController pipelineReferenceList;
     private final Provider<EditorPresenter> jsonEditorProvider;
     private final PipelineTree pipelineTree;
     private PipelineElement selectedElement;
@@ -109,26 +109,26 @@ public class PipelineStructurePresenter
                                       final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final Provider<NewElementController> newElementProvider,
-                                      final PropertyListController propertyListPresenter,
-                                      final PipelineReferenceListController pipelineReferenceListPresenter,
+                                      final PropertyListController propertyList,
+                                      final PipelineReferenceListController pipelineReferenceList,
                                       final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
         own(pipelinePresenter);
-        own(propertyListPresenter);
-        own(pipelineReferenceListPresenter);
+        own(propertyList);
+        own(pipelineReferenceList);
         this.pipelineTree = pipelineTree;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.newElementProvider = newElementProvider;
-        this.propertyListPresenter = propertyListPresenter;
-        this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
+        this.propertyList = propertyList;
+        this.pipelineReferenceList = pipelineReferenceList;
         this.jsonEditorProvider = jsonEditorProvider;
 
         getView().setUiHandlers(this);
         getView().setInheritanceTree(pipelinePresenter.getView());
         getView().setTreeView(pipelineTree);
-        getView().setProperties(propertyListPresenter);
-        getView().setPipelineReferences(pipelineReferenceListPresenter);
+        getView().setProperties(propertyList);
+        getView().setPipelineReferences(pipelineReferenceList);
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -161,12 +161,12 @@ public class PipelineStructurePresenter
                 pipelineTree.getSelectionModel().addSelectionChangeHandler(event -> {
                     selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
 
-                    propertyListPresenter.setPipelineModel(pipelineModel);
-                    propertyListPresenter.setCurrentElement(selectedElement);
+                    propertyList.setPipelineModel(pipelineModel);
+                    propertyList.setCurrentElement(selectedElement);
 
-                    pipelineReferenceListPresenter.setPipeline(pipelineDoc);
-                    pipelineReferenceListPresenter.setPipelineModel(pipelineModel);
-                    pipelineReferenceListPresenter.setCurrentElement(selectedElement);
+                    pipelineReferenceList.setPipeline(pipelineDoc);
+                    pipelineReferenceList.setPipelineModel(pipelineModel);
+                    pipelineReferenceList.setCurrentElement(selectedElement);
 
                     enableButtons();
                 }));
@@ -198,9 +198,9 @@ public class PipelineStructurePresenter
         // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
         // that can be changed
         pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
-        propertyListPresenter.setTableName(
+        propertyList.setTableName(
                 "Pipeline '" + docRef.getName() + "' Properties");
-        pipelineReferenceListPresenter.setTableName(
+        pipelineReferenceList.setTableName(
                 "Pipeline '" + docRef.getName() + "' References");
         enableButtons();
 

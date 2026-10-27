@@ -151,7 +151,7 @@ Also on the harness, for what Stroom's app does around a screen:
   always when the screen (or anything it creates) reads the cached UI config at once or the
   user's preferences (`EditorPresenter` reads the editor
   preferences, lists format dates with them). Without it, each `UiConfigCache.get` call made before
-  the config arrives is answered, which a screen may not expect (`UserListPresenter` then sets up
+  the config arrives is answered, which a screen may not expect (`UserList` then sets up
   its columns twice). Most of the `UsersScreen` stories deliberately open the screen at once:
   they are the regression test for `UiConfigCache.get` calling its consumer with null.
 * **Menus**: the harness installs Stroom's `MenuManager`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
@@ -573,8 +573,8 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   as `AccountChange` sends the members it leaves alone as `null` (and an empty action set as `[]`):
   check "only these values" with `SecurityPlays.withOnlyValues(matcher, json)`, and read the first
   of several requests with `SecurityPlays.firstBody(spy, matcher)`. Lists that select their first
-  row when they load (`UserAccessListPresenter`, `UserDependenciesListPresenter`) are cleared with a
-  ctrl-mousedown on the selected row. A `UserListPresenter`'s whole block (label, quick filter,
+  row when they load (`UserAccessList`, `UserDependenciesList`) are cleared with a
+  ctrl-mousedown on the selected row. A `UserList`'s whole block (label, quick filter,
   toolbar, grid and pager) is its label's `.closest(".dock-container-vertical")`. Rules that
   aren't screens (`DeleteConfirmation.isEmpty`,
   `CurrentUser.hasAppPermission`, `DocumentPluginEventManager` handling `DeleteDocumentEvent`) are

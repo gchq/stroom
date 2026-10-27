@@ -81,7 +81,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final RuleSetSettingsController ruleSetSettings;
     // Shows the Rules tab's component in the tab panel
     private final ControllerLayer ruleSetSettingsLayer;
-    private final FieldListController fieldListPresenter;
+    private final FieldListController fieldList;
     private final ControllerLayer fieldListLayer;
     private final LazyValue<MarkdownEditController> lazyMarkdownEdit;
     private final RestFactory restFactory;
@@ -115,9 +115,9 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.ruleSetSettings = own(ruleSetSettings);
         ruleSetSettingsLayer = new ControllerLayer(ruleSetSettings);
         ruleSetSettings.setOnChange(this::onChange);
-        fieldListPresenter = make(fieldListPresenterProvider);
-        fieldListLayer = new ControllerLayer(fieldListPresenter);
-        ruleSetSettings.setFields(fieldListPresenter::getFields);
+        fieldList = make(fieldListPresenterProvider);
+        fieldListLayer = new ControllerLayer(fieldList);
+        ruleSetSettings.setFields(fieldList::getFields);
         this.lazyMarkdownEdit = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
                 (Supplier<MarkdownEditController>) () -> make(markdownEditProvider),
@@ -264,14 +264,14 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private void read(final ReceiveDataRules rules) {
         this.receiveDataRules = rules;
         ruleSetSettings.read(receiveDataRules);
-        fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules);
+        fieldList.read(receiveDataRules.asDocRef(), receiveDataRules);
         lazyMarkdownEdit.consumeIfInitialised(this::setDescriptionOnPresenter);
     }
 
     private ReceiveDataRules write(final ReceiveDataRules rules) {
         ReceiveDataRules updated = rules;
         updated = ruleSetSettings.write(updated);
-        updated = fieldListPresenter.write(updated);
+        updated = fieldList.write(updated);
         if (lazyMarkdownEdit.isInitialised()) {
             updated = updated.copy().description(lazyMarkdownEdit.getValue().getText()).build();
         }

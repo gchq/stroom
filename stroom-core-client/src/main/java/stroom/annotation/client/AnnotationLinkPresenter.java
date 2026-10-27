@@ -43,7 +43,7 @@ public class AnnotationLinkPresenter
         implements FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final FindAnnotationListController listPresenter;
+    private final FindAnnotationListController findAnnotationList;
 
     private DocRef annotationRef;
     private AnnotationPresenter parent;
@@ -56,34 +56,34 @@ public class AnnotationLinkPresenter
     public AnnotationLinkPresenter(final EventBus eventBus,
                                    final FindView view,
                                    final AnnotationResourceClient annotationResourceClient,
-                                   final FindAnnotationListController listPresenter) {
+                                   final FindAnnotationListController findAnnotationList) {
         super(eventBus, view);
-        own(listPresenter);
+        own(findAnnotationList);
         this.annotationResourceClient = annotationResourceClient;
-        this.listPresenter = listPresenter;
+        this.findAnnotationList = findAnnotationList;
 
         // To browse, users only need view permission.
-        listPresenter.setPermission(DocumentPermission.VIEW);
+        findAnnotationList.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(listPresenter);
+        view.setResultView(findAnnotationList);
         view.setUiHandlers(this);
-        listPresenter.setOnOpen(this::openDocument);
-        listPresenter.setOnFocusFilter(this::focus);
+        findAnnotationList.setOnOpen(this::openDocument);
+        findAnnotationList.setOnFocusFilter(this::focus);
 
-        listPresenter.getToolbar().setName("Link actions");
-        add = listPresenter.getToolbar().button(SvgImage.ADD, "Add Annotation Link",
+        findAnnotationList.getToolbar().setName("Link actions");
+        add = findAnnotationList.getToolbar().button(SvgImage.ADD, "Add Annotation Link",
                 () -> ShowFindAnnotationEvent.fire(this, this::link));
         add.setEnabled(false);
         add.setVisible(false);
-        remove = listPresenter.getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
+        remove = findAnnotationList.getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
         remove.setEnabled(false);
         remove.setVisible(false);
 
-        own(listPresenter.addSelectionHandler(e -> enableButtons()));
+        own(findAnnotationList.addSelectionHandler(e -> enableButtons()));
     }
 
     private void onRemove() {
-        final Annotation annotation = listPresenter.getSelected();
+        final Annotation annotation = findAnnotationList.getSelected();
         if (annotation != null) {
             ConfirmEvent.fire(this, "Are you sure you want to remove this reference?", ok -> {
                 if (ok) {
@@ -108,7 +108,7 @@ public class AnnotationLinkPresenter
     private void onChangeComplete(final Boolean success) {
         if (success != null && success) {
             parent.updateHistory();
-            listPresenter.refresh();
+            findAnnotationList.refresh();
         }
     }
 
@@ -118,21 +118,21 @@ public class AnnotationLinkPresenter
     }
 
     public void refresh() {
-        listPresenter.refresh();
+        findAnnotationList.refresh();
     }
 
     @Override
     public void changeQuickFilter(final String name) {
-        listPresenter.setFilter(name);
-        listPresenter.refresh();
+        findAnnotationList.setFilter(name);
+        findAnnotationList.refresh();
     }
 
     @Override
     public void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            openDocument(listPresenter.getSelected());
+            openDocument(findAnnotationList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            listPresenter.setKeyboardSelectedRow(0, true);
+            findAnnotationList.setKeyboardSelectedRow(0, true);
         }
     }
 
@@ -147,17 +147,17 @@ public class AnnotationLinkPresenter
     protected void onRead(final DocRef docRef, final Annotation document) {
         annotationRef = docRef;
         if (from) {
-            listPresenter.setDestinationId(document.getId());
+            findAnnotationList.setDestinationId(document.getId());
         } else {
-            listPresenter.setSourceId(document.getId());
+            findAnnotationList.setSourceId(document.getId());
         }
-        listPresenter.refresh();
+        findAnnotationList.refresh();
         enableButtons();
     }
 
     private void enableButtons() {
         add.setEnabled(!isReadOnly());
-        remove.setEnabled(!isReadOnly() && listPresenter.getSelected() != null);
+        remove.setEnabled(!isReadOnly() && findAnnotationList.getSelected() != null);
         add.setVisible(!from);
         remove.setVisible(!from);
     }

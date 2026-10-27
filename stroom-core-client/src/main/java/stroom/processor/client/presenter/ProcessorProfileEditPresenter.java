@@ -48,7 +48,7 @@ public class ProcessorProfileEditPresenter
 
     private final ProcessorProfileClient processorProfileClient;
     private final NodeGroupClient nodeGroupClient;
-    private final ProfilePeriodListController profilePeriodListPresenter;
+    private final ProfilePeriodListController profilePeriodList;
 
     private boolean opening;
     private boolean open;
@@ -58,13 +58,13 @@ public class ProcessorProfileEditPresenter
                                          final ProcessorProfileEditView view,
                                          final ProcessorProfileClient processorProfileClient,
                                          final NodeGroupClient nodeGroupClient,
-                                         final ProfilePeriodListController profilePeriodListPresenter) {
+                                         final ProfilePeriodListController profilePeriodList) {
         super(eventBus, view);
-        own(profilePeriodListPresenter);
+        own(profilePeriodList);
         this.processorProfileClient = processorProfileClient;
         this.nodeGroupClient = nodeGroupClient;
-        this.profilePeriodListPresenter = profilePeriodListPresenter;
-        view.setListView(profilePeriodListPresenter);
+        this.profilePeriodList = profilePeriodList;
+        view.setListView(profilePeriodList);
 
         final NodeGroupListModel nodeGroupListModel = new NodeGroupListModel(eventBus, nodeGroupClient);
         nodeGroupListModel.setTaskMonitorFactory(this);
@@ -95,7 +95,7 @@ public class ProcessorProfileEditPresenter
             open = true;
             getView().setName(processorProfile.getName());
             getView().setUserTimeZone(processorProfile.getTimeZone());
-            profilePeriodListPresenter.setProfilePeriods(processorProfile.getProfilePeriods());
+            profilePeriodList.setProfilePeriods(processorProfile.getProfilePeriods());
 
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)
@@ -113,7 +113,7 @@ public class ProcessorProfileEditPresenter
                                             ProcessorProfileEditView::getNodeGroup,
                                             SelectionBox::getValue,
                                             NodeGroup::getName))
-                                    .profilePeriods(profilePeriodListPresenter.getProfilePeriods())
+                                    .profilePeriods(profilePeriodList.getProfilePeriods())
                                     .timeZone(getView().getUserTimeZone())
                                     .build();
 

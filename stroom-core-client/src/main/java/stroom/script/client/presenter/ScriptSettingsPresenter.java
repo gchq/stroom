@@ -29,28 +29,28 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, ScriptDoc> {
 
-    private final ScriptDependencyListController scriptDependencyListPresenter;
+    private final ScriptDependencyListController scriptDependencyList;
 
     @Inject
     public ScriptSettingsPresenter(final EventBus eventBus,
                                    final ScriptSettingsView view,
-                                   final ScriptDependencyListController scriptDependencyListPresenter) {
+                                   final ScriptDependencyListController scriptDependencyList) {
         super(eventBus, view);
-        own(scriptDependencyListPresenter);
-        this.scriptDependencyListPresenter = scriptDependencyListPresenter;
-        view.setDependencyList(scriptDependencyListPresenter);
+        own(scriptDependencyList);
+        this.scriptDependencyList = scriptDependencyList;
+        view.setDependencyList(scriptDependencyList);
 
-        scriptDependencyListPresenter.setOnChange(this::onChange);
+        scriptDependencyList.setOnChange(this::onChange);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final ScriptDoc script) {
-        scriptDependencyListPresenter.read(docRef, script);
+        scriptDependencyList.read(docRef, script);
     }
 
     @Override
     protected ScriptDoc onWrite(ScriptDoc script) {
-        script = scriptDependencyListPresenter.write(script);
+        script = scriptDependencyList.write(script);
         return script;
     }
 

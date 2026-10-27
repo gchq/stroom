@@ -39,33 +39,33 @@ public class NodePresenter
     public static final String TAB_TYPE = "Nodes";
 
     private final NodeStatusListController nodeStatusList;
-    private final NodeJobListController nodeJobListPresenter;
+    private final NodeJobListController nodeJobList;
 
     @Inject
     public NodePresenter(final EventBus eventBus,
                          final NodeView view,
                          final NodeStatusListController nodeStatusList,
-                         final NodeJobListController nodeJobListPresenter) {
+                         final NodeJobListController nodeJobList) {
         super(eventBus, view);
         own(nodeStatusList);
-        own(nodeJobListPresenter);
+        own(nodeJobList);
         this.nodeStatusList = nodeStatusList;
-        this.nodeJobListPresenter = nodeJobListPresenter;
+        this.nodeJobList = nodeJobList;
 
         getView().setNodeListView(nodeStatusList);
-        getView().setNodeJobListView(nodeJobListPresenter);
+        getView().setNodeJobListView(nodeJobList);
 
         own(nodeStatusList.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeStatusList.getSelectionModel().getSelected();
             final String nodeName = NullSafe.get(row, NodeStatusResult::getNode, Node::getName);
-            nodeJobListPresenter.read(nodeName);
+            nodeJobList.read(nodeName);
         }));
     }
 
     @Override
     public void refresh() {
         nodeStatusList.refresh();
-        nodeJobListPresenter.refresh();
+        nodeJobList.refresh();
     }
 
     @Override
@@ -90,14 +90,14 @@ public class NodePresenter
 
     public void setSelected(final String nodeName) {
         nodeStatusList.setSelected(nodeName);
-        nodeJobListPresenter.read(nodeName);
+        nodeJobList.read(nodeName);
     }
 
     public void setSelected(final JobNode jobNode) {
         final String nodeName = NullSafe.get(jobNode, JobNode::getNodeName);
-        nodeJobListPresenter.read(nodeName);
+        nodeJobList.read(nodeName);
         nodeStatusList.setSelected(nodeName);
-        nodeJobListPresenter.setSelected(jobNode);
+        nodeJobList.setSelected(jobNode);
     }
 
 

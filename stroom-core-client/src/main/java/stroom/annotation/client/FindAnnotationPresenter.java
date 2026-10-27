@@ -41,23 +41,23 @@ public class FindAnnotationPresenter
         implements ShowFindAnnotationEvent.Handler, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private boolean showing;
-    private final FindAnnotationListController findResultListPresenter;
+    private final FindAnnotationListController findAnnotationList;
 
     @Inject
     public FindAnnotationPresenter(final EventBus eventBus,
                                    final FindView view,
-                                   final FindAnnotationListController findResultListPresenter,
+                                   final FindAnnotationListController findAnnotationList,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(findResultListPresenter);
+        own(findAnnotationList);
         getView().setDialogMode(false);
-        this.findResultListPresenter = findResultListPresenter;
+        this.findAnnotationList = findAnnotationList;
 
-        view.setResultView(findResultListPresenter);
+        view.setResultView(findAnnotationList);
         view.setUiHandlers(this);
-        findResultListPresenter.setOnOpen(this::openDocument);
-        findResultListPresenter.setOnFocusFilter(this::focus);
-        findResultListPresenter.setOnFilterError(view::setFilterError);
+        findAnnotationList.setOnOpen(this::openDocument);
+        findAnnotationList.setOnFocusFilter(this::focus);
+        findAnnotationList.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindAnnotationRequest.QUICK_FILTER_CONTEXT, this, this));
     }
@@ -72,13 +72,13 @@ public class FindAnnotationPresenter
             showing = true;
 
             // Make sure we are set to focus text next time we show.
-            findResultListPresenter.setFocusText(true);
+            findAnnotationList.setFocusText(true);
 
             // Refresh the results.
-            findResultListPresenter.refresh();
+            findAnnotationList.refresh();
 
             // Ensure list has a border in the popup view.
-            findResultListPresenter.asWidget().addStyleName("form-control-border form-control-background");
+            findAnnotationList.asWidget().addStyleName("form-control-border form-control-background");
 
             getView().setDialogMode(true);
             final PopupSize popupSize = PopupSize.resizable(800, 600);
@@ -89,7 +89,7 @@ public class FindAnnotationPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            final Annotation selected = findResultListPresenter.getSelected();
+                            final Annotation selected = findAnnotationList.getSelected();
                             if (selected == null) {
                                 // The consumers can't handle no annotation, so keep the dialog open
                                 AlertEvent.fireWarn(this, "No annotation has been selected", e::reset);
@@ -111,16 +111,16 @@ public class FindAnnotationPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        findResultListPresenter.setFilter(name);
-        findResultListPresenter.refresh();
+        findAnnotationList.setFilter(name);
+        findAnnotationList.refresh();
     }
 
     @Override
     public void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            openDocument(findResultListPresenter.getSelected());
+            openDocument(findAnnotationList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            findResultListPresenter.setKeyboardSelectedRow(0, true);
+            findAnnotationList.setKeyboardSelectedRow(0, true);
         }
     }
 

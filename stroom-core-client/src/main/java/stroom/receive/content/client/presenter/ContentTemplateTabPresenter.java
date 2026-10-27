@@ -44,7 +44,6 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -75,7 +74,7 @@ public class ContentTemplateTabPresenter
     protected static final CellIcon MOVE_TEMPLATE_UP_ICON = CellIcon.of(SvgImage.UP, "Move template up", false);
     protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
-    private final ContentTemplateListController listPresenter;
+    private final ContentTemplateListController contentTemplateList;
     private final ExpressionTreeController expressionTree;
     private final Provider<ContentTemplateEditPresenter> editPresenterProvider;
     private final RestFactory restFactory;
@@ -101,51 +100,45 @@ public class ContentTemplateTabPresenter
     @Inject
     public ContentTemplateTabPresenter(final EventBus eventBus,
                                        final ContentTemplateTabView view,
-                                       final ContentTemplateListController listPresenter,
+                                       final ContentTemplateListController contentTemplateList,
                                        final ExpressionTreeController expressionTree,
                                        final Provider<ContentTemplateEditPresenter> editPresenterProvider,
                                        final RestFactory restFactory) {
         super(eventBus, view);
-        own(listPresenter);
+        own(contentTemplateList);
         own(expressionTree);
-        this.listPresenter = listPresenter;
+        this.contentTemplateList = contentTemplateList;
         this.expressionTree = expressionTree;
         this.editPresenterProvider = editPresenterProvider;
         this.restFactory = restFactory;
 
-        getView().setTableView(listPresenter);
+        getView().setTableView(contentTemplateList);
 //        getView().setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
 
-        listPresenter.getToolbar().setName("Content template actions");
-        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
+        contentTemplateList.getToolbar().setName("Content template actions");
+        saveButton = contentTemplateList.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
         saveButton.setEnabled(false);
-        addAboveButton = listPresenter.getToolbar().button(
+        addAboveButton = contentTemplateList.getToolbar().button(
                 SvgImage.ADD_ABOVE,
                 "Add Template Above",
                 this::onAddAbove);
-        addBelowButton = listPresenter.getToolbar().button(
+        addBelowButton = contentTemplateList.getToolbar().button(
                 SvgImage.ADD_BELOW,
                 "Add Template Below",
                 this::onAddBelow);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
+        editButton = contentTemplateList.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
+        copyButton = contentTemplateList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
+        deleteButton = contentTemplateList.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
+        moveUpButton = contentTemplateList.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
+        moveDownButton = contentTemplateList.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
-
-        listPresenter
-                .asWidget()
-                .getElement()
-                .getStyle()
-                .setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
 
@@ -162,7 +155,7 @@ public class ContentTemplateTabPresenter
         addListSelectionHandler();
         addEnabledClickHandler();
 
-        listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
+        contentTemplateList.setActionMenuItemProvider(this::buildActionMenuItems);
     }
 
     private void initialiseTemplates(final RestFactory restFactory) {
@@ -315,7 +308,7 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEnabledClickHandler() {
-        listPresenter.setEnabledStateHandler(this::setRuleEnabledState);
+        contentTemplateList.setEnabledStateHandler(this::setRuleEnabledState);
     }
 
     private void setRuleEnabledState(final ContentTemplate currTemplate, final boolean isEnabled) {
@@ -643,7 +636,7 @@ public class ContentTemplateTabPresenter
             contentTemplates.clear();
             contentTemplates.addAll(tempList);
 
-            listPresenter.setData(contentTemplates);
+            contentTemplateList.setData(contentTemplates);
             // Update the policy so the impact tab can see the unsaved changes
 //            contentTemplates.setRules(getTemplates());
         }
@@ -732,15 +725,15 @@ public class ContentTemplateTabPresenter
 
 
     private MultiSelectionModel<ContentTemplate> getSelectionModel() {
-        return listPresenter.getSelectionModel();
+        return contentTemplateList.getSelectionModel();
     }
 
     private void setSelected(final ContentTemplate contentTemplate) {
-        listPresenter.getSelectionModel().setSelected(contentTemplate);
+        contentTemplateList.getSelectionModel().setSelected(contentTemplate);
     }
 
     private ContentTemplate getSelected() {
-        return listPresenter.getSelectionModel().getSelected();
+        return contentTemplateList.getSelectionModel().getSelected();
     }
 
 

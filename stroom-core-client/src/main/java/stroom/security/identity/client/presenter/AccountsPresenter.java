@@ -33,17 +33,17 @@ public class AccountsPresenter
         implements Refreshable {
 
     public static final String TAB_TYPE = "Accounts";
-    private final AccountsListController listPresenter;
+    private final AccountsListController accountsList;
 
     @Inject
     public AccountsPresenter(final EventBus eventBus,
                              final AccountsView view,
-                             final AccountsListController listPresenter,
+                             final AccountsListController accountsList,
                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
-        view.setList(listPresenter.asWidget());
+        own(accountsList);
+        this.accountsList = accountsList;
+        view.setList(accountsList.asWidget());
     }
 
     public void focus() {
@@ -52,7 +52,7 @@ public class AccountsPresenter
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
+        accountsList.refresh();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AccountsPresenter
     }
 
     public void setFilterInput(final String filterInput) {
-        listPresenter.setQuickFilterText(filterInput);
+        accountsList.setQuickFilterText(filterInput);
     }
 
 

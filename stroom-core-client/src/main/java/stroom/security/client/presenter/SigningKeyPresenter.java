@@ -51,7 +51,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
     public static final String TAB_TYPE = "SigningKeys";
 
-    private final SigningKeyListController listPresenter;
+    private final SigningKeyListController signingKeyList;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final ButtonView revokeButton;
@@ -60,24 +60,24 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
     @Inject
     public SigningKeyPresenter(final EventBus eventBus,
                                final SigningKeyView view,
-                               final SigningKeyListController listPresenter,
+                               final SigningKeyListController signingKeyList,
                                final RestFactory restFactory,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
+        own(signingKeyList);
+        this.signingKeyList = signingKeyList;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setList(listPresenter);
+        view.setList(signingKeyList);
 
-        listPresenter.getToolbar().setName("Signing key actions");
-        revokeButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
+        signingKeyList.getToolbar().setName("Signing key actions");
+        revokeButton = signingKeyList.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
                 this::revokeSelected);
         revokeButton.setEnabled(false);
         // Always enabled: it acts on every key rather than the selected one, so setButtonStates() —
         // which is driven by the selection — has nothing to say about it.
-        revokeAllButton = listPresenter.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
+        revokeAllButton = signingKeyList.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
                 this::revokeAll);
 
         own(getSelectionModel().addSelectionHandler(e -> setButtonStates()));
@@ -85,7 +85,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
     }
 
     private MultiSelectionModelImpl<SigningKeyRow> getSelectionModel() {
-        return listPresenter.getSelectionModel();
+        return signingKeyList.getSelectionModel();
     }
 
     private void setButtonStates() {
@@ -185,7 +185,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
+        signingKeyList.refresh();
         setButtonStates();
     }
 

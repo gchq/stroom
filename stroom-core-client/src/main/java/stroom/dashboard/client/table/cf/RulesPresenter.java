@@ -38,7 +38,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
@@ -53,7 +52,7 @@ public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
         implements Focus {
 
-    private final RuleList listPresenter;
+    private final RuleList ruleList;
     private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<QueryField> fields;
@@ -74,42 +73,40 @@ public class RulesPresenter
     @Inject
     public RulesPresenter(final EventBus eventBus,
                           final RulesView view,
-                          final RuleList listPresenter,
+                          final RuleList ruleList,
                           final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
-        this.listPresenter = listPresenter;
+        this.ruleList = ruleList;
         this.editRulePresenterProvider = editRulePresenterProvider;
 
-        getView().setTableView(listPresenter);
+        getView().setTableView(ruleList);
 
-        listPresenter.getToolbar().setName("Conditional formatting rule actions");
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Formatting Rule", this::add);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Formatting Rule",
+        ruleList.getToolbar().setName("Conditional formatting rule actions");
+        addButton = ruleList.getToolbar().button(SvgImage.ADD, "New Formatting Rule", this::add);
+        editButton = ruleList.getToolbar().button(SvgImage.EDIT, "Edit Selected Formatting Rule",
                 this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Formatting Rule",
+        copyButton = ruleList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Formatting Rule",
                 this::onCopy);
         copyButton.setEnabled(false);
-        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable Selected Formatting Rule",
+        disableButton = ruleList.getToolbar().button(SvgImage.DISABLE, "Disable Selected Formatting Rule",
                 this::onDisable);
         disableButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Formatting Rule",
+        deleteButton = ruleList.getToolbar().button(SvgImage.DELETE, "Delete Selected Formatting Rule",
                 this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Formatting Rule Up",
+        moveUpButton = ruleList.getToolbar().button(SvgImage.UP, "Move Formatting Rule Up",
                 this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Formatting Rule Down",
+        moveDownButton = ruleList.getToolbar().button(SvgImage.DOWN, "Move Formatting Rule Down",
                 this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-        listPresenter.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-
         updateButtons();
 
-        listPresenter.setOnChange(() -> setDirty(true));
-        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+        ruleList.setOnChange(() -> setDirty(true));
+        own(ruleList.getSelectionModel().addSelectionHandler(event -> {
+            final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
             if (rule != null) {
 //                expressionPresenter.read(rule.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
@@ -128,14 +125,14 @@ public class RulesPresenter
     }
 
     private void onEdit() {
-        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule selected = ruleList.getSelectionModel().getSelected();
         if (selected != null) {
             edit(selected);
         }
     }
 
     private void onCopy() {
-        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule selected = ruleList.getSelectionModel().getSelected();
         if (selected != null) {
             final ConditionalFormattingRule newRule = selected
                     .copy()
@@ -151,12 +148,12 @@ public class RulesPresenter
             }
 
             update();
-            listPresenter.getSelectionModel().setSelected(newRule);
+            ruleList.getSelectionModel().setSelected(newRule);
         }
     }
 
     private void onDisable() {
-        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule selected = ruleList.getSelectionModel().getSelected();
         if (selected != null) {
             final ConditionalFormattingRule newRule = selected
                     .copy()
@@ -165,7 +162,7 @@ public class RulesPresenter
             final int index = rules.indexOf(selected);
             rules.remove(index);
             rules.add(index, newRule);
-            listPresenter.getSelectionModel().setSelected(newRule);
+            ruleList.getSelectionModel().setSelected(newRule);
             update();
             setDirty(true);
         }
@@ -174,9 +171,9 @@ public class RulesPresenter
     private void onDelete() {
         ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
             if (ok) {
-                final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+                final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
                 rules.remove(rule);
-                listPresenter.getSelectionModel().clear();
+                ruleList.getSelectionModel().clear();
                 update();
                 setDirty(true);
             }
@@ -184,7 +181,7 @@ public class RulesPresenter
     }
 
     private void onMoveUp() {
-        final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
         if (rule != null) {
             final int index = rules.indexOf(rule);
             if (index > 0) {
@@ -197,7 +194,7 @@ public class RulesPresenter
     }
 
     private void onMoveDown() {
-        final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
         if (rule != null) {
             final int index = rules.indexOf(rule);
             if (index < rules.size() - 1) {
@@ -232,7 +229,7 @@ public class RulesPresenter
                         final ConditionalFormattingRule rule = editRulePresenter.write();
                         rules.add(rule);
                         update();
-                        listPresenter.getSelectionModel().setSelected(rule);
+                        ruleList.getSelectionModel().setSelected(rule);
                         setDirty(true);
                     }
                     e.hide();
@@ -267,7 +264,7 @@ public class RulesPresenter
                             rules.add(index, rule);
 
                             update();
-                            listPresenter.getSelectionModel().setSelected(rule);
+                            ruleList.getSelectionModel().setSelected(rule);
 
                             // Only mark the policies as dirty if the rule was actually changed.
                             if (!existingRule.equals(rule)) {
@@ -312,7 +309,7 @@ public class RulesPresenter
         } else {
             this.rules.clear();
         }
-        listPresenter.getSelectionModel().clear();
+        ruleList.getSelectionModel().clear();
         setDirty(false);
         update();
     }
@@ -337,7 +334,7 @@ public class RulesPresenter
             this.rules = new ArrayList<>();
         }
 
-        listPresenter.getSelectionModel().clear();
+        ruleList.getSelectionModel().clear();
         setDirty(false);
         update();
     }
@@ -387,13 +384,13 @@ public class RulesPresenter
     }
 
     private void update() {
-        listPresenter.setData(rules);
+        ruleList.setData(rules);
         updateButtons();
     }
 
     private void updateButtons() {
         final boolean loadedPolicy = rules != null;
-        final ConditionalFormattingRule selection = listPresenter.getSelectionModel().getSelected();
+        final ConditionalFormattingRule selection = ruleList.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
         int index = -1;
         if (selected) {

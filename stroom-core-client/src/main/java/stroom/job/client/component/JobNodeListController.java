@@ -106,7 +106,7 @@ public class JobNodeListController extends Controller {
 
         refreshNodeStates();
 
-        // NodeListPresenter may change a node
+        // NodeStatusListController may change a node
         listen(
                 NodeChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
