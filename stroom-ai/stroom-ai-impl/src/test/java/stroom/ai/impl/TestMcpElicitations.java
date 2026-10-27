@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -118,6 +119,32 @@ class TestMcpElicitations {
         // Only one answer counts.
         assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null))
                 .hasMessageContaining("already been answered");
+    }
+
+    @Test
+    void anAnswerGivenAsSoonAsTheFormIsShownIsTaken() {
+        // Seen as a flaky test: the form was shown before its run waited for the user, so an answer given at once
+        // was refused as if the tool had stopped waiting. Here the user answers the moment the form is stored.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final AtomicReference<Throwable> answerError = new AtomicReference<>();
+        Mockito.when(aiDao.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString())).thenAnswer(inv -> {
+            final AiChatMessage card = new AiChatMessage(nextId.getAndIncrement(), inv.getArgument(0), 0L,
+                    inv.getArgument(1), null, inv.getArgument(2), 1, null);
+            messages.put(card.getId(), card);
+            try {
+                elicitations.answer(CHAT_ID, card.getId(), "ACCEPT", Map.of("feed", "ACME"));
+            } catch (final RuntimeException e) {
+                answerError.set(e);
+            }
+            return card;
+        });
+
+        final ElicitResult result = elicitations.handle(CHAT_ID, "fastmcp", new ElicitFormRequest("Which feed?",
+                FORM, null));
+
+        assertThat(answerError.get()).isNull();
+        assertThat(result.action()).isEqualTo(Action.ACCEPT);
+        assertThat(result.content()).isEqualTo(Map.of("feed", "ACME"));
     }
 
     @Test
