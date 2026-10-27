@@ -377,6 +377,20 @@ public final class ElasticTestNode {
         }
     }
 
+    /// Send any request to the node, as a cluster administrator would in Kibana's Dev Tools, e.g. to apply an index
+    /// template a user was given, or read what Elasticsearch mapped.
+    ///
+    /// @param method The HTTP method, e.g. `PUT`.
+    /// @param path   The path, e.g. `/_index_template/my-template`.
+    /// @param body   The JSON body, or null for none.
+    /// @return The response's status and body.
+    public Response request(final String method, final String path, final String body) {
+        final HttpResponse<String> response = send(method, path.startsWith("/")
+                ? path
+                : "/" + path, body);
+        return new Response(response.statusCode(), response.body());
+    }
+
     private HttpResponse<String> send(final String method, final String path, final String body) {
         final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(baseUrl + path))
                 .timeout(TIMEOUT)
@@ -475,6 +489,18 @@ public final class ElasticTestNode {
 
     /// Trusts any certificate. Only used to read the chain a node presents.
     @SuppressWarnings("java:S4830") // Deliberately trusts anything, as nothing is sent over the connection
+    /// A response from the node.
+    ///
+    /// @param status Its HTTP status.
+    /// @param body   Its body.
+    public record Response(int status, String body) {
+
+        /// @return Whether the status is a success (2xx).
+        public boolean isSuccess() {
+            return status >= 200 && status < 300;
+        }
+    }
+
     private static final class TrustAllTrustManager implements X509TrustManager {
 
         @Override
