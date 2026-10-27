@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
 import stroom.explorer.client.component.FindController;
+import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.component.RecentItemsController;
 import stroom.explorer.client.event.DeleteTabSessionEvent;
 import stroom.explorer.client.event.LocateDocEvent;
@@ -36,7 +37,6 @@ import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
@@ -58,6 +58,7 @@ public class NavigationPlugin extends Plugin {
     private DocRef selectedDoc;
     private List<TabSession> tabSessions;
     private FindController find;
+    private FindInContentController findInContent;
     private RecentItemsController recentItems;
 
     @Inject
@@ -65,7 +66,7 @@ public class NavigationPlugin extends Plugin {
                             final DocumentPluginRegistry documentPluginRegistry,
                             final Provider<ExplorerNodeEditTagsPresenter> explorerNodeEditTagsPresenterProvider,
                             final Provider<ExplorerNodeRemoveTagsPresenter> explorerNodeRemoveTagsPresenterProvider,
-                            final Provider<FindInContentPresenter> findInContentPresenterProvider,
+                            final Provider<FindInContentController> findInContentProvider,
                             final AppRoot appRoot,
                             final Provider<FindController> findProvider,
                             final Provider<RecentItemsController> recentItemsProvider) {
@@ -84,9 +85,13 @@ public class NavigationPlugin extends Plugin {
                 explorerNodeEditTagsPresenterProvider.get().onCreate(event));
         eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
                 explorerNodeRemoveTagsPresenterProvider.get().onCreate(event));
-        eventBus.addHandler(ShowFindInContentEvent.getType(), event ->
-                findInContentPresenterProvider.get().onShow(event));
-        // Find and Recent Items are made once and kept, to keep their last filter
+        // Find, Find In Content and Recent Items are made once and kept, to keep their last filter
+        eventBus.addHandler(ShowFindInContentEvent.getType(), event -> {
+            if (findInContent == null) {
+                findInContent = appRoot.make(findInContentProvider);
+            }
+            findInContent.show();
+        });
         eventBus.addHandler(ShowFindEvent.getType(), event -> {
             if (find == null) {
                 find = appRoot.make(findProvider);

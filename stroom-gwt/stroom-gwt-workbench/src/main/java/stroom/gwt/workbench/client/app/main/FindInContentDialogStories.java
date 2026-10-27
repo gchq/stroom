@@ -17,8 +17,8 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.event.ShowFindInContentEvent;
-import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/FindInContentDialog`, showing Stroom's real [FindInContentPresenter] (the
+/// Stories of `App/Main/FindInContentDialog`, showing Stroom's real [FindInContentController] (the
 /// 'Find In Content' dialog: a pattern box with match case and regex toggles over a result list and
 /// a highlighted preview) with fake REST replies.
 ///
@@ -154,10 +154,10 @@ public final class FindInContentDialogStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As NavigationPlugin would
-            final FindInContentPresenter presenter = harness.own(injector.getFindInContentPresenter());
+            // As NavigationPlugin does, made once and kept
+            final FindInContentController findInContent = harness.own(injector.getFindInContentController());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
-                    presenter::onShow));
+                    event -> findInContent.show()));
             ShowFindInContentEvent.fire(harness.getHasHandlers());
         });
         return harness.asWidget();

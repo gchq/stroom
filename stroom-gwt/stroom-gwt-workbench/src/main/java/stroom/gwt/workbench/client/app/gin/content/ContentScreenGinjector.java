@@ -33,7 +33,7 @@ import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.explorer.client.component.FindController;
-import stroom.explorer.client.presenter.FindInContentPresenter;
+import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
@@ -154,8 +154,9 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     /// @return The 'Find' dialog, as `NavigationPlugin` shows it for `ShowFindEvent`.
     FindController getFindController();
 
-    /// @return The 'Find In Content' dialog, shown by firing `ShowFindInContentEvent`.
-    FindInContentPresenter getFindInContentPresenter();
+    /// @return The 'Find In Content' dialog, as `NavigationPlugin` shows it for
+    /// `ShowFindInContentEvent`.
+    FindInContentController getFindInContentController();
 
     /// @return The tab session manager, which shows the tab session chooser for `OpenTabSessionEvent`.
     TabSessionManager getTabSessionManager();

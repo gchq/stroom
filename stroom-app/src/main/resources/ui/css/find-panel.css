@@ -35,7 +35,7 @@
     height: 2.1rem;
 }
 
-.find-panel__top .text-field--multiline.multiLine {
+.find-panel__top .text-field--multiline.find-panel__pattern--multiline {
     /* Multi line */
     height: 6.3rem;
 }

@@ -34,13 +34,10 @@ import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
-import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -110,10 +107,6 @@ public class AppModule extends AbstractPresenterModule {
                 ExplorerNodeRemoveTagsView.class,
                 ExplorerNodeRemoveTagsViewImpl.class);
 
-        bindPresenter(
-                FindInContentPresenter.class,
-                FindInContentView.class,
-                FindInContentViewImpl.class);
 
         // Menu
         bind(MenuManager.class).asEagerSingleton();
