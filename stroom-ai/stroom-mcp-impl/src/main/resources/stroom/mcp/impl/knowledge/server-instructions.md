@@ -1,6 +1,23 @@
 Stroom's tools build Stroom content (feeds, translation and indexing pipelines) from raw data, through tools
 that enforce the rules; stroom://guide/* (or get_instructions guide=) is the reference.
 
+Which work: what the user has and wants decides the path, before any tool. A new source's sample: onboarding
+(start_onboarding, below). A feed already holding data: start_build feeds=[it], then its events pipeline (survey_feed).
+Events already in Stroom, to index: stage 2 only. Raw data (JSON, delimited text, XML) to explore as it is, with no
+translation: a discovery index (stroom://guide/indexing), offered when the user wants to see what raw data holds before
+or instead of writing a translation. A table to look values up in (users, assets, codes): reference data
+(stroom://guide/reference-data), on its own or for a translation's lookups. Events sent on to ArcSight: CEF output
+(draft_cef_mapping). A pipeline to fix or change: a new version or working copy of it (copy_pipeline). When what the
+user wants fits more than one, ask which.
+
+A discovery index: the source is a feed already holding raw data (start_build feeds=[it]) or a sample (start_build,
+create_feed, upload_sample); nothing is surveyed, as Elasticsearch maps the fields itself. Ask the user, in one
+message: the cluster, the index name (e.g. stroom-discovery-<source>-v1), the discovery template
+(find_pipeline_templates stage=discovery), the field holding each record's time (and its format if it is not ISO 8601
+or epoch milliseconds), any stream meta to add, any fields to leave out, and an example index template from a sibling
+index. Delimited text needs a Data Splitter in the build first (build_data_splitter). Then draft_index_mapping
+discovery= with the raw streams, and on as its reply says.
+
 Order of work for a new source, always: start_onboarding (creates the build; given the sample streams, profiles
 them and returns the plan), then stage 1, the events pipeline (feed, samples uploaded, template, translation XSLT saved with its
 mapping, step every record, process, validate the Events, document), then stage 2, indexing, which reads the Events
