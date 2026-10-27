@@ -19,8 +19,8 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.query.api.Column;
@@ -39,7 +39,6 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -68,7 +67,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private final Provider<ColumnFormatController> columnFormatProvider;
     private final Provider<RulesPresenter> rulesPresenterProvider;
     private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
-    private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
+    private final ColumnValuesFilterController columnValuesFilterPresenter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
@@ -79,7 +78,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                     final Provider<ColumnFormatController> columnFormatProvider,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
-                                    final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+                                    final ColumnValuesFilterController columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.columnFormatProvider = columnFormatProvider;
@@ -139,7 +138,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                             final boolean isDiableFilterButton = diableFilterButton.isOrHasChild(target);
 
                             if (currentFilterColIndex == colIndex) {
-                                HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
+                                columnValuesFilterPresenter.hide();
 
                             } else if (isFilterButton) {
                                 showValuesFilter(column, colIndex, th, button);

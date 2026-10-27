@@ -25,6 +25,7 @@ import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.input.FilterableTable;
@@ -213,7 +214,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UserPreferencesManager userPreferencesManager,
                           final DynamicColumnSelectionListModel columnSelectionListModel,
                           final DataSourceClient dataSourceClient,
-                          final ColumnValuesFilterPresenter columnValuesFilterPresenter,
+                          final ColumnValuesFilterController columnValuesFilterPresenter,
                           final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
         own(tableFilterPresenter);

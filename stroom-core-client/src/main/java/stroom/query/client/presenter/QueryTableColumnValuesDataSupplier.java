@@ -71,10 +71,10 @@ public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier
     }
 
     @Override
-    protected void exec(final Range range,
-                        final Consumer<ColumnValues> dataConsumer,
-                        final RestErrorHandler errorHandler,
-                        final Map<String, ColumnValueSelection> selections) {
+    public void exec(final Range range,
+                     final Consumer<ColumnValues> dataConsumer,
+                     final RestErrorHandler errorHandler,
+                     final Map<String, ColumnValueSelection> selections) {
         if (searchRequest == null) {
             dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
 

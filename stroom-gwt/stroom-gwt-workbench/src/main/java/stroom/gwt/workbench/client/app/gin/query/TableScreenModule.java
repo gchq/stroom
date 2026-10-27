@@ -22,9 +22,6 @@ import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
-import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
-import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
-import stroom.dashboard.client.table.ColumnValuesFilterViewImpl;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
@@ -58,8 +55,5 @@ public class TableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(RulePresenter.class,
                 RulePresenter.RuleView.class,
                 RuleViewImpl.class);
-        bindPresenterWidget(ColumnValuesFilterPresenter.class,
-                ColumnValuesFilterView.class,
-                ColumnValuesFilterViewImpl.class);
     }
 }

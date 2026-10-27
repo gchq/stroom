@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.query.api.Column;
@@ -36,7 +37,6 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.ElementUtil;
@@ -68,7 +68,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
     private final TableFilterPresenter tableFilterPresenter;
-    private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
+    private final ColumnValuesFilterController columnValuesFilterPresenter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
@@ -82,7 +82,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
-                          final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+                          final ColumnValuesFilterController columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
@@ -157,7 +157,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
 
                             if (currentFilterColIndex == colIndex) {
-                                HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
+                                columnValuesFilterPresenter.hide();
 
                             } else if (isFilterButton) {
                                 showValuesFilter(column, colIndex, th, button);

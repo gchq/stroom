@@ -290,7 +290,7 @@ public final class DashboardSearchStories {
                     DashboardPlays.opened(play);
                     final Play screen = play.screen();
                     // The Table Filter is a list of the column's values to tick
-                    // (ColumnValuesFilterPresenter), so the play chooses 'red' and 'green' there;
+                    // (ColumnValuesFilterController), so the play chooses 'red' and 'green' there;
                     // the values are the table's, so the query is run first. Each step waits for the
                     // one before to take effect (under load a click could land while the list was
                     // still being refreshed by the first query's results)

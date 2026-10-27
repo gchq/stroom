@@ -1342,31 +1342,6 @@
     height: auto;
 }
 
-.ColumnValuesFilterViewImpl {
-    display: flex;
-    flex-direction: column;
-    gap: var(--control__padding--vertical);
-}
-
-.ColumnValuesFilterViewImpl .bar {
-	display: flex;
-    gap: var(--control__padding--horizontal);
-}
-
-.ColumnValuesFilterViewImpl .link {
-	display: inline-flex;
-	align-items: center;
-	/* At least 24px high, the minimum target size (WCAG 2.5.8) */
-	min-height: 24px;
-	cursor: pointer;
-	padding: 2px 5px;
-    text-decoration: underline;
-}
-
-.ColumnValuesFilterViewImpl .listContainer {
-    /*height: 300px;*/
-}
-
 .durationSetting {
     display: flex;
 }
@@ -1544,17 +1519,6 @@
     flex-basis: 0;
     min-height: 200px;
     overflow: hidden;
-}
-
-.table-filter-outer .ColumnValuesFilterViewImpl {
-    gap: 0;
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.popupContent .ColumnValuesFilterViewImpl {
-    width: 400px;
-    height: 400px;
 }
 
 .data-grid .dashboard-table-filter-cell {

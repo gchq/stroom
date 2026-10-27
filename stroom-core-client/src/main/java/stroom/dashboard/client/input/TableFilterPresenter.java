@@ -16,12 +16,12 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.input.TableFilterPresenter.TableFilterView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TableFilterComponentSettings;
@@ -60,16 +60,16 @@ public class TableFilterPresenter
                     "Table Filter",
                     ComponentUse.INPUT);
 
-    private final Provider<ColumnValuesFilterPresenter> columnValuesFilterPresenterProvider;
+    private final Provider<ColumnValuesFilterController> columnValuesFilterPresenterProvider;
     private final List<HandlerRegistration> registrations = new ArrayList<>();
-    private final Map<String, ColumnValuesFilterPresenter> columnFilterPresenters = new HashMap<>();
+    private final Map<String, ColumnValuesFilterController> columnFilterPresenters = new HashMap<>();
     private List<Column> currentColumns = Collections.emptyList();
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
                                 final TableFilterView view,
                                 final Provider<TableFilterSettingsPresenter> settingsPresenterProvider,
-                                final Provider<ColumnValuesFilterPresenter> columnValuesFilterPresenterProvider) {
+                                final Provider<ColumnValuesFilterController> columnValuesFilterPresenterProvider) {
         super(eventBus, view, settingsPresenterProvider);
         this.columnValuesFilterPresenterProvider = columnValuesFilterPresenterProvider;
         onDispose(this::removeTableListeners);
@@ -110,7 +110,7 @@ public class TableFilterPresenter
                 updateColumns(settings, table);
                 registrations.add(table.addUpdateListener(() -> {
                     updateColumns(settings, table);
-                    columnFilterPresenters.values().forEach(ColumnValuesFilterPresenter::refresh);
+                    columnFilterPresenters.values().forEach(ColumnValuesFilterController::refresh);
                 }));
             }
         }
@@ -135,7 +135,7 @@ public class TableFilterPresenter
                     final Label label = new Label(column.getName(), false);
                     label.addStyleName("table-filter-label");
 
-                    final ColumnValuesFilterPresenter columnValuesFilterPresenter =
+                    final ColumnValuesFilterController columnValuesFilterPresenter =
                             make(columnValuesFilterPresenterProvider);
                     columnFilterPresenters.put(column.getId(), columnValuesFilterPresenter);
 
@@ -160,7 +160,7 @@ public class TableFilterPresenter
                     final FlowPanel panel = new FlowPanel();
                     panel.addStyleName("table-filter-panel");
                     panel.add(label);
-                    panel.add(columnValuesFilterPresenter.getWidget());
+                    panel.add(columnValuesFilterPresenter.asWidget());
 
                     getView().getPanel().add(panel);
                     columnValuesFilterPresenter.refresh();

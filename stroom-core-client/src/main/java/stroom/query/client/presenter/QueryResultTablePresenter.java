@@ -26,11 +26,11 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.GroupLevelButtons;
@@ -172,7 +172,7 @@ public class QueryResultTablePresenter
                                      final Provider<ColumnFormatController> columnFormatProvider,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
                                      final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
-                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter,
+                                     final ColumnValuesFilterController columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         own(downloadOptions);

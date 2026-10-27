@@ -54,7 +54,8 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
     /// @param columnValueSelection The values chosen.
     /// @param item                 A value.
     /// @return Whether the value is chosen, as a tick box shows it.
-    static TickBoxState stateOf(final ColumnValueSelection.Builder columnValueSelection, final ColumnValue item) {
+    public static TickBoxState stateOf(final ColumnValueSelection.Builder columnValueSelection,
+                                       final ColumnValue item) {
         final ColumnValueSelection selection = columnValueSelection.build();
         final boolean selected;
         if (selection.getValues().contains(item.getValue())) {

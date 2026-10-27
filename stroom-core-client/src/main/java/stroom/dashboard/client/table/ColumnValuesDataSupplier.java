@@ -42,10 +42,16 @@ public abstract class ColumnValuesDataSupplier {
         this.conditionalFormattingRules = conditionalFormattingRules;
     }
 
-    protected abstract void exec(Range range,
-                                 Consumer<ColumnValues> dataConsumer,
-                                 RestErrorHandler errorHandler,
-                                 Map<String, ColumnValueSelection> selections);
+    /// Fetches a page of the column's values.
+    ///
+    /// @param range        The page.
+    /// @param dataConsumer Given the page of values.
+    /// @param errorHandler Told why it failed.
+    /// @param selections   Every column's selection, which the values fetched match, or null.
+    public abstract void exec(Range range,
+                              Consumer<ColumnValues> dataConsumer,
+                              RestErrorHandler errorHandler,
+                              Map<String, ColumnValueSelection> selections);
 
     public Column getColumn() {
         return column;
