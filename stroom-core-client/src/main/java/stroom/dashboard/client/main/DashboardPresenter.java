@@ -1332,6 +1332,36 @@ public class DashboardPresenter
                 : " (" + String.join("; ", state) + ")";
     }
 
+    /// The settings of a table on the dashboard as it is now, unsaved changes included.
+    ///
+    /// @param componentId The table's component id.
+    /// @param name        The table's name, to find it by if no id is given.
+    /// @return Its settings, or null if the dashboard has no such table.
+    public TableComponentSettings tableSettings(final String componentId, final String name) {
+        // By its id alone, if it has one: another table may have its name.
+        final Component component = componentId != null
+                ? components.get(componentId)
+                : findComponent(null, name);
+        return component instanceof final TablePresenter table
+                ? table.getTableComponentSettings()
+                : null;
+    }
+
+    // A component by its id, or else by its name.
+    private Component findComponent(final String componentId, final String name) {
+        Component component = componentId == null
+                ? null
+                : components.get(componentId);
+        if (component == null) {
+            for (final Component each : components) {
+                if (Objects.equals(NullSafe.get(each.getComponentConfig(), ComponentConfig::getName), name)) {
+                    component = each;
+                }
+            }
+        }
+        return component;
+    }
+
     /// Applies changes made programmatically to one of the dashboard's tables, as its column menus would, unsaved:
     /// changes to the table, to the expression of the classic query that feeds it, and tables added beside it as
     /// tabs (fed by the same query), which later changes name as their table. They are applied all or none: if one
@@ -1349,16 +1379,7 @@ public class DashboardPresenter
                                       final String name,
                                       final List<TableChange> changes,
                                       final String undoKey) {
-        Component component = componentId == null
-                ? null
-                : components.get(componentId);
-        if (component == null) {
-            for (final Component each : components) {
-                if (Objects.equals(NullSafe.get(each.getComponentConfig(), ComponentConfig::getName), name)) {
-                    component = each;
-                }
-            }
-        }
+        final Component component = findComponent(componentId, name);
         if (component == null) {
             return "The dashboard has no table '" + name + "'.";
         }

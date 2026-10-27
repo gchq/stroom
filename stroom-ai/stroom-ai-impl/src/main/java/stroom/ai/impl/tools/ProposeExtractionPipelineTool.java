@@ -26,10 +26,13 @@ import stroom.ai.impl.extraction.ExtractionPipelines;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.extraction.ExtractionPlan.Existing;
 import stroom.ai.impl.extraction.ExtractionPreview;
+import stroom.ai.impl.extraction.PreviewRecord;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AskStroomAiContext;
@@ -42,10 +45,15 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,11 +75,9 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
     static final String NAME = "propose_extraction_pipeline";
     static final String TABLE_ARG = "table";
     static final String FIELDS_ARG = "fields";
-    static final String NAMESPACE_ARG = "namespace";
     static final String PIPELINE_NAME_ARG = "name";
     static final String SUMMARY_ARG = "summary";
     static final int MAX_NAME_CHARS = 100;
-    static final int MAX_NAMESPACE_CHARS = 200;
     static final int MAX_SUMMARY_CHARS = 500;
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
@@ -116,7 +122,8 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                  + "already, it offers to change that pipeline in place, or to save a new one (a "
                                  + "child of it): give every field, if Stroom AI wrote its XSLT; only those to add, "
                                  + "if it was written by hand.")
-                        .chatOnly(" Give the fields and namespace you tried with preview_extraction, once the user "
+                        .chatOnly(" Give the fields exactly as you last tried them with preview_extraction for this "
+                                  + "table (it is refused otherwise), once the user "
                                   + "has seen its preview and agreed them. Tell the user about the button(s) rather "
                                   + "than saying it was made.")
                         .build())
@@ -132,14 +139,12 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                         .required("name", "xpath")
                                         .build())
                                 .build())
-                        .addStringProperty(NAMESPACE_ARG, "The events' namespace, as the preview gave it (blank "
-                                                          + "for none).")
                         .addStringProperty(PIPELINE_NAME_ARG, "The name to suggest for the new pipeline and its "
                                                               + "XSLT, e.g. 'Logons extraction'; the user may "
                                                               + "change it.")
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what it adds to the table, shown with "
                                                         + "the button.")
-                        .required(TABLE_ARG, FIELDS_ARG, NAMESPACE_ARG, PIPELINE_NAME_ARG)
+                        .required(TABLE_ARG, FIELDS_ARG, PIPELINE_NAME_ARG)
                         .build())
                 .build();
     }
@@ -148,15 +153,10 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final List<ExtractionField> fields = ExtractionField.parse(argsMap(request).get(FIELDS_ARG));
         final String tableName = stringArg(request, TABLE_ARG);
-        final String namespace = NullSafe.string(stringArg(request, NAMESPACE_ARG)).strip();
         final String name = NullSafe.get(stringArg(request, PIPELINE_NAME_ARG), String::strip);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (tableName == null) {
             throw new WorkspaceException("Give the table, by its name as the user sees it.");
-        }
-        if (namespace.length() > MAX_NAMESPACE_CHARS || namespace.chars().anyMatch(Character::isWhitespace)
-            || namespace.chars().anyMatch(Character::isISOControl)) {
-            throw new WorkspaceException("Give the events' namespace as the preview gave it, e.g. event-logging:3.");
         }
         if (NullSafe.isBlankString(name) || name.length() > MAX_NAME_CHARS
             || name.chars().anyMatch(Character::isISOControl)) {
@@ -199,6 +199,22 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         final DocRef pipeline = settings.extractValues()
                 ? settings.getExtractionPipeline()
                 : null;
+        // Only fields tried on the table's events, as they were tried, are offered; the XSLT is written for the
+        // namespace of an event they were tried on.
+        final PreviewRecord tried = previewRecord(context, dashboard, table.getComponentId());
+        if (tried == null) {
+            return ToolResult.text("Nothing was offered: the extraction hasn't been tried, usably, on the events of "
+                                   + "table '" + tableName + "' (its last preview, if any, said why). Try it with "
+                                   + "preview_extraction first, show the user the preview, and propose the fields as "
+                                   + "tried.");
+        }
+        if (!PreviewRecord.fieldsHash(fields).equals(tried.fieldsHash())
+            || !Objects.equals(tried.tablePipeline(), NullSafe.get(pipeline, DocRef::getUuid))) {
+            return ToolResult.text("Nothing was offered: these fields (or the table's extraction pipeline) aren't "
+                                   + "as they were when the extraction was last tried on the events of table '"
+                                   + tableName + "'. Try these fields with preview_extraction, show the user the "
+                                   + "preview, and propose them as tried.");
+        }
         final Existing existing;
         final ExtractionChange.Changed changed;
         if (pipeline != null) {
@@ -226,7 +242,8 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                        + "be changed.");
             }
             try {
-                changed = ExtractionChange.change(code, namespace, fields);
+                // Checked only: the events' namespace is read when the button is used.
+                changed = ExtractionChange.change(code, null, fields);
             } catch (final IllegalArgumentException e) {
                 return ToolResult.text("Nothing was offered: " + e.getMessage());
             }
@@ -234,6 +251,11 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         } else {
             existing = null;
             changed = null;
+        }
+        if (!Objects.equals(tried.xsltHash(), NullSafe.get(existing, Existing::codeHash))) {
+            return ToolResult.text("Nothing was offered: the XSLT of the extraction pipeline of table '" + tableName
+                                   + "' has changed since the extraction was tried. Try it again with "
+                                   + "preview_extraction, show the user the preview, and propose it as tried.");
         }
 
         final Map<String, String> columns = ResultsRequests.columnExpressions(search);
@@ -268,7 +290,7 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         }
 
         final ExtractionPlan plan = new ExtractionPlan(NullSafe.nonBlankStringElse(table.getName(),
-                table.getComponentId()), table.getComponentId(), namespace, fields, newColumns, existing);
+                table.getComponentId()), table.getComponentId(), tried.sample(), fields, newColumns, existing);
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
         arguments.put("name", name);
@@ -329,6 +351,27 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         return canEdit
                 ? result.withUserAction(change).withUserAction(create)
                 : result.withUserAction(create);
+    }
+
+    // The record of the table's last usable preview in this chat, or null if there is none.
+    private PreviewRecord previewRecord(final ToolCallContext context,
+                                        final DocRef dashboard,
+                                        final String componentId) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final WorkspacePath path = PreviewRecord.path(dashboard.getUuid(), componentId);
+        if (workspace.find(path).isEmpty()) {
+            return null;
+        }
+        try {
+            final PreviewRecord record = PreviewRecord.fromJson(Files.readString(workspace.localFile(path),
+                    StandardCharsets.UTF_8));
+            return record != null && dashboard.getUuid().equals(record.dashboard())
+                   && componentId.equals(record.componentId())
+                    ? record
+                    : null;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static String name(final DocRef docRef) {

@@ -248,8 +248,10 @@ public class ContextAssembler {
             which isn't indexed), use a search extraction. Find each value's XPath in a sample event \
             (current_results with withEventIds, fetch_events, xpath); try the fields with preview_extraction on \
             ten or so events, and show the user its table and what it says to check; agree the fields and their \
-            names with them; then offer it with propose_extraction_pipeline. Stroom writes the XSLT, and nothing \
-            is written until the user confirms it. Turning extraction on fills every value in the table from it, \
+            names with them; then offer them, exactly as last tried, with propose_extraction_pipeline (it \
+            refuses fields not tried so; without the Stepping permission, an extraction can't be tried, nor \
+            offered). Stroom writes the XSLT, for the namespace of the events tried, and nothing is written until \
+            the user confirms it. Turning extraction on fills every value in the table from it, \
             so give every field the table's columns use. For a table with an extraction pipeline already, give \
             every field if Stroom AI wrote its XSLT, or only those to add if it was written by hand; the user \
             chooses whether to change it in place (which changes the other dashboards and queries that use it) or \

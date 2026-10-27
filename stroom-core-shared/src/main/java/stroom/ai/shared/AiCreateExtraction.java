@@ -58,6 +58,8 @@ public class AiCreateExtraction {
     @JsonProperty
     private final String pipelineDescription;
     @JsonProperty
+    private final DocRef tablePipeline;
+    @JsonProperty
     private final String contentHash;
 
     /// @param name             The name to suggest for the new pipeline and its XSLT.
@@ -71,6 +73,8 @@ public class AiCreateExtraction {
     /// @param dashboardChanges Each change made to the table as the pipeline is made (unsaved), in words.
     /// @param xsltDescription     The description the XSLT is given.
     /// @param pipelineDescription The description the pipeline is given.
+    /// @param tablePipeline    The extraction pipeline the table had when this was proposed (which the new one is a
+    ///                         child of), or null for none: nothing is written if it has another now.
     /// @param contentHash      The hash of what will be written, which the write must be given, so nothing else
     ///                         is written.
     @JsonCreator
@@ -85,6 +89,7 @@ public class AiCreateExtraction {
                               @JsonProperty("dashboardChanges") final List<String> dashboardChanges,
                               @JsonProperty("xsltDescription") final String xsltDescription,
                               @JsonProperty("pipelineDescription") final String pipelineDescription,
+                              @JsonProperty("tablePipeline") final DocRef tablePipeline,
                               @JsonProperty("contentHash") final String contentHash) {
         this.name = name;
         this.folder = folder;
@@ -97,6 +102,7 @@ public class AiCreateExtraction {
         this.dashboardChanges = dashboardChanges;
         this.xsltDescription = xsltDescription;
         this.pipelineDescription = pipelineDescription;
+        this.tablePipeline = tablePipeline;
         this.contentHash = contentHash;
     }
 
@@ -153,6 +159,11 @@ public class AiCreateExtraction {
     /// @return The description the pipeline is given.
     public String getPipelineDescription() {
         return pipelineDescription;
+    }
+
+    /// @return The extraction pipeline the table had when this was proposed, or null for none.
+    public DocRef getTablePipeline() {
+        return tablePipeline;
     }
 
     /// @return The hash of what will be written.

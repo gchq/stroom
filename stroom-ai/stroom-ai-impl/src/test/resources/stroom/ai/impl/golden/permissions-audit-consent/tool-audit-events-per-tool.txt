@@ -474,7 +474,7 @@
     }
   }
 
-## propose_extraction_pipeline {"table":"Users","namespace":"","name":"Users extraction","fields":[{"name":"Org","xpath":"Org"}]}
+## propose_extraction_pipeline {"table":"Users","name":"Users extraction","fields":[{"name":"Org","xpath":"Org"}]}
 (nothing recorded)
 
 ## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}

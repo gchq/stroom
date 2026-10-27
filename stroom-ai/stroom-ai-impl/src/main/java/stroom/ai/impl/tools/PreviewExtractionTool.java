@@ -20,12 +20,15 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.extraction.ExtractionChange;
+import stroom.ai.impl.extraction.ExtractionEvents;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPipelines;
+import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.extraction.ExtractionPreview;
 import stroom.ai.impl.extraction.ExtractionPreview.Preview;
 import stroom.ai.impl.extraction.ExtractionPreview.Sample;
 import stroom.ai.impl.extraction.ExtractionXslt;
+import stroom.ai.impl.extraction.PreviewRecord;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -112,6 +115,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
     private final Provider<XsltStore> xsltStoreProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final SteppingWalks steppingWalks;
+    private final ExtractionEvents extractionEvents;
     private final AiAuditLog auditLog;
 
     @Inject
@@ -123,6 +127,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                           final Provider<XsltStore> xsltStoreProvider,
                           final Provider<SecurityContext> securityContextProvider,
                           final SteppingWalks steppingWalks,
+                          final ExtractionEvents extractionEvents,
                           final AiAuditLog auditLog) {
         super(workspace);
         this.tabSnapshots = tabSnapshots;
@@ -132,6 +137,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         this.xsltStoreProvider = xsltStoreProvider;
         this.securityContextProvider = securityContextProvider;
         this.steppingWalks = steppingWalks;
+        this.extractionEvents = extractionEvents;
         this.auditLog = auditLog;
     }
 
@@ -354,7 +360,89 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
             fields.forEach(field -> alsoGiven.remove(field.name()));
         }
         final Preview preview = ExtractionPreview.preview(fields, alsoGiven, tried, columns, dataSourceFields);
-        return ToolResult.text(describe(tableName, trial, changed, preview, namespace));
+        final Sample steppedSample = tried.stream()
+                .filter(sample -> sample.extracted() != null)
+                .findFirst()
+                .orElse(null);
+        // A proposal is offered only for fields tried so, and its XSLT is written for the namespace of the event
+        // recorded; the table's last preview is the one that counts.
+        final String notRecorded = record(context, workspace, path, dashboard, table, search, trial, fields,
+                preview, steppedSample, namespace);
+        return ToolResult.text(describe(tableName, trial, changed, preview, namespace)
+                               + (notRecorded == null
+                ? ""
+                : "\n\nIt can't be proposed: " + notRecorded));
+    }
+
+    // Records a usable preview of the table, for propose_extraction_pipeline: one of its own events (from a
+    // snapshot current_results took of it, which only Stroom writes), with no problems, whose namespace as stored
+    // is the one stepping found. Else records that its last preview can't be used. Returns why it can't be
+    // proposed, or null if it can.
+    private String record(final ToolCallContext context,
+                          final SessionWorkspace workspace,
+                          final WorkspacePath path,
+                          final DocRef dashboard,
+                          final AiTabSearch table,
+                          final AskStroomAiContext search,
+                          final Trial trial,
+                          final List<ExtractionField> fields,
+                          final Preview preview,
+                          final Sample stepped,
+                          final String namespace) {
+        String problem = null;
+        if (!preview.problems().isEmpty() || stepped == null) {
+            problem = "it can't be used as it is.";
+        } else if (CurrentResultsTool.snapshotOf(workspace, path)
+                .filter(meta -> NullSafe.get(meta.tab(), DocRef::getUuid) != null
+                                && meta.tab().getUuid().equals(dashboard.getUuid())
+                                && table.getComponentId().equals(meta.componentId()))
+                .isEmpty()) {
+            problem = "its events aren't from a snapshot of this table taken by current_results (with "
+                      + "withEventIds). Take one, and try the extraction on it.";
+        } else {
+            final ExtractionPlan.Sample sample = new ExtractionPlan.Sample(stepped.streamId(), stepped.eventId());
+            try {
+                final String stored = extractionEvents.namespace(sample, context.session());
+                if (!stored.equals(NullSafe.string(namespace))) {
+                    problem = "the events reach the extraction's XSLT in namespace '" + NullSafe.string(namespace)
+                              + "', but are stored in '" + stored + "' (an earlier element of the pipeline "
+                              + "changes them), so an XSLT written for them can't be checked. Change the "
+                              + "pipeline by hand.";
+                }
+            } catch (final IllegalStateException e) {
+                problem = e.getMessage();
+            }
+            if (problem == null) {
+                final TableSettings settings = ResultsRequests.tableSettings(search);
+                return write(workspace, dashboard, table, new PreviewRecord(dashboard.getUuid(),
+                        table.getComponentId(),
+                        settings.extractValues()
+                                ? NullSafe.get(settings.getExtractionPipeline(), DocRef::getUuid)
+                                : null,
+                        NullSafe.get(trial.existingCode(), ExtractionChange::sha256),
+                        PreviewRecord.fieldsHash(fields),
+                        sample));
+            }
+        }
+        final String notWritten = write(workspace, dashboard, table, PreviewRecord.unusable(dashboard.getUuid(),
+                table.getComponentId()));
+        return notWritten == null
+                ? problem
+                : problem + " " + notWritten;
+    }
+
+    // Writes a preview's record where only Stroom writes. Returns why it couldn't be, or null.
+    private static String write(final SessionWorkspace workspace,
+                                final DocRef dashboard,
+                                final AiTabSearch table,
+                                final PreviewRecord record) {
+        try {
+            workspace.writeTabFile(PreviewRecord.path(dashboard.getUuid(), table.getComponentId()), record.toJson(),
+                    dashboard.getUuid());
+            return null;
+        } catch (final WorkspaceException e) {
+            return "The preview couldn't be recorded (" + e.getMessage() + "), so it can't be proposed.";
+        }
     }
 
     // Steps one event with the extraction's XSLT.
@@ -504,7 +592,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         }
         if (preview.problems().isEmpty()) {
             sb.append("\n\nShow the user the table and anything to check, and agree the fields with them; then "
-                      + "offer to make it with propose_extraction_pipeline, with these fields and the namespace")
+                      + "offer to make it with propose_extraction_pipeline, with these fields, as tried")
                     .append(changed == null
                             ? "."
                             : " (it offers to change the pipeline in place, or to save a new one).");

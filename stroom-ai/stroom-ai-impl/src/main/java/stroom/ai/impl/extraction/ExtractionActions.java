@@ -21,6 +21,7 @@ import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.extraction.ExtractionPlan.Existing;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiCreateExtraction;
@@ -87,6 +88,7 @@ public class ExtractionActions {
     private final Provider<XsltStore> xsltStoreProvider;
     private final Provider<PipelineStore> pipelineStoreProvider;
     private final Provider<DocDependencyService> docDependencyServiceProvider;
+    private final ExtractionEvents extractionEvents;
     private final DocumentAccess documentAccess;
     private final SecurityContext securityContext;
 
@@ -96,6 +98,7 @@ public class ExtractionActions {
                              final Provider<XsltStore> xsltStoreProvider,
                              final Provider<PipelineStore> pipelineStoreProvider,
                              final Provider<DocDependencyService> docDependencyServiceProvider,
+                             final ExtractionEvents extractionEvents,
                              final DocumentAccess documentAccess,
                              final SecurityContext securityContext) {
         this.explorerServiceProvider = explorerServiceProvider;
@@ -103,6 +106,7 @@ public class ExtractionActions {
         this.xsltStoreProvider = xsltStoreProvider;
         this.pipelineStoreProvider = pipelineStoreProvider;
         this.docDependencyServiceProvider = docDependencyServiceProvider;
+        this.extractionEvents = extractionEvents;
         this.documentAccess = documentAccess;
         this.securityContext = securityContext;
     }
@@ -112,9 +116,13 @@ public class ExtractionActions {
     /// @param dashboard The dashboard.
     /// @param name      The name to suggest for the new pipeline and its XSLT.
     /// @param plan      The extraction.
+    /// @param session   The chat it is for, to record the events read.
     /// @return What would be written, with the hash the write must be given.
-    public AiCreateExtraction prepare(final DocRef dashboard, final String name, final ExtractionPlan plan) {
-        final Content content = content(dashboard, plan);
+    public AiCreateExtraction prepare(final DocRef dashboard,
+                                      final String name,
+                                      final ExtractionPlan plan,
+                                      final ToolSession session) {
+        final Content content = content(dashboard, plan, session);
         final ExplorerNode folder = explorerNodeServiceProvider.get().getParent(dashboard)
                 .map(VisualisationActions::inExplorerTree)
                 .orElse(null);
@@ -123,7 +131,7 @@ public class ExtractionActions {
                 .toList();
         return new AiCreateExtraction(name, folder, dashboard, plan.componentId(), plan.component(),
                 content.base(), content.xslt(), fields, describeChanges(plan), content.xsltDescription(),
-                content.pipelineDescription(), content.hash());
+                content.pipelineDescription(), NullSafe.get(plan.existing(), Existing::pipeline), content.hash());
     }
 
     /// Writes the extraction the user confirmed, as the user: the XSLT, then the pipeline using it, both in the
@@ -135,11 +143,15 @@ public class ExtractionActions {
     /// @param dashboard The dashboard.
     /// @param plan      The extraction.
     /// @param request   The name and folder the user chose, and the hash of what they were shown.
+    /// @param session   The chat it is for, to record the events read.
     /// @return The new pipeline, and the changes to make to the table to use it.
     /// @throws IllegalStateException saying why nothing was written, e.g. what would be written has changed
     /// since the user was shown it, or they can't create documents in the folder.
-    public Written write(final DocRef dashboard, final ExtractionPlan plan, final AiWriteExtractionRequest request) {
-        final Content content = content(dashboard, plan);
+    public Written write(final DocRef dashboard,
+                         final ExtractionPlan plan,
+                         final AiWriteExtractionRequest request,
+                         final ToolSession session) {
+        final Content content = content(dashboard, plan, session);
         if (request == null || !content.hash().equals(request.getContentHash())) {
             throw new IllegalStateException("What would be written has changed since you were shown it, so nothing "
                                             + "was written. Use the button again to see what would be.");
@@ -235,7 +247,9 @@ public class ExtractionActions {
     // What would be written for a new pipeline: the XSLT, the pipeline it inherits (the template, the table's
     // pipeline, or none) and its element given the XSLT, and the hash of these and the table changes, which the
     // write must be given.
-    Content content(final DocRef dashboard, final ExtractionPlan plan) {
+    Content content(final DocRef dashboard, final ExtractionPlan plan, final ToolSession session) {
+        // The events' namespace, as they are: not as the agent said.
+        final String namespace = extractionEvents.namespace(plan.sample(), session);
         final Existing existing = plan.existing();
         final String xslt;
         final DocRef template;
@@ -243,7 +257,7 @@ public class ExtractionActions {
         final String base;
         final String xsltDescription;
         if (existing == null) {
-            xslt = ExtractionXslt.xslt(plan.namespace(), plan.fields());
+            xslt = ExtractionXslt.xslt(namespace, plan.fields());
             template = template();
             element = ExtractionPipelines.XSLT_ELEMENT;
             base = template != null
@@ -270,7 +284,7 @@ public class ExtractionActions {
             if (unchangeable != null) {
                 throw new IllegalStateException(unchangeable);
             }
-            final ExtractionChange.Changed changed = changed(existing, plan);
+            final ExtractionChange.Changed changed = current(existing, plan, namespace).changed();
             xslt = changed.code();
             template = existing.pipeline();
             element = existing.element();
@@ -293,13 +307,8 @@ public class ExtractionActions {
         return new Content(xslt, template, element, base, xsltDescription, pipelineDescription, hash);
     }
 
-    // The table's extraction XSLT changed as proposed, if it is as it was then.
-    private ExtractionChange.Changed changed(final Existing existing, final ExtractionPlan plan) {
-        return current(existing, plan).changed();
-    }
-
     // The table's extraction XSLT's code, read once, and it changed as proposed, if it is as it was then.
-    private Current current(final Existing existing, final ExtractionPlan plan) {
+    private Current current(final Existing existing, final ExtractionPlan plan, final String namespace) {
         final String code = documentAccess.read(existing.xslt(), XsltDoc.class)
                 .map(XsltDoc::getData)
                 .orElseThrow(() -> new IllegalStateException("XSLT '" + name(existing.xslt()) + "' no longer "
@@ -309,7 +318,7 @@ public class ExtractionActions {
             throw new IllegalStateException(changedSince(existing));
         }
         try {
-            return new Current(code, ExtractionChange.change(code, plan.namespace(), plan.fields()));
+            return new Current(code, ExtractionChange.change(code, namespace, plan.fields()));
         } catch (final IllegalArgumentException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
@@ -325,13 +334,16 @@ public class ExtractionActions {
     ///
     /// @param dashboard The dashboard.
     /// @param plan      The extraction, a change to the table's pipeline.
+    /// @param session   The chat it is for, to record the events read.
     /// @return What would be written, with the hash the write must be given.
     /// @throws IllegalStateException if the XSLT has changed since the change was proposed, can't be changed so,
     /// the user can't edit it, or what else uses it can't be found.
-    public AiChangeExtraction prepareChange(final DocRef dashboard, final ExtractionPlan plan) {
+    public AiChangeExtraction prepareChange(final DocRef dashboard,
+                                            final ExtractionPlan plan,
+                                            final ToolSession session) {
         final Existing existing = requireExisting(plan);
         requireEdit(existing);
-        final Current current = current(existing, plan);
+        final Current current = current(existing, plan, extractionEvents.namespace(plan.sample(), session));
         final ExtractionChange.Changed changed = current.changed();
         final String change = changed.generated()
                 ? "XSLT '" + name(existing.xslt()) + "' written again by Stroom AI from the fields: "
@@ -354,11 +366,16 @@ public class ExtractionActions {
     /// @param dashboard   The dashboard.
     /// @param plan        The extraction, a change to the table's pipeline.
     /// @param contentHash The hash of what the user was shown.
+    /// @param session     The chat it is for, to record the events read.
     /// @return The pipeline and its XSLT, and the changes to make to the table (columns for the new fields).
     /// @throws IllegalStateException saying why nothing was written.
-    public Written writeChange(final DocRef dashboard, final ExtractionPlan plan, final String contentHash) {
+    public Written writeChange(final DocRef dashboard,
+                               final ExtractionPlan plan,
+                               final String contentHash,
+                               final ToolSession session) {
         final Existing existing = requireExisting(plan);
-        final ExtractionChange.Changed changed = changed(existing, plan);
+        final ExtractionChange.Changed changed = current(existing, plan,
+                extractionEvents.namespace(plan.sample(), session)).changed();
         if (!changeHash(existing, changed, plan, usedBy(existing, dashboard)).equals(contentHash)) {
             throw new IllegalStateException("What would be written, or what uses it, has changed since you were "
                                             + "shown it, so nothing was written. Use the button again to see what "

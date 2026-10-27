@@ -54,7 +54,7 @@ class TestExtractionChange {
                 new ExtractionField("Type", "EventDetail/TypeId", null)));
 
         // UserId kept, Type removed, Organisation added.
-        final ExtractionChange.Changed changed = ExtractionChange.change(before, "", List.of(
+        final ExtractionChange.Changed changed = ExtractionChange.change(before, null, List.of(
                 new ExtractionField("UserId", "EventSource/User/Id", null),
                 new ExtractionField("Organisation", "EventSource/User/Organisation", null)));
 
@@ -63,7 +63,9 @@ class TestExtractionChange {
         assertThat(changed.added()).extracting(ExtractionField::name).containsExactly("Organisation");
         // What anything else using it loses.
         assertThat(changed.removed()).containsExactly("Type");
-        // The namespace it was written with is kept.
+        // The namespace it was written with is kept, unless the events' own is given.
+        assertThat(ExtractionXslt.read(ExtractionChange.change(before, "", changed.added()).code()))
+                .hasValueSatisfying(generated -> assertThat(generated.namespace()).isEmpty());
         assertThat(ExtractionXslt.read(changed.code())).hasValueSatisfying(generated -> {
             assertThat(generated.namespace()).isEqualTo("event-logging:3");
             assertThat(generated.fields()).extracting(ExtractionField::name)

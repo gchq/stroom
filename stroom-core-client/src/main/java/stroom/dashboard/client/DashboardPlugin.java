@@ -24,6 +24,7 @@ import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,6 +41,7 @@ import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -92,6 +94,18 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             event.setHandled(open != null, open != null && !open.isReadOnly());
             return;
         }
+        if (ApplyDashboardChangeEvent.Operation.READ_EXTRACTION == event.getOperation()) {
+            // Only from an open dashboard: opening one that can't be loaded would never answer.
+            final DashboardSuperPresenter open = openDashboard(docRef);
+            event.setHandled(open != null, open != null && !open.isReadOnly());
+            if (open == null) {
+                event.notApplied("Dashboard '" + NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid())
+                                 + "' isn't open, so its table can't be checked. Open it, then try again.");
+            } else {
+                readExtraction(open, event);
+            }
+            return;
+        }
         if (ApplyDashboardChangeEvent.Operation.CAN_UNDO == event.getOperation()
             || ApplyDashboardChangeEvent.Operation.UNDO == event.getOperation()) {
             // Only an open dashboard can be undone: the change was never saved, so a closed one doesn't have it.
@@ -117,6 +131,19 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 event.notApplied("The dashboard couldn't be opened.");
             }
         }, false, new DefaultTaskMonitorFactory(this));
+    }
+
+    // Gives the extraction pipeline the table extracts with, as the dashboard has it now.
+    private void readExtraction(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
+        final TableComponentSettings settings = dashboard.getDashboardPresenter().tableSettings(
+                event.getComponentId(), event.getComponentName());
+        if (settings == null) {
+            event.notApplied("The dashboard has no table '" + event.getComponentName() + "'.");
+        } else {
+            event.extractionRead(settings.extractValues()
+                    ? settings.getExtractionPipeline()
+                    : null);
+        }
     }
 
     // Applies the change on top of the dashboard as it is now, if the user can edit it.

@@ -18,8 +18,13 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
+import stroom.ai.impl.extraction.ExtractionEvents;
+import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPipelines;
+import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.extraction.ExtractionXslt;
+import stroom.ai.impl.extraction.PreviewRecord;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.dashboard.shared.DashboardDoc;
@@ -91,6 +96,8 @@ class TestPreviewExtractionTool {
               </xsl:template>
             </xsl:stylesheet>
             """;
+    // Where current_results put the snapshot of the table's events.
+    private static final String SNAPSHOT_PATH = "/tabs/dashboard-logons/events-table-1.md";
     private static final String SNAPSHOT = """
             | User | StreamId | EventId |
             |---|---|---|
@@ -109,6 +116,7 @@ class TestPreviewExtractionTool {
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final XsltStore xsltStore = Mockito.mock(XsltStore.class);
     private final SteppingService steppingService = Mockito.mock(SteppingService.class);
+    private final ExtractionEvents extractionEvents = Mockito.mock(ExtractionEvents.class);
     private final Map<List<Long>, String> events = Map.of(
             List.of(7L, 1L), event(7, 1, "jsmith", "Finance"),
             List.of(7L, 2L), event(7, 2, "akhan", "Operations"),
@@ -124,6 +132,16 @@ class TestPreviewExtractionTool {
         final Path snapshot = tempDir.resolve("events.md");
         Files.writeString(snapshot, SNAPSHOT, StandardCharsets.UTF_8);
         Mockito.when(fixture.workspace.localFile(Mockito.anyInt(), Mockito.any())).thenReturn(snapshot);
+        // What current_results took the snapshot of, beside it where only Stroom writes.
+        final Path meta = tempDir.resolve("events.json");
+        Files.writeString(meta, JsonUtil.writeValueAsString(new CurrentResultsTool.ResultsMeta(DASHBOARD, "Events",
+                "table-1", SNAPSHOT_PATH, "h", null, 0L, 3L, 3L, false, 3L, true, false, true, null, null, null)),
+                StandardCharsets.UTF_8);
+        final WorkspacePath metaPath = WorkspacePath.parse(SNAPSHOT_PATH.replace(".md", ".json"));
+        Mockito.when(fixture.workspace.find(CHAT, metaPath)).thenReturn(Optional.of(2));
+        Mockito.when(fixture.workspace.localFile(CHAT, metaPath)).thenReturn(meta);
+        // As the events are stored.
+        Mockito.when(extractionEvents.namespace(Mockito.any(), Mockito.any())).thenReturn("event-logging:3");
         Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION)).thenReturn(true);
         fixture.add(DASHBOARD, null, true);
         fixture.add(PLACEHOLDER, null, true);
@@ -135,7 +153,7 @@ class TestPreviewExtractionTool {
         dashboard(List.of(Column.builder().id("c1").name("User").expression("${UserId}").build()));
         tool = new PreviewExtractionTool(fixture.workspace, tabSnapshots, fixture.documentAccess(),
                 dataSourceAccess, () -> queryService, () -> xsltStore, () -> fixture.securityContext,
-                new SteppingWalks(() -> steppingService), fixture.auditLog());
+                new SteppingWalks(() -> steppingService), extractionEvents, fixture.auditLog());
     }
 
     @Test
@@ -160,6 +178,16 @@ class TestPreviewExtractionTool {
         assertThat(fixture.written.get(PreviewExtractionTool.XSLT_OUT))
                 .contains("xpath-default-namespace=\"event-logging:3\"")
                 .contains("<data name=\"Organisation\">");
+        // What was tried, where only Stroom writes, so the fields can be proposed as tried.
+        final ArgumentCaptor<String> record = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(fixture.workspace).writeTabFile(Mockito.eq(CHAT),
+                Mockito.eq(PreviewRecord.path(DASHBOARD.getUuid(), "table-1")), record.capture(),
+                Mockito.eq(DASHBOARD.getUuid()));
+        assertThat(PreviewRecord.fromJson(record.getValue())).isEqualTo(new PreviewRecord(DASHBOARD.getUuid(),
+                "table-1", null, null, PreviewRecord.fieldsHash(List.of(
+                        new ExtractionField("UserId", "EventSource/User/Id", null),
+                        new ExtractionField("Organisation", "EventSource/User/Organisation", null))),
+                new ExtractionPlan.Sample(7, 1)));
     }
 
     @Test
@@ -188,6 +216,34 @@ class TestPreviewExtractionTool {
 
         assertThat(result).contains("It can't be used as it is:\n- Column 'User' uses UserId, which the extraction "
                                     + "doesn't give");
+        // So it can't be proposed, nor can an earlier preview of the table: this one is the last.
+        assertThat(result).endsWith("It can't be proposed: it can't be used as it is.");
+        assertThat(recorded()).isNull();
+    }
+
+    @Test
+    void eventsNotFromASnapshotOfTheTableCantBeProposed() {
+        // E.g. a list of events written to the workspace, which needn't be the table's.
+        final String arguments = JsonUtil.writeValueAsString(Map.of("table", "Events",
+                "path", "/outputs/events.md", "fields", List.of(Map.of("name", "UserId",
+                        "xpath", "EventSource/User/Id"))));
+        final String result = tool.execute(new ToolCall("c1", PreviewExtractionTool.NAME, arguments),
+                ToolCalls.inChat(CHAT, fixture.workspace)).text();
+
+        assertThat(result).contains("It can't be proposed: its events aren't from a snapshot of this table taken by "
+                                    + "current_results");
+        assertThat(recorded()).isNull();
+    }
+
+    @Test
+    void eventsStoredInAnotherNamespaceThanTheXsltSeesCantBeProposed() {
+        // An earlier element of the pipeline changes them, so the XSLT written for them can't be checked.
+        Mockito.when(extractionEvents.namespace(Mockito.any(), Mockito.any())).thenReturn("raw:1");
+
+        assertThat(run(List.of(Map.of("name", "UserId", "xpath", "EventSource/User/Id"))))
+                .contains("It can't be proposed: the events reach the extraction's XSLT in namespace "
+                          + "'event-logging:3', but are stored in 'raw:1'");
+        assertThat(recorded()).isNull();
     }
 
     @Test
@@ -287,9 +343,18 @@ class TestPreviewExtractionTool {
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
     }
 
+    // The record of the table's last preview, as written; null if it can't be used.
+    private PreviewRecord recorded() {
+        final ArgumentCaptor<String> record = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(fixture.workspace).writeTabFile(Mockito.eq(CHAT),
+                Mockito.eq(PreviewRecord.path(DASHBOARD.getUuid(), "table-1")), record.capture(),
+                Mockito.eq(DASHBOARD.getUuid()));
+        return PreviewRecord.fromJson(record.getValue());
+    }
+
     private String run(final List<Map<String, String>> fields) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("table", "Events",
-                "path", "/attachments/events.md", "fields", fields));
+                "path", SNAPSHOT_PATH, "fields", fields));
         return tool.execute(new ToolCall("c1", PreviewExtractionTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, fixture.workspace)).text();
     }
