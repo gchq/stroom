@@ -100,6 +100,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -107,7 +108,6 @@ import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -712,7 +712,7 @@ public class DocumentPluginEventManager extends Plugin {
 //    /**
 //     * 8.1. This method will copy documents.
 //     */
-//    void copyDocument(final MyPresenterWidget<?> popup, final DocRef document, final DocRef folder,
+//    void copyDocument(final Controller popup, final DocRef document, final DocRef folder,
 //                      final PermissionInheritance permissionInheritance) {
 //        copy(document, folder, permissionInheritance).onSuccess(newDocRef -> {
 //            // Hide the copy document presenter.
@@ -1027,7 +1027,7 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean forceOpen,
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
-                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                     final Consumer<Controller> callbackOnOpen,
                      final Runnable callbackOnFailure,
                      final boolean duplicate,
                      final TaskMonitorFactory taskMonitorFactory) {

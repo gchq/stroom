@@ -27,12 +27,14 @@ import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.ControllerView;
 import stroom.widget.component.client.DirtyTracker;
+import stroom.widget.component.client.LayerController;
 import stroom.widget.component.client.Listeners;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,8 +46,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// Opens a [DocumentEditor], or another [TabbedController] such as a folder's tabs, as a tab of
-/// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents through presenters.
-/// It owns the controller, and:
+/// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents. It owns the controller,
+/// shows its widget, and:
 ///
 /// * reads the document into it as the plugin reads it (when it is opened, saved, or its lock
 ///   changes), telling a document editor whether the user may change it;
@@ -61,8 +63,8 @@ import java.util.function.Consumer;
 ///
 /// @param <D> The document's type.
 public class DocumentEditorHost<D>
-        extends MyPresenterWidget<ControllerView>
-        implements DocumentTabData, HasSave, HasCommonTabs {
+        extends LayerController
+        implements DocumentTabData, HasSave, HasCommonTabs, TaskMonitorFactory {
 
     private final TabbedController<D> editor;
     private final String type;
@@ -80,12 +82,13 @@ public class DocumentEditorHost<D>
     /// @param editor   The document's editor (or a folder's tabs), just made.
     /// @param type     The document's type, e.g. `DictionaryDoc.TYPE`, for the tab's icon.
     public DocumentEditorHost(final EventBus eventBus, final TabbedController<D> editor, final String type) {
-        super(eventBus, new ControllerView(editor));
+        super(eventBus);
         provide(Contexts.DOCUMENT, documentContext);
         // What a folder's tabs or an annotation's own tell it of changes (a document editor tells
         // it itself, below)
         provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
         this.editor = own(editor);
+        initWidget(editor.asWidget());
         this.type = Objects.requireNonNull(type, "type");
         if (editor instanceof final DocumentEditor<D> documentEditor) {
             documentEditor.setOnDirtyChange(this::setDirty);
@@ -273,6 +276,18 @@ public class DocumentEditorHost<D>
     @Override
     public boolean isCloseable() {
         return true;
+    }
+
+    /// Shows a task's progress, e.g. a Save As's, on the task monitor its tab provides
+    /// ([Contexts#TASK_MONITOR]), or as an app-wide task before it is in a tab.
+    ///
+    /// @return A task monitor.
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null
+                ? provided.createTaskMonitor()
+                : new DefaultTaskMonitorFactory(this).createTaskMonitor();
     }
 
     private void refreshTabIfLabelChanged() {

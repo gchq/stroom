@@ -24,10 +24,10 @@ import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -173,8 +173,8 @@ public class ContentManager implements HasHandlers {
     public void open(final CloseContentEvent.Handler closeHandler,
                      final TabData tabData,
                      final Layer layer,
-                     final MyPresenterWidget<?> presenter,
-                     final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+                     final Controller presenter,
+                     final Consumer<Controller> callbackOnOpen) {
         handlerMap.put(tabData, closeHandler);
         // Opening a tab that is open again keeps its root
         final ControllerNode root = roots.computeIfAbsent(tabData, k -> ControllerNode.root("ContentTab"));

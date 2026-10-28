@@ -48,7 +48,6 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -98,14 +97,14 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid);
             // Open the item in the content pane.
-            final MyPresenterWidget<?> presenter = open(docRef,
+            final DocumentEditorHost<?> host = open(docRef,
                     true,
                     false,
                     new DefaultTaskMonitorFactory(this));
             // Highlight the item in the explorer tree.
             //            highlight(docRef);
 
-            final PipelineEditor pipelineEditor = getEditor(presenter);
+            final PipelineEditor pipelineEditor = getEditor(host);
             if (pipelineEditor != null) {
                 pipelineEditor.showProcessorFilter(event.getProcessorFilter());
             }

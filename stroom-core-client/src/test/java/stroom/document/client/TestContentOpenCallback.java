@@ -16,8 +16,9 @@
 
 package stroom.document.client;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
+import com.google.gwt.user.client.ui.Widget;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -29,10 +30,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestContentOpenCallback {
 
     @Test
-    void testCalledForAScreenThatIsNotAPresenter() {
-        // A content tab controller (e.g. Jobs) is not a presenter; a tab session's next tab waits on
-        // the callback all the same
-        final List<MyPresenterWidget<?>> opened = new ArrayList<>();
+    void testGivenTheScreenOpened() {
+        // A tab session's next tab waits on the callback, which is given the screen (e.g. Jobs)
+        final List<Controller> opened = new ArrayList<>();
+        final Consumer<Controller> callback = ContentOpenCallback.of(opened::add);
+        final Controller screen = new Screen();
+
+        callback.accept(screen);
+
+        assertThat(opened).containsExactly(screen);
+    }
+
+    @Test
+    void testCalledForAScreenThatIsNotAController() {
+        final List<Controller> opened = new ArrayList<>();
         final Consumer<Object> callback = ContentOpenCallback.of(opened::add);
 
         callback.accept(new Object());
@@ -46,5 +57,17 @@ class TestContentOpenCallback {
         final Consumer<Object> callback = ContentOpenCallback.of(null);
 
         callback.accept(new Object());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class Screen extends Controller {
+
+        @Override
+        public Widget asWidget() {
+            return null;
+        }
     }
 }

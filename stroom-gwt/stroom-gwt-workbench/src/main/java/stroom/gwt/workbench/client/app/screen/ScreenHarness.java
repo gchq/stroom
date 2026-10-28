@@ -61,7 +61,6 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.core.client.GWT;
@@ -173,7 +172,6 @@ public final class ScreenHarness {
     // Owns what the story shows (see own), made when first needed
     private ControllerNode componentRoot;
     private Controller shownComponent;
-    private MyPresenterWidget<?> shownContent;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
     private int probeCleanUpMark;
@@ -451,20 +449,6 @@ public final class ScreenHarness {
         return (C) shown.shownComponent;
     }
 
-    /// For a play: the presenter the story shows (the last given to [#show] or [#showPage]), e.g.
-    /// to act on it as Stroom does (reading a document again when it is locked).
-    ///
-    /// @param <P> The presenter's type.
-    /// @return The presenter.
-    /// @throws IllegalStateException If the story shows none.
-    @SuppressWarnings("unchecked")
-    public static <P extends MyPresenterWidget<?>> P shownContent() {
-        if (shown == null || shown.shownContent == null) {
-            throw new IllegalStateException("The story shows no presenter");
-        }
-        return (P) shown.shownContent;
-    }
-
     /// For a play: closes the story's components as closing a document's tab does, disposing the
     /// story's root and so everything it owns. Their widgets stay on the page.
     ///
@@ -506,9 +490,6 @@ public final class ScreenHarness {
         own(screen);
         fillWidget(screen.asWidget(), screen, tab);
         shownComponent = screen;
-        if (screen instanceof final MyPresenterWidget<?> presenter) {
-            shownContent = presenter;
-        }
         shown = this;
         return screen;
     }

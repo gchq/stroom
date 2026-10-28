@@ -92,7 +92,7 @@ public final class AnnotationEditorStories {
                                     .toSpyMatcher()));
                     // The tab is labelled with the new title (it once kept the old one)
                     play.waitFor(() -> play.expect("the tab's label",
-                                    () -> ScreenHarness.<DocumentEditorHost<?>>shownContent().getLabel())
+                                    () -> ScreenHarness.<DocumentEditorHost<?>>shownComponent().getLabel())
                             .toBe("#42 Investigate CPU alert"));
                     // GWT's chooser button reads 'Choose Comment' and the comment
                     // box's label 'Add a comment'

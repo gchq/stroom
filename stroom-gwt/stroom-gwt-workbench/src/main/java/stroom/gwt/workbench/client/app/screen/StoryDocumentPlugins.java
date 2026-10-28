@@ -21,7 +21,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -81,7 +81,7 @@ public final class StoryDocumentPlugins {
     /// @return This set up.
     public StoryDocumentPlugins showOpenedTabs() {
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
-            harness.show((MyPresenterWidget<?>) event.getLayer());
+            harness.show((Controller) event.getLayer());
             closeTabOnCleanUp(harness, event.getTabData());
         }));
         return this;

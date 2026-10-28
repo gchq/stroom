@@ -25,11 +25,10 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -85,25 +84,23 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     @Override
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> myPresenterWidget,
+                                final DocumentEditorHost<?> host,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
-                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                final Consumer<Controller> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (myPresenterWidget instanceof final DocumentEditorHost<?> host) {
-            // Nothing in a folder's tab can be changed
-            readFolder(host, docRef);
-        }
+        // Nothing in a folder's tab can be changed
+        readFolder(host, docRef);
 
-        if (selectedTab != null && myPresenterWidget instanceof final HasCommonTabs hasCommonTabs) {
-            hasCommonTabs.selectCommonTab(selectedTab);
+        if (selectedTab != null) {
+            host.selectCommonTab(selectedTab);
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
+        contentManager.open(closeHandler, tabData, host, host, callbackOnOpen);
     }
 
     // A folder's document is its reference, as it has nothing to load

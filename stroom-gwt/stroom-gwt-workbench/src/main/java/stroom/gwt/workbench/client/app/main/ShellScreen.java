@@ -120,7 +120,7 @@ final class ShellScreen {
     /// @param docRef The document.
     void startFullScreen(final DocRef docRef) {
         harness.addRegistration(harness.getEventBus().addHandler(ShowFullScreenEvent.getType(), event ->
-                harness.show(event.getPresenterWidget())));
+                harness.show(event.getController())));
         harness.afterStartUp(() -> {
             registerPlugins();
             OpenDocumentEvent.fire(harness.getHasHandlers(), docRef, true, true);

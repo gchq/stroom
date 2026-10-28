@@ -141,7 +141,7 @@ public final class FolderEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
                     play.run("follow a link to the permissions", () -> ScreenHarness.<DocumentEditorHost<DocRef>>
-                            shownContent().selectCommonTab(CommonDocLinkTab.PERMISSIONS));
+                            shownComponent().selectCommonTab(CommonDocLinkTab.PERMISSIONS));
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Permissions").closest("[role=tab]"))
                             .toHaveAttribute("aria-selected", "true"));
                     DocEditors.expectNoProblems(play);

@@ -353,7 +353,7 @@ public final class PlanBEditorStories {
     // Its FormGroup has no identity, so it has no id
     // Reads the shown document again, as DocumentPlugin does, read only or not
     private static void readAgain(final boolean readOnly) {
-        final DocumentEditorHost<PlanBDoc> host = ScreenHarness.shownContent();
+        final DocumentEditorHost<PlanBDoc> host = ScreenHarness.shownComponent();
         host.setReadOnly(readOnly);
         host.read(host.getDocRef(), host.getEntity());
     }

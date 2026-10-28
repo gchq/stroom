@@ -16,13 +16,13 @@
 
 package stroom.document.client;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import java.util.function.Consumer;
 
 /// Tells an `OpenDocumentEvent`'s caller that a content screen (e.g. Jobs, opened from a saved tab
-/// session) is open, whatever the screen is: a presenter is given to the callback, a controller as
-/// null. Each opening of a tab session waits on this to open its next tab.
+/// session) is open, giving it the screen. Each opening of a tab session waits on this to open its
+/// next tab.
 public final class ContentOpenCallback {
 
     private ContentOpenCallback() {
@@ -32,11 +32,11 @@ public final class ContentOpenCallback {
     /// @param callbackOnOpen The event's callback, or null for none.
     /// @param <T>            The type of the screens opened.
     /// @return What the content plugin runs with the screen it opened.
-    public static <T> Consumer<T> of(final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+    public static <T> Consumer<T> of(final Consumer<Controller> callbackOnOpen) {
         return screen -> {
             if (callbackOnOpen != null) {
-                callbackOnOpen.accept(screen instanceof final MyPresenterWidget<?> presenter
-                        ? presenter
+                callbackOnOpen.accept(screen instanceof final Controller controller
+                        ? controller
                         : null);
             }
         };

@@ -16,8 +16,8 @@
 
 package stroom.content.client.event;
 
+import stroom.widget.component.client.Controller;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -31,11 +31,11 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     private static Type<OpenContentTabHandler> TYPE;
     private final TabData tabData;
     private final Layer layer;
-    private final MyPresenterWidget<?> presenter;
-    private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
+    private final Controller presenter;
+    private final Consumer<Controller> callbackOnOpen;
 
-    private OpenContentTabEvent(final TabData tabData, final Layer layer, final MyPresenterWidget<?> presenter,
-                                final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+    private OpenContentTabEvent(final TabData tabData, final Layer layer, final Controller presenter,
+                                final Consumer<Controller> callbackOnOpen) {
         this.tabData = tabData;
         this.layer = layer;
         this.presenter = presenter;
@@ -43,7 +43,7 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData, final Layer layer,
-            final MyPresenterWidget<?> presenter, final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+            final Controller presenter, final Consumer<Controller> callbackOnOpen) {
         handlers.fireEvent(new OpenContentTabEvent(tabData, layer, presenter, callbackOnOpen));
     }
 

@@ -323,7 +323,7 @@ public final class DictionaryEditorStories {
 
     // The host the story shows, for plays that act as DocumentPlugin does
     private static DocumentEditorHost<DictionaryDoc> host() {
-        return ScreenHarness.shownContent();
+        return ScreenHarness.shownComponent();
     }
 
     // Reads the shown document again, as DocumentPlugin does, read only or not

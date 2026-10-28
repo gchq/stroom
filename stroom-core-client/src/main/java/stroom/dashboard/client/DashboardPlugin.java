@@ -39,7 +39,7 @@ import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -81,12 +81,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
-    public MyPresenterWidget<?> open(final DocRef docRef,
+    public DocumentEditorHost<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
-                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final Consumer<Controller> callbackOnOpen,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {

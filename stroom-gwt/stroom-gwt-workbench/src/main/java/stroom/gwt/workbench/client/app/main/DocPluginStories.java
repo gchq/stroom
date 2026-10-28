@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -126,7 +126,7 @@ public final class DocPluginStories {
         injector.getXMLSchemaPlugin();
         // The tab the plugin opens is shown as the story's content, as the tab pane would show it
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
-            harness.show((MyPresenterWidget<?>) event.getLayer());
+            harness.show((Controller) event.getLayer());
             StoryDocumentPlugins.closeTabOnCleanUp(harness, event.getTabData());
         }));
         // As the explorer does when the document is opened

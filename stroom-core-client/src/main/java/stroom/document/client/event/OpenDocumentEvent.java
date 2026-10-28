@@ -18,7 +18,7 @@ package stroom.document.client.event;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.Handler;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -35,7 +35,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
     private final boolean forceOpen;
     private final boolean fullScreen;
     private final CommonDocLinkTab selectedTab;
-    private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
+    private final Consumer<Controller> callbackOnOpen;
     private final Runnable callbackOnFailure;
     private final boolean duplicate;
 
@@ -43,7 +43,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                               final boolean forceOpen,
                               final boolean fullScreen,
                               final CommonDocLinkTab selectedTab,
-                              final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                              final Consumer<Controller> callbackOnOpen,
                               final Runnable callbackOnFailure,
                               final boolean duplicate) {
         this.docRef = docRef;
@@ -122,7 +122,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         return Optional.ofNullable(selectedTab);
     }
 
-    public Consumer<MyPresenterWidget<?>> getCallbackOnOpen() {
+    public Consumer<Controller> getCallbackOnOpen() {
         return callbackOnOpen;
     }
 
@@ -170,7 +170,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         private boolean forceOpen = true;
         private boolean fullScreen = false;
         private CommonDocLinkTab selectedTab = null;
-        private Consumer<MyPresenterWidget<?>> callbackOnOpen;
+        private Consumer<Controller> callbackOnOpen;
         private Runnable callbackOnFailure;
         private boolean duplicate;
 
@@ -189,7 +189,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
             return this;
         }
 
-        public Builder callbackOnOpen(final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+        public Builder callbackOnOpen(final Consumer<Controller> callbackOnOpen) {
             this.callbackOnOpen = callbackOnOpen;
             return this;
         }

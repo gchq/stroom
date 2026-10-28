@@ -25,13 +25,12 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -124,24 +123,22 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> myPresenterWidget,
+                                final DocumentEditorHost<?> host,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
-                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                final Consumer<Controller> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (myPresenterWidget instanceof final DocumentEditorHost<?> host) {
-            FolderPlugin.readFolder(host, ExplorerConstants.SYSTEM_DOC_REF);
-        }
+        FolderPlugin.readFolder(host, ExplorerConstants.SYSTEM_DOC_REF);
 
-        if (selectedTab != null && myPresenterWidget instanceof final HasCommonTabs hasCommonTabs) {
-            hasCommonTabs.selectCommonTab(selectedTab);
+        if (selectedTab != null) {
+            host.selectCommonTab(selectedTab);
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
+        contentManager.open(closeHandler, tabData, host, host, callbackOnOpen);
     }
 
     @Override

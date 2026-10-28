@@ -20,7 +20,6 @@ import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.widget.component.client.Controller;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -48,18 +47,18 @@ public class FullScreenController extends Controller
 
     @Override
     public void onShowFullScreen(final ShowFullScreenEvent e) {
-        final MyPresenterWidget<?> presenterWidget = e.getPresenterWidget();
-        view.setContentView(presenterWidget);
+        final Controller content = e.getController();
+        view.setContentView(content);
 
         final String title = urlParameters.getTitle();
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title.trim());
         } else {
-            if (presenterWidget instanceof final DocumentEditorHost<?> tabPresenter) {
-                tabPresenter.addDirtyListener(dirty -> Window.setTitle(tabPresenter.getLabel()));
+            if (content instanceof final DocumentEditorHost<?> host) {
+                host.addDirtyListener(dirty -> Window.setTitle(host.getLabel()));
                 Window.addWindowClosingHandler(event -> {
-                    if (tabPresenter.isDirty()) {
-                        event.setMessage(tabPresenter.getType() + " '" + tabPresenter.getLabel() + "' " +
+                    if (host.isDirty()) {
+                        event.setMessage(host.getType() + " '" + host.getLabel() + "' " +
                                          "has unsaved changes. Are you sure you want to close it?");
                     }
                 });
