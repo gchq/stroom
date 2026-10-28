@@ -14,6 +14,79 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 > **Since wave 12 (27 October 2026):** the document tabs and composite panes are components with a controller each (`stroom.<area>.client.component`). A document shows one as a tab through `ControllerTabProvider`: `new ControllerTabProvider<>(eventBus, provider::get, Foo::read, Foo::write)` for one the tab makes, or `ControllerTabProvider.ofOwned(eventBus, controller, reader[, writer])` for one the document makes and owns (e.g. to give it callbacks before the tab is opened); the tab passes on the controller's toolbars when it is a `HasToolbar`. Hand-rolled tab panes (`SteppingPresenter`, `UserTabPresenter`, `DataRetentionPresenter`) show each controller in a `ControllerLayer`. `ProcessorTaskPresenter` and `UserAndGroupsPresenter` stay as thin `ContentTabPresenter` shells around their controllers until wave 15. Among the new names: `SteppingElement`, `UserInfoTab`, `FloorMapSettings`, `DocumentAssetsTab` (shown through `DocumentAssetsTabProvider`), `ProcessorFilterTasks`, `DuplicateManagement`, `ImportsTab` with `ImportsTabController`, `AnnotationLinksController` (on the shared `FindPanel`), `ScriptSettings`, `UserAndGroups`, `ElasticClusterSettings`, `FeedDependenciesEditor` (`edit(opener, dependencies, onOk)`), `GitRepoSettings`, `AnnotationEdit` (`setOnTitleChange`, `setOnDelete`), `PipelineStructure`, `OpenAIModelSettings`, `PlanBSettings` (also a Traces store's Settings tab, its state type locked), `ScheduledProcessing` (also a data generator's Execution tab; `setIsDocumentDirty`), `PathwaysSplit`, `TracesListTab`, `SolrIndexSettings`, `ProcessorEdit` (`show(opener, ...)`), `DataRetentionImpact`, `DataRetentionPolicy`, `Processors` with `ProcessorsController` (a pipeline's, rule's or folder's Processors tab), `UserPermissionReport`, `StreamingProcessing` and one `AnalyticProcessing` for rules and reports (`setProcessingTypes(...)`; `AbstractProcessingPresenter` and its two subclasses are gone); the notification list is shown directly (`NotificationListController`). `ClassificationWrapper` takes its content in a template (`<d:content>`), and a `QuickFilterPage` takes a `<form:HelpHTML>` child as its filter's help. The plans below keep the old names. See `wave-12.md`.
 
+## Audited (28 October 2026)
+
+Five reviewers read the wave's two unit commits against this plan, "Done means" and AGENTS.md (the
+document framework: `TabbedController`, `DocumentEditor`, `DocumentEditorHost` and `LinkTabPanel`;
+the code, settings and dashboard editors; the pipeline, feed, folder and index editors; the
+annotation tabs, receipt rules and embedded query; the statistics store and what the deletion
+left). Fixed, in 1 commit:
+
+- **Default tabs.** Editors that selected a tab in their constructor now set it as their default
+  tab (`setDefaultTab`), made once the editor is attached unless another tab is selected first; the
+  pipeline's `showProcessorFilter` asks `hasTab` before selecting its Processors tab.
+- **The dashboard's label.** `DashboardEditor.onRead` reads the dashboard's body, so its tab is
+  named for the dashboard's title again (it was blank until a save).
+- **Receipt rules saved by any document's save.** The rules' shell saved them on every
+  `SaveDocumentEvent`, so saving another dirty document saved the rules too; it now saves only when
+  the event is its own. Story `App/Main/DataReceiptRulesScreen SavingAnotherDocument` (fails
+  before). Master does this too: changelog entry.
+- **An annotation's tab label.** Renaming an annotation left its tab with the old title until it
+  was opened again; the label follows the title (`AnnotationEditController.getAnnotationTitle`).
+  The Editor story asserts the label. Master too: changelog entry.
+- **Smaller fixes.** Traces opened with no document are labelled "Traces"; `CodeTabController`
+  shows "" for a null text; the embedded query clears its result with `setResult(null)`; the
+  read-only chip is a `SafeHtmlTemplates` template; the link tab panel's stories make their tabs'
+  content lazily, as editors do; the tab story's Save wiring went; `PresenterCoverage` counts
+  `DocumentEditor` subclasses as screens; the floor map event store's unused `TAB_TYPE` and the
+  traces plugin's commented-out code went.
+- **Docs.** ISSUES.md entries the wave had wrongly edited were put back; WRITING-STORIES.md,
+  COMPONENTS.md, COMPONENT_MODEL_DESIGN.md (phase 9 done), DATA_GRID_DESIGN.md and the ginjectors'
+  javadoc name the new classes.
+
+Left, on purpose (recorded in ISSUES.md, "Left from wave 14's audit"): Save As of a visualisation
+or floor map whose Assets tab was never shown; the text converter's highlighting on a type change;
+no stories for the SQL temporal store and floor map event store editors; no unit tests for the
+document host's rules; traces with no document still showing their document tabs; a query opened
+from an embedded query closing with it; a statistic store's first view of its roll-ups making it
+dirty; `HasDocumentRead`, `ChangeUiHandlers` and `HasCommonTabs` now barely used; the
+`linkTabPanelViewImpl` class names; the copied `taskMonitor()` helper; the story helpers
+`DocEditors.open` and `DocumentEditors.open`.
+
+## Done (28 October 2026)
+
+All 36 of the plan's units, and the statistics store's editor beyond it, in 3 commits: the editors
+(with the annotation tabs, receipt rules, embedded query and statistics store), the old framework's
+deletion (`DocPresenter` merged into `DocumentEditorHost`, `DocTabPresenter`, `LinkTabPanelPresenter`
+and the tab providers gone, the link tab panel a component), and the audit's. Each ran its stories in
+a copy of the worktree with the leak check and the screenshot diff. The app and the standalone
+dashboard GWT compile, checkstyle is clean and the client and workbench modules' 2,179 JUnit tests
+pass (`TestDocPresenter`'s 9 went with `DocPresenter`). Two bugs master has too were fixed, with
+changelog entries: saving any document saved the receipt rules, and an annotation's tab kept its old
+title. The full workbench run after the audit (1,723 stories, 4 workers, with the leak check) passed all 1,723; of their screenshots, 1,616 match, the 12 new are stories with no baseline yet (the wave's `DataReceiptRulesScreen.SavingAnotherDocument` and wave 13's 11), and of the 95 that differ, 29 are the annotation editor's and 2 the comment decoration's (the empty toolbar row above an annotation went, so its content is higher), 1 the pipeline editor's `ComplexStructure` (its default tab), 59 are wave 13's known ones (the query and floor map editors) and those that differ from run to run (the force visualisations), and 3 are small and not yet explained (`TopBar.Keyboard`, a tooltip; `AppShell.ExplorerItemKeys`, a renamed item's text; `DataGrid.ValueSpinnerColumn`), recorded in ISSUES.md. What was decided on the way, where it differs from the plans below:
+
+- **The framework.** `TabbedController` has the tabs and their toolbars (`addTab`, `addOwnedTab` for
+  content already made and owned, `replaceTab` for the pipeline's Structure and Stepping,
+  `setDefaultTab`, `getSelectedTab`, `afterSelectTab`, `handleKeyAction`, `onContentTabVisible`,
+  `onClose`, `getTabLabel`, `beforeRead`/`afterWrite`, `showReadOnlyStatus`); `DocumentEditor`
+  adds Save and Save As, `addDocumentationTab` and `addPermissionsTab`, `hasAssociatedDirty`, the
+  post-save callbacks and `beforeSave`; `DocumentEditorHost` (`DocPresenter` merged in) hosts one,
+  and `MultiInstanceEditorHost` dashboards. `CodeTabController` is a code editor tab.
+- **Key actions.** The query, report, analytic rule and dashboard editors' OK and Close keys run
+  only with the Query (or Dashboard) tab shown, as the old code meant (its tab type check compared
+  nulls, so they ran from any tab).
+- **Selected at once.** A tab selected in a constructor was selected deferred; a default tab is now
+  made once the editor is attached.
+- **The receipt rules.** `RuleSetPresenter` stayed a thin content-tab shell around `RuleSetEditor`
+  until wave 15.
+- **The statistics store.** `StatisticsDataSourceEditor` (stroom-statistics, in no wave) was
+  converted so `DocTabPresenter` had no subclasses left; its three tabs stay presenters, shown as
+  tabs directly.
+- **Removals.** The old framework was deleted in this wave rather than waiting: the in-flight
+  worktrees are the user's experiments elsewhere (agreed 27 October 2026).
+- **Tool slips.** The converter removed same-named workbench modules by simple name; it is
+  package-aware now.
+
 Move every DocTabPresenter shell onto DocumentEditor<D> plus DocumentEditorHost, with TabbedComponent tabs (Markdown and permissions tabs as reusable tabs), then delete DocPresenter, DocTabPresenter and LinkTabPanelPresenter. RuleSetPresenter's hand-rolled tabs also move onto DocumentEditor.
 
 ## CSS and template notes for the wave

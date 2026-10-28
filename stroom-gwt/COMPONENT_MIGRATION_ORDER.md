@@ -943,6 +943,14 @@ Rename the dashboard Component interface to DashboardPane, give panes and their 
 
 Each unit's plan (names, template, what goes, every inline style and its replacement, what moves into the template): [`component-migration/wave-14.md`](component-migration/wave-14.md).
 
+> **Done and audited, 28 October 2026**: all 36 units, and the statistics store's editor, in 2
+> commits and the audit's 1. Every document editor is a `DocumentEditor` (on `TabbedController`)
+> shown in a `DocumentEditorHost`; `DocPresenter`, `DocTabPresenter`, `LinkTabPanelPresenter` and
+> the tab providers are gone, and the link tab panel is a component. Five reviewers audited the
+> wave: default tabs, the dashboard's label and stale names fixed. Two bugs master has were fixed:
+> any document's save saved the receipt rules, and an annotation's tab kept its old title. The full
+> workbench run after it passed all 1,723 stories with the leak check. See `wave-14.md`.
+
 Move every DocTabPresenter shell onto DocumentEditor<D> plus DocumentEditorHost, with TabbedComponent tabs (Markdown and permissions tabs as reusable tabs), then delete DocPresenter, DocTabPresenter and LinkTabPanelPresenter. RuleSetPresenter's hand-rolled tabs also move onto DocumentEditor.
 
 **Why now.** Their tab bodies converted in waves 8, 12 and 13. The recipe is mechanical and shared, so S3ConfigPresenter, the smallest, goes first as the template. The old document framework is deleted only once no editor uses it.
