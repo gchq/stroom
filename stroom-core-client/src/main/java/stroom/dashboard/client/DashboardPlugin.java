@@ -87,13 +87,14 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                                      final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<Controller> callbackOnOpen,
+                                     final Runnable callbackOnFailure,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen, duplicate,
-                taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen,
+                callbackOnFailure, duplicate, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final Object context, final String href) {

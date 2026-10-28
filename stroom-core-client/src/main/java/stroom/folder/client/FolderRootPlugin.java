@@ -130,6 +130,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<Controller> callbackOnOpen,
+                                final Runnable callbackOnFailure,
                                 final TaskMonitorFactory taskMonitorFactory) {
         FolderPlugin.readFolder(host, ExplorerConstants.SYSTEM_DOC_REF);
 

@@ -74,6 +74,16 @@ public class FloorMapDocEditor extends DocumentEditor<FloorMapDoc> {
     private double[] sharedInitialView;
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param mapProvider          Makes the map.
+    /// @param editorProvider       Makes the editor.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param queryProvider        Makes the query.
+    /// @param permissionsProvider  Makes the Permissions tab.
+    /// @param assetsTab            The assets tab.
     @Inject
     public FloorMapDocEditor(final EventBus eventBus,
                              final LinkTabPanel view,
@@ -276,7 +286,8 @@ public class FloorMapDocEditor extends DocumentEditor<FloorMapDoc> {
     /// @return The save of the assets to the copy, run once a copy of the document is saved.
     @Override
     public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveAsCallback() {
-        return assetsTab::onSaveAs;
+        // The assets are copied from the document being saved, even if its Assets tab was never shown
+        return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
     }
 
     // Flushes the Editor's staged changes, if any, and only once that succeeds saves the assets

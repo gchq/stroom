@@ -61,6 +61,11 @@ public class TextConverterSettings extends Component {
         return textConverter.copy().converterType(converterType.getValue()).build();
     }
 
+    /// @return The converter type shown, which the user may have changed.
+    public TextConverterType getConverterType() {
+        return converterType.getValue();
+    }
+
     /// @param onChange What to run when the user changes a setting.
     public void setOnChange(final Runnable onChange) {
         this.onChange = onChange;

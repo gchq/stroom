@@ -1054,6 +1054,7 @@ public class DocumentPluginEventManager extends Plugin {
                                         fullScreen,
                                         selectedLinkTab,
                                         callbackOnOpen,
+                                        callbackOnFailure,
                                         duplicate,
                                         new DefaultTaskMonitorFactory(this));
                                 if (!duplicate) {
@@ -1079,6 +1080,9 @@ public class DocumentPluginEventManager extends Plugin {
                     callbackOnFailure.run();
                 }
             }
+        } else if (callbackOnFailure != null) {
+            // Nothing to open (e.g. a tab session's reference with no type): carry on
+            callbackOnFailure.run();
         }
     }
 

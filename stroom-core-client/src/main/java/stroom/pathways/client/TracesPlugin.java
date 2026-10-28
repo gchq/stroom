@@ -56,10 +56,9 @@ public class TracesPlugin extends ContentPlugin<DocumentEditorHost<TracesDoc>> {
                 ShowTracesEvent.getType(), showTracesEvent -> {
 
                     final TracesEditor tracesEditor = tracesEditorProvider.get();
-                    tracesEditor.setDataSourceRef(showTracesEvent.getDataSourceRef());
-                    tracesEditor.setPathway(showTracesEvent.getPathway());
-                    tracesEditor.setFilter(showTracesEvent.getFilter());
-                    tracesEditor.forceRefresh();
+                    tracesEditor.showTraces(showTracesEvent.getDataSourceRef(),
+                            showTracesEvent.getPathway(),
+                            showTracesEvent.getFilter());
                     final DocumentEditorHost<TracesDoc> tracesTab = new DocumentEditorHost<>(
                             eventBus, tracesEditor, TracesDoc.TYPE);
 

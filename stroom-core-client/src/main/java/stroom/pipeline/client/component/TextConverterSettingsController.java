@@ -18,17 +18,22 @@ package stroom.pipeline.client.component;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
+
 /// A text converter's Settings tab ([TextConverterSettings]), read only in a document the user
 /// can't change.
 public class TextConverterSettingsController extends Controller {
 
     private final TextConverterSettings view;
+    private Consumer<TextConverterType> onTypeChange = type -> {
+    };
 
     /// Made by GIN, with its tab.
     ///
@@ -39,8 +44,16 @@ public class TextConverterSettingsController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        view.setOnChange(this::markChanged);
+        view.setOnChange(() -> {
+            markChanged();
+            onTypeChange.accept(view.getConverterType());
+        });
         watch(Contexts.READ_ONLY, view::setReadOnly);
+    }
+
+    /// @param onTypeChange Told the converter type when the user changes it, before it is saved.
+    public void setOnTypeChange(final Consumer<TextConverterType> onTypeChange) {
+        this.onTypeChange = onTypeChange;
     }
 
     /// Shows a text converter's settings.

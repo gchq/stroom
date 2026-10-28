@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,6 +58,14 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
 
     /// Makes the editor, with its Settings, Fields, Custom Roll-ups, Documentation and Permissions
     /// tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param fieldList            The field list.
+    /// @param customMaskList       The custom mask list.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public StatisticsDataSourceEditor(
             final EventBus eventBus,
@@ -125,11 +134,14 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
                 .map(field -> new StatisticField(field.getName()))
                 .collect(Collectors.toList());
 
-        final Set<CustomRollUpMask> customRollUpMasks = state.getIntegerMaskSet()
+        final Set<CustomRollUpMask> shownMasks = state.getIntegerMaskSet()
                 .stream()
                 .map(CustomRollUpMask::new)
                 .sorted()
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        final Set<CustomRollUpMask> customRollUpMasks = masksToWrite(
+                shownMasks,
+                NullSafe.get(written, StatisticStoreDoc::getConfig, StatisticsDataSourceData::getCustomRollUpMasks));
 
         final StatisticsDataSourceData config = NullSafe.getOrElse(
                         written,
@@ -140,5 +152,22 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
                 .customRollUpMasks(customRollUpMasks)
                 .build();
         return written.copy().config(config).build();
+    }
+
+    /// The custom roll-ups to write. The Custom Roll-ups tab always shows a "no roll-up" row, adding
+    /// it to a store with none, so a store read with none and showing only that row is written with
+    /// none, as read: just looking at the tab doesn't change the store.
+    ///
+    /// @param shown The roll-ups the tab shows.
+    /// @param read  The roll-ups the store was read with, or null.
+    /// @return The roll-ups to write.
+    static Set<CustomRollUpMask> masksToWrite(final Set<CustomRollUpMask> shown,
+                                              final Set<CustomRollUpMask> read) {
+        final boolean onlyNoRollUp = shown.size() == 1
+                                     && shown.contains(new CustomRollUpMask(Collections.emptyList()));
+        if (onlyNoRollUp && NullSafe.isEmptyCollection(read)) {
+            return read;
+        }
+        return shown;
     }
 }

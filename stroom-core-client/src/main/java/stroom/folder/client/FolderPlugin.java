@@ -91,6 +91,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<Controller> callbackOnOpen,
+                                final Runnable callbackOnFailure,
                                 final TaskMonitorFactory taskMonitorFactory) {
         // Nothing in a folder's tab can be changed
         readFolder(host, docRef);

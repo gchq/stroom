@@ -662,10 +662,14 @@ public class PipelineStructureController extends Controller {
                                 })
                                 .fire();
                     })
-                    .onFailure(throwable -> jsonEditor.setErrorText(
-                            "Unable to display pipeline source",
-                            throwable.getMessage()
-                    ))
+                    .onFailure(throwable -> {
+                        // The dialog isn't shown, so say why here, and release its editor
+                        AlertEvent.fireError(this,
+                                "Unable to display pipeline source",
+                                throwable.getMessage(),
+                                null);
+                        release(jsonEditor);
+                    })
                     .owner(this)
                     .taskMonitorFactory(taskMonitor())
                     .exec();

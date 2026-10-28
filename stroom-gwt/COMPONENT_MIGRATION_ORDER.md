@@ -1124,6 +1124,14 @@ radio group's `setOnChange` where nothing else sets it, otherwise the widget's `
   it: the conversion uses `addXxxHandler` where the widget is handed out.
 - Checked by both apps' GWT compiles and a full workbench run with the leak check.
 
+## 19. Behaviour bugs left from waves 14 and 16
+
+Record: [`component-migration/wave-19.md`](component-migration/wave-19.md). Added 28 October 2026,
+after wave 18.
+
+> **Done, 28 October 2026**: the eight bugs (all as on master) are fixed, each with a regression test
+> and a changelog entry. See `wave-19.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

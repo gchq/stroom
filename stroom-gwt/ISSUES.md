@@ -1608,29 +1608,29 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported** (28 October 2026).
 
-* **Visualisation and floor map Save As without the Assets tab.** `DocumentAssetsTabController.onSaveAs`
+* ~~**Visualisation and floor map Save As without the Assets tab.** `DocumentAssetsTabController.onSaveAs`
   reads its document's uuid, which is null until the Assets tab has been shown, so Save As of a
   visualisation or floor map whose Assets tab was never opened fails. As before the wave (the old
   tab provider read the tab only once shown too). To fix: skip the asset copy when nothing was read,
-  or read the owned assets tab on every read.
-* **The text converter's highlighting on a type change.** The plan has the Settings tab's converter
+  or read the owned assets tab on every read.~~ Fixed in wave 19 (28 October 2026). The editor passes the source document.
+* ~~**The text converter's highlighting on a type change.** The plan has the Settings tab's converter
   type tell the Conversion tab, so the code is highlighted for the new type at once; it is still
   chosen only when the converter is read (after a save), as before. `TextConverterSettingsController`
-  would need a `setOnTypeChange`.
+  would need a `setOnTypeChange`.~~ Fixed in wave 19 (28 October 2026).
 * **No stories for two editors.** `SqlTemporalStoreEditor` and `FloorMapEventStoreEditor` have no
   workbench stories (default, read only, leak check), as before the wave.
 * **No unit tests for the document host.** `TestDocPresenter` went with `DocPresenter`; the read-only
   narrowing and dirty rules now in `DocumentEditorHost` and `DocumentEditor` are covered only by
   stories (a `Composite` can't be made on the JVM). To do: move the rules into a plain helper and
   test it.
-* **Traces shown without a document.** Opened from a pathway (`ShowTracesEvent`), the traces editor
-  still shows its Settings, Documentation and Permissions tabs, which have nothing to read.
-* **A query opened from an embedded query pane closes with it.** `EmbeddedQueryController.editQuery`
+* ~~**Traces shown without a document.** Opened from a pathway (`ShowTracesEvent`), the traces editor
+  still shows its Settings, Documentation and Permissions tabs, which have nothing to read.~~ Fixed in wave 19 (28 October 2026). Only the Traces tab shows.
+* ~~**A query opened from an embedded query pane closes with it.** `EmbeddedQueryController.editQuery`
   owns the query's tab, so removing the pane, or closing the dashboard, disposes it while it is open
-  (as before the wave).
-* **A store's first view of its roll-ups makes it dirty.** Showing a statistic store's Custom
+  (as before the wave).~~ Fixed in wave 19 (28 October 2026). Its tab is the content manager's, and closes with the pane.
+* ~~**A store's first view of its roll-ups makes it dirty.** Showing a statistic store's Custom
   Roll-ups tab adds the "no roll-up" row to a store with none, so undoing an edit leaves the store
-  dirty (as before).
+  dirty (as before).~~ Fixed in wave 19 (28 October 2026).
 * **One implementation.** `HasCommonTabs` is implemented only by `DocumentEditorHost`.
 * **Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
   tooltip), `AppShell.ExplorerItemKeys` (a renamed item's text) and `DataGrid.ValueSpinnerColumn`
@@ -1682,18 +1682,18 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   its type), so they still reopen Caches and Batch Document Permissions; only sessions saved since
   are right. The client can't tell the old entries apart. (Before, two plugins registered "Caches",
   and the last to register won, so a saved Caches tab may have opened Properties.)
-* **A tab session stops partway** if a document's load or permission check fails
+* ~~**A tab session stops partway** if a document's load or permission check fails
   (`DocumentPlugin.showDocument`), or a saved reference has no type: neither callback runs, so the
   tabs after it never open. As before the wave. Fix: pass `callbackOnFailure` down to
-  `showDocument`'s error handlers.
-* **The pipeline's source fails silently.** If fetching a pipeline's JSON fails, the error text goes
+  `showDocument`'s error handlers.~~ Fixed in wave 19 (28 October 2026).
+* ~~**The pipeline's source fails silently.** If fetching a pipeline's JSON fails, the error text goes
   into an editor that is never shown, and the dialog's controller stays owned until the pipeline's
   tab closes (`PipelineStructureController.viewSource`). As before the wave. Fix: show the error
-  (`AlertEvent.fireError`) and release the controller.
-* **A pane's selection info, clicked twice.** `DashboardBodyController.onSelectionInfo` adds a
+  (`AlertEvent.fireError`) and release the controller.~~ Fixed in wave 19 (28 October 2026).
+* ~~**A pane's selection info, clicked twice.** `DashboardBodyController.onSelectionInfo` adds a
   context listener before each showing; a second click hides the popup through the popup manager's
   toggle, which runs only the first showing's `onHide`, so the second listener stays and keeps
-  refreshing the hidden popup. As before the wave. Fix: add the listener only when not shown.
+  refreshing the hidden popup. As before the wave. Fix: add the listener only when not shown.~~ Fixed in wave 19 (28 October 2026).
 * **The test suite's inventories** (`stroom-gwt/stroom-gwt-suite/oracles/gwt-inventory.csv`,
   `capability-specs.json`, generated) still list `MyPresenterWidget`, `PresenterAdapter`, the deleted
   cells and `MyTreeLayout`, and the old packages of the classes wave 17 moved; regenerate them (`tools/build-capability-specs.mjs` and the inventory

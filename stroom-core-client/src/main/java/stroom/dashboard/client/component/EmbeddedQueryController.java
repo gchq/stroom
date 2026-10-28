@@ -17,6 +17,7 @@
 package stroom.dashboard.client.component;
 
 import stroom.core.client.ContentManager;
+import stroom.core.client.OwnedContentTabs;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -95,7 +96,8 @@ public class EmbeddedQueryController
     private final QueryClient queryClient;
     private final QueryModel queryModel;
     private final Provider<QueryDocEditor> queryDocEditorProvider;
-    private final ContentManager contentManager;
+    // The query's tab, opened by Edit Query, which closes when the pane goes (its Save writes to the pane)
+    private final OwnedContentTabs queryTabs;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
     private String query;
@@ -115,6 +117,18 @@ public class EmbeddedQueryController
     private final Listeners<Boolean> updateListeners = new Listeners<>();
 
     /// Made by GIN, with its pane.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       Its component.
+    /// @param settingsControllerProvider Makes the settings controller.
+    /// @param tableControllerProvider    Makes the table controller.
+    /// @param visControllerProvider      Makes the vis controller.
+    /// @param queryDocEditorProvider     Makes the query doc editor.
+    /// @param queryClient                The query client.
+    /// @param restFactory                Makes REST requests.
+    /// @param dateTimeSettingsFactory    The user's date and time settings.
+    /// @param resultStoreModel           The result stores.
+    /// @param contentManager             The content manager.
     @Inject
     public EmbeddedQueryController(final EventBus eventBus,
                                    final EmbeddedQuery view,
@@ -134,7 +148,8 @@ public class EmbeddedQueryController
         this.tableControllerProvider = tableControllerProvider;
         this.visControllerProvider = visControllerProvider;
         this.queryDocEditorProvider = queryDocEditorProvider;
-        this.contentManager = contentManager;
+        this.queryTabs = new OwnedContentTabs(contentManager);
+        onDispose(queryTabs::closeAll);
 
         final stroom.query.client.ResultComponent tableResultConsumer = new ResultComponent() {
             boolean start;
@@ -355,8 +370,8 @@ public class EmbeddedQueryController
             final QueryDoc doc = getQueryDoc();
             final QueryDocEditor queryDocEditor = queryDocEditorProvider.get();
             // The tab it is shown in, which owns it
-            final DocumentEditorHost<QueryDoc> queryTab = own(new DocumentEditorHost<>(
-                    getEventBus(), queryDocEditor, QueryDoc.TYPE));
+            final DocumentEditorHost<QueryDoc> queryTab = new DocumentEditorHost<>(
+                    getEventBus(), queryDocEditor, QueryDoc.TYPE);
             queryDocEditor.setSaveInterceptor(() -> {
                 final QueryDoc embeddedQueryDoc = queryDocEditor.write(doc);
                 final EmbeddedQueryComponentSettings settings = getQuerySettings();
@@ -372,11 +387,7 @@ public class EmbeddedQueryController
             // Editable unless the dashboard is read only (its context narrows it)
             queryTab.setReadOnly(false);
             queryTab.read(doc.asDocRef(), doc);
-            contentManager.open(e -> {
-                e.getCallback().closeTab(true);
-                // Its tab is closed for good
-                release(queryTab);
-            }, queryTab, queryTab);
+            queryTabs.open(queryTab, queryTab);
         }
     }
 

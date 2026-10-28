@@ -45,6 +45,13 @@ public class VisualisationEditor extends DocumentEditor<VisualisationDoc> {
     private final DocumentAssetsTabController<VisualisationDoc> assetsTab;
 
     /// Makes the editor, with its Settings, Assets, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param assetsTab            The assets tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public VisualisationEditor(final EventBus eventBus,
                                final LinkTabPanel view,
@@ -87,6 +94,7 @@ public class VisualisationEditor extends DocumentEditor<VisualisationDoc> {
 
     @Override
     public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveAsCallback() {
-        return assetsTab::onSaveAs;
+        // The assets are copied from the document being saved, even if its Assets tab was never shown
+        return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
     }
 }

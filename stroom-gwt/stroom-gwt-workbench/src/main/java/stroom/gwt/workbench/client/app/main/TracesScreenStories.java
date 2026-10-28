@@ -91,6 +91,12 @@ public final class TracesScreenStories {
                 .withPlay(play -> {
                     play.findByText("GET /api/things");
                     play.expect(play.getByText("Total Spans")).toBeInTheDocument();
+                    // Shown without a store's document, so only the Traces tab: the others had
+                    // nothing to read
+                    play.expect(play.getByText("Traces", StroomDom.LINK_TAB_LABEL)).toBeVisible();
+                    for (final String other : new String[]{"Settings", "Documentation", "Permissions"}) {
+                        play.expect(play.getByText(other, StroomDom.LINK_TAB_LABEL)).not().toBeVisible();
+                    }
                     // Select the trace row: its spans load into the waterfall
                     play.click(play.getByText("GET /api/things"));
                     play.findByText("db query");
@@ -132,10 +138,7 @@ public final class TracesScreenStories {
         harness.afterStartUp(() -> {
             // As TracesPlugin does for ShowTracesEvent
             final TracesEditor editor = injector.getTracesEditor();
-            editor.setDataSourceRef(DATA_SOURCE);
-            editor.setPathway(null);
-            editor.setFilter(null);
-            editor.forceRefresh();
+            editor.showTraces(DATA_SOURCE, null, null);
             harness.show(new DocumentEditorHost<>(harness.getEventBus(), editor, TracesDoc.TYPE));
         });
         return harness.asWidget();

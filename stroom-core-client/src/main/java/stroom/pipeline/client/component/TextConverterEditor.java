@@ -33,8 +33,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 /// A text converter's editor: its Conversion (the converter's code), Settings, Documentation and
-/// Permissions tabs (see [DocumentEditor]). The code is highlighted as the converter's type is
-/// when it is read.
+/// Permissions tabs (see [DocumentEditor]). The code is highlighted as the converter's type: the
+/// one read, then the one chosen on the Settings tab, as soon as it is chosen.
 public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
@@ -42,7 +42,16 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
+    private CodeTabController conversion;
+
     /// Makes the editor, with its Conversion, Settings, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param codeTabProvider      Makes the code tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public TextConverterEditor(final EventBus eventBus,
                                final LinkTabPanel view,
@@ -53,17 +62,21 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
         super(eventBus, view);
         addTab(CONVERSION,
                 () -> {
-                    final CodeTabController conversion = codeTabProvider.get();
+                    conversion = codeTabProvider.get();
                     conversion.setOnChange(this::onChange);
                     return conversion;
                 },
-                (conversion, docRef, doc) -> {
-                    conversion.setText(doc.getData());
-                    conversion.setMode(editorMode(doc.getConverterType(), conversion.getText()));
+                (code, docRef, doc) -> {
+                    code.setText(doc.getData());
+                    code.setMode(editorMode(doc.getConverterType(), code.getText()));
                 },
-                (conversion, doc) -> doc.copy().data(conversion.getText()).build());
+                (code, doc) -> doc.copy().data(code.getText()).build());
         addTab(SETTINGS,
-                settingsProvider::get,
+                () -> {
+                    final TextConverterSettingsController settings = settingsProvider.get();
+                    settings.setOnTypeChange(this::onTypeChange);
+                    return settings;
+                },
                 TextConverterSettingsController::read,
                 TextConverterSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
@@ -72,6 +85,13 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
         setDefaultTab(CONVERSION);
+    }
+
+    // Highlights the code as the type chosen, before the converter is saved
+    private void onTypeChange(final TextConverterType converterType) {
+        if (conversion != null) {
+            conversion.setMode(editorMode(converterType, conversion.getText()));
+        }
     }
 
     /// The language a converter's code is highlighted as: its type's, or, if it has none, the one

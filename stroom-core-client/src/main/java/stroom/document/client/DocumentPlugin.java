@@ -105,7 +105,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, true, null, null, false, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, true, null, null, null, false, taskMonitorFactory);
     }
 
     public final DocumentEditorHost<?> open(final DocRef docRef,
@@ -114,7 +114,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                      final boolean selectDefaultTab,
                                      final Consumer<Controller> callbackOnOpen,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, selectDefaultTab, null, callbackOnOpen, false, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, selectDefaultTab, null, callbackOnOpen, null, false,
+                taskMonitorFactory);
     }
 
     public final DocumentEditorHost<?> open(final DocRef docRef,
@@ -122,15 +123,17 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<Controller> callbackOnOpen,
+                                     final Runnable callbackOnFailure,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, true, selectedLinkTab, callbackOnOpen, duplicate,
-                taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, true, selectedLinkTab, callbackOnOpen, callbackOnFailure,
+                duplicate, taskMonitorFactory);
     }
 
     /**
      * 4. This method will open a document and show it in the content pane with the desired
-     * selectedTab
+     * selectedTab. If the document can't be loaded, or its permissions checked, callbackOnFailure
+     * is run (if given), e.g. so that a tab session carries on with its next tab.
      */
     public DocumentEditorHost<?> open(final DocRef docRef,
                                      final boolean forceOpen,
@@ -138,6 +141,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                      final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<Controller> callbackOnOpen,
+                                     final Runnable callbackOnFailure,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         DocumentEditorHost<?> host = null;
@@ -205,6 +209,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                         selectDefaultTab,
                         selectedLinkTab,
                         callbackOnOpen,
+                        callbackOnFailure,
                         taskMonitorFactory);
             }
 
@@ -230,6 +235,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 true,
                 null,
                 null,
+                null,
                 taskMonitorFactory);
     }
 
@@ -242,18 +248,32 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedCommonTab,
                                 final Consumer<Controller> callbackOnOpen,
+                                final Runnable callbackOnFailure,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        final RestErrorHandler errorHandler = caught ->
-                AlertEvent.fireError(
-                        DocumentPlugin.this,
-                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef), caught.getMessage(),
-                        null);
+        // The tab is never shown: forget it (so that opening the document again doesn't select a tab
+        // that doesn't exist), release its editor, and tell the opener, e.g. a tab session, which
+        // carries on with its next tab
+        final Runnable onFailure = () -> {
+            documentTabManager.remove(docRef, tabData);
+            host.dispose();
+            if (callbackOnFailure != null) {
+                callbackOnFailure.run();
+            }
+        };
+        final RestErrorHandler errorHandler = caught -> {
+            AlertEvent.fireError(
+                    DocumentPlugin.this,
+                    "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef), caught.getMessage(),
+                    null);
+            onFailure.run();
+        };
 
         final Consumer<D> loadConsumer = doc -> {
             if (doc == null) {
                 AlertEvent.fireError(DocumentPlugin.this,
                         "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef),
                         null);
+                onFailure.run();
             } else {
                 if (selectedCommonTab != null) {
                     host.selectCommonTab(selectedCommonTab);
@@ -277,7 +297,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                                 callbackOnOpen);
                                     }
                                 },
-                                throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                                throwable -> {
+                                    AlertEvent.fireErrorFromException(this, throwable, null);
+                                    onFailure.run();
+                                },
                                 taskMonitorFactory);
             }
         };

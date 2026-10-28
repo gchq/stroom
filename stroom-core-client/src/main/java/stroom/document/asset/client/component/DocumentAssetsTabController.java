@@ -317,11 +317,15 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     /// 3. Updates any necessary content in the draft assets
     /// 4. Saves the draft into live for the new document
     ///
+    /// The source is the editor's document, not the one this tab was last given: the tab is only
+    /// given one once it is shown, and Save As must copy the assets whether or not it has been.
+    ///
+    /// @param source      The document being saved as a copy.
     /// @param newDocument The document we're Saving As.
     /// @param callback    The lamda to call when this chain is complete.
-    public void onSaveAs(final D newDocument, final Consumer<D> callback) {
+    public void onSaveAs(final D source, final D newDocument, final Consumer<D> callback) {
 
-        Console.info("onSaveAs for " + document + " to " + newDocument);
+        Console.info("onSaveAs for " + source + " to " + newDocument);
 
         String updatedContentPath = null;
         byte[] updatedContent = null;
@@ -333,7 +337,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                 new DocumentAssetSaveAsParameters(newDocument.getUuid(), updatedContentPath, updatedContent);
 
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
-                .method(r -> r.saveAs(document.getUuid(), params))
+                .method(r -> r.saveAs(source.getUuid(), params))
                 .onSuccess(result -> {
                     if (result) {
                         // Tab becomes the new document so change the reference here

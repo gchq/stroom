@@ -225,6 +225,11 @@ public final class PipelineEditorStories {
 
     private static final RestFixtures FIXTURES = fixtures(DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(LAYERS)));
+    // The pipeline's source can't be fetched
+    private static final RestFixtures SOURCE_FAILS_FIXTURES = fixtures(DOC, NO_ROWS, NO_ROWS,
+            RestFixtures.builder()
+                    .post(LAYERS_PATH, RestReply.json(LAYERS))
+                    .post("/pipeline/v1/fetchPipelineJson", RestReply.error(500, "No such pipeline")));
     // The processor collapsed (no expanded rows asked for): its filter isn't sent
     private static final String COLLAPSED_PROCESSOR_ROWS = """
             {
@@ -923,6 +928,18 @@ public final class PipelineEditorStories {
                 })
                 // A batch change that fails says why and leaves the dialog usable: the change had no
                 // failure handler, so OK and Cancel stayed disabled after the alert
+                // View Source when the source can't be fetched says why, and shows no dialog. Before,
+                // the error went into the dialog's editor, which was never shown
+                .story("ViewSourceFails", context -> render(context, SOURCE_FAILS_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    play.click(play.getByRole("button", "View Source"));
+                    play.click(dialogWith(screen, TextMatch.containing("Unable to display pipeline source"))
+                            .getByRole("button", StroomDom.button("Close")));
+                    play.expect(screen.queryByText("Pipeline Source", StroomDom.DIALOG_TITLE)).toBeNull();
+                })
                 .story("FailedBatchChangeKeepsDialogUsable", context -> render(context, BATCH_FAILS_FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();

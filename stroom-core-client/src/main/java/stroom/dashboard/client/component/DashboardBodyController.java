@@ -123,6 +123,8 @@ public class DashboardBodyController
     private final Provider<CurrentSelectionController> currentSelectionControllerProvider;
     private final Provider<ExplorerPopupController> dashboardSelection;
     private CurrentSelectionController currentSelection;
+    // The Current Selection popup refreshes as the selection changes, while it is shown
+    private final ListenerWhileShown selectionListener = new ListenerWhileShown();
     private boolean loaded;
     private String customTitle;
     private DocRef docRef;
@@ -149,6 +151,17 @@ public class DashboardBodyController
     private final Toolbar editToolbar;
 
     /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param view                               Its component.
+    /// @param components                         The components.
+    /// @param queryToolbar                       The query toolbar.
+    /// @param tabMenuProvider                    Makes the tab menu.
+    /// @param queryInfo                          The query info.
+    /// @param layoutConstraintControllerProvider Makes the layout constraint controller.
+    /// @param currentSelectionControllerProvider Makes the current selection controller.
+    /// @param urlParameters                      The page's URL parameters.
+    /// @param dashboardSelection                 The dashboard selection.
     @Inject
     public DashboardBodyController(final EventBus eventBus,
                                    final DashboardBody view,
@@ -286,15 +299,17 @@ public class DashboardBodyController
             currentSelection = make(currentSelectionControllerProvider);
         }
 
-        currentSelection.refresh(dashboardContext, false);
-        final HandlerRegistration handlerRegistration = dashboardContext.addContextChangeListener(() ->
-                currentSelection.refresh(dashboardContext, false));
+        // Showing it again while it is shown hides it, so it listens only from its first showing
+        if (selectionListener.start(() -> dashboardContext.addContextChangeListener(() ->
+                currentSelection.refresh(dashboardContext, false)))) {
+            currentSelection.refresh(dashboardContext, false);
+        }
         ControllerDialog.show(currentSelection)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(600, 800))
                 .caption("Current Selection")
                 .modal(false)
-                .onHide(e -> handlerRegistration.removeHandler())
+                .onHide(e -> selectionListener.stop())
                 .fire();
     }
 

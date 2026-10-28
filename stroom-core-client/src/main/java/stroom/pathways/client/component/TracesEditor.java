@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// A traces store's editor: its Traces (the traces found), Settings (Plan B's, for traces only),
 /// Documentation and Permissions tabs (see [DocumentEditor]). It is also opened on its own to show
-/// the traces of a pathway ([#setDataSourceRef], [#setPathway], [#setFilter], [#forceRefresh]).
+/// the traces of a pathway ([#showTraces]), with only its Traces tab.
 public class TracesEditor extends DocumentEditor<TracesDoc> {
 
     public static final String TAB_TYPE = "Traces";
@@ -47,6 +47,13 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
     private final TracesListTabController tracesListTab;
 
     /// Makes the editor, with its Traces, Settings, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus              The application's event bus.
+    /// @param view                  Its component.
+    /// @param tracesListTab         The traces list tab.
+    /// @param planBSettingsProvider Makes the plan bsettings.
+    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public TracesEditor(final EventBus eventBus,
                         final LinkTabPanel view,
@@ -88,23 +95,19 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
                 : null;
     }
 
-    /// Finds the traces again.
-    public void forceRefresh() {
-        tracesListTab.refresh();
-    }
-
+    /// Shows traces on their own, not a store's document: only the Traces tab, as the others have
+    /// no document to show.
+    ///
     /// @param dataSourceRef The store to find the traces in.
-    public void setDataSourceRef(final DocRef dataSourceRef) {
+    /// @param pathway       The pathway the traces found must follow, or null for any.
+    /// @param filter        What the traces found must match, or null for all.
+    public void showTraces(final DocRef dataSourceRef, final Pathway pathway, final String filter) {
+        setTabHidden(SETTINGS, true);
+        setTabHidden(DOCUMENTATION, true);
+        setTabHidden(PERMISSIONS, true);
         tracesListTab.setDataSourceRef(dataSourceRef);
-    }
-
-    /// @param filter What the traces found must match, or null for all.
-    public void setFilter(final String filter) {
-        tracesListTab.setFilter(filter);
-    }
-
-    /// @param pathway The pathway the traces found must follow, or null for any.
-    public void setPathway(final Pathway pathway) {
         tracesListTab.setPathway(pathway);
+        tracesListTab.setFilter(filter);
+        tracesListTab.refresh();
     }
 }
