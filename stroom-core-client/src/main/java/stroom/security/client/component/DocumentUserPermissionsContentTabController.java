@@ -27,6 +27,10 @@ import javax.inject.Inject;
 /// A document's permissions ([DocumentUserPermissionsTabController]) in a main content tab of its own.
 public class DocumentUserPermissionsContentTabController extends ContentTabController {
 
+    /// The tab's type, its own (not Batch Document Permissions'), so a tab session doesn't reopen it
+    /// as the batch screen; with no plugin to open it again, a tab session skips it.
+    public static final String TAB_TYPE = "DocumentUserPermissions";
+
     private final DocumentUserPermissionsTabController permissions;
     private DocRef docRef;
 
@@ -62,6 +66,6 @@ public class DocumentUserPermissionsContentTabController extends ContentTabContr
 
     @Override
     public String getType() {
-        return "DocumentPermissions";
+        return TAB_TYPE;
     }
 }

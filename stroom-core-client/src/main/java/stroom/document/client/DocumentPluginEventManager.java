@@ -1075,6 +1075,9 @@ public class DocumentPluginEventManager extends Plugin {
                 contentPlugin.open(ContentOpenCallback.of(callbackOnOpen));
             } else {
                 Console.error(() -> "Document type '" + docRef.getType() + "' not registered");
+                if (callbackOnFailure != null) {
+                    callbackOnFailure.run();
+                }
             }
         }
     }

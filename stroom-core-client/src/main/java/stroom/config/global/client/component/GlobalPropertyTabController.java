@@ -36,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// Shows Stroom's configuration properties, filtered as the user asks, and edits them.
 public class GlobalPropertyTabController extends ContentTabController {
 
-    public static final String TAB_TYPE = "Caches";
+    public static final String TAB_TYPE = "Properties";
 
     private final GlobalPropertyTab view;
 
