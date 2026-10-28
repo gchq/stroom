@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
-import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.TemporalPrecision;
+import stroom.planb.shared.TemporalStateKeySchema;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class SessionKeySchemaSettingsWidget extends Component {
+public class TemporalStateKeySchemaSettingsWidget extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -47,29 +47,29 @@ public class SessionKeySchemaSettingsWidget extends Component {
     SelectionBox<TemporalPrecision> temporalPrecision;
 
     /// Makes the settings, at their defaults.
-    public SessionKeySchemaSettingsWidget() {
+    public TemporalStateKeySchemaSettingsWidget() {
         initWidget(BINDER.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
-        setKeySchema(new SessionKeySchema.Builder().build());
-        onStateKeyTypeChange();
+        setKeySchema(new TemporalStateKeySchema.Builder().build());
+        onKeyTypeChange();
     }
 
-    public SessionKeySchema getKeySchema() {
-        return new SessionKeySchema.Builder()
+    public TemporalStateKeySchema getKeySchema() {
+        return new TemporalStateKeySchema.Builder()
                 .keyType(keyType.getValue())
                 .hashLength(hashLength.getValue())
                 .temporalPrecision(temporalPrecision.getValue())
                 .build();
     }
 
-    public void setKeySchema(final SessionKeySchema keySchema) {
-        final SessionKeySchema schema = new SessionKeySchema.Builder(keySchema).build();
+    public void setKeySchema(final TemporalStateKeySchema keySchema) {
+        final TemporalStateKeySchema schema = new TemporalStateKeySchema.Builder(keySchema).build();
         keyType.setValue(schema.getKeyType());
         hashLength.setValue(schema.getHashLength());
         temporalPrecision.setValue(schema.getTemporalPrecision());
-        onStateKeyTypeChange();
+        onKeyTypeChange();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class SessionKeySchemaSettingsWidget extends Component {
         temporalPrecision.setReadOnly(readOnly);
     }
 
-    private void onStateKeyTypeChange() {
+    private void onKeyTypeChange() {
         final KeyType value = keyType.getValue();
         // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
         hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
@@ -88,7 +88,7 @@ public class SessionKeySchemaSettingsWidget extends Component {
 
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
-        onStateKeyTypeChange();
+        onKeyTypeChange();
         changed();
     }
 
@@ -121,7 +121,7 @@ public class SessionKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, SessionKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, TemporalStateKeySchemaSettingsWidget> {
 
     }
 }

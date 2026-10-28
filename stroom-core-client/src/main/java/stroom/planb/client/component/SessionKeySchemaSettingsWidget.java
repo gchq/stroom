@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
-import stroom.planb.shared.MetricKeySchema;
-import stroom.planb.shared.TemporalResolution;
-import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeZoneBox;
+import stroom.planb.shared.SessionKeySchema;
+import stroom.planb.shared.TemporalPrecision;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -34,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class MetricKeySchemaSettingsWidget extends Component {
+public class SessionKeySchemaSettingsWidget extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -46,48 +44,42 @@ public class MetricKeySchemaSettingsWidget extends Component {
     @UiField
     SelectionBox<HashLength> hashLength;
     @UiField
-    SelectionBox<TemporalResolution> temporalResolution;
-    @UiField
-    TimeZoneBox timeZoneBox;
+    SelectionBox<TemporalPrecision> temporalPrecision;
 
     /// Makes the settings, at their defaults.
-    public MetricKeySchemaSettingsWidget() {
+    public SessionKeySchemaSettingsWidget() {
         initWidget(BINDER.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        setKeySchema(new MetricKeySchema.Builder().build());
-        onKeyTypeChange();
+        temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
+        setKeySchema(new SessionKeySchema.Builder().build());
+        onStateKeyTypeChange();
     }
 
-    public MetricKeySchema getKeySchema() {
-        final UserTimeZone userTimeZone = timeZoneBox.getUserTimeZone();
-        return new MetricKeySchema.Builder()
+    public SessionKeySchema getKeySchema() {
+        return new SessionKeySchema.Builder()
                 .keyType(keyType.getValue())
                 .hashLength(hashLength.getValue())
-                .temporalResolution(temporalResolution.getValue())
-                .timeZone(userTimeZone)
+                .temporalPrecision(temporalPrecision.getValue())
                 .build();
     }
 
-    public void setKeySchema(final MetricKeySchema keySchema) {
-        final MetricKeySchema schema = new MetricKeySchema.Builder(keySchema).build();
+    public void setKeySchema(final SessionKeySchema keySchema) {
+        final SessionKeySchema schema = new SessionKeySchema.Builder(keySchema).build();
         keyType.setValue(schema.getKeyType());
         hashLength.setValue(schema.getHashLength());
-        temporalResolution.setValue(schema.getTemporalResolution());
-        timeZoneBox.setUserTimeZone(schema.getTimeZone());
-        onKeyTypeChange();
+        temporalPrecision.setValue(schema.getTemporalPrecision());
+        onStateKeyTypeChange();
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
         keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
-        temporalResolution.setReadOnly(readOnly);
-        timeZoneBox.setReadOnly(readOnly);
+        temporalPrecision.setReadOnly(readOnly);
     }
 
-    private void onKeyTypeChange() {
+    private void onStateKeyTypeChange() {
         final KeyType value = keyType.getValue();
         // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
         hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
@@ -96,7 +88,7 @@ public class MetricKeySchemaSettingsWidget extends Component {
 
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
-        onKeyTypeChange();
+        onStateKeyTypeChange();
         changed();
     }
 
@@ -105,8 +97,8 @@ public class MetricKeySchemaSettingsWidget extends Component {
         changed();
     }
 
-    @UiHandler("temporalResolution")
-    public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
+    @UiHandler("temporalPrecision")
+    public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
         changed();
     }
 
@@ -118,7 +110,6 @@ public class MetricKeySchemaSettingsWidget extends Component {
                 ? onChange
                 : () -> {
                 };
-        timeZoneBox.setOnChange(this.onChange);
     }
 
     // Says that the user changed a setting
@@ -130,7 +121,7 @@ public class MetricKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, MetricKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, SessionKeySchemaSettingsWidget> {
 
     }
 }

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
+import stroom.planb.shared.KeyType;
+import stroom.planb.shared.MetricKeySchema;
+import stroom.planb.shared.TemporalResolution;
+import stroom.query.api.UserTimeZone;
+import stroom.query.client.view.TimeZoneBox;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -31,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class StateValueSchemaSettingsWidget extends Component {
+public class MetricKeySchemaSettingsWidget extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -39,54 +42,71 @@ public class StateValueSchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<StateValueType> stateValueType;
+    SelectionBox<KeyType> keyType;
     @UiField
     SelectionBox<HashLength> hashLength;
+    @UiField
+    SelectionBox<TemporalResolution> temporalResolution;
+    @UiField
+    TimeZoneBox timeZoneBox;
 
     /// Makes the settings, at their defaults.
-    public StateValueSchemaSettingsWidget() {
+    public MetricKeySchemaSettingsWidget() {
         initWidget(BINDER.createAndBindUi(this));
-        stateValueType.addItems(StateValueType.ORDERED_LIST);
+        keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        setValueSchema(new StateValueSchema.Builder().build());
-        onStateValueTypeChange();
+        temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
+        setKeySchema(new MetricKeySchema.Builder().build());
+        onKeyTypeChange();
     }
 
-    public StateValueSchema getValueSchema() {
-        return new StateValueSchema.Builder()
-                .stateValueType(stateValueType.getValue())
+    public MetricKeySchema getKeySchema() {
+        final UserTimeZone userTimeZone = timeZoneBox.getUserTimeZone();
+        return new MetricKeySchema.Builder()
+                .keyType(keyType.getValue())
                 .hashLength(hashLength.getValue())
+                .temporalResolution(temporalResolution.getValue())
+                .timeZone(userTimeZone)
                 .build();
     }
 
-    public void setValueSchema(final StateValueSchema valueSchema) {
-        final StateValueSchema schema = new StateValueSchema.Builder(valueSchema).build();
-        stateValueType.setValue(schema.getStateValueType());
+    public void setKeySchema(final MetricKeySchema keySchema) {
+        final MetricKeySchema schema = new MetricKeySchema.Builder(keySchema).build();
+        keyType.setValue(schema.getKeyType());
         hashLength.setValue(schema.getHashLength());
-        onStateValueTypeChange();
+        temporalResolution.setValue(schema.getTemporalResolution());
+        timeZoneBox.setUserTimeZone(schema.getTimeZone());
+        onKeyTypeChange();
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        stateValueType.setReadOnly(readOnly);
+        keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
+        temporalResolution.setReadOnly(readOnly);
+        timeZoneBox.setReadOnly(readOnly);
     }
 
-    private void onStateValueTypeChange() {
-        final StateValueType value = stateValueType.getValue();
+    private void onKeyTypeChange() {
+        final KeyType value = keyType.getValue();
         // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
-        hashLength.setEnabled(Objects.equals(value, StateValueType.HASH_LOOKUP) ||
-                              Objects.equals(value, StateValueType.VARIABLE));
+        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                              Objects.equals(value, KeyType.VARIABLE));
     }
 
-    @UiHandler("stateValueType")
-    public void onStateValueType(final ValueChangeEvent<StateValueType> event) {
-        onStateValueTypeChange();
+    @UiHandler("keyType")
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+        onKeyTypeChange();
         changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
+        changed();
+    }
+
+    @UiHandler("temporalResolution")
+    public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
         changed();
     }
 
@@ -98,6 +118,7 @@ public class StateValueSchemaSettingsWidget extends Component {
                 ? onChange
                 : () -> {
                 };
+        timeZoneBox.setOnChange(this.onChange);
     }
 
     // Says that the user changed a setting
@@ -109,7 +130,7 @@ public class StateValueSchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, StateValueSchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, MetricKeySchemaSettingsWidget> {
 
     }
 }

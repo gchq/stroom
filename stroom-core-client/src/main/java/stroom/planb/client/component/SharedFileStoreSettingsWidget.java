@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.widget.component.client.Component;

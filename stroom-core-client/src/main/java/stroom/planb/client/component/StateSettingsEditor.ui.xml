@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.planb.client.view">
+             xmlns:v="urn:import:stroom.planb.client.component">
     <!-- The settings of a state store, each group a titled set of Plan B's settings widgets -->
     <g:FlowPanel styleName="max form">
         <v:SettingsGroup label="General">

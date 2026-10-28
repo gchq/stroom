@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
-import stroom.planb.shared.StateKeySchema;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class StateKeySchemaSettingsWidget extends Component {
+public class StateValueSchemaSettingsWidget extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -39,49 +39,49 @@ public class StateKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<KeyType> keyType;
+    SelectionBox<StateValueType> stateValueType;
     @UiField
     SelectionBox<HashLength> hashLength;
 
     /// Makes the settings, at their defaults.
-    public StateKeySchemaSettingsWidget() {
+    public StateValueSchemaSettingsWidget() {
         initWidget(BINDER.createAndBindUi(this));
-        keyType.addItems(KeyType.ORDERED_LIST);
+        stateValueType.addItems(StateValueType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        setKeySchema(new StateKeySchema.Builder().build());
-        onStateKeyTypeChange();
+        setValueSchema(new StateValueSchema.Builder().build());
+        onStateValueTypeChange();
     }
 
-    public StateKeySchema getKeySchema() {
-        return new StateKeySchema.Builder()
-                .keyType(keyType.getValue())
+    public StateValueSchema getValueSchema() {
+        return new StateValueSchema.Builder()
+                .stateValueType(stateValueType.getValue())
                 .hashLength(hashLength.getValue())
                 .build();
     }
 
-    public void setKeySchema(final StateKeySchema keySchema) {
-        final StateKeySchema schema = new StateKeySchema.Builder(keySchema).build();
-        keyType.setValue(schema.getKeyType());
+    public void setValueSchema(final StateValueSchema valueSchema) {
+        final StateValueSchema schema = new StateValueSchema.Builder(valueSchema).build();
+        stateValueType.setValue(schema.getStateValueType());
         hashLength.setValue(schema.getHashLength());
-        onStateKeyTypeChange();
+        onStateValueTypeChange();
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        keyType.setReadOnly(readOnly);
+        stateValueType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
     }
 
-    private void onStateKeyTypeChange() {
-        final KeyType value = keyType.getValue();
+    private void onStateValueTypeChange() {
+        final StateValueType value = stateValueType.getValue();
         // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
-        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
-                              Objects.equals(value, KeyType.VARIABLE));
+        hashLength.setEnabled(Objects.equals(value, StateValueType.HASH_LOOKUP) ||
+                              Objects.equals(value, StateValueType.VARIABLE));
     }
 
-    @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<KeyType> event) {
-        onStateKeyTypeChange();
+    @UiHandler("stateValueType")
+    public void onStateValueType(final ValueChangeEvent<StateValueType> event) {
+        onStateValueTypeChange();
         changed();
     }
 
@@ -109,7 +109,7 @@ public class StateKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, StateKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, StateValueSchemaSettingsWidget> {
 
     }
 }

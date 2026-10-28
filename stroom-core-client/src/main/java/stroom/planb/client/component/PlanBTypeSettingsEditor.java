@@ -16,10 +16,6 @@
 
 package stroom.planb.client.component;
 
-import stroom.planb.client.view.CondenseSettingsWidget;
-import stroom.planb.client.view.GeneralSettingsWidget;
-import stroom.planb.client.view.RetentionSettingsWidget;
-import stroom.planb.client.view.SharedFileStoreSettingsWidget;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.widget.component.client.Component;
 

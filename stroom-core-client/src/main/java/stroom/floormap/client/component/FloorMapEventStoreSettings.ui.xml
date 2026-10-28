@@ -17,7 +17,7 @@
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:sg="urn:import:stroom.planb.client.view"
+             xmlns:sg="urn:import:stroom.planb.client.component"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">

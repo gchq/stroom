@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.shared.RangeKeySchema;
-import stroom.planb.shared.RangeType;
+import stroom.planb.shared.HistogramValueSchema;
+import stroom.planb.shared.MaxValueSize;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -28,7 +28,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class RangeKeySchemaSettingsWidget extends Component {
+public class HistogramValueSchemaSettingsWidget extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -36,33 +36,33 @@ public class RangeKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<RangeType> rangeType;
+    SelectionBox<MaxValueSize> maxValue;
 
     /// Makes the settings, at their defaults.
-    public RangeKeySchemaSettingsWidget() {
+    public HistogramValueSchemaSettingsWidget() {
         initWidget(BINDER.createAndBindUi(this));
-        rangeType.addItems(RangeType.ORDERED_LIST);
-        setKeySchema(new RangeKeySchema.Builder().build());
+        maxValue.addItems(MaxValueSize.ORDERED_LIST);
+        setValueSchema(new HistogramValueSchema.Builder().build());
     }
 
-    public RangeKeySchema getKeySchema() {
-        return new RangeKeySchema.Builder()
-                .rangeType(rangeType.getValue())
+    public HistogramValueSchema getValueSchema() {
+        return new HistogramValueSchema.Builder()
+                .valueType(maxValue.getValue())
                 .build();
     }
 
-    public void setKeySchema(final RangeKeySchema rangeKeySchema) {
-        final RangeKeySchema schema = new RangeKeySchema.Builder(rangeKeySchema).build();
-        rangeType.setValue(schema.getRangeType());
+    public void setValueSchema(final HistogramValueSchema valueSchema) {
+        final HistogramValueSchema schema = new HistogramValueSchema.Builder(valueSchema).build();
+        maxValue.setValue(schema.getValueType());
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        rangeType.setReadOnly(readOnly);
+        maxValue.setReadOnly(readOnly);
     }
 
-    @UiHandler("rangeType")
-    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+    @UiHandler("maxValue")
+    public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
         changed();
     }
 
@@ -85,7 +85,7 @@ public class RangeKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, RangeKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, HistogramValueSchemaSettingsWidget> {
 
     }
 }

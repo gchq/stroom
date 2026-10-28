@@ -16,11 +16,6 @@
 
 package stroom.planb.client.component;
 
-import stroom.planb.client.view.GeneralSettingsWidget;
-import stroom.planb.client.view.PublishingSettingsWidget;
-import stroom.planb.client.view.RetentionSettingsWidget;
-import stroom.planb.client.view.SharedFileStoreSettingsWidget;
-import stroom.planb.client.view.TraceGeneralSettingsWidget;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.TraceSettings;

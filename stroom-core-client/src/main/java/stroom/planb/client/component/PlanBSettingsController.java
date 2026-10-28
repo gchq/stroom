@@ -17,7 +17,6 @@
 package stroom.planb.client.component;
 
 import stroom.docref.DocRef;
-import stroom.planb.client.view.GeneralSettingsWidget;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;

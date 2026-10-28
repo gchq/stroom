@@ -18,9 +18,9 @@ package stroom.floormap.client.component;
 
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.item.client.SelectionBox;
-import stroom.planb.client.view.CondenseSettingsWidget;
-import stroom.planb.client.view.GeneralSettingsWidget;
-import stroom.planb.client.view.RetentionSettingsWidget;
+import stroom.planb.client.component.CondenseSettingsWidget;
+import stroom.planb.client.component.GeneralSettingsWidget;
+import stroom.planb.client.component.RetentionSettingsWidget;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;

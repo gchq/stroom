@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* A titled group of settings (stroom.planb.client.view.SettingsGroup): its label, then the settings */
+/* A titled group of settings (stroom.planb.client.component.SettingsGroup): its label, then the settings */
 .settings-group {
     display: flex;
     margin-top: 1rem;

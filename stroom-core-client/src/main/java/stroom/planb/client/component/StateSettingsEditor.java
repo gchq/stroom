@@ -16,11 +16,6 @@
 
 package stroom.planb.client.component;
 
-import stroom.planb.client.view.GeneralSettingsWidget;
-import stroom.planb.client.view.RetentionSettingsWidget;
-import stroom.planb.client.view.SnapshotSettingsWidget;
-import stroom.planb.client.view.StateKeySchemaSettingsWidget;
-import stroom.planb.client.view.StateValueSchemaSettingsWidget;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.StateSettings;
 
