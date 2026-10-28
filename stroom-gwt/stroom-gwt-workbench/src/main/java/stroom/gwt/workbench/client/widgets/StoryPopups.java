@@ -24,6 +24,7 @@ import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.component.client.Controller;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.Menu;
@@ -33,7 +34,6 @@ import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
@@ -52,14 +52,14 @@ import java.util.List;
 public final class StoryPopups {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<MyPresenterWidget<?>> openPopups = new ArrayList<>();
+    private final List<Controller> openPopups = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private boolean disposed;
 
     private StoryPopups(final StoryContext context) {
         context.addCleanUp(this::dispose);
         eventBus.addHandler(ShowPopupEvent.getType(), this::onShow);
-        eventBus.addHandler(HidePopupEvent.getType(), event -> openPopups.remove(event.getPresenterWidget()));
+        eventBus.addHandler(HidePopupEvent.getType(), event -> openPopups.remove(event.getController()));
         new PopupManager(eventBus);
     }
 
@@ -145,10 +145,10 @@ public final class StoryPopups {
     }
 
     private void onShow(final ShowPopupEvent event) {
-        final MyPresenterWidget<?> presenter = event.getPresenterWidget();
+        final Controller popup = event.getController();
         // PopupManager toggles a popup that is shown twice
-        if (!openPopups.remove(presenter)) {
-            openPopups.add(presenter);
+        if (!openPopups.remove(popup)) {
+            openPopups.add(popup);
         }
     }
 
@@ -158,7 +158,7 @@ public final class StoryPopups {
         }
         disposed = true;
         // Hide the popups as Stroom would, most recently shown first
-        final List<MyPresenterWidget<?>> popups = new ArrayList<>(openPopups);
+        final List<Controller> popups = new ArrayList<>(openPopups);
         for (int i = popups.size() - 1; i >= 0; i--) {
             HidePopupEvent.builder(popups.get(i)).autoClose(true).ok(false).fire();
         }

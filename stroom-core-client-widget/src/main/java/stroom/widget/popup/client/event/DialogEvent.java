@@ -16,9 +16,9 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.event.DialogEvent.Handler;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -28,19 +28,19 @@ public class DialogEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final MyPresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final DialogAction action;
 
-    private DialogEvent(final MyPresenterWidget<?> presenterWidget,
+    private DialogEvent(final Controller controller,
                        final DialogAction action) {
-        this.presenterWidget = presenterWidget;
+        this.controller = controller;
         this.action = action;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final MyPresenterWidget<?> presenterWidget,
+                            final Controller controller,
                             final DialogAction action) {
-        handlers.fireEvent(new DialogEvent(presenterWidget, action));
+        handlers.fireEvent(new DialogEvent(controller, action));
     }
 
     public static Type<Handler> getType() {
@@ -60,8 +60,8 @@ public class DialogEvent extends GwtEvent<Handler> {
         handler.onDialogAction(this);
     }
 
-    public MyPresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    public Controller getController() {
+        return controller;
     }
 
     public DialogAction getAction() {

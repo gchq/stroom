@@ -21,9 +21,9 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
+import stroom.widget.popup.client.view.DialogActionHandler;
 
-public interface PopupSupport extends DialogActionUiHandlers {
+public interface PopupSupport extends DialogActionHandler {
 
     void show(ShowPopupEvent event);
 

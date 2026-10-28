@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.widget.presenter.client.UiHandlers;
+/// Told of an action asked of a dialog, by a click on one of its buttons or a key (Escape,
+/// Ctrl+Enter).
+@FunctionalInterface
+public interface DialogActionHandler {
 
-public interface HideRequestUiHandlers extends UiHandlers {
-
-    default void hideRequest(final HideRequest request) {
-    }
+    /// @param action The action asked for, e.g. `DialogAction.OK`.
+    void onDialogAction(DialogAction action);
 }

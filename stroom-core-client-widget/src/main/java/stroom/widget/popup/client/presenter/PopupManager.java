@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -24,7 +25,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.PopupSupportImpl;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -34,7 +34,7 @@ import java.util.Map;
 
 public class PopupManager implements DialogEvent.Handler {
 
-    private Map<MyPresenterWidget<?>, PopupSupport> popupMap;
+    private Map<Controller, PopupSupport> popupMap;
 
     @Inject
     public PopupManager(final EventBus eventBus) {
@@ -48,25 +48,24 @@ public class PopupManager implements DialogEvent.Handler {
     }
 
     private void show(final ShowPopupEvent event) {
-        final MyPresenterWidget<?> presenterWidget = event.getPresenterWidget();
+        final Controller controller = event.getController();
 
         if (popupMap == null) {
             popupMap = new HashMap<>();
         }
 
         // Toggle popup visibility if we are asked to show twice.
-        if (popupMap.containsKey(presenterWidget)) {
-            hide(HidePopupEvent.builder(presenterWidget).autoClose(true).ok(false).build());
+        if (popupMap.containsKey(controller)) {
+            hide(HidePopupEvent.builder(controller).autoClose(true).ok(false).build());
 
         } else {
             final PopupSupport popupSupport = new PopupSupportImpl(
-                    presenterWidget.getView(),
-                    presenterWidget,
+                    controller,
                     event.getIcon(),
                     event.getCaption(),
                     event.getModal(), event.getAutoHidePartners());
 
-            popupMap.put(presenterWidget, popupSupport);
+            popupMap.put(controller, popupSupport);
 
             popupSupport.show(event);
         }
@@ -74,7 +73,7 @@ public class PopupManager implements DialogEvent.Handler {
 
     private void hideRequest(final HidePopupRequestEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.get(event.getController());
             if (popupSupport != null) {
                 popupSupport.hideRequest(event);
             }
@@ -83,7 +82,7 @@ public class PopupManager implements DialogEvent.Handler {
 
     private void hide(final HidePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.remove(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.remove(event.getController());
             if (popupSupport != null) {
                 popupSupport.hide(event);
             }
@@ -92,7 +91,7 @@ public class PopupManager implements DialogEvent.Handler {
 
     private void disable(final DisablePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.get(event.getController());
             if (popupSupport != null) {
                 if (event.getAction() != null) {
                     popupSupport.setEnabled(event.getAction(), false);
@@ -105,7 +104,7 @@ public class PopupManager implements DialogEvent.Handler {
 
     private void enable(final EnablePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.get(event.getController());
             if (popupSupport != null) {
                 if (event.getAction() != null) {
                     popupSupport.setEnabled(event.getAction(), true);
@@ -118,7 +117,7 @@ public class PopupManager implements DialogEvent.Handler {
 
     private void rename(final RenamePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.get(event.getController());
             if (popupSupport != null) {
                 popupSupport.setCaption(event.getCaption());
             }
@@ -128,7 +127,7 @@ public class PopupManager implements DialogEvent.Handler {
     @Override
     public void onDialogAction(final DialogEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            final PopupSupport popupSupport = popupMap.get(event.getController());
             if (popupSupport != null) {
                 popupSupport.onDialogAction(event.getAction());
             }

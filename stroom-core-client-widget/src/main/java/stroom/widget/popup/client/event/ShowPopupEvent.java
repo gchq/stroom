@@ -18,10 +18,10 @@ package stroom.widget.popup.client.event;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
@@ -34,7 +34,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final MyPresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final PopupType popupType;
     private final PopupPosition popupPosition;
     private final PopupSize popupSize;
@@ -46,7 +46,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final Boolean modal;
     private final Element[] autoHidePartners;
 
-    private ShowPopupEvent(final MyPresenterWidget<?> presenterWidget,
+    private ShowPopupEvent(final Controller controller,
                            final PopupType popupType,
                            final PopupPosition popupPosition,
                            final PopupSize popupSize,
@@ -57,7 +57,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                            final HidePopupEvent.Handler hideHandler,
                            final Boolean modal,
                            final Element... autoHidePartners) {
-        this.presenterWidget = presenterWidget;
+        this.controller = controller;
         this.popupType = popupType;
         this.popupPosition = popupPosition;
         this.popupSize = popupSize;
@@ -70,8 +70,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         this.autoHidePartners = autoHidePartners;
     }
 
-    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
-        return new Builder(presenterWidget);
+    public static Builder builder(final Controller controller) {
+        return new Builder(controller);
     }
 
     public static Type<Handler> getType() {
@@ -91,8 +91,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         handler.onShow(this);
     }
 
-    public MyPresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    public Controller getController() {
+        return controller;
     }
 
     public PopupType getPopupType() {
@@ -150,7 +150,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     public static class Builder {
 
-        private final MyPresenterWidget<?> presenterWidget;
+        private final Controller controller;
         private PopupType popupType;
         private PopupPosition popupPosition;
         private PopupSize popupSize;
@@ -162,8 +162,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         private Boolean modal;
         private final List<Element> autoHidePartners = new ArrayList<>();
 
-        public Builder(final MyPresenterWidget<?> presenterWidget) {
-            this.presenterWidget = presenterWidget;
+        public Builder(final Controller controller) {
+            this.controller = controller;
         }
 
         public Builder popupType(final PopupType popupType) {
@@ -237,7 +237,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             if (hideRequestHandler == null) {
                 hideRequestHandler = e -> {
 //                    GWT.log("isOk: " + e.isOk());
-                    HidePopupEvent.builder(presenterWidget)
+                    HidePopupEvent.builder(controller)
                             .autoClose(e.isAutoClose())
                             .ok(e.isOk())
                             .fire();
@@ -249,9 +249,9 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 
-//            if (!presenterWidget.getView().asWidget().isVisible()) {
-            presenterWidget.fireEvent(new ShowPopupEvent(
-                    presenterWidget,
+//            if (!controller.getView().asWidget().isVisible()) {
+            controller.fireEvent(new ShowPopupEvent(
+                    controller,
                     popupType,
                     popupPosition,
                     popupSize,

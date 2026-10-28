@@ -16,7 +16,6 @@
 
 package stroom.widget.component.client;
 
-import stroom.widget.component.client.ControllerDialog.DialogHost;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -52,7 +51,7 @@ class TestControllerDialog {
     }
 
     @Test
-    void theDialogIsShownThroughAPresenterThatOwnsIt() {
+    void theDialogIsShownItselfAndOwnedByItsOpener() {
         final ControllerNode opener = ControllerNode.root("opener");
         final Editor editor = new Editor(eventBus);
 
@@ -64,11 +63,8 @@ class TestControllerDialog {
         assertThat(shown).hasSize(1);
         final ShowPopupEvent event = shown.get(0);
         assertThat(event.getCaption()).isEqualTo("Edit");
-        assertThat(event.getPresenterWidget()).isInstanceOfSatisfying(DialogHost.class, host -> {
-            assertThat(host.getContent()).isSameAs(editor);
-            assertThat(host.getControllerNode().parent()).isSameAs(opener);
-            assertThat(editor.getControllerNode().parent()).isSameAs(host.getControllerNode());
-        });
+        assertThat(event.getController()).isSameAs(editor);
+        assertThat(editor.getControllerNode().parent()).isSameAs(opener);
         assertThat(ControllerChecks.unownedNames()).isEmpty();
     }
 

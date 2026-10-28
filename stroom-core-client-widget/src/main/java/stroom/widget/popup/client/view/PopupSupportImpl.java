@@ -19,8 +19,10 @@ package stroom.widget.popup.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -28,7 +30,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -37,6 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class PopupSupportImpl implements PopupSupport {
 
@@ -45,23 +47,22 @@ public class PopupSupportImpl implements PopupSupport {
     private String caption;
     private Boolean modal;
 
-    private View view;
-    // The dialog's presenter, whose context gives the dialog's task monitor to all it owns
-    private Object dialogPresenter;
+    // What the popup shows, whose context gives the dialog's task monitor to all it owns
+    private final Controller controller;
+    // Whether the dialog's task monitor is the one the controller provides, to take back when hidden
+    private boolean providesTaskMonitor;
     private HidePopupRequestEvent.Handler hideRequestHandler;
     private HidePopupEvent.Handler hideHandler;
     private List<Element> autoHidePartners;
     private DialogButtons dialogButtons;
-    private DialogActionUiHandlers dialogActionHandler;
+    private DialogActionHandler dialogActionHandler;
 
-    public PopupSupportImpl(final View view,
-                            final Object dialogPresenter,
+    public PopupSupportImpl(final Controller controller,
                             final SvgImage icon,
                             final String caption,
                             final Boolean modal,
                             final Element... autoHidePartners) {
-        setView(view);
-        this.dialogPresenter = dialogPresenter;
+        this.controller = controller;
         setIcon(icon);
         setCaption(caption);
 
@@ -92,8 +93,13 @@ public class PopupSupportImpl implements PopupSupport {
         hideHandler = event.getHideHandler();
 
         if (popup == null) {
-            final HideRequestUiHandlers uiHandlers = new DefaultHideRequestUiHandlers(event.getPresenterWidget());
-            popup = createPopup(popupType, popupSize, uiHandlers);
+            final Controller shown = event.getController();
+            popup = createPopup(popupType, popupSize, request -> HidePopupRequestEvent
+                    .builder(shown)
+                    .autoClose(request.isAutoClose())
+                    .action(request.getAction())
+                    .cancelHandler(request.getCancelHandler())
+                    .fire());
         }
         final PopupPanel popupPanel = (PopupPanel) popup;
 
@@ -132,6 +138,7 @@ public class PopupSupportImpl implements PopupSupport {
         if (popup != null) {
             popup.forceHide(event.isAutoClose());
             popup = null;
+            clearTaskMonitor();
             hideRequestHandler = null;
             if (hideHandler != null) {
                 hideHandler.onHide(event);
@@ -176,8 +183,8 @@ public class PopupSupportImpl implements PopupSupport {
 
     private Popup createPopup(final PopupType popupType,
                               final PopupSize popupSize,
-                              final HideRequestUiHandlers uiHandlers) {
-        dialogActionHandler = action -> uiHandlers.hideRequest(
+                              final Consumer<HideRequest> onHideRequest) {
+        dialogActionHandler = action -> onHideRequest.accept(
                 new HideRequest(action, null));
 
         Popup popup = null;
@@ -185,7 +192,7 @@ public class PopupSupportImpl implements PopupSupport {
             case POPUP: {
                 final SimplePopup simplePopup = new SimplePopup();
                 simplePopup.setOnAction(dialogActionHandler::onDialogAction);
-                simplePopup.setContent(view.asWidget());
+                simplePopup.setContent(controller.asWidget());
                 popup = simplePopup;
                 break;
             }
@@ -195,35 +202,35 @@ public class PopupSupportImpl implements PopupSupport {
                 if (popupSize != null) {
                     setTaskMonitor((TaskMonitorFactory) dialog);
                 }
-                dialog.setContent(view.asWidget());
+                dialog.setContent(controller.asWidget());
                 popup = dialog;
                 break;
             }
             case CLOSE_DIALOG: {
                 final CloseContent content = new CloseContent();
-                content.setOnHideRequest(uiHandlers::hideRequest);
-                content.setContent(view.asWidget());
+                content.setOnHideRequest(onHideRequest);
+                content.setContent(controller.asWidget());
                 popup = createDialogWith(content, content, popupSize);
                 break;
             }
             case OK_CANCEL_DIALOG: {
                 final OkCancelContent content = new OkCancelContent();
-                content.setOnHideRequest(uiHandlers::hideRequest);
-                content.setContent(view.asWidget());
+                content.setOnHideRequest(onHideRequest);
+                content.setContent(controller.asWidget());
                 popup = createDialogWith(content, content, popupSize);
                 break;
             }
             case CREATE_OK_CANCEL_DIALOG: {
                 final CreateOkCancelContent content = new CreateOkCancelContent();
-                content.setOnHideRequest(uiHandlers::hideRequest);
-                content.setContent(view.asWidget());
+                content.setOnHideRequest(onHideRequest);
+                content.setContent(controller.asWidget());
                 popup = createDialogWith(content, content, popupSize);
                 break;
             }
             case ACCEPT_REJECT_DIALOG: {
                 final AcceptRejectContent content = new AcceptRejectContent();
-                content.setOnHideRequest(uiHandlers::hideRequest);
-                content.setContent(view.asWidget());
+                content.setOnHideRequest(onHideRequest);
+                content.setContent(controller.asWidget());
                 popup = createDialogWith(content, content, popupSize);
                 break;
             }
@@ -254,7 +261,7 @@ public class PopupSupportImpl implements PopupSupport {
 
     // A dialog that can be resized as its size says, or one of a fixed size if it has none
     private static AbstractPopupPanel createDialog(final PopupSize popupSize,
-                                                   final DialogActionUiHandlers onAction) {
+                                                   final DialogActionHandler onAction) {
         final AbstractPopupPanel dialog = popupSize != null
                 ? new ResizableDialog(popupSize)
                 : new Dialog();
@@ -262,16 +269,26 @@ public class PopupSupportImpl implements PopupSupport {
         return dialog;
     }
 
-    private void setView(final View view) {
-        this.view = view;
+    // What the dialog shows, and everything it owns (through its context), show their tasks on the
+    // dialog, unless it provides a task monitor of its own (e.g. a list's pager)
+    private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
+        final ControllerNode node = controller.getControllerNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
+        if (node != null) {
+            final ContextValue<TaskMonitorFactory> provided = node.provided(Contexts.TASK_MONITOR);
+            if (provided == null || provided.get() == Contexts.TASK_MONITOR.getDefaultValue()) {
+                node.setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
+                providesTaskMonitor = true;
+            }
+        }
     }
 
-    // The dialog's presenter, and everything it owns (through its context), show their tasks on the
-    // dialog
-    private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
-        if (dialogPresenter instanceof final HasControllerNode hasComponentNode
-            && hasComponentNode.getControllerNode() != null) {
-            hasComponentNode.getControllerNode().setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
+    // A controller shown again is given its next dialog's task monitor, not this one's
+    private void clearTaskMonitor() {
+        if (providesTaskMonitor) {
+            controller.getControllerNode().setProvided(Contexts.TASK_MONITOR,
+                    Contexts.TASK_MONITOR.getDefaultValue());
+            providesTaskMonitor = false;
         }
     }
 

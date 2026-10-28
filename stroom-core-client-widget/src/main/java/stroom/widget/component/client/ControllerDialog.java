@@ -20,14 +20,12 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.Scheduler;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -47,15 +45,14 @@ import java.util.function.Consumer;
 ///         .fire();
 /// ```
 ///
-/// The popup manager shows presenters, so the controller is shown through a small presenter that
-/// owns it; the hide request handler's event (`e.hide()`, `e.reset()`) works as for any dialog.
+/// The popup manager shows the controller's widget; the hide request handler's event (`e.hide()`,
+/// `e.reset()`) works as for any dialog, and while it is shown the dialog's spinner is the
+/// controller's task monitor ([Contexts#TASK_MONITOR]), unless it provides one of its own.
 public final class ControllerDialog {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
-    // The presenter each dialog shown is shown through, while it is (for setActionEnabled)
-    private static final Map<Controller, DialogHost> HOSTS = new HashMap<>();
 
     private ControllerDialog() {
         // Static utility
@@ -70,25 +67,19 @@ public final class ControllerDialog {
     /// @throws IllegalStateException If the controller was made without an event bus.
     public static ShowPopupEvent.Builder showOnce(final HasControllerNode opener, final Controller dialog) {
         Objects.requireNonNull(opener, "opener");
-        Objects.requireNonNull(dialog, "dialog");
-        if (dialog.getEventBus() == null) {
-            throw new IllegalStateException(dialog.getControllerNode().getName()
-                                            + " can't be shown as a dialog: it was made without an event bus");
-        }
-        final DialogHost host = new DialogHost(dialog, true);
-        HOSTS.put(dialog, host);
-        opener.getControllerNode().adopt(host.getControllerNode());
-        disposeWhenHidden(host);
-        return ShowPopupEvent.builder(host);
+        checkCanShow(dialog);
+        opener.getControllerNode().adopt(dialog.getControllerNode());
+        disposeWhenHidden(dialog);
+        return ShowPopupEvent.builder(dialog);
     }
 
     /// Starts showing a controller as a dialog or popup that is shown again, e.g. settings kept
-    /// between showings: it stays owned by what owns it, and isn't disposed when it is hidden. Each
-    /// showing is through the same presenter, so showing it while it is shown hides it, as the popup
-    /// manager does for any popup asked to show twice (a second click on the button that opens it).
+    /// between showings: it stays owned by what owns it, and isn't disposed when it is hidden.
+    /// Showing it while it is shown hides it, as the popup manager does for any popup asked to show
+    /// twice (a second click on the button that opens it).
     ///
     /// ```java
-    /// // In the timeline's presenter, which owns its settings' controller
+    /// // In the timeline's controller, which owns its settings' controller
     /// ControllerDialog.show(settings).popupType(PopupType.POPUP).caption("Timeline Settings").fire();
     /// ```
     ///
@@ -97,35 +88,22 @@ public final class ControllerDialog {
     /// @return The popup's builder: set its type, caption and handlers, then `fire()` it.
     /// @throws IllegalStateException If the controller was made without an event bus.
     public static ShowPopupEvent.Builder show(final Controller dialog) {
-        Objects.requireNonNull(dialog, "dialog");
-        if (dialog.getEventBus() == null) {
-            throw new IllegalStateException(dialog.getControllerNode().getName()
-                                            + " can't be shown as a dialog: it was made without an event bus");
-        }
-        DialogHost host = HOSTS.get(dialog);
-        if (host == null) {
-            host = new DialogHost(dialog, false);
-            HOSTS.put(dialog, host);
-            // The controller owns the presenter it is shown through, so it goes with it
-            dialog.getControllerNode().adopt(host.getControllerNode());
-        }
-        return ShowPopupEvent.builder(host);
+        checkCanShow(dialog);
+        return ShowPopupEvent.builder(dialog);
     }
 
-    /// Enables or disables one of a dialog's buttons, e.g. OK until something is chosen, as
-    /// `EnablePopupEvent` and `DisablePopupEvent` do for a presenter's.
+    /// Enables or disables one of a dialog's buttons, e.g. OK until something is chosen.
     ///
     /// @param dialog  The controller shown with [#showOnce] or [#show]; nothing happens once a
     ///                dialog shown once is hidden.
     /// @param action  The button's action, e.g. `DialogAction.OK`.
     /// @param enabled Whether the button can be pressed.
     public static void setActionEnabled(final Controller dialog, final DialogAction action, final boolean enabled) {
-        final DialogHost host = HOSTS.get(dialog);
-        if (host != null) {
+        if (!dialog.isDisposed()) {
             if (enabled) {
-                EnablePopupEvent.builder(host).action(action).fire();
+                EnablePopupEvent.builder(dialog).action(action).fire();
             } else {
-                DisablePopupEvent.builder(host).action(action).fire();
+                DisablePopupEvent.builder(dialog).action(action).fire();
             }
         }
     }
@@ -137,15 +115,24 @@ public final class ControllerDialog {
     ///               dialog shown once is hidden.
     /// @param action The button's action, e.g. `DialogAction.OK`.
     public static void pressAction(final Controller dialog, final DialogAction action) {
-        final DialogHost host = HOSTS.get(dialog);
-        if (host != null) {
-            HidePopupRequestEvent.builder(host).action(action).fire();
+        if (!dialog.isDisposed()) {
+            HidePopupRequestEvent.builder(dialog).action(action).fire();
         }
     }
 
-    /// Hides a dialog at once, without asking its hide request handler, as `HidePopupEvent` does
-    /// for a presenter's, e.g. a sub menu closed with its menu. One shown with [#showOnce] is then
-    /// disposed.
+    /// Changes a dialog's caption while it is shown, e.g. to a page's title once it has loaded.
+    ///
+    /// @param dialog  The controller shown with [#showOnce] or [#show]; nothing happens once a
+    ///                dialog shown once is hidden.
+    /// @param caption The new caption.
+    public static void rename(final Controller dialog, final String caption) {
+        if (!dialog.isDisposed()) {
+            RenamePopupEvent.builder(dialog).caption(caption).fire();
+        }
+    }
+
+    /// Hides a dialog at once, without asking its hide request handler, e.g. a sub menu closed with
+    /// its menu. One shown with [#showOnce] is then disposed.
     ///
     /// @param dialog    The controller shown with [#showOnce] or [#show]. Hiding it again does
     ///                  nothing (the popup manager no longer has it), and once a dialog shown once is
@@ -153,15 +140,14 @@ public final class ControllerDialog {
     /// @param autoClose Whether it is hidden by a click outside it, as its hide handler is told.
     /// @param ok        Whether it is hidden by its OK action, as its hide handler is told.
     public static void hide(final Controller dialog, final boolean autoClose, final boolean ok) {
-        final DialogHost host = HOSTS.get(dialog);
-        if (host != null) {
-            HidePopupEvent.builder(host).autoClose(autoClose).ok(ok).fire();
+        if (!dialog.isDisposed()) {
+            HidePopupEvent.builder(dialog).autoClose(autoClose).ok(ok).fire();
         }
     }
 
-    // Disposes a presenter shown as a popup for one use once it is hidden, after the popup manager
-    // has hidden it (see Controller.makeDialog and AppRoot.makeDialog)
-    static <P extends MyPresenterWidget<?>> P disposeWhenHidden(final P dialog) {
+    // Disposes a controller shown as a popup for one use once it is hidden, after the popup manager
+    // has hidden it (see showOnce, Controller.makeDialog and AppRoot.makeDialog)
+    static <C extends Controller> C disposeWhenHidden(final C dialog) {
         final ControllerNode dialogNode = dialog.getControllerNode();
         // Null only for a mock (e.g. Mockito's, in a test)
         if (dialogNode != null) {
@@ -172,24 +158,11 @@ public final class ControllerDialog {
         return dialog;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    // The presenter the popup manager shows. One for one use owns the controller, so disposing it
-    // (once hidden) disposes the controller; one shown again is owned by it instead
-    static final class DialogHost extends MyPresenterWidget<ControllerView> {
-
-        private DialogHost(final Controller content, final boolean ownsContent) {
-            super(content.getEventBus(), new ControllerView(content));
-            if (ownsContent) {
-                own(content);
-            }
-            onDispose(() -> HOSTS.remove(content));
-        }
-
-        Controller getContent() {
-            return getView().getContent();
+    private static void checkCanShow(final Controller dialog) {
+        Objects.requireNonNull(dialog, "dialog");
+        if (dialog.getEventBus() == null) {
+            throw new IllegalStateException(dialog.getControllerNode().getName()
+                                            + " can't be shown as a dialog: it was made without an event bus");
         }
     }
 }

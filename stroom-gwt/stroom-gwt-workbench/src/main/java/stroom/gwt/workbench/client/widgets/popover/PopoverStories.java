@@ -56,7 +56,7 @@ public final class PopoverStories {
                     final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(),
                             new InfoTooltip());
                     popups.addCleanUp(popups.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
-                        if (event.getPresenterWidget() == tooltipPresenter) {
+                        if (event.getController() == tooltipPresenter) {
                             onClose.call();
                         }
                     })::removeHandler);

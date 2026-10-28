@@ -21,6 +21,7 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -235,16 +236,16 @@ class TestController {
     }
 
     @Test
-    void aDialogsButtonsAreEnabledThroughItsHost() {
+    void aDialogsButtonsAreEnabled() {
         final EventBus eventBus = new SimpleEventBus();
         final Parent opener = new Parent(null);
         final Parent dialog = new Parent(eventBus);
         final List<String> seen = new ArrayList<>();
-        // The popup manager knows a dialog by its host, the presenter it is shown through
+        // The popup manager knows a dialog by the controller it shows
         eventBus.addHandler(DisablePopupEvent.getType(), e ->
-                seen.add("disable " + e.getAction() + " " + shows(e.getPresenterWidget(), dialog)));
+                seen.add("disable " + e.getAction() + " " + (e.getController() == dialog)));
         eventBus.addHandler(EnablePopupEvent.getType(), e ->
-                seen.add("enable " + e.getAction() + " " + shows(e.getPresenterWidget(), dialog)));
+                seen.add("enable " + e.getAction() + " " + (e.getController() == dialog)));
         ControllerDialog.showOnce(opener, dialog);
 
         ControllerDialog.setActionEnabled(dialog, DialogAction.OK, false);
@@ -258,13 +259,13 @@ class TestController {
     }
 
     @Test
-    void aDialogsButtonIsPressedThroughItsHost() {
+    void aDialogsButtonIsPressed() {
         final EventBus eventBus = new SimpleEventBus();
         final Parent opener = new Parent(null);
         final Parent dialog = new Parent(eventBus);
         final List<String> seen = new ArrayList<>();
         eventBus.addHandler(HidePopupRequestEvent.getType(), e ->
-                seen.add((e.isOk() ? "OK" : "not OK") + " " + shows(e.getPresenterWidget(), dialog)));
+                seen.add((e.isOk() ? "OK" : "not OK") + " " + (e.getController() == dialog)));
         ControllerDialog.showOnce(opener, dialog);
 
         ControllerDialog.pressAction(dialog, DialogAction.OK);
@@ -272,7 +273,7 @@ class TestController {
     }
 
     @Test
-    void aDialogShownAgainIsShownThroughOneHostAndKeptWhenHidden() {
+    void aDialogShownAgainIsKeptWhenHidden() {
         final Consumer<Runnable> scheduler = ControllerDialog.deferred;
         final List<Runnable> deferred = new ArrayList<>();
         ControllerDialog.deferred = deferred::add;
@@ -281,32 +282,28 @@ class TestController {
             final Parent owner = new Parent(null);
             final Parent dialog = new Parent(eventBus);
             owner.getControllerNode().adopt(dialog.getControllerNode());
-            final List<MyPresenterWidget<?>> shown = new ArrayList<>();
-            eventBus.addHandler(ShowPopupEvent.getType(), e -> shown.add(e.getPresenterWidget()));
+            final List<Controller> shown = new ArrayList<>();
+            eventBus.addHandler(ShowPopupEvent.getType(), e -> shown.add(e.getController()));
 
             ControllerDialog.show(dialog).fire();
             ControllerDialog.show(dialog).fire();
-            assertThat(shown).hasSize(2);
-            assertThat(shown.get(1)).isSameAs(shown.get(0));
-            assertThat(shows(shown.get(0), dialog)).isTrue();
+            assertThat(shown).containsExactly(dialog, dialog);
 
             // Hidden, it is kept, to be shown again
             ControllerDialog.hide(dialog, false, false);
             deferred.forEach(Runnable::run);
             assertThat(dialog.isDisposed()).isFalse();
-            assertThat(shown.get(0).isDisposed()).isFalse();
 
-            // It goes with what owns it, and its presenter with it
+            // It goes with what owns it
             owner.dispose();
             assertThat(dialog.isDisposed()).isTrue();
-            assertThat(shown.get(0).isDisposed()).isTrue();
         } finally {
             ControllerDialog.deferred = scheduler;
         }
     }
 
     @Test
-    void aDialogIsHiddenThroughItsHostThenDisposed() {
+    void aDialogIsHiddenThenDisposed() {
         final Consumer<Runnable> scheduler = ControllerDialog.deferred;
         final List<Runnable> deferred = new ArrayList<>();
         ControllerDialog.deferred = deferred::add;
@@ -316,7 +313,7 @@ class TestController {
             final Parent dialog = new Parent(eventBus);
             final List<String> seen = new ArrayList<>();
             eventBus.addHandler(HidePopupEvent.getType(), e ->
-                    seen.add(e.isAutoClose() + " " + e.isOk() + " " + shows(e.getPresenterWidget(), dialog)));
+                    seen.add(e.isAutoClose() + " " + e.isOk() + " " + (e.getController() == dialog)));
             ControllerDialog.showOnce(opener, dialog);
 
             ControllerDialog.hide(dialog, true, false);
@@ -332,10 +329,23 @@ class TestController {
         }
     }
 
-    // Whether a popup's presenter shows a controller as a dialog
-    private static boolean shows(final MyPresenterWidget<?> presenterWidget, final Controller dialog) {
-        return presenterWidget instanceof ControllerDialog.DialogHost
-               && ((ControllerDialog.DialogHost) presenterWidget).getContent() == dialog;
+    @Test
+    void aDialogIsRenamed() {
+        final EventBus eventBus = new SimpleEventBus();
+        final Parent opener = new Parent(null);
+        final Parent dialog = new Parent(eventBus);
+        final List<String> seen = new ArrayList<>();
+        eventBus.addHandler(RenamePopupEvent.getType(), e ->
+                seen.add(e.getCaption() + " " + (e.getController() == dialog)));
+        ControllerDialog.showOnce(opener, dialog);
+
+        ControllerDialog.rename(dialog, "A page");
+        assertThat(seen).containsExactly("A page true");
+
+        // Once it is gone, nothing
+        opener.dispose();
+        ControllerDialog.rename(dialog, "Another page");
+        assertThat(seen).hasSize(1);
     }
 
     @Test

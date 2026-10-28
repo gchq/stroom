@@ -58,7 +58,6 @@ import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
@@ -160,7 +159,7 @@ public final class ScreenHarness {
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final StoryLocationManager locationManager;
-    private final PopupTracker<MyPresenterWidget<?>> popups = new PopupTracker<>();
+    private final PopupTracker<Controller> popups = new PopupTracker<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     // Each closes a popup as its Close button would
     private final List<Runnable> popupsToClose = new ArrayList<>();
@@ -227,8 +226,8 @@ public final class ScreenHarness {
                 .setAppPermissions(builder.startup.getAppPermissions());
 
         // Track the popups so they can be hidden through Stroom's own path when disposed
-        eventBus.addHandler(ShowPopupEvent.getType(), event -> popups.onShow(event.getPresenterWidget()));
-        eventBus.addHandler(HidePopupEvent.getType(), event -> popups.onHide(event.getPresenterWidget()));
+        eventBus.addHandler(ShowPopupEvent.getType(), event -> popups.onShow(event.getController()));
+        eventBus.addHandler(HidePopupEvent.getType(), event -> popups.onHide(event.getController()));
         new PopupManager(eventBus);
         // Widgets with no event bus of their own show their dialogs on Stroom's static one, as in
         // Stroom
@@ -565,8 +564,8 @@ public final class ScreenHarness {
         for (int i = popupsToClose.size() - 1; i >= probePopupsToCloseMark; i--) {
             runSafely("closing a popup", popupsToClose.remove(i));
         }
-        // Popups (dialogs) are hidden as Stroom hides them, which unbinds their presenters
-        for (final MyPresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
+        // Popups (dialogs) are hidden as Stroom hides them, which disposes those shown once
+        for (final Controller popup : List.copyOf(popups.getOpenPopups())) {
             HidePopupEvent.builder(popup).autoClose(true).ok(false).fire();
         }
         for (int i = host.getWidgetCount() - 1; i >= probeWidgetMark; i--) {
@@ -642,27 +641,12 @@ public final class ScreenHarness {
         return screen;
     }
 
-    /// Owns a popup as [#own] does, and closes it as the user would, with its Close button (a
-    /// `HidePopupRequestEvent` with `DialogAction.CLOSE`), when the story renders again, before the
-    /// harness hides the popups that are still open. Use it for a popup whose presenter stops
+    /// Owns a popup as [#own] does, and closes it as the user would, with its Close button
+    /// ([ControllerDialog#pressAction] with `DialogAction.CLOSE`), when the story renders again,
+    /// before the harness hides the popups that are still open. Use it for a popup that stops
     /// something only when asked to close, e.g. one that polls the server until its
     /// `onHideRequest` cancels its timer (the harness's own hiding, with `HidePopupEvent`, skips
     /// that). The REST requests made meanwhile are dropped, as the dispatcher is disposed first.
-    ///
-    /// @param popup The popup's presenter.
-    /// @param <P>   The presenter type.
-    /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P ownPopup(final P popup) {
-        own(Objects.requireNonNull(popup));
-        popupsToClose.add(() -> HidePopupRequestEvent.builder(popup)
-                .action(DialogAction.CLOSE)
-                .fire());
-        return popup;
-    }
-
-    /// Owns a controller shown as a popup again and again ([ControllerDialog#show]) as [#own] does,
-    /// and closes it as the user would, with its Close button, when the story renders again, as
-    /// [#ownPopup(MyPresenterWidget)] does for a presenter.
     ///
     /// @param popup The popup's controller.
     /// @param <C>   The controller type.
@@ -705,9 +689,9 @@ public final class ScreenHarness {
         for (final Runnable close : popupsToClose) {
             runSafely("closing a popup", close);
         }
-        // Hide the popups as Stroom would, which unbinds their presenters and restores the focus.
+        // Hide the popups as Stroom would, which disposes those shown once and restores the focus.
         // The bus is still live for this, but spies ignore calls now the harness is disposed.
-        for (final MyPresenterWidget<?> popup : popups.getOpenPopups()) {
+        for (final Controller popup : popups.getOpenPopups()) {
             runSafely("hiding a popup", () -> HidePopupEvent.builder(popup).autoClose(true).ok(false).fire());
         }
         for (int i = cleanUps.size() - 1; i >= 0; i--) {

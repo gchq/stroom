@@ -16,7 +16,7 @@
 
 package stroom.widget.popup.client.event;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -24,18 +24,18 @@ import com.google.gwt.event.shared.GwtEvent;
 public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final MyPresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final boolean autoClose;
     private final boolean ok;
 
-    private HidePopupEvent(final MyPresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
-        this.presenterWidget = presenterWidget;
+    private HidePopupEvent(final Controller controller, final boolean autoClose, final boolean ok) {
+        this.controller = controller;
         this.autoClose = autoClose;
         this.ok = ok;
     }
 
-    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
-        return new Builder(presenterWidget);
+    public static Builder builder(final Controller controller) {
+        return new Builder(controller);
     }
 
     public static Type<Handler> getType() {
@@ -55,8 +55,8 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
         handler.onHide(this);
     }
 
-    public MyPresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    public Controller getController() {
+        return controller;
     }
 
     public boolean isAutoClose() {
@@ -82,12 +82,12 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final MyPresenterWidget<?> presenterWidget;
+        private final Controller controller;
         private boolean autoClose;
         private boolean ok = true;
 
-        public Builder(final MyPresenterWidget<?> presenterWidget) {
-            this.presenterWidget = presenterWidget;
+        public Builder(final Controller controller) {
+            this.controller = controller;
         }
 
         public Builder autoClose(final boolean autoClose) {
@@ -102,13 +102,13 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
         public HidePopupEvent build() {
             return new HidePopupEvent(
-                    presenterWidget,
+                    controller,
                     autoClose,
                     ok);
         }
 
         public void fire() {
-            presenterWidget.fireEvent(build());
+            controller.fireEvent(build());
         }
     }
 }

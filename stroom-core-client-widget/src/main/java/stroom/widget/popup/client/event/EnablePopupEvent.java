@@ -16,8 +16,8 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,16 +25,16 @@ import com.google.gwt.event.shared.GwtEvent;
 public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final MyPresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final DialogAction action;
 
-    private EnablePopupEvent(final MyPresenterWidget<?> presenterWidget, final DialogAction action) {
-        this.presenterWidget = presenterWidget;
+    private EnablePopupEvent(final Controller controller, final DialogAction action) {
+        this.controller = controller;
         this.action = action;
     }
 
-    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
-        return new Builder(presenterWidget);
+    public static Builder builder(final Controller controller) {
+        return new Builder(controller);
     }
 
     public static Type<Handler> getType() {
@@ -54,8 +54,8 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
         handler.onEnable(this);
     }
 
-    public MyPresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    public Controller getController() {
+        return controller;
     }
 
     public DialogAction getAction() {
@@ -69,11 +69,11 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final MyPresenterWidget<?> presenterWidget;
+        private final Controller controller;
         private DialogAction action;
 
-        public Builder(final MyPresenterWidget<?> presenterWidget) {
-            this.presenterWidget = presenterWidget;
+        public Builder(final Controller controller) {
+            this.controller = controller;
         }
 
         public Builder action(final DialogAction action) {
@@ -82,7 +82,7 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
         }
 
         public void fire() {
-            presenterWidget.fireEvent(new EnablePopupEvent(presenterWidget, action));
+            controller.fireEvent(new EnablePopupEvent(controller, action));
         }
     }
 }
