@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.component;
 
-import stroom.explorer.client.presenter.RecentItems;
+import stroom.explorer.client.RecentItems;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.popup.client.PopupSize;

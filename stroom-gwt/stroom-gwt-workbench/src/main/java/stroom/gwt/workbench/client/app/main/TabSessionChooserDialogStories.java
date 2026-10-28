@@ -17,10 +17,10 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.TabSessionManager;
 import stroom.explorer.client.component.TabSessionChooserController;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.event.OpenTabSessionEvent;
-import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;

@@ -15,7 +15,7 @@
  */
 
 /*
-   A result of Find, Find In Content or Recent Items (stroom.explorer.client.presenter.FindResultCell,
+   A result of Find, Find In Content or Recent Items (stroom.explorer.client.FindResultCell,
    FindInContentResultCell), named BEM style (block, block__element, block--modifier). Imported
    after components.css, where it was.
 */

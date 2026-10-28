@@ -17,8 +17,8 @@
 package stroom.explorer.client.component;
 
 import stroom.docstore.shared.DocumentType;
-import stroom.explorer.client.presenter.DocumentTypeCell;
-import stroom.explorer.client.presenter.DocumentTypeSelectionModel;
+import stroom.explorer.client.DocumentTypeCell;
+import stroom.explorer.client.DocumentTypeSelectionModel;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;

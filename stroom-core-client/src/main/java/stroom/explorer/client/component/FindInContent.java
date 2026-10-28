@@ -17,7 +17,7 @@
 package stroom.explorer.client.component;
 
 import stroom.editor.client.component.CodeEditor;
-import stroom.explorer.client.presenter.FindInContentResultCell;
+import stroom.explorer.client.FindInContentResultCell;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;

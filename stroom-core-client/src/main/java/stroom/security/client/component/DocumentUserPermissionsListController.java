@@ -23,7 +23,7 @@ import stroom.data.client.component.UserRefCell;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.client.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocPermissionResource;

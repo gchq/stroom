@@ -18,12 +18,12 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.RecentItems;
 import stroom.explorer.client.component.FindDocResultList;
 import stroom.explorer.client.component.FindDocResultListController;
 import stroom.explorer.client.component.FindPanel;
 import stroom.explorer.client.component.RecentItemsController;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.presenter.RecentItems;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;

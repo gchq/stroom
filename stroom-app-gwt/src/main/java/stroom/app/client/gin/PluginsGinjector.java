@@ -17,7 +17,7 @@
 package stroom.app.client.gin;
 
 import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.TabSessionManager;
+import stroom.explorer.client.TabSessionManager;
 
 public interface PluginsGinjector {
 

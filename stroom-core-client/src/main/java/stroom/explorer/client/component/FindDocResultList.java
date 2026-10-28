@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.component;
 
-import stroom.explorer.client.presenter.FindResultCell;
+import stroom.explorer.client.FindResultCell;
 import stroom.explorer.shared.FindResult;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;

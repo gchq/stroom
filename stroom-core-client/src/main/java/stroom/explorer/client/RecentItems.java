@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.client;
 
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;

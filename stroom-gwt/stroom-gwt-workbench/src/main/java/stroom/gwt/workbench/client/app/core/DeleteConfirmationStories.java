@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.DeleteDocumentEvent;
-import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.client.DocumentTypeCache;
 import stroom.explorer.shared.DeleteConfirmation;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;

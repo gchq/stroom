@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentTypes;

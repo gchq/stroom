@@ -19,7 +19,7 @@ package stroom.explorer.client.component;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.explorer.client.presenter.DocumentTypeSelectionModel;
+import stroom.explorer.client.DocumentTypeSelectionModel;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Controller;
