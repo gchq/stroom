@@ -1702,6 +1702,11 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
     `TabbedController<UserRef>` as the plan says.
   * The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
     `QuickFilter.setOnChange` exists (to check they fire alike first).
+  * The open callback (`OpenDocumentEvent`, `OpenContentTabEvent`, the plugins' `open(...)`) is
+    still a `Consumer<MyPresenterWidget<?>>`; `ContentOpenCallback` gives it null for a screen that
+    is a controller. Only `TabSessionManager` (which ignores what it is given) and
+    `DashboardBodyController` (which needs the dashboard's `DocumentEditorHost`) use it; it should
+    take a `Controller` before the presenter framework goes.
   * Unused `view` fields in about a dozen of the new controllers (assigned, only the constructor's
     parameter used), dead code carried over (`UsersController.onEditUserOrGroup`, commented-out code
     in the API keys, retention, source and template screens), and "presenter" names left in the
