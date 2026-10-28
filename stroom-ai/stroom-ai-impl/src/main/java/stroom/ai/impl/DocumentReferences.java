@@ -38,7 +38,7 @@ import jakarta.inject.Inject;
 
 import java.util.List;
 
-/// Stroom documents attached to chats as references, from the Explorer tree ("Attach to chat"). Each document is an
+/// Stroom documents attached to chats as references, from the Explorer tree ("Attach to Chat"). Each document is an
 /// attachment of its own, ready at once as there is nothing to download, and the model is given a short note about
 /// it with its uuid, which it reads with its document tools. The user's View permission is checked when it is
 /// attached and again whenever the note is given.
