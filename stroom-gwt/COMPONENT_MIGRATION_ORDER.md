@@ -79,6 +79,7 @@ A unit's wave is the table it is in. The prose above each table is the first pla
 | 14. Document editors | 34 | 6,715 | S 16, M 14, L 2, XL 2 | 0 |  |
 | 15. Content-tab screens and the shell | 40 | 12,295 | S 20, M 15, L 3, XL 2 | 0 |  |
 | 16. The last presenters and the presenter framework | 13 | 3,863 | S 7, M 4, L 2 | 0 | The user's go-ahead for unit 12 |
+| 17. Tidy up: packages, names and CSS | 5 | about 1,200 files touched | S 1, M 1, L 2, XL 1 | 0 | Wave 16 |
 
 ## Before the waves
 
@@ -1086,6 +1087,21 @@ Waves 3, 6, 8 and 14 left `TooltipPresenter`, `IFramePresenter`, `EditorPresente
 - The popup manager's toggle (showing a popup again hides it) and the dialog's task monitor change with the events' key; the tooltip and Ask Stroom AI stories check them.
 - The tab session restore and Save on close go through the document host and the open callback.
 - The framework's deletion is checked with a full workbench run, the leak check and a screenshot diff before and after.
+
+## 17. Tidy up: packages, names and CSS
+
+Each step's plan: [`component-migration/wave-17.md`](component-migration/wave-17.md). Added 28 October 2026, after wave 15.
+
+> **Not started.** After wave 16.
+
+Nothing a user sees changes. Move the classes still in `client.presenter` and `client.view` packages (about 300, checked for clashes) to their area's `client.component` (components, widgets, controllers) or `client` (everything else), and merge the widget library's `presenter` and `view` packages into their parents; rename what still says "presenter", "view" or "widget" (classes, then about 140 field and variable names); make the 35 or so CSS class blocks still named after deleted views BEM blocks in their components' stylesheets, and give the eight stylesheets not in kebab case their blocks' names; then the empty directories and the docs.
+
+**Why now.** Once nothing is a presenter, the old package and class names only mislead.
+
+**Risks.**
+
+- Moves touch about 1,200 files and 130 templates' `urn:import` lines: each commit is only a move, so it can be checked by the rename.
+- CSS renames can change the look if a selector is missed: a screenshot diff after each must show no change.
 
 ## Deferred: delete rather than convert
 

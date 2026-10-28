@@ -209,14 +209,7 @@ framework; effort M.
   Controller`)" and describes `makeDialog(provider)` for presenter dialogs. It isn't edited by
   agents: the lines to change are listed for the user instead.
 
-## Left for a later tidy (not this wave)
+## Left for wave 17
 
-- **Packages and names.** 180 classes are still in `client.presenter` packages and 118 in
-  `client.view` packages (controllers, components, helpers, cells; e.g. 31 in
-  `stroom.query.client.presenter`, 26 in `stroom.widget.menu.client.presenter`, 22 in
-  `stroom.widget.popup.client.view`), and a few names say "presenter" (`AbstractTabPresenterPlugin`,
-  `DocumentAssetPresenterUtils`, `SourcePresenterStories`, plugin fields). Moving them is mechanical
-  but touches hundreds of files, so it is its own change.
-- **BEM blocks** for the classes still named after deleted views (`mainViewImpl*`,
-  `curveTabLayoutViewImpl-*`, `linkTabPanelViewImpl*` and the rest in ISSUES.md), each with a
-  screenshot diff.
+The package moves, the names that still say "presenter" and the CSS classes named after deleted
+views are wave 17 (`wave-17.md`).
