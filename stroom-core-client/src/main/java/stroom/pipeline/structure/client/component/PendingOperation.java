@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.view;
+package stroom.pipeline.structure.client.component;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;

@@ -31,7 +31,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.ErrorType;

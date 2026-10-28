@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.pipeline.structure.client.view.Box;
+import stroom.pipeline.structure.client.component.Box;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;

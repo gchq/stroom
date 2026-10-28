@@ -17,7 +17,7 @@
 package stroom.pipeline.stepping.client;
 
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.structure.client.presenter.SimplePipelineTreeBuilder;
+import stroom.pipeline.structure.client.SimplePipelineTreeBuilder;
 
 public class SteppingPipelineTreeBuilder extends SimplePipelineTreeBuilder {
 

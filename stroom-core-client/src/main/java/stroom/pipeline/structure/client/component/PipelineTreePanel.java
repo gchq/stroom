@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.view;
+package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.ConnectorRenderer;

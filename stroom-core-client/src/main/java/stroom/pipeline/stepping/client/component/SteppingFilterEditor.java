@@ -20,7 +20,7 @@ import stroom.cell.info.client.CellIcon;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
+import stroom.pipeline.structure.client.PipelineElementTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.OutputState;

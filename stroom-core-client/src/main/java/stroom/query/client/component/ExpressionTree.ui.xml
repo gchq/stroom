@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:pv="urn:import:stroom.pipeline.structure.client.view">
+             xmlns:pv="urn:import:stroom.pipeline.structure.client.component">
     <!--
       An expression's tree of terms and operators (expression-tree.css), whose items can be dragged
       to another operator

@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:pv="urn:import:stroom.pipeline.structure.client.view">
+             xmlns:pv="urn:import:stroom.pipeline.structure.client.component">
     <!--
       The pipeline structure editor's tree of elements, filling its pane. The order of an
       element's children doesn't matter (the model moves nothing), so dropping an element where it

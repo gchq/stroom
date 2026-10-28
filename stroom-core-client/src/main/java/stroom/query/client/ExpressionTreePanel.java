@@ -17,8 +17,8 @@
 package stroom.query.client;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.structure.client.view.Box;
-import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.pipeline.structure.client.component.Box;
+import stroom.pipeline.structure.client.component.TreePanel;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.widget.component.client.AriaPanel;

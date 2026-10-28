@@ -30,10 +30,10 @@ import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.structure.client.DefaultPipelineTreeBuilder;
+import stroom.pipeline.structure.client.PipelineElementTypes;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.pipeline.structure.client.component.PipelineTree;
-import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;

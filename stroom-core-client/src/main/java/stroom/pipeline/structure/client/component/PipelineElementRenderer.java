@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.view;
+package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.widget.htree.client.CellRenderer2;

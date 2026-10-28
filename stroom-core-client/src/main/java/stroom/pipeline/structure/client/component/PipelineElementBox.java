@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.view;
+package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.DisabledState;

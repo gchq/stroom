@@ -18,12 +18,8 @@ package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
-import stroom.pipeline.structure.client.view.DraggableTreePanel;
-import stroom.pipeline.structure.client.view.PipelineElementRenderer;
-import stroom.pipeline.structure.client.view.PipelineTreePanel;
-import stroom.pipeline.structure.client.view.TreeKeyboard;
+import stroom.pipeline.structure.client.PipelineModel;
+import stroom.pipeline.structure.client.StructureValidationUtil;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;

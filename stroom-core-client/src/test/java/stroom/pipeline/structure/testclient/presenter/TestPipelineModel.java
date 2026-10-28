@@ -30,9 +30,9 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.DefaultPipelineTreeBuilder;
+import stroom.pipeline.structure.client.PipelineElementTypes;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.presenter;
+package stroom.pipeline.structure.client;
 
 import stroom.pipeline.shared.data.PipelineElementType;
 

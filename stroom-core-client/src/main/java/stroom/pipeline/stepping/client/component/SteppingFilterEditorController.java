@@ -20,7 +20,7 @@ import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
+import stroom.pipeline.structure.client.PipelineElementTypesFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;

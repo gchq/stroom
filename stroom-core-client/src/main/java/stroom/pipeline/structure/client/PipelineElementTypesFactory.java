@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.presenter;
+package stroom.pipeline.structure.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.FetchPropertyTypesResult;

@@ -17,9 +17,9 @@
 package stroom.query.client.component;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.structure.client.view.Box;
-import stroom.pipeline.structure.client.view.DraggableTreePanel;
-import stroom.pipeline.structure.client.view.TreeKeyboard;
+import stroom.pipeline.structure.client.component.Box;
+import stroom.pipeline.structure.client.component.DraggableTreePanel;
+import stroom.pipeline.structure.client.component.TreeKeyboard;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionItemRenderer;
 import stroom.query.client.ExpressionTreePanel;

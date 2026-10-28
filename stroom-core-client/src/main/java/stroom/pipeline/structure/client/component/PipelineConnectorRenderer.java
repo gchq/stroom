@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.view;
+package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.PipelineModel;
 import stroom.util.shared.NullSafe;
 import stroom.widget.htree.client.CanvasColours;
 import stroom.widget.htree.client.ConnectorRenderer;
