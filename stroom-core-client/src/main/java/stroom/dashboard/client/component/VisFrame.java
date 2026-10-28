@@ -22,8 +22,8 @@ import stroom.dashboard.client.vis.VisToolbarButton;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.script.shared.ScriptDoc;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
+import stroom.visualisation.client.VisFunction;
+import stroom.visualisation.client.VisFunction.LoadStatus;
 import stroom.widget.component.client.Component;
 import stroom.widget.util.client.CssProperties;
 

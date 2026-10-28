@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
 import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;

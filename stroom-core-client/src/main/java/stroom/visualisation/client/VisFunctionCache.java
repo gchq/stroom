@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.visualisation.client.presenter;
+package stroom.visualisation.client;
 
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;

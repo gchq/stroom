@@ -17,7 +17,7 @@
 package stroom.dashboard.client.embeddedquery.gin;
 
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
-import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
