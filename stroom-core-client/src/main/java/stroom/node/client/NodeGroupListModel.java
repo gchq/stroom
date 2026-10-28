@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.node.client.presenter;
+package stroom.node.client;
 
 import stroom.credentials.shared.Credential;
 import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
 import stroom.task.client.DefaultTaskMonitorFactory;

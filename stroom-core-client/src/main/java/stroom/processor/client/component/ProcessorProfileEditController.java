@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
-import stroom.node.client.presenter.NodeGroupListModel;
+import stroom.node.client.NodeGroupListModel;
 import stroom.node.shared.NodeGroup;
 import stroom.processor.client.presenter.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
