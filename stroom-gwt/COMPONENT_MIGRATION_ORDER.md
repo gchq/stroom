@@ -1092,7 +1092,7 @@ Waves 3, 6, 8 and 14 left `TooltipPresenter`, `IFramePresenter`, `EditorPresente
 
 Each step's plan: [`component-migration/wave-17.md`](component-migration/wave-17.md). Added 28 October 2026, after wave 15.
 
-> **Not started.** After wave 16.
+> **Done, 28 October 2026**: in 41 commits, each a move or a rename. No class is in a `presenter` or `view` package, nothing is named for a presenter, and the classes named after deleted views are BEM blocks in their own stylesheets. A full workbench run passed all 1,722 stories with the leak check and the screenshots unchanged. See `wave-17.md`.
 
 Nothing a user sees changes. Move the classes still in `client.presenter` and `client.view` packages (about 300, checked for clashes) to their area's `client.component` (components, widgets, controllers) or `client` (everything else), and merge the widget library's `presenter` and `view` packages into their parents; rename what still says "presenter", "view" or "widget" (classes, then about 140 field and variable names); make the 35 or so CSS class blocks still named after deleted views BEM blocks in their components' stylesheets, and give the eight stylesheets not in kebab case their blocks' names; then the empty directories and the docs.
 

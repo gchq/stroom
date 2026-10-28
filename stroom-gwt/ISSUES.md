@@ -1595,15 +1595,6 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `.settingsPresenter .layer-container`, never applied either, so nothing changed. To decide:
   `addStyleNames="dock-max"` (the settings tabs then scroll, a look change to check against the
   screenshots), or drop the rule.
-* **Names that still say presenter.** Fields, parameters and locals holding controllers keep their
-  old names: `tablePresenter` (`AbstractQueryDataController` and its subclasses,
-  `AnalyticDataShardsController`, `ColumnsManager`), `queryEditPresenter` (`QueryDocEditController`,
-  `FloorMapQueryController`), `queryResultPresenter`, `visPresenterProvider` and
-  `currentVisPresenter` (`QueryEditController`), `dataPresenter` (`LinkedEventsController`,
-  `MetaBrowserController`), `sourcePresenter` (`SteppingScreenController`, `SourceTabPresenter`),
-  `metaPresenterProvider` (`FolderTabs`), `annotationManager` (the two tables), `layoutPresenter`
-  (`DashboardBodyController`) and the settings dialogs' `settingsPresenterProvider`. Rename them
-  as the files are next touched. (Wave 14's editors named theirs afresh.)
 * **Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
   its parts." without an `@param` per part (e.g. `SteppingScreenController`,
   `MetaBrowserController`, `TableController`, `QueryPaneController`).
@@ -1639,9 +1630,6 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   Roll-ups tab adds the "no roll-up" row to a store with none, so undoing an edit leaves the store
   dirty (as before).
 * **One implementation.** `HasCommonTabs` is implemented only by `DocumentEditorHost`.
-* **Class names after the deleted view.** `linkTabPanelViewImpl`, `linkTabPanelViewImpl-middle` and
-  `toolbarContainer` (`components.css`), used by `LinkTabPanel.ui.xml` and four other templates, and
-  the `docTab-readOnly*` classes are to become a `link-tab-panel` BEM block.
 * **Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
   tooltip), `AppShell.ExplorerItemKeys` (a renamed item's text) and `DataGrid.ValueSpinnerColumn`
   differ a little from their baselines; to check whether they differ from run to run.
@@ -1666,11 +1654,6 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   some.
 * **`CurveTabLayout`'s right indent.** `setRightIndent(32)` set `right` on the tab bar's row, which
   isn't positioned, so it did nothing; it went rather than becoming a class.
-* **Old names in the components' classes.** `CurveTabLayout`, `Main`, `Navigation`, `FullScreen`,
-  `DataRetention` and `AskStroomAi` keep their `curveTabLayoutViewImpl-*`, `mainViewImpl*`,
-  `navigation*`, `fullScreenViewImpl-*`, `dataRetentionViewImpl-*` and `askStroomAiViewImpl*`
-  classes (stories and CSS use them), and `ContentStoreTab` uses `contentstore-scroll-y` from
-  `components.css`; each is to become a BEM block in its own stylesheet.
 * **From the wave's audit, left on purpose** (28 October 2026):
   * Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its controller works on
     the component's message panel directly
@@ -1685,9 +1668,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   * The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
     `QuickFilter.setOnChange` exists (to check they fire alike first).
   * Unused `view` fields in about a dozen of the new controllers (assigned, only the constructor's
-    parameter used), dead code carried over (`UsersController.onEditUserOrGroup`, commented-out code
-    in the API keys, retention, source and template screens), and "presenter" names left in the
-    plugins' fields and parameters and the stories' variables.
+    parameter used), and dead code carried over (`UsersController.onEditUserOrGroup`, commented-out
+    code in the API keys, retention, source and template screens).
 
 ### Left from wave 16
 
@@ -1716,6 +1698,22 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   tool) before a tool reads them as current.
 * **Dialog stories show `StoryContent` with `ShowPopupEvent.builder`** directly, unowned, as they
   showed `ContentPresenter`, rather than through `ControllerDialog` as the plan said.
+
+### Left from wave 17
+
+**Reported** (28 October 2026).
+
+* **The explorer's other classes** (`navigation-title-bar`, `navigation-logo` and the like in
+  `components.css`) aren't BEM yet: wave 17 renamed only classes named after views, and moved the
+  `navigation` block's own rules to `navigation.css`.
+* **Four types keep "View" in their names**, as they aren't presenters' views: `ButtonView` and
+  `ToggleButtonView` (the buttons as controllers see them), `SidebarView` (the workbench framework's
+  sidebar) and `DataGridView` (the bridge between the two grids, to go with `MyDataGrid`).
+* **Comments in shared and server code** (`FloorMapDoc`, `FloorMapGroup`,
+  `TestFloorMapDocCollections`, `FloorMapEventStoreSearchProvider`) still describe the floor map's
+  client as presenters.
+* **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
+  `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
 ### Some components wire their handlers with `@UiHandler`
 
@@ -2048,6 +2046,13 @@ this extends it to every handler. When counted (wave 13), the converted componen
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 17** (2026-10-28), from the leftovers of waves 13 to 15: the names that still said
+  presenter (fields, parameters, locals, comments and javadoc), the classes named after deleted
+  views (`linkTabPanelViewImpl*`, `toolbarContainer`, `docTab-readOnly*`, `curveTabLayoutViewImpl-*`,
+  `mainViewImpl*`, `fullScreenViewImpl-*`, `dataRetentionViewImpl-*`, `askStroomAiViewImpl*`,
+  `contentstore-scroll-y` and the rest) are BEM blocks in their components' stylesheets, and the
+  classes nothing used are gone.
 
 * **Wave 16** (2026-10-28), from the leftovers of waves 14 and 15:
   * A Properties tab saved in a tab session reopened as Caches, and a document's permissions tab as

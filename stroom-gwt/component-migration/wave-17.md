@@ -11,7 +11,47 @@ that no longer exist. This wave changes nothing a user sees: it moves, renames a
 same look, so every step is checked by compiling, the JVM tests and a screenshot diff that must show
 no change.
 
-**Not started.** The user's decisions (28 October 2026): the Ace editor wrapper's classes go to
+## Done (28 October 2026)
+
+Every step, in 41 commits, each a move or a rename that compiled, passed checkstyle and was
+committed on its own. No class is in a `presenter` or `view` package: the widget library's merged
+into their parents (the Ace wrapper into `stroom.editor.client.ace`, the quick filter into
+`stroom.widget.quickfilter.client`, with a GWT module of its own), the app's 176 classes went to their
+area's `client.component` or `client`, area by area, and `Layer`, `LayerContainer`, `Page` and
+`HandlerRegistrations` to `stroom.widget.component.client` (the `Presenter` GWT module went). Plan
+B's 17 settings widgets are `...SettingsForm`s, `TraceOverviewWidget` is `TraceOverviewChart`, and
+`AbstractTabPlugin`, `DocumentAssetUtils` and `SourceStories` lost "presenter"; so did 70 identifiers
+and the comments and javadoc. About 75 classes named after views are BEM blocks, each block's rules
+in its own stylesheet (16 new), the 25 nothing used are gone, and the eight stylesheets without
+kebab-case names have them. Checked by both apps' GWT compiles, the JVM tests and a full workbench
+run with the leak check: all 1,722 stories passed, and the screenshots matched wave 16's but for the
+visualisations that differ from run to run, so nothing a user sees changed.
+
+What was decided on the way, where it differs from the plan below:
+
+- **Four types keep "View"** (`ButtonView`, `ToggleButtonView`, `SidebarView`, `DataGridView`): none
+  is a presenter's view (recorded in ISSUES.md).
+- **`FloorMapGrid` went to `client`**, not `client.component`: it builds the grid's SVG for the
+  canvas, and isn't a widget.
+- **Two packages moved whole** to `client.component` (the pipeline tree's and the asset tree's), as
+  their helpers are parts of the widget.
+- **Block names:** `sign-in-page` for the `LoginView*` classes (the sign-in and reset password
+  pages share them), `result-table` for both results tables (`TableViewImpl`, `TablePresenter`),
+  `main` for the main screen; the rest after their components. `showValueFilters` stays (it is a
+  saved settings' JSON property too), and `toolbarContainer` was renamed only as a class.
+- **Dead styling:** the rule editor's `ruleViewImpl-name` class, which no rule matched, went with the
+  `.ruleView-name` and `.ruleView-optional` rules meant for it, rather than making them apply (a look
+  change).
+- **The cascade:** each new stylesheet is imported straight after the last one its rules came from;
+  the dark theme's rules stay in `theme.css`. A rule naming two blocks went to `navigation.css`.
+- **Comments that record history** ("as it was in the presenter") kept their wording; commented-out
+  code was renamed with its fields.
+- **Tool slips caught:** the first CSS clean-up treated commented-out CSS as rules and cut into it (the
+  stylesheets were restored and the step redone with comments masked); two JSNI bodies still named
+  renamed parameters (fixed before the GWT compile); the quick filter's new package had no GWT module
+  (the GWT compile caught it).
+
+The user's decisions (28 October 2026): the Ace editor wrapper's classes go to
 `stroom.editor.client.ace`; the quick filter's to `stroom.widget.quickfilter.client`; Plan B's
 settings widgets are all `...SettingsForm`s and `TraceOverviewWidget` is `TraceOverviewChart`; and
 every name that still says "presenter" is renamed, area by area.
