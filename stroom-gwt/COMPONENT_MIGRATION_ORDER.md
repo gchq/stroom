@@ -78,7 +78,7 @@ A unit's wave is the table it is in. The prose above each table is the first pla
 | 13. Query and dashboard stack | 69 | 34,711 | S 27, M 24, L 8, XL 10 | 0 |  |
 | 14. Document editors | 34 | 6,715 | S 16, M 14, L 2, XL 2 | 0 |  |
 | 15. Content-tab screens and the shell | 40 | 12,295 | S 20, M 15, L 3, XL 2 | 0 |  |
-| 16. The last presenters and the presenter framework | 13 | 3,863 | S 7, M 4, L 2 | 0 | The user's go-ahead for unit 12 |
+| 16. The last presenters and the presenter framework | 14 | 3,863 | S 8, M 4, L 2 | 0 |  |
 | 17. Tidy up: packages, names and CSS | 5 | about 1,200 files touched | S 1, M 1, L 2, XL 1 | 0 | Wave 16 |
 
 ## Before the waves
@@ -1076,7 +1076,7 @@ Convert the tool screens onto a content-tab component base: Users, Accounts, API
 
 Each unit's plan: [`component-migration/wave-16.md`](component-migration/wave-16.md). Added 28 October 2026, after wave 15.
 
-> **Not started.** Deleting the framework itself (unit 12) waits for the user's go-ahead.
+> **Not started.** Agreed 28 October 2026: the framework goes once a full run passes, and the screens that share a tab type are fixed (see `wave-16.md`).
 
 Waves 3, 6, 8 and 14 left `TooltipPresenter`, `IFramePresenter`, `EditorPresenter`, `UserRefSelectionBoxPresenter`, `DocSelectionBoxPresenter` and `DocumentEditorHost` as presenters over their new controllers, and `LinkTabsPresenter` was deferred for deletion. Re-key the popup events (`ShowPopupEvent` and the rest) and the content-tab and full screen events on `Controller`; move the wrappers' last callers and delete them; make `DocumentEditorHost` a `LayerController` and the open callback a `Consumer<Controller>`; move the workbench's helpers and coverage check off presenters; delete the unused `UiHandlers` and the deferred dead code; then delete `MyPresenterWidget`, `View`, `ViewImpl`, `UiHandlers`, `PresenterAdapter` and `AbstractPresenterModule`.
 

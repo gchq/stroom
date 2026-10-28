@@ -11,7 +11,10 @@ that no longer exist. This wave changes nothing a user sees: it moves, renames a
 same look, so every step is checked by compiling, the JVM tests and a screenshot diff that must show
 no change.
 
-**Not started.**
+**Not started.** The user's decisions (28 October 2026): the Ace editor wrapper's classes go to
+`stroom.editor.client.ace`; the quick filter's to `stroom.widget.quickfilter.client`; Plan B's
+settings widgets are all `...SettingsForm`s and `TraceOverviewWidget` is `TraceOverviewChart`; and
+every name that still says "presenter" is renamed, area by area.
 
 ## Rules for the wave
 
@@ -35,7 +38,7 @@ no change.
 | `stroom.widget.popup.client.presenter` and `.view` | 8 and 22 (with 6 templates): `PopupManager`, `PopupSupportImpl`, `Dialog`, `ResizableDialog`, `SimplePopup`, the button bars, `PopupPosition`, `PopupSize` and the rest | `stroom.widget.popup.client` |
 | `stroom.widget.tab.client.presenter` and `.view` | 5 and 14 (6 templates): `TabData`, `TabDataImpl`, `TabBar`, `CurveTabBar`, `LinkTabBar`, `LayerContainerImpl`, `DraggableTabBar` and the rest | `stroom.widget.tab.client` |
 | `stroom.widget.menu.client.presenter` | 23 (`Menu.ui.xml`): `Menu`, `MenuController`, `MenuManager`, the menu items, `ShowMenuEvent` | `stroom.widget.menu.client` |
-| `stroom.editor.client.presenter` and `.view` | 6 and 9: `Option`, `Action`, `CurrentPreferences`, `DelegatingAceCompleter`; Ace's `Editor`, `RightBar`, `Marker`, `Annotation`, `IndicatorPopup` and the rest | `stroom.editor.client` (the Ace wrapper's nine could be `stroom.editor.client.ace`; a choice to record) |
+| `stroom.editor.client.presenter` and `.view` | 6 and 9: `Option`, `Action`, `CurrentPreferences`, `DelegatingAceCompleter`; Ace's `Editor`, `RightBar`, `Marker`, `Annotation`, `IndicatorPopup` and the rest | `stroom.editor.client`; the Ace wrapper's nine (from `view`) to `stroom.editor.client.ace` |
 | `stroom.widget.dropdowntree.client.view` | 7 (3 templates): `QuickFilter`, `QuickFilterPage`, `QuickFilterDialog`, its history and tooltip helpers | `stroom.widget.quickfilter.client` (they are the quick filter, not the drop-down tree) |
 | `stroom.widget.xsdbrowser.client.view` | 13 (1 template) | `stroom.widget.xsdbrowser.client` |
 | `stroom.widget.tickbox.client.view` | `TickBox` (1 template) | `stroom.widget.tickbox.client`; a string names it in full, so search for `"stroom.widget.tickbox.client.view.TickBox"` |
@@ -76,10 +79,10 @@ import, so it can go in its own commit.
   in about 1,000 files once the package names have gone (`tablePresenter`, `presenterProvider`,
   `currentVisPresenter`, `queryEditPresenter`, "the presenter" in comments). Each becomes what it
   holds (`table`, `tableController`, `editor`). Done area by area, as plain renames.
-- **Named for how it was made:** Plan B's 15 `...SettingsWidget`s and `TraceOverviewWidget`, as
-  `HistogramWidget` became `Histogram` (the design's naming rule). Each new name is checked against
-  every class name first (e.g. Plan B's shared settings classes); a clash keeps a qualifier that says
-  what it is (`...SettingsForm`), not how it was made.
+- **Named for how it was made:** Plan B's 15 `...SettingsWidget`s become `...SettingsForm`s
+  (`GeneralSettingsForm`, `RetentionSettingsForm`; three would clash with shared classes without a
+  qualifier, so the whole family takes one), and `TraceOverviewWidget` becomes `TraceOverviewChart`
+  (`TraceOverview` is shared data), beside `TraceHistogramChart`.
 - **"View" in names of things that aren't views:** after wave 16 deletes `ControllerView` and
   `LinkTabsLayoutView`, `ButtonView`, `ToggleButtonView` (the button interfaces), `DataGridView` and
   `SidebarView` are left; each is checked and named for what it is.

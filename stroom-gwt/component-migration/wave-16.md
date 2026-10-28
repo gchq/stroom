@@ -9,8 +9,13 @@ callers, converts the presenters that are left, re-keys the popup and content-ta
 `Controller`, and then deletes the presenter framework (`MyPresenterWidget`, `View`, `ViewImpl`,
 `UiHandlers`, `PresenterAdapter` and the GIN helpers), with the dead code the plan deferred.
 
-**Not started.** The last step, deleting the framework, needs the user's go-ahead before it is
-done, even with the rest of the wave finished.
+**Not started.** The user's decisions (28 October 2026):
+
+- **The framework goes** (unit 12) once units 1 to 11 are in and a full workbench run with the
+  leak check and a screenshot diff passes; no need to stop and ask again.
+- **Two screens' shared tab types are fixed** (unit 14).
+- **`LinkTabsWidgetStories` are deleted** with their baselines (unit 7).
+- **The coverage check is renamed** `DialogCoverage` (unit 9).
 
 ## Order
 
@@ -22,7 +27,9 @@ wrappers stayed only because the popup manager couldn't show a controller again 
 3. The document host and the open callback (unit 8).
 4. The workbench's helpers and the coverage check (unit 9).
 5. Unused presenter-era types and the deferred dead code (units 10 and 11).
-6. The framework (unit 12), with the user's go-ahead, then the docs (unit 13).
+6. The framework (unit 12), after a full run passes, then the docs (unit 13).
+
+The tab types (unit 14) can go at any point.
 
 Each step compiles and runs its stories on its own; a full workbench run with the leak check and a
 screenshot diff goes before and after unit 12.
@@ -159,7 +166,8 @@ workbench; effort M.
 - `PresenterCoverage` and `TestPresenterCoverage` (the Gradle task `workbenchPresenterCoverage`)
   find dialogs from `ShowPopupEvent.builder(...)` arguments: re-point them at
   `ControllerDialog.show`/`showOnce` calls, keeping the report's meaning (every dialog has a story).
-  Renaming the class and task (e.g. `DialogCoverage`) is a choice to record.
+  Renamed for what it checks: `DialogCoverage`, `TestDialogCoverage` and the Gradle task
+  `workbenchDialogCoverage` (the user's decision).
 
 ## 10. Unused presenter-era types
 
@@ -180,7 +188,7 @@ work: `ItemCell`, `SvgIconCell`, `FindResultWithPermissionsCell`, `JobTypeCell`,
 `SvgStringCell` and `MyTreeLayout`, each checked again for users (code, templates, reflection,
 stories) and its CSS with it.
 
-## 12. The presenter framework (with the user's go-ahead)
+## 12. The presenter framework
 
 framework; effort M.
 
@@ -208,6 +216,19 @@ framework; effort M.
 - **AGENTS.md** still says "Every presenter is a controller too (`MyPresenterWidget extends
   Controller`)" and describes `makeDialog(provider)` for presenter dialogs. It isn't edited by
   agents: the lines to change are listed for the user instead.
+
+## 14. Screens that share a tab type
+
+effort S; a bug master has too (changelog entry).
+
+- **Now:** `GlobalPropertyTabController.TAB_TYPE` is "Caches", as `CachesController`'s is, so a
+  saved tab session holding Properties reopens Caches (or nothing); `BatchDocumentPermissionsController`
+  and `DocumentUserPermissionsContentTabController` share "DocumentPermissions".
+- **Becomes:** Properties' own type, "Properties"; the two permissions screens each their own type,
+  each plugin opening its own. Sessions saved before keep what they hold (a Properties tab saved as
+  "Caches" reopens Caches once); new ones are right.
+- **Tests:** a JUnit regression test that every content screen's tab type is unique (fails before
+  the fix); the tab session stories.
 
 ## Left for wave 17
 

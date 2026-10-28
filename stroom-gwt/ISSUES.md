@@ -1664,7 +1664,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **Two screens share a tab type.** `GlobalPropertyTabController.TAB_TYPE` is "Caches", as
   `CachesController`'s is (master too), so a saved tab session holding Properties opens Caches (or
   nothing). `BatchDocumentPermissionsController` and `DocumentUserPermissionsContentTabController`
-  share "DocumentPermissions". Not changed: a new type changes what saved sessions hold.
+  share "DocumentPermissions". Not changed in wave 15: a new type changes what saved sessions hold.
+  To fix in wave 16 (unit 14), agreed 28 October 2026.
 * **Screens left as the plan's "stays" or for later.** `WelcomeTab` keeps its `g:Grid` and sets its
   name cells' `rowheader` role in Java (the plan's `<th scope="row">` table changes the cells'
   look); `Main` still builds its split panes in Java on each layout change, sets the theme's page
