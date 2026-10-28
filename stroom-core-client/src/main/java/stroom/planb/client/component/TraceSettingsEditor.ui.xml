@@ -13,21 +13,21 @@
     -->
     <g:FlowPanel styleName="max form">
         <v:SettingsGroup label="Shared File Store">
-            <v:SharedFileStoreSettingsWidget ui:field="sharedFileStore"/>
+            <v:SharedFileStoreSettingsForm ui:field="sharedFileStore"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Publishing">
-            <v:PublishingSettingsWidget ui:field="publishing"/>
+            <v:PublishingSettingsForm ui:field="publishing"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Storage">
             <g:FlowPanel styleName="form">
-                <v:GeneralSettingsWidget ui:field="general"
+                <v:GeneralSettingsForm ui:field="general"
                                          maxStoreSizeHelpText="The size limit for each file in the store. A trace store has one file per time bucket and shard, so the whole store can be much bigger than this."
                                          writeOptionsVisible="false"/>
-                <v:TraceGeneralSettingsWidget ui:field="traceGeneral"/>
+                <v:TraceGeneralSettingsForm ui:field="traceGeneral"/>
             </g:FlowPanel>
         </v:SettingsGroup>
         <v:SettingsGroup label="Data Retention">
-            <v:RetentionSettingsWidget ui:field="retention" useStateTimeVisible="false" checkIntervalVisible="true"/>
+            <v:RetentionSettingsForm ui:field="retention" useStateTimeVisible="false" checkIntervalVisible="true"/>
         </v:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

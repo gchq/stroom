@@ -60,7 +60,7 @@ import java.util.function.Supplier;
 /// (`GET /data/v1/{id}/parts/{part}/child-types`) and the data (`POST /data/v1/fetch`).
 ///
 /// The data preview pages by part or record (the 'View Source' link opens the
-/// source view, see `SourcePresenterStories`), and shows markers in its Error tab, for streams of
+/// source view, see `SourceStories`), and shows markers in its Error tab, for streams of
 /// the `Error` type.
 public final class SourceViewerStories {
 

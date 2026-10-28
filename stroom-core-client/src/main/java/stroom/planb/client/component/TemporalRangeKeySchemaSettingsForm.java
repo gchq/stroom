@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package stroom.planb.client.component;
 
-import stroom.planb.shared.TraceSettings;
-import stroom.util.shared.ModelStringUtil;
+import stroom.item.client.SelectionBox;
+import stroom.planb.shared.RangeType;
+import stroom.planb.shared.TemporalPrecision;
+import stroom.planb.shared.TemporalRangeKeySchema;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,11 +29,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-/**
- * General settings that only apply to a Traces store, shown alongside
- * {@link GeneralSettingsWidget} so that widget stays store-type agnostic.
- */
-public class TraceGeneralSettingsWidget extends Component {
+public class TemporalRangeKeySchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -40,40 +37,44 @@ public class TraceGeneralSettingsWidget extends Component {
     };
 
     @UiField
-    TextBox maxSpansPerTrace;
+    SelectionBox<RangeType> rangeType;
+    @UiField
+    SelectionBox<TemporalPrecision> temporalPrecision;
 
     /// Makes the settings, at their defaults.
-    public TraceGeneralSettingsWidget() {
+    public TemporalRangeKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        rangeType.addItems(RangeType.ORDERED_LIST);
+        temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
+        setKeySchema(new TemporalRangeKeySchema.Builder().build());
     }
 
-    public Long getMaxSpansPerTrace() {
-        final String value = maxSpansPerTrace.getValue();
-        try {
-            final String string = value.trim();
-            if (!string.isEmpty()) {
-                return ModelStringUtil.parseNumberString(string);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
-        }
-        setMaxSpansPerTrace(TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE);
-        return TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE;
+    public TemporalRangeKeySchema getKeySchema() {
+        return new TemporalRangeKeySchema.Builder()
+                .rangeType(rangeType.getValue())
+                .temporalPrecision(temporalPrecision.getValue())
+                .build();
     }
 
-    public void setMaxSpansPerTrace(final Long maxSpansPerTrace) {
-        this.maxSpansPerTrace.setValue(String.valueOf(maxSpansPerTrace == null
-                ? TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE
-                : maxSpansPerTrace));
+    public void setKeySchema(final TemporalRangeKeySchema keySchema) {
+        final TemporalRangeKeySchema schema = new TemporalRangeKeySchema.Builder(keySchema).build();
+        rangeType.setValue(schema.getRangeType());
+        temporalPrecision.setValue(schema.getTemporalPrecision());
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        maxSpansPerTrace.setReadOnly(readOnly);
+        rangeType.setReadOnly(readOnly);
+        temporalPrecision.setReadOnly(readOnly);
     }
 
-    @UiHandler("maxSpansPerTrace")
-    public void onMaxSpansPerTrace(final ValueChangeEvent<String> event) {
+    @UiHandler("rangeType")
+    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+        changed();
+    }
+
+    @UiHandler("temporalPrecision")
+    public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
         changed();
     }
 
@@ -96,7 +97,7 @@ public class TraceGeneralSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, TraceGeneralSettingsWidget> {
+    interface Binder extends UiBinder<Widget, TemporalRangeKeySchemaSettingsForm> {
 
     }
 }

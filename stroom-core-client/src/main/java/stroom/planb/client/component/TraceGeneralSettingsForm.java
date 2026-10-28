@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package stroom.planb.client.component;
 
-import stroom.planb.shared.SnapshotSettings;
+import stroom.planb.shared.TraceSettings;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Component;
-import stroom.widget.tickbox.client.TickBox;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,11 +29,10 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Whether reads come from snapshots pushed to other nodes. Only a store served over HTTP has
- * snapshots, so this has no place in a trace store — see
- * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ * General settings that only apply to a Traces store, shown alongside
+ * {@link GeneralSettingsForm} so that widget stays store-type agnostic.
  */
-public class SnapshotSettingsWidget extends Component {
+public class TraceGeneralSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -40,51 +40,40 @@ public class SnapshotSettingsWidget extends Component {
     };
 
     @UiField
-    TickBox useSnapshotsForLookup;
-    @UiField
-    TickBox useSnapshotsForGet;
-    @UiField
-    TickBox useSnapshotsForQuery;
+    TextBox maxSpansPerTrace;
 
     /// Makes the settings, at their defaults.
-    public SnapshotSettingsWidget() {
+    public TraceGeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    public SnapshotSettings getSnapshotSettings() {
-        return new SnapshotSettings(
-                useSnapshotsForLookup.getValue(),
-                useSnapshotsForGet.getValue(),
-                useSnapshotsForQuery.getValue());
+    public Long getMaxSpansPerTrace() {
+        final String value = maxSpansPerTrace.getValue();
+        try {
+            final String string = value.trim();
+            if (!string.isEmpty()) {
+                return ModelStringUtil.parseNumberString(string);
+            }
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
+        setMaxSpansPerTrace(TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE);
+        return TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE;
     }
 
-    public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        if (snapshotSettings != null) {
-            useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
-            useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
-            useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
-        }
+    public void setMaxSpansPerTrace(final Long maxSpansPerTrace) {
+        this.maxSpansPerTrace.setValue(String.valueOf(maxSpansPerTrace == null
+                ? TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE
+                : maxSpansPerTrace));
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        useSnapshotsForLookup.setReadOnly(readOnly);
-        useSnapshotsForGet.setReadOnly(readOnly);
-        useSnapshotsForQuery.setReadOnly(readOnly);
+        maxSpansPerTrace.setReadOnly(readOnly);
     }
 
-    @UiHandler("useSnapshotsForLookup")
-    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
-        changed();
-    }
-
-    @UiHandler("useSnapshotsForGet")
-    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
-        changed();
-    }
-
-    @UiHandler("useSnapshotsForQuery")
-    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
+    @UiHandler("maxSpansPerTrace")
+    public void onMaxSpansPerTrace(final ValueChangeEvent<String> event) {
         changed();
     }
 
@@ -107,7 +96,7 @@ public class SnapshotSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {
+    interface Binder extends UiBinder<Widget, TraceGeneralSettingsForm> {
 
     }
 }

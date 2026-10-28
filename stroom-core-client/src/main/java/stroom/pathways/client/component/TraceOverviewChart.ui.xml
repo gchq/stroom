@@ -6,7 +6,7 @@
     <!--
       A trace's overview (pathways.css): a vertical stack of the pager bar, shown once a trace is,
       with the group level buttons on the left and the pager on the right, then the trace itself
-      (a fixed timeline above a scrolling list of its spans), which TraceOverviewWidget draws
+      (a fixed timeline above a scrolling list of its spans), which TraceOverviewChart draws
     -->
     <g:FlowPanel styleName="trace-overview-root">
         <g:FlowPanel ui:field="pagerBar" styleName="trace-pager-bar" visible="false">

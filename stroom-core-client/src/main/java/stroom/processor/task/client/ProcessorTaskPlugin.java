@@ -17,7 +17,7 @@
 package stroom.processor.task.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.AbstractTabPresenterPlugin;
+import stroom.data.client.AbstractTabPlugin;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.task.client.component.ProcessorFilterTasksTabController;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
@@ -30,7 +30,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ProcessorTaskPlugin
-        extends AbstractTabPresenterPlugin<ProcessorFilter, ProcessorFilterTasksTabController> {
+        extends AbstractTabPlugin<ProcessorFilter, ProcessorFilterTasksTabController> {
 
     @Inject
     public ProcessorTaskPlugin(final EventBus eventBus,

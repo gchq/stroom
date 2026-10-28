@@ -30,7 +30,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class GeneralSettingsWidget extends Component {
+public class GeneralSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -53,7 +53,7 @@ public class GeneralSettingsWidget extends Component {
     private boolean writeOptionsVisible = true;
 
     /// Makes the settings, at their defaults.
-    public GeneralSettingsWidget() {
+    public GeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
         setOverwrite(true);
     }
@@ -167,7 +167,7 @@ public class GeneralSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, GeneralSettingsWidget> {
+    interface Binder extends UiBinder<Widget, GeneralSettingsForm> {
 
     }
 }

@@ -30,15 +30,15 @@ public class StateSettingsEditor extends PlanBTypeSettingsEditor {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    GeneralSettingsWidget general;
+    GeneralSettingsForm general;
     @UiField
-    SnapshotSettingsWidget snapshot;
+    SnapshotSettingsForm snapshot;
     @UiField
-    RetentionSettingsWidget retention;
+    RetentionSettingsForm retention;
     @UiField
-    StateKeySchemaSettingsWidget keySchema;
+    StateKeySchemaSettingsForm keySchema;
     @UiField
-    StateValueSchemaSettingsWidget valueSchema;
+    StateValueSchemaSettingsForm valueSchema;
 
     /// Makes the settings, at their defaults.
     public StateSettingsEditor() {
@@ -78,12 +78,12 @@ public class StateSettingsEditor extends PlanBTypeSettingsEditor {
     }
 
     @Override
-    public GeneralSettingsWidget getGeneralSettings() {
+    public GeneralSettingsForm getGeneralSettings() {
         return general;
     }
 
     @Override
-    public RetentionSettingsWidget getRetentionSettings() {
+    public RetentionSettingsForm getRetentionSettings() {
         return retention;
     }
 

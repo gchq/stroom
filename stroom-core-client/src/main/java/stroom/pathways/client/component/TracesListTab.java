@@ -34,7 +34,7 @@ public class TracesListTab extends Component {
     @UiField
     SimplePanel tracesList;
     @UiField
-    TraceOverviewWidget traceOverview;
+    TraceOverviewChart traceOverview;
 
     /// Makes the tab, with no traces.
     public TracesListTab() {
@@ -47,7 +47,7 @@ public class TracesListTab extends Component {
     }
 
     /// @return The selected trace's spans, which its controller fills.
-    public TraceOverviewWidget getTraceOverview() {
+    public TraceOverviewChart getTraceOverview() {
         return traceOverview;
     }
 

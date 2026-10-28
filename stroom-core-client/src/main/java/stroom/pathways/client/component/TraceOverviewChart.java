@@ -79,9 +79,9 @@ import java.util.function.Consumer;
 /// A trace's overview: a timeline of its spans, with a window on it that can be dragged and resized,
 /// above a waterfall of the spans in the window, as a tree that opens and closes, and a panel of a
 /// chosen span's details. A trace too large to show whole is shown a page of spans at a time, with a
-/// pager. Its frame is in `TraceOverviewWidget.ui.xml`; the trace itself is drawn as HTML, again on
+/// pager. Its frame is in `TraceOverviewChart.ui.xml`; the trace itself is drawn as HTML, again on
 /// every change, styled by `pathways.css` (with custom properties for the positions and sizes).
-public class TraceOverviewWidget extends Composite implements TaskMonitorFactory {
+public class TraceOverviewChart extends Composite implements TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -174,7 +174,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     }
 
     /// Makes an overview showing no trace.
-    public TraceOverviewWidget() {
+    public TraceOverviewChart() {
         initWidget(BINDER.createAndBindUi(this));
         pager.setDisplay(pagerRows);
         // Expand/collapse-level buttons on the LEFT, the pager on the RIGHT (CSS space-between).
@@ -1356,7 +1356,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         }
     }
 
-    interface Binder extends UiBinder<Widget, TraceOverviewWidget> {
+    interface Binder extends UiBinder<Widget, TraceOverviewChart> {
 
     }
 

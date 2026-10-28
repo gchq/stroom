@@ -29,7 +29,7 @@ import java.util.Set;
 
 /// Utility methods used by the Assets tab ([stroom.document.asset.client.component.DocumentAssetsTabController])
 /// and the asset chooser. Separated out as the main class was getting too big.
-public class DocumentAssetPresenterUtils {
+public class DocumentAssetUtils {
 
     /** Slash / character */
     private static final String SLASH = "/";

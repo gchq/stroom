@@ -16,7 +16,7 @@
 
 package stroom.document.asset.client.component;
 
-import stroom.document.asset.client.DocumentAssetPresenterUtils;
+import stroom.document.asset.client.DocumentAssetUtils;
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.widget.component.client.Component;
 
@@ -51,10 +51,10 @@ public class DocumentAssetChooser extends Component {
     ///
     /// @param assets The assets.
     public void setAssets(final List<DocumentAsset> assets) {
-        DocumentAssetPresenterUtils.storeOpenClosedState(tree, openFolders);
+        DocumentAssetUtils.storeOpenClosedState(tree, openFolders);
         tree.clear();
-        DocumentAssetPresenterUtils.addPathsToTree(tree, assets);
-        DocumentAssetPresenterUtils.restoreOpenClosedState(tree, openFolders);
+        DocumentAssetUtils.addPathsToTree(tree, assets);
+        DocumentAssetUtils.restoreOpenClosedState(tree, openFolders);
     }
 
     /// Sets what is told when the choice changes (it follows the focus).

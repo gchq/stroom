@@ -32,7 +32,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class RetentionSettingsWidget extends Component {
+public class RetentionSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -62,7 +62,7 @@ public class RetentionSettingsWidget extends Component {
     private boolean checkIntervalVisible;
 
     /// Makes the settings, at their defaults.
-    public RetentionSettingsWidget() {
+    public RetentionSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
 
         retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
@@ -216,7 +216,7 @@ public class RetentionSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, RetentionSettingsWidget> {
+    interface Binder extends UiBinder<Widget, RetentionSettingsForm> {
 
     }
 }

@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
  * affects records published from then on, and buckets already written are read back using the layout
  * recorded in their own directory names.
  */
-public class PublishingSettingsWidget extends Component {
+public class PublishingSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -54,7 +54,7 @@ public class PublishingSettingsWidget extends Component {
     SelectionBox<TimeUnit> maxWaitForDataTimeUnit;
 
     /// Makes the settings, at their defaults.
-    public PublishingSettingsWidget() {
+    public PublishingSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
 
         granularity.addItem(BucketGranularity.HOUR);
@@ -137,7 +137,7 @@ public class PublishingSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, PublishingSettingsWidget> {
+    interface Binder extends UiBinder<Widget, PublishingSettingsForm> {
 
     }
 }

@@ -18,11 +18,8 @@ package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.HistogramKeySchema;
-import stroom.planb.shared.KeyType;
-import stroom.planb.shared.TemporalResolution;
-import stroom.query.api.UserTimeZone;
-import stroom.query.client.component.TimeZoneBox;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -34,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class HistogramKeySchemaSettingsWidget extends Component {
+public class StateValueSchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -42,71 +39,54 @@ public class HistogramKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<KeyType> keyType;
+    SelectionBox<StateValueType> stateValueType;
     @UiField
     SelectionBox<HashLength> hashLength;
-    @UiField
-    SelectionBox<TemporalResolution> temporalResolution;
-    @UiField
-    TimeZoneBox timeZoneBox;
 
     /// Makes the settings, at their defaults.
-    public HistogramKeySchemaSettingsWidget() {
+    public StateValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
-        keyType.addItems(KeyType.ORDERED_LIST);
+        stateValueType.addItems(StateValueType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        setKeySchema(new HistogramKeySchema.Builder().build());
-        onKeyTypeChange();
+        setValueSchema(new StateValueSchema.Builder().build());
+        onStateValueTypeChange();
     }
 
-    public HistogramKeySchema getKeySchema() {
-        final UserTimeZone userTimeZone = timeZoneBox.getUserTimeZone();
-        return new HistogramKeySchema.Builder()
-                .keyType(keyType.getValue())
+    public StateValueSchema getValueSchema() {
+        return new StateValueSchema.Builder()
+                .stateValueType(stateValueType.getValue())
                 .hashLength(hashLength.getValue())
-                .temporalResolution(temporalResolution.getValue())
-                .timeZone(userTimeZone)
                 .build();
     }
 
-    public void setKeySchema(final HistogramKeySchema keySchema) {
-        final HistogramKeySchema schema = new HistogramKeySchema.Builder(keySchema).build();
-        keyType.setValue(schema.getKeyType());
+    public void setValueSchema(final StateValueSchema valueSchema) {
+        final StateValueSchema schema = new StateValueSchema.Builder(valueSchema).build();
+        stateValueType.setValue(schema.getStateValueType());
         hashLength.setValue(schema.getHashLength());
-        temporalResolution.setValue(schema.getTemporalResolution());
-        timeZoneBox.setUserTimeZone(schema.getTimeZone());
-        onKeyTypeChange();
+        onStateValueTypeChange();
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        keyType.setReadOnly(readOnly);
+        stateValueType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
-        temporalResolution.setReadOnly(readOnly);
-        timeZoneBox.setReadOnly(readOnly);
     }
 
-    private void onKeyTypeChange() {
-        final KeyType value = keyType.getValue();
+    private void onStateValueTypeChange() {
+        final StateValueType value = stateValueType.getValue();
         // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
-        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
-                              Objects.equals(value, KeyType.VARIABLE));
+        hashLength.setEnabled(Objects.equals(value, StateValueType.HASH_LOOKUP) ||
+                              Objects.equals(value, StateValueType.VARIABLE));
     }
 
-    @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<KeyType> event) {
-        onKeyTypeChange();
+    @UiHandler("stateValueType")
+    public void onStateValueType(final ValueChangeEvent<StateValueType> event) {
+        onStateValueTypeChange();
         changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        changed();
-    }
-
-    @UiHandler("temporalResolution")
-    public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
         changed();
     }
 
@@ -118,7 +98,6 @@ public class HistogramKeySchemaSettingsWidget extends Component {
                 ? onChange
                 : () -> {
                 };
-        timeZoneBox.setOnChange(this.onChange);
     }
 
     // Says that the user changed a setting
@@ -130,7 +109,7 @@ public class HistogramKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, HistogramKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, StateValueSchemaSettingsForm> {
 
     }
 }

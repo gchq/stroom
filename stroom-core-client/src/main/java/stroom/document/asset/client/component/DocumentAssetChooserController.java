@@ -18,7 +18,7 @@ package stroom.document.asset.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.DocumentAssetPresenterUtils;
+import stroom.document.asset.client.DocumentAssetUtils;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -118,7 +118,7 @@ public class DocumentAssetChooserController extends Controller {
         if (selectedItem != null && document != null) {
             return DocumentAssetsTabController.ASSET_SERVLET_PATH_PREFIX
                    + document.getUuid()
-                   + DocumentAssetPresenterUtils.getItemPath(selectedItem);
+                   + DocumentAssetUtils.getItemPath(selectedItem);
         }
         return null;
     }

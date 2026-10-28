@@ -180,7 +180,7 @@ public class DocumentAssetQuickUploadController extends Controller implements Do
         }
         final String docUuid = document.getUuid();
         // A root-level new-item path is the bare filename (see
-        // DocumentAssetPresenterUtils.getNewItemPath), whereas the servlet URL
+        // DocumentAssetUtils.getNewItemPath), whereas the servlet URL
         // always has a separator after the document UUID.
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
                 .method(r -> r.updateNewUploadedFile(docUuid,

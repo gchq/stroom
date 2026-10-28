@@ -29,7 +29,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class MetricValueSchemaSettingsWidget extends Component {
+public class MetricValueSchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -50,7 +50,7 @@ public class MetricValueSchemaSettingsWidget extends Component {
     TickBox storeSum;
 
     /// Makes the settings, at their defaults.
-    public MetricValueSchemaSettingsWidget() {
+    public MetricValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new MetricValueSchema.Builder().build());
@@ -136,7 +136,7 @@ public class MetricValueSchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, MetricValueSchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, MetricValueSchemaSettingsForm> {
 
     }
 }

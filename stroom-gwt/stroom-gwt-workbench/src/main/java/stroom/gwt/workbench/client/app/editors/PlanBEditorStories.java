@@ -331,7 +331,7 @@ public final class PlanBEditorStories {
                     play.expect(selection(play, "Key Schema", "Hash Length")).toHaveValue("Integer");
                     DocumentEditors.expectNoProblems(play);
                 })
-                // GeneralSettingsWidget shows DEFAULT_MAX_STORE_SIZE for an unset max store size
+                // GeneralSettingsForm shows DEFAULT_MAX_STORE_SIZE for an unset max store size
                 .story("MaxStoreSizeDefaultsWhenUnset", context -> render(context, "planb-STATE-UNSET", false))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("10G"));

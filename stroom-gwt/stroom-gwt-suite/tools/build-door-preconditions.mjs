@@ -316,7 +316,7 @@ for (const door of missing) {
     // them as menu screens said "attribution gap" for two doors that needed a seed.
     klass = /ComponentRegistry|registerComponent/.test(src) ? 'needs-component'
       : /extends\s+DocumentPlugin/.test(src) ? 'document-editor'
-        : /extends\s+AbstractTabPresenterPlugin/.test(src) ? 'event' : 'menu-screen';
+        : /extends\s+AbstractTabPlugin/.test(src) ? 'event' : 'menu-screen';
   }
   out.push({ door: door.name, how: door.how, area: door.area, via: door.via, reachedParent: showers.filter((s) => reached.has(s)),
     class: klass, sites: uniq });

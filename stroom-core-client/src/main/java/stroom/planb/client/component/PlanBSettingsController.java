@@ -146,7 +146,7 @@ public class PlanBSettingsController extends Controller {
 
     // Keeps the settings every type has (and those only some have), from the type being left
     private void keepCommonSettings(final PlanBTypeSettingsEditor previous) {
-        final GeneralSettingsWidget general = previous.getGeneralSettings();
+        final GeneralSettingsForm general = previous.getGeneralSettings();
         maxStoreSize = general.getMaxStoreSize();
         if (previous.hasWriteOptions()) {
             synchroniseMerge = general.getSynchroniseMerge();
@@ -160,7 +160,7 @@ public class PlanBSettingsController extends Controller {
 
     // Gives the settings kept to the type being shown, as far as it has them
     private void giveCommonSettings(final PlanBTypeSettingsEditor next) {
-        final GeneralSettingsWidget general = next.getGeneralSettings();
+        final GeneralSettingsForm general = next.getGeneralSettings();
         general.setMaxStoreSize(maxStoreSize);
         if (next.hasWriteOptions()) {
             general.setSynchroniseMerge(synchroniseMerge);

@@ -28,7 +28,7 @@ import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabController> {
+public class DataPreviewTabPlugin extends AbstractTabPlugin<DataPreviewKey, DataPreviewTabController> {
 
     @Inject
     public DataPreviewTabPlugin(final EventBus eventBus,

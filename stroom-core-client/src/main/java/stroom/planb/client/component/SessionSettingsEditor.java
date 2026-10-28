@@ -30,15 +30,15 @@ public class SessionSettingsEditor extends PlanBTypeSettingsEditor {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    GeneralSettingsWidget general;
+    GeneralSettingsForm general;
     @UiField
-    SnapshotSettingsWidget snapshot;
+    SnapshotSettingsForm snapshot;
     @UiField
-    CondenseSettingsWidget condense;
+    CondenseSettingsForm condense;
     @UiField
-    RetentionSettingsWidget retention;
+    RetentionSettingsForm retention;
     @UiField
-    SessionKeySchemaSettingsWidget keySchema;
+    SessionKeySchemaSettingsForm keySchema;
 
     /// Makes the settings, at their defaults.
     public SessionSettingsEditor() {
@@ -78,17 +78,17 @@ public class SessionSettingsEditor extends PlanBTypeSettingsEditor {
     }
 
     @Override
-    public GeneralSettingsWidget getGeneralSettings() {
+    public GeneralSettingsForm getGeneralSettings() {
         return general;
     }
 
     @Override
-    public RetentionSettingsWidget getRetentionSettings() {
+    public RetentionSettingsForm getRetentionSettings() {
         return retention;
     }
 
     @Override
-    public CondenseSettingsWidget getCondenseSettings() {
+    public CondenseSettingsForm getCondenseSettings() {
         return condense;
     }
 

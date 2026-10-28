@@ -52,7 +52,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
     private static final int LARGE_TRACE_THRESHOLD = 10_000;
 
     private final TracesListController tracesList;
-    private final TraceOverviewWidget traceOverviewWidget;
+    private final TraceOverviewChart traceOverviewChart;
     private final RestFactory restFactory;
     // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
     // right-aligned by the .traces-toolbar wrapper, rather than in a dedicated band above the grid.
@@ -79,7 +79,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
         own(timeRangeSelectorController).attach(timeRangeSelector);
         this.tracesList = tracesList;
         this.restFactory = restFactory;
-        traceOverviewWidget = view.getTraceOverview();
+        traceOverviewChart = view.getTraceOverview();
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);
@@ -135,14 +135,14 @@ public class TracesListTabController extends Controller implements HasToolbar {
         restFactory
                 .create(TRACES_RESOURCE)
                 .method(res -> res.findTrace(request))
-                .onSuccess(traceOverviewWidget::setTrace)
+                .onSuccess(traceOverviewChart::setTrace)
                 // Belt-and-braces: orphan-only traces are now served by the success path, so a
                 // failure here is genuinely unexpected — clear the detail rather than leaving a
                 // stale trace displayed.
-                .onFailure(error -> traceOverviewWidget.setTrace(null))
+                .onFailure(error -> traceOverviewChart.setTrace(null))
                 // Spin the span-detail widget's own refresh button, not the traces list's.
                 .owner(this)
-                .taskMonitorFactory(traceOverviewWidget)
+                .taskMonitorFactory(traceOverviewChart)
                 .exec();
     }
 
@@ -156,7 +156,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
         final Long startTimeMs = traceRoot.getStartTime() != null
                 ? traceRoot.getStartTime().toEpochMillis()
                 : null;
-        final TraceOverviewWidget.SpanWindowFetcher fetcher =
+        final TraceOverviewChart.SpanWindowFetcher fetcher =
                 (offset, cursor, limit, groupSelection, onLoaded) -> {
                     final GetSpansRequest spansRequest = new GetSpansRequest(
                             dataSourceRef, traceId, offset, limit, startTimeMs, cursor, groupSelection);
@@ -167,10 +167,10 @@ public class TracesListTabController extends Controller implements HasToolbar {
                             .onFailure(error -> onLoaded.accept(null))
                             // Spin the span-list pager's own refresh button, not the traces list's.
                             .owner(this)
-                            .taskMonitorFactory(traceOverviewWidget)
+                            .taskMonitorFactory(traceOverviewChart)
                             .exec();
                 };
-        traceOverviewWidget.setLargeTrace(traceRoot, fetcher);
+        traceOverviewChart.setLargeTrace(traceRoot, fetcher);
     }
 
     /// Shows a Traces store's traces, today's at first.

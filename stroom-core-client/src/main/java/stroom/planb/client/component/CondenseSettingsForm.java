@@ -32,7 +32,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class CondenseSettingsWidget extends Component {
+public class CondenseSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -49,7 +49,7 @@ public class CondenseSettingsWidget extends Component {
     SelectionBox<TimeUnit> condenseTimeUnit;
 
     /// Makes the settings, at their defaults.
-    public CondenseSettingsWidget() {
+    public CondenseSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
 
         condenseAge.setValue(1);
@@ -137,7 +137,7 @@ public class CondenseSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, CondenseSettingsWidget> {
+    interface Binder extends UiBinder<Widget, CondenseSettingsForm> {
 
     }
 }

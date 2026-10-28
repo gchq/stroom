@@ -18,9 +18,9 @@ package stroom.floormap.client.component;
 
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.item.client.SelectionBox;
-import stroom.planb.client.component.CondenseSettingsWidget;
-import stroom.planb.client.component.GeneralSettingsWidget;
-import stroom.planb.client.component.RetentionSettingsWidget;
+import stroom.planb.client.component.CondenseSettingsForm;
+import stroom.planb.client.component.GeneralSettingsForm;
+import stroom.planb.client.component.RetentionSettingsForm;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -33,7 +33,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A floor map event store's Settings tab: how long an entity stays on the map, and the Plan B
-/// settings ([GeneralSettingsWidget], [CondenseSettingsWidget] and [RetentionSettingsWidget]) a user
+/// settings ([GeneralSettingsForm], [CondenseSettingsForm] and [RetentionSettingsForm]) a user
 /// may safely change once data exists, so a store's general settings look and behave as they do
 /// everywhere else. The key and value schema widgets are simply not declared: that is the whole
 /// mechanism by which they stop being editable here.
@@ -42,11 +42,11 @@ public class FloorMapEventStoreSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    GeneralSettingsWidget generalSettings;
+    GeneralSettingsForm generalSettings;
     @UiField
-    CondenseSettingsWidget condenseSettings;
+    CondenseSettingsForm condenseSettings;
     @UiField
-    RetentionSettingsWidget retentionSettings;
+    RetentionSettingsForm retentionSettings;
     @UiField
     ValueSpinner expiryTime;
     @UiField

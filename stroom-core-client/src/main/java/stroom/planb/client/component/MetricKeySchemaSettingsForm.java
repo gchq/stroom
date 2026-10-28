@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-public class MetricKeySchemaSettingsWidget extends Component {
+public class MetricKeySchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -51,7 +51,7 @@ public class MetricKeySchemaSettingsWidget extends Component {
     TimeZoneBox timeZoneBox;
 
     /// Makes the settings, at their defaults.
-    public MetricKeySchemaSettingsWidget() {
+    public MetricKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
@@ -130,7 +130,7 @@ public class MetricKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, MetricKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, MetricKeySchemaSettingsForm> {
 
     }
 }

@@ -46,7 +46,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// progress bar, character navigator and the read-only editor).
 ///
 /// The data is served by fixtures for `POST /data/v1/fetch`.
-public final class SourcePresenterStories {
+public final class SourceStories {
 
     /// The name of the spy for the stepping button.
     static final String ON_BEGIN_STEPPING = "onBeginStepping";
@@ -82,7 +82,7 @@ public final class SourcePresenterStories {
                     }"""))
             .build();
 
-    private SourcePresenterStories() {
+    private SourceStories() {
         // Static utility
     }
 
@@ -90,7 +90,7 @@ public final class SourcePresenterStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        registry.component("Widgets/Editors & Viewers/SourcePresenter", SourcePresenterStories.class)
+        registry.component("Widgets/Editors & Viewers/SourcePresenter", SourceStories.class)
                 .layout(StoryLayout.CENTERED)
                 // A loaded non-segmented source: title, classification banner, click-to-seek progress
                 // bar, character navigator and the read-only XML editor

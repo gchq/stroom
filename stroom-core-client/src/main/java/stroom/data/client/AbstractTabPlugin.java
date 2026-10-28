@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public abstract class AbstractTabPresenterPlugin<K, T extends Layer & TabData>
+public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
         extends Plugin {
 
     // Bi-directional maps to hold the open presenters
@@ -46,7 +46,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends Layer & TabData>
     private final ContentManager contentManager;
     private final Provider<T> tabPresenterProvider;
 
-    public AbstractTabPresenterPlugin(final EventBus eventBus,
+    public AbstractTabPlugin(final EventBus eventBus,
                                       final ContentManager contentManager,
                                       final Provider<T> tabPresenterProvider) {
         super(eventBus);
@@ -73,7 +73,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends Layer & TabData>
         T tabPresenter = null;
         if (presenterKey == null) {
             AlertEvent.fireError(
-                    AbstractTabPresenterPlugin.this,
+                    AbstractTabPlugin.this,
                     "Missing key for " + getName(),
                     null);
         } else {
@@ -129,7 +129,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends Layer & TabData>
         try {
             if (presenterKey == null) {
                 AlertEvent.fireError(
-                        AbstractTabPresenterPlugin.this,
+                        AbstractTabPlugin.this,
                         "Unable to load " + getName() + " (null)",
                         null);
             } else {

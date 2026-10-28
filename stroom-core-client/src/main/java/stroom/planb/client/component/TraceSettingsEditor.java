@@ -35,15 +35,15 @@ public class TraceSettingsEditor extends PlanBTypeSettingsEditor {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SharedFileStoreSettingsWidget sharedFileStore;
+    SharedFileStoreSettingsForm sharedFileStore;
     @UiField
-    PublishingSettingsWidget publishing;
+    PublishingSettingsForm publishing;
     @UiField
-    GeneralSettingsWidget general;
+    GeneralSettingsForm general;
     @UiField
-    TraceGeneralSettingsWidget traceGeneral;
+    TraceGeneralSettingsForm traceGeneral;
     @UiField
-    RetentionSettingsWidget retention;
+    RetentionSettingsForm retention;
 
     // Held from the most recent read so that write round-trips them. Neither has an editor: the
     // query range limit because nothing offers one yet, the compaction frequency because reclaiming
@@ -94,17 +94,17 @@ public class TraceSettingsEditor extends PlanBTypeSettingsEditor {
     }
 
     @Override
-    public GeneralSettingsWidget getGeneralSettings() {
+    public GeneralSettingsForm getGeneralSettings() {
         return general;
     }
 
     @Override
-    public RetentionSettingsWidget getRetentionSettings() {
+    public RetentionSettingsForm getRetentionSettings() {
         return retention;
     }
 
     @Override
-    public SharedFileStoreSettingsWidget getSharedFileStoreSettings() {
+    public SharedFileStoreSettingsForm getSharedFileStoreSettings() {
         return sharedFileStore;
     }
 

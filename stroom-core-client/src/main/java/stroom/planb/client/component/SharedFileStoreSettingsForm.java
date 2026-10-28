@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
  * back to, so there is nothing to switch off; an empty path is a save-blocking error rather than a
  * mode.
  */
-public class SharedFileStoreSettingsWidget extends Component {
+public class SharedFileStoreSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -54,7 +54,7 @@ public class SharedFileStoreSettingsWidget extends Component {
     private boolean locked;
 
     /// Makes the settings, at their defaults.
-    public SharedFileStoreSettingsWidget() {
+    public SharedFileStoreSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
 
         shardCount.setValue(1);
@@ -126,7 +126,7 @@ public class SharedFileStoreSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, SharedFileStoreSettingsWidget> {
+    interface Binder extends UiBinder<Widget, SharedFileStoreSettingsForm> {
 
     }
 }

@@ -16,11 +16,9 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
-import stroom.planb.shared.RangeType;
-import stroom.planb.shared.TemporalPrecision;
-import stroom.planb.shared.TemporalRangeKeySchema;
+import stroom.planb.shared.SnapshotSettings;
 import stroom.widget.component.client.Component;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -29,7 +27,12 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class TemporalRangeKeySchemaSettingsWidget extends Component {
+/**
+ * Whether reads come from snapshots pushed to other nodes. Only a store served over HTTP has
+ * snapshots, so this has no place in a trace store — see
+ * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ */
+public class SnapshotSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -37,44 +40,51 @@ public class TemporalRangeKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<RangeType> rangeType;
+    TickBox useSnapshotsForLookup;
     @UiField
-    SelectionBox<TemporalPrecision> temporalPrecision;
+    TickBox useSnapshotsForGet;
+    @UiField
+    TickBox useSnapshotsForQuery;
 
     /// Makes the settings, at their defaults.
-    public TemporalRangeKeySchemaSettingsWidget() {
+    public SnapshotSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
-        rangeType.addItems(RangeType.ORDERED_LIST);
-        temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
-        setKeySchema(new TemporalRangeKeySchema.Builder().build());
     }
 
-    public TemporalRangeKeySchema getKeySchema() {
-        return new TemporalRangeKeySchema.Builder()
-                .rangeType(rangeType.getValue())
-                .temporalPrecision(temporalPrecision.getValue())
-                .build();
+    public SnapshotSettings getSnapshotSettings() {
+        return new SnapshotSettings(
+                useSnapshotsForLookup.getValue(),
+                useSnapshotsForGet.getValue(),
+                useSnapshotsForQuery.getValue());
     }
 
-    public void setKeySchema(final TemporalRangeKeySchema keySchema) {
-        final TemporalRangeKeySchema schema = new TemporalRangeKeySchema.Builder(keySchema).build();
-        rangeType.setValue(schema.getRangeType());
-        temporalPrecision.setValue(schema.getTemporalPrecision());
+    public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
+        if (snapshotSettings != null) {
+            useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
+            useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
+            useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
+        }
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        rangeType.setReadOnly(readOnly);
-        temporalPrecision.setReadOnly(readOnly);
+        useSnapshotsForLookup.setReadOnly(readOnly);
+        useSnapshotsForGet.setReadOnly(readOnly);
+        useSnapshotsForQuery.setReadOnly(readOnly);
     }
 
-    @UiHandler("rangeType")
-    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+    @UiHandler("useSnapshotsForLookup")
+    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
         changed();
     }
 
-    @UiHandler("temporalPrecision")
-    public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
+    @UiHandler("useSnapshotsForGet")
+    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
+        changed();
+    }
+
+    @UiHandler("useSnapshotsForQuery")
+    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
         changed();
     }
 
@@ -97,7 +107,7 @@ public class TemporalRangeKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, TemporalRangeKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, SnapshotSettingsForm> {
 
     }
 }

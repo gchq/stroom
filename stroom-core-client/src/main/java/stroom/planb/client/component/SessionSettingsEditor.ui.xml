@@ -5,19 +5,19 @@
     <!-- The settings of a session store, each group a titled set of Plan B's settings widgets -->
     <g:FlowPanel styleName="max form">
         <v:SettingsGroup label="General">
-            <v:GeneralSettingsWidget ui:field="general"/>
+            <v:GeneralSettingsForm ui:field="general"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Snapshot">
-            <v:SnapshotSettingsWidget ui:field="snapshot"/>
+            <v:SnapshotSettingsForm ui:field="snapshot"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Condense Data">
-            <v:CondenseSettingsWidget ui:field="condense"/>
+            <v:CondenseSettingsForm ui:field="condense"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Data Retention">
-            <v:RetentionSettingsWidget ui:field="retention"/>
+            <v:RetentionSettingsForm ui:field="retention"/>
         </v:SettingsGroup>
         <v:SettingsGroup label="Key Schema">
-            <v:SessionKeySchemaSettingsWidget ui:field="keySchema"/>
+            <v:SessionKeySchemaSettingsForm ui:field="keySchema"/>
         </v:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

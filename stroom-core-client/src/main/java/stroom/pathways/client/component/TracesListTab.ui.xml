@@ -9,7 +9,7 @@
                      names="Traces, Trace overview" addStyleNames="max default-min-sizes">
         <g:SimplePanel ui:field="tracesList" addStyleNames="max"/>
         <g:SimplePanel addStyleNames="max">
-            <pp:TraceOverviewWidget ui:field="traceOverview"/>
+            <pp:TraceOverviewChart ui:field="traceOverview"/>
         </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

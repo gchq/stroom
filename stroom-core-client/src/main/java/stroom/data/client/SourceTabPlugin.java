@@ -28,7 +28,7 @@ import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, SourceTabController> {
+public class SourceTabPlugin extends AbstractTabPlugin<SourceKey, SourceTabController> {
 
     @Inject
     public SourceTabPlugin(final EventBus eventBus,

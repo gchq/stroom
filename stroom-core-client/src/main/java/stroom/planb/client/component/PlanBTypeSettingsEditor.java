@@ -40,18 +40,18 @@ public abstract class PlanBTypeSettingsEditor extends Component {
     public abstract AbstractPlanBSettings write();
 
     /// @return The general settings (e.g. the maximum store size), which every type has.
-    public abstract GeneralSettingsWidget getGeneralSettings();
+    public abstract GeneralSettingsForm getGeneralSettings();
 
     /// @return The data retention settings, which every type has.
-    public abstract RetentionSettingsWidget getRetentionSettings();
+    public abstract RetentionSettingsForm getRetentionSettings();
 
     /// @return The condense settings, or null for a type that has none.
-    public CondenseSettingsWidget getCondenseSettings() {
+    public CondenseSettingsForm getCondenseSettings() {
         return null;
     }
 
     /// @return The shared file store settings, or null for a type that has none.
-    public SharedFileStoreSettingsWidget getSharedFileStoreSettings() {
+    public SharedFileStoreSettingsForm getSharedFileStoreSettings() {
         return null;
     }
 

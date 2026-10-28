@@ -42,7 +42,7 @@
             </form:FormGroup>
         </sg:SettingsGroup>
         <sg:SettingsGroup label="General">
-            <sg:GeneralSettingsWidget ui:field="generalSettings"/>
+            <sg:GeneralSettingsForm ui:field="generalSettings"/>
         </sg:SettingsGroup>
         <sg:SettingsGroup label="Condense Data">
             <!-- What turning condense on costs, in the one place a user can turn it on: condense
@@ -53,11 +53,11 @@
             <g:FlowPanel>
                 <g:Label addStyleNames="floor-map-event-store-settings__condense-warning"
                          text="This will cause repeating events to disappear from the map."/>
-                <sg:CondenseSettingsWidget ui:field="condenseSettings"/>
+                <sg:CondenseSettingsForm ui:field="condenseSettings"/>
             </g:FlowPanel>
         </sg:SettingsGroup>
         <sg:SettingsGroup label="Data Retention">
-            <sg:RetentionSettingsWidget ui:field="retentionSettings"/>
+            <sg:RetentionSettingsForm ui:field="retentionSettings"/>
         </sg:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

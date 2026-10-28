@@ -30,15 +30,15 @@ public class HistogramSettingsEditor extends PlanBTypeSettingsEditor {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    GeneralSettingsWidget general;
+    GeneralSettingsForm general;
     @UiField
-    SnapshotSettingsWidget snapshot;
+    SnapshotSettingsForm snapshot;
     @UiField
-    RetentionSettingsWidget retention;
+    RetentionSettingsForm retention;
     @UiField
-    HistogramKeySchemaSettingsWidget keySchema;
+    HistogramKeySchemaSettingsForm keySchema;
     @UiField
-    HistogramValueSchemaSettingsWidget valueSchema;
+    HistogramValueSchemaSettingsForm valueSchema;
 
     /// Makes the settings, at their defaults.
     public HistogramSettingsEditor() {
@@ -78,12 +78,12 @@ public class HistogramSettingsEditor extends PlanBTypeSettingsEditor {
     }
 
     @Override
-    public GeneralSettingsWidget getGeneralSettings() {
+    public GeneralSettingsForm getGeneralSettings() {
         return general;
     }
 
     @Override
-    public RetentionSettingsWidget getRetentionSettings() {
+    public RetentionSettingsForm getRetentionSettings() {
         return retention;
     }
 

@@ -18,7 +18,7 @@ package stroom.security.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
-import stroom.data.client.AbstractTabPresenterPlugin;
+import stroom.data.client.AbstractTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserTabController;
 import stroom.security.client.event.OpenUserEvent;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class UserTabPlugin extends AbstractTabPresenterPlugin<UserRef, UserTabController> {
+public class UserTabPlugin extends AbstractTabPlugin<UserRef, UserTabController> {
 
     public static final SvgImage USER_ICON = SvgImage.USER;
     public static final SvgImage GROUP_ICON = SvgImage.USERS;

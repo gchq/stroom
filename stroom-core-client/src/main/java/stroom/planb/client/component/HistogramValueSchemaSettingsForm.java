@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
-import stroom.planb.shared.StateKeySchema;
+import stroom.planb.shared.HistogramValueSchema;
+import stroom.planb.shared.MaxValueSize;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -29,9 +28,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Objects;
-
-public class StateKeySchemaSettingsWidget extends Component {
+public class HistogramValueSchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -39,54 +36,33 @@ public class StateKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<KeyType> keyType;
-    @UiField
-    SelectionBox<HashLength> hashLength;
+    SelectionBox<MaxValueSize> maxValue;
 
     /// Makes the settings, at their defaults.
-    public StateKeySchemaSettingsWidget() {
+    public HistogramValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
-        keyType.addItems(KeyType.ORDERED_LIST);
-        hashLength.addItems(HashLength.ORDERED_LIST);
-        setKeySchema(new StateKeySchema.Builder().build());
-        onStateKeyTypeChange();
+        maxValue.addItems(MaxValueSize.ORDERED_LIST);
+        setValueSchema(new HistogramValueSchema.Builder().build());
     }
 
-    public StateKeySchema getKeySchema() {
-        return new StateKeySchema.Builder()
-                .keyType(keyType.getValue())
-                .hashLength(hashLength.getValue())
+    public HistogramValueSchema getValueSchema() {
+        return new HistogramValueSchema.Builder()
+                .valueType(maxValue.getValue())
                 .build();
     }
 
-    public void setKeySchema(final StateKeySchema keySchema) {
-        final StateKeySchema schema = new StateKeySchema.Builder(keySchema).build();
-        keyType.setValue(schema.getKeyType());
-        hashLength.setValue(schema.getHashLength());
-        onStateKeyTypeChange();
+    public void setValueSchema(final HistogramValueSchema valueSchema) {
+        final HistogramValueSchema schema = new HistogramValueSchema.Builder(valueSchema).build();
+        maxValue.setValue(schema.getValueType());
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        keyType.setReadOnly(readOnly);
-        hashLength.setReadOnly(readOnly);
+        maxValue.setReadOnly(readOnly);
     }
 
-    private void onStateKeyTypeChange() {
-        final KeyType value = keyType.getValue();
-        // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
-        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
-                              Objects.equals(value, KeyType.VARIABLE));
-    }
-
-    @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<KeyType> event) {
-        onStateKeyTypeChange();
-        changed();
-    }
-
-    @UiHandler("hashLength")
-    public void onHashLength(final ValueChangeEvent<HashLength> event) {
+    @UiHandler("maxValue")
+    public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
         changed();
     }
 
@@ -109,7 +85,7 @@ public class StateKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, StateKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, HistogramValueSchemaSettingsForm> {
 
     }
 }

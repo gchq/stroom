@@ -23,8 +23,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.document.asset.client.DocumentAssetAddFileCallback;
-import stroom.document.asset.client.DocumentAssetPresenterUtils;
 import stroom.document.asset.client.DocumentAssetState;
+import stroom.document.asset.client.DocumentAssetUtils;
 import stroom.document.asset.client.component.DocumentAssetAddItemDialogController.DialogType;
 import stroom.document.asset.client.component.DocumentAssetsTab.AssetAction;
 import stroom.document.asset.shared.DocumentAssetResource;
@@ -215,8 +215,8 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                                 final String fileName,
                                 final ResourceKey resourceKey) {
 
-        final String path = DocumentAssetPresenterUtils.getNewItemPath(parentFolderItem, fileName);
-        DocumentAssetPresenterUtils.markOpenClosedStateOpen(parentFolderItem, treeItemPathToOpenState);
+        final String path = DocumentAssetUtils.getNewItemPath(parentFolderItem, fileName);
+        DocumentAssetUtils.markOpenClosedStateOpen(parentFolderItem, treeItemPathToOpenState);
         doUpdateNewUploadedFile(path, resourceKey);
     }
 
@@ -238,14 +238,14 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         if (assetParentItem != null) {
             int i = 1;
             while (assetParentItem.labelExists(nonClashingLabel, itemId)) {
-                nonClashingLabel = DocumentAssetPresenterUtils.generateNonClashingLabel(label, i);
+                nonClashingLabel = DocumentAssetUtils.generateNonClashingLabel(label, i);
                 i++;
             }
         } else {
             // Parent is the top of the tree
             int i = 1;
-            while (DocumentAssetPresenterUtils.labelClashesInTreeRoot(tree, nonClashingLabel, itemId)) {
-                nonClashingLabel = DocumentAssetPresenterUtils.generateNonClashingLabel(label, i);
+            while (DocumentAssetUtils.labelClashesInTreeRoot(tree, nonClashingLabel, itemId)) {
+                nonClashingLabel = DocumentAssetUtils.generateNonClashingLabel(label, i);
                 i++;
             }
         }
@@ -360,17 +360,17 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     private void onCreateNewItem(final boolean addFile) {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem parentItem =
-                    DocumentAssetPresenterUtils.findFolderForSelectedItem(
+                    DocumentAssetUtils.findFolderForSelectedItem(
                             tree.getSelectedItem());
 
-            final String path = DocumentAssetPresenterUtils.getItemPath(parentItem);
+            final String path = DocumentAssetUtils.getItemPath(parentItem);
             final DialogType dialogType = addFile
                     ? DialogType.FILE_DIALOG
                     : DialogType.FOLDER_DIALOG;
             addItemDialogProvider.get().show(this, path, ILLEGAL_ASSET_NAME_CHARACTERS, dialogType, name -> {
                 final String itemName = getNonClashingLabel(parentItem, name, null);
-                DocumentAssetPresenterUtils.markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
-                final String newItemPath = DocumentAssetPresenterUtils.getNewItemPath(parentItem, itemName);
+                DocumentAssetUtils.markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
+                final String newItemPath = DocumentAssetUtils.getNewItemPath(parentItem, itemName);
                 if (addFile) {
                     doUpdateNewFile(newItemPath);
                 } else {
@@ -396,7 +396,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                 ConfirmEvent.fire(this, message,
                         result -> {
                             if (result) {
-                                final String path = DocumentAssetPresenterUtils.getItemPath(assetTreeItem);
+                                final String path = DocumentAssetUtils.getItemPath(assetTreeItem);
                                 doUpdateDelete(path, !assetTreeItem.isLeaf());
                             }
                         });
@@ -415,10 +415,10 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                         selectedItem.isLeaf(),
                         ILLEGAL_ASSET_NAME_CHARACTERS,
                         name -> {
-                            final String oldPath = DocumentAssetPresenterUtils.getItemPath(selectedItem);
+                            final String oldPath = DocumentAssetUtils.getItemPath(selectedItem);
                             final DocumentAssetTreeItem parentItem = selectedItem.getParentItem();
                             final String text = getNonClashingLabel(parentItem, name, selectedItem.getId());
-                            final String newPath = DocumentAssetPresenterUtils.getNewItemPath(parentItem, text);
+                            final String newPath = DocumentAssetUtils.getNewItemPath(parentItem, text);
                             doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
                         });
             }
@@ -503,7 +503,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
 
         if (selectedItem != null && selectedItem.isLeaf()) {
-            final String selectedItemPath = DocumentAssetPresenterUtils.getItemPath(selectedItem);
+            final String selectedItemPath = DocumentAssetUtils.getItemPath(selectedItem);
             assetDirtyState.onSelectNewItemAfterSaveOldItem(selectedItem, selectedItemPath);
             fetchDraftContent(document,
                     selectedItemPath,
@@ -531,9 +531,9 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     private void onUploadFile() {
         if (!isReadOnly()) {
             final DocumentAssetTreeItem folderItem =
-                    DocumentAssetPresenterUtils.findFolderForSelectedItem(
+                    DocumentAssetUtils.findFolderForSelectedItem(
                             tree.getSelectedItem());
-            final String path = DocumentAssetPresenterUtils.getItemPath(folderItem);
+            final String path = DocumentAssetUtils.getItemPath(folderItem);
             uploadFileDialogProvider.get().show(this, this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
         }
     }
@@ -548,7 +548,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                 final String docId = document.getUuid();
                 final String relativePath = ASSET_SERVLET_PATH_PREFIX
                                             + docId
-                                            + DocumentAssetPresenterUtils.getItemPath(selectedItem);
+                                            + DocumentAssetUtils.getItemPath(selectedItem);
                 Window.open(relativePath, "_blank", null);
             }
         }
@@ -817,7 +817,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     // Called from read() to pull down the assets from the server and show them in the tree
     private void fetchDraftAssets(final D document) {
         final String ownerId = document.getUuid();
-        DocumentAssetPresenterUtils.storeOpenClosedState(tree, treeItemPathToOpenState);
+        DocumentAssetUtils.storeOpenClosedState(tree, treeItemPathToOpenState);
 
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
                 .method(r -> r.fetchDraftAssets(ownerId))
@@ -826,7 +826,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                     tree.clear();
 
                     // Put the new tree in
-                    DocumentAssetPresenterUtils.addPathsToTree(tree, assets.getAssets());
+                    DocumentAssetUtils.addPathsToTree(tree, assets.getAssets());
 
                     // Mark the editor content as clean
                     assetDirtyState.onFetchDraftAssets();
@@ -837,7 +837,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                     markChanged();
 
                     // Restore the open/closed state of the tree
-                    DocumentAssetPresenterUtils.restoreOpenClosedState(tree, treeItemPathToOpenState);
+                    DocumentAssetUtils.restoreOpenClosedState(tree, treeItemPathToOpenState);
 
                     // Make sure UI state is correct
                     updateState();

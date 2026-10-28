@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.shared.RangeKeySchema;
-import stroom.planb.shared.RangeType;
+import stroom.planb.shared.HashLength;
+import stroom.planb.shared.KeyType;
+import stroom.planb.shared.StateKeySchema;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -28,7 +29,9 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class RangeKeySchemaSettingsWidget extends Component {
+import java.util.Objects;
+
+public class StateKeySchemaSettingsForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -36,33 +39,54 @@ public class RangeKeySchemaSettingsWidget extends Component {
     };
 
     @UiField
-    SelectionBox<RangeType> rangeType;
+    SelectionBox<KeyType> keyType;
+    @UiField
+    SelectionBox<HashLength> hashLength;
 
     /// Makes the settings, at their defaults.
-    public RangeKeySchemaSettingsWidget() {
+    public StateKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
-        rangeType.addItems(RangeType.ORDERED_LIST);
-        setKeySchema(new RangeKeySchema.Builder().build());
+        keyType.addItems(KeyType.ORDERED_LIST);
+        hashLength.addItems(HashLength.ORDERED_LIST);
+        setKeySchema(new StateKeySchema.Builder().build());
+        onStateKeyTypeChange();
     }
 
-    public RangeKeySchema getKeySchema() {
-        return new RangeKeySchema.Builder()
-                .rangeType(rangeType.getValue())
+    public StateKeySchema getKeySchema() {
+        return new StateKeySchema.Builder()
+                .keyType(keyType.getValue())
+                .hashLength(hashLength.getValue())
                 .build();
     }
 
-    public void setKeySchema(final RangeKeySchema rangeKeySchema) {
-        final RangeKeySchema schema = new RangeKeySchema.Builder(rangeKeySchema).build();
-        rangeType.setValue(schema.getRangeType());
+    public void setKeySchema(final StateKeySchema keySchema) {
+        final StateKeySchema schema = new StateKeySchema.Builder(keySchema).build();
+        keyType.setValue(schema.getKeyType());
+        hashLength.setValue(schema.getHashLength());
+        onStateKeyTypeChange();
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        rangeType.setReadOnly(readOnly);
+        keyType.setReadOnly(readOnly);
+        hashLength.setReadOnly(readOnly);
     }
 
-    @UiHandler("rangeType")
-    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+    private void onStateKeyTypeChange() {
+        final KeyType value = keyType.getValue();
+        // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
+        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                              Objects.equals(value, KeyType.VARIABLE));
+    }
+
+    @UiHandler("keyType")
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+        onStateKeyTypeChange();
+        changed();
+    }
+
+    @UiHandler("hashLength")
+    public void onHashLength(final ValueChangeEvent<HashLength> event) {
         changed();
     }
 
@@ -85,7 +109,7 @@ public class RangeKeySchemaSettingsWidget extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, RangeKeySchemaSettingsWidget> {
+    interface Binder extends UiBinder<Widget, StateKeySchemaSettingsForm> {
 
     }
 }

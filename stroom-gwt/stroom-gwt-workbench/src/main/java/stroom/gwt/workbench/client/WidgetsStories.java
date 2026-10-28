@@ -66,7 +66,7 @@ import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorThemeStori
 import stroom.gwt.workbench.client.widgets.editorsandviewers.DataTextPaneStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.ItemNavigatorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.MarkdownEditorStories;
-import stroom.gwt.workbench.client.widgets.editorsandviewers.SourcePresenterStories;
+import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.XsdBrowserStories;
 import stroom.gwt.workbench.client.widgets.entitychecktree.EntityCheckTreeStories;
@@ -151,7 +151,7 @@ public final class WidgetsStories {
         // Widgets/Editors & Viewers/MarkdownEditor
         MarkdownEditorStories.addTo(registry);
         // Widgets/Editors & Viewers/SourcePresenter
-        SourcePresenterStories.addTo(registry);
+        SourceStories.addTo(registry);
         // Widgets/Editors & Viewers/SourceViewer
         SourceViewerStories.addTo(registry);
         // Widgets/Editors & Viewers/TextPresenter
