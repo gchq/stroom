@@ -72,7 +72,7 @@ class TestStoryFileCreator {
 
     @Test
     void testCreate() throws IOException {
-        final StoryFileCreator.Result result = creator.create("stroom.widget.tickbox.client.view.TickBox");
+        final StoryFileCreator.Result result = creator.create("stroom.widget.tickbox.client.TickBox");
 
         final Path expectedFile = tempDir.resolve("app/client/widgets/TickBoxStories.java");
         assertThat(result.getFile()).isEqualTo(expectedFile);
@@ -83,7 +83,7 @@ class TestStoryFileCreator {
                 .startsWith("/*\n * Copyright ")
                 .contains("package app.client.widgets;\n\n"
                           + "import stroom.gwt.workbench.framework.client.story.StoryRegistry;\n"
-                          + "import stroom.widget.tickbox.client.view.TickBox;\n\n"
+                          + "import stroom.widget.tickbox.client.TickBox;\n\n"
                           + "/// Stories for [TickBox].")
                 .contains("public final class TickBoxStories {")
                 .contains("registry.component(\"Widgets/TickBox\", TickBoxStories.class)")

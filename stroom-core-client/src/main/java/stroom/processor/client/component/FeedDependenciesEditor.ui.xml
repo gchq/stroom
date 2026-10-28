@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
     <!-- The Set Feed Dependencies dialog's content -->
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="feedDependencies"

@@ -27,7 +27,7 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

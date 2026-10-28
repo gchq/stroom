@@ -2,7 +2,7 @@
 <!-- An analytic or report's schedule: its name, node, schedule, bounds and run as user -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:schedule="urn:import:stroom.schedule.client"

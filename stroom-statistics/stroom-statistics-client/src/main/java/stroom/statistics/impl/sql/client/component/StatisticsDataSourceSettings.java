@@ -22,7 +22,7 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.component.client.Component;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

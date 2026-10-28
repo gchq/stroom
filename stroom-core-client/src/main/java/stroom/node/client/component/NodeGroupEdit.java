@@ -20,7 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.node.shared.NodeInclusionBehaviour;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:sel="urn:import:stroom.item.client">
     <!-- A Git repository's Settings tab -->
     <g:FlowPanel styleName="max form-padding form gitrepo-settings-form">

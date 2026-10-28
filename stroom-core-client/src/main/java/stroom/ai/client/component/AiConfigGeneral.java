@@ -25,7 +25,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

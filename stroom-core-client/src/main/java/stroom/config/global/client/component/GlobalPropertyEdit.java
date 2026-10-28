@@ -20,7 +20,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.core.client.GWT;

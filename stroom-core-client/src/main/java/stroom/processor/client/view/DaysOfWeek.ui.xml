@@ -2,7 +2,7 @@
 <!-- The days of the week (days-of-week.css), a tick box each -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
     <g:FlowPanel styleName="days-of-week">
         <tickbox:TickBox ui:field="mon" label="Monday"/>
         <tickbox:TickBox ui:field="tue" label="Tuesday"/>

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
     <g:FlowPanel styleName="max form">
         <!-- Theme -->
         <form:FormGroup identity="userPreferencesTheme"

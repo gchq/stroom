@@ -20,7 +20,7 @@ import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

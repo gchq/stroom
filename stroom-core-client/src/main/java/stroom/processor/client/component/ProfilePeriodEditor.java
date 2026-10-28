@@ -20,7 +20,7 @@ import stroom.processor.client.view.DaysOfWeek;
 import stroom.util.shared.time.Days;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

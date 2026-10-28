@@ -4,7 +4,7 @@
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">

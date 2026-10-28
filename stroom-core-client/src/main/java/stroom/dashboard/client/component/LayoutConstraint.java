@@ -18,7 +18,7 @@ package stroom.dashboard.client.component;
 
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.widget.component.client.Component;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

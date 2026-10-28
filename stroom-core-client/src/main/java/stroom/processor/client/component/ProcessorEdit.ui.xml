@@ -4,7 +4,7 @@
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:l="urn:import:stroom.item.client"

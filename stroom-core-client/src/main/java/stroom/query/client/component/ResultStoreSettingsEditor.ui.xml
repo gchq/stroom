@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="searchProcessTimeToIdle" label="Search Process Time To Idle"
                         helpText="How long the search can go unused before it is stopped. Results already found are kept. Enter a duration such as 30s, 10m, 1h or 1d, or ISO 8601 such as PT10M."

@@ -19,7 +19,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
 
     <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-popup">
         <!-- Loop playback toggle -->

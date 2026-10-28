@@ -22,7 +22,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

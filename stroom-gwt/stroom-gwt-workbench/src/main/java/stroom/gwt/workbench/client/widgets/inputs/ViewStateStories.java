@@ -62,7 +62,7 @@ import stroom.widget.form.client.RadioGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.user.client.ui.Composite;

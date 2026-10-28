@@ -26,7 +26,7 @@ import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 

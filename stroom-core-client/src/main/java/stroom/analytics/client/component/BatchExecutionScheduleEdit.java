@@ -31,7 +31,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;

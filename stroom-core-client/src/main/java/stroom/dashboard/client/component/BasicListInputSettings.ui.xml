@@ -3,7 +3,7 @@
      dictionary's -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:v="urn:import:stroom.widget.tickbox.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">

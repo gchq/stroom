@@ -17,7 +17,7 @@
 /*
    The tick box, named BEM style (block, block__element, block--modifier), in two forms:
 
-   - The widget (stroom.widget.tickbox.client.view.TickBox): a label element holding a native
+   - The widget (stroom.widget.tickbox.client.TickBox): a label element holding a native
      checkbox (tick-box__input, unseen, over the box), the box drawn for it (tick-box__mark) and its
      text (tick-box__label). Clicking anywhere on it ticks it. Its states come from the input:
      :checked, :disabled and aria-readonly.

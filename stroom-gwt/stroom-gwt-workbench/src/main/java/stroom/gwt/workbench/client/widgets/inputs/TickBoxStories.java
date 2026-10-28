@@ -22,7 +22,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 /// Stories for [TickBox], the tick box (`tick-box`) used in Stroom's forms. A form's tick box is
 /// ticked or not (e.g. whether something is enabled), so it has no half-ticked state: that belongs

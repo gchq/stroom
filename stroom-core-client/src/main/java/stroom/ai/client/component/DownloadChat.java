@@ -17,7 +17,7 @@
 package stroom.ai.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

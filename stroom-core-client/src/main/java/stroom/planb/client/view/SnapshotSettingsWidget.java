@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.planb.shared.SnapshotSettings;
 import stroom.widget.component.client.Component;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

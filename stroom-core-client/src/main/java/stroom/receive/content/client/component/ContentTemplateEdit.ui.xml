@@ -5,7 +5,7 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup

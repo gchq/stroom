@@ -18,7 +18,7 @@ package stroom.processor.client.view;
 
 import stroom.util.shared.time.Day;
 import stroom.util.shared.time.Days;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

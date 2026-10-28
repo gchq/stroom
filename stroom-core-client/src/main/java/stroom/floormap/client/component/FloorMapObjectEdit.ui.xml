@@ -20,7 +20,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:colour="urn:import:stroom.widget.colour.client"
-             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:t="urn:import:stroom.widget.tickbox.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:a="urn:import:stroom.widget.component.client">
 

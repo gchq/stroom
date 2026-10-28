@@ -24,7 +24,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;

@@ -25,7 +25,7 @@ import stroom.query.api.TextAttributes;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;

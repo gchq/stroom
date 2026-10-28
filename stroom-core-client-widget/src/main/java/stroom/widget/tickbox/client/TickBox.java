@@ -30,7 +30,7 @@
  * the License.
  */
 
-package stroom.widget.tickbox.client.view;
+package stroom.widget.tickbox.client;
 
 import stroom.util.shared.NullSafe;
 

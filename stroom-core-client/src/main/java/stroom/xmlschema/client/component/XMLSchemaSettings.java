@@ -19,7 +19,7 @@ package stroom.xmlschema.client.component;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.gwt.core.client.GWT;

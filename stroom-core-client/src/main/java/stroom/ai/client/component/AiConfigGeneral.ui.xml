@@ -5,7 +5,7 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
         <form:FormGroup identity="model"
                         label="Model"
