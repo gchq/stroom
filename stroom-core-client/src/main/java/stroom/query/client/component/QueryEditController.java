@@ -38,8 +38,6 @@ import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
@@ -349,15 +347,6 @@ public class QueryEditController
         }
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     @Override
     public List<Widget> getToolbars() {

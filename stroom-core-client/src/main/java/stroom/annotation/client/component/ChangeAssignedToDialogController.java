@@ -24,8 +24,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.FindUserContext;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -128,11 +126,4 @@ public class ChangeAssignedToDialogController extends Controller {
         });
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

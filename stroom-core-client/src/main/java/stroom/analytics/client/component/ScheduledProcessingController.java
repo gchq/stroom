@@ -24,8 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
@@ -213,8 +211,4 @@ public class ScheduledProcessingController extends Controller {
     }
 
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

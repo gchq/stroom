@@ -26,8 +26,6 @@ import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.DataFormatNames;
 import stroom.receive.rules.shared.ReceiptCheckMode;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -134,11 +132,4 @@ public class FeedSettingsController extends Controller {
         }, taskMonitor());
     }
 
-    // The task monitor of what owns this, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

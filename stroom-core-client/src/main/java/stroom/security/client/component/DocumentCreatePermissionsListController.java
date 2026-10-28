@@ -26,8 +26,6 @@ import stroom.security.client.presenter.DescriptionBuilder;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 
@@ -276,11 +274,4 @@ public class DocumentCreatePermissionsListController extends Controller {
         updateDetails();
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

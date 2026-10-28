@@ -17,9 +17,10 @@
 package stroom.dashboard.client.query.gin;
 
 import stroom.dashboard.client.query.QueryPlugin;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public class QueryModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public class QueryModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

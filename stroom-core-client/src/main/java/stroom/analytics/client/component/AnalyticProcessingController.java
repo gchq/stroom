@@ -21,8 +21,6 @@ import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -176,13 +174,4 @@ public class AnalyticProcessingController extends Controller {
         view.setProcessingType(analyticProcessType);
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

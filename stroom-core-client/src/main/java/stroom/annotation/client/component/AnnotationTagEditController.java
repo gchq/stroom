@@ -23,8 +23,6 @@ import stroom.annotation.shared.AnnotationTagType;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -161,8 +159,4 @@ public class AnnotationTagEditController extends Controller {
                 .fire();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -25,8 +25,6 @@ import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
@@ -252,8 +250,4 @@ public class FsVolumeGroupEditController extends Controller {
                 .exec();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

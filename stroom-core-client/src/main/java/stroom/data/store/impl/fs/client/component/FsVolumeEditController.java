@@ -23,8 +23,6 @@ import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
@@ -196,8 +194,4 @@ public class FsVolumeEditController extends Controller {
                 .build();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

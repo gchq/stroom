@@ -28,8 +28,6 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.http.client.component.HttpClientConfigEditorController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.component.client.Contexts;
@@ -290,13 +288,4 @@ public class GitRepoSettingsController extends Controller {
         }
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

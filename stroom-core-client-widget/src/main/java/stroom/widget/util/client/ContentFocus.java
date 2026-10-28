@@ -16,8 +16,6 @@
 
 package stroom.widget.util.client;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -39,7 +37,7 @@ public final class ContentFocus {
 
     /// Focuses a screen that has just been shown.
     ///
-    /// @param content The screen, e.g. a tab's presenter, or its widget.
+    /// @param content The screen, e.g. a tab's controller, or its widget.
     public static void focus(final Object content) {
         if (content instanceof final Focus focus) {
             focus.focus();
@@ -60,12 +58,9 @@ public final class ContentFocus {
 
     // The screen's widget, or null if it has none
     private static Widget widgetOf(final Object content) {
-        if (content instanceof final MyPresenterWidget<?> presenter) {
-            return presenter.getWidget();
-        } else if (content instanceof final IsWidget isWidget) {
-            return isWidget.asWidget();
-        }
-        return null;
+        return content instanceof final IsWidget isWidget
+                ? isWidget.asWidget()
+                : null;
     }
 
     // A screen that has just opened shows its start, so focusing must not scroll it, or the

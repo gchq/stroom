@@ -39,8 +39,6 @@ import stroom.query.api.TimeRange;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
@@ -476,10 +474,6 @@ public class QueryDocEditController
     }
 
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
     /// Shows a query document's query, time range and table preferences.
     ///

@@ -17,9 +17,10 @@
 package stroom.entity.client.gin;
 
 import stroom.entity.client.DocumentDialogScreens;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public class EntityModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public class EntityModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

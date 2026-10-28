@@ -21,8 +21,6 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -135,8 +133,4 @@ public class SelectionHandlerEditorController extends Controller {
                 .build();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

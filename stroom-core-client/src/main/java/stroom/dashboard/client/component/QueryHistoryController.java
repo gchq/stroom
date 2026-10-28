@@ -23,8 +23,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionTreeController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -153,8 +151,4 @@ public class QueryHistoryController extends Controller {
                 .fire();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

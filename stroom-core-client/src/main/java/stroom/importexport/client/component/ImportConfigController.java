@@ -23,8 +23,6 @@ import stroom.importexport.client.presenter.ImportUtil;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;
@@ -120,11 +118,4 @@ public class ImportConfigController extends Controller {
                 .exec();
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

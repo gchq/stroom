@@ -29,8 +29,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.GetUserRequest;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserRefResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -261,11 +259,4 @@ public class UserRefPopupController extends Controller {
                 .exec();
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

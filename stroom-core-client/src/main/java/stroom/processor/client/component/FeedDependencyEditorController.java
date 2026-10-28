@@ -24,8 +24,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.MetaResource;
 import stroom.processor.shared.FeedDependency;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -129,11 +127,4 @@ public class FeedDependencyEditorController extends Controller {
                 .exec();
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

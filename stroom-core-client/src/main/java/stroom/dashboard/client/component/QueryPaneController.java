@@ -61,8 +61,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
@@ -207,15 +205,6 @@ public class QueryPaneController
         }
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     private void onHistory() {
         history.show(getId(),

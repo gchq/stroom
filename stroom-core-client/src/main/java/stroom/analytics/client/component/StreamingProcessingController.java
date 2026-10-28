@@ -21,8 +21,6 @@ import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.processor.client.component.ProcessorsController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
@@ -100,8 +98,4 @@ public class StreamingProcessingController extends Controller {
         this.isDocumentDirty = isDocumentDirty;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -26,8 +26,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.NullSafe;
@@ -101,15 +99,6 @@ public class ViewSettingsController extends Controller {
         });
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     /// Shows a view's data source, pipeline and stream filter.
     ///

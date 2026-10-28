@@ -25,8 +25,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
@@ -341,8 +339,4 @@ public class EditApiKeyController extends Controller {
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

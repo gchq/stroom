@@ -22,8 +22,6 @@ import stroom.query.api.LifespanInfo;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.shared.UpdateStoreRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -129,11 +127,4 @@ public class ResultStoreSettingsEditorController extends Controller {
         return null;
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

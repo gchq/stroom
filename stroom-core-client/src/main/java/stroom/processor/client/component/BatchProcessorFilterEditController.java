@@ -25,8 +25,6 @@ import stroom.processor.shared.ProcessorFilterChange;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.component.UserRefSelectionController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -196,8 +194,4 @@ public class BatchProcessorFilterEditController extends Controller {
                 .exec();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

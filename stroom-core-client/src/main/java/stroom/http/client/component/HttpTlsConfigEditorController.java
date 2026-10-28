@@ -20,8 +20,6 @@ import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.http.HttpTlsConfig;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -137,8 +135,4 @@ public class HttpTlsConfigEditorController extends Controller {
         return model;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

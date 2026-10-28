@@ -20,9 +20,10 @@ import stroom.dashboard.client.input.KeyValueInputPlugin;
 import stroom.dashboard.client.input.ListInputPlugin;
 import stroom.dashboard.client.input.TableFilterPlugin;
 import stroom.dashboard.client.input.TextInputPlugin;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public class InputModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public class InputModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

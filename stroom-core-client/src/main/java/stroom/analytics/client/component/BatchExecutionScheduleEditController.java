@@ -22,8 +22,6 @@ import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
 import stroom.schedule.client.ScheduleBoxController;
 import stroom.security.client.component.UserRefSelectionController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -158,8 +156,4 @@ public class BatchExecutionScheduleEditController extends Controller {
         view.setOnApplyFiltered(onApplyFiltered);
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

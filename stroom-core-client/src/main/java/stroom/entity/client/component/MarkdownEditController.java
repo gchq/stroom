@@ -23,8 +23,6 @@ import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.iframe.client.component.IFrame;
 import stroom.iframe.client.component.IFrame.SandboxOption;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
@@ -241,13 +239,6 @@ public class MarkdownEditController extends Controller implements HasToolbar {
         }, taskMonitor());
     }
 
-    // The task monitor its owner gives it, else its own spinner
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 
     private void updatePreview() {
         final String rawMarkdown = editor.getText();

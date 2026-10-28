@@ -40,8 +40,6 @@ import stroom.pipeline.structure.client.presenter.SimplePipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -717,10 +715,6 @@ public class PipelineStructureController extends Controller {
         view.setRestoreEnabled(!isReadOnly() && NullSafe.hasItems(restoreMenuItems));
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
     private DocRef getParentPipeline() {
         return parentPipeline;

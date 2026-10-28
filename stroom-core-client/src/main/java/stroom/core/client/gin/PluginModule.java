@@ -17,9 +17,10 @@
 package stroom.core.client.gin;
 
 import stroom.core.client.presenter.Plugin;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public abstract class PluginModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public abstract class PluginModule extends AbstractGinModule {
 
     protected <P extends Plugin> void bindPlugin(final Class<P> plugin) {
         bind(plugin).asEagerSingleton();

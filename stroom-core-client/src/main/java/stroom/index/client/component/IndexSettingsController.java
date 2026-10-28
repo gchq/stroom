@@ -29,8 +29,6 @@ import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.NullSafe;
@@ -172,11 +170,4 @@ public class IndexSettingsController extends Controller {
         pipeline.setReadOnly(readOnly);
     }
 
-    // The task monitor of what owns this, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

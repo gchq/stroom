@@ -18,11 +18,11 @@ package stroom.dashboard.client.vis.gin;
 
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
-public class VisModule extends AbstractPresenterModule {
+public class VisModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

@@ -73,7 +73,6 @@ public class ApiKeysController extends ContentTabController
         this.restFactory = restFactory;
         this.editApiKeyProvider = editApiKeyProvider;
 
-//        view.setUiHandlers(this);
         view.setList(apiKeysList);
 
         apiKeysList.getToolbar().setName("API key actions");

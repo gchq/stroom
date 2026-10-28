@@ -27,8 +27,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.query.api.Column;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -294,8 +292,4 @@ public class BasicVisSettingsController extends BasicSettingsTabController<Basic
         this.onRemoveTab = onRemoveTab;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

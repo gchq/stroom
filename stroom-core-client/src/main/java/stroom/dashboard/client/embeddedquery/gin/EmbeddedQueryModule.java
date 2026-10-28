@@ -18,11 +18,11 @@ package stroom.dashboard.client.embeddedquery.gin;
 
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
-public class EmbeddedQueryModule extends AbstractPresenterModule {
+public class EmbeddedQueryModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

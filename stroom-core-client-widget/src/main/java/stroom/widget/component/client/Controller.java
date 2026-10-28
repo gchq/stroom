@@ -16,6 +16,7 @@
 
 package stroom.widget.component.client;
 
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -256,6 +257,21 @@ public abstract class Controller implements IsWidget, HasControllerNode, HasHand
         return taskMonitorFactory == Contexts.TASK_MONITOR.getDefaultValue()
                 ? null
                 : taskMonitorFactory;
+    }
+
+    /// What shows the progress of this controller's requests: when each starts, the task monitor its
+    /// owners provide then ([Contexts#TASK_MONITOR], e.g. its tab's or dialog's), or, if none does,
+    /// Stroom's own busy indicator (an app-wide task). It can be given before this controller is
+    /// owned, e.g. to a list made in its constructor.
+    ///
+    /// @return The task monitor.
+    protected final TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
     /// Watches a context value: runs `onChange` with it once this controller is owned, and again

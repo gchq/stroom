@@ -32,14 +32,14 @@ import stroom.main.client.presenter.MainScreens;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-public class AppModule extends AbstractPresenterModule {
+public class AppModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

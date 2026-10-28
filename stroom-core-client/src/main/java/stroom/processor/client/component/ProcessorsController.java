@@ -38,8 +38,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.security.shared.DocPermissionResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
@@ -467,8 +465,4 @@ public class ProcessorsController extends Controller {
         this.editInterceptor = editInterceptor;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

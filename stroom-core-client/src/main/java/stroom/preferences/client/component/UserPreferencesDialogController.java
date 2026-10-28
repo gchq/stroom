@@ -24,8 +24,6 @@ import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
@@ -233,8 +231,4 @@ public class UserPreferencesDialogController extends Controller {
         return builder.build();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

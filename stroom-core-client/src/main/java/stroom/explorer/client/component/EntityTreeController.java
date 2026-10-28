@@ -21,8 +21,6 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -141,11 +139,4 @@ public class EntityTreeController extends Controller {
         treeController.setSelectParentIfNotFound(selectParentIfNotFound);
     }
 
-    // The task monitor of what owns this, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

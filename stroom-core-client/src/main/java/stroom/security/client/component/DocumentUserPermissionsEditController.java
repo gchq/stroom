@@ -37,7 +37,6 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -236,8 +235,4 @@ public class DocumentUserPermissionsEditController extends Controller {
         return new AbstractDocumentPermissionsChange.SetPermission(relatedUser, view.getPermission());
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

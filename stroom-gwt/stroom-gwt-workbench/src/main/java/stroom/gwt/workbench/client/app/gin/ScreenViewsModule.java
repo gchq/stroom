@@ -16,7 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,
@@ -27,7 +28,7 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// bound here must be left out of the area modules (a key bound twice fails the GIN compile).
 /// Add a binding here (copied from Stroom's module) when a view or presenter is a widget shared
 /// by several areas' screens.
-public class ScreenViewsModule extends AbstractPresenterModule {
+public class ScreenViewsModule extends AbstractGinModule {
 
     /// Binds the shared views and presenters.
     @Override

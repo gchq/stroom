@@ -18,11 +18,11 @@ package stroom.ai.client.gin;
 
 import stroom.ai.client.AskStroomAiScreens;
 import stroom.ai.client.component.AskStroomAiController;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
-public class AskStroomAIModule extends AbstractPresenterModule {
+public class AskStroomAIModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

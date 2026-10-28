@@ -31,8 +31,6 @@ import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumen
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermissionChange;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
@@ -240,8 +238,4 @@ public class BatchDocumentPermissionsEditController extends Controller {
                 .exec();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

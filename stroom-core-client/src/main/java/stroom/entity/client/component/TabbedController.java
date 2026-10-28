@@ -24,7 +24,6 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -486,15 +485,11 @@ public abstract class TabbedController<D> extends Controller {
                     : writer.apply(content, document);
         }
 
-        // What adds to the toolbar row: the content, or the presenter an adapter shows
+        // What adds to the toolbar row: the content, if it has toolbars of its own
         private HasToolbar getToolbar() {
-            if (content instanceof final HasToolbar hasToolbar) {
-                return hasToolbar;
-            } else if (content instanceof final PresenterAdapter<?> adapter
-                       && adapter.getPresenter() instanceof final HasToolbar hasToolbar) {
-                return hasToolbar;
-            }
-            return null;
+            return content instanceof final HasToolbar hasToolbar
+                    ? hasToolbar
+                    : null;
         }
     }
 }

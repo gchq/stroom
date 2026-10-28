@@ -17,15 +17,12 @@
 package stroom.widget.component.client;
 
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +53,7 @@ class TestAppRoot {
     void aDialogIsOwnedByTheRootUntilHidden() {
         final AppRoot appRoot = new AppRoot();
 
-        final MyPresenterWidget<View> dialog = appRoot.makeDialog(this::newDialog);
+        final Dialog dialog = appRoot.makeDialog(this::newDialog);
 
         assertThat(dialog.getControllerNode().parent()).isSameAs(appRoot.getControllerNode());
         HidePopupEvent.builder(dialog).fire();
@@ -82,7 +79,7 @@ class TestAppRoot {
     void whatItMakesIsOwnedUntilTheRootGoes() {
         final AppRoot appRoot = new AppRoot();
 
-        final MyPresenterWidget<View> kept = appRoot.make(this::newDialog);
+        final Dialog kept = appRoot.make(this::newDialog);
 
         assertThat(kept.getControllerNode().parent()).isSameAs(appRoot.getControllerNode());
         // Hiding it doesn't dispose it
@@ -111,7 +108,18 @@ class TestAppRoot {
                 .hasMessageContaining("provider");
     }
 
-    private MyPresenterWidget<View> newDialog() {
-        return new MyPresenterWidget<>(eventBus, Mockito.mock(View.class));
+    private Dialog newDialog() {
+        return new Dialog(eventBus);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class Dialog extends Controller {
+
+        private Dialog(final EventBus eventBus) {
+            super(eventBus);
+        }
     }
 }

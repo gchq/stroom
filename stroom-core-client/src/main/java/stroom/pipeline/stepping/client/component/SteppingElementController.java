@@ -32,8 +32,6 @@ import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.ErrorType;
@@ -708,10 +706,6 @@ public class SteppingElementController extends Controller {
         this.pipelineModel = pipelineModel;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
 
     // --------------------------------------------------------------------------------

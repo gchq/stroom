@@ -58,9 +58,7 @@ import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.NullSafe;
@@ -438,13 +436,4 @@ public class NavigationController extends Controller
         explorerTree.focus();
     }
 
-    // Lazily, as it is first used after this is owned: the tasks of the filter's recent filters
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

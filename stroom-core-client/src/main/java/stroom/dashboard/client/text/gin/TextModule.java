@@ -17,9 +17,10 @@
 package stroom.dashboard.client.text.gin;
 
 import stroom.dashboard.client.text.TextPlugin;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public class TextModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public class TextModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

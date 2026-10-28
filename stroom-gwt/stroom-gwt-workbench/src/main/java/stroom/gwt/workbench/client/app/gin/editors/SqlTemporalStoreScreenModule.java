@@ -16,11 +16,12 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The settings tab's binding from Stroom's `SqlTemporalStoreModule`
 /// (`stroom/sqlstore/client/gin/SqlTemporalStoreModule.java`).
-public class SqlTemporalStoreScreenModule extends AbstractPresenterModule {
+public class SqlTemporalStoreScreenModule extends AbstractGinModule {
 
     /// Binds the presenter and view.
     @Override

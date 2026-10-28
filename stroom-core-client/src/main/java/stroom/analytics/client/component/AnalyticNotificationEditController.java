@@ -26,8 +26,6 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.config.global.shared.ConfigTarget;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
@@ -214,8 +212,4 @@ public class AnalyticNotificationEditController extends Controller {
         showDestination(view.getDestinationType());
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

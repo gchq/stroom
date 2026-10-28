@@ -16,7 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin.shell;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The bindings of Stroom's app shell that the `shell` batch's `App/Main/AppShell` stories need and
 /// no other batch's module has: the main view and the explorer's navigation panel (Stroom's
@@ -28,7 +29,7 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// Plugins are left out, as in the other mirrors: the story gets them from the ginjector, which
 /// registers them, and they add the handlers of the app-wide events that open their screens, as in
 /// Stroom.
-public class ShellAppScreenModule extends AbstractPresenterModule {
+public class ShellAppScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

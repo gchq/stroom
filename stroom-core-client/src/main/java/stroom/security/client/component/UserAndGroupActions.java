@@ -22,8 +22,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.UserAndGroupHelper;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.component.client.Controller;
 
@@ -111,9 +109,4 @@ public class UserAndGroupActions extends Controller {
         }
     }
 
-    // The screen's task monitor, as the update's progress shows on the screen
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -23,8 +23,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.widget.component.client.Controller;
@@ -139,11 +137,4 @@ public class ErrorFeedController extends Controller {
                 taskMonitor());
     }
 
-    // The task monitor of whatever shows this, or a spinner of its own
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

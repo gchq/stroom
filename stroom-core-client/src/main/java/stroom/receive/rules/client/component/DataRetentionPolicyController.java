@@ -26,8 +26,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.receive.rules.client.component.DataRetentionPolicy.RetentionRuleAction;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -560,8 +558,4 @@ public class DataRetentionPolicyController extends Controller {
         this.onDirtyChange = onDirtyChange;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -84,29 +84,6 @@ public class IndexVolumeGroupsController extends ContentTabController {
         }));
     }
 
-//    public void show() {
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                hide();
-//            }
-//        };
-//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-//        ShowPopupEvent.fire(
-//                this,
-//                this,
-//                PopupType.CLOSE_DIALOG,
-//                null,
-//                popupSize,
-//                "Index Volumes",
-//                popupUiHandlers,
-//                null);
-//    }
-//
-//    public void hide() {
-//        HidePopupEvent.fire(this, this, false, true);
-//    }
-
     private void add() {
         newIndexVolumeGroupControllerProvider.get().show(this, "", indexVolumeGroup -> {
             edit(indexVolumeGroup);

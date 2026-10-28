@@ -22,8 +22,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Controller;
@@ -230,8 +228,4 @@ public class SteppingFilterEditorController extends Controller {
         currentElementId = elementId;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

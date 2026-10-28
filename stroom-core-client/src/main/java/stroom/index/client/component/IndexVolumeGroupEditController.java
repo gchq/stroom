@@ -30,8 +30,6 @@ import stroom.node.client.NodeClient;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
@@ -283,8 +281,4 @@ public class IndexVolumeGroupEditController extends Controller {
                 .exec();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

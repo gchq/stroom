@@ -20,8 +20,6 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
@@ -104,8 +102,4 @@ public class EmbeddedQuerySettingsController extends ComponentSettingsDialogCont
         addTab("Selection Filter", selectionFilter);
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

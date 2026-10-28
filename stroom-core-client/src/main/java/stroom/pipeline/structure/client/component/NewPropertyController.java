@@ -31,8 +31,6 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.component.NewProperty.ValueEditor;
 import stroom.pipeline.structure.client.component.PropertyListController.Source;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -337,10 +335,4 @@ public class NewPropertyController extends Controller {
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

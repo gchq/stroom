@@ -24,14 +24,14 @@ import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-public class DashboardAppModule extends AbstractPresenterModule {
+public class DashboardAppModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

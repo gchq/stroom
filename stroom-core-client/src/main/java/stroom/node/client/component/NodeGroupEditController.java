@@ -25,8 +25,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeStatusResult;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -167,8 +165,4 @@ public class NodeGroupEditController extends Controller {
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

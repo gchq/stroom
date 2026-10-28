@@ -17,8 +17,8 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.core.client.ContentManager;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
 /// The bindings of Stroom's app-wide `AppModule` (`stroom-app-gwt`,
@@ -26,7 +26,7 @@ import com.google.inject.Singleton;
 /// Find In Content dialogs, the tab session chooser, the content tab pane and the content manager.
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
-public class ContentAppScreenModule extends AbstractPresenterModule {
+public class ContentAppScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

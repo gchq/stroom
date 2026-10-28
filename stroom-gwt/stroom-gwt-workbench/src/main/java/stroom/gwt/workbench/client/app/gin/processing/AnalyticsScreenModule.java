@@ -16,13 +16,14 @@
 
 package stroom.gwt.workbench.client.app.gin.processing;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The execution schedule bindings of Stroom's `AnalyticsModule`
 /// (`stroom/analytics/client/gin/AnalyticsModule.java`): the schedule editor, batch editor and
 /// 'Run Now' dialog that the Execution Schedule Manager uses, without the analytic rule editor
 /// (whose graph needs the query and dashboard modules) or the module's plugin.
-public class AnalyticsScreenModule extends AbstractPresenterModule {
+public class AnalyticsScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

@@ -16,6 +16,8 @@
 
 package stroom.widget.component.client;
 
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -24,8 +26,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -103,6 +103,30 @@ class TestController {
         final Requester owned = new Requester();
         root.adopt(owned.getControllerNode());
         assertThat(owned.getProvidedTaskMonitor()).isSameAs(provided);
+    }
+
+    @Test
+    void theTaskMonitorIsTheOneProvidedWhenATaskStarts() {
+        // Given before it is owned, e.g. to a list made in a constructor, as the copies of this
+        // helper in two dozen controllers did by hand
+        final Requester requester = new Requester();
+        final TaskMonitorFactory taskMonitor = requester.taskMonitor();
+        final TaskMonitor provided = Mockito.mock(TaskMonitor.class);
+        final ControllerNode root = ControllerNode.root("dialog");
+        root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> provided));
+        root.adopt(requester.getControllerNode());
+
+        assertThat(taskMonitor.createTaskMonitor()).isSameAs(provided);
+    }
+
+    @Test
+    void theTaskMonitorIsAppWideWhenNothingProvidesOne() {
+        final Requester requester = new Requester(new SimpleEventBus());
+        ControllerNode.root("story").adopt(requester.getControllerNode());
+
+        // Stroom's own busy indicator, which fires task events on the bus
+        assertThat(requester.taskMonitor().createTaskMonitor())
+                .hasSameClassAs(new DefaultTaskMonitorFactory(requester).createTaskMonitor());
     }
 
     @Test
@@ -217,8 +241,7 @@ class TestController {
         try {
             final EventBus eventBus = new SimpleEventBus();
             final Parent opener = new Parent(null);
-            final MyPresenterWidget<View> dialog = opener.makeDialogChild(() ->
-                    new MyPresenterWidget<>(eventBus, Mockito.mock(View.class)));
+            final Requester dialog = opener.makeDialogChild(() -> new Requester(eventBus));
             assertThat(dialog.getControllerNode().parent()).isSameAs(opener.getControllerNode());
 
             HidePopupEvent.builder(dialog).fire();
@@ -376,7 +399,7 @@ class TestController {
             return make(provider);
         }
 
-        MyPresenterWidget<View> makeDialogChild(final Provider<MyPresenterWidget<View>> provider) {
+        Requester makeDialogChild(final Provider<Requester> provider) {
             return makeDialog(provider);
         }
 
@@ -403,6 +426,14 @@ class TestController {
 
     // A controller that makes requests through a client that takes a task monitor
     private static final class Requester extends Controller {
+
+        private Requester() {
+            super();
+        }
+
+        private Requester(final EventBus eventBus) {
+            super(eventBus);
+        }
     }
 
 

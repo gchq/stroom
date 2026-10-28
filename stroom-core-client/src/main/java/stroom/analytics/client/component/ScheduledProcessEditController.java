@@ -32,8 +32,6 @@ import stroom.schedule.client.ScheduleBoxController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.shared.FindUserContext;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
@@ -264,8 +262,4 @@ public class ScheduledProcessEditController extends Controller {
                 : scheduleBounds.getEndTimeMs());
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

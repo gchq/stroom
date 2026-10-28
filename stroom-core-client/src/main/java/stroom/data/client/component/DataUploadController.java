@@ -26,8 +26,6 @@ import stroom.docref.DocRef;
 import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.presenter.ImportUtil;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;
@@ -194,8 +192,4 @@ public class DataUploadController extends Controller {
         AlertEvent.fireError(this, message, currentHideRequest::reset);
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

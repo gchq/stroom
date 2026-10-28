@@ -26,8 +26,6 @@ import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ContextValue;
@@ -174,15 +172,6 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
         }
     }
 
-    // The task monitor of whatever shows the tabs, or one of their own, looked up when a task starts
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     private void addWarningButton(final ReceiptCheckMode receiptCheckMode) {
         if (receiptCheckMode != ReceiptCheckMode.RECEIPT_POLICY) {

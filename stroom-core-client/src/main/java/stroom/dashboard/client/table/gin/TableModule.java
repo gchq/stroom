@@ -18,9 +18,10 @@ package stroom.dashboard.client.table.gin;
 
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.query.client.presenter.TimeZones;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
-public class TableModule extends AbstractPresenterModule {
+import com.google.gwt.inject.client.AbstractGinModule;
+
+public class TableModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

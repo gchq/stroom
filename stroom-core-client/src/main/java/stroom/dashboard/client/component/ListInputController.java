@@ -25,8 +25,6 @@ import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.Param;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
@@ -171,8 +169,4 @@ public class ListInputController extends DashboardComponentController implements
         return TAB_TYPE;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

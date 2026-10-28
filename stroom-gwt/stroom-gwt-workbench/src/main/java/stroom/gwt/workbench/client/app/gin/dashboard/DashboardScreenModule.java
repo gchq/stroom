@@ -18,8 +18,8 @@ package stroom.gwt.workbench.client.app.gin.dashboard;
 
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
 /// The presenter and view bindings of Stroom's `DashboardModule`
@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
 /// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
 /// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`
 /// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`).
-public class DashboardScreenModule extends AbstractPresenterModule {
+public class DashboardScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

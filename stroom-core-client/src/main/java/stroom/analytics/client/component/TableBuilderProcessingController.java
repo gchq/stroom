@@ -26,8 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.datepicker.client.DateTimeBoxController;
@@ -129,13 +127,6 @@ public class TableBuilderProcessingController extends Controller {
         }
     }
 
-    // The task monitor its owner gives it, else its own spinner
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 
     private SafeHtml getInfo(final AnalyticTracker tracker) {
         final TableBuilder tb = new TableBuilder();

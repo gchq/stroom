@@ -17,14 +17,14 @@
 package stroom.gwt.workbench.client.app.gin.processing;
 
 import stroom.core.client.ContentManager;
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
 
 /// Single bindings from Stroom's modules that the processing screens need without the rest of
 /// their module: `AppModule`'s content manager (a singleton, which the document plugins share,
 /// as in Stroom).
-public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
+public class ProcessingExtrasScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

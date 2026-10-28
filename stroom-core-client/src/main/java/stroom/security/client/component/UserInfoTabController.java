@@ -20,8 +20,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
 
@@ -104,8 +102,4 @@ public class UserInfoTabController extends Controller {
         return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

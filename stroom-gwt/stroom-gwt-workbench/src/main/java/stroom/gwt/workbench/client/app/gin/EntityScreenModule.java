@@ -16,13 +16,14 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The presenter and view bindings of Stroom's `EntityModule`
 /// (`stroom/entity/client/gin/EntityModule.java`), without its plugins and app services.
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
-public class EntityScreenModule extends AbstractPresenterModule {
+public class EntityScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

@@ -28,8 +28,6 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -118,15 +116,6 @@ public class LinkedEventsController extends Controller {
         });
     }
 
-    // Lazily, as it is first used after this is owned
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     private void linkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,

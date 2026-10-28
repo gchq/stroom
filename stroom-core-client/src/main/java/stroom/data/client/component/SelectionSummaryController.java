@@ -24,8 +24,6 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Range;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -130,13 +128,6 @@ public class SelectionSummaryController extends Controller {
                 .fire();
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 
     private void update(final String postAction, final String action, final SelectionSummary result) {
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();

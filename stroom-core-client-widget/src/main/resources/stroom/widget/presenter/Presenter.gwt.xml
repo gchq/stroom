@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <!--
-  Stroom's presenter base class (MyPresenterWidget), views, the page (Page) and layers (see
-  stroom-gwt/COMPONENT_MODEL_DESIGN.md).
+  The page (Page) and layers (Layer, LayerContainer), from before controllers (see
+  stroom-gwt/COMPONENT_MODEL_DESIGN.md); to move into the component model's package.
 -->
 <module>
     <inherits name="com.google.gwt.user.User"/>

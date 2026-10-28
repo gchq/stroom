@@ -22,8 +22,6 @@ import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.StringWrapper;
 import stroom.widget.component.client.Controller;
@@ -229,13 +227,6 @@ public class AnalyticEmailDestinationController extends Controller {
         return true;
     }
 
-    // The task monitor its owner gives it, else its own spinner
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 
 
     // --------------------------------------------------------------------------------

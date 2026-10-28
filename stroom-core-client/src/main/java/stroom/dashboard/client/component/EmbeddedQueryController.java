@@ -62,8 +62,6 @@ import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Listeners;
@@ -925,13 +923,4 @@ public class EmbeddedQueryController
         return currentTablePresenter.getFilterCellManager();
     }
 
-    // The task monitor of whatever shows the pane, or one of its own, looked up when a task starts
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

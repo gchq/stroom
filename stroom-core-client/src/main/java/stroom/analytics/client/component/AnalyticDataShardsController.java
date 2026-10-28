@@ -27,8 +27,6 @@ import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.component.QueryToolbarController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.widget.component.client.Controller;
@@ -137,10 +135,6 @@ public class AnalyticDataShardsController
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
     /// Shows a rule's data shards.
     ///

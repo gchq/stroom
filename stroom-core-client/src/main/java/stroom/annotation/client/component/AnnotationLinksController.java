@@ -28,8 +28,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.component.FindPanel;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -184,8 +182,4 @@ public class AnnotationLinksController extends Controller {
         this.onChange = onChange;
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

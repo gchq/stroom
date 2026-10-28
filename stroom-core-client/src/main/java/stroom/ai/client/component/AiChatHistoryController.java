@@ -20,8 +20,6 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.explorer.client.component.FindPanel;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -114,11 +112,4 @@ public class AiChatHistoryController extends Controller {
         }
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -27,8 +27,6 @@ import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.TabbedController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -171,15 +169,6 @@ public class AnnotationTabs extends TabbedController<Annotation> {
         setDescriptionDirty(false);
     }
 
-    // The task monitor of whatever shows the tabs, or one of their own, looked up when a task starts
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 
     private void setDescriptionDirty(final boolean dirty) {
         this.descriptionDirty = dirty;

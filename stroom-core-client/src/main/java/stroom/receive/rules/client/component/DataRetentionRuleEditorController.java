@@ -21,8 +21,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -115,8 +113,4 @@ public class DataRetentionRuleEditorController extends Controller {
                 view.isForever());
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

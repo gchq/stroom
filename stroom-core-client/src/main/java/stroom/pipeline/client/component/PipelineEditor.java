@@ -39,8 +39,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Listeners;
@@ -300,14 +298,4 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                 })));
     }
 
-    // The task monitor of whatever shows the editor, or one of its own, looked up when a task
-    // starts
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

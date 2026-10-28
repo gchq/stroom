@@ -18,8 +18,6 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -120,13 +118,4 @@ public class StatisticsFieldEditController extends Controller {
         return null;
     }
 
-    // The task monitor of whatever shows the dialog, or one of its own, looked up when a task starts
-    private TaskMonitorFactory taskMonitor() {
-        return () -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return provided != null
-                    ? provided.createTaskMonitor()
-                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
-        };
-    }
 }

@@ -24,8 +24,6 @@ import stroom.node.client.presenter.NodeGroupListModel;
 import stroom.node.shared.NodeGroup;
 import stroom.processor.client.presenter.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PathSafeNames;
 import stroom.widget.component.client.Controller;
@@ -167,8 +165,4 @@ public class ProcessorProfileEditController extends Controller {
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -21,8 +21,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.entity.client.component.NameEntry;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PathSafeNames;
 import stroom.widget.component.client.Controller;
@@ -113,11 +111,4 @@ public class NewNodeGroupController extends Controller {
         }, RestErrorHandler.forPopup(this, e), taskMonitor());
     }
 
-    // The dialog's task monitor, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 }

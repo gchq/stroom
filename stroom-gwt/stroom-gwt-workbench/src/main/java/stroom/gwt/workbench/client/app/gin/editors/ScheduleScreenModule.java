@@ -16,14 +16,15 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
+
 
 /// The presenter and view bindings of Stroom's `AnalyticsModule`
 /// (`stroom/analytics/client/gin/AnalyticsModule.java`) for execution schedules, without its
 /// plugins, app services and analytic rule screens.
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
-public class ScheduleScreenModule extends AbstractPresenterModule {
+public class ScheduleScreenModule extends AbstractGinModule {
 
     /// Binds the presenters and views.
     @Override

@@ -40,8 +40,6 @@ import stroom.editor.client.component.CodeEditorController;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Contexts;
@@ -885,8 +883,4 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

@@ -28,8 +28,6 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
@@ -389,13 +387,6 @@ public class ExplorerPopupController extends Controller {
         selectionChangeConsumer.accept(explorerNode);
     }
 
-    // The task monitor of what owns this, else Stroom's own busy indicator
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
-    }
 
     private static ExplorerNode resolve(final ExplorerNode selection) {
         if (ExplorerTree.NULL_SELECTION.equals(selection)) {

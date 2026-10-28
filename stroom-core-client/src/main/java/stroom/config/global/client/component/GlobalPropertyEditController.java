@@ -25,8 +25,6 @@ import stroom.config.global.shared.OverrideValue;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.component.client.Controller;
@@ -458,8 +456,4 @@ public class GlobalPropertyEditController extends Controller {
         return "#" + name.replace(' ', '-').toLowerCase();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 }

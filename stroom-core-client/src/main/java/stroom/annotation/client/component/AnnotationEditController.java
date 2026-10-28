@@ -61,8 +61,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.FindUserContext;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
@@ -1550,10 +1548,6 @@ public class AnnotationEditController extends Controller implements Focus {
         view.focus();
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
     /// @param initialComment The comment to start with, e.g. the text of the data annotated.
     public void setInitialComment(final String initialComment) {

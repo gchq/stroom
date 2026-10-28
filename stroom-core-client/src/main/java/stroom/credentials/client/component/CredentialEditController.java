@@ -23,8 +23,6 @@ import stroom.credentials.shared.PutCredentialRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerLayer;
@@ -154,10 +152,6 @@ public class CredentialEditController extends Controller {
         }
     }
 
-    private TaskMonitorFactory taskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
 
 
     // --------------------------------------------------------------------------------
