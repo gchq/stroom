@@ -18,7 +18,7 @@ package stroom.entity.client.component;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;

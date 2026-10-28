@@ -17,9 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.tabs;
 
+import stroom.entity.client.HasToolbar;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.TabbedController;
-import stroom.entity.client.presenter.HasToolbar;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;

@@ -18,7 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.entity.client.MarkdownConverter;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;

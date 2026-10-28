@@ -22,7 +22,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.client.TreeRowHandler;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.presenter.TaskProgressUtil;
 import stroom.task.shared.FindTaskProgressCriteria;

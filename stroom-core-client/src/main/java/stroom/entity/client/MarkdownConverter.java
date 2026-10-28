@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.client.presenter;
+package stroom.entity.client;
 
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.shared.ThemeType;
@@ -136,7 +136,7 @@ public class MarkdownConverter {
     }-*/;
 
     public native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
-        var converter = this.@stroom.entity.client.presenter.MarkdownConverter::showdownConverter;
+        var converter = this.@stroom.entity.client.MarkdownConverter::showdownConverter;
         var markdownAsHtml = converter.makeHtml(rawMarkdown);
 
         // Only need to involve prism if showdown has set a language-XXX class

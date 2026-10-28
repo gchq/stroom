@@ -18,8 +18,8 @@ package stroom.entity.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.ChangeCurrentPreferencesEvent;
-import stroom.entity.client.presenter.HasToolbar;
-import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.entity.client.HasToolbar;
+import stroom.entity.client.MarkdownConverter;
 import stroom.iframe.client.component.IFrame;
 import stroom.iframe.client.component.IFrame.SandboxOption;
 import stroom.svg.shared.SvgImage;

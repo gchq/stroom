@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.editor.FloorMapDocSession;

@@ -25,7 +25,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
-import stroom.entity.client.presenter.HasCommonTabs;
+import stroom.entity.client.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;

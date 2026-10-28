@@ -16,7 +16,7 @@
 
 package stroom.config.global.client;
 
-import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.client.TreeRowHandler;
 
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;

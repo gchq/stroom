@@ -18,7 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;

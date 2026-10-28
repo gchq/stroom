@@ -32,7 +32,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.query.api.TimeRange;

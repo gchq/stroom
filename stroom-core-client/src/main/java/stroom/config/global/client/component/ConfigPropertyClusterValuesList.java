@@ -19,7 +19,7 @@ package stroom.config.global.client.component;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.config.global.client.ListDataProvider;
 import stroom.config.global.client.NodeSource;
-import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.client.TreeRowHandler;
 import stroom.util.shared.Expander;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;

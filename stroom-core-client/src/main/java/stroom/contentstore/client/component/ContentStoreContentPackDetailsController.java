@@ -24,7 +24,7 @@ import stroom.contentstore.shared.ContentStoreResource;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
 import stroom.credentials.client.component.CredentialsManagerDialogController;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.entity.client.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;

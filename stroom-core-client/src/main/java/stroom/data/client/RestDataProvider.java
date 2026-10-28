@@ -18,7 +18,7 @@ package stroom.data.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.client.TreeRowHandler;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.event.shared.GwtEvent;

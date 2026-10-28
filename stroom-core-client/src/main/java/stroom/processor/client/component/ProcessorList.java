@@ -31,7 +31,7 @@ import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.UserRefCell;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.client.TreeRowHandler;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;

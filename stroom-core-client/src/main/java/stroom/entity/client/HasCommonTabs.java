@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.client.presenter;
+package stroom.entity.client;
 
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 

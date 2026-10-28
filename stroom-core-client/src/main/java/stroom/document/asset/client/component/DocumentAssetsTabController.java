@@ -35,7 +35,7 @@ import stroom.document.asset.shared.DocumentAssetUpdateNewFile;
 import stroom.document.asset.shared.DocumentAssetUpdateRename;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.Console;

@@ -18,7 +18,7 @@ package stroom.query.client.component;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.entity.client.MarkdownConverter;
 import stroom.query.client.presenter.DynamicQueryHelpSelectionListModel;
 import stroom.query.client.presenter.QueryHelpAceCompletionProvider;
 import stroom.query.client.presenter.QueryHelpDetailProvider;

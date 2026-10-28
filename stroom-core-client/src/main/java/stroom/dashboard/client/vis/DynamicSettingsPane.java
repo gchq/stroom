@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.entity.client.presenter.HasReadAndWrite;
+import stroom.entity.client.HasReadAndWrite;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;

@@ -18,7 +18,7 @@ package stroom.analytics.client.component;
 
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.query.client.component.QueryEditController;
 import stroom.widget.component.client.Controller;
 

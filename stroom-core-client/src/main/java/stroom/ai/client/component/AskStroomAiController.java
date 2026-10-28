@@ -37,7 +37,7 @@ import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
-import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.entity.client.MarkdownConverter;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;

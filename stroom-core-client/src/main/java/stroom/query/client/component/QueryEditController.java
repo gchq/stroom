@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.editor.client.ace.IndicatorLines;
 import stroom.editor.client.ace.Marker;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.entity.client.presenter.HasToolbar;
+import stroom.entity.client.HasToolbar;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
