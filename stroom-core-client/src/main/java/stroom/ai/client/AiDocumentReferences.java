@@ -24,7 +24,7 @@ import stroom.explorer.shared.ExplorerNode;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Which of the items selected in the Explorer tree can be attached to a chat ("Attach to chat"): documents and
+/// Which of the items selected in the Explorer tree can be attached to a chat ("Attach to Chat"): documents and
 /// folders the user can view, but not the System or Favourites roots.
 public final class AiDocumentReferences {
 

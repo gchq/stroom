@@ -1651,7 +1651,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.AI)
-                .text("Attach to chat")
+                .text("Attach to Chat")
                 .command(() -> AskStroomAiEvent.fire(DocumentPluginEventManager.this, attachable))
                 .build();
     }
