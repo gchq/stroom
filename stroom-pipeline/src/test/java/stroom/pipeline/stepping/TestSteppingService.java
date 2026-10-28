@@ -17,9 +17,12 @@
 package stroom.pipeline.stepping;
 
 import stroom.meta.api.MetaService;
+import stroom.pipeline.factory.PipelineDataHolder;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.capture.ReprocessDriver;
 import stroom.pipeline.stepping.capture.StreamCaptureDriver;
 import stroom.pipeline.stepping.capture.StreamSweep;
@@ -28,28 +31,33 @@ import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.SessionStepResolver;
 import stroom.pipeline.stepping.read.SteppableElements;
+import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.pipeline.stepping.session.SteppingSessionRegistry;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreManager;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,6 +68,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 class TestSteppingService {
 
     private static final long META_ID = 123L;
+    private static final String SESSION_ID = "session-1";
 
     private final TaskContextFactory taskContextFactory = Mockito.mock(TaskContextFactory.class);
     private final ReprocessDriver reprocessDriver = Mockito.mock(ReprocessDriver.class);
@@ -67,6 +76,11 @@ class TestSteppingService {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final TaskManager taskManager = Mockito.mock(TaskManager.class);
     private final StepDataStoreManager stepDataStoreManager = Mockito.mock(StepDataStoreManager.class);
+    private final MetaService metaService = Mockito.mock(MetaService.class);
+    private final PipelineDataHolderFactory pipelineDataHolderFactory = Mockito.mock(PipelineDataHolderFactory.class);
+    private final SessionStepResolver sessionStepResolver = Mockito.mock(SessionStepResolver.class);
+    private final SteppingSessionRegistry sessionRegistry = Mockito.mock(SteppingSessionRegistry.class);
+    private final SteppingSession session = Mockito.mock(SteppingSession.class);
     private final TaskContext producerTaskContext = Mockito.mock(TaskContext.class);
     private final TaskId producerTaskId = new TaskId("producer", null);
 
@@ -139,15 +153,15 @@ class TestSteppingService {
                 () -> Mockito.mock(StreamCaptureDriver.class),
                 () -> reprocessDriver,
                 executorProvider,
-                Mockito.mock(MetaService.class),
+                metaService,
                 securityContext,
                 taskManager,
                 stepDataStoreManager,
-                Mockito.mock(PipelineDataHolderFactory.class),
+                pipelineDataHolderFactory,
                 Mockito.mock(ElementFingerprinter.class),
                 SteppingConfig::new,
-                Mockito.mock(SessionStepResolver.class),
-                Mockito.mock(SteppingSessionRegistry.class),
+                sessionStepResolver,
+                sessionRegistry,
                 Mockito.mock(SteppableElements.class));
     }
 
@@ -178,5 +192,55 @@ class TestSteppingService {
         Mockito.verify(taskManager).terminate(producerTaskId);
         // The store of a failed reprocess must not be leaked.
         Mockito.verify(stepDataStoreManager).deleteSession(anyString());
+    }
+
+    @Test
+    void testStepOnASessionClosedByStopIsIncomplete() {
+        givenAStepCanReachTheResolver();
+        // Stop closed the session while the step was waiting on it, so the resolver fails on the closed session.
+        Mockito.when(session.isClosed()).thenReturn(true);
+        Mockito.when(sessionStepResolver.resolve(any(), any(), any(), anyLong()))
+                .thenThrow(new IllegalStateException("Stepping session " + SESSION_ID + " has been closed"));
+
+        final SteppingResult result = steppingService.step(stepRequest());
+
+        assertThat(result.isComplete()).isFalse();
+        assertThat(result.isFoundRecord()).isFalse();
+        assertThat(result.getGeneralErrors()).isEmpty();
+        assertThat(result.getSessionUuid()).isEqualTo(SESSION_ID);
+    }
+
+    @Test
+    void testStepFailingOnAnOpenSessionStillFails() {
+        givenAStepCanReachTheResolver();
+        Mockito.when(session.isClosed()).thenReturn(false);
+        Mockito.when(sessionStepResolver.resolve(any(), any(), any(), anyLong()))
+                .thenThrow(new IllegalStateException("boom"));
+
+        assertThatThrownBy(() -> steppingService.step(stepRequest()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("boom");
+    }
+
+    // Let step() run as far as resolving the step against a mocked session.
+    @SuppressWarnings("unchecked")
+    private void givenAStepCanReachTheResolver() {
+        Mockito.when(securityContext.secureResult(any(AppPermission.class), any(Supplier.class)))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        Mockito.when(securityContext.useAsReadResult(any(Supplier.class)))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
+        Mockito.when(metaService.find(any())).thenReturn(ResultPage.empty());
+        Mockito.when(pipelineDataHolderFactory.create(any())).thenReturn(Mockito.mock(PipelineDataHolder.class));
+        Mockito.when(session.getSessionId()).thenReturn(SESSION_ID);
+        Mockito.when(session.getStreamIdList()).thenReturn(List.of(META_ID));
+        Mockito.when(sessionRegistry.getOrCreate(any(), any(), any(), any())).thenReturn(session);
+    }
+
+    private PipelineStepRequest stepRequest() {
+        return PipelineStepRequest.builder()
+                .stepType(StepType.FORWARD)
+                .sessionUuid(SESSION_ID)
+                .timeout(40L)
+                .build();
     }
 }

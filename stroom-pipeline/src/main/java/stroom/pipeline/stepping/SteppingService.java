@@ -56,6 +56,7 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 
@@ -880,8 +881,21 @@ public class SteppingService {
             // The fingerprints are what this step is served under. If an element was edited they have
             // changed, so it is served under new keys while the untouched elements are still read from what
             // was already captured.
-            final SessionStepResult sessionResult = sessionStepResolver.resolve(
-                    session, request, fingerprints, request.getTimeout() == null ? 0L : request.getTimeout());
+            final SessionStepResult sessionResult;
+            try {
+                sessionResult = sessionStepResolver.resolve(
+                        session, request, fingerprints, request.getTimeout() == null ? 0L : request.getTimeout());
+            } catch (final RuntimeException e) {
+                if (!session.isClosed()) {
+                    throw e;
+                }
+                // The session was terminated (the user pressed Stop) while this step was waiting on it, so the
+                // step failed on a closed session or its deleted store. That is the termination, not an error:
+                // answer as an unfinished step, which a client that has stopped simply drops.
+                LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
+                        session.getSessionId(), e.getMessage()));
+                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+            }
 
             sessionRegistry.reapIdle();
 
