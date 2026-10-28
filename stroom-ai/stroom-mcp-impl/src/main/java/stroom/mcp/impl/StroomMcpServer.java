@@ -19,6 +19,7 @@ package stroom.mcp.impl;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiToolPolicyService;
 import stroom.ai.impl.McpEndpointConfig;
+import stroom.ai.impl.McpJson;
 import stroom.mcp.impl.RunningCalls.RunningCall;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -148,7 +149,7 @@ class StroomMcpServer {
         this.buildInfoProvider = buildInfoProvider;
         this.transport = HttpServletStreamableServerTransportProvider.builder()
                 .mcpEndpoint(McpServlet.PATH)
-                .jsonMapper(McpJsonDefaults.getMapper())
+                .jsonMapper(McpJson.mapper())
                 .contextExtractor(request -> McpTransportContext.create(transportContext(
                         securityContext.getUserIdentity(), McpRequestEnd.of(request))))
                 .keepAliveInterval(config().getKeepAliveInterval().getDuration())
@@ -330,7 +331,7 @@ class StroomMcpServer {
                 McpSchema.METHOD_RESOURCES_TEMPLATES_LIST, (exchange, params) -> asUser(exchange, session ->
                         resources.templates()),
                 McpSchema.METHOD_RESOURCES_READ, (exchange, params) -> asUser(exchange, session ->
-                        resources.read(McpJsonDefaults.getMapper()
+                        resources.read(McpJson.mapper()
                                 .convertValue(params, ReadResourceRequest.class).uri())));
     }
 
@@ -363,7 +364,7 @@ class StroomMcpServer {
     }
 
     private static CallToolRequest toCallToolRequest(final Object params) {
-        return McpJsonDefaults.getMapper().convertValue(params, CallToolRequest.class);
+        return McpJson.mapper().convertValue(params, CallToolRequest.class);
     }
 
     // Does the work of a request as its user, on the thread serving it, refusing it if the session isn't theirs.
