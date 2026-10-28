@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.view;
+package stroom.pipeline.stepping.client;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.stepping.client.view.PipelinePath.Step;
+import stroom.pipeline.stepping.client.PipelinePath.Step;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;

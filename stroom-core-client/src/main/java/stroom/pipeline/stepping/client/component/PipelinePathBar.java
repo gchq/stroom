@@ -18,10 +18,10 @@ package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.stepping.client.view.PipelinePath;
-import stroom.pipeline.stepping.client.view.PipelinePath.Step;
-import stroom.pipeline.stepping.client.view.PipelinePathCollapse;
-import stroom.pipeline.stepping.client.view.SeverityChanges;
+import stroom.pipeline.stepping.client.PipelinePath;
+import stroom.pipeline.stepping.client.PipelinePath.Step;
+import stroom.pipeline.stepping.client.PipelinePathCollapse;
+import stroom.pipeline.stepping.client.SeverityChanges;
 import stroom.pipeline.structure.client.component.AbstractPipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.view.PipelineElementBoxFactory;

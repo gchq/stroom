@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.view;
+package stroom.pipeline.stepping.client;
 
 import java.util.ArrayList;
 import java.util.List;
