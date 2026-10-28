@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.importexport.client.presenter;
+package stroom.importexport.client;
 
 import com.google.gwt.core.client.GWT;
 

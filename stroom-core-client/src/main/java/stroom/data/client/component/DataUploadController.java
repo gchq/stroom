@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.client.presenter.ImportUtil;
+import stroom.importexport.client.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;

@@ -20,7 +20,7 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.Secret;
-import stroom.importexport.client.presenter.ImportUtil;
+import stroom.importexport.client.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;

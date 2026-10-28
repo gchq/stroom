@@ -18,7 +18,7 @@ package stroom.document.asset.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.asset.client.DocumentAssetAddFileCallback;
-import stroom.importexport.client.presenter.ImportUtil;
+import stroom.importexport.client.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

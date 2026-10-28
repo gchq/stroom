@@ -18,8 +18,8 @@ package stroom.importexport.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
+import stroom.importexport.client.ImportUtil;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
-import stroom.importexport.client.presenter.ImportUtil;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
