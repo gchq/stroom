@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -79,6 +78,12 @@ public class NewProperty extends Component {
     /// Makes the content.
     public NewProperty() {
         initWidget(BINDER.createAndBindUi(this));
+        source.addValueChangeHandler(this::onSource);
+        booleanValue.addValueChangeHandler(this::onValue);
+        streamTypeValue.addValueChangeHandler(this::onValue);
+        volumeGroupValue.addValueChangeHandler(this::onValue);
+        textValue.addValueChangeHandler(this::onValue);
+        numberValue.setOnChange(value -> onNumber());
         source.addItem(Source.DEFAULT);
         source.addItem(Source.INHERIT);
         source.addItem(Source.LOCAL);
@@ -240,18 +245,15 @@ public class NewProperty extends Component {
         this.onValueChange = onValueChange;
     }
 
-    @UiHandler("source")
-    void onSource(final ValueChangeEvent<Source> event) {
+    private void onSource(final ValueChangeEvent<Source> event) {
         onSourceChange.accept(source.getValue());
     }
 
-    @UiHandler({"booleanValue", "streamTypeValue", "volumeGroupValue", "textValue"})
-    void onValue(final ValueChangeEvent<String> event) {
+    private void onValue(final ValueChangeEvent<String> event) {
         onValueChange.run();
     }
 
-    @UiHandler("numberValue")
-    void onNumber(final ValueChangeEvent<Long> event) {
+    private void onNumber() {
         onValueChange.run();
     }
 

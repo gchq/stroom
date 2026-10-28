@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -74,6 +73,10 @@ public class ChangePassword extends Component {
     /// Makes an empty form.
     public ChangePassword() {
         initWidget(BINDER.createAndBindUi(this));
+        password.addKeyDownHandler(this::onPasswordKeyDown);
+        confirmPassword.addKeyDownHandler(this::onConfirmPasswordKeyDown);
+        password.addValueChangeHandler(this::onPassword);
+        password.addKeyUpHandler(this::onPasswordKeyUp);
 
         // The length is shown as a picture only: the strength meter says how good the password is
         passwordLengthBadge.setStyleName(LENGTH_BLOCK + " " + LENGTH_BLOCK + "--short");
@@ -159,13 +162,11 @@ public class ChangePassword extends Component {
         return result.score;
     }-*/;
 
-    @UiHandler("password")
-    void onPasswordKeyDown(final KeyDownEvent e) {
+    private void onPasswordKeyDown(final KeyDownEvent e) {
         onKeyDown(e);
     }
 
-    @UiHandler("confirmPassword")
-    void onConfirmPasswordKeyDown(final KeyDownEvent e) {
+    private void onConfirmPasswordKeyDown(final KeyDownEvent e) {
         onKeyDown(e);
     }
 
@@ -175,13 +176,11 @@ public class ChangePassword extends Component {
         }
     }
 
-    @UiHandler("password")
-    void onPassword(final ValueChangeEvent<String> e) {
+    private void onPassword(final ValueChangeEvent<String> e) {
         updateStrength();
     }
 
-    @UiHandler("password")
-    void onPasswordKeyUp(final KeyUpEvent e) {
+    private void onPasswordKeyUp(final KeyUpEvent e) {
         // Shows the password's strength and length as it is typed
         updateStrength();
     }

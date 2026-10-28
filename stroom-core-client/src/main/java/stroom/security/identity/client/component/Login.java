@@ -26,12 +26,10 @@ import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -70,6 +68,10 @@ public class Login extends Component {
     /// Makes an empty page.
     public Login() {
         initWidget(BINDER.createAndBindUi(this));
+        userName.addKeyDownHandler(this::onUserNameKeyDown);
+        password.addKeyDownHandler(this::onPasswordKeyDown);
+        signInButton.setOnClick(this::onSignInButton);
+        forgotPasswordLink.setOnClick(this::onForgotPasswordLink);
 
         userImage.getElement().setInnerHTML(SvgImage.INFINITY_LOGO.getSvg());
         userImage.addStyleName(SvgImage.INFINITY_LOGO.getClassName());
@@ -151,13 +153,11 @@ public class Login extends Component {
                 : PASSWORD_HELP + " If you have forgotten it, ask your administrator to reset it.");
     }
 
-    @UiHandler("userName")
-    void onUserNameKeyDown(final KeyDownEvent e) {
+    private void onUserNameKeyDown(final KeyDownEvent e) {
         onKeyDown(e);
     }
 
-    @UiHandler("password")
-    void onPasswordKeyDown(final KeyDownEvent e) {
+    private void onPasswordKeyDown(final KeyDownEvent e) {
         onKeyDown(e);
     }
 
@@ -173,13 +173,11 @@ public class Login extends Component {
         onSignIn.run();
     }
 
-    @UiHandler("signInButton")
-    void onSignInButton(final ClickEvent e) {
+    private void onSignInButton() {
         signIn();
     }
 
-    @UiHandler("forgotPasswordLink")
-    void onForgotPasswordLink(final ClickEvent e) {
+    private void onForgotPasswordLink() {
         onForgotPassword.run();
     }
 

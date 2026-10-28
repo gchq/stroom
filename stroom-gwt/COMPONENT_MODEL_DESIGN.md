@@ -380,7 +380,7 @@ A toolbar can be declared in a template. `@UiConstructor Toolbar(String name)` m
 ```
 
 - `svg="SAVE"` sets the icon: UiBinder sets the enum through `ToolbarButton.setSvg(SvgImage)` (story `Widgets/Buttons/Toolbar` `Template`). Until now icons were set in Java even when the title was in the template.
-- The template declares the layout; behaviour is wired in Java with `save.setOnClick(this::save)`, so toolbars made in templates and in code read the same. `@UiHandler` also works (its lifetime is the widget's, case 1), but cannot be replaced or cleared.
+- The template declares the layout; behaviour is wired in Java with `save.setOnClick(this::save)`, so toolbars made in templates and in code read the same. `@UiHandler` would work (its lifetime is the widget's, case 1), but cannot be replaced or cleared, and isn't used: wave 18 wired the last ones in Java, and checkstyle refuses it.
 - Toolbars whose buttons depend on permissions, the document type or contributions are made in Java; both end up as the same `Toolbar`.
 
 ### Contributions

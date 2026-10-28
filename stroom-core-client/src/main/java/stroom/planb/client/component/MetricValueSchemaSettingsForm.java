@@ -26,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class MetricValueSchemaSettingsForm extends Component {
@@ -52,6 +51,12 @@ public class MetricValueSchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public MetricValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        maxValue.addValueChangeHandler(this::onMaxValue);
+        storeLatestValue.setOnChange(value -> onStoreLatestValue());
+        storeMin.setOnChange(value -> onStoreMin());
+        storeMax.setOnChange(value -> onStoreMax());
+        storeCount.setOnChange(value -> onStoreCount());
+        storeSum.setOnChange(value -> onStoreSum());
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new MetricValueSchema.Builder().build());
     }
@@ -87,33 +92,27 @@ public class MetricValueSchemaSettingsForm extends Component {
         storeSum.setReadOnly(readOnly);
     }
 
-    @UiHandler("maxValue")
-    public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
+    private void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
         changed();
     }
 
-    @UiHandler("storeLatestValue")
-    public void onStoreLatestValue(final ValueChangeEvent<Boolean> event) {
+    private void onStoreLatestValue() {
         changed();
     }
 
-    @UiHandler("storeMin")
-    public void onStoreMin(final ValueChangeEvent<Boolean> event) {
+    private void onStoreMin() {
         changed();
     }
 
-    @UiHandler("storeMax")
-    public void onStoreMax(final ValueChangeEvent<Boolean> event) {
+    private void onStoreMax() {
         changed();
     }
 
-    @UiHandler("storeCount")
-    public void onStoreCount(final ValueChangeEvent<Boolean> event) {
+    private void onStoreCount() {
         changed();
     }
 
-    @UiHandler("storeSum")
-    public void onStoreSum(final ValueChangeEvent<Boolean> event) {
+    private void onStoreSum() {
         changed();
     }
 

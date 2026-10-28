@@ -25,10 +25,8 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -55,6 +53,7 @@ public class DataRetentionRuleEditor extends Component {
     /// Makes the form, retaining for 1 minute until a rule is shown.
     public DataRetentionRuleEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        forever.setOnChange(value -> onForeverChange());
 
         age.setValue(1);
 
@@ -117,8 +116,7 @@ public class DataRetentionRuleEditor extends Component {
         this.timeUnit.setValue(timeUnit);
     }
 
-    @UiHandler("forever")
-    void onForeverChange(final ValueChangeEvent<Boolean> event) {
+    private void onForeverChange() {
         setRetainForEnabled(!isForever());
     }
 

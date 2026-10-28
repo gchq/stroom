@@ -29,11 +29,9 @@ import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.ui.Widget;
@@ -74,6 +72,9 @@ public class ColumnValuesFilter extends Component {
     /// Makes an empty list.
     public ColumnValuesFilter() {
         initWidget(BINDER.createAndBindUi(this));
+        selectAllLink.setOnClick(this::onSelectAllLink);
+        selectNoneLink.setOnClick(this::onSelectNoneLink);
+        quickFilter.addValueChangeHandler(this::onFilterChange);
 
         final DataGridSelectionEventManager<ColumnValue> selectionEventManager =
                 new DataGridSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
@@ -166,18 +167,15 @@ public class ColumnValuesFilter extends Component {
         return pager;
     }
 
-    @UiHandler("selectAllLink")
-    void onSelectAllLink(final ClickEvent event) {
+    private void onSelectAllLink() {
         onSelectAll.run();
     }
 
-    @UiHandler("selectNoneLink")
-    void onSelectNoneLink(final ClickEvent event) {
+    private void onSelectNoneLink() {
         onSelectNone.run();
     }
 
-    @UiHandler("quickFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
+    private void onFilterChange(final ValueChangeEvent<String> event) {
         onFilterChange.accept(quickFilter.getText());
     }
 

@@ -31,7 +31,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -69,6 +68,7 @@ public class ContentTemplateEdit extends Component {
     /// Makes the form, with the processor's defaults.
     public ContentTemplateEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        templateTypeSelectionBox.addValueChangeHandler(this::onTemplateTypeChange);
 
         final List<TemplateType> templateTypes = Arrays.stream(TemplateType.values())
                 .sorted()
@@ -161,8 +161,7 @@ public class ContentTemplateEdit extends Component {
         processorMaxConcurrent.setValue(value);
     }
 
-    @UiHandler("templateTypeSelectionBox")
-    void onTemplateTypeChange(final ValueChangeEvent<TemplateType> event) {
+    private void onTemplateTypeChange(final ValueChangeEvent<TemplateType> event) {
         setTemplateType(event.getValue());
     }
 

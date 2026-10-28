@@ -28,7 +28,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -80,6 +79,19 @@ public class Pager extends AbstractPager {
 
     public Pager() {
         initWidget(BINDER.createAndBindUi(this));
+        first.setOnClick(this::onClickFirst);
+        prev.setOnClick(this::onClickPrev);
+        next.setOnClick(this::onClickNext);
+        last.setOnClick(this::onClickLast);
+        refresh.addClickHandler(this::onClickRefresh);
+        txtFrom.addKeyDownHandler(this::onKeyDownFrom);
+        txtTo.addKeyDownHandler(this::onKeyDownTo);
+        txtFrom.addFocusHandler(this::onFocusFrom);
+        txtTo.addFocusHandler(this::onFocusTo);
+        txtFrom.addBlurHandler(this::onBlurFrom);
+        txtTo.addBlurHandler(this::onBlurTo);
+        lblFrom.addClickHandler(this::onClickFrom);
+        lblTo.addClickHandler(this::onClickTo);
 
         // Disable the buttons by default.
         setupButton(first);
@@ -93,78 +105,65 @@ public class Pager extends AbstractPager {
         button.setEnabled(false);
     }
 
-    @UiHandler("first")
-    void onClickFirst(final ClickEvent event) {
+    private void onClickFirst() {
         setEditing(false);
         firstPage();
     }
 
-    @UiHandler("prev")
-    void onClickPrev(final ClickEvent event) {
+    private void onClickPrev() {
         setEditing(false);
         previousPage();
     }
 
-    @UiHandler("next")
-    void onClickNext(final ClickEvent event) {
+    private void onClickNext() {
         setEditing(false);
         nextPage();
     }
 
-    @UiHandler("last")
-    void onClickLast(final ClickEvent event) {
+    private void onClickLast() {
         setEditing(false);
         lastPage();
     }
 
-    @UiHandler("refresh")
-    void onClickRefresh(final ClickEvent event) {
+    private void onClickRefresh(final ClickEvent event) {
         setEditing(false);
         RangeChangeEvent.fire(getDisplay(), getDisplay().getVisibleRange());
     }
 
-    @UiHandler("txtFrom")
-    void onKeyDownFrom(final KeyDownEvent event) {
+    private void onKeyDownFrom(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             setEditing(false);
         }
     }
 
-    @UiHandler("txtTo")
-    void onKeyDownTo(final KeyDownEvent event) {
+    private void onKeyDownTo(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             setEditing(false);
         }
     }
 
-    @UiHandler("txtFrom")
-    void onFocusFrom(final FocusEvent event) {
+    private void onFocusFrom(final FocusEvent event) {
         focussed.add(txtFrom);
     }
 
-    @UiHandler("txtTo")
-    void onFocusTo(final FocusEvent event) {
+    private void onFocusTo(final FocusEvent event) {
         focussed.add(txtTo);
     }
 
-    @UiHandler("txtFrom")
-    void onBlurFrom(final BlurEvent event) {
+    private void onBlurFrom(final BlurEvent event) {
         focussed.remove(txtFrom);
     }
 
-    @UiHandler("txtTo")
-    void onBlurTo(final BlurEvent event) {
+    private void onBlurTo(final BlurEvent event) {
         focussed.remove(txtTo);
     }
 
-    @UiHandler("lblFrom")
-    public void onClickFrom(final ClickEvent event) {
+    private void onClickFrom(final ClickEvent event) {
         setEditing(true);
         txtFrom.setFocus(true);
     }
 
-    @UiHandler("lblTo")
-    void onClickTo(final ClickEvent event) {
+    private void onClickTo(final ClickEvent event) {
         setEditing(true);
         txtTo.setFocus(true);
     }

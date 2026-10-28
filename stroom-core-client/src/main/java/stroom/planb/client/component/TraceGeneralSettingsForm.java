@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -45,6 +44,7 @@ public class TraceGeneralSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public TraceGeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        maxSpansPerTrace.addValueChangeHandler(this::onMaxSpansPerTrace);
     }
 
     public Long getMaxSpansPerTrace() {
@@ -72,8 +72,7 @@ public class TraceGeneralSettingsForm extends Component {
         maxSpansPerTrace.setReadOnly(readOnly);
     }
 
-    @UiHandler("maxSpansPerTrace")
-    public void onMaxSpansPerTrace(final ValueChangeEvent<String> event) {
+    private void onMaxSpansPerTrace(final ValueChangeEvent<String> event) {
         changed();
     }
 

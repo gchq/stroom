@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -58,6 +57,7 @@ public class CreateUser extends Component {
     /// Makes empty content.
     public CreateUser() {
         initWidget(BINDER.createAndBindUi(this));
+        createTypes.addValueChangeHandler(this::onCreateTypes);
     }
 
     /// Adds the form for a group's name, shown when a group is to be added.
@@ -117,8 +117,7 @@ public class CreateUser extends Component {
         multipleUsers.setVisible(createType == CreateType.MULTI_IDP_USERS);
     }
 
-    @UiHandler("createTypes")
-    void onCreateTypes(final ValueChangeEvent<CreateType> event) {
+    private void onCreateTypes(final ValueChangeEvent<CreateType> event) {
         showForm(event.getValue());
         onTypeChange.accept(event.getValue());
     }

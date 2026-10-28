@@ -30,10 +30,8 @@ import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -82,6 +80,7 @@ public class EditApiKey extends Component {
     /// Makes an empty form, offering every hash algorithm. The name takes the focus once shown.
     public EditApiKey() {
         initWidget(BINDER.createAndBindUi(this));
+        copyButton.setOnClick(this::onCopyButton);
         addAttachHandler(event -> focus());
         hashAlgorithmSelectionBox.addItems(Arrays.stream(HashAlgorithm.values())
                 .sorted(Comparator.comparing(HashAlgorithm::getDisplayValue))
@@ -218,8 +217,7 @@ public class EditApiKey extends Component {
         this.onCopy = onCopy;
     }
 
-    @UiHandler("copyButton")
-    void onCopyButton(final ClickEvent event) {
+    private void onCopyButton() {
         onCopy.run();
     }
 

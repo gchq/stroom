@@ -31,11 +31,9 @@ import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.Widget;
@@ -95,6 +93,7 @@ public class FloorMapClusterDialog extends Component {
     /// Makes an empty dialog content, with no members.
     public FloorMapClusterDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        trackButton.setOnClick(this::onTrackButton);
 
         // The widget's default help text describes the platform's field-qualified quick filter,
         // which this box is not — it says what this one actually does, including the one rule a
@@ -227,8 +226,7 @@ public class FloorMapClusterDialog extends Component {
         this.onTrack = onTrack;
     }
 
-    @UiHandler("trackButton")
-    void onTrackButton(final ClickEvent event) {
+    private void onTrackButton() {
         onTrack.run();
     }
 

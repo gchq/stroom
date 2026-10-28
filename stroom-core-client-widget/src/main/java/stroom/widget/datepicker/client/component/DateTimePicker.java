@@ -27,11 +27,9 @@ import stroom.widget.datepicker.client.UTCDate;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -70,6 +68,14 @@ public class DateTimePicker extends Component {
     LinkButton midnight;
     @UiField
     LinkButton midday;
+    @UiField
+    LinkButton hourReset;
+    @UiField
+    LinkButton minuteReset;
+    @UiField
+    LinkButton secondReset;
+    @UiField
+    LinkButton millisecondReset;
 
     private UTCDate value;
     private String currentDateString;
@@ -79,6 +85,21 @@ public class DateTimePicker extends Component {
     /// Makes a picker; [#setTime(long)] gives it the time to show.
     public DateTimePicker() {
         initWidget(BINDER.createAndBindUi(this));
+        today.setOnClick(this::onToday);
+        yesterday.setOnClick(this::onYesterday);
+        weekStart.setOnClick(this::onWeekStart);
+        datePicker.addValueChangeHandler(this::onDatePicker);
+        now.setOnClick(this::onNow);
+        midnight.setOnClick(this::onMidnight);
+        midday.setOnClick(this::onMidday);
+        hour.setOnChange(value -> onHour());
+        hourReset.setOnClick(this::onHourReset);
+        minute.setOnChange(value -> onMinute());
+        minuteReset.setOnClick(this::onMinuteReset);
+        second.setOnChange(value -> onSecond());
+        secondReset.setOnClick(this::onSecondReset);
+        millisecond.setOnChange(value -> onMillisecond());
+        millisecondReset.setOnClick(this::onMillisecondReset);
     }
 
     private void setDatePickerTime(final UTCDate value) {
@@ -113,10 +134,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Chooses today, keeping the time.
-    ///
-    /// @param event The event.
-    @UiHandler("today")
-    void onToday(final ClickEvent event) {
+    private void onToday() {
         final UTCDate utc = dateTimeModel.getTodayUTC();
         setDatePickerTime(utc);
         value = resolveDateTime(value);
@@ -124,10 +142,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Chooses yesterday, keeping the time.
-    ///
-    /// @param event The event.
-    @UiHandler("yesterday")
-    void onYesterday(final ClickEvent event) {
+    private void onYesterday() {
         final UTCDate utc = dateTimeModel.getTodayUTC();
         utc.setDate(utc.getDate() - 1);
         setDatePickerTime(utc);
@@ -136,10 +151,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Chooses the start of this week, keeping the time.
-    ///
-    /// @param event The event.
-    @UiHandler("weekStart")
-    void onWeekStart(final ClickEvent event) {
+    private void onWeekStart() {
         final UTCDate utc = dateTimeModel.getTodayUTC();
         utc.setDate(utc.getDate() - utc.getDay());
         setDatePickerTime(utc);
@@ -150,18 +162,14 @@ public class DateTimePicker extends Component {
     /// Takes the day chosen in the calendar.
     ///
     /// @param event The event.
-    @UiHandler("datePicker")
-    void onDatePicker(final ValueChangeEvent<UTCDate> event) {
+    private void onDatePicker(final ValueChangeEvent<UTCDate> event) {
         value = resolveDateTime(value);
         updateDateLabel();
         updateTime();
     }
 
     /// Chooses the time now, keeping the date.
-    ///
-    /// @param event The event.
-    @UiHandler("now")
-    void onNow(final ClickEvent event) {
+    private void onNow() {
         final TimeRecord timeRecord = dateTimeModel.parseTime(UTCDate.create());
         hour.setValue(timeRecord.getHour());
         minute.setValue(timeRecord.getMinute());
@@ -172,10 +180,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Chooses midnight, keeping the date.
-    ///
-    /// @param event The event.
-    @UiHandler("midnight")
-    void onMidnight(final ClickEvent event) {
+    private void onMidnight() {
         hour.setValue(0);
         minute.setValue(0);
         second.setValue(0);
@@ -185,10 +190,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Chooses midday, keeping the date.
-    ///
-    /// @param event The event.
-    @UiHandler("midday")
-    void onMidday(final ClickEvent event) {
+    private void onMidday() {
         hour.setValue(12);
         minute.setValue(0);
         second.setValue(0);
@@ -198,10 +200,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Takes the hour typed or spun, allowing for daylight saving changes.
-    ///
-    /// @param event The event.
-    @UiHandler("hour")
-    void onHour(final ValueChangeEvent<Long> event) {
+    private void onHour() {
         final int previousHour = this.previousHour;
         final DateRecord dateBefore = dateTimeModel.parseDate(value);
         final int hour = this.hour.getIntValue();
@@ -224,10 +223,7 @@ public class DateTimePicker extends Component {
     }
 
     /// Zeroes the time.
-    ///
-    /// @param event The event.
-    @UiHandler("hourReset")
-    void onHourReset(final ClickEvent event) {
+    private void onHourReset() {
         hour.setValue(0);
         minute.setValue(0);
         second.setValue(0);
@@ -237,20 +233,14 @@ public class DateTimePicker extends Component {
     }
 
     /// Takes the minute typed or spun.
-    ///
-    /// @param event The event.
-    @UiHandler("minute")
-    void onMinute(final ValueChangeEvent<Long> event) {
+    private void onMinute() {
         final int minute = this.minute.getIntValue();
         value = resolveDateTime(value, minute == 59);
         updateTime();
     }
 
     /// Zeroes the minute and what follows it.
-    ///
-    /// @param event The event.
-    @UiHandler("minuteReset")
-    void onMinuteReset(final ClickEvent event) {
+    private void onMinuteReset() {
         minute.setValue(0);
         second.setValue(0);
         millisecond.setValue(0);
@@ -259,19 +249,13 @@ public class DateTimePicker extends Component {
     }
 
     /// Takes the second typed or spun.
-    ///
-    /// @param event The event.
-    @UiHandler("second")
-    void onSecond(final ValueChangeEvent<Long> event) {
+    private void onSecond() {
         value.setSeconds(second.getIntValue());
         updateTimeLabel();
     }
 
     /// Zeroes the second and what follows it.
-    ///
-    /// @param event The event.
-    @UiHandler("secondReset")
-    void onSecondReset(final ClickEvent event) {
+    private void onSecondReset() {
         second.setValue(0);
         millisecond.setValue(0);
         value = resolveDateTime(value);
@@ -279,19 +263,13 @@ public class DateTimePicker extends Component {
     }
 
     /// Takes the millisecond typed or spun.
-    ///
-    /// @param event The event.
-    @UiHandler("millisecond")
-    void onMillisecond(final ValueChangeEvent<Long> event) {
+    private void onMillisecond() {
         value.setMilliseconds(millisecond.getIntValue());
         updateTimeLabel();
     }
 
     /// Zeroes the millisecond.
-    ///
-    /// @param event The event.
-    @UiHandler("millisecondReset")
-    void onMillisecondReset(final ClickEvent event) {
+    private void onMillisecondReset() {
         millisecond.setValue(0);
         value = resolveDateTime(value);
         update();

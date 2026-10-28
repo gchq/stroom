@@ -25,7 +25,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Several identity provider users to add, one per line, as CSV: unique identity, optional display
@@ -42,6 +41,7 @@ public class CreateMultipleUsers extends Component {
     /// Makes an empty form.
     public CreateMultipleUsers() {
         initWidget(BINDER.createAndBindUi(this));
+        userBatch.addKeyUpHandler(this::onUserBatchKeyUp);
     }
 
     /// Focuses the users, once the event being handled is done.
@@ -62,8 +62,7 @@ public class CreateMultipleUsers extends Component {
         return userBatch.getText();
     }
 
-    @UiHandler("userBatch")
-    void onUserBatchKeyUp(final KeyUpEvent event) {
+    private void onUserBatchKeyUp(final KeyUpEvent event) {
         // Once users have been entered the feedback no longer applies
         if (userBatchGroup.getFeedback() != null && !userBatch.getText().trim().isEmpty()) {
             userBatchGroup.clearFeedback();

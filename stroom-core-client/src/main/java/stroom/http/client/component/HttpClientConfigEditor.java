@@ -26,10 +26,8 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An HTTP client's settings: its timeouts, pool sizes, retries and user agent, with a button that
@@ -71,6 +69,7 @@ public class HttpClientConfigEditor extends Component {
     /// Makes an empty form.
     public HttpClientConfigEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        setHttpTlsConfig.setOnClick(this::onSetHttpTlsConfig);
     }
 
     @Override
@@ -222,8 +221,7 @@ public class HttpClientConfigEditor extends Component {
         this.onSetHttpTlsConfig = onSetHttpTlsConfig;
     }
 
-    @UiHandler("setHttpTlsConfig")
-    void onSetHttpTlsConfig(final ClickEvent event) {
+    private void onSetHttpTlsConfig() {
         onSetHttpTlsConfig.run();
     }
 

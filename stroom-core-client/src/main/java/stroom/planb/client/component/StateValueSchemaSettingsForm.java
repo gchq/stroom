@@ -26,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -46,6 +45,8 @@ public class StateValueSchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public StateValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        stateValueType.addValueChangeHandler(this::onStateValueType);
+        hashLength.addValueChangeHandler(this::onHashLength);
         stateValueType.addItems(StateValueType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         setValueSchema(new StateValueSchema.Builder().build());
@@ -79,14 +80,12 @@ public class StateValueSchemaSettingsForm extends Component {
                               Objects.equals(value, StateValueType.VARIABLE));
     }
 
-    @UiHandler("stateValueType")
-    public void onStateValueType(final ValueChangeEvent<StateValueType> event) {
+    private void onStateValueType(final ValueChangeEvent<StateValueType> event) {
         onStateValueTypeChange();
         changed();
     }
 
-    @UiHandler("hashLength")
-    public void onHashLength(final ValueChangeEvent<HashLength> event) {
+    private void onHashLength(final ValueChangeEvent<HashLength> event) {
         changed();
     }
 

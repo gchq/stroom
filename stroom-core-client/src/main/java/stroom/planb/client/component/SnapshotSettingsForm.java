@@ -21,10 +21,8 @@ import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -49,6 +47,9 @@ public class SnapshotSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public SnapshotSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        useSnapshotsForLookup.setOnChange(value -> onUseSnapshotsForLookup());
+        useSnapshotsForGet.setOnChange(value -> onUseSnapshotsForGet());
+        useSnapshotsForQuery.setOnChange(value -> onUseSnapshotsForQuery());
     }
 
     public SnapshotSettings getSnapshotSettings() {
@@ -73,18 +74,15 @@ public class SnapshotSettingsForm extends Component {
         useSnapshotsForQuery.setReadOnly(readOnly);
     }
 
-    @UiHandler("useSnapshotsForLookup")
-    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
+    private void onUseSnapshotsForLookup() {
         changed();
     }
 
-    @UiHandler("useSnapshotsForGet")
-    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
+    private void onUseSnapshotsForGet() {
         changed();
     }
 
-    @UiHandler("useSnapshotsForQuery")
-    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
+    private void onUseSnapshotsForQuery() {
         changed();
     }
 

@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The XPath filter dialog's content, for stepping: where to look in the output, and what
@@ -57,6 +56,8 @@ public class XPathFilterEditor extends Component {
     /// Makes the content.
     public XPathFilterEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        searchType.addValueChangeHandler(this::onSearchTypeChange);
+        matchType.addValueChangeHandler(this::onMatchTypeChange);
         matchType.addItems(MatchType.values());
         matchType.setValue(MatchType.EQUALS);
 
@@ -141,8 +142,7 @@ public class XPathFilterEditor extends Component {
         ignoreCaseContainer.setVisible(visible);
     }
 
-    @UiHandler("searchType")
-    void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
+    private void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
         final SearchType selected = e.getValue();
         switch (selected) {
             case ALL:
@@ -156,8 +156,7 @@ public class XPathFilterEditor extends Component {
         updateXPathVisibility();
     }
 
-    @UiHandler("matchType")
-    void onMatchTypeChange(final ValueChangeEvent<MatchType> e) {
+    private void onMatchTypeChange(final ValueChangeEvent<MatchType> e) {
         changeVisibility(e.getValue());
     }
 

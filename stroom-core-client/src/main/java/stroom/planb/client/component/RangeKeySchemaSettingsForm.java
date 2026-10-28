@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RangeKeySchemaSettingsForm extends Component {
@@ -41,6 +40,7 @@ public class RangeKeySchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public RangeKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        rangeType.addValueChangeHandler(this::onRangeType);
         rangeType.addItems(RangeType.ORDERED_LIST);
         setKeySchema(new RangeKeySchema.Builder().build());
     }
@@ -61,8 +61,7 @@ public class RangeKeySchemaSettingsForm extends Component {
         rangeType.setReadOnly(readOnly);
     }
 
-    @UiHandler("rangeType")
-    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+    private void onRangeType(final ValueChangeEvent<RangeType> event) {
         changed();
     }
 

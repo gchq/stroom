@@ -1103,6 +1103,27 @@ Nothing a user sees changes. Move the classes still in `client.presenter` and `c
 - Moves touch about 1,200 files and 130 templates' `urn:import` lines: each commit is only a move, so it can be checked by the rename.
 - CSS renames can change the look if a selector is missed: a screenshot diff after each must show no change.
 
+## 18. Handlers wired in Java
+
+Plan and record: [`component-migration/wave-18.md`](component-migration/wave-18.md). Added 28 October
+2026, after wave 17.
+
+> **Done, 28 October 2026**: the 191 `@UiHandler` methods are wired in their components'
+> constructors (`setOnClick`, `setOnChange` or `addXxxHandler`), and checkstyle refuses
+> `@UiHandler`. See `wave-18.md`.
+
+Nothing a user sees changes. Each `@UiHandler` method is wired in its component's constructor,
+straight after the template is bound: a Stroom button's `setOnClick`, a tick box's, spinner's or
+radio group's `setOnChange` where nothing else sets it, otherwise the widget's `addXxxHandler`.
+
+**Why now.** The waves are done, so every component can follow the rule new ones already do.
+
+**Risks.**
+
+- A callback holds one function, so one set by the component and again by its caller would replace
+  it: the conversion uses `addXxxHandler` where the widget is handed out.
+- Checked by both apps' GWT compiles and a full workbench run with the leak check.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

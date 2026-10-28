@@ -38,7 +38,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.Label;
@@ -95,6 +94,11 @@ public class FindInContent extends Component {
     /// Makes empty content.
     public FindInContent() {
         initWidget(BINDER.createAndBindUi(this));
+        pattern.addKeyUpHandler(this::onPatternKeyUp);
+        pattern.addKeyDownHandler(this::onPatternKeyDown);
+        pattern.addValueChangeHandler(this::onPatternValueChange);
+        toggleMatchCase.addClickHandler(this::onToggleMatchCase);
+        toggleRegex.addClickHandler(this::onToggleRegex);
         // Enter, or a double click, opens a result, and Up on the first goes back to the pattern
         FindResultLists.wire(
                 resultList,
@@ -218,30 +222,25 @@ public class FindInContent extends Component {
                 : TEXT_HINT);
     }
 
-    @UiHandler("pattern")
-    void onPatternKeyUp(final KeyUpEvent e) {
+    private void onPatternKeyUp(final KeyUpEvent e) {
         onPatternChange.run();
     }
 
-    @UiHandler("pattern")
-    void onPatternKeyDown(final KeyDownEvent e) {
+    private void onPatternKeyDown(final KeyDownEvent e) {
         if (!e.getNativeEvent().getShiftKey()) {
             onPatternKeyDown.accept(e);
         }
     }
 
-    @UiHandler("pattern")
-    void onPatternValueChange(final ValueChangeEvent<String> e) {
+    private void onPatternValueChange(final ValueChangeEvent<String> e) {
         pattern.setStyleName(MULTILINE, pattern.getText().contains("\n"));
     }
 
-    @UiHandler("toggleMatchCase")
-    void onToggleMatchCase(final ClickEvent e) {
+    private void onToggleMatchCase(final ClickEvent e) {
         onPatternChange.run();
     }
 
-    @UiHandler("toggleRegex")
-    void onToggleRegex(final ClickEvent e) {
+    private void onToggleRegex(final ClickEvent e) {
         updateHint();
         onPatternChange.run();
     }

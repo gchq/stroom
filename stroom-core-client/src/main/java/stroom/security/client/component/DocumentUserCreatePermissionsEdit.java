@@ -24,10 +24,8 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -58,6 +56,7 @@ public class DocumentUserCreatePermissionsEdit extends Component {
     /// Makes an empty form, with no document types until [#setDocumentTypes(IsWidget)].
     public DocumentUserCreatePermissionsEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        applyPermissionToDescendants.setOnClick(this::onApplyPermissionToDescendants);
     }
 
     /// @param docRef The folder.
@@ -86,8 +85,7 @@ public class DocumentUserCreatePermissionsEdit extends Component {
         this.onApplyToDescendants = onApplyToDescendants;
     }
 
-    @UiHandler("applyPermissionToDescendants")
-    void onApplyPermissionToDescendants(final ClickEvent e) {
+    private void onApplyPermissionToDescendants() {
         onApplyToDescendants.accept(applyPermissionToDescendants);
     }
 

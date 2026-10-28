@@ -28,7 +28,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A new document: the folder to make it in, its name and how its permissions are set. Enter in
@@ -53,6 +52,8 @@ public class CreateDocument extends Component {
     /// focus once shown.
     public CreateDocument() {
         initWidget(BINDER.createAndBindUi(this));
+        name.addKeyDownHandler(this::onKeyDown);
+        name.addKeyUpHandler(this::onKeyUp);
         addAttachHandler(event -> focus());
         permissionInheritance.addItem(PermissionInheritance.NONE);
         permissionInheritance.addItem(PermissionInheritance.DESTINATION);
@@ -102,15 +103,13 @@ public class CreateDocument extends Component {
         this.onSubmit = onSubmit;
     }
 
-    @UiHandler("name")
-    void onKeyDown(final KeyDownEvent event) {
+    private void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
             onSubmit.run();
         }
     }
 
-    @UiHandler("name")
-    void onKeyUp(final KeyUpEvent event) {
+    private void onKeyUp(final KeyUpEvent event) {
         // Once a name has been typed the feedback no longer applies
         if (nameGroup.getFeedback() != null && !name.getText().trim().isEmpty()) {
             nameGroup.clearFeedback();

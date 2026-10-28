@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -52,6 +51,10 @@ public class CreateExternalUser extends Component {
     /// Makes an empty form.
     public CreateExternalUser() {
         initWidget(BINDER.createAndBindUi(this));
+        subjectId.addKeyDownHandler(this::onUserIdentityKeyDown);
+        subjectId.addKeyUpHandler(this::onUserIdentityKeyUp);
+        displayName.addKeyDownHandler(this::onDisplayNameKeyDown);
+        fullName.addKeyDownHandler(this::onFullNameKeyDown);
     }
 
     /// Focuses the unique identity, once the event being handled is done.
@@ -87,26 +90,22 @@ public class CreateExternalUser extends Component {
         subjectId.setFocus(true);
     }
 
-    @UiHandler("subjectId")
-    void onUserIdentityKeyDown(final KeyDownEvent event) {
+    private void onUserIdentityKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
     }
 
-    @UiHandler("subjectId")
-    void onUserIdentityKeyUp(final KeyUpEvent event) {
+    private void onUserIdentityKeyUp(final KeyUpEvent event) {
         // Once an identity has been typed the feedback no longer applies
         if (subjectIdGroup.getFeedback() != null && !subjectId.getText().trim().isEmpty()) {
             subjectIdGroup.clearFeedback();
         }
     }
 
-    @UiHandler("displayName")
-    void onDisplayNameKeyDown(final KeyDownEvent event) {
+    private void onDisplayNameKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
     }
 
-    @UiHandler("fullName")
-    void onFullNameKeyDown(final KeyDownEvent event) {
+    private void onFullNameKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
     }
 

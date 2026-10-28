@@ -22,10 +22,8 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Create Processors dialog's content, for streams chosen in the data browser: the new
@@ -55,6 +53,7 @@ public class ProcessChoiceDialog extends Component {
     /// Makes the content.
     public ProcessChoiceDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        reprocess.setOnChange(value -> onReprocess());
         // setValue is overloaded, so it can't be set in the template
         priority.setValue(DEFAULT_PRIORITY);
     }
@@ -114,8 +113,7 @@ public class ProcessChoiceDialog extends Component {
         this.onReprocessChange = onReprocessChange;
     }
 
-    @UiHandler("reprocess")
-    void onReprocess(final ValueChangeEvent<Boolean> event) {
+    private void onReprocess() {
         onReprocessChange.run();
     }
 

@@ -24,10 +24,8 @@ import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -80,6 +78,9 @@ public class EditAccount extends Component {
     /// Makes an empty account.
     public EditAccount() {
         initWidget(BINDER.createAndBindUi(this));
+        changePassword.setOnClick(this::onChangePassword);
+        unlock.setOnClick(this::onUnlock);
+        reactivate.setOnClick(this::onReactivate);
     }
 
     /// Focuses the user id.
@@ -207,18 +208,15 @@ public class EditAccount extends Component {
         this.onReactivate = Objects.requireNonNull(onReactivate, "onReactivate");
     }
 
-    @UiHandler("changePassword")
-    void onChangePassword(final ClickEvent e) {
+    private void onChangePassword() {
         onChangePassword.run();
     }
 
-    @UiHandler("unlock")
-    void onUnlock(final ClickEvent e) {
+    private void onUnlock() {
         onUnlock.run();
     }
 
-    @UiHandler("reactivate")
-    void onReactivate(final ClickEvent e) {
+    private void onReactivate() {
         onReactivate.run();
     }
 

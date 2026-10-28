@@ -23,10 +23,8 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Edit Period dialog's content: when a processor profile's period applies, and the
@@ -53,6 +51,8 @@ public class ProfilePeriodEditor extends Component {
     /// Makes the content.
     public ProfilePeriodEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        limitNodeThreads.setOnChange(value -> onLimitNodeThreads());
+        limitClusterThreads.setOnChange(value -> onLimitClusterThreads());
     }
 
 
@@ -123,13 +123,11 @@ public class ProfilePeriodEditor extends Component {
         this.maxClusterThreads.setValue(totalClusterThreads);
     }
 
-    @UiHandler("limitNodeThreads")
-    void onLimitNodeThreads(final ValueChangeEvent<Boolean> event) {
+    private void onLimitNodeThreads() {
         maxNodeThreads.setEnabled(limitNodeThreads.getValue());
     }
 
-    @UiHandler("limitClusterThreads")
-    void onLimitClusterThreads(final ValueChangeEvent<Boolean> event) {
+    private void onLimitClusterThreads() {
         maxClusterThreads.setEnabled(limitClusterThreads.getValue());
     }
 

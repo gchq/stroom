@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,6 +58,11 @@ public class AnalyticNotificationEdit extends Component {
     /// destination types.
     public AnalyticNotificationEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        enabled.setOnChange(value -> onEnabled());
+        limitNotifications.setOnChange(value -> onLimitNotifications());
+        maxNotifications.setOnChange(value -> onMaxNotifications());
+        resumeAfter.addValueChangeHandler(this::onResumeAfter);
+        destinationType.addValueChangeHandler(this::onDestinationType);
         maxNotifications.setValue(1);
         destinationType.addItem(NotificationDestinationType.STREAM);
         destinationType.addItem(NotificationDestinationType.EMAIL);
@@ -124,28 +128,23 @@ public class AnalyticNotificationEdit extends Component {
         this.onChange = onChange;
     }
 
-    @UiHandler("enabled")
-    void onEnabled(final ValueChangeEvent<Boolean> event) {
+    private void onEnabled() {
         onChange.run();
     }
 
-    @UiHandler("limitNotifications")
-    void onLimitNotifications(final ValueChangeEvent<Boolean> event) {
+    private void onLimitNotifications() {
         onChange.run();
     }
 
-    @UiHandler("maxNotifications")
-    void onMaxNotifications(final ValueChangeEvent<Long> event) {
+    private void onMaxNotifications() {
         onChange.run();
     }
 
-    @UiHandler("resumeAfter")
-    void onResumeAfter(final ValueChangeEvent<SimpleDuration> event) {
+    private void onResumeAfter(final ValueChangeEvent<SimpleDuration> event) {
         onChange.run();
     }
 
-    @UiHandler("destinationType")
-    void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
+    private void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
         onChange.run();
     }
 

@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -56,6 +55,9 @@ public class PublishingSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public PublishingSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        granularity.addValueChangeHandler(this::onGranularity);
+        maxWaitForData.setOnChange(value -> onMaxWaitForData());
+        maxWaitForDataTimeUnit.addValueChangeHandler(this::onMaxWaitForDataTimeUnit);
 
         granularity.addItem(BucketGranularity.HOUR);
         granularity.addItem(BucketGranularity.DAY);
@@ -103,18 +105,15 @@ public class PublishingSettingsForm extends Component {
         maxWaitForDataTimeUnit.setReadOnly(readOnly);
     }
 
-    @UiHandler("granularity")
-    public void onGranularity(final ValueChangeEvent<BucketGranularity> event) {
+    private void onGranularity(final ValueChangeEvent<BucketGranularity> event) {
         changed();
     }
 
-    @UiHandler("maxWaitForData")
-    public void onMaxWaitForData(final ValueChangeEvent<Long> event) {
+    private void onMaxWaitForData() {
         changed();
     }
 
-    @UiHandler("maxWaitForDataTimeUnit")
-    public void onMaxWaitForDataTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+    private void onMaxWaitForDataTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         changed();
     }
 

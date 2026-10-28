@@ -25,7 +25,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -50,6 +49,7 @@ public class ManageActivity extends Component {
     /// Makes empty content.
     public ManageActivity() {
         initWidget(BINDER.createAndBindUi(this));
+        nameFilter.addValueChangeHandler(this::onFilterChange);
         nameFilter.registerPopupTextProvider(() -> tooltipContentSupplier.get());
     }
 
@@ -85,8 +85,7 @@ public class ManageActivity extends Component {
         this.onFilterChange = onFilterChange;
     }
 
-    @UiHandler("nameFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
+    private void onFilterChange(final ValueChangeEvent<String> event) {
         onFilterChange.accept(nameFilter.getText());
     }
 

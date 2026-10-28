@@ -26,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,6 +53,7 @@ public class NodeGroupEdit extends Component {
     /// Makes an empty form, offering both inclusion behaviours.
     public NodeGroupEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        nodeInclusionBehaviour.addValueChangeHandler(this::onNodeInclusionBehaviourChange);
         nodeInclusionBehaviour.addItems(List.of(
                 NodeInclusionBehaviour.INCLUDE_SELECTED,
                 NodeInclusionBehaviour.EXCLUDE_SELECTED));
@@ -101,8 +101,7 @@ public class NodeGroupEdit extends Component {
         this.onInvertSelectionChange = onInvertSelectionChange;
     }
 
-    @UiHandler("nodeInclusionBehaviour")
-    void onNodeInclusionBehaviourChange(final ValueChangeEvent<NodeInclusionBehaviour> event) {
+    private void onNodeInclusionBehaviourChange(final ValueChangeEvent<NodeInclusionBehaviour> event) {
         onInvertSelectionChange.run();
     }
 

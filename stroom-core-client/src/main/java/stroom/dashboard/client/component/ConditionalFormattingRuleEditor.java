@@ -28,11 +28,9 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -74,6 +72,11 @@ public class ConditionalFormattingRuleEditor extends Component {
     /// Makes the form, with a background style of none.
     public ConditionalFormattingRuleEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        formattingType.addValueChangeHandler(this::onFormattingType);
+        formattingStyle.addValueChangeHandler(this::onFormattingStyle);
+        editCustomStyle.setOnClick(this::onEditCustomStyle);
+        textBold.setOnChange(value -> onTextBold());
+        textItalic.setOnChange(value -> onTextItalic());
 
         formattingType.addItems(ConditionalFormattingType.LIST);
         formattingType.setValue(ConditionalFormattingType.BACKGROUND);
@@ -172,30 +175,25 @@ public class ConditionalFormattingRuleEditor extends Component {
         this.onEditCustomStyle = onEditCustomStyle;
     }
 
-    @UiHandler("formattingType")
-    void onFormattingType(final ValueChangeEvent<ConditionalFormattingType> e) {
+    private void onFormattingType(final ValueChangeEvent<ConditionalFormattingType> e) {
         updateVisibility();
         updateExampleSwatch();
     }
 
-    @UiHandler("formattingStyle")
-    void onFormattingStyle(final ValueChangeEvent<ConditionalFormattingStyle> e) {
+    private void onFormattingStyle(final ValueChangeEvent<ConditionalFormattingStyle> e) {
         updateExampleSwatch();
     }
 
-    @UiHandler("editCustomStyle")
-    void onEditCustomStyle(final ClickEvent e) {
+    private void onEditCustomStyle() {
         onEditCustomStyle.run();
     }
 
-    @UiHandler("textBold")
-    void onTextBold(final ValueChangeEvent<Boolean> e) {
+    private void onTextBold() {
         updateVisibility();
         updateExampleSwatch();
     }
 
-    @UiHandler("textItalic")
-    void onTextItalic(final ValueChangeEvent<Boolean> e) {
+    private void onTextItalic() {
         updateVisibility();
         updateExampleSwatch();
     }

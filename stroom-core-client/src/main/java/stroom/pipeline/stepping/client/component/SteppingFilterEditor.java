@@ -34,7 +34,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -73,6 +72,8 @@ public class SteppingFilterEditor extends Component {
     /// Makes the editor, with no elements until [#setElements(List)].
     public SteppingFilterEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        skipToErrors.addValueChangeHandler(this::onSkipToErrorsValueChange);
+        skipToOutput.addValueChangeHandler(this::onSkipToOutputValueChange);
 
         skipToErrors.addItem(Severity.INFO);
         skipToErrors.addItem(Severity.WARNING);
@@ -203,13 +204,11 @@ public class SteppingFilterEditor extends Component {
         this.onChange = onChange;
     }
 
-    @UiHandler("skipToErrors")
-    void onSkipToErrorsValueChange(final ValueChangeEvent<Severity> e) {
+    private void onSkipToErrorsValueChange(final ValueChangeEvent<Severity> e) {
         onChange.run();
     }
 
-    @UiHandler("skipToOutput")
-    void onSkipToOutputValueChange(final ValueChangeEvent<OutputState> e) {
+    private void onSkipToOutputValueChange(final ValueChangeEvent<OutputState> e) {
         onChange.run();
     }
 

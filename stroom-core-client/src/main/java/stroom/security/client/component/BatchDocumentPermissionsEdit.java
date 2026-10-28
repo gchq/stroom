@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -61,6 +60,7 @@ public class BatchDocumentPermissionsEdit extends Component {
     /// Makes the content, with Set Permission chosen.
     public BatchDocumentPermissionsEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        documentPermissionChange.addValueChangeHandler(this::onDocumentPermissionChange);
         permission.addItems(DocumentPermission.LIST);
         // Added where the list stands, so set after the permissions to come last
         permission.setNonSelectString("[ none ]");
@@ -104,8 +104,7 @@ public class BatchDocumentPermissionsEdit extends Component {
         return permission.getValue();
     }
 
-    @UiHandler("documentPermissionChange")
-    void onDocumentPermissionChange(final ValueChangeEvent<DocumentPermissionChange> e) {
+    private void onDocumentPermissionChange(final ValueChangeEvent<DocumentPermissionChange> e) {
         update();
     }
 

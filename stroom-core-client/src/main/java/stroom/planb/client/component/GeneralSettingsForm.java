@@ -27,7 +27,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class GeneralSettingsForm extends Component {
@@ -55,6 +54,9 @@ public class GeneralSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public GeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        maxStoreSize.addValueChangeHandler(this::onMaxStoreSize);
+        synchroniseMerge.setOnChange(value -> onSynchroniseMerge());
+        overwrite.setOnChange(value -> onOverwrite());
         setOverwrite(true);
     }
 
@@ -133,18 +135,15 @@ public class GeneralSettingsForm extends Component {
         updateStates();
     }
 
-    @UiHandler("maxStoreSize")
-    public void onMaxStoreSize(final ValueChangeEvent<String> event) {
+    private void onMaxStoreSize(final ValueChangeEvent<String> event) {
         changed();
     }
 
-    @UiHandler("synchroniseMerge")
-    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
+    private void onSynchroniseMerge() {
         changed();
     }
 
-    @UiHandler("overwrite")
-    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+    private void onOverwrite() {
         changed();
     }
 

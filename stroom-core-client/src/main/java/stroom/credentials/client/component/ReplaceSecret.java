@@ -22,10 +22,8 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -51,6 +49,7 @@ public class ReplaceSecret extends Component {
     /// Makes an empty form, with no secret form until [#setSecretForm(IsWidget)].
     public ReplaceSecret() {
         initWidget(BINDER.createAndBindUi(this));
+        credsExpire.setOnChange(value -> onCredsExpire());
     }
 
     /// @param name The name of the credential, shown in the warning.
@@ -103,8 +102,7 @@ public class ReplaceSecret extends Component {
         expiryTimeFormGroup.setDisabled(!expires);
     }
 
-    @UiHandler("credsExpire")
-    void onCredsExpire(final ValueChangeEvent<Boolean> e) {
+    private void onCredsExpire() {
         updateState();
     }
 

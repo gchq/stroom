@@ -28,7 +28,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -55,6 +54,8 @@ public class ExportConfigDialog extends Component {
     /// Makes empty content.
     public ExportConfigDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        nameFilter.addValueChangeHandler(this::onFilterChange);
+        filter.addClickHandler(this::onFilterClick);
     }
 
     /// Puts the focus in the filter.
@@ -102,13 +103,11 @@ public class ExportConfigDialog extends Component {
         return filter.getElement();
     }
 
-    @UiHandler("nameFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
+    private void onFilterChange(final ValueChangeEvent<String> event) {
         onFilterChange.accept(nameFilter.getText());
     }
 
-    @UiHandler("filter")
-    void onFilterClick(final ClickEvent event) {
+    private void onFilterClick(final ClickEvent event) {
         onFilterTypes.run();
     }
 

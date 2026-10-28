@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -58,6 +57,8 @@ public class AskStroomAiConfigDialog extends Component {
     /// Makes the dialog, with no tabs until [#addTab(TabData)] and Set As Default hidden.
     public AskStroomAiConfigDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        restoreFromDefaults.addClickHandler(this::onRestoreFromDefaultsClick);
+        setDefaults.addClickHandler(this::onSetDefaultsClick);
         tabBar.setTabPanel(layerContainer.getElement());
         tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
     }
@@ -106,13 +107,11 @@ public class AskStroomAiConfigDialog extends Component {
         this.onSetDefaults = onSetDefaults;
     }
 
-    @UiHandler("restoreFromDefaults")
-    void onRestoreFromDefaultsClick(final ClickEvent event) {
+    private void onRestoreFromDefaultsClick(final ClickEvent event) {
         onRestoreFromDefaults.run();
     }
 
-    @UiHandler("setDefaults")
-    void onSetDefaultsClick(final ClickEvent event) {
+    private void onSetDefaultsClick(final ClickEvent event) {
         onSetDefaults.run();
     }
 

@@ -27,7 +27,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -84,6 +83,10 @@ public class GlobalPropertyEdit extends Component {
     /// Makes an empty, read-only form.
     public GlobalPropertyEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        copyNameButton.setOnClick(this::onCopyNameButton);
+        effectiveValueWarnings.addClickHandler(this::onClusterValuesButton);
+        effectiveValueInfo.addClickHandler(this::onClusterValuesButton);
+        dataTypeHelp.setOnClick(this::onDataTypeHelpButton);
         setEditable(false);
 
         useOverride.addValueChangeHandler(event -> onChange.run());
@@ -222,18 +225,15 @@ public class GlobalPropertyEdit extends Component {
         this.onDataTypeHelp = onDataTypeHelp;
     }
 
-    @UiHandler("copyNameButton")
-    void onCopyNameButton(final ClickEvent event) {
+    private void onCopyNameButton() {
         Clipboard.writeText(name.getText());
     }
 
-    @UiHandler({"effectiveValueWarnings", "effectiveValueInfo"})
-    void onClusterValuesButton(final ClickEvent event) {
+    private void onClusterValuesButton(final ClickEvent event) {
         onShowClusterValues.run();
     }
 
-    @UiHandler("dataTypeHelp")
-    void onDataTypeHelpButton(final ClickEvent event) {
+    private void onDataTypeHelpButton() {
         onDataTypeHelp.run();
     }
 

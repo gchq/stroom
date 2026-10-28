@@ -26,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TemporalRangeKeySchemaSettingsForm extends Component {
@@ -44,6 +43,8 @@ public class TemporalRangeKeySchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public TemporalRangeKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        rangeType.addValueChangeHandler(this::onRangeType);
+        temporalPrecision.addValueChangeHandler(this::onTemporalPrecision);
         rangeType.addItems(RangeType.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         setKeySchema(new TemporalRangeKeySchema.Builder().build());
@@ -68,13 +69,11 @@ public class TemporalRangeKeySchemaSettingsForm extends Component {
         temporalPrecision.setReadOnly(readOnly);
     }
 
-    @UiHandler("rangeType")
-    public void onRangeType(final ValueChangeEvent<RangeType> event) {
+    private void onRangeType(final ValueChangeEvent<RangeType> event) {
         changed();
     }
 
-    @UiHandler("temporalPrecision")
-    public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
+    private void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
         changed();
     }
 

@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -62,6 +61,7 @@ public class IndexFieldEditor extends Component {
     /// Makes the content.
     public IndexFieldEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        type.addValueChangeHandler(this::onType);
         type.addItems(LuceneFieldTypes.FIELD_TYPES);
         analyser.addItems(AnalyzerType.values());
     }
@@ -157,8 +157,7 @@ public class IndexFieldEditor extends Component {
         this.onTypeChange = onTypeChange;
     }
 
-    @UiHandler("type")
-    void onType(final ValueChangeEvent<?> event) {
+    private void onType(final ValueChangeEvent<?> event) {
         onTypeChange.run();
     }
 

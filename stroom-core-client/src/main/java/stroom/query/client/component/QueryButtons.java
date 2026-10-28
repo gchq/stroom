@@ -21,10 +21,8 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,6 +42,7 @@ public class QueryButtons extends Composite {
     /// Makes the button, to run the query.
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
+        start.setOnClick(this::onStartClick);
     }
 
     /// @param onStart Run when the button is pressed, to run the query or, while it runs, to stop it,
@@ -52,8 +51,7 @@ public class QueryButtons extends Composite {
         this.onStart = onStart;
     }
 
-    @UiHandler("start")
-    void onStartClick(final ClickEvent event) {
+    private void onStartClick() {
         if (onStart != null) {
             onStart.run();
         }

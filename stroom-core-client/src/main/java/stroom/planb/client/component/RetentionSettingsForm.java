@@ -29,7 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RetentionSettingsForm extends Component {
@@ -64,6 +63,12 @@ public class RetentionSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public RetentionSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        retentionEnabled.setOnChange(value -> onRetentionEnabled());
+        retentionAge.setOnChange(value -> onRetainAge());
+        retentionTimeUnit.addValueChangeHandler(this::onRetainTimeUnit);
+        retentionCheckInterval.setOnChange(value -> onRetentionCheckInterval());
+        retentionCheckIntervalTimeUnit.addValueChangeHandler(this::onRetentionCheckIntervalTimeUnit);
+        useStateTime.setOnChange(value -> onUseStateTime());
 
         retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
 
@@ -166,34 +171,28 @@ public class RetentionSettingsForm extends Component {
         useStateTime.setReadOnly(readOnly);
     }
 
-    @UiHandler("retentionEnabled")
-    public void onRetentionEnabled(final ValueChangeEvent<Boolean> event) {
+    private void onRetentionEnabled() {
         updateStates();
         changed();
     }
 
-    @UiHandler("retentionAge")
-    public void onRetainAge(final ValueChangeEvent<Long> event) {
+    private void onRetainAge() {
         changed();
     }
 
-    @UiHandler("retentionTimeUnit")
-    public void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+    private void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         changed();
     }
 
-    @UiHandler("retentionCheckInterval")
-    public void onRetentionCheckInterval(final ValueChangeEvent<Long> event) {
+    private void onRetentionCheckInterval() {
         changed();
     }
 
-    @UiHandler("retentionCheckIntervalTimeUnit")
-    public void onRetentionCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+    private void onRetentionCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         changed();
     }
 
-    @UiHandler("useStateTime")
-    public void onUseStateTime(final ValueChangeEvent<Boolean> event) {
+    private void onUseStateTime() {
         changed();
     }
 

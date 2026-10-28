@@ -26,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of the batch processor filter dialog: a change for every processor filter a
@@ -45,6 +44,7 @@ public class BatchProcessorFilterEdit extends Component {
     /// Makes the content, with Enable chosen.
     public BatchProcessorFilterEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        change.addValueChangeHandler(this::onChange);
         change.addItems(ProcessorFilterChange.LIST);
         change.setValue(ProcessorFilterChange.ENABLE);
     }
@@ -64,8 +64,7 @@ public class BatchProcessorFilterEdit extends Component {
         return userRef;
     }
 
-    @UiHandler("change")
-    void onChange(final ValueChangeEvent<ProcessorFilterChange> e) {
+    private void onChange(final ValueChangeEvent<ProcessorFilterChange> e) {
         userRefLabel.setVisible(ProcessorFilterChange.SET_RUN_AS_USER.equals(change.getValue()));
     }
 

@@ -27,7 +27,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -49,6 +48,9 @@ public class TemporalStateKeySchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public TemporalStateKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        keyType.addValueChangeHandler(this::onKeyType);
+        hashLength.addValueChangeHandler(this::onHashLength);
+        temporalPrecision.addValueChangeHandler(this::onTemporalPrecision);
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
@@ -86,19 +88,16 @@ public class TemporalStateKeySchemaSettingsForm extends Component {
                               Objects.equals(value, KeyType.VARIABLE));
     }
 
-    @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+    private void onKeyType(final ValueChangeEvent<KeyType> event) {
         onKeyTypeChange();
         changed();
     }
 
-    @UiHandler("hashLength")
-    public void onHashLength(final ValueChangeEvent<HashLength> event) {
+    private void onHashLength(final ValueChangeEvent<HashLength> event) {
         changed();
     }
 
-    @UiHandler("temporalPrecision")
-    public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
+    private void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
         changed();
     }
 

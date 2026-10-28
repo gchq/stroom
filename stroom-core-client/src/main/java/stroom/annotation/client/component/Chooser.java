@@ -52,7 +52,6 @@ public class Chooser<T> extends Component {
     public Chooser() {
         initWidget(BINDER.createAndBindUi(this));
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
-        // Added here rather than with @UiHandler, which a generic component's template can't use
         nameFilter.addValueChangeHandler(e -> onFilterChange.accept(e.getValue()));
     }
 

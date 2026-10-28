@@ -25,7 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -64,6 +63,11 @@ public class PipelineStructure extends Component {
     /// Makes the tab, with an empty tree and no lists.
     public PipelineStructure() {
         initWidget(BINDER.createAndBindUi(this));
+        add.addClickHandler(this::onAddClick);
+        remove.addClickHandler(this::onRemoveClick);
+        edit.addClickHandler(this::onEditClick);
+        restore.addClickHandler(this::onRestoreClick);
+        viewSource.addClickHandler(this::onViewSource);
     }
 
     /// @return The box its controller attaches the Inherit From picker to.
@@ -117,28 +121,23 @@ public class PipelineStructure extends Component {
         onAction.accept(action, target);
     }
 
-    @UiHandler("add")
-    void onAddClick(final ClickEvent event) {
+    private void onAddClick(final ClickEvent event) {
         fire(PipelineStructureAction.ADD, event);
     }
 
-    @UiHandler("remove")
-    void onRemoveClick(final ClickEvent event) {
+    private void onRemoveClick(final ClickEvent event) {
         fire(PipelineStructureAction.REMOVE, event);
     }
 
-    @UiHandler("edit")
-    void onEditClick(final ClickEvent event) {
+    private void onEditClick(final ClickEvent event) {
         fire(PipelineStructureAction.EDIT, event);
     }
 
-    @UiHandler("restore")
-    void onRestoreClick(final ClickEvent event) {
+    private void onRestoreClick(final ClickEvent event) {
         fire(PipelineStructureAction.RESTORE, event);
     }
 
-    @UiHandler("viewSource")
-    void onViewSource(final ClickEvent event) {
+    private void onViewSource(final ClickEvent event) {
         fire(PipelineStructureAction.VIEW_SOURCE, event);
     }
 

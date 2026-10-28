@@ -39,7 +39,6 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -105,6 +104,10 @@ public class AnnotationEdit extends Component {
     SettingBlock annotationCollectionBlock;
     @UiField
     SettingBlock annotationRetentionPeriodBlock;
+    @UiField
+    SettingBlock titleBlock;
+    @UiField
+    SettingBlock subjectBlock;
 
     private BiConsumer<AnnotationEditAction, Element> onAction = (action, element) -> {
     };
@@ -120,6 +123,20 @@ public class AnnotationEdit extends Component {
     /// Makes the tab, with no annotation.
     public AnnotationEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        titleTextBox.addBlurHandler(this::onTitleBlur);
+        titleTextBox.addKeyDownHandler(this::onTitleReturn);
+        subjectTextBox.addBlurHandler(this::onSubjectBlur);
+        subjectTextBox.addKeyDownHandler(this::onSubjectReturn);
+        titleBlock.addClickHandler(this::onTitleBlock);
+        subjectBlock.addClickHandler(this::onSubjectBlock);
+        statusBlock.addClickHandler(this::onStatusBlock);
+        assignedToBlock.addClickHandler(this::onAssignedToBlock);
+        annotationLabelBlock.addClickHandler(this::onAnnotationLabelBlock);
+        annotationCollectionBlock.addClickHandler(this::onAnnotationCollectionBlock);
+        annotationRetentionPeriodBlock.addClickHandler(this::onAnnotationRetentionPeriodBlock);
+        create.setOnClick(this::onCreate);
+        commentButton.setOnClick(this::onCommentButton);
+        delete.setOnClick(this::onDelete);
         assignYourself.setOnAssign(() -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF,
                 assignYourself.getElement()));
         historyHtml.addDomHandler(e -> onHistoryKeyDown.accept(e), KeyDownEvent.getType());
@@ -322,81 +339,67 @@ public class AnnotationEdit extends Component {
         onSubjectChange.run();
     }
 
-    @UiHandler("titleTextBox")
-    void onTitleBlur(final BlurEvent e) {
+    private void onTitleBlur(final BlurEvent e) {
         finishTitleEdit();
     }
 
-    @UiHandler("titleTextBox")
-    void onTitleReturn(final KeyDownEvent e) {
+    private void onTitleReturn(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             finishTitleEdit();
             Scheduler.get().scheduleDeferred(() -> subjectTextBox.setFocus(true));
         }
     }
 
-    @UiHandler("subjectTextBox")
-    void onSubjectBlur(final BlurEvent e) {
+    private void onSubjectBlur(final BlurEvent e) {
         finishSubjectEdit();
     }
 
-    @UiHandler("subjectTextBox")
-    void onSubjectReturn(final KeyDownEvent e) {
+    private void onSubjectReturn(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             finishSubjectEdit();
             Scheduler.get().scheduleDeferred(() -> comment.setFocus(true));
         }
     }
 
-    @UiHandler("titleBlock")
-    void onTitleBlock(final ClickEvent e) {
+    private void onTitleBlock(final ClickEvent e) {
         titleTextBox.setFocus(true);
     }
 
-    @UiHandler("subjectBlock")
-    void onSubjectBlock(final ClickEvent e) {
+    private void onSubjectBlock(final ClickEvent e) {
         subjectTextBox.setFocus(true);
     }
 
-    @UiHandler("statusBlock")
-    void onStatusBlock(final ClickEvent e) {
+    private void onStatusBlock(final ClickEvent e) {
         onAction.accept(AnnotationEditAction.STATUS, statusBlock.getElement());
     }
 
-    @UiHandler("assignedToBlock")
-    void onAssignedToBlock(final ClickEvent e) {
+    private void onAssignedToBlock(final ClickEvent e) {
         onAction.accept(AnnotationEditAction.ASSIGNED_TO, assignedToBlock.getElement());
     }
 
-    @UiHandler("annotationLabelBlock")
-    void onAnnotationLabelBlock(final ClickEvent e) {
+    private void onAnnotationLabelBlock(final ClickEvent e) {
         onAction.accept(AnnotationEditAction.LABELS, annotationLabelBlock.getElement());
     }
 
-    @UiHandler("annotationCollectionBlock")
-    void onAnnotationCollectionBlock(final ClickEvent e) {
+    private void onAnnotationCollectionBlock(final ClickEvent e) {
         onAction.accept(AnnotationEditAction.COLLECTIONS, annotationCollectionBlock.getElement());
     }
 
-    @UiHandler("annotationRetentionPeriodBlock")
-    void onAnnotationRetentionPeriodBlock(final ClickEvent e) {
+    private void onAnnotationRetentionPeriodBlock(final ClickEvent e) {
         onAction.accept(AnnotationEditAction.RETENTION_PERIOD, annotationRetentionPeriodBlock.getElement());
     }
 
-    @UiHandler("create")
-    void onCreate(final ClickEvent e) {
+    private void onCreate() {
         onAction.accept(AnnotationEditAction.CREATE, create.getElement());
     }
 
-    @UiHandler("commentButton")
-    void onCommentButton(final ClickEvent e) {
+    private void onCommentButton() {
         if (commentButton.isEnabled()) {
             onAction.accept(AnnotationEditAction.CHOOSE_COMMENT, commentButton.getElement());
         }
     }
 
-    @UiHandler("delete")
-    void onDelete(final ClickEvent e) {
+    private void onDelete() {
         onAction.accept(AnnotationEditAction.DELETE, delete.getElement());
     }
 

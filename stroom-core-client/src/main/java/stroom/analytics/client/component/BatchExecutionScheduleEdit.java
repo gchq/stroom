@@ -34,10 +34,8 @@ import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -107,6 +105,8 @@ public class BatchExecutionScheduleEdit extends Component {
     /// Makes the form, nothing ticked.
     public BatchExecutionScheduleEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        applySelectionButton.setOnClick(this::onApplySelection);
+        applyFilteredButton.setOnClick(this::onApplyFiltered);
         nameEnable.addValueChangeHandler(event -> update());
         enabledEnable.addValueChangeHandler(event -> update());
         nodeEnable.addValueChangeHandler(event -> update());
@@ -241,13 +241,11 @@ public class BatchExecutionScheduleEdit extends Component {
         this.onApplyFiltered = onApplyFiltered;
     }
 
-    @UiHandler("applySelectionButton")
-    void onApplySelection(final ClickEvent event) {
+    private void onApplySelection() {
         onApplySelection.run();
     }
 
-    @UiHandler("applyFilteredButton")
-    void onApplyFiltered(final ClickEvent event) {
+    private void onApplyFiltered() {
         onApplyFiltered.run();
     }
 

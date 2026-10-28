@@ -25,10 +25,8 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Download Options dialog's content, for a table's results: the file type, whether all
@@ -51,6 +49,7 @@ public class DownloadSearchResults extends Component {
     /// Makes the content.
     public DownloadSearchResults() {
         initWidget(BINDER.createAndBindUi(this));
+        sample.setOnChange(value -> onSampleChange());
 
         // ValueSpinner's setValue is overloaded, which UiBinder can't choose between
         percent.setValue(100);
@@ -102,8 +101,7 @@ public class DownloadSearchResults extends Component {
         return percent.getIntValue();
     }
 
-    @UiHandler("sample")
-    void onSampleChange(final ValueChangeEvent<Boolean> event) {
+    private void onSampleChange() {
         percent.setEnabled(sample.getValue());
     }
 

@@ -29,11 +29,9 @@ import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -72,6 +70,7 @@ public class ScheduledProcessEdit extends Component {
     /// Makes an empty form.
     public ScheduledProcessEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        setDefaultNode.setOnClick(this::onSetDefaultNode);
         scheduleBox.addValueChangeHandler(this::onSchedule);
     }
 
@@ -161,8 +160,7 @@ public class ScheduledProcessEdit extends Component {
         this.onSetDefaultNode = onSetDefaultNode;
     }
 
-    @UiHandler("setDefaultNode")
-    void onSetDefaultNode(final ClickEvent event) {
+    private void onSetDefaultNode() {
         onSetDefaultNode.run();
     }
 

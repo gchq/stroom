@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class HistogramValueSchemaSettingsForm extends Component {
@@ -41,6 +40,7 @@ public class HistogramValueSchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public HistogramValueSchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        maxValue.addValueChangeHandler(this::onMaxValue);
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new HistogramValueSchema.Builder().build());
     }
@@ -61,8 +61,7 @@ public class HistogramValueSchemaSettingsForm extends Component {
         maxValue.setReadOnly(readOnly);
     }
 
-    @UiHandler("maxValue")
-    public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
+    private void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
         changed();
     }
 

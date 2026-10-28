@@ -29,7 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CondenseSettingsForm extends Component {
@@ -51,6 +50,9 @@ public class CondenseSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public CondenseSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        condenseEnabled.setOnChange(value -> onCondenseEnabled());
+        condenseAge.setOnChange(value -> onCondenseAge());
+        condenseTimeUnit.addValueChangeHandler(this::onCondenseTimeUnit);
 
         condenseAge.setValue(1);
 
@@ -102,19 +104,16 @@ public class CondenseSettingsForm extends Component {
         condenseTimeUnit.setReadOnly(readOnly);
     }
 
-    @UiHandler("condenseEnabled")
-    public void onCondenseEnabled(final ValueChangeEvent<Boolean> event) {
+    private void onCondenseEnabled() {
         setCondenseEnabled(condenseEnabled.getValue());
         changed();
     }
 
-    @UiHandler("condenseAge")
-    public void onCondenseAge(final ValueChangeEvent<Long> event) {
+    private void onCondenseAge() {
         changed();
     }
 
-    @UiHandler("condenseTimeUnit")
-    public void onCondenseTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+    private void onCondenseTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         changed();
     }
 

@@ -171,6 +171,14 @@
             <message key="import.illegal" value="Do not use GWT''s {0}: use Stroom''s own version of it (see AGENTS.md, Stroom''s widgets only)."/>
         </module>
 
+        <!-- Handlers are wired in Java, in the component's constructor (button.setOnClick(...),
+             box.addKeyDownHandler(...)), never with @UiHandler (see stroom-gwt/UI-GUIDE.md). -->
+        <module name="IllegalImport">
+            <property name="id" value="UiHandlerAnnotation"/>
+            <property name="illegalClasses" value="com.google.gwt.uibinder.client.UiHandler"/>
+            <message key="import.illegal" value="Do not use @UiHandler: wire the handler in Java, in the constructor (see stroom-gwt/UI-GUIDE.md)."/>
+        </module>
+
         <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>
 

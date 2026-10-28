@@ -1719,7 +1719,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 ### Some components wire their handlers with `@UiHandler`
 
-**Deferred** (agreed 27 October 2026; a clean-up pass after the waves). Every component wires its
+**Fixed** (28 October 2026, wave 18: all 191 are wired in their constructors, and checkstyle refuses
+`@UiHandler`; see `component-migration/wave-18.md`). **Deferred** (agreed 27 October 2026; a
+clean-up pass after the waves). Every component wires its
 widgets' handlers in Java, in its constructor, rather than with `@UiHandler` methods, so that each
 handler is in one place and in one form, whether the widget is declared in the template or made in
 Java. `COMPONENT_MODEL_DESIGN.md` already wires buttons this way (`save.setOnClick(this::save)`);

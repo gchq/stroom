@@ -27,10 +27,8 @@ import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An annotation tag: its name, its text (for a standard comment) or style (for a label), and a
@@ -58,6 +56,7 @@ public class AnnotationTagEdit extends Component {
     /// Makes an empty form, offering every style, each shown as a swatch, None chosen.
     public AnnotationTagEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        editPermissions.setOnClick(this::onEditPermissions);
         formattingStyle.setRenderFunction(style -> ConditionalFormattingSwatchUtil
                 .createSwatch(ConditionalFormattingType.BACKGROUND, style, null));
         formattingStyle.addItems(ConditionalFormattingStyle.LIST);
@@ -118,8 +117,7 @@ public class AnnotationTagEdit extends Component {
         this.onPermissions = onPermissions;
     }
 
-    @UiHandler("editPermissions")
-    void onEditPermissions(final ClickEvent e) {
+    private void onEditPermissions() {
         onPermissions.run();
     }
 

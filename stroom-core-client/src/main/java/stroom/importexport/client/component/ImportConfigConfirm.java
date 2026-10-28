@@ -27,7 +27,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -59,6 +58,8 @@ public class ImportConfigConfirm extends Component {
     /// Makes the content, with nothing ticked.
     public ImportConfigConfirm() {
         initWidget(BINDER.createAndBindUi(this));
+        useImportNames.addClickHandler(this::onUseImportNames);
+        useImportFolders.addClickHandler(this::onUseImportFolders);
     }
 
     /// Puts the focus on Enable Processor Filters.
@@ -106,13 +107,11 @@ public class ImportConfigConfirm extends Component {
         this.onUseImportFolders = onUseImportFolders;
     }
 
-    @UiHandler("useImportNames")
-    void onUseImportNames(final ClickEvent event) {
+    private void onUseImportNames(final ClickEvent event) {
         onUseImportNames.accept(useImportNames.getValue());
     }
 
-    @UiHandler("useImportFolders")
-    void onUseImportFolders(final ClickEvent event) {
+    private void onUseImportFolders(final ClickEvent event) {
         onUseImportFolders.accept(useImportFolders.getValue());
     }
 

@@ -25,7 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -49,6 +48,8 @@ public class MainToolbar extends Composite {
 
     public MainToolbar() {
         initWidget(BINDER.createAndBindUi(this));
+        menu.addClickHandler(this::onMenu);
+        showAi.addClickHandler(this::onShowAi);
     }
 
     /// @return The spinner shown while the app is busy, for its task monitor.
@@ -72,15 +73,13 @@ public class MainToolbar extends Composite {
         this.onShowAi = onShowAi;
     }
 
-    @UiHandler("menu")
-    void onMenu(final ClickEvent event) {
+    private void onMenu(final ClickEvent event) {
         if (MouseUtil.isPrimary(event) && onShowMenu != null) {
             onShowMenu.accept(menu.getElement());
         }
     }
 
-    @UiHandler("showAi")
-    void onShowAi(final ClickEvent event) {
+    private void onShowAi(final ClickEvent event) {
         if (MouseUtil.isPrimary(event) && onShowAi != null) {
             onShowAi.run();
         }

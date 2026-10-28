@@ -27,10 +27,8 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -63,6 +61,8 @@ public class DocumentUserPermissionsEdit extends Component {
     /// Makes an empty form, offering every permission, then none.
     public DocumentUserPermissionsEdit() {
         initWidget(BINDER.createAndBindUi(this));
+        editCreatePermissions.setOnClick(this::onEditCreatePermissions);
+        applyPermissionToDescendants.setOnClick(this::onApplyPermissionToDescendants);
         permission.addItems(DocumentPermission.LIST);
         // Added where the list stands, so set after the permissions to come last
         permission.setNonSelectString("[ none ]");
@@ -115,13 +115,11 @@ public class DocumentUserPermissionsEdit extends Component {
         this.onApplyToDescendants = onApplyToDescendants;
     }
 
-    @UiHandler("editCreatePermissions")
-    void onEditCreatePermissions(final ClickEvent e) {
+    private void onEditCreatePermissions() {
         onEditCreatePermissions.accept(editCreatePermissions);
     }
 
-    @UiHandler("applyPermissionToDescendants")
-    void onApplyPermissionToDescendants(final ClickEvent e) {
+    private void onApplyPermissionToDescendants() {
         onApplyToDescendants.accept(applyPermissionToDescendants);
     }
 

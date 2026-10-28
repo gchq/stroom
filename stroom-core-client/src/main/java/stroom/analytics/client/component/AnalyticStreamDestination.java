@@ -22,11 +22,8 @@ import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Where a notification's detections are written as streams: the destination feed (a picker its
@@ -51,6 +48,8 @@ public class AnalyticStreamDestination extends Component {
 
     public AnalyticStreamDestination() {
         initWidget(BINDER.createAndBindUi(this));
+        setDefaultDestinationFeed.setOnClick(this::onSetDefaultDestinationFeed);
+        useSourceFeedIfPossible.setOnChange(value -> onUseSourceFeedIfPossible());
     }
 
     /// @return The destination feed's picker.
@@ -89,13 +88,11 @@ public class AnalyticStreamDestination extends Component {
         this.onSetDefault = onSetDefault;
     }
 
-    @UiHandler("setDefaultDestinationFeed")
-    void onSetDefaultDestinationFeed(final ClickEvent event) {
+    private void onSetDefaultDestinationFeed() {
         onSetDefault.run();
     }
 
-    @UiHandler("useSourceFeedIfPossible")
-    void onUseSourceFeedIfPossible(final ValueChangeEvent<Boolean> event) {
+    private void onUseSourceFeedIfPossible() {
         onChange.run();
     }
 

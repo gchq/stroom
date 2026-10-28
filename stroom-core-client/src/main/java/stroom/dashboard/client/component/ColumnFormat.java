@@ -29,7 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -106,6 +105,10 @@ public class ColumnFormat extends Component {
     /// Makes the content.
     public ColumnFormat() {
         initWidget(BINDER.createAndBindUi(this));
+        custom.setOnChange(value -> onCustom());
+        type.addValueChangeHandler(this::onType);
+        format.addValueChangeHandler(this::onFormat);
+        timeZoneUse.addValueChangeHandler(this::onTimeZoneUse);
         format.addItems(STANDARD_FORMATS);
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);
@@ -275,23 +278,19 @@ public class ColumnFormat extends Component {
         formatTimeZoneOffset.setVisible(dateTime && Use.OFFSET.equals(timeZoneUse.getValue()));
     }
 
-    @UiHandler("custom")
-    void onCustom(final ValueChangeEvent<Boolean> event) {
+    private void onCustom() {
         text.setEnabled(custom.getValue());
     }
 
-    @UiHandler("type")
-    void onType(final ValueChangeEvent<Type> event) {
+    private void onType(final ValueChangeEvent<Type> event) {
         showSettings();
     }
 
-    @UiHandler("format")
-    void onFormat(final ValueChangeEvent<String> event) {
+    private void onFormat(final ValueChangeEvent<String> event) {
         setPattern(format.getValue());
     }
 
-    @UiHandler("timeZoneUse")
-    void onTimeZoneUse(final ValueChangeEvent<Use> event) {
+    private void onTimeZoneUse(final ValueChangeEvent<Use> event) {
         showSettings();
     }
 

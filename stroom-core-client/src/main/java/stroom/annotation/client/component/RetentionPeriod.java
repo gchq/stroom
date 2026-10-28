@@ -23,10 +23,8 @@ import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Set Retention Period dialog's content: how long an annotation is kept, or for ever.
@@ -42,6 +40,7 @@ public class RetentionPeriod extends Component {
     /// Makes the content.
     public RetentionPeriod() {
         initWidget(BINDER.createAndBindUi(this));
+        forever.setOnChange(value -> onForever());
     }
 
     /// @param duration The period, or null to keep the annotation for ever (5 years is offered).
@@ -66,8 +65,7 @@ public class RetentionPeriod extends Component {
         forever.focus();
     }
 
-    @UiHandler("forever")
-    void onForever(final ValueChangeEvent<Boolean> event) {
+    private void onForever() {
         durationPicker.setEnabled(!forever.getValue());
     }
 

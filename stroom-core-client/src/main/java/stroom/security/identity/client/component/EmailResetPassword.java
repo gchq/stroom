@@ -25,7 +25,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -47,6 +46,7 @@ public class EmailResetPassword extends Component {
     /// Makes an empty form.
     public EmailResetPassword() {
         initWidget(BINDER.createAndBindUi(this));
+        email.addKeyDownHandler(this::onEmailKeyDown);
     }
 
     /// Focuses the email address.
@@ -87,8 +87,7 @@ public class EmailResetPassword extends Component {
         return valid;
     }
 
-    @UiHandler("email")
-    void onEmailKeyDown(final KeyDownEvent e) {
+    private void onEmailKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onEnter.run();
         }

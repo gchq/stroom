@@ -24,7 +24,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,6 +58,7 @@ public class QuickFilterDialog extends Component implements HasWidgets {
     /// Makes a dialog's content with nothing to filter yet.
     public QuickFilterDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        quickFilter.addValueChangeHandler(this::onFilterChange);
     }
 
     /// @param popupTextSupplier Gives the filter's help popup its text, e.g. the fields it can use.
@@ -144,8 +144,7 @@ public class QuickFilterDialog extends Component implements HasWidgets {
         return data.remove(widget);
     }
 
-    @UiHandler("quickFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
+    private void onFilterChange(final ValueChangeEvent<String> event) {
         onFilterChange.accept(quickFilter.getText());
     }
 

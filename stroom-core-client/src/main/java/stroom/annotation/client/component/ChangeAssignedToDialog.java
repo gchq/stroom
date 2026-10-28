@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -54,6 +53,7 @@ public class ChangeAssignedToDialog extends Component {
     /// Makes empty content.
     public ChangeAssignedToDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        assignedToBlock.addClickHandler(this::onAssignedToBlock);
         assignYourself.setOnAssign(() -> onAssignYourself.run());
     }
 
@@ -86,8 +86,7 @@ public class ChangeAssignedToDialog extends Component {
         this.onAssignYourself = Objects.requireNonNull(onAssignYourself, "onAssignYourself");
     }
 
-    @UiHandler("assignedToBlock")
-    void onAssignedToBlock(final ClickEvent e) {
+    private void onAssignedToBlock(final ClickEvent e) {
         onChooseAssignedTo.run();
     }
 

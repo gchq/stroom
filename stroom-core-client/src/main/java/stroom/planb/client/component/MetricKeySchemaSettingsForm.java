@@ -29,7 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -53,6 +52,9 @@ public class MetricKeySchemaSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public MetricKeySchemaSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        keyType.addValueChangeHandler(this::onKeyType);
+        hashLength.addValueChangeHandler(this::onHashLength);
+        temporalResolution.addValueChangeHandler(this::onTemporalResolution);
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
@@ -94,19 +96,16 @@ public class MetricKeySchemaSettingsForm extends Component {
                               Objects.equals(value, KeyType.VARIABLE));
     }
 
-    @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+    private void onKeyType(final ValueChangeEvent<KeyType> event) {
         onKeyTypeChange();
         changed();
     }
 
-    @UiHandler("hashLength")
-    public void onHashLength(final ValueChangeEvent<HashLength> event) {
+    private void onHashLength(final ValueChangeEvent<HashLength> event) {
         changed();
     }
 
-    @UiHandler("temporalResolution")
-    public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
+    private void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
         changed();
     }
 

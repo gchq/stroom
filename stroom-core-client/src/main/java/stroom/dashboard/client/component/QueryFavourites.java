@@ -27,10 +27,8 @@ import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -66,6 +64,9 @@ public class QueryFavourites extends Component {
     /// Makes the list, empty, with Change Favourite Name and Delete Favourite disabled.
     public QueryFavourites() {
         initWidget(BINDER.createAndBindUi(this));
+        createButton.setOnClick(this::onCreateButton);
+        editButton.setOnClick(this::onEditButton);
+        deleteButton.setOnClick(this::onDeleteButton);
         // The one with the focus is chosen (and shown below it); Enter, or a double click, on one
         // opens it
         list.setSelectionModel(selectionModel,
@@ -134,18 +135,15 @@ public class QueryFavourites extends Component {
         this.onChoose = onChoose;
     }
 
-    @UiHandler("createButton")
-    void onCreateButton(final ClickEvent event) {
+    private void onCreateButton() {
         onAction.accept(FavouriteAction.CREATE);
     }
 
-    @UiHandler("editButton")
-    void onEditButton(final ClickEvent event) {
+    private void onEditButton() {
         onAction.accept(FavouriteAction.EDIT);
     }
 
-    @UiHandler("deleteButton")
-    void onDeleteButton(final ClickEvent event) {
+    private void onDeleteButton() {
         onAction.accept(FavouriteAction.DELETE);
     }
 

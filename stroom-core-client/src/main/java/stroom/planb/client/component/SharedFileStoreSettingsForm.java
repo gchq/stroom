@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -56,6 +55,8 @@ public class SharedFileStoreSettingsForm extends Component {
     /// Makes the settings, at their defaults.
     public SharedFileStoreSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
+        sharedPath.addValueChangeHandler(this::onSharedPath);
+        shardCount.setOnChange(value -> onShardCount());
 
         shardCount.setValue(1);
     }
@@ -97,13 +98,11 @@ public class SharedFileStoreSettingsForm extends Component {
         shardCount.setReadOnly(readOnly);
     }
 
-    @UiHandler("sharedPath")
-    public void onSharedPath(final ValueChangeEvent<String> event) {
+    private void onSharedPath(final ValueChangeEvent<String> event) {
         changed();
     }
 
-    @UiHandler("shardCount")
-    public void onShardCount(final ValueChangeEvent<Long> event) {
+    private void onShardCount() {
         changed();
     }
 

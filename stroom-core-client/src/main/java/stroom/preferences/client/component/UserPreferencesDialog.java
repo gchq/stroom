@@ -24,10 +24,8 @@ import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -57,6 +55,8 @@ public class UserPreferencesDialog extends Component {
     /// Makes the dialog, with no tabs until [#addTab(TabData)].
     public UserPreferencesDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        setAsDefault.setOnClick(this::onClickSetAsDefault);
+        revertToDefault.setOnClick(this::onClickRevertToDefault);
         tabBar.setTabPanel(layerContainer.getElement());
         tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
     }
@@ -95,13 +95,11 @@ public class UserPreferencesDialog extends Component {
         this.onRevertToDefault = onRevertToDefault;
     }
 
-    @UiHandler("setAsDefault")
-    void onClickSetAsDefault(final ClickEvent event) {
+    private void onClickSetAsDefault() {
         onSetAsDefault.run();
     }
 
-    @UiHandler("revertToDefault")
-    void onClickRevertToDefault(final ClickEvent event) {
+    private void onClickRevertToDefault() {
         onRevertToDefault.run();
     }
 

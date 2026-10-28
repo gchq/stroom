@@ -25,7 +25,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -47,6 +46,7 @@ public class CurrentPassword extends Component {
     /// Makes an empty form.
     public CurrentPassword() {
         initWidget(BINDER.createAndBindUi(this));
+        password.addKeyDownHandler(this::onPasswordKeyDown);
     }
 
     /// Focuses the password.
@@ -79,8 +79,7 @@ public class CurrentPassword extends Component {
         return true;
     }
 
-    @UiHandler("password")
-    void onPasswordKeyDown(final KeyDownEvent e) {
+    private void onPasswordKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onEnter.run();
         }

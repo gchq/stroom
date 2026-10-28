@@ -28,7 +28,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -58,6 +57,7 @@ public class DocumentUserPermissionsTab extends Component {
     /// Makes the tab, listing those with explicit permissions.
     public DocumentUserPermissionsTab() {
         initWidget(BINDER.createAndBindUi(this));
+        permissionVisibility.addValueChangeHandler(this::onPermissionVisibility);
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
     }
@@ -94,8 +94,7 @@ public class DocumentUserPermissionsTab extends Component {
         this.onPermissionVisibilityChange = onPermissionVisibilityChange;
     }
 
-    @UiHandler("permissionVisibility")
-    void onPermissionVisibility(final ValueChangeEvent<PermissionShowLevel> event) {
+    private void onPermissionVisibility(final ValueChangeEvent<PermissionShowLevel> event) {
         onPermissionVisibilityChange.accept(permissionVisibility.getValue());
     }
 
