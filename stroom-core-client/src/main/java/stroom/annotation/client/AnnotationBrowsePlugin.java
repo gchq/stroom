@@ -43,18 +43,18 @@ public class AnnotationBrowsePlugin extends Plugin {
 
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
-    private final Provider<BrowseAnnotationController> presenterProvider;
-    private BrowseAnnotationController presenter;
+    private final Provider<BrowseAnnotationController> controllerProvider;
+    private BrowseAnnotationController controller;
 
     @Inject
     public AnnotationBrowsePlugin(final EventBus eventBus,
                                   final ClientSecurityContext securityContext,
                                   final ContentManager contentManager,
-                                  final Provider<BrowseAnnotationController> presenterProvider) {
+                                  final Provider<BrowseAnnotationController> controllerProvider) {
         super(eventBus);
         this.securityContext = securityContext;
         this.contentManager = contentManager;
-        this.presenterProvider = presenterProvider;
+        this.controllerProvider = controllerProvider;
 
         final Action openAction = getOpenAction();
         if (openAction != null) {
@@ -87,10 +87,10 @@ public class AnnotationBrowsePlugin extends Plugin {
     }
 
     private void open() {
-        if (presenter == null) {
+        if (controller == null) {
             // If the presenter is null then we haven't got this tab open.
             // Create a new presenter.
-            presenter = presenterProvider.get();
+            controller = controllerProvider.get();
         }
 
         final CloseContentEvent.Handler closeHandler = event -> {
@@ -99,13 +99,13 @@ public class AnnotationBrowsePlugin extends Plugin {
 
             // After we close the tab set the presenter back to null so
             // that we can open it again.
-            presenter = null;
+            controller = null;
         };
 
         // Tell the content manager to open the tab.
-        final TabData tabData = presenter;
-        presenter.refresh();
-        contentManager.open(closeHandler, tabData, presenter);
+        final TabData tabData = controller;
+        controller.refresh();
+        contentManager.open(closeHandler, tabData, controller);
     }
 
     protected Action getOpenAction() {

@@ -159,11 +159,11 @@ public final class AnnotationTagScreenStories {
                 .build();
         harness.afterStartUp(() -> {
             // As AnnotationPlugin opens the tab
-            final AnnotationTagsController presenter = injector.getAnnotationTagsController();
-            presenter.setTabLabel(label);
-            presenter.setAnnotationTagType(type);
-            presenter.refresh();
-            harness.show(presenter);
+            final AnnotationTagsController controller = injector.getAnnotationTagsController();
+            controller.setTabLabel(label);
+            controller.setAnnotationTagType(type);
+            controller.refresh();
+            harness.show(controller);
         });
         return harness.asWidget();
     }

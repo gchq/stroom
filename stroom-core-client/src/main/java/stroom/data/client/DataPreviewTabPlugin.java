@@ -33,8 +33,8 @@ public class DataPreviewTabPlugin extends AbstractTabPlugin<DataPreviewKey, Data
     @Inject
     public DataPreviewTabPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<DataPreviewTabController> dataPreviewTabPresenterProvider) {
-        super(eventBus, contentManager, dataPreviewTabPresenterProvider);
+                                final Provider<DataPreviewTabController> dataPreviewTabControllerProvider) {
+        super(eventBus, contentManager, dataPreviewTabControllerProvider);
     }
 
     @Override
@@ -49,12 +49,12 @@ public class DataPreviewTabPlugin extends AbstractTabPlugin<DataPreviewKey, Data
                                                   final DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 
-        return super.openTabPresenter(
+        return super.openTabController(
                 forceOpen,
                 new DataPreviewKey(sourceLocation),
-                dataPreviewTabPresenter -> {
-                    dataPreviewTabPresenter.setInitDataViewType(initDataViewType);
-                    dataPreviewTabPresenter.setSourceLocation(sourceLocation);
+                dataPreviewTabController -> {
+                    dataPreviewTabController.setInitDataViewType(initDataViewType);
+                    dataPreviewTabController.setSourceLocation(sourceLocation);
                 });
 
     }

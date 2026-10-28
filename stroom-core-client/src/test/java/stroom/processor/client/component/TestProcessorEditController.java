@@ -124,14 +124,14 @@ class TestProcessorEditController {
         // A date-time box can't be made (or mocked) outside a browser; the controllers are mocks
         Mockito.doReturn(null).when(view).getMinMetaCreateTimeBox();
         Mockito.doReturn(null).when(view).getMaxMetaCreateTimeBox();
-        final ExpressionEditorController editExpressionPresenter = Mockito.mock(ExpressionEditorController.class);
-        Mockito.when(editExpressionPresenter.write()).thenReturn(ExpressionOperator.builder()
+        final ExpressionEditorController editExpressionController = Mockito.mock(ExpressionEditorController.class);
+        Mockito.when(editExpressionController.write()).thenReturn(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.EQUALS).value("TEST").build())
                 .build());
         final ProcessorEditController controller = new ProcessorEditController(
                 eventBus,
                 view,
-                editExpressionPresenter,
+                editExpressionController,
                 restFactory,
                 Mockito.mock(DateTimeSettingsFactory.class),
                 () -> Mockito.mock(UserRefSelectionController.class),

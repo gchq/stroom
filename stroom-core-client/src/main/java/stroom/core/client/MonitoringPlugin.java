@@ -39,10 +39,10 @@ public abstract class MonitoringPlugin<P extends Layer & TabData> extends Conten
     @Inject
     public MonitoringPlugin(final EventBus eventBus,
                             final ContentManager contentManager,
-                            final Provider<P> presenterProvider,
+                            final Provider<P> controllerProvider,
                             final ClientSecurityContext securityContext,
                             final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry);
         this.securityContext = securityContext;
 
         final Action openAction = getOpenAction();

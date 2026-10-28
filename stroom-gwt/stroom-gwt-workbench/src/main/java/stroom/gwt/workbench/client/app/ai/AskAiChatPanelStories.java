@@ -183,13 +183,13 @@ public final class AskAiChatPanelStories {
 
     // The chat's view in a panel box: 480 by 560 pixels, with a border
     private static void showPanel(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        final AskStroomAiController presenter = injector.getAskStroomAiController();
-        final SimplePanel box = new SimplePanel(presenter.asWidget());
+        final AskStroomAiController controller = injector.getAskStroomAiController();
+        final SimplePanel box = new SimplePanel(controller.asWidget());
         box.getElement().getStyle().setProperty("width", "480px");
         box.getElement().getStyle().setProperty("height", "560px");
         box.getElement().getStyle().setProperty("display", "flex");
         box.getElement().getStyle().setProperty("border", "1px solid var(--border-color)");
         harness.add(box);
-        harness.own(presenter);
+        harness.own(controller);
     }
 }

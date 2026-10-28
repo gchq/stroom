@@ -84,15 +84,15 @@ public class QueryEditController
     private final QueryHelpController queryHelp;
     private final QueryToolbarController queryToolbar;
     private final CodeEditorController editor;
-    private final QueryResultTableSplitController queryResultPresenter;
+    private final QueryResultTableSplitController queryResultController;
     private final QueryModel queryModel;
     private final QueryEdit view;
     private final QueryInfo queryInfo;
     private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
 
-    private final Provider<QueryResultVisController> visPresenterProvider;
+    private final Provider<QueryResultVisController> visControllerProvider;
 
-    private QueryResultVisController currentVisPresenter;
+    private QueryResultVisController currentVisController;
     private String currentQuery;
     private Timer requestTimer;
     private Map<String, String> queryVariables;
@@ -119,8 +119,8 @@ public class QueryEditController
                                final QueryHelpController queryHelp,
                                final QueryToolbarController queryToolbar,
                                final CodeEditorController editor,
-                               final QueryResultTableSplitController queryResultPresenter,
-                               final Provider<QueryResultVisController> visPresenterProvider,
+                               final QueryResultTableSplitController queryResultController,
+                               final Provider<QueryResultVisController> visControllerProvider,
                                final RestFactory restFactory,
                                final DateTimeSettingsFactory dateTimeSettingsFactory,
                                final ResultStoreModel resultStoreModel,
@@ -130,15 +130,15 @@ public class QueryEditController
         initWidget(view);
         own(queryHelp);
         own(queryToolbar);
-        own(queryResultPresenter);
+        own(queryResultController);
         this.queryHelp = queryHelp;
         this.queryToolbar = queryToolbar;
-        this.queryResultPresenter = queryResultPresenter;
-        this.visPresenterProvider = visPresenterProvider;
+        this.queryResultController = queryResultController;
+        this.visControllerProvider = visControllerProvider;
         this.queryInfo = queryInfo;
 
-        queryResultPresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
-        queryResultPresenter.setQueryTablePreferencesConsumer(qtp -> {
+        queryResultController.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
+        queryResultController.setQueryTablePreferencesConsumer(qtp -> {
             if (qtp != null) {
                 queryTablePreferences = qtp;
             }
@@ -170,8 +170,8 @@ public class QueryEditController
 
             @Override
             public void endSearch() {
-                if (currentVisPresenter != null) {
-                    currentVisPresenter.endSearch();
+                if (currentVisController != null) {
+                    currentVisController.endSearch();
                 }
                 start = false;
                 if (!hasData) {
@@ -185,7 +185,7 @@ public class QueryEditController
                 if (componentResult != null) {
                     if (!start) {
                         createNewVis();
-                        currentVisPresenter.startSearch();
+                        currentVisController.startSearch();
                         start = true;
                     }
 
@@ -195,11 +195,11 @@ public class QueryEditController
                         setVisHidden(false);
                     }
 
-                    currentVisPresenter.setData(componentResult);
+                    currentVisController.setData(componentResult);
                 } else {
                     if (start) {
-                        currentVisPresenter.clear();
-                        currentVisPresenter.endSearch();
+                        currentVisController.clear();
+                        currentVisController.endSearch();
                         start = false;
                         hasData = false;
                         destroyCurrentVis();
@@ -222,7 +222,7 @@ public class QueryEditController
                 () -> queryTablePreferences);
         // Shows its requests' progress as this controller's owners do (its context's)
         queryModel.setTaskMonitorFactory(taskMonitor());
-        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
+        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultController);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
 
         queryModel.addSearchErrorListener(queryToolbar);
@@ -290,7 +290,7 @@ public class QueryEditController
             }
             onClose();
         });
-        queryResultPresenter.setOnChange(this::onChange);
+        queryResultController.setOnChange(this::onChange);
     }
 
     private void focus() {
@@ -331,19 +331,19 @@ public class QueryEditController
 
     private void createNewVis() {
         destroyCurrentVis();
-        currentVisPresenter = make(visPresenterProvider);
-        currentVisPresenter.setQueryModel(queryModel);
-        queryResultPresenter.setQueryResultVis(currentVisPresenter);
+        currentVisController = make(visControllerProvider);
+        currentVisController.setQueryModel(queryModel);
+        queryResultController.setQueryResultVis(currentVisController);
         if (VISUALISATION.equals(view.getSelectedTab())) {
-            view.showContent(currentVisPresenter);
+            view.showContent(currentVisController);
         }
     }
 
     private void destroyCurrentVis() {
-        if (currentVisPresenter != null) {
-            currentVisPresenter.onRemove();
-            release(currentVisPresenter);
-            currentVisPresenter = null;
+        if (currentVisController != null) {
+            currentVisController.onRemove();
+            release(currentVisController);
+            currentVisController = null;
         }
     }
 
@@ -368,7 +368,7 @@ public class QueryEditController
                 if (!Objects.equals(currentQuery, query)) {
                     currentQuery = query;
                     queryHelp.setQuery(query);
-                    queryResultPresenter.setQuery(query);
+                    queryResultController.setQuery(query);
                 }
             }
         };
@@ -377,9 +377,9 @@ public class QueryEditController
 
     private void selectTab(final TabData tabData) {
         if (TABLE.equals(tabData)) {
-            view.showTab(tabData, queryResultPresenter);
+            view.showTab(tabData, queryResultController);
         } else if (VISUALISATION.equals(tabData)) {
-            view.showTab(tabData, currentVisPresenter);
+            view.showTab(tabData, currentVisController);
         }
     }
 
@@ -441,7 +441,7 @@ public class QueryEditController
     @SuppressWarnings("unused")
     private void run(final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
         // Clear the table selection and any markers.
-        queryResultPresenter.clear();
+        queryResultController.clear();
         editor.setMarkers(Collections.emptyList());
         editor.setIndicators(new IndicatorLines(new Indicators()));
 
@@ -542,13 +542,13 @@ public class QueryEditController
     public void read(final QueryTablePreferences queryTablePreferences) {
         if (queryTablePreferences != null) {
             this.queryTablePreferences = queryTablePreferences;
-            queryResultPresenter.updateQueryTablePreferences();
+            queryResultController.updateQueryTablePreferences();
         }
     }
 
     /// @param visible Whether the query's tab is showing.
     public void onContentTabVisible(final boolean visible) {
-        queryResultPresenter.onContentTabVisible(visible);
+        queryResultController.onContentTabVisible(visible);
     }
 
     @Override
@@ -559,6 +559,6 @@ public class QueryEditController
 
     /// @return The results table.
     public QueryResultTableSplitController getQueryResultTable() {
-        return queryResultPresenter;
+        return queryResultController;
     }
 }

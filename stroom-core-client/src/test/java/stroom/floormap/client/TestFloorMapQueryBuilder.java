@@ -460,7 +460,7 @@ class TestFloorMapQueryBuilder {
     }
 
     @Test
-    void theBucketWidthParameterNameMatchesTheOneThePresenterSends() {
+    void theBucketWidthParameterNameMatchesTheOneTheControllerSends() {
         // The query and the parameter are set in two places; this is what keeps them the same one.
         assertThat(FloorMapQueryBuilder.defaultHistogramQuery())
                 .contains("param('" + FloorMapQueryBuilder.PARAM_BUCKET_WIDTH + "')");

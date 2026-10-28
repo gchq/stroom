@@ -102,11 +102,11 @@ public final class EntityCheckTreeStories {
         // In a panel, as the export dialog's template declares it in one
         final ExplorerTree explorerTree = new ExplorerTree();
         final SimplePanel view = new SimplePanel(explorerTree);
-        final EntityCheckTreeController presenter = new EntityCheckTreeController(
+        final EntityCheckTreeController controller = new EntityCheckTreeController(
                 () -> new ExplorerTreeController(harness.getRestFactory()));
-        harness.own(presenter);
-        presenter.attach(explorerTree);
-        presenter.refresh();
+        harness.own(controller);
+        controller.attach(explorerTree);
+        controller.refresh();
 
         final Label checked = new Label();
         checked.getElement().setAttribute("data-testid", "checked");
@@ -120,7 +120,7 @@ public final class EntityCheckTreeStories {
         final Spy onCheckedChange = context.fn(ON_CHECKED_CHANGE);
         final Runnable update = () -> Scheduler.get().scheduleDeferred(() -> {
             final List<String> uuids = new ArrayList<>();
-            for (final ExplorerNode node : presenter.getSelectedSet()) {
+            for (final ExplorerNode node : controller.getSelectedSet()) {
                 uuids.add(node.getUuid());
             }
             Collections.sort(uuids);

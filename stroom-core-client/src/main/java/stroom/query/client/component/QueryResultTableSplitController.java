@@ -41,7 +41,7 @@ public class QueryResultTableSplitController
         implements ResultComponent {
 
     private final QueryResultTableSplit view;
-    private final QueryResultTableController tablePresenter;
+    private final QueryResultTableController tableController;
     private final QueryTextPaneController textPane;
 
     /// Made by GIN, with its content and its parts.
@@ -53,26 +53,26 @@ public class QueryResultTableSplitController
     @Inject
     public QueryResultTableSplitController(final EventBus eventBus,
                                            final QueryResultTableSplit view,
-                                           final QueryResultTableController tablePresenter,
+                                           final QueryResultTableController tableController,
                                            final QueryTextPaneController textPane) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(tablePresenter);
+        own(tableController);
         own(textPane);
-        this.tablePresenter = tablePresenter;
+        this.tableController = tableController;
         this.textPane = textPane;
 
-        view.setTable(tablePresenter);
+        view.setTable(tableController);
         view.setSource(textPane);
 
-        own(tablePresenter.getSelectionModel().addSelectionHandler(event ->
-                onSelection(tablePresenter.getSelectionModel().getSelected())));
+        own(tableController.getSelectionModel().addSelectionHandler(event ->
+                onSelection(tableController.getSelectionModel().getSelected())));
     }
 
     @Override
     public void setQueryModel(final QueryModel queryModel) {
-        tablePresenter.setQueryModel(queryModel);
+        tableController.setQueryModel(queryModel);
     }
 
     private void onSelection(final TableRow tableRow) {
@@ -118,76 +118,76 @@ public class QueryResultTableSplitController
 
     /// Clears the table's selection, which hides the source.
     public void clear() {
-        tablePresenter.getSelectionModel().clear();
+        tableController.getSelectionModel().clear();
     }
 
     /// @return The results table.
     public QueryResultTableController getTable() {
-        return tablePresenter;
+        return tableController;
     }
 
     @Override
     public OffsetRange getRequestedRange() {
-        return tablePresenter.getRequestedRange();
+        return tableController.getRequestedRange();
     }
 
     @Override
     public GroupSelection getGroupSelection() {
-        return tablePresenter.getGroupSelection();
+        return tableController.getGroupSelection();
     }
 
     @Override
     public void reset() {
-        tablePresenter.reset();
+        tableController.reset();
     }
 
     @Override
     public void startSearch() {
-        tablePresenter.startSearch();
+        tableController.startSearch();
     }
 
     @Override
     public void endSearch() {
-        tablePresenter.endSearch();
+        tableController.endSearch();
     }
 
     @Override
     public void setData(final Result componentResult) {
-        tablePresenter.setData(componentResult);
+        tableController.setData(componentResult);
     }
 
     /// @param queryTablePreferencesSupplier Gives the table's preferences, e.g. its columns.
     public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
-        tablePresenter.setQueryTablePreferencesSupplier(queryTablePreferencesSupplier);
+        tableController.setQueryTablePreferencesSupplier(queryTablePreferencesSupplier);
     }
 
     /// @param queryTablePreferencesConsumer Given the table's preferences when the user changes them.
     public void setQueryTablePreferencesConsumer(final Consumer<QueryTablePreferences> queryTablePreferencesConsumer) {
-        tablePresenter.setQueryTablePreferencesConsumer(queryTablePreferencesConsumer);
+        tableController.setQueryTablePreferencesConsumer(queryTablePreferencesConsumer);
     }
 
     /// Shows the table's preferences again, e.g. after they were read.
     public void updateQueryTablePreferences() {
-        tablePresenter.updateQueryTablePreferences();
+        tableController.updateQueryTablePreferences();
     }
 
     /// @param onChange What to run when the user changes the table's settings.
     public void setOnChange(final Runnable onChange) {
-        tablePresenter.setOnChange(onChange);
+        tableController.setOnChange(onChange);
     }
 
     /// @param queryResultVis The results' visualisation, refreshed with the table.
     public void setQueryResultVis(final QueryResultVisController queryResultVis) {
-        tablePresenter.setQueryResultVis(queryResultVis);
+        tableController.setQueryResultVis(queryResultVis);
     }
 
     /// @param query The query, whose data source the table's column menus use.
     public void setQuery(final String query) {
-        tablePresenter.setQuery(query);
+        tableController.setQuery(query);
     }
 
     /// @param visible Whether the query's tab is showing.
     public void onContentTabVisible(final boolean visible) {
-        tablePresenter.onContentTabVisible(visible);
+        tableController.onContentTabVisible(visible);
     }
 }

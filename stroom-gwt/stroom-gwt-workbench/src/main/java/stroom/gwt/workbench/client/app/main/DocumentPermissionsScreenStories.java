@@ -116,9 +116,9 @@ public final class DocumentPermissionsScreenStories {
         // Opened as DocumentPermissionsPlugin.open opens it: the descendants of System, once Stroom
         // has started (the list reads the UI config)
         harness.afterStartUp(() -> {
-            final BatchDocumentPermissionsController presenter =
+            final BatchDocumentPermissionsController controller =
                     harness.show(injector.getBatchDocumentPermissionsController());
-            presenter.setExpression(ExpressionOperator.builder()
+            controller.setExpression(ExpressionOperator.builder()
                     .addTerm(ExpressionTerm.builder()
                             .field(DocumentPermissionFields.DESCENDANTS.getFldName())
                             .condition(Condition.OF_DOC_REF)

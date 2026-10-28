@@ -333,11 +333,11 @@ public class QueryModel implements HasHandlers {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
-            final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
+            final ResultComponent tableController = resultComponents.get(TABLE_COMPONENT_ID);
             final GroupSelection groupSelection = NullSafe
-                    .getOrElse(tablePresenter, ResultComponent::getGroupSelection, new GroupSelection());
+                    .getOrElse(tableController, ResultComponent::getGroupSelection, new GroupSelection());
             final OffsetRange requestedRange = NullSafe
-                    .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
+                    .getOrElse(tableController, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
 
             final QuerySearchRequest request = currentSearch
                     .copy()

@@ -65,9 +65,9 @@ public class ListInputController extends DashboardComponentController implements
     @Inject
     public ListInputController(final EventBus eventBus,
                                final ListInput view,
-                               final Provider<ListInputSettingsController> settingsPresenterProvider,
+                               final Provider<ListInputSettingsController> settingsControllerProvider,
                                final RestFactory restFactory) {
-        super(eventBus, settingsPresenterProvider);
+        super(eventBus, settingsControllerProvider);
         this.view = view;
         this.restFactory = restFactory;
         initWidget(view);

@@ -52,11 +52,11 @@ public class FloorMapEventStoreDataController
     @Inject
     public FloorMapEventStoreDataController(final EventBus eventBus,
                                             final QueryDataPane view,
-                                            final QueryResultTableController tablePresenter,
+                                            final QueryResultTableController tableController,
                                             final RestFactory restFactory,
                                             final DateTimeSettingsFactory dateTimeSettingsFactory,
                                             final ResultStoreModel resultStoreModel) {
-        super(eventBus, view, tablePresenter, restFactory, dateTimeSettingsFactory, resultStoreModel);
+        super(eventBus, view, tableController, restFactory, dateTimeSettingsFactory, resultStoreModel);
     }
 
     @Override

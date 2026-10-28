@@ -62,10 +62,10 @@ public final class StaticDialogStories {
                     final Style style = body.getElement().getStyle();
                     style.setProperty("padding", "12px");
                     style.setProperty("color", "var(--text-color)");
-                    final StoryContent presenter = new StoryContent(popups.getEventBus(), body);
+                    final StoryContent controller = new StoryContent(popups.getEventBus(), body);
 
                     // As the IdP presenters show themselves
-                    ShowPopupEvent.builder(presenter)
+                    ShowPopupEvent.builder(controller)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .icon(SvgImage.PASSWORD)
                             .caption("Change Password")

@@ -31,20 +31,20 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     private static Type<OpenContentTabHandler> TYPE;
     private final TabData tabData;
     private final Layer layer;
-    private final Controller presenter;
+    private final Controller controller;
     private final Consumer<Controller> callbackOnOpen;
 
-    private OpenContentTabEvent(final TabData tabData, final Layer layer, final Controller presenter,
+    private OpenContentTabEvent(final TabData tabData, final Layer layer, final Controller controller,
                                 final Consumer<Controller> callbackOnOpen) {
         this.tabData = tabData;
         this.layer = layer;
-        this.presenter = presenter;
+        this.controller = controller;
         this.callbackOnOpen = callbackOnOpen;
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData, final Layer layer,
-            final Controller presenter, final Consumer<Controller> callbackOnOpen) {
-        handlers.fireEvent(new OpenContentTabEvent(tabData, layer, presenter, callbackOnOpen));
+            final Controller controller, final Consumer<Controller> callbackOnOpen) {
+        handlers.fireEvent(new OpenContentTabEvent(tabData, layer, controller, callbackOnOpen));
     }
 
     public static Type<OpenContentTabHandler> getType() {
@@ -73,8 +73,8 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     }
 
     public void runCallbackOnOpen() {
-        if (presenter != null && callbackOnOpen != null) {
-            callbackOnOpen.accept(presenter);
+        if (controller != null && callbackOnOpen != null) {
+            callbackOnOpen.accept(controller);
         }
     }
 

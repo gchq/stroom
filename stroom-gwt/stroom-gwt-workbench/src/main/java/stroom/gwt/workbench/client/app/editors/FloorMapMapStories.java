@@ -389,14 +389,14 @@ public final class FloorMapMapStories {
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
         return DocEditors.render(context, fixtures, false, (harness, injector) -> {
-            final FloorMapMapController presenter = injector.getFloorMapMap();
+            final FloorMapMapController controller = injector.getFloorMapMap();
             // The tab checks every 10 seconds whether its facts are due a re-read, from when it
             // reads the document until it is closed (which a story never does)
-            harness.addTimer(factsCadenceTimer(presenter));
+            harness.addTimer(factsCadenceTimer(controller));
             DocEditors.open(harness,
                     DOC_REF,
                     // Shown as the document shows its Map tab
-                    new TabStory<>(harness.getEventBus(), presenter,
+                    new TabStory<>(harness.getEventBus(), controller,
                             FloorMapMapController::read, FloorMapMapController::write),
                     DocResource.of(
                             restFactory -> restFactory.create(resource)
@@ -407,7 +407,7 @@ public final class FloorMapMapStories {
     }
 
     // FloorMapMapController's private facts cadence timer
-    private static native Timer factsCadenceTimer(FloorMapMapController presenter) /*-{
+    private static native Timer factsCadenceTimer(FloorMapMapController controller) /*-{
         return presenter.@stroom.floormap.client.component.FloorMapMapController::factsCadenceTimer;
     }-*/;
 }

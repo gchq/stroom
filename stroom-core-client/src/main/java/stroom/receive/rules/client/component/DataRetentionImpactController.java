@@ -113,7 +113,7 @@ public class DataRetentionImpactController extends Controller {
         switch (action) {
             case RUN -> refreshSourceData(new Range(0, Integer.MAX_VALUE));
             case STOP -> cancelQuery();
-            case FILTER -> openFilterPresenter();
+            case FILTER -> openFilterController();
             case EXPAND_ALL -> onExpandAll();
             case COLLAPSE_ALL -> onCollapseAll();
         }
@@ -247,7 +247,7 @@ public class DataRetentionImpactController extends Controller {
         refreshVisibleData();
     }
 
-    private void openFilterPresenter() {
+    private void openFilterController() {
         final ExpressionEditorController expressionEditor = expressionEditorProvider.get();
         expressionEditor.read(criteria.getExpression());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();

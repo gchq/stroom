@@ -39,17 +39,17 @@ abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagsCon
 
     AnnotationPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<AnnotationTagsController> presenterProvider,
+                     final Provider<AnnotationTagsController> controllerProvider,
                      final DocumentPluginRegistry documentPluginRegistry,
                      final ClientSecurityContext securityContext,
                      final String tabLabel,
                      final AnnotationTagType annotationTagType) {
         super(eventBus, contentManager, () -> {
-            final AnnotationTagsController annotationTagPresenter = presenterProvider.get();
-            annotationTagPresenter.setTabLabel(tabLabel);
-            annotationTagPresenter.setAnnotationTagType(annotationTagType);
-            annotationTagPresenter.refresh();
-            return annotationTagPresenter;
+            final AnnotationTagsController annotationTagController = controllerProvider.get();
+            annotationTagController.setTabLabel(tabLabel);
+            annotationTagController.setAnnotationTagType(annotationTagType);
+            annotationTagController.refresh();
+            return annotationTagController;
         }, documentPluginRegistry, securityContext);
         this.tabLabel = tabLabel;
     }

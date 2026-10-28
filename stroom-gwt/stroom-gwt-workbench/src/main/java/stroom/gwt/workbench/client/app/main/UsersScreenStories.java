@@ -281,9 +281,9 @@ public final class UsersScreenStories {
             // Both refreshes wait for the UI config; only the first sets up the list (the second
             // once set it up again, duplicating its columns and rows, which the play's
             // findByText would now find twice)
-            final UsersController presenter = harness.show(injector.getUsersController());
-            presenter.refresh();
-            presenter.showUser(focus);
+            final UsersController controller = harness.show(injector.getUsersController());
+            controller.refresh();
+            controller.showUser(focus);
         }
         return harness.asWidget();
     }

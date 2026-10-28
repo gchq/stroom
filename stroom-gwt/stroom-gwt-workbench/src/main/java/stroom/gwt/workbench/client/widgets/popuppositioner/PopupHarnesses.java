@@ -192,8 +192,8 @@ final class PopupHarnesses {
         return outerTrigger;
     }
 
-    private static void showAt(final StoryContent presenter, final int left, final Widget trigger) {
-        ShowPopupEvent.builder(presenter)
+    private static void showAt(final StoryContent controller, final int left, final Widget trigger) {
+        ShowPopupEvent.builder(controller)
                 .popupType(PopupType.POPUP)
                 .popupPosition(new PopupPosition(left, CASCADE_TOP))
                 .addAutoHidePartner(trigger.getElement())

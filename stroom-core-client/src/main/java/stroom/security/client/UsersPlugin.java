@@ -45,14 +45,14 @@ public class UsersPlugin extends MonitoringPlugin<UsersController> {
     @Inject
     public UsersPlugin(final EventBus eventBus,
                        final ContentManager contentManager,
-                       final Provider<UsersController> presenterProvider,
+                       final Provider<UsersController> controllerProvider,
                        final ClientSecurityContext securityContext,
                        final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenUsersScreenEvent.getType(), event -> {
-            open(usersPresenter ->
-                    usersPresenter.showUser(event.getUserRef()));
+            open(usersController ->
+                    usersController.showUser(event.getUserRef()));
         });
     }
 
@@ -73,9 +73,9 @@ public class UsersPlugin extends MonitoringPlugin<UsersController> {
 
     @Override
     public void open(final Consumer<UsersController> consumer) {
-        super.open(presenter -> {
-            presenter.refresh();
-            consumer.accept(presenter);
+        super.open(controller -> {
+            controller.refresh();
+            consumer.accept(controller);
         });
     }
 

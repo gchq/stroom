@@ -67,7 +67,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
 
     private final QueryDataPane view;
     private final QueryModel queryModel;
-    private final QueryResultTableController tablePresenter;
+    private final QueryResultTableController tableController;
     private final RestFactory restFactory;
     private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
     private DocRef currentDocRef;
@@ -81,24 +81,24 @@ public abstract class AbstractQueryDataController<D> extends Controller {
     /// @param resultStoreModel        Keeps the query's results.
     protected AbstractQueryDataController(final EventBus eventBus,
                                           final QueryDataPane view,
-                                          final QueryResultTableController tablePresenter,
+                                          final QueryResultTableController tableController,
                                           final RestFactory restFactory,
                                           final DateTimeSettingsFactory dateTimeSettingsFactory,
                                           final ResultStoreModel resultStoreModel) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(tablePresenter);
-        this.tablePresenter = tablePresenter;
+        own(tableController);
+        this.tableController = tableController;
         this.restFactory = restFactory;
 
         view.setOnAction(this::onAction);
-        view.setTable(tablePresenter);
+        view.setTable(tableController);
 
-        tablePresenter.setEmptyText("No data");
-        tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
-        tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
-        tablePresenter.setData(null);
+        tableController.setEmptyText("No data");
+        tableController.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
+        tableController.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
+        tableController.setData(null);
 
         queryModel = new QueryModel(
                 eventBus,
@@ -106,7 +106,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
                 dateTimeSettingsFactory,
                 resultStoreModel,
                 () -> queryTablePreferences);
-        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tablePresenter);
+        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableController);
         // Destroys the query when the tab is closed, or the browser
         onDispose(() -> queryModel.reset(DestroyReason.TAB_CLOSE));
         listen(WindowCloseEvent.getType(), event -> queryModel.reset(DestroyReason.WINDOW_CLOSE));
@@ -147,7 +147,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
     public void read(final DocRef docRef, final D doc) {
         this.currentDocRef = docRef;
         this.currentDoc = doc;
-        tablePresenter.setPreferredColumns(getPreferredColumns(doc));
+        tableController.setPreferredColumns(getPreferredColumns(doc));
         view.setQuery(getDefaultQuery(docRef, doc));
         view.clearError();
     }

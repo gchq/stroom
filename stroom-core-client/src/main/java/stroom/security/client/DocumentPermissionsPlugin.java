@@ -50,24 +50,24 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     @Inject
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
-                                     final Provider<BatchDocumentPermissionsController> presenterProvider,
+                                     final Provider<BatchDocumentPermissionsController> controllerProvider,
                                      final Provider<DocumentUserPermissionsContentTabController>
-                                             documentPermissionsPresenterProvider,
+                                             documentPermissionsControllerProvider,
                                      final ClientSecurityContext securityContext,
                                      final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
-            final DocumentUserPermissionsContentTabController presenter = documentPermissionsPresenterProvider.get();
-            presenter.setDocRef(event.getDocRef());
+            final DocumentUserPermissionsContentTabController controller = documentPermissionsControllerProvider.get();
+            controller.setDocRef(event.getDocRef());
             final CloseContentEvent.Handler closeHandler = closeEvent -> {
-                if (presenter instanceof CloseContentEvent.Handler) {
+                if (controller instanceof CloseContentEvent.Handler) {
                     final Callback callback = ok -> {
                         closeEvent.getCallback().closeTab(ok);
                     };
 
-                    ((CloseContentEvent.Handler) presenter)
+                    ((CloseContentEvent.Handler) controller)
                             .onCloseRequest(new CloseContentEvent(closeEvent.getDirtyMode(), callback));
                 } else {
                     // Give the content manager the ok to close the tab.
@@ -76,7 +76,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
             };
 
             // Tell the content manager to open the tab.
-            contentManager.open(closeHandler, presenter, presenter);
+            contentManager.open(closeHandler, controller, controller);
         });
     }
 
@@ -97,7 +97,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
 
     @Override
     public void open(final Consumer<BatchDocumentPermissionsController> consumer) {
-        super.open(presenter -> {
+        super.open(controller -> {
             final ExpressionTerm term = ExpressionTerm
                     .builder()
                     .field(DocumentPermissionFields.DESCENDANTS.getFldName())
@@ -108,8 +108,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
                     .builder()
                     .addTerm(term)
                     .build();
-            presenter.setExpression(operator);
-            consumer.accept(presenter);
+            controller.setExpression(operator);
+            consumer.accept(controller);
         });
     }
 

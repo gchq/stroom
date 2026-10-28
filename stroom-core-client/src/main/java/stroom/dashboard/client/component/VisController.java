@@ -278,13 +278,13 @@ public class VisController
         builder.tableId(tableId);
 
         final DashboardPane component = getDashboardContext().getComponents().get(tableId);
-        if (component instanceof final TableController tablePresenter) {
-            final TableComponentSettings tableComponentSettings = tablePresenter
+        if (component instanceof final TableController tableController) {
+            final TableComponentSettings tableComponentSettings = tableController
                     .getTableComponentSettings();
             final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
-            final TableSettings tableSettings = tablePresenter.resolveTableSettings();
+            final TableSettings tableSettings = tableController.resolveTableSettings();
 
             // Refresh if the linked table settings have changed.
             if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {
@@ -305,8 +305,8 @@ public class VisController
 
         if (queryId != null) {
             final DashboardPane component = getDashboardContext().getComponents().get(queryId);
-            if (component instanceof final QueryPaneController queryPresenter) {
-                final SearchModel searchModel = queryPresenter.getSearchModel();
+            if (component instanceof final QueryPaneController queryController) {
+                final SearchModel searchModel = queryController.getSearchModel();
                 currentSearchModel = searchModel;
                 if (searchModel != null) {
                     searchModel.addComponent(getComponentConfig().getId(), this);

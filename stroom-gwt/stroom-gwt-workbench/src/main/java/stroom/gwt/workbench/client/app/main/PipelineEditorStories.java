@@ -1316,19 +1316,19 @@ public final class PipelineEditorStories {
         // Opened once Stroom has started, as PipelinePlugin opens a document: load it, check the
         // user may edit it, read it into the editor and show the tab
         harness.afterStartUp(() -> {
-            final DocumentEditorHost<PipelineDoc> presenter = new DocumentEditorHost<>(
+            final DocumentEditorHost<PipelineDoc> controller = new DocumentEditorHost<>(
                     harness.getEventBus(), injector.getPipelineEditor(), PipelineDoc.TYPE);
             final PipelineResource resource = GWT.create(PipelineResource.class);
             harness.getRestFactory()
                     .create(resource)
                     .method(res -> res.fetch(UUID))
                     .onSuccess(doc -> {
-                        harness.addRegistration(presenter.addDirtyListener(onDirty::call));
-                        presenter.setReadOnly(readOnly);
-                        presenter.read(DOC_REF, doc);
-                        harness.show(presenter);
+                        harness.addRegistration(controller.addDirtyListener(onDirty::call));
+                        controller.setReadOnly(readOnly);
+                        controller.read(DOC_REF, doc);
+                        harness.show(controller);
                     })
-                    .taskMonitorFactory(presenter)
+                    .taskMonitorFactory(controller)
                     .exec();
         });
         return harness.asWidget();

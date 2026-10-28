@@ -100,7 +100,7 @@ public class SteppingScreenController extends Controller {
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
     private final SteppingScreen view;
     private final PipelinePathBar pipelinePathBar;
-    private final SourceViewerController sourcePresenter;
+    private final SourceViewerController sourceController;
     // The source as a layer, kept, as the container tells its layers apart by identity
     private final ControllerLayer sourceLayer;
     private final Provider<SteppingElementController> elementProvider;
@@ -145,19 +145,19 @@ public class SteppingScreenController extends Controller {
                                     final SteppingScreen view,
                                     final Provider<PipelinePathBarController> pathBarControllerProvider,
                                     final RestFactory restFactory,
-                                    final SourceViewerController sourcePresenter,
+                                    final SourceViewerController sourceController,
                                     final Provider<SteppingElementController> elementProvider,
                                     final StepLocationLinkController stepLocationLink,
                                     final StepControlController stepControl,
                                     final SteppingFilterEditorController steppingFilterEditor,
                                     final PipelineElementTypesFactory pipelineElementTypesFactory,
-                                    final Provider<SteppingMetaListController> metaListPresenterProvider,
+                                    final Provider<SteppingMetaListController> metaListControllerProvider,
                                     final Provider<ExpressionDialogController> filterDialogProvider,
                                     final ExpressionValidator expressionValidator) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(sourcePresenter);
+        own(sourceController);
         own(stepLocationLink);
         own(stepControl);
         own(steppingFilterEditor);
@@ -165,21 +165,21 @@ public class SteppingScreenController extends Controller {
 
         this.pipelinePathBar = view.getPipelinePathBar();
         make(pathBarControllerProvider).attach(pipelinePathBar);
-        this.sourcePresenter = sourcePresenter;
-        this.sourceLayer = new ControllerLayer(sourcePresenter);
+        this.sourceController = sourceController;
+        this.sourceLayer = new ControllerLayer(sourceController);
         this.elementProvider = elementProvider;
         this.stepLocationLink = stepLocationLink;
         this.stepControl = stepControl;
         this.steppingFilterEditor = steppingFilterEditor;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
-        this.steppingMetaList = make(metaListPresenterProvider);
+        this.steppingMetaList = make(metaListControllerProvider);
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
         view.setOnTerminate(this::terminate);
 
-        sourcePresenter.asWidget().addStyleName("dashboard-panel overflow-hidden");
-        sourcePresenter.setSteppingSource(true);
+        sourceController.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourceController.setSteppingSource(true);
 
         pipelinePathBar.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelinePathBar.setAllowNullSelection(false);
@@ -190,7 +190,7 @@ public class SteppingScreenController extends Controller {
 
         view.setOnToggleLogPane(this::onToggleLogPane);
 
-        sourcePresenter.setOnClassification(this::setClassification);
+        sourceController.setOnClassification(this::setClassification);
 
         view.setStepControls(stepLocationLink, stepControl);
 
@@ -198,7 +198,7 @@ public class SteppingScreenController extends Controller {
         streamListFilter = steppingMetaList.getToolbar().button(SvgImage.FILTER, "Filter Streams",
                 this::onStreamListFilter);
 
-        sourcePresenter.setMetaList(steppingMetaList);
+        sourceController.setMetaList(steppingMetaList);
 
         own(
                 pipelinePathBar.getSelectionModel().addSelectionChangeHandler(event -> {
@@ -667,7 +667,7 @@ public class SteppingScreenController extends Controller {
     public void beginStepping() {
         if (this.meta == null) {
             if (steppingMetaList.getSelected() == null) {
-                sourcePresenter.clear();
+                sourceController.clear();
 
                 if (steppingMetaList.getResultPage() == null) {
                     refreshMetaList();
@@ -700,7 +700,7 @@ public class SteppingScreenController extends Controller {
                 .withPartIndex(stepLocation.getPartIndex())
                 .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
                 .build();
-        sourcePresenter.setSourceLocation(sourceLocation);
+        sourceController.setSourceLocation(sourceLocation);
 
         // Set the pipeline on the stepping action.
         requestBuilder.pipelineDoc(pipelineDoc);
@@ -1072,9 +1072,9 @@ public class SteppingScreenController extends Controller {
                             .copy()
                             .withHighlight((DataRange) null)
                             .build();
-                    sourcePresenter.setSourceLocation(newSourceLocation);
+                    sourceController.setSourceLocation(newSourceLocation);
                 } else {
-                    sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
+                    sourceController.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
                 }
             }
 

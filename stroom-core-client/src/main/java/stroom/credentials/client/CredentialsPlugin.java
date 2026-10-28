@@ -54,10 +54,10 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsController> {
     @Inject
     public CredentialsPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
-                             final Provider<CredentialsController> presenterProvider,
+                             final Provider<CredentialsController> controllerProvider,
                              final ClientSecurityContext securityContext,
                              final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 

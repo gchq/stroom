@@ -91,9 +91,9 @@ public final class BrowseAnnotationsScreenStories {
                 harness.spy(ON_OPEN_ANNOTATION, String.valueOf(event.getAnnotationId()))));
         harness.afterStartUp(() -> {
             // As AnnotationBrowsePlugin opens the tab
-            final BrowseAnnotationController presenter = injector.getBrowseAnnotationController();
-            presenter.refresh();
-            harness.show(presenter);
+            final BrowseAnnotationController controller = injector.getBrowseAnnotationController();
+            controller.refresh();
+            harness.show(controller);
         });
         return harness.asWidget();
     }

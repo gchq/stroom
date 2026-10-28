@@ -41,10 +41,10 @@ public class UserPlugin extends MonitoringPlugin<UserTabController> {
     @Inject
     public UserPlugin(final EventBus eventBus,
                       final ContentManager contentManager,
-                      final Provider<UserTabController> presenterProvider,
+                      final Provider<UserTabController> controllerProvider,
                       final ClientSecurityContext securityContext,
                       final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -66,8 +66,8 @@ public class UserPlugin extends MonitoringPlugin<UserTabController> {
 
     @Override
     public final void open() {
-        open(presenter -> {
-            presenter.setUserRef(securityContext.getUserRef());
+        open(controller -> {
+            controller.setUserRef(securityContext.getUserRef());
         });
     }
 

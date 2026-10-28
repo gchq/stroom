@@ -38,8 +38,8 @@ public abstract class RefreshableDashboardComponentController
     /// @param settingsPresenterProvider Makes the pane's settings dialog.
     protected RefreshableDashboardComponentController(
             final EventBus eventBus,
-            final Provider<? extends ComponentSettingsDialogController> settingsPresenterProvider) {
-        super(eventBus, settingsPresenterProvider);
+            final Provider<? extends ComponentSettingsDialogController> settingsControllerProvider) {
+        super(eventBus, settingsControllerProvider);
         onDispose(this::cancelRefresh);
     }
 

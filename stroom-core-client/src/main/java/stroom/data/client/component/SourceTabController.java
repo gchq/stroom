@@ -31,21 +31,21 @@ public class SourceTabController extends ContentTabController {
 
     private final SourceTab view;
 
-    private final SourceViewerController sourcePresenter;
+    private final SourceViewerController sourceController;
     private SourceKey sourceKey;
 
     /// Made by GIN, with its screen and its parts.
     @Inject
     public SourceTabController(final EventBus eventBus,
-                               final SourceViewerController sourcePresenter,
+                               final SourceViewerController sourceController,
                                final SourceTab view) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(sourcePresenter);
-        this.sourcePresenter = sourcePresenter;
+        own(sourceController);
+        this.sourceController = sourceController;
 
-        view.setSourceView(sourcePresenter);
+        view.setSourceView(sourceController);
 
     }
 
@@ -73,7 +73,7 @@ public class SourceTabController extends ContentTabController {
     /// @param sourceLocation The place and its highlight.
     public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
         sourceKey = new SourceKey(sourceLocation);
-        sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
+        sourceController.setSourceLocationUsingHighlight(sourceLocation);
     }
 
     /// Shows a stream's source, from a place in it.
@@ -81,7 +81,7 @@ public class SourceTabController extends ContentTabController {
     /// @param sourceLocation The place.
     public void setSourceLocation(final SourceLocation sourceLocation) {
         sourceKey = new SourceKey(sourceLocation);
-        sourcePresenter.setSourceLocation(sourceLocation);
+        sourceController.setSourceLocation(sourceLocation);
     }
 
 //    public void setSourceKey(final SourceKey sourceKey) {

@@ -33,9 +33,9 @@ public class WelcomePlugin extends ContentPlugin<WelcomeTabController> implement
 
     @Inject
     public WelcomePlugin(final EventBus eventBus, final ContentManager eventManager,
-                         final Provider<WelcomeTabController> presenterProvider,
+                         final Provider<WelcomeTabController> controllerProvider,
                          final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, documentPluginRegistry);
 
         getEventBus().addHandler(ShowMainEvent.getType(), this);
     }

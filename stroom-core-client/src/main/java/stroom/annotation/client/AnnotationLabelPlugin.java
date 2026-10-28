@@ -34,12 +34,12 @@ public class AnnotationLabelPlugin extends AnnotationPlugin {
     @Inject
     AnnotationLabelPlugin(final EventBus eventBus,
                           final ContentManager contentManager,
-                          final Provider<AnnotationTagsController> presenterProvider,
+                          final Provider<AnnotationTagsController> controllerProvider,
                           final DocumentPluginRegistry documentPluginRegistry,
                           final ClientSecurityContext securityContext) {
         super(eventBus,
                 contentManager,
-                presenterProvider,
+                controllerProvider,
                 documentPluginRegistry,
                 securityContext,
                 "Annotation Labels",

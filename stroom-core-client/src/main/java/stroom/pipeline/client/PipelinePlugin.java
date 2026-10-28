@@ -265,8 +265,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                   final Meta meta,
                                   final String childStreamType) {
         open(pipeline, true, false,
-                false, presenter -> {
-                    final PipelineEditor pipelineEditor = getEditor(presenter);
+                false, controller -> {
+                    final PipelineEditor pipelineEditor = getEditor(controller);
                     if (pipelineEditor == null) {
                         return;
                     }

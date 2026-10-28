@@ -120,7 +120,7 @@ public class QueryPaneController
     @Inject
     public QueryPaneController(final EventBus eventBus,
                                final QueryPane view,
-                               final Provider<QuerySettingsController> settingsPresenterProvider,
+                               final Provider<QuerySettingsController> settingsControllerProvider,
                                final ExpressionTreeController expressionTree,
                                final QueryHistoryController history,
                                final QueryFavouritesController favourites,
@@ -134,7 +134,7 @@ public class QueryPaneController
                                final DateTimeSettingsFactory dateTimeSettingsFactory,
                                final ResultStoreModel resultStoreModel,
                                final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
-        super(eventBus, settingsPresenterProvider);
+        super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
         own(expressionTree);

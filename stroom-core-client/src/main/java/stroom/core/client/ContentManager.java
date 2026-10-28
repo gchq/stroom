@@ -173,15 +173,15 @@ public class ContentManager implements HasHandlers {
     public void open(final CloseContentEvent.Handler closeHandler,
                      final TabData tabData,
                      final Layer layer,
-                     final Controller presenter,
+                     final Controller controller,
                      final Consumer<Controller> callbackOnOpen) {
         handlerMap.put(tabData, closeHandler);
         // Opening a tab that is open again keeps its root
         final ControllerNode root = roots.computeIfAbsent(tabData, k -> ControllerNode.root("ContentTab"));
-        ownIfUnowned(root, presenter);
+        ownIfUnowned(root, controller);
         ownIfUnowned(root, layer);
         ownIfUnowned(root, tabData);
-        OpenContentTabEvent.fire(this, tabData, layer, presenter, callbackOnOpen);
+        OpenContentTabEvent.fire(this, tabData, layer, controller, callbackOnOpen);
     }
 
     private static void ownIfUnowned(final ControllerNode root, final Object content) {

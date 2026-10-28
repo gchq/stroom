@@ -394,10 +394,10 @@ public final class ProcessorTaskSummaryStories {
         harness.addRegistration(harness.getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 openFeed.call(event.getName())));
         harness.afterStartUp(() -> {
-            final ProcessorTasksTabController presenter = injector.getProcessorTasksTabController();
+            final ProcessorTasksTabController controller = injector.getProcessorTasksTabController();
             // As a folder's 'Active Tasks' tab reads it (FolderTabs)
-            presenter.read(FOLDER, null);
-            harness.show(presenter);
+            controller.read(FOLDER, null);
+            harness.show(controller);
         });
         return harness.asWidget();
     }

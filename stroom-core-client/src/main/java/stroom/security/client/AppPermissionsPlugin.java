@@ -47,14 +47,14 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsControl
     @Inject
     public AppPermissionsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<AppPermissionsController> presenterProvider,
+                                final Provider<AppPermissionsController> controllerProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event -> {
-            open(appPermissionsPresenter ->
-                    appPermissionsPresenter.showUser(event.getUserRef()));
+            open(appPermissionsController ->
+                    appPermissionsController.showUser(event.getUserRef()));
         });
     }
 
@@ -85,9 +85,9 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsControl
 
     @Override
     public void open(final Consumer<AppPermissionsController> consumer) {
-        super.open(presenter -> {
-            presenter.refresh();
-            consumer.accept(presenter);
+        super.open(controller -> {
+            controller.refresh();
+            consumer.accept(controller);
         });
     }
 

@@ -43,16 +43,16 @@ public class JobListPlugin extends MonitoringPlugin<JobsController> {
     @Inject
     public JobListPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
-                         final Provider<JobsController> presenterProvider,
+                         final Provider<JobsController> controllerProvider,
                          final ClientSecurityContext securityContext,
                          final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(
                 OpenJobNodeEvent.getType(), openJobNodeEvent -> {
                     final JobNode jobNode = openJobNodeEvent.getJobNode();
-                    open(jobPresenter -> {
-                        jobPresenter.setSelected(jobNode);
+                    open(jobController -> {
+                        jobController.setSelected(jobNode);
                     });
                 });
     }

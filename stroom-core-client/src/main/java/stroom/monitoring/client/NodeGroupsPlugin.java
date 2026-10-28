@@ -41,10 +41,10 @@ public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupsController> {
     @Inject
     NodeGroupsPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<NodeGroupsController> presenterProvider,
+                     final Provider<NodeGroupsController> controllerProvider,
                      final ClientSecurityContext securityContext,
                      final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

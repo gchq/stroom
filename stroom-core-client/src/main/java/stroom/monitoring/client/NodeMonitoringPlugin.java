@@ -43,19 +43,19 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodesController> {
     @Inject
     public NodeMonitoringPlugin(final EventBus eventBus,
                                 final ContentManager eventManager,
-                                final Provider<NodesController> presenterProvider,
+                                final Provider<NodesController> controllerProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
                     final JobNode jobNode = openNodeEvent.getJobNode();
-                    open(nodePresenter -> {
+                    open(nodeController -> {
                         if (jobNode != null) {
-                            nodePresenter.setSelected(jobNode);
+                            nodeController.setSelected(jobNode);
                         } else {
-                            nodePresenter.setSelected(openNodeEvent.getNodeName());
+                            nodeController.setSelected(openNodeEvent.getNodeName());
                         }
                     });
                 });

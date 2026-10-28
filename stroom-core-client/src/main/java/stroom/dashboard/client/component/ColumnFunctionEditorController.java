@@ -84,13 +84,13 @@ public class ColumnFunctionEditorController extends Controller {
     /// @param column               The column.
     /// @param columnChangeConsumer Given the column and the column with its new expression, once
     ///                             OK is pressed with a valid changed expression.
-    public void show(final TableController tablePresenter,
+    public void show(final TableController tableController,
                      final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
         editor.setText(column.getExpression() != null
                 ? column.getExpression()
                 : "");
-        final SearchModel searchModel = tablePresenter.getCurrentSearchModel();
+        final SearchModel searchModel = tableController.getCurrentSearchModel();
         if (searchModel != null) {
             final IndexLoader indexLoader = searchModel.getIndexLoader();
             if (indexLoader != null) {
@@ -98,7 +98,7 @@ public class ColumnFunctionEditorController extends Controller {
             }
         }
 
-        ControllerDialog.showOnce(tablePresenter, this)
+        ControllerDialog.showOnce(tableController, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(800, 700))
                 .caption("Set Expression For '" + column.getName() + "'")

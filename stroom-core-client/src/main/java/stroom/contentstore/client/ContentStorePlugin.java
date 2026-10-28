@@ -55,10 +55,10 @@ public class ContentStorePlugin extends ContentPlugin<ContentStoreTabController>
     @Inject
     public ContentStorePlugin(final EventBus eventBus,
                               final ContentManager contentManager,
-                              final Provider<ContentStoreTabController> presenterProvider,
+                              final Provider<ContentStoreTabController> controllerProvider,
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 

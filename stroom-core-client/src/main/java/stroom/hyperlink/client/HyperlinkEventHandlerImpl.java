@@ -60,7 +60,7 @@ import java.util.function.Function;
 public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHandlers {
 
     private final EventBus eventBus;
-    private final Provider<IFrameContentController> iFrameContentPresenterProvider;
+    private final Provider<IFrameContentController> iFrameContentControllerProvider;
     private final Provider<IFrameController> iFrameProvider;
     private final ContentManager contentManager;
 
@@ -69,13 +69,13 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFrameController> iFrameProvider,
-                                     final Provider<IFrameContentController> iFrameContentPresenterProvider,
+                                     final Provider<IFrameContentController> iFrameContentControllerProvider,
                                      final ContentManager contentManager,
                                      final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.eventBus = eventBus;
         this.iFrameProvider = iFrameProvider;
-        this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
+        this.iFrameContentControllerProvider = iFrameContentControllerProvider;
         this.contentManager = contentManager;
 
         eventBus.addHandler(HyperlinkEvent.getType(), this);
@@ -289,10 +289,10 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
     }
 
     private void openTab(final Hyperlink hyperlink, final String customTitle) {
-        final IFrameContentController presenter = iFrameContentPresenterProvider.get();
-        presenter.setUrl(hyperlink.getHref());
-        presenter.setCustomTitle(customTitle);
-        presenter.setIcon(hyperlink.getIcon());
+        final IFrameContentController controller = iFrameContentControllerProvider.get();
+        controller.setUrl(hyperlink.getHref());
+        controller.setCustomTitle(customTitle);
+        controller.setIcon(hyperlink.getIcon());
         final CloseContentEvent.Handler handler = event ->
                 ConfirmEvent.fire(this,
                         "Are you sure you want to close?",
@@ -301,8 +301,8 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
                         });
         contentManager.open(
                 handler,
-                presenter,
-                presenter);
+                controller,
+                controller);
     }
 
     private <T> T getParam(final String href,

@@ -245,10 +245,10 @@ public final class MetaBrowserStories {
                 .realAlerts()
                 .build();
         harness.afterStartUp(() -> {
-            final MetaBrowserController presenter = injector.getMetaBrowser();
-            harness.show(presenter);
+            final MetaBrowserController controller = injector.getMetaBrowser();
+            harness.show(controller);
             // As the data browser reads it, with no document: all unlocked streams
-            presenter.read(null, null);
+            controller.read(null, null);
         });
         return harness.asWidget();
     }

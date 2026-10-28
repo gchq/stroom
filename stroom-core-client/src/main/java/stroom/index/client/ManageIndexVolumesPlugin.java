@@ -41,10 +41,10 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
     @Inject
     ManageIndexVolumesPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
-                             final Provider<IndexVolumeGroupsController> presenterProvider,
+                             final Provider<IndexVolumeGroupsController> controllerProvider,
                              final DocumentPluginRegistry documentPluginRegistry,
                              final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry, securityContext);
     }
 
     @Override

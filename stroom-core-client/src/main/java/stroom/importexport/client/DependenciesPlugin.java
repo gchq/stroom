@@ -46,20 +46,20 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabControll
     @Inject
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,
-                              final Provider<DependenciesTabController> presenterProvider,
+                              final Provider<DependenciesTabController> controllerProvider,
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry,
                               final Provider<DependenciesInfoController> dependenciesInfoControllerProvider,
                               final AppRoot appRoot) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
 
         // Open the Dependencies view, filtered by a particular DocRef
         getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
-            open(presenter -> {
+            open(controller -> {
                 final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
                         ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
                         : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
-                presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
+                controller.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
             });
         });
 

@@ -129,7 +129,7 @@ public final class DocumentEditors {
     /// @param <D>       The type of the document.
     public static <T extends DirectRestService, D> void open(
             final ScreenHarness harness,
-            final DocumentEditorHost<D> presenter,
+            final DocumentEditorHost<D> controller,
             final DocRef docRef,
             final T resource,
             final Function<T, D> fetch) {
@@ -140,17 +140,17 @@ public final class DocumentEditors {
                         docRef,
                         DocumentPermission.EDIT,
                         allowUpdate -> {
-                            presenter.setReadOnly(!allowUpdate);
-                            presenter.read(docRef, doc);
-                            harness.show(presenter);
+                            controller.setReadOnly(!allowUpdate);
+                            controller.read(docRef, doc);
+                            harness.show(controller);
                             // As Stroom's content pane does when it selects the editor's tab
-                            if (presenter instanceof TabData) {
-                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), (TabData) presenter);
+                            if (controller instanceof TabData) {
+                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), (TabData) controller);
                             }
                         },
                         error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
-                        presenter))
-                .taskMonitorFactory(presenter)
+                        controller))
+                .taskMonitorFactory(controller)
                 .exec();
     }
 

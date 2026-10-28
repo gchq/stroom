@@ -269,12 +269,12 @@ public final class AskStroomAiDialogStories {
     }
 
     // As the AI toolbar button does: the presenter handles ShowAskStroomAiEvent (its listener event)
-    private static AskStroomAiController showPresenter(final ScreenHarness harness,
+    private static AskStroomAiController showController(final ScreenHarness harness,
                                                       final EditorsScreenGinjector injector) {
-        final AskStroomAiController presenter = injector.getAskStroomAiController();
-        harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), presenter));
-        harness.own(presenter);
-        return presenter;
+        final AskStroomAiController controller = injector.getAskStroomAiController();
+        harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), controller));
+        harness.own(controller);
+        return controller;
     }
 
     private static Widget render(final StoryContext context) {
@@ -284,16 +284,16 @@ public final class AskStroomAiDialogStories {
     }
 
     private static void showDialog(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        final AskStroomAiController presenter = showPresenter(harness, injector);
-        harness.ownPopup(presenter);
+        final AskStroomAiController controller = showController(harness, injector);
+        harness.ownPopup(controller);
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
     }
 
     private static void showDialogWithContext(final ScreenHarness harness,
                                               final EditorsScreenGinjector injector) {
-        final AskStroomAiController presenter = showPresenter(harness, injector);
-        harness.ownPopup(presenter);
-        presenter.setContext(new GeneralTableContext("Orders table",
+        final AskStroomAiController controller = showController(harness, injector);
+        harness.ownPopup(controller);
+        controller.setContext(new GeneralTableContext("Orders table",
                 List.of("Order", "Total"),
                 List.of(List.of("1", "42"))));
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
@@ -307,7 +307,7 @@ public final class AskStroomAiDialogStories {
 
     // As MainController wires the toolbar's AI toggle
     private static void showToolbar(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        showPresenter(harness, injector);
+        showController(harness, injector);
         final MainToolbar toolbar = new MainToolbar();
         final boolean[] showing = {false};
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), event -> {

@@ -182,27 +182,27 @@ public final class SourceStories {
         final EventBus eventBus = harness.getEventBus();
         // Stroom's MenuManager (for the source's context menus) is the harness's
 
-        final SourceViewerController presenter = sourcePresenter(harness);
-        harness.own(presenter);
+        final SourceViewerController controller = sourceController(harness);
+        harness.own(controller);
 
         harness.fn(ON_BEGIN_STEPPING);
         harness.addRegistration(eventBus.addHandler(BeginPipelineSteppingEvent.getType(), event ->
                 harness.spy(ON_BEGIN_STEPPING, event.getStepLocation().toString())));
 
-        presenter.setSteppingSource(steppingSource);
-        presenter.setSourceLocation(SourceLocation.builder(META_ID)
+        controller.setSteppingSource(steppingSource);
+        controller.setSourceLocation(SourceLocation.builder(META_ID)
                 .withPartIndex(0L)
                 .withRecordIndex(0L)
                 .build());
 
         // SourceViewer keeps a 300px area at the top for the stepping meta
         // list, so much of the view is below the frame's fold
-        harness.add(EditorWidgets.frame(presenter.asWidget(), WIDTH, HEIGHT));
+        harness.add(EditorWidgets.frame(controller.asWidget(), WIDTH, HEIGHT));
         return harness.asWidget();
     }
 
     /// Creates the presenter and its views, as GIN would.
-    static SourceViewerController sourcePresenter(final ScreenHarness harness) {
+    static SourceViewerController sourceController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final SourceProgressBar sourceProgressBar = new SourceProgressBar();
         final CharacterNavigatorController characterNavigator = new CharacterNavigatorController(

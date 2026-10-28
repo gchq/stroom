@@ -33,8 +33,8 @@ public class SourceTabPlugin extends AbstractTabPlugin<SourceKey, SourceTabContr
     @Inject
     public SourceTabPlugin(final EventBus eventBus,
                            final ContentManager contentManager,
-                           final Provider<SourceTabController> sourceTabPresenterProvider) {
-        super(eventBus, contentManager, sourceTabPresenterProvider);
+                           final Provider<SourceTabController> sourceTabControllerProvider) {
+        super(eventBus, contentManager, sourceTabControllerProvider);
     }
 
     @Override
@@ -48,11 +48,11 @@ public class SourceTabPlugin extends AbstractTabPlugin<SourceKey, SourceTabContr
     public Optional<SourceTabController> open(final SourceLocation sourceLocation,
                                              final boolean forceOpen) {
 
-        return super.openTabPresenter(
+        return super.openTabController(
                 forceOpen,
                 new SourceKey(sourceLocation),
-                sourceTabPresenter ->
-                        sourceTabPresenter.setSourceLocationUsingHighlight(sourceLocation));
+                sourceTabController ->
+                        sourceTabController.setSourceLocationUsingHighlight(sourceLocation));
 
     }
 }

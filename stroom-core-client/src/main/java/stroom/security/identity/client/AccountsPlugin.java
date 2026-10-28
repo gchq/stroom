@@ -51,15 +51,15 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsController> {
     public AccountsPlugin(final EventBus eventBus,
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<AccountsController> accountsPresenterProvider,
+                          final Provider<AccountsController> accountsControllerProvider,
                           final Provider<UiConfigCache> uiConfigCacheProvider,
                           final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, accountsPresenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, accountsControllerProvider, securityContext, documentPluginRegistry);
         this.uiConfigCacheProvider = uiConfigCacheProvider;
 
         getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
-            open(accountsPresenter ->
-                    accountsPresenter.setFilterInput(buildFilterInput(event.getUserId())));
+            open(accountsController ->
+                    accountsController.setFilterInput(buildFilterInput(event.getUserId())));
         });
     }
 
@@ -83,9 +83,9 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsController> {
 
     @Override
     public void open(final Consumer<AccountsController> consumer) {
-        super.open(presenter -> {
-            presenter.refresh();
-            consumer.accept(presenter);
+        super.open(controller -> {
+            controller.refresh();
+            consumer.accept(controller);
         });
     }
 

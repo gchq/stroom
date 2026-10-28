@@ -43,7 +43,7 @@ public final class AskStroomAiChat {
 
     private final ScreenHarness harness;
     private final Supplier<AskStroomAiController> factory;
-    private AskStroomAiController presenter;
+    private AskStroomAiController controller;
 
     private AskStroomAiChat(final ScreenHarness harness, final Supplier<AskStroomAiController> factory) {
         this.harness = harness;
@@ -62,25 +62,25 @@ public final class AskStroomAiChat {
         final AskStroomAiChat chat = new AskStroomAiChat(Objects.requireNonNull(harness),
                 Objects.requireNonNull(factory));
         harness.addRegistration(harness.getEventBus().addHandler(AskStroomAiEvent.getType(),
-                event -> chat.getPresenter().onAsk(event)));
+                event -> chat.getController().onAsk(event)));
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(),
-                event -> chat.getPresenter().onShow(event)));
+                event -> chat.getController().onShow(event)));
         return chat;
     }
 
     /// @return Whether the presenter has been created, i.e. whether either event has been fired.
     public boolean isCreated() {
-        return presenter != null;
+        return controller != null;
     }
 
     /// Gets the chat's presenter, creating it if no event has created it yet.
     ///
     /// @return The presenter.
-    public AskStroomAiController getPresenter() {
-        if (presenter == null) {
-            presenter = factory.get();
-            harness.ownPopup(presenter);
+    public AskStroomAiController getController() {
+        if (controller == null) {
+            controller = factory.get();
+            harness.ownPopup(controller);
         }
-        return presenter;
+        return controller;
     }
 }

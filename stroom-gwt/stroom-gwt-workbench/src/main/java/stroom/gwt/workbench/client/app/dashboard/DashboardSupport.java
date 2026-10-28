@@ -231,12 +231,12 @@ public final class DashboardSupport {
                              final DocRef docRef,
                              final DashboardEditor editor,
                              final Consumer<DashboardEditor> afterOpen) {
-        final MultiInstanceEditorHost<DashboardDoc> presenter = new MultiInstanceEditorHost<>(
+        final MultiInstanceEditorHost<DashboardDoc> controller = new MultiInstanceEditorHost<>(
                 harness.getEventBus(), editor, DashboardDoc.TYPE);
         final DashboardResource resource = GWT.create(DashboardResource.class);
         harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
-            if (event.getTabData() == presenter) {
-                save(harness, docRef, presenter, resource);
+            if (event.getTabData() == controller) {
+                save(harness, docRef, controller, resource);
             }
         }));
         harness.getRestFactory()
@@ -247,41 +247,41 @@ public final class DashboardSupport {
                             docRef,
                             DocumentPermission.EDIT,
                             allowUpdate -> {
-                                presenter.setReadOnly(!allowUpdate);
-                                presenter.read(docRef, doc);
-                                harness.show(presenter);
+                                controller.setReadOnly(!allowUpdate);
+                                controller.read(docRef, doc);
+                                harness.show(controller);
                                 // As Stroom's content pane does when it selects the tab
-                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), presenter);
+                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), controller);
                                 afterOpen.accept(editor);
                             },
                             error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
-                            presenter);
+                            controller);
                 })
                 .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
                         "Unable to load document " + docRef,
                         error.getMessage(),
                         null))
-                .taskMonitorFactory(presenter)
+                .taskMonitorFactory(controller)
                 .exec();
     }
 
     // As DocumentPlugin.save
     private static void save(final ScreenHarness harness,
                              final DocRef docRef,
-                             final MultiInstanceEditorHost<DashboardDoc> presenter,
+                             final MultiInstanceEditorHost<DashboardDoc> controller,
                              final DashboardResource resource) {
-        if (presenter.isDirty()) {
-            final DashboardDoc document = presenter.write(presenter.getEntity());
+        if (controller.isDirty()) {
+            final DashboardDoc document = controller.write(controller.getEntity());
             if (document != null) {
                 harness.getRestFactory()
                         .create(resource)
                         .method(res -> res.update(document.getUuid(), document))
-                        .onSuccess(saved -> presenter.read(docRef, saved))
+                        .onSuccess(saved -> controller.read(docRef, saved))
                         .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
                                 "Unable to save document " + docRef,
                                 error.getMessage(),
                                 null))
-                        .taskMonitorFactory(presenter)
+                        .taskMonitorFactory(controller)
                         .exec();
             }
         }
@@ -304,7 +304,7 @@ public final class DashboardSupport {
         private Consumer<ScreenHarness.Builder> harnessOptions = builder -> {
         };
         private String linkParams;
-        private Consumer<DashboardEditor> afterOpen = presenter -> {
+        private Consumer<DashboardEditor> afterOpen = controller -> {
         };
         private BiConsumer<ScreenHarness, DashboardScreenGinjector> setup = (harness, injector) -> {
         };

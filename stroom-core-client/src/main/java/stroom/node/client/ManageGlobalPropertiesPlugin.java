@@ -39,10 +39,10 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     @Inject
     ManageGlobalPropertiesPlugin(final EventBus eventBus,
                                  final ContentManager contentManager,
-                                 final Provider<GlobalPropertyTabController> presenterProvider,
+                                 final Provider<GlobalPropertyTabController> controllerProvider,
                                  final DocumentPluginRegistry documentPluginRegistry,
                                  final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry, securityContext);
     }
 
     @Override

@@ -481,13 +481,14 @@ public final class DictionaryEditorStories {
     }
 
     private static void open(final ScreenHarness harness, final AppScreenGinjector injector) {
-        final DocumentEditorHost<DictionaryDoc> presenter = new DocumentEditorHost<>(
+        final DocumentEditorHost<DictionaryDoc> controller = new DocumentEditorHost<>(
                 harness.getEventBus(), injector.getDictionaryEditor(), DictionaryDoc.TYPE);
         // As DocumentPluginEventManager is asked to save it. Removed with the story's opening, as
         // the handler holds the editor
         harness.addCleanUp(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> harness.spy(SAVE,
                 event.getTabData().getLabel().replace("* ", "")
-                + ", imports: " + NullSafe.size(presenter.write(presenter.getEntity()).getImports())))::removeHandler);
+                + ", imports: "
+                + NullSafe.size(controller.write(controller.getEntity()).getImports())))::removeHandler);
         final DictionaryResource resource = GWT.create(DictionaryResource.class);
         harness.getRestFactory()
                 .create(resource)
@@ -496,13 +497,13 @@ public final class DictionaryEditorStories {
                         DOC_REF,
                         DocumentPermission.EDIT,
                         allowUpdate -> {
-                            presenter.setReadOnly(!allowUpdate);
-                            presenter.read(DOC_REF, doc);
-                            harness.show(presenter);
+                            controller.setReadOnly(!allowUpdate);
+                            controller.read(DOC_REF, doc);
+                            harness.show(controller);
                         },
                         error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
-                        presenter))
-                .taskMonitorFactory(presenter)
+                        controller))
+                .taskMonitorFactory(controller)
                 .exec();
     }
 }

@@ -54,8 +54,8 @@ public class TextInputController extends DashboardComponentController implements
     @Inject
     public TextInputController(final EventBus eventBus,
                                final TextInput view,
-                               final Provider<TextInputSettingsController> settingsPresenterProvider) {
-        super(eventBus, settingsPresenterProvider);
+                               final Provider<TextInputSettingsController> settingsControllerProvider) {
+        super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
         view.setOnChange(this::onValueChanged);

@@ -264,10 +264,10 @@ public class SelectionHandlersController extends SettingsTabController implement
             final DashboardPane component = getDashboardContext().getComponents().get(componentConfig.getId());
             if (component instanceof final EmbeddedQueryController embeddedQuery) {
                 List<Column> columns = Collections.emptyList();
-                final QueryResultTableController queryResultTablePresenter =
-                        embeddedQuery.getCurrentTablePresenter();
-                if (queryResultTablePresenter != null) {
-                    columns = NullSafe.list(queryResultTablePresenter.getCurrentColumns());
+                final QueryResultTableController queryResultTableController =
+                        embeddedQuery.getCurrentTableController();
+                if (queryResultTableController != null) {
+                    columns = NullSafe.list(queryResultTableController.getCurrentColumns());
                 }
                 fieldSelectionListModel = createSelectionListModelFromColumns(columns);
             }

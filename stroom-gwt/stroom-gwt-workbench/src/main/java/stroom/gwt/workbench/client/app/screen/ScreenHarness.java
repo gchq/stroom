@@ -517,7 +517,7 @@ public final class ScreenHarness {
     /// when it opens it ([ContentFocus]) and reports where the focus went: `{inside, tabStop, name}`,
     /// whether it is in the screen, on one of its tab stops (rather than the screen itself, which
     /// takes the focus when it has none), and the name of what has it.
-    private static native void exposeContentFocus(Object presenter, Element content) /*-{
+    private static native void exposeContentFocus(Object controller, Element content) /*-{
         $wnd.__workbenchContentFocus = function () {
             @stroom.widget.util.client.ContentFocus::focus(Ljava/lang/Object;)(presenter);
             var active = $doc.activeElement;

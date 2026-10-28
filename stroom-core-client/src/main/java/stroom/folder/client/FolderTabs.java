@@ -48,9 +48,9 @@ public class FolderTabs extends TabbedController<DocRef> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ClientSecurityContext securityContext;
-    private final Provider<MetaBrowserController> metaPresenterProvider;
+    private final Provider<MetaBrowserController> metaControllerProvider;
     private final Provider<ProcessorsController> processorsProvider;
-    private final Provider<ProcessorTasksTabController> processorTaskPresenterProvider;
+    private final Provider<ProcessorTasksTabController> processorTaskControllerProvider;
     private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private boolean tabsAdded;
 
@@ -58,15 +58,15 @@ public class FolderTabs extends TabbedController<DocRef> {
     public FolderTabs(final EventBus eventBus,
                       final LinkTabPanel view,
                       final ClientSecurityContext securityContext,
-                      final Provider<MetaBrowserController> metaPresenterProvider,
+                      final Provider<MetaBrowserController> metaControllerProvider,
                       final Provider<ProcessorsController> processorsProvider,
-                      final Provider<ProcessorTasksTabController> processorTaskPresenterProvider,
+                      final Provider<ProcessorTasksTabController> processorTaskControllerProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;
-        this.metaPresenterProvider = metaPresenterProvider;
+        this.metaControllerProvider = metaControllerProvider;
         this.processorsProvider = processorsProvider;
-        this.processorTaskPresenterProvider = processorTaskPresenterProvider;
+        this.processorTaskControllerProvider = processorTaskControllerProvider;
         this.permissionsProvider = permissionsProvider;
     }
 
@@ -89,7 +89,7 @@ public class FolderTabs extends TabbedController<DocRef> {
         TabData selectedTab = null;
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA,
-                    metaPresenterProvider::get,
+                    metaControllerProvider::get,
                     (meta, docRef, folder) -> meta.read(docRef, null));
             selectedTab = DATA;
         }
@@ -107,7 +107,7 @@ public class FolderTabs extends TabbedController<DocRef> {
                     },
                     (processors, docRef, folder) -> processors.read(docRef, null));
             addTab(TASKS,
-                    processorTaskPresenterProvider::get,
+                    processorTaskControllerProvider::get,
                     (tasks, docRef, folder) -> tasks.read(docRef, null));
             if (selectedTab == null) {
                 selectedTab = PROCESSORS;

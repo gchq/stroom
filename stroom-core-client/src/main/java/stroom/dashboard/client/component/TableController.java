@@ -206,7 +206,7 @@ public class TableController extends DashboardComponentController
                            final Provider<ColumnFunctionEditorController> expressionProvider,
                            final Provider<ColumnFormatController> columnFormatProvider,
                            final ColumnFilterDialogController columnFilterDialog,
-                           final Provider<TableSettingsController> settingsPresenterProvider,
+                           final Provider<TableSettingsController> settingsControllerProvider,
                            final DownloadSearchResultsController downloadOptions,
                            final AnnotationMenuController annotationManager,
                            final RestFactory restFactory,
@@ -217,7 +217,7 @@ public class TableController extends DashboardComponentController
                            final DataSourceClient dataSourceClient,
                            final ColumnValuesFilterController columnValuesFilter,
                            final UiConfigCache uiConfigCache) {
-        super(eventBus, settingsPresenterProvider);
+        super(eventBus, settingsControllerProvider);
         initWidget(view);
         own(columnFilterDialog);
         own(downloadOptions);
@@ -952,8 +952,8 @@ public class TableController extends DashboardComponentController
 
         if (queryId != null) {
             final DashboardPane component = getDashboardContext().getComponents().get(queryId);
-            if (component instanceof final QueryPaneController queryPresenter) {
-                currentSearchModel = queryPresenter.getSearchModel();
+            if (component instanceof final QueryPaneController queryController) {
+                currentSearchModel = queryController.getSearchModel();
                 if (currentSearchModel != null) {
                     currentSearchModel.addComponent(getComponentConfig().getId(), this);
                 }

@@ -45,14 +45,14 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UsersAndGroupsTabCont
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<UsersAndGroupsTabController> presenterProvider,
+                                final Provider<UsersAndGroupsTabController> controllerProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event -> {
-            open(userAndGroupsPresenter ->
-                    userAndGroupsPresenter.showUser(event.getUserRef()));
+            open(userAndGroupsController ->
+                    userAndGroupsController.showUser(event.getUserRef()));
         });
     }
 
@@ -73,9 +73,9 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UsersAndGroupsTabCont
 
     @Override
     public void open(final Consumer<UsersAndGroupsTabController> consumer) {
-        super.open(presenter -> {
-            presenter.refresh();
-            consumer.accept(presenter);
+        super.open(controller -> {
+            controller.refresh();
+            consumer.accept(controller);
         });
     }
 

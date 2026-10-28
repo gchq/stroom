@@ -225,19 +225,19 @@ public final class SourceViewerStories {
                                  final SourceLocation sourceLocation) {
         // Stroom's MenuManager (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
-        final DataViewerController presenter = dataPresenter(harness);
-        harness.own(presenter);
+        final DataViewerController controller = dataController(harness);
+        harness.own(controller);
         if (sourceLocation != null) {
-            presenter.fetchData(sourceLocation);
+            controller.fetchData(sourceLocation);
         }
 
         // A 460px high frame
-        harness.add(EditorWidgets.frame(presenter.asWidget(), "auto", "460px"));
+        harness.add(EditorWidgets.frame(controller.asWidget(), "auto", "460px"));
         return harness.asWidget();
     }
 
     /// Creates the presenter and its views, as GIN would.
-    private static DataViewerController dataPresenter(final ScreenHarness harness) {
+    private static DataViewerController dataController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final ItemNavigatorController itemNavigator = new ItemNavigatorController(
                 new ItemNavigator(),

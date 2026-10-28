@@ -323,8 +323,8 @@ public final class DialogStories {
         private void show(final StoryPopups popups) {
             // A new presenter each time, as Stroom's presenters are, since PopupManager toggles a
             // presenter that is shown twice
-            final StoryContent presenter = StoryContent.html(popups.getEventBus(), html);
-            ShowPopupEvent.builder(presenter)
+            final StoryContent controller = StoryContent.html(popups.getEventBus(), html);
+            ShowPopupEvent.builder(controller)
                     .popupType(popupType)
                     .popupSize(popupSize)
                     .icon(icon)

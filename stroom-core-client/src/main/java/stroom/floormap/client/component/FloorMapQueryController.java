@@ -55,7 +55,7 @@ public class FloorMapQueryController
         implements HasToolbar {
 
     private final FloorMapQuery view;
-    private final QueryEditController queryEditPresenter;
+    private final QueryEditController queryEditController;
     /// Which result column carries each event role. Never `null` once `read` has run.
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
     /// UUID of the document being queried.
@@ -71,13 +71,13 @@ public class FloorMapQueryController
     @Inject
     public FloorMapQueryController(final EventBus eventBus,
                                    final FloorMapQuery view,
-                                   final QueryEditController queryEditPresenter) {
+                                   final QueryEditController queryEditController) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(queryEditPresenter);
-        this.queryEditPresenter = queryEditPresenter;
-        view.setQueryEdit(queryEditPresenter);
+        own(queryEditController);
+        this.queryEditController = queryEditController;
+        view.setQueryEdit(queryEditController);
 
         // A dropdown change has to mark the document dirty, as a query edit does (the mapping was
         // once unsaveable on its own, as only the query editor's changes were told)
@@ -88,16 +88,16 @@ public class FloorMapQueryController
 
         // A query edit updates the dropdown lists (the table's columns may have changed), and is a
         // change to the document
-        queryEditPresenter.setOnChange(() -> {
+        queryEditController.setOnChange(() -> {
             updateColumnSelections();
             onChange.run();
         });
 
         // Listen to this tab's table's data updates and publish the events (it once heard every
         // query result table's in the application, and needed a source guard)
-        final QueryResultTableController tablePresenter =
-                queryEditPresenter.getQueryResultTable().getTable();
-        own(tablePresenter.addUpdateListener(() -> {
+        final QueryResultTableController tableController =
+                queryEditController.getQueryResultTable().getTable();
+        own(tableController.addUpdateListener(() -> {
             // The dropdowns track whatever columns the table currently has, so
             // they follow every update, partial result set or not.
             updateColumnSelections();
@@ -116,7 +116,7 @@ public class FloorMapQueryController
         // instantly. The searching-to-idle transition is the only point at which
         // the rows are the answer to the query rather than a snapshot of
         // progress, so that is when the overlay is published.
-        own(queryEditPresenter.addSearchStateListener(searching -> {
+        own(queryEditController.addSearchStateListener(searching -> {
             // Not as the query is destroyed while this tab closes
             if (isDisposed()) {
                 return;
@@ -144,7 +144,7 @@ public class FloorMapQueryController
     ///
     /// Only ever called for a finished result set (see the search state listener in the constructor).
     private void publishMapObjects() {
-        final TableResult tableResult = queryEditPresenter.getQueryResultTable()
+        final TableResult tableResult = queryEditController.getQueryResultTable()
                 .getTable()
                 .getCurrentTableResult();
 
@@ -165,7 +165,7 @@ public class FloorMapQueryController
     /// [FloorMapEventQuery#selectableColumnNames].
     private void updateColumnSelections() {
         final List<String> colNames = FloorMapEventQuery.selectableColumnNames(
-                queryEditPresenter.getQueryResultTable()
+                queryEditController.getQueryResultTable()
                         .getTable()
                         .getCurrentColumns());
 
@@ -237,10 +237,10 @@ public class FloorMapQueryController
         view.setColumnMappingsVisible(showColumnMappings);
 
         // Populate the inner query editor.
-        queryEditPresenter.setQueryVariables(queryVariables);
-        queryEditPresenter.setQuery(docRef, query);
-        queryEditPresenter.setTimeRange(timeRange);
-        queryEditPresenter.read(queryTablePreferences);
+        queryEditController.setQueryVariables(queryVariables);
+        queryEditController.setQuery(docRef, query);
+        queryEditController.setTimeRange(timeRange);
+        queryEditController.read(queryTablePreferences);
 
         updateColumnSelections();
     }
@@ -255,9 +255,9 @@ public class FloorMapQueryController
 
         return doc.copy()
                 .eventColumns(currentEventColumns)
-                .eventsQuery(queryEditPresenter.getQuery())
-                .eventsQueryTimeRange(queryEditPresenter.getTimeRange())
-                .eventsQueryTablePreferences(queryEditPresenter.write())
+                .eventsQuery(queryEditController.getQuery())
+                .eventsQueryTimeRange(queryEditController.getTimeRange())
+                .eventsQueryTablePreferences(queryEditController.write())
                 .build();
     }
 
@@ -273,15 +273,15 @@ public class FloorMapQueryController
     }
 
     public String getQuery() {
-        return queryEditPresenter.getQuery();
+        return queryEditController.getQuery();
     }
 
     public TimeRange getQueryTimeRange() {
-        return queryEditPresenter.getTimeRange();
+        return queryEditController.getTimeRange();
     }
 
     public QueryTablePreferences getQueryTablePreferences() {
-        return queryEditPresenter.write();
+        return queryEditController.write();
     }
 
     public FloorMapEventColumns getEventColumns() {
@@ -290,7 +290,7 @@ public class FloorMapQueryController
 
     @Override
     public List<Widget> getToolbars() {
-        return queryEditPresenter.getToolbars();
+        return queryEditController.getToolbars();
     }
 
 }

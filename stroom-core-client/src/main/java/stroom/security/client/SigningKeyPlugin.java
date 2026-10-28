@@ -43,9 +43,9 @@ public class SigningKeyPlugin extends MonitoringPlugin<SigningKeysController> {
     public SigningKeyPlugin(final EventBus eventBus,
                             final ContentManager eventManager,
                             final ClientSecurityContext securityContext,
-                            final Provider<SigningKeysController> signingKeyPresenterProvider,
+                            final Provider<SigningKeysController> signingKeyControllerProvider,
                             final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, signingKeyPresenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, signingKeyControllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

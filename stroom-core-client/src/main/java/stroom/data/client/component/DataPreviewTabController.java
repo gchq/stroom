@@ -33,21 +33,21 @@ public class DataPreviewTabController extends ContentTabController {
 
     private final DataPreviewTab view;
 
-    private final DataViewerController dataPresenter;
+    private final DataViewerController dataController;
     private DataPreviewKey dataPreviewKey;
 
     /// Made by GIN, with its screen and its parts.
     @Inject
     public DataPreviewTabController(final EventBus eventBus,
-                                    final DataViewerController dataPresenter,
+                                    final DataViewerController dataController,
                                     final DataPreviewTab view) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(dataPresenter);
-        this.dataPresenter = dataPresenter;
-        this.dataPresenter.setDisplayMode(DisplayMode.STROOM_TAB);
-        view.setContentView(dataPresenter);
+        own(dataController);
+        this.dataController = dataController;
+        this.dataController.setDisplayMode(DisplayMode.STROOM_TAB);
+        view.setContentView(dataController);
     }
 
     @Override
@@ -67,12 +67,12 @@ public class DataPreviewTabController extends ContentTabController {
     /// @param sourceLocation The place.
     public void setSourceLocation(final SourceLocation sourceLocation) {
         dataPreviewKey = new DataPreviewKey(sourceLocation);
-        dataPresenter.fetchData(sourceLocation);
+        dataController.fetchData(sourceLocation);
     }
 
     /// @param initDataViewType How the data is first shown, e.g. as its preview or its source.
     public void setInitDataViewType(final DataViewType initDataViewType) {
-        this.dataPresenter.setInitDataViewType(initDataViewType);
+        this.dataController.setInitDataViewType(initDataViewType);
     }
 
     @Override

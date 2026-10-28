@@ -283,10 +283,10 @@ public final class ProcessorProfilesScreenStories {
         }
         final ScreenHarness harness = builder.build();
         harness.afterStartUp(() -> {
-            final ProcessorProfilesController presenter = injector.getProcessorProfilesController();
-            harness.show(presenter);
+            final ProcessorProfilesController controller = injector.getProcessorProfilesController();
+            harness.show(controller);
             // As the content pane does when it shows a Refreshable tab
-            presenter.refresh();
+            controller.refresh();
         });
         return harness.asWidget();
     }

@@ -167,8 +167,8 @@ public final class SigningKeysScreenStories {
         // Opened as SigningKeyPlugin opens it (refreshed), once Stroom has started (the dates are
         // formatted with the user's preferences)
         harness.afterStartUp(() -> {
-            final SigningKeysController presenter = harness.show(injector.getSigningKeysController());
-            presenter.refresh();
+            final SigningKeysController controller = harness.show(injector.getSigningKeysController());
+            controller.refresh();
         });
         return harness.asWidget();
     }

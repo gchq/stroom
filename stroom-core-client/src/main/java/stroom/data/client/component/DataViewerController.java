@@ -222,7 +222,7 @@ public class DataViewerController
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
         itemNavigator.setDisplay(noNavigatorData);
-        dataView.setOnSourceLink(this::openSourcePresenter);
+        dataView.setOnSourceLink(this::openSourceController);
         dataView.setSourceLinkVisible(true, true);
         dataView.setNavigator(itemNavigator);
         dataView.setProgress(sourceProgressBar);
@@ -257,7 +257,7 @@ public class DataViewerController
                 .build();
     }
 
-    private void openSourcePresenter() {
+    private void openSourceController() {
         // No need to supply a data range as it will just open it with the default range
         // that is bigger than our preview range
 
@@ -299,14 +299,14 @@ public class DataViewerController
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {
                     setActiveTab(infoTab, null);
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
-                    showHtmlPresenter();
+                    showHtmlController();
                     fetchMetaInfoData(getCurrentMetaId());
                     dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
                     dataView.setProgress(null);
                     itemNavigator.refreshNavigator();
                     refreshProgressBar(false);
-                    refreshTextPresenterContent();
+                    refreshTextControllerContent();
                 } else {
 //                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
@@ -643,7 +643,7 @@ public class DataViewerController
                                    + currentRecordNo, "");
         itemNavigator.setDisplay(noNavigatorData);
         dataView.setSourceLinkVisible(false, false);
-        showTextPresenter();
+        showTextController();
     }
 
     private void update(final boolean fireEvents,
@@ -651,7 +651,7 @@ public class DataViewerController
                         final Set<String> availableChildStreamTypes) {
         if (INFO_PSEUDO_STREAM_TYPE.equals(effectiveChildStreamType)) {
             updateAvailableAndSelectedTabs(streamTypeName, availableChildStreamTypes);
-            refreshMetaInfoPresenterContent(currentSourceLocation.getMetaId());
+            refreshMetaInfoControllerContent(currentSourceLocation.getMetaId());
             refreshProgressBar(false);
             // As we are not hitting the rest service we need to clear this out else it will
             // think we are on a strm/part that we are not.
@@ -955,7 +955,7 @@ public class DataViewerController
         }
 
         if (streamType == null) {
-            showHtmlPresenter();
+            showHtmlController();
             itemNavigator.setDisplay(noNavigatorData);
         } else {
             // Select the tab based
@@ -963,25 +963,25 @@ public class DataViewerController
             if (INFO_PSEUDO_STREAM_TYPE.equals(effectiveChildStreamType)) {
                 newActiveTab = infoTab;
                 setActiveTab(newActiveTab, streamType);
-                showHtmlPresenter();
+                showHtmlController();
             } else if (isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
                 newActiveTab = errorTab;
                 effectiveChildStreamType = null;
                 setActiveTab(newActiveTab, streamType);
-                showMarkerPresenter();
+                showMarkerController();
             } else if (StreamTypeNames.META.equals(effectiveChildStreamType)) {
                 newActiveTab = metaTab;
                 setActiveTab(newActiveTab, streamType);
-                showTextPresenter();
+                showTextController();
             } else if (StreamTypeNames.CONTEXT.equals(effectiveChildStreamType)) {
                 newActiveTab = contextTab;
                 setActiveTab(newActiveTab, streamType);
-                showTextPresenter();
+                showTextController();
             } else {
                 newActiveTab = dataTab;
                 effectiveChildStreamType = null;
                 setActiveTab(newActiveTab, streamType);
-                showTextPresenter();
+                showTextController();
             }
             // Now we have changed tabs, ensure the nav visibility is right
             itemNavigator.refreshNavigator();
@@ -999,29 +999,29 @@ public class DataViewerController
         updateEditorDisplay();
     }
 
-    private void showHtmlPresenter() {
+    private void showHtmlController() {
         itemNavigator.setDisplay(noNavigatorData);
         dataView.showLayer(htmlLayer);
     }
 
-    private void showTextPresenter() {
+    private void showTextController() {
         itemNavigator.setDisplay(navigatorData);
         dataView.showLayer(textPaneLayer);
     }
 
-    private void showMarkerPresenter() {
+    private void showMarkerController() {
         itemNavigator.setDisplay(navigatorData);
         dataView.showLayer(markerLayer);
     }
 
-    private void hidePresenters() {
+    private void hideControllers() {
         dataView.clearLayers();
     }
 
     private void refresh(final AbstractFetchDataResult result) {
 
-        refreshTextPresenterContent();
-        refreshMetaInfoPresenterContent(result != null
+        refreshTextControllerContent();
+        refreshMetaInfoControllerContent(result != null
                 ? result.getSourceLocation().getMetaId()
                 : null);
 
@@ -1044,7 +1044,7 @@ public class DataViewerController
         }
     }
 
-    private void refreshTextPresenterContent() {
+    private void refreshTextControllerContent() {
         if (lastResult != null && lastResult.hasErrors()) {
             final String childStreamText = lastResult.getSourceLocation().getOptChildType()
                     .map(childType -> " (" + childType + ")")
@@ -1093,7 +1093,7 @@ public class DataViewerController
         textPane.getOptions().getViewAsHexOption().setAvailable();
     }
 
-    private void refreshMetaInfoPresenterContent(final Long metaId) {
+    private void refreshMetaInfoControllerContent(final Long metaId) {
 
         if (metaId != null && INFO_TAB_NAME.equals(lastTabName)) {
             fetchMetaInfoData(metaId);
@@ -1300,13 +1300,13 @@ public class DataViewerController
 
         dataView.setSourceLinkVisible(false, false);
         setErrorText(title, errorText);
-        showTextPresenter();
+        showTextController();
     }
 
     private void showSimpleError(final String errorText) {
         dataView.setSourceLinkVisible(false, false);
         setErrorText("Unable to display source", errorText);
-        showTextPresenter();
+        showTextController();
     }
 
     public void setInitDataViewType(final DataViewType initDataViewType) {

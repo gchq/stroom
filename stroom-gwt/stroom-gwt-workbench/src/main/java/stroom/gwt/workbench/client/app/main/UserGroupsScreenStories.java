@@ -334,8 +334,8 @@ public final class UserGroupsScreenStories {
         // Opened as UsersAndGroupsPlugin.open opens it (refreshed), once Stroom has started (it
         // reads the UI config)
         harness.afterStartUp(() -> {
-            final UsersAndGroupsTabController presenter = harness.show(injector.getUsersAndGroupsTabController());
-            presenter.refresh();
+            final UsersAndGroupsTabController controller = harness.show(injector.getUsersAndGroupsTabController());
+            controller.refresh();
         });
         return harness.asWidget();
     }

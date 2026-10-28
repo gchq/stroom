@@ -50,7 +50,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                       final ClientSecurityContext securityContext,
                       final Provider<FeedSettingsController> settingsProvider,
                       final Provider<MetaBrowserController> metaBrowserProvider,
-                      final Provider<ProcessorTasksTabController> taskPresenterProvider,
+                      final Provider<ProcessorTasksTabController> taskControllerProvider,
                       final Provider<MarkdownEditController> markdownEditProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
@@ -70,7 +70,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
         }
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS,
-                    taskPresenterProvider::get,
+                    taskControllerProvider::get,
                     (tasks, docRef, doc) -> tasks.read(docRef, doc));
         }
         addTab(SETTINGS,

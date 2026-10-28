@@ -40,18 +40,18 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
         extends Plugin {
 
     // Bi-directional maps to hold the open presenters
-    private final Map<K, T> keyToPresenterMap = new HashMap<>();
-    private final Map<T, K> presenterToKeyMap = new HashMap<>();
+    private final Map<K, T> keyToControllerMap = new HashMap<>();
+    private final Map<T, K> controllerToKeyMap = new HashMap<>();
 
     private final ContentManager contentManager;
-    private final Provider<T> tabPresenterProvider;
+    private final Provider<T> tabControllerProvider;
 
     public AbstractTabPlugin(final EventBus eventBus,
                                       final ContentManager contentManager,
-                                      final Provider<T> tabPresenterProvider) {
+                                      final Provider<T> tabControllerProvider) {
         super(eventBus);
         this.contentManager = contentManager;
-        this.tabPresenterProvider = tabPresenterProvider;
+        this.tabControllerProvider = tabControllerProvider;
     }
 
     /**
@@ -66,32 +66,32 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
      *                             it what content to display.
      * @return The
      */
-    protected Optional<T> openTabPresenter(final boolean forceOpen,
-                                           final K presenterKey,
-                                           final Consumer<T> tabPresenterConsumer) {
+    protected Optional<T> openTabController(final boolean forceOpen,
+                                           final K controllerKey,
+                                           final Consumer<T> tabControllerConsumer) {
 
-        T tabPresenter = null;
-        if (presenterKey == null) {
+        T tabController = null;
+        if (controllerKey == null) {
             AlertEvent.fireError(
                     AbstractTabPlugin.this,
                     "Missing key for " + getName(),
                     null);
         } else {
-            tabPresenter = keyToPresenterMap.get(presenterKey);
+            tabController = keyToControllerMap.get(controllerKey);
             final TaskMonitor taskMonitor = new DefaultTaskMonitorFactory(this).createTaskMonitor();
-            final Task task = new SimpleTask("Opening " + getName() + " (" + presenterKey + ")");
+            final Task task = new SimpleTask("Opening " + getName() + " (" + controllerKey + ")");
 
-            if (tabPresenter != null) {
+            if (tabController != null) {
                 // If we already have a tab item for this key then make sure it is visible.
 
                 // Start spinning.
                 taskMonitor.onStart(task);
 
                 // Let the caller set what it wants on the presenter
-                tabPresenterConsumer.accept(tabPresenter);
+                tabControllerConsumer.accept(tabController);
 
                 // Tell the content presenter to select this existing tab.
-                SelectContentTabEvent.fire(this, tabPresenter);
+                SelectContentTabEvent.fire(this, tabController);
 
                 // Stop spinning.
                 taskMonitor.onEnd(task);
@@ -102,32 +102,32 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
 
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
-                tabPresenter = tabPresenterProvider.get();
+                tabController = tabControllerProvider.get();
 
                 // Let the caller set what it wants on the presenter
-                tabPresenterConsumer.accept(tabPresenter);
+                tabControllerConsumer.accept(tabController);
 
                 // Register the tab as being open.
-                keyToPresenterMap.put(presenterKey, tabPresenter);
-                presenterToKeyMap.put(tabPresenter, presenterKey);
+                keyToControllerMap.put(controllerKey, tabController);
+                controllerToKeyMap.put(tabController, controllerKey);
 
-                final CloseContentEvent.Handler closeHandler = createCloseHandler(tabPresenter);
+                final CloseContentEvent.Handler closeHandler = createCloseHandler(tabController);
 
                 // Load the document and show the tab.
-                showTab(presenterKey, tabPresenter, closeHandler, taskMonitor, task);
+                showTab(controllerKey, tabController, closeHandler, taskMonitor, task);
             }
         }
 
-        return Optional.ofNullable(tabPresenter);
+        return Optional.ofNullable(tabController);
     }
 
-    private void showTab(final K presenterKey,
-                         final T tabPresenter,
+    private void showTab(final K controllerKey,
+                         final T tabController,
                          final CloseContentEvent.Handler closeHandler,
                          final TaskMonitor taskMonitor,
                          final Task task) {
         try {
-            if (presenterKey == null) {
+            if (controllerKey == null) {
                 AlertEvent.fireError(
                         AbstractTabPlugin.this,
                         "Unable to load " + getName() + " (null)",
@@ -136,8 +136,8 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
                 // Open the tab.
                 contentManager.open(
                         closeHandler,
-                        tabPresenter,
-                        tabPresenter);
+                        tabController,
+                        tabController);
             }
         } finally {
             // Stop spinning.
@@ -145,18 +145,18 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
         }
     }
 
-    private void removeTabData(final T tabPresenter) {
-        final K presenterKey = presenterToKeyMap.remove(tabPresenter);
-        keyToPresenterMap.remove(presenterKey);
+    private void removeTabData(final T tabController) {
+        final K controllerKey = controllerToKeyMap.remove(tabController);
+        keyToControllerMap.remove(controllerKey);
     }
 
-    private CloseContentEvent.Handler createCloseHandler(final T tabPresenter) {
+    private CloseContentEvent.Handler createCloseHandler(final T tabController) {
         return event -> {
-            if (tabPresenter != null) {
+            if (tabController != null) {
                 // Tell the presenter we are closing.
 //                    sourceTabPresenter.onClose();
                 // Cleanup reference to this tab data.
-                removeTabData(tabPresenter);
+                removeTabData(tabController);
                 // Tell the callback to close the tab if ok.
                 event.getCallback().closeTab(true);
             }

@@ -163,14 +163,14 @@ public final class DataScreenStories {
         harness.afterStartUp(() -> {
             // As DataDisplaySupport.openStroomTab opens it (DataPreviewTabPlugin/SourceTabPlugin)
             if (DataViewType.PREVIEW.equals(dataViewType)) {
-                final DataPreviewTabController presenter = injector.getDataPreviewTabController();
-                harness.show(presenter);
-                presenter.setInitDataViewType(dataViewType);
-                presenter.setSourceLocation(sourceLocation);
+                final DataPreviewTabController controller = injector.getDataPreviewTabController();
+                harness.show(controller);
+                controller.setInitDataViewType(dataViewType);
+                controller.setSourceLocation(sourceLocation);
             } else {
-                final SourceTabController presenter = injector.getSourceTabController();
-                harness.show(presenter);
-                presenter.setSourceLocationUsingHighlight(sourceLocation);
+                final SourceTabController controller = injector.getSourceTabController();
+                harness.show(controller);
+                controller.setSourceLocationUsingHighlight(sourceLocation);
             }
         });
         return harness.asWidget();

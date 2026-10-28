@@ -115,7 +115,7 @@ public class DashboardBodyController
     private static final String DEFAULT_PARAMS_INPUT = "Params";
 
     private static final Logger logger = Logger.getLogger(DashboardBodyController.class.getName());
-    private final FlexLayout layoutPresenter;
+    private final FlexLayout layoutController;
     private final Components components;
     private final QueryToolbarController queryToolbar;
     private final QueryInfo queryInfo;
@@ -166,7 +166,7 @@ public class DashboardBodyController
         final FlexLayout flexLayout = view.getLayout();
         own(queryToolbar);
         this.queryToolbar = queryToolbar;
-        this.layoutPresenter = flexLayout;
+        this.layoutController = flexLayout;
         this.components = components;
         components.setOwner(this);
         this.queryInfo = queryInfo;
@@ -274,7 +274,7 @@ public class DashboardBodyController
         layoutConstraintControllerProvider.get().edit(this, layoutConstraints, constraints -> {
             if (!Objects.equals(constraints, layoutConstraints)) {
                 layoutConstraints = constraints;
-                layoutPresenter.setLayoutConstraints(layoutConstraints);
+                layoutController.setLayoutConstraints(layoutConstraints);
                 onChange();
             }
         });
@@ -314,7 +314,7 @@ public class DashboardBodyController
         addComponentButton.setVisible(designMode);
         setConstraintsButton.setVisible(designMode);
         selectionInfoButton.setVisible(designMode);
-        layoutPresenter.setDesignMode(designMode);
+        layoutController.setDesignMode(designMode);
         view.setDesignMode(designMode);
 //        components.forEach(component -> component.setDesignMode(designMode));
 
@@ -509,7 +509,7 @@ public class DashboardBodyController
             // tabVisibility.setSelectedItem(dashboardData.getTabVisibility());
             // }
 
-            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
+            layoutController.configure(layoutConfig, layoutConstraints, preferredSize);
 
             // Tell all queryable components whether we want them to query on open.
             for (final DashboardPane component : components) {
@@ -633,7 +633,7 @@ public class DashboardBodyController
                 .builder()
                 .timeRange(queryToolbar.getTimeRange())
                 .components(componentDataList)
-                .layout(MutableConfigUtil.toLayoutConfig(layoutPresenter.getLayoutConfig()))
+                .layout(MutableConfigUtil.toLayoutConfig(layoutController.getLayoutConfig()))
                 .layoutConstraints(layoutConstraints)
                 .preferredSize(MutableConfigUtil.toSize(preferredSize))
                 // Persist the mode the user is working in, so saving in design mode is remembered.
@@ -666,8 +666,8 @@ public class DashboardBodyController
             if (dashDocRef != null) {
                 OpenDocumentEvent.builder(this, dashDocRef)
                         .forceOpen(true)
-                        .callbackOnOpen(presenter -> {
-                            if (presenter instanceof final DocumentEditorHost<?> host
+                        .callbackOnOpen(controller -> {
+                            if (controller instanceof final DocumentEditorHost<?> host
                                 && host.getEditor() instanceof final DashboardEditor dashboardEditor) {
                                 dashboardEditor.getDashboardBody()
                                         .duplicateTab(tabLayoutConfig, tabConfig, components);
@@ -771,7 +771,7 @@ public class DashboardBodyController
             final MutableTabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
             final Element selectedComponent = getFirstComponentElement(firstTabConfig);
             final Rect rect = ElementUtil.getClientRect(selectedComponent);
-            layoutPresenter.enterNewComponentDestinationMode(
+            layoutController.enterNewComponentDestinationMode(
                     null,
                     duplicatedComponents,
                     rect.getLeft() + (rect.getWidth() / 2),
@@ -831,7 +831,7 @@ public class DashboardBodyController
             ConfirmEvent.fire(this, message, ok -> {
                 if (ok) {
                     for (final MutableTabConfig tab : tabs) {
-                        layoutPresenter.closeTab(tab);
+                        layoutController.closeTab(tab);
                         final DashboardPane component = components.get(tab.getId());
                         if (component != null) {
                             if (component instanceof final Queryable queryable) {
@@ -851,17 +851,17 @@ public class DashboardBodyController
     public void maximiseTabs(final MutableTabConfig tabConfig) {
         maximiseTabsButton.setVisible(false);
         restoreTabsButton.setVisible(true);
-        layoutPresenter.maximiseTabs(tabConfig);
+        layoutController.maximiseTabs(tabConfig);
     }
 
     public void restoreTabs() {
         maximiseTabsButton.setVisible(true);
         restoreTabsButton.setVisible(false);
-        layoutPresenter.restoreTabs();
+        layoutController.restoreTabs();
     }
 
     public boolean isMaximised() {
-        return layoutPresenter.isMaximised();
+        return layoutController.isMaximised();
     }
 
 
@@ -941,35 +941,35 @@ public class DashboardBodyController
                     .name(componentId.name)
                     .build();
 
-            final DashboardPane componentPresenter = addComponent(componentConfig.getType(), componentConfig);
-            if (componentPresenter != null) {
-                componentPresenter.link();
+            final DashboardPane componentController = addComponent(componentConfig.getType(), componentConfig);
+            if (componentController != null) {
+                componentController.link();
                 final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
-                componentPresenter.setTabConfig(tabConfig);
+                componentController.setTabConfig(tabConfig);
 
-                final MutableTabConfig firstTabConfig = getFirstTabConfig(layoutPresenter.getLayoutConfig());
+                final MutableTabConfig firstTabConfig = getFirstTabConfig(layoutController.getLayoutConfig());
                 if (firstTabConfig == null) {
                     // Add the panel directly.
                     // Note that as we don't have any panels then size it to fit the visible area.
-                    final MutableSize visibleSize = layoutPresenter.getVisibleSize();
+                    final MutableSize visibleSize = layoutController.getVisibleSize();
                     preferredSize = visibleSize.copy();
 
                     final MutableTabLayoutConfig tabLayoutConfig =
                             new MutableTabLayoutConfig(visibleSize, 0);
                     tabLayoutConfig.add(tabConfig);
 
-                    layoutPresenter.configure(tabLayoutConfig, layoutConstraints, preferredSize);
+                    layoutController.configure(tabLayoutConfig, layoutConstraints, preferredSize);
                     onChange();
 
                     // Show the component settings.
-                    componentPresenter.showSettings();
+                    componentController.showSettings();
 
                 } else {
                     final Element element = getFirstComponentElement(firstTabConfig);
                     final Rect rect = ElementUtil.getClientRect(element);
-                    layoutPresenter.enterNewComponentDestinationMode(
-                            componentPresenter,
-                            Collections.singletonList(componentPresenter),
+                    layoutController.enterNewComponentDestinationMode(
+                            componentController,
+                            Collections.singletonList(componentController),
                             rect.getLeft() + (rect.getWidth() / 2),
                             rect.getTop() + (rect.getHeight() / 2));
                 }

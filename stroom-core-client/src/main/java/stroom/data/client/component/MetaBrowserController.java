@@ -72,7 +72,7 @@ public class MetaBrowserController
     private final ExpressionValidator expressionValidator;
     private final MetaListController metaList;
     private final MetaRelationListController metaRelationList;
-    private final DataViewerController dataPresenter;
+    private final DataViewerController dataController;
     private final Provider<DataUploadController> dataUploadProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ButtonView streamListFilter;
@@ -98,7 +98,7 @@ public class MetaBrowserController
                                  final MetaBrowser view,
                                  final MetaListController metaList,
                                  final MetaRelationListController metaRelationList,
-                                 final DataViewerController dataPresenter,
+                                 final DataViewerController dataController,
                                  final Provider<ExpressionDialogController> filterDialogProvider,
                                  final Provider<DataUploadController> dataUploadProvider,
                                  final ClientSecurityContext securityContext,
@@ -109,12 +109,12 @@ public class MetaBrowserController
         initWidget(view);
         own(metaList);
         own(metaRelationList);
-        own(dataPresenter);
+        own(dataController);
         this.metaList = metaList;
         this.metaRelationList = metaRelationList;
         this.filterDialogProvider = filterDialogProvider;
         this.dataUploadProvider = dataUploadProvider;
-        this.dataPresenter = dataPresenter;
+        this.dataController = dataController;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.expressionValidator = expressionValidator;
@@ -122,9 +122,9 @@ public class MetaBrowserController
 
         view.setStreamList(metaList);
         view.setStreamRelationList(metaRelationList);
-        view.setData(dataPresenter);
+        view.setData(dataController);
 
-        dataPresenter.setBeginSteppingHandler(this);
+        dataController.setBeginSteppingHandler(this);
 
         metaList.getToolbar().setName("Stream actions");
         metaRelationList.getToolbar().setName("Related stream actions");
@@ -278,9 +278,9 @@ public class MetaBrowserController
     private void showData() {
         final Meta meta = getSelected();
         if (meta == null) {
-            dataPresenter.clear();
+            dataController.clear();
         } else {
-            dataPresenter.fetchData(meta);
+            dataController.fetchData(meta);
         }
     }
 
@@ -293,8 +293,8 @@ public class MetaBrowserController
     }
 
     public void refreshData() {
-        if (dataPresenter != null) {
-            dataPresenter.update(false);
+        if (dataController != null) {
+            dataController.update(false);
         }
     }
 

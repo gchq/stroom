@@ -40,10 +40,10 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachesController> {
 
     @Inject
     public CacheMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                 final Provider<CachesController> presenterProvider,
+                                 final Provider<CachesController> controllerProvider,
                                  final ClientSecurityContext securityContext,
                                  final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

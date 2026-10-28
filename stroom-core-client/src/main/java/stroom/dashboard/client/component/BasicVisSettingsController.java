@@ -112,8 +112,8 @@ public class BasicVisSettingsController extends BasicSettingsTabController<Basic
 
     private void updateFieldNames(final DashboardPane component) {
         final Map<String, VisFieldOption> optionsByName = new HashMap<>();
-        if (component instanceof final TableController tablePresenter) {
-            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+        if (component instanceof final TableController tableController) {
+            final List<Column> columns = tableController.getTableComponentSettings().getColumns();
             if (columns != null) {
                 for (final Column column : columns) {
                     optionsByName.putIfAbsent(column.getName(), new VisFieldOption(column.getName(),

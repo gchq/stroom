@@ -121,7 +121,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             editor.setParamsFromLink(params);
             editor.setCustomTitle(title);
             editor.setQueryOnOpen(queryOnOpen);
-            final MultiInstanceEditorHost<DashboardDoc> presenter = createHost(editor);
+            final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
 
             //        // Register the tab as being open.
             //        documentToTabDataMap.put(docRef, tabData);
@@ -130,14 +130,14 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             // Load the document and show the tab.
             final CloseContentEvent.Handler closeHandler = event -> {
                 // Tell the presenter we are closing.
-                presenter.onClose();
+                controller.onClose();
                 // Actually close the tab, which releases the dashboard and all its presenters
                 event.getCallback().closeTab(true);
             };
             showDocument(docRef,
-                    presenter,
+                    controller,
                     closeHandler,
-                    presenter,
+                    controller,
                     new DefaultTaskMonitorFactory(this));
         }
     }
@@ -181,19 +181,19 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // create a new presenter and register it as open.
                 final DashboardEditor editor = dashboardEditorProvider.get();
                 editor.setResultStoreInfo(resultStoreInfo);
-                final MultiInstanceEditorHost<DashboardDoc> presenter = createHost(editor);
+                final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
 
                 // Load the document and show the tab.
                 final CloseContentEvent.Handler closeHandler = event -> {
                     // Tell the presenter we are closing.
-                    presenter.onClose();
+                    controller.onClose();
                     // Actually close the tab, which releases the dashboard and all its presenters
                     event.getCallback().closeTab(true);
                 };
                 showDocument(docRef,
-                        presenter,
+                        controller,
                         closeHandler,
-                        presenter,
+                        controller,
                         new DefaultTaskMonitorFactory(this));
             }
         }

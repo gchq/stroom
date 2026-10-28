@@ -89,7 +89,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                           final Provider<MetaBrowserController> metaBrowserProvider,
                           final Provider<PipelineStructureController> structureProvider,
                           final ProcessorsController processors,
-                          final Provider<ProcessorTasksTabController> taskPresenterProvider,
+                          final Provider<ProcessorTasksTabController> taskControllerProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                           final ClientSecurityContext securityContext,
@@ -127,7 +127,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                         controller.setAllowUpdate(!context(Contexts.READ_ONLY));
                     });
             addTab(TASKS,
-                    taskPresenterProvider::get,
+                    taskControllerProvider::get,
                     (tasks, docRef, doc) -> tasks.read(docRef, doc));
             if (defaultTab == null) {
                 defaultTab = PROCESSORS;

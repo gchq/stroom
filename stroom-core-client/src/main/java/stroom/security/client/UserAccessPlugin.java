@@ -44,9 +44,9 @@ public class UserAccessPlugin extends MonitoringPlugin<UserAccessController> {
     public UserAccessPlugin(final EventBus eventBus,
                             final ContentManager eventManager,
                             final ClientSecurityContext securityContext,
-                            final Provider<UserAccessController> userAccessPresenterProvider,
+                            final Provider<UserAccessController> userAccessControllerProvider,
                             final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, userAccessPresenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, userAccessControllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

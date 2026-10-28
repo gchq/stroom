@@ -289,14 +289,14 @@ public final class DependenciesScreenStories {
             }
         }));
         harness.afterStartUp(() -> {
-            final DependenciesTabController presenter = harness.show(injector.getDependenciesTabController());
+            final DependenciesTabController controller = harness.show(injector.getDependenciesTabController());
             // As DependenciesPlugin does
             harness.addRegistration(harness.getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(),
                     event -> {
                         final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
                                 ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
                                 : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
-                        presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
+                        controller.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
                     }));
         });
         return harness.asWidget();

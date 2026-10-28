@@ -41,10 +41,10 @@ public class ProcessorProfilePlugin extends MonitoringPlugin<ProcessorProfilesCo
     @Inject
     ProcessorProfilePlugin(final EventBus eventBus,
                            final ContentManager contentManager,
-                           final Provider<ProcessorProfilesController> presenterProvider,
+                           final Provider<ProcessorProfilesController> controllerProvider,
                            final ClientSecurityContext securityContext,
                            final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

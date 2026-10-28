@@ -87,7 +87,7 @@ public class UserAndGroupsController extends Controller {
     @Inject
     public UserAndGroupsController(final EventBus eventBus,
                                    final UserAndGroups view,
-                                   final Provider<UserListController> userListPresenterProvider,
+                                   final Provider<UserListController> userListControllerProvider,
                                    final Provider<CreateUserController> createUserProvider,
                                    final UserAndGroupActions actions,
                                    final Provider<UserRefPopupController> userRefPopupProvider,
@@ -96,7 +96,7 @@ public class UserAndGroupsController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.userList = make(userListPresenterProvider);
+        this.userList = make(userListControllerProvider);
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
         this.userList.setHelpText(HtmlBuilder.builder()
@@ -113,12 +113,12 @@ public class UserAndGroupsController extends Controller {
                 onSelection());
         this.userList.setOnCopyPermissions(this::copyPermissionsTo);
 
-        this.parentsList = make(userListPresenterProvider);
+        this.parentsList = make(userListControllerProvider);
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
         this.parentsList.setValidUserScreensForActionMenu(UserScreen.all());
 
-        this.childrenList = make(userListPresenterProvider);
+        this.childrenList = make(userListControllerProvider);
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 

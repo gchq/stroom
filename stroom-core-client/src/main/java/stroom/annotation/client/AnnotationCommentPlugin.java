@@ -34,12 +34,12 @@ public class AnnotationCommentPlugin extends AnnotationPlugin {
     @Inject
     AnnotationCommentPlugin(final EventBus eventBus,
                             final ContentManager contentManager,
-                            final Provider<AnnotationTagsController> presenterProvider,
+                            final Provider<AnnotationTagsController> controllerProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
                             final ClientSecurityContext securityContext) {
         super(eventBus,
                 contentManager,
-                presenterProvider,
+                controllerProvider,
                 documentPluginRegistry,
                 securityContext,
                 "Annotation Comments",

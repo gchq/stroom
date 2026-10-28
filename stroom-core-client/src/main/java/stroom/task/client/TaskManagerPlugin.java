@@ -47,16 +47,16 @@ public class TaskManagerPlugin extends MonitoringPlugin<ServerTasksController> {
     @Inject
     public TaskManagerPlugin(final EventBus eventBus,
                              final ContentManager eventManager,
-                             final Provider<ServerTasksController> presenterProvider,
+                             final Provider<ServerTasksController> controllerProvider,
                              final ClientSecurityContext securityContext,
                              final DocumentPluginRegistry documentPluginRegistry,
                              final AppRoot appRoot,
                              final Provider<UserTaskManagerController> userTaskManagerProvider) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
-            open(taskManagerPresenter -> {
-                taskManagerPresenter.changeNameFilter(
+            open(taskManagerController -> {
+                taskManagerController.changeNameFilter(
                         event.getNodeName(),
                         event.getTaskName(),
                         event.getUserName());

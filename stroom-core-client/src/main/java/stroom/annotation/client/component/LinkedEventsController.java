@@ -54,7 +54,7 @@ public class LinkedEventsController extends Controller {
 
     private final LinkedEvents view;
 
-    private final DataViewerController dataPresenter;
+    private final DataViewerController dataController;
     private final Provider<AddEventLinkController> addEventLinkProvider;
 
     private DocRef annotationRef;
@@ -76,22 +76,22 @@ public class LinkedEventsController extends Controller {
     public LinkedEventsController(final EventBus eventBus,
                                   final LinkedEvents view,
                                   final AnnotationResourceClient annotationResourceClient,
-                                  final DataViewerController dataPresenter,
+                                  final DataViewerController dataController,
                                   final Provider<AddEventLinkController> addEventLinkProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(dataPresenter);
+        own(dataController);
 
         dataGrid = view.getDataGrid();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.annotationResourceClient = annotationResourceClient;
-        this.dataPresenter = dataPresenter;
-        dataPresenter.setNavigationControlsVisible(false);
+        this.dataController = dataController;
+        dataController.setNavigationControlsVisible(false);
         // It is not in its own dialog but is part of this one and this will determine how the
         // source view is opened if the user clicks that
-        dataPresenter.setDisplayMode(DisplayMode.DIALOG);
+        dataController.setDisplayMode(DisplayMode.DIALOG);
 
         this.addEventLinkProvider = addEventLinkProvider;
 
@@ -101,7 +101,7 @@ public class LinkedEventsController extends Controller {
                 case REMOVE -> onRemoveEvent();
             }
         });
-        view.setData(dataPresenter);
+        view.setData(dataController);
 
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.copyTextColumnBuilder(EventId::toString)
@@ -204,9 +204,9 @@ public class LinkedEventsController extends Controller {
                     .withRecordIndex(selected.getEventId() - 1) // EventId obj is one based, segment index is 0 based
                     .build();
 
-            dataPresenter.fetchData(sourceLocation);
+            dataController.fetchData(sourceLocation);
         } else {
-            dataPresenter.clear();
+            dataController.clear();
         }
         enableButtons();
     }

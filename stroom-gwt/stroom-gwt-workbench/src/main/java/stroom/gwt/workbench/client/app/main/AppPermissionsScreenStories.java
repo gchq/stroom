@@ -192,8 +192,8 @@ public final class AppPermissionsScreenStories {
         // Opened as AppPermissionsPlugin opens it (refreshed), once Stroom has started (the list
         // reads the UI config)
         harness.afterStartUp(() -> {
-            final AppPermissionsController presenter = harness.show(injector.getAppPermissionsController());
-            presenter.refresh();
+            final AppPermissionsController controller = harness.show(injector.getAppPermissionsController());
+            controller.refresh();
         });
         return harness.asWidget();
     }

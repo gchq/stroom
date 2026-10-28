@@ -157,14 +157,14 @@ public final class AppPermissionsStories {
                                    final FlowPanel panel,
                                    final String id,
                                    final UserRef userRef) {
-        final UserTabController presenter = injector.getUserTabController();
+        final UserTabController controller = injector.getUserTabController();
         String note = "";
         try {
-            presenter.setUserRef(userRef);
+            controller.setUserRef(userRef);
         } catch (final RuntimeException e) {
             note = "(setUserRef threw)";
         }
-        final Label label = new Label(presenter.getLabel());
+        final Label label = new Label(controller.getLabel());
         label.getElement().setAttribute("data-testid", "caption-" + id);
         panel.add(StoryPanels.row(8, new Label(id + ":"), label, new Label(note)));
     }

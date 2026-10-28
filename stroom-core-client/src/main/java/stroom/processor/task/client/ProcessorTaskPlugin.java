@@ -35,8 +35,8 @@ public class ProcessorTaskPlugin
     @Inject
     public ProcessorTaskPlugin(final EventBus eventBus,
                                final ContentManager contentManager,
-                               final Provider<ProcessorFilterTasksTabController> processorTaskPresenterProvider) {
-        super(eventBus, contentManager, processorTaskPresenterProvider);
+                               final Provider<ProcessorFilterTasksTabController> processorTaskControllerProvider) {
+        super(eventBus, contentManager, processorTaskControllerProvider);
 
         getEventBus().addHandler(OpenProcessorTaskEvent.getType(), event -> {
             open(event.getProcessorFilter(), true);
@@ -45,11 +45,11 @@ public class ProcessorTaskPlugin
 
     public void open(final ProcessorFilter processorFilter, final boolean forceOpen) {
         if (processorFilter != null) {
-            super.openTabPresenter(
+            super.openTabController(
                     forceOpen,
                     processorFilter,
-                    processorTaskPresenter ->
-                            processorTaskPresenter.setProcessorFilter(processorFilter));
+                    processorTaskController ->
+                            processorTaskController.setProcessorFilter(processorFilter));
         }
     }
 

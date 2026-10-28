@@ -147,9 +147,9 @@ public final class DataUploadDialogStories {
         harness.afterStartUp(() -> {
             // The feed's data browser, which the dialog refreshes after an upload. Created after
             // start-up, as it reads the UI config.
-            final MetaBrowserController metaPresenter = harness.own(injector.getMetaBrowser());
+            final MetaBrowserController metaController = harness.own(injector.getMetaBrowser());
             // As MetaBrowserController's 'Upload Data to Feed' button shows it
-            injector.getDataUploadController().show(metaPresenter, feedRef, metaPresenter::refresh);
+            injector.getDataUploadController().show(metaController, feedRef, metaController::refresh);
         });
         return harness.asWidget();
     }

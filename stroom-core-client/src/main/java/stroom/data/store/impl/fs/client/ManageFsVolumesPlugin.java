@@ -41,10 +41,10 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroups
     @Inject
     ManageFsVolumesPlugin(final EventBus eventBus,
                           final ContentManager contentManager,
-                          final Provider<FsVolumeGroupsController> presenterProvider,
+                          final Provider<FsVolumeGroupsController> controllerProvider,
                           final DocumentPluginRegistry documentPluginRegistry,
                           final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry, securityContext);
     }
 
     @Override

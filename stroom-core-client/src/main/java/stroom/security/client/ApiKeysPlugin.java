@@ -45,13 +45,13 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysController> {
     public ApiKeysPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
                          final ClientSecurityContext securityContext,
-                         final Provider<ApiKeysController> apiKeysPresenterAsyncProvider,
+                         final Provider<ApiKeysController> apiKeysControllerAsyncProvider,
                          final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, apiKeysControllerAsyncProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
-            open(apiKeysPresenter ->
-                    apiKeysPresenter.showOwner(event.getUserRef()));
+            open(apiKeysController ->
+                    apiKeysController.showOwner(event.getUserRef()));
         });
     }
 

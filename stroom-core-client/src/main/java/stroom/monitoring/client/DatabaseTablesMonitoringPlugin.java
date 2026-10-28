@@ -40,10 +40,10 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
 
     @Inject
     public DatabaseTablesMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                          final Provider<DatabaseTablesMonitoringController> presenterProvider,
+                                          final Provider<DatabaseTablesMonitoringController> controllerProvider,
                                           final ClientSecurityContext securityContext,
                                           final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

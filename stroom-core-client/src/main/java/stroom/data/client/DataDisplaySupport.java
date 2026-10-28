@@ -30,26 +30,26 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class DataDisplaySupport {
 
-    private final Provider<DataViewerController> dataPresenterProvider;
+    private final Provider<DataViewerController> dataControllerProvider;
     private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
 
-    private final Provider<SourceViewerController> sourcePresenterProvider;
+    private final Provider<SourceViewerController> sourceControllerProvider;
     private final Provider<SourceTabPlugin> sourceTabPluginProvider;
 
     private final AppRoot appRoot;
 
     @Inject
     public DataDisplaySupport(final EventBus eventBus,
-                              final Provider<DataViewerController> dataPresenterProvider,
+                              final Provider<DataViewerController> dataControllerProvider,
                               final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
-                              final Provider<SourceViewerController> sourcePresenterProvider,
+                              final Provider<SourceViewerController> sourceControllerProvider,
                               final Provider<SourceTabPlugin> sourceTabPluginProvider,
                               final AppRoot appRoot) {
         this.appRoot = appRoot;
 
-        this.dataPresenterProvider = dataPresenterProvider;
+        this.dataControllerProvider = dataControllerProvider;
         this.dataPreviewTabPluginProvider = dataPreviewTabPluginProvider;
-        this.sourcePresenterProvider = sourcePresenterProvider;
+        this.sourceControllerProvider = sourceControllerProvider;
         this.sourceTabPluginProvider = sourceTabPluginProvider;
 
         eventBus.addHandler(ShowDataEvent.getType(), showDataEvent -> {
@@ -85,7 +85,7 @@ public class DataDisplaySupport {
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
                 DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
             // One per use, the app's until it is hidden
-            final DataViewerController dataViewer = dataPresenterProvider.get();
+            final DataViewerController dataViewer = dataControllerProvider.get();
             dataViewer.setDisplayMode(showDataEvent.getDisplayMode());
             dataViewer.setInitDataViewType(showDataEvent.getDataViewType());
             dataViewer.fetchData(sourceLocation);
@@ -96,7 +96,7 @@ public class DataDisplaySupport {
                     .onShow(e -> dataViewer.focus())
                     .fire();
         } else {
-            final SourceViewerController sourceViewer = sourcePresenterProvider.get();
+            final SourceViewerController sourceViewer = sourceControllerProvider.get();
             sourceViewer.setSourceLocationUsingHighlight(sourceLocation);
             ControllerDialog.showOnce(appRoot, sourceViewer)
                     .popupType(PopupType.OK_CANCEL_DIALOG)

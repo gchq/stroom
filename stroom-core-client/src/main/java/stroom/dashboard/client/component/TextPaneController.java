@@ -98,7 +98,7 @@ public class TextPaneController extends DashboardComponentController {
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
-    private HasComponentSelection currentTablePresenter;
+    private HasComponentSelection currentTableController;
 
     private CodeEditorController rawEditor;
     private HtmlPane htmlPane;
@@ -330,13 +330,13 @@ public class TextPaneController extends DashboardComponentController {
             if (getTextSettings() != null) {
                 if (getTextSettings().getTableId() == null) {
                     if (component instanceof HasComponentSelection) {
-                        currentTablePresenter = (HasComponentSelection) component;
-                        update(currentTablePresenter);
+                        currentTableController = (HasComponentSelection) component;
+                        update(currentTableController);
                     }
                 } else if (Objects.equals(getTextSettings().getTableId(), component.getId())) {
                     if (component instanceof HasComponentSelection) {
-                        currentTablePresenter = (HasComponentSelection) component;
-                        update(currentTablePresenter);
+                        currentTableController = (HasComponentSelection) component;
+                        update(currentTableController);
                     }
                 }
             }
@@ -703,13 +703,13 @@ public class TextPaneController extends DashboardComponentController {
                 .copy()
                 .tableId(newTableId)
                 .build());
-        update(currentTablePresenter);
+        update(currentTableController);
     }
 
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        update(currentTablePresenter);
+        update(currentTableController);
     }
 
     @Override

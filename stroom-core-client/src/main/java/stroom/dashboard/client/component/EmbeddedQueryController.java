@@ -100,11 +100,11 @@ public class EmbeddedQueryController
     private QueryInfo queryInfo;
     private String query;
 
-    private final Provider<QueryResultTableController> tablePresenterProvider;
-    private final Provider<QueryResultVisController> visPresenterProvider;
+    private final Provider<QueryResultTableController> tableControllerProvider;
+    private final Provider<QueryResultVisController> visControllerProvider;
 
-    private QueryResultTableController currentTablePresenter;
-    private QueryResultVisController currentVisPresenter;
+    private QueryResultTableController currentTableController;
+    private QueryResultVisController currentVisController;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
     private List<ErrorMessage> currentErrors;
@@ -118,21 +118,21 @@ public class EmbeddedQueryController
     @Inject
     public EmbeddedQueryController(final EventBus eventBus,
                                    final EmbeddedQuery view,
-                                   final Provider<EmbeddedQuerySettingsController> settingsPresenterProvider,
-                                   final Provider<QueryResultTableController> tablePresenterProvider,
-                                   final Provider<QueryResultVisController> visPresenterProvider,
+                                   final Provider<EmbeddedQuerySettingsController> settingsControllerProvider,
+                                   final Provider<QueryResultTableController> tableControllerProvider,
+                                   final Provider<QueryResultVisController> visControllerProvider,
                                    final Provider<QueryDocEditor> queryDocEditorProvider,
                                    final QueryClient queryClient,
                                    final RestFactory restFactory,
                                    final DateTimeSettingsFactory dateTimeSettingsFactory,
                                    final ResultStoreModel resultStoreModel,
                                    final ContentManager contentManager) {
-        super(eventBus, settingsPresenterProvider);
+        super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
         this.queryClient = queryClient;
-        this.tablePresenterProvider = tablePresenterProvider;
-        this.visPresenterProvider = visPresenterProvider;
+        this.tableControllerProvider = tableControllerProvider;
+        this.visControllerProvider = visControllerProvider;
         this.queryDocEditorProvider = queryDocEditorProvider;
         this.contentManager = contentManager;
 
@@ -142,12 +142,12 @@ public class EmbeddedQueryController
 
             @Override
             public OffsetRange getRequestedRange() {
-                return NullSafe.get(currentTablePresenter, QueryResultTableController::getRequestedRange);
+                return NullSafe.get(currentTableController, QueryResultTableController::getRequestedRange);
             }
 
             @Override
             public GroupSelection getGroupSelection() {
-                return NullSafe.get(currentTablePresenter, QueryResultTableController::getGroupSelection);
+                return NullSafe.get(currentTableController, QueryResultTableController::getGroupSelection);
             }
 
             @Override
@@ -164,8 +164,8 @@ public class EmbeddedQueryController
             @Override
             public void endSearch() {
                 start = false;
-                if (currentTablePresenter != null) {
-                    currentTablePresenter.endSearch();
+                if (currentTableController != null) {
+                    currentTableController.endSearch();
                 }
                 if (!hasData) {
                     destroyCurrentTable();
@@ -180,8 +180,8 @@ public class EmbeddedQueryController
                     if (start) {
                         createNewTable();
                         updateVisibleResult();
-                        currentTablePresenter.setQueryModel(queryModel);
-                        currentTablePresenter.startSearch();
+                        currentTableController.setQueryModel(queryModel);
+                        currentTableController.startSearch();
                         start = false;
                     }
 
@@ -199,7 +199,7 @@ public class EmbeddedQueryController
                     }
 
                     // Give the new data to the table.
-                    currentTablePresenter.setData(componentResult);
+                    currentTableController.setData(componentResult);
                 }
 //                else {
 //                    if (start) {
@@ -215,8 +215,8 @@ public class EmbeddedQueryController
 
             @Override
             public void setQueryModel(final QueryModel queryModel) {
-                if (currentTablePresenter != null) {
-                    currentTablePresenter.setQueryModel(queryModel);
+                if (currentTableController != null) {
+                    currentTableController.setQueryModel(queryModel);
                 }
             }
         };
@@ -227,19 +227,19 @@ public class EmbeddedQueryController
 
             @Override
             public OffsetRange getRequestedRange() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisController::getRequestedRange);
+                return NullSafe.get(currentVisController, QueryResultVisController::getRequestedRange);
             }
 
             @Override
             public GroupSelection getGroupSelection() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisController::getGroupSelection);
+                return NullSafe.get(currentVisController, QueryResultVisController::getGroupSelection);
             }
 
             @Override
             public void reset() {
                 hasData = false;
-                if (currentVisPresenter != null) {
-                    currentVisPresenter.reset();
+                if (currentVisController != null) {
+                    currentVisController.reset();
                 }
             }
 
@@ -252,8 +252,8 @@ public class EmbeddedQueryController
             @Override
             public void endSearch() {
                 start = false;
-                if (currentVisPresenter != null) {
-                    currentVisPresenter.endSearch();
+                if (currentVisController != null) {
+                    currentVisController.endSearch();
                 }
                 if (!hasData) {
                     destroyCurrentVis();
@@ -269,8 +269,8 @@ public class EmbeddedQueryController
                     if (start) {
                         createNewVis();
                         updateVisibleResult();
-                        currentVisPresenter.setQueryModel(queryModel);
-                        currentVisPresenter.startSearch();
+                        currentVisController.setQueryModel(queryModel);
+                        currentVisController.startSearch();
                         start = false;
                     }
 
@@ -278,7 +278,7 @@ public class EmbeddedQueryController
                         hasData = true;
                     }
 
-                    currentVisPresenter.setData(componentResult);
+                    currentVisController.setData(componentResult);
                 }
 //                else {
 //                    if (start) {
@@ -294,8 +294,8 @@ public class EmbeddedQueryController
 
             @Override
             public void setQueryModel(final QueryModel queryModel) {
-                if (currentVisPresenter != null) {
-                    currentVisPresenter.setQueryModel(queryModel);
+                if (currentVisController != null) {
+                    currentVisController.setQueryModel(queryModel);
                 }
             }
         };
@@ -323,12 +323,12 @@ public class EmbeddedQueryController
 
     /// @return Whether the pane shows its query's visualisation, rather than its table.
     public boolean isShowingVis() {
-        return getQuerySettings().getShowTable() != Boolean.TRUE && currentVisPresenter != null;
+        return getQuerySettings().getShowTable() != Boolean.TRUE && currentVisController != null;
     }
 
     /// @return Whether the pane's query has a visualisation to show.
     public boolean canShowVis() {
-        return currentVisPresenter != null;
+        return currentVisController != null;
     }
 
     /// Shows the query's table, or its visualisation if it has one.
@@ -411,12 +411,12 @@ public class EmbeddedQueryController
                     run(true, true, selectionQuery);
                 }
 
-                if (currentTablePresenter != null) {
-                    currentTablePresenter.setDashboardContext(dashboardContext);
+                if (currentTableController != null) {
+                    currentTableController.setDashboardContext(dashboardContext);
                     final ExpressionOperator selectionFilter = resolveSelectionFilter();
-                    if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
-                        currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
-                        currentTablePresenter.onColumnFilterChange();
+                    if (!Objects.equals(currentTableController.getCurrentSelectionFilter(), selectionFilter)) {
+                        currentTableController.setCurrentSelectionFilter(selectionFilter);
+                        currentTableController.onColumnFilterChange();
                     }
                 }
             }
@@ -453,8 +453,8 @@ public class EmbeddedQueryController
     // The table's selection filter, or, before the table exists (e.g. for the first search), the
     // one the dashboard's context gives
     private ExpressionOperator getCurrentSelectionFilter() {
-        return currentTablePresenter != null
-                ? currentTablePresenter.getCurrentSelectionFilter()
+        return currentTableController != null
+                ? currentTableController.getCurrentSelectionFilter()
                 : resolveSelectionFilter();
     }
 
@@ -469,11 +469,11 @@ public class EmbeddedQueryController
     }
 
     private void updateVisibleResult() {
-        if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
-            view.setResult(currentVisPresenter);
-            currentVisPresenter.refresh();
-        } else if (currentTablePresenter != null) {
-            view.setResult(currentTablePresenter);
+        if (currentVisController != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
+            view.setResult(currentVisController);
+            currentVisController.refresh();
+        } else if (currentTableController != null) {
+            view.setResult(currentTableController);
         } else {
             // A released table isn't left on show
             view.setResult(null);
@@ -481,28 +481,28 @@ public class EmbeddedQueryController
     }
 
     private void createNewTable() {
-        if (currentTablePresenter == null) {
-            currentTablePresenter = make(tablePresenterProvider);
-            currentTablePresenter.setDashboardContext(getDashboardContext());
+        if (currentTableController == null) {
+            currentTableController = make(tableControllerProvider);
+            currentTableController.setDashboardContext(getDashboardContext());
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes
-            currentTablePresenter.setCurrentSelectionFilter(resolveSelectionFilter());
-            currentTablePresenter.setQueryTablePreferencesSupplier(this::getQueryTablePreferences);
-            currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
+            currentTableController.setCurrentSelectionFilter(resolveSelectionFilter());
+            currentTableController.setQueryTablePreferencesSupplier(this::getQueryTablePreferences);
+            currentTableController.setQueryTablePreferencesConsumer(queryTablePreferences ->
                     setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
-            currentTablePresenter.setQueryModel(queryModel);
-            currentTablePresenter.updateQueryTablePreferences();
-            currentTablePresenter.setOnChange(this::onChange);
-            tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
+            currentTableController.setQueryModel(queryModel);
+            currentTableController.updateQueryTablePreferences();
+            currentTableController.setOnChange(this::onChange);
+            tableHandlerRegistrations.add(currentTableController.getSelectionModel()
                     .addSelectionHandler(event ->
                             getDashboardContext().fireComponentChangeEvent(this)));
 
-            if (currentVisPresenter != null) {
-                currentTablePresenter.setQueryResultVis(currentVisPresenter);
+            if (currentVisController != null) {
+                currentTableController.setQueryResultVis(currentVisController);
             }
 
             // Chain update events.
-            tableHandlerRegistrations.add(currentTablePresenter.addUpdateListener(
+            tableHandlerRegistrations.add(currentTableController.addUpdateListener(
                     this::fireColumnAndDataUpdate));
         }
     }
@@ -511,35 +511,35 @@ public class EmbeddedQueryController
         tableHandlerRegistrations.forEach(HandlerRegistration::removeHandler);
         tableHandlerRegistrations.clear();
 
-        if (currentTablePresenter != null) {
-            release(currentTablePresenter);
-            currentTablePresenter = null;
+        if (currentTableController != null) {
+            release(currentTableController);
+            currentTableController = null;
         }
     }
 
     private void createNewVis() {
-        if (currentVisPresenter == null) {
+        if (currentVisController == null) {
             final VisSelectionModel visSelectionModel = new VisSelectionModel();
             visSelectionModel.addSelectionHandler(event ->
                     getDashboardContext().fireComponentChangeEvent(EmbeddedQueryController.this));
 
-            currentVisPresenter = make(visPresenterProvider);
-            currentVisPresenter.setQueryModel(queryModel);
-            currentVisPresenter.setVisSelectionModel(visSelectionModel);
+            currentVisController = make(visControllerProvider);
+            currentVisController.setQueryModel(queryModel);
+            currentVisController.setVisSelectionModel(visSelectionModel);
 
-            if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVis(currentVisPresenter);
+            if (currentTableController != null) {
+                currentTableController.setQueryResultVis(currentVisController);
             }
         }
     }
 
     private void destroyCurrentVis() {
-        if (currentVisPresenter != null) {
-            currentVisPresenter.onRemove();
-            release(currentVisPresenter);
-            currentVisPresenter = null;
-            if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVis(null);
+        if (currentVisController != null) {
+            currentVisController.onRemove();
+            release(currentVisController);
+            currentVisController = null;
+            if (currentTableController != null) {
+                currentTableController.setQueryResultVis(null);
             } else if (getQuerySettings().getShowTable() != Boolean.TRUE) {
                 // The removed vis is being shown and there is no table to show instead, so clear it
                 // rather than leave a vis that will never finish loading
@@ -576,8 +576,8 @@ public class EmbeddedQueryController
             currentErrors = null;
 
             // Clear the table selection and any markers.
-            if (currentTablePresenter != null) {
-                currentTablePresenter.reset();
+            if (currentTableController != null) {
+                currentTableController.reset();
             }
 
             // Destroy any previous query.
@@ -674,8 +674,8 @@ public class EmbeddedQueryController
     @Override
     public void setSettings(final ComponentSettings componentSettings) {
         super.setSettings(componentSettings);
-        if (currentTablePresenter != null) {
-            currentTablePresenter.refresh();
+        if (currentTableController != null) {
+            currentTableController.refresh();
         }
     }
 
@@ -798,39 +798,39 @@ public class EmbeddedQueryController
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        if (currentTablePresenter != null) {
-            currentTablePresenter.changeSettings();
-            currentTablePresenter.refresh();
+        if (currentTableController != null) {
+            currentTableController.changeSettings();
+            currentTableController.refresh();
         }
         loadEmbeddedQuery();
     }
 
     @Override
     public List<ColumnRef> getColumnRefs() {
-        if (currentVisPresenter != null) {
-            return currentVisPresenter.getColumnRefs();
-        } else if (currentTablePresenter != null) {
-            return currentTablePresenter.getColumnRefs();
+        if (currentVisController != null) {
+            return currentVisController.getColumnRefs();
+        } else if (currentTableController != null) {
+            return currentTableController.getColumnRefs();
         }
         return Collections.emptyList();
     }
 
     @Override
     public List<ComponentSelection> getSelection() {
-        if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
-            return currentVisPresenter.getSelection();
-        } else if (currentTablePresenter != null) {
-            return currentTablePresenter.getSelection();
+        if (currentVisController != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
+            return currentVisController.getSelection();
+        } else if (currentTableController != null) {
+            return currentTableController.getSelection();
         }
         return Collections.emptyList();
     }
 
     @Override
     public Set<String> getHighlights() {
-        if (currentVisPresenter != null) {
-            return currentVisPresenter.getHighlights();
-        } else if (currentTablePresenter != null) {
-            return currentTablePresenter.getHighlights();
+        if (currentVisController != null) {
+            return currentVisController.getHighlights();
+        } else if (currentTableController != null) {
+            return currentTableController.getHighlights();
         }
         return Collections.emptySet();
     }
@@ -840,40 +840,40 @@ public class EmbeddedQueryController
         return TAB_TYPE;
     }
 
-    public QueryResultTableController getCurrentTablePresenter() {
-        return currentTablePresenter;
+    public QueryResultTableController getCurrentTableController() {
+        return currentTableController;
     }
 
     @Override
     public void onContentTabVisible(final boolean visible) {
-        if (currentTablePresenter != null) {
-            currentTablePresenter.onContentTabVisible(visible);
+        if (currentTableController != null) {
+            currentTableController.onContentTabVisible(visible);
         }
     }
 
     @Override
     public List<Column> getColumns() {
         return NullSafe.getOrElse(
-                currentTablePresenter,
+                currentTableController,
                 QueryResultTableController::getColumns,
                 Collections.emptyList());
     }
 
     @Override
     public Element getFilterButton(final Column column) {
-        if (currentTablePresenter == null) {
+        if (currentTableController == null) {
             return null;
         }
-        return currentTablePresenter.getFilterButton(column);
+        return currentTableController.getFilterButton(column);
     }
 
     @Override
     public ColumnValuesDataSupplier getDataSupplier(final Column column,
                                                     final List<ConditionalFormattingRule> conditionalFormattingRules) {
-        if (currentTablePresenter == null) {
+        if (currentTableController == null) {
             return null;
         }
-        return currentTablePresenter.getDataSupplier(column, conditionalFormattingRules);
+        return currentTableController.getDataSupplier(column, conditionalFormattingRules);
     }
 
     private void fireColumnAndDataUpdate() {
@@ -887,10 +887,10 @@ public class EmbeddedQueryController
 
     @Override
     public FilterCellManager getFilterCellManager() {
-        if (currentTablePresenter == null) {
+        if (currentTableController == null) {
             return null;
         }
-        return currentTablePresenter.getFilterCellManager();
+        return currentTableController.getFilterCellManager();
     }
 
 }

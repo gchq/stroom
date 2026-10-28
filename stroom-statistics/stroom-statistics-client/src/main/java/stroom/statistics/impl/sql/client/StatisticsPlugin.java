@@ -90,24 +90,24 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     @Override
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditorHost<?>) {
-            final DocumentEditorHost<StatisticStoreDoc> presenter =
+            final DocumentEditorHost<StatisticStoreDoc> controller =
                     (DocumentEditorHost<StatisticStoreDoc>) tabData;
-            if (presenter.isDirty()) {
-                final StatisticStoreDoc entity = presenter.getEntity();
+            if (controller.isDirty()) {
+                final StatisticStoreDoc entity = controller.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
                 load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, presenter),
+                        entityFromDb -> doConfirmSave(controller, entity, entityFromDb, controller),
                         throwable -> {
                         },
-                        presenter);
+                        controller);
             }
         }
     }
 
-    private void doConfirmSave(final DocumentEditorHost<StatisticStoreDoc> presenter,
+    private void doConfirmSave(final DocumentEditorHost<StatisticStoreDoc> controller,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -122,7 +122,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         final List<StatisticField> prevFieldList = dbConfig.getFields();
         final Set<CustomRollUpMask> prevMaskSet = dbConfig.getCustomRollUpMasks();
 
-        final StatisticStoreDoc writtenEntity = presenter.write(entity);
+        final StatisticStoreDoc writtenEntity = controller.write(entity);
         final StatisticsDataSourceData writtenConfig = NullSafe.getOrElse(
                 writtenEntity,
                 StatisticStoreDoc::getConfig,
@@ -148,22 +148,22 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                                                     "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, writtenEntity, taskMonitorFactory);
+                            doSave(controller, writtenEntity, taskMonitorFactory);
                         } else {
                             // Re-enable popup buttons.
                         }
                     });
         } else {
             // user has changed some attributes we don't care about so just do the save
-            doSave(presenter, writtenEntity, taskMonitorFactory);
+            doSave(controller, writtenEntity, taskMonitorFactory);
         }
     }
 
-    private void doSave(final DocumentEditorHost<StatisticStoreDoc> presenter,
+    private void doSave(final DocumentEditorHost<StatisticStoreDoc> controller,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
-                        presenter.read(DocRefUtil.create(doc), doc),
+                        controller.read(DocRefUtil.create(doc), doc),
                 throwable -> {
                 },
                 taskMonitorFactory);

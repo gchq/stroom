@@ -53,8 +53,8 @@ public class KeyValueInputController extends DashboardComponentController implem
     @Inject
     public KeyValueInputController(final EventBus eventBus,
                                    final KeyValueInput view,
-                                   final Provider<KeyValueInputSettingsController> settingsPresenterProvider) {
-        super(eventBus, settingsPresenterProvider);
+                                   final Provider<KeyValueInputSettingsController> settingsControllerProvider) {
+        super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
         view.setOnChange(this::onValueChanged);

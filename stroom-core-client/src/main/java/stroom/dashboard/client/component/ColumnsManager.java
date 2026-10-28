@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 public class ColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
     private final EventBus eventBus;
-    private final TableController tablePresenter;
+    private final TableController tableController;
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
@@ -76,14 +76,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
 
     public ColumnsManager(final EventBus eventBus,
-                          final TableController tablePresenter,
+                          final TableController tableController,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
                           final ColumnFilterDialogController columnFilterDialog,
                           final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
-        this.tablePresenter = tablePresenter;
+        this.tableController = tableController;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
@@ -200,7 +200,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                                   final Element button) {
         currentFilterColIndex = colIndex;
         columnValuesFilter.setNameFilter(currentQuickFilters.get(column.getId()));
-        final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
+        final ColumnValuesDataSupplier dataSupplier = tableController.getDataSupplier(column, null);
         columnValuesFilter.show(
                 () -> button,
                 th,
@@ -226,7 +226,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Column column = getColumn(fromIndex);
         if (column != null) {
-            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+            final List<Column> columns = tableController.getTableComponentSettings().getColumns();
             columns.remove(column);
 
             final int destIndex = toIndex - columnsStartIndex;
@@ -238,7 +238,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 columns.add(destIndex, column);
             }
 
-            tablePresenter.onChange();
+            tableController.onChange();
         }
     }
 
@@ -247,12 +247,12 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         final Column column = getColumn(colIndex);
         if (column != null) {
             replaceColumn(column, column.copy().width(size).build());
-            tablePresenter.onChange();
+            tableController.onChange();
         }
     }
 
     private void changeSort(final Column column, final SortDirection direction) {
-        final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+        final List<Column> columns = tableController.getTableComponentSettings().getColumns();
         boolean change = false;
 
         if (direction == null) {
@@ -286,9 +286,9 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         }
 
         if (change) {
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.refresh();
         }
     }
 
@@ -316,34 +316,34 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     public void showRename(final Column column) {
-        renameColumnControllerProvider.get().rename(tablePresenter,
+        renameColumnControllerProvider.get().rename(tableController,
                 column,
-                tablePresenter::handleFieldRename,
-                name -> tablePresenter.getTableComponentSettings()
+                tableController::handleFieldRename,
+                name -> tableController.getTableComponentSettings()
                         .getColumns()
                         .stream()
                         .map(Column::getName)
                         .anyMatch(columnName -> Objects.equals(columnName, name)),
                 (oldField, newField) -> {
                     replaceColumn(oldField, newField);
-                    tablePresenter.onChange();
-                    tablePresenter.updateColumns();
+                    tableController.onChange();
+                    tableController.updateColumns();
                 });
     }
 
     public void showExpression(final Column column) {
-        expressionProvider.get().show(tablePresenter, column, (oldField, newField) -> {
+        expressionProvider.get().show(tableController, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
-            tablePresenter.onChange();
-            tablePresenter.refresh();
+            tableController.onChange();
+            tableController.refresh();
         });
     }
 
     public void showFormat(final Column column) {
-        columnFormatProvider.get().show(tablePresenter, column, (oldField, newField) -> {
+        columnFormatProvider.get().show(tableController, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
-            tablePresenter.onChange();
-            tablePresenter.refresh();
+            tableController.onChange();
+            tableController.refresh();
         });
     }
 
@@ -367,14 +367,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
-                if (!tablePresenter.getTableComponentSettings().showValueFilters()) {
-                    tablePresenter.toggleShowValueFilters();
+                if (!tableController.getTableComponentSettings().showValueFilters()) {
+                    tableController.toggleShowValueFilters();
                 }
             }
 
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.onColumnFilterChange();
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.onColumnFilterChange();
         });
     }
 
@@ -393,9 +393,9 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.add(index, newColumn);
         updateColumns(columns);
 
-        tablePresenter.onChange();
-        tablePresenter.updateColumns();
-        tablePresenter.refresh();
+        tableController.onChange();
+        tableController.updateColumns();
+        tableController.refresh();
     }
 
     private void duplicateColumn(final Column column) {
@@ -409,8 +409,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.remove(column);
         columns.add(0, column);
         updateColumns(columns);
-        tablePresenter.onChange();
-        tablePresenter.updateColumns();
+        tableController.onChange();
+        tableController.updateColumns();
     }
 
     private void moveLast(final Column column) {
@@ -418,8 +418,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.remove(column);
         columns.add(column);
         updateColumns(columns);
-        tablePresenter.onChange();
-        tablePresenter.updateColumns();
+        tableController.onChange();
+        tableController.updateColumns();
     }
 
     private String makeUniqueColumnName(final String columnName) {
@@ -434,19 +434,19 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     public String createRandomColumnId(final Set<String> usedColumnIds) {
-        final String componentId = tablePresenter.getComponentConfig().getId();
+        final String componentId = tableController.getComponentConfig().getId();
         return UniqueUtil.createUniqueColumnId(componentId, usedColumnIds);
     }
 
     private void deleteColumn(final Column column) {
         if (getVisibleColumnCount() <= 1) {
-            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
+            AlertEvent.fireError(tableController, "You cannot remove or hide all columns", null);
         } else {
             replaceColumn(column, null);
 
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.refresh();
         }
     }
 
@@ -473,10 +473,10 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
             column.setColumnFilter(columnFilter);
 
             replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-            tablePresenter.setFocused(false);
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.onColumnFilterChange();
+            tableController.setFocused(false);
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.onColumnFilterChange();
         }
     }
 
@@ -488,23 +488,23 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
             column.setColumnValueSelection(columnValueSelection);
 
             replaceColumn(column, column.copy().columnValueSelection(columnValueSelection).build());
-            tablePresenter.setFocused(false);
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.onColumnFilterChange();
+            tableController.setFocused(false);
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.onColumnFilterChange();
         }
     }
 
     public List<Column> getColumns() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
-            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
+        if (tableController.getSettings() != null && tableController.getTableComponentSettings().getColumns() != null) {
+            return new ArrayList<>(tableController.getTableComponentSettings().getColumns());
         }
         return new ArrayList<>();
     }
 
     private void updateColumns(final List<Column> columns) {
-        tablePresenter.setSettings(
-                tablePresenter.getTableComponentSettings()
+        tableController.setSettings(
+                tableController.getTableComponentSettings()
                         .copy()
                         .columns(columns)
                         .build());
@@ -512,17 +512,17 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private void showColumn(final Column column) {
         replaceColumn(column, column.copy().visible(true).build());
-        tablePresenter.onChange();
-        tablePresenter.updateColumns();
+        tableController.onChange();
+        tableController.updateColumns();
     }
 
     private void hideColumn(final Column column) {
         if (getVisibleColumnCount() <= 1) {
-            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
+            AlertEvent.fireError(tableController, "You cannot remove or hide all columns", null);
         } else {
             replaceColumn(column, column.copy().visible(false).build());
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
+            tableController.onChange();
+            tableController.updateColumns();
         }
     }
 
@@ -706,9 +706,9 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         if (!Objects.equals(column.getGroup(), group)) {
             replaceColumn(column, column.copy().group(group).build());
             fixGroups(getColumns());
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tableController.onChange();
+            tableController.updateColumns();
+            tableController.refresh();
         }
     }
 

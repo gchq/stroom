@@ -922,15 +922,15 @@ public final class ExpressionBuilderStories {
                                  final RestHandler decorate) {
         final ScreenHarness harness = harness(context, decorate);
         final ExpressionTreeController tree = treeController(harness);
-        final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
+        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(),
                 new ExpressionEditor(),
                 tree);
-        harness.own(presenter);
-        presenter.init(DATA_SOURCE, fieldModel(harness, dynamicFields));
-        presenter.read(expression);
+        harness.own(controller);
+        controller.init(DATA_SOURCE, fieldModel(harness, dynamicFields));
+        controller.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
-        presenter.setOnChange(() -> onChange.call(presenter.write().toString()));
-        harness.add(frame(presenter.asWidget()));
+        controller.setOnChange(() -> onChange.call(controller.write().toString()));
+        harness.add(frame(controller.asWidget()));
         return harness.asWidget();
     }
 
@@ -955,14 +955,14 @@ public final class ExpressionBuilderStories {
     /// @return The editor's widget.
     public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
         final ExpressionTreeController tree = treeController(harness);
-        final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
+        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(),
                 new ExpressionEditor(),
                 tree);
-        harness.own(presenter);
-        presenter.init(DATA_SOURCE, fieldModel(harness, false));
-        presenter.setReadOnly(readOnly);
-        presenter.read(populatedExpression());
-        return presenter.asWidget();
+        harness.own(controller);
+        controller.init(DATA_SOURCE, fieldModel(harness, false));
+        controller.setReadOnly(readOnly);
+        controller.read(populatedExpression());
+        return controller.asWidget();
     }
 
     private static ExpressionTreeController treeController(final ScreenHarness harness) {

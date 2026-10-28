@@ -305,10 +305,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
     public void save(final DocumentTabData tabData, final Runnable onComplete) {
         if (tabData instanceof DocumentEditorHost<?>) {
-            final DocumentEditorHost<D> presenter = (DocumentEditorHost<D>) tabData;
-            if (presenter.isDirty()) {
-                D document = presenter.getEntity();
-                document = presenter.write(document);
+            final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
+            if (controller.isDirty()) {
+                D document = controller.getEntity();
+                document = controller.write(document);
                 if (document != null) {
                     final String validationError = getPreSaveError(document);
                     if (validationError != null) {
@@ -317,9 +317,9 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     }
                     final D finalDocument = document;
                     save(getDocRef(document), document,
-                            presenter.getPostSaveCallback(),
+                            controller.getPostSaveCallback(),
                             doc -> {
-                                presenter.read(getDocRef(doc), doc);
+                                controller.read(getDocRef(doc), doc);
                                 onComplete.run();
                             },
                             throwable -> {
@@ -330,7 +330,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                         throwable.getMessage(), null);
                                 onComplete.run();
                             },
-                            presenter);
+                            controller);
                     return;
                 }
             }
@@ -355,14 +355,14 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                        final ExplorerNode explorerNode) {
         final DocRef docRef = explorerNode.getDocRef();
         if (tabData instanceof DocumentEditorHost<?>) {
-            final DocumentEditorHost<D> presenter = (DocumentEditorHost<D>) tabData;
+            final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
 
             final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
                 final DocRef newDocRef = newNode.getDocRef();
                 final Consumer<D> saveConsumer = saved -> {
                     // Read the new document into this presenter.
-                    presenter.setReadOnly(false);
-                    presenter.read(newDocRef, saved);
+                    controller.setReadOnly(false);
+                    controller.read(newDocRef, saved);
                     // Record that the open document has been switched.
                     documentTabManager.remove(docRef, tabData);
                     documentTabManager.put(newDocRef, tabData);
@@ -370,19 +370,19 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
                 final Consumer<D> loadConsumer = document -> {
                     // Write to the newly created document.
-                    document = presenter.write(document);
+                    document = controller.write(document);
                     // Save the new document and read it back into the presenter.
                     save(newDocRef,
                             document,
-                            presenter.getPostSaveAsCallback(),
+                            controller.getPostSaveAsCallback(),
                             saveConsumer,
                             null,
-                            presenter);
+                            controller);
                 };
 
                 // If the user has created a new document then load it.
                 load(newDocRef, loadConsumer, throwable -> {
-                }, presenter);
+                }, controller);
             };
 
             // Ask the user to create a new document.
@@ -407,8 +407,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     @Override
     public boolean isDirty() {
         for (final DocumentTabData tabData : documentTabManager.getAll()) {
-            if (tabData instanceof final DocumentEditorHost<?> presenter) {
-                if (presenter.isDirty()) {
+            if (tabData instanceof final DocumentEditorHost<?> controller) {
+                if (controller.isDirty()) {
                     return true;
                 }
             }
@@ -419,8 +419,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     public boolean isDirty(final DocRef docRef) {
         final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
         for (final DocumentTabData tabData : tabDataList) {
-            if (tabData instanceof final DocumentEditorHost<?> presenter) {
-                if (presenter.isDirty()) {
+            if (tabData instanceof final DocumentEditorHost<?> controller) {
+                if (controller.isDirty()) {
                     return true;
                 }
             }
@@ -438,17 +438,17 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         // If we have an document edit presenter then reload the document.
         for (final DocumentTabData tabData : tabDataList) {
             if (tabData instanceof DocumentEditorHost<?>) {
-                final DocumentEditorHost<D> presenter = (DocumentEditorHost<D>) tabData;
+                final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
 
                 // Reload the document.
                 load(docRef,
                         doc -> {
                             // Read the reloaded document.
-                            presenter.read(getDocRef(doc), doc);
+                            controller.read(getDocRef(doc), doc);
                         },
                         throwable -> {
                         },
-                        presenter);
+                        controller);
             }
         }
     }
@@ -552,23 +552,23 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         public void onCloseRequest(final CloseContentEvent event) {
             if (tabData != null) {
                 if (tabData instanceof DocumentEditorHost<?>) {
-                    final DocumentEditorHost<D> presenter = (DocumentEditorHost<D>) tabData;
+                    final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
                     final DirtyMode dirtyMode = event.getDirtyMode();
-                    if (presenter.isDirty() && DirtyMode.FORCE != dirtyMode) {
+                    if (controller.isDirty() && DirtyMode.FORCE != dirtyMode) {
                         if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
-                            final DocRef docRef = getDocRef(presenter.getEntity());
+                            final DocRef docRef = getDocRef(controller.getEntity());
                             ConfirmEvent.fire(DocumentPlugin.this,
                                     docRef.getType() + " '" + docRef.getName()
                                     + "' has unsaved changes. Are you sure you want to close this item?",
                                     result ->
-                                            actuallyClose(tabData, event.getCallback(), presenter, result));
+                                            actuallyClose(tabData, event.getCallback(), controller, result));
                         } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
                             // Do nothing
                         } else {
                             throw new RuntimeException("Unexpected DirtyMode: " + dirtyMode);
                         }
                     } else {
-                        actuallyClose(tabData, event.getCallback(), presenter, true);
+                        actuallyClose(tabData, event.getCallback(), controller, true);
                     }
                 } else {
                     // Cleanup reference to this tab data.
@@ -581,11 +581,11 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
         private void actuallyClose(final DocumentTabData tabData,
                                    final Callback callback,
-                                   final DocumentEditorHost<D> presenter,
+                                   final DocumentEditorHost<D> controller,
                                    final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.
-                presenter.onClose();
+                controller.onClose();
                 // Cleanup reference to this tab data.
                 removeTabData(tabData);
             }

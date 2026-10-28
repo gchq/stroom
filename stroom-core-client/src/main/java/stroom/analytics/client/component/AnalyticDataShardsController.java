@@ -50,7 +50,7 @@ public class AnalyticDataShardsController
 
     private final QueryToolbarController queryToolbar;
     private final AnalyticDataShardListController analyticDataShardList;
-    private final QueryResultTableController tablePresenter;
+    private final QueryResultTableController tableController;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private String analyticRuleUuid;
@@ -71,28 +71,28 @@ public class AnalyticDataShardsController
                                         final AnalyticDataShards view,
                                         final QueryToolbarController queryToolbar,
                                         final AnalyticDataShardListController analyticDataShardList,
-                                        final QueryResultTableController tablePresenter,
+                                        final QueryResultTableController tableController,
                                         final RestFactory restFactory,
                                         final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus);
         initWidget(view);
         own(queryToolbar);
         own(analyticDataShardList);
-        own(tablePresenter);
+        own(tableController);
         this.queryToolbar = queryToolbar;
         this.analyticDataShardList = analyticDataShardList;
-        this.tablePresenter = tablePresenter;
+        this.tableController = tableController;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         view.setShardList(analyticDataShardList);
-        view.setTable(tablePresenter);
-        tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
-        tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
+        view.setTable(tableController);
+        tableController.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
+        tableController.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
 
         queryToolbar.setOnStart(this::update);
         queryToolbar.setOnTimeRangeChange(this::update);
         own(analyticDataShardList.getSelectionModel().addSelectionHandler(e -> update()));
-        tablePresenter.setOnRefreshRequest(this::update);
+        tableController.setOnRefreshRequest(this::update);
     }
 
     @Override
@@ -105,11 +105,11 @@ public class AnalyticDataShardsController
         queryToolbar.onSearching(false);
         final AnalyticDataShard selected = analyticDataShardList.getSelectionModel().getSelected();
         if (selected == null) {
-            tablePresenter.reset();
+            tableController.reset();
         } else {
             final GetAnalyticShardDataRequest request =
                     new GetAnalyticShardDataRequest(
-                            tablePresenter.getRequestedRange(),
+                            tableController.getRequestedRange(),
                             queryToolbar.getTimeRange(),
                             analyticRuleUuid,
                             selected.getPath(),
@@ -120,7 +120,7 @@ public class AnalyticDataShardsController
                     .create(ANALYTIC_DATA_SHARD_RESOURCE)
                     .method(res -> res.getData(selected.getNode(), request))
                     .onSuccess(result -> {
-                        tablePresenter.setData(result);
+                        tableController.setData(result);
                         queryToolbar.onSearching(false);
                     })
                     .onFailure(t -> {

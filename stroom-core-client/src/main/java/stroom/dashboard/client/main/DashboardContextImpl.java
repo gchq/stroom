@@ -210,8 +210,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     }
                 }
 
-                if (component instanceof final TableController tablePresenter) {
-                    final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+                if (component instanceof final TableController tableController) {
+                    final List<Column> columns = tableController.getTableComponentSettings().getColumns();
                     if (NullSafe.hasItems(columns)) {
                         for (final Column column : columns) {
                             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();

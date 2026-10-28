@@ -44,9 +44,9 @@ public class UserTabPlugin extends AbstractTabPlugin<UserRef, UserTabController>
     @Inject
     public UserTabPlugin(final EventBus eventBus,
                          final ContentManager contentManager,
-                         final Provider<UserTabController> userTabPresenterProvider,
+                         final Provider<UserTabController> userTabControllerProvider,
                          final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, userTabPresenterProvider);
+        super(eventBus, contentManager, userTabControllerProvider);
         this.securityContext = securityContext;
 
         getEventBus().addHandler(OpenUserEvent.getType(), event -> {
@@ -60,11 +60,11 @@ public class UserTabPlugin extends AbstractTabPlugin<UserRef, UserTabController>
         if (userRef != null) {
             if (hasPermissionToOpenUser(userRef)) {
 
-                super.openTabPresenter(
+                super.openTabController(
                         forceOpen,
                         userRef,
-                        userTabPresenter ->
-                                userTabPresenter.setUserRef(userRef));
+                        userTabController ->
+                                userTabController.setUserRef(userRef));
             } else {
                 AlertEvent.fireError(this, "You do not have permission to open user '"
                                            + userRef.toDisplayString() + "'.", null);

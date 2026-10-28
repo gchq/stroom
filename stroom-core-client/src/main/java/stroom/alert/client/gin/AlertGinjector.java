@@ -22,5 +22,5 @@ import com.google.inject.Provider;
 
 public interface AlertGinjector {
 
-    Provider<AlertPlugin> getAlertPresenter();
+    Provider<AlertPlugin> getAlertController();
 }

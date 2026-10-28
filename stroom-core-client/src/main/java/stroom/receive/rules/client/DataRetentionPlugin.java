@@ -41,10 +41,10 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionControlle
     @Inject
     public DataRetentionPlugin(final EventBus eventBus,
                                final ContentManager eventManager,
-                               final Provider<DataRetentionController> presenterProvider,
+                               final Provider<DataRetentionController> controllerProvider,
                                final ClientSecurityContext securityContext,
                                final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

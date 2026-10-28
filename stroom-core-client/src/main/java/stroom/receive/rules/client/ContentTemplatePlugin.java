@@ -41,10 +41,10 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabCo
     @Inject
     public ContentTemplatePlugin(final EventBus eventBus,
                                  final ContentManager eventManager,
-                                 final Provider<ContentTemplateTabController> presenterProvider,
+                                 final Provider<ContentTemplateTabController> controllerProvider,
                                  final ClientSecurityContext securityContext,
                                  final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override

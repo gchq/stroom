@@ -42,10 +42,10 @@ public abstract class NodeToolsContentPlugin<P extends Layer & TabData>
     @Inject
     public NodeToolsContentPlugin(final EventBus eventBus,
                                   final ContentManager contentManager,
-                                  final Provider<P> presenterProvider,
+                                  final Provider<P> controllerProvider,
                                   final DocumentPluginRegistry documentPluginRegistry,
                                   final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry);
         this.securityContext = securityContext;
 
         final Action openAction = getOpenAction();

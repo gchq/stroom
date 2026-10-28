@@ -81,7 +81,7 @@ public class UserTabController extends ContentTabController {
     private ControllerLayer userPermissionReportLayer;
     private final LazyValue<UserDependenciesListController> userDependenciesListLazyValue;
     private ControllerLayer userDependenciesListLayer;
-    private final LazyValue<ApiKeysController> apiKeysListPresenterLazyValue;
+    private final LazyValue<ApiKeysController> apiKeysListControllerLazyValue;
     private final LazyValue<AppPermissionsEditController> appPermissionsEditLazyValue;
     private ControllerLayer appPermissionsEditLayer;
     private final LazyValue<UserAndGroupsController> userAndGroupsLazyValue;
@@ -101,7 +101,7 @@ public class UserTabController extends ContentTabController {
                              final ClientSecurityContext clientSecurityContext,
                              final Provider<UserPermissionReportController> userPermissionReportProvider,
                              final Provider<UserDependenciesListController> userDependenciesListProvider,
-                             final Provider<ApiKeysController> apiKeysListPresenterProvider,
+                             final Provider<ApiKeysController> apiKeysListControllerProvider,
                              final Provider<AppPermissionsEditController> appPermissionsEditProvider,
                              final Provider<UserAndGroupsController> userAndGroupsProvider) {
         super(eventBus);
@@ -122,10 +122,10 @@ public class UserTabController extends ContentTabController {
                     userDependenciesListLayer = new ControllerLayer(userDependenciesList);
                     userDependenciesList.setUserRef(getUserRef());
                 });
-        this.apiKeysListPresenterLazyValue = new LazyValue<ApiKeysController>(
-                (Supplier<ApiKeysController>) () -> make(apiKeysListPresenterProvider),
-                apiKeysListPresenter -> {
-                    apiKeysListPresenter.setOwner(getUserRef());
+        this.apiKeysListControllerLazyValue = new LazyValue<ApiKeysController>(
+                (Supplier<ApiKeysController>) () -> make(apiKeysListControllerProvider),
+                apiKeysListController -> {
+                    apiKeysListController.setOwner(getUserRef());
                 });
         this.appPermissionsEditLazyValue = new LazyValue<AppPermissionsEditController>(
                 (Supplier<AppPermissionsEditController>) () -> make(appPermissionsEditProvider),
@@ -207,7 +207,7 @@ public class UserTabController extends ContentTabController {
             userDependenciesList.setUserRef(userRef);
             callback.accept(userDependenciesListLayer);
         } else if (API_KEYS_TAB.equals(tab)) {
-            callback.accept(apiKeysListPresenterLazyValue.getValue());
+            callback.accept(apiKeysListControllerLazyValue.getValue());
         } else {
             callback.accept(null);
         }
@@ -260,8 +260,8 @@ public class UserTabController extends ContentTabController {
                 userPermissionReport.setUserRef(userRef));
         userDependenciesListLazyValue.consumeIfInitialised(userDependenciesList ->
                 userDependenciesList.setUserRef(userRef));
-        apiKeysListPresenterLazyValue.consumeIfInitialised(apiKeysPresenter ->
-                apiKeysPresenter.setOwner(userRef));
+        apiKeysListControllerLazyValue.consumeIfInitialised(apiKeysController ->
+                apiKeysController.setOwner(userRef));
     }
 
     /// @return The user or group shown.

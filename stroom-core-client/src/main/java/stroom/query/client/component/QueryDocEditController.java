@@ -68,7 +68,7 @@ public class QueryDocEditController
     private static final ReportResource REPORT_RESOURCE = GWT.create(ReportResource.class);
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-    private final QueryEditController queryEditPresenter;
+    private final QueryEditController queryEditController;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final Toolbar toolbar;
@@ -82,13 +82,13 @@ public class QueryDocEditController
     /// @param uiConfigCache      Gives a new rule's or report's defaults.
     @Inject
     public QueryDocEditController(final EventBus eventBus,
-                                  final QueryEditController queryEditPresenter,
+                                  final QueryEditController queryEditController,
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus);
-        initWidget(queryEditPresenter.asWidget());
-        own(queryEditPresenter);
-        this.queryEditPresenter = queryEditPresenter;
+        initWidget(queryEditController.asWidget());
+        own(queryEditController);
+        this.queryEditController = queryEditController;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
@@ -96,28 +96,28 @@ public class QueryDocEditController
         toolbar.button(SvgImage.DOCUMENT_ANALYTIC_RULE, "Create Analytic Rule", this::createRule);
         toolbar.button(SvgImage.DOCUMENT_REPORT, "Create Report", this::createReport);
 
-        queryEditPresenter.setOnChange(this::markChanged);
+        queryEditController.setOnChange(this::markChanged);
     }
 
     @Override
     public List<Widget> getDocumentButtons() {
         final List<Widget> list = new ArrayList<>();
         list.add(toolbar);
-        list.addAll(queryEditPresenter.getDocumentButtons());
+        list.addAll(queryEditController.getDocumentButtons());
         return list;
     }
 
     @Override
     public List<Widget> getToolbars() {
-        return queryEditPresenter.getToolbars();
+        return queryEditController.getToolbars();
     }
 
     private void createRule() {
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
-                final String query = queryEditPresenter.getQuery();
-                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                final String query = queryEditController.getQuery();
+                final TimeRange timeRange = queryEditController.getTimeRange();
                 restFactory
                         .create(QUERY_RESOURCE)
                         .method(res -> res.validateQuery(query))
@@ -309,8 +309,8 @@ public class QueryDocEditController
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final ReportUiDefaultConfig analyticUiDefaultConfig = uiConfig.getReportUiDefaultConfig();
-                final String query = queryEditPresenter.getQuery();
-                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                final String query = queryEditController.getQuery();
+                final TimeRange timeRange = queryEditController.getTimeRange();
                 restFactory
                         .create(QUERY_RESOURCE)
                         .method(res -> res.validateQuery(query))
@@ -481,14 +481,14 @@ public class QueryDocEditController
     /// @param entity The document.
     public void read(final DocRef docRef, final QueryDoc entity) {
         this.docRef = docRef;
-        queryEditPresenter.setTimeRange(entity.getTimeRange());
-        queryEditPresenter.setQuery(docRef, entity.getQuery());
-        queryEditPresenter.read(entity.getQueryTablePreferences());
+        queryEditController.setTimeRange(entity.getTimeRange());
+        queryEditController.setQuery(docRef, entity.getQuery());
+        queryEditController.read(entity.getQueryTablePreferences());
     }
 
     /// @param visible Whether the query's tab is showing.
     public void onContentTabVisible(final boolean visible) {
-        queryEditPresenter.onContentTabVisible(visible);
+        queryEditController.onContentTabVisible(visible);
     }
 
     /// @param entity The document.
@@ -496,19 +496,19 @@ public class QueryDocEditController
     public QueryDoc write(final QueryDoc entity) {
         return entity
                 .copy()
-                .timeRange(queryEditPresenter.getTimeRange())
-                .query(queryEditPresenter.getQuery())
-                .queryTablePreferences(queryEditPresenter.write())
+                .timeRange(queryEditController.getTimeRange())
+                .query(queryEditController.getQuery())
+                .queryTablePreferences(queryEditController.write())
                 .build();
     }
 
     /// Runs the query again.
     public void start() {
-        queryEditPresenter.start();
+        queryEditController.start();
     }
 
     /// Stops the query.
     public void stop() {
-        queryEditPresenter.stop();
+        queryEditController.stop();
     }
 }
