@@ -15,7 +15,7 @@
  */
 
 /*
-   The main toolbar (stroom.main.client.view.MainToolbar), named BEM style: the busy spinner, the Ask
+   The main toolbar (stroom.main.client.component.MainToolbar), named BEM style: the busy spinner, the Ask
    Stroom AI toggle and the main menu's button, at the top right, as high as the tab bar's row (less
    its border) with its buttons centred in it, leaving room around them for their focus rings, which
    the page would otherwise cut off.

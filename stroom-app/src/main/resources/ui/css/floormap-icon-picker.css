@@ -15,7 +15,7 @@
  */
 
 /*
-   The floor map's icon picker (stroom.floormap.client.view.FloorMapIconPicker), the BEM block
+   The floor map's icon picker (stroom.floormap.client.component.FloorMapIconPicker), the BEM block
    floormap-icon-picker: a radio group (role="radiogroup") of its icons (floormap-icon-picker__cell, a
    label), each holding an unseen native radio button (__input), its picture (__glyph) and its name
    (__label). The chosen and focused looks are drawn from the radio button's state.

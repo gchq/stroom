@@ -15,7 +15,7 @@
  */
 
 /*
-   The classification label (stroom.data.client.view.ClassificationLabel), named BEM style: a
+   The classification label (stroom.data.client.component.ClassificationLabel), named BEM style: a
    data's classification on the colour configured for it, e.g. the banner below the data viewer.
    Was .classificationLabel (components.css) and .classification (stroom.css).
 */

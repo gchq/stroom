@@ -15,7 +15,7 @@
  */
 
 /*
-   The trace histogram (stroom.pathways.client.presenter.TraceHistogramChart), named BEM style: the
+   The trace histogram (stroom.pathways.client.component.TraceHistogramChart), named BEM style: the
    counts of traces in each part of the time range, as bars on a plot between a y axis (the highest
    count and 0) and an x axis (the range's start and end), or a hint when there is none. Every bar
    is as wide as the others (--trace-histogram-chart__bar-width, on the plot), placed by its index
