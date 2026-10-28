@@ -44,11 +44,11 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `GET /cache/v1/info?cacheName=&nodeName=` | a cache's info |
 /// | `DELETE /cache/v1?cacheName=&nodeName=` | clearing a cache |
 ///
-/// The requests made are checked on the request spy. The presenter comes from GIN, and is
+/// The requests made are checked on the request spy. The controller comes from GIN, and is
 /// shown as `CacheMonitoringPlugin` opens it.
 public final class CachesScreenStories {
 
-    // CacheResource.list(nodeName): the same caches on every node (the presenter merges them)
+    // CacheResource.list(nodeName): the same caches on every node (the controller merges them)
     private static final String CACHES = """
             {
               "values": [

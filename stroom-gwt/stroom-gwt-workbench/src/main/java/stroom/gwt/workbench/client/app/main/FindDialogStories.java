@@ -45,7 +45,7 @@ import java.util.Map;
 /// fake REST replies.
 ///
 /// `POST /explorer/v2/find` is answered by a handler that filters a small fixed set by the
-/// request's `nameFilter`. The dialog is shown by firing `ShowFindEvent`, with the presenter (from
+/// request's `nameFilter`. The dialog is shown by firing `ShowFindEvent`, with the controller (from
 /// GIN) registered as its handler in place of its listener.
 public final class FindDialogStories {
 

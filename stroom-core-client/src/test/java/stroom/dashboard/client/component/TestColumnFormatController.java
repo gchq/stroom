@@ -51,7 +51,7 @@ class TestColumnFormatController {
 
     @Test
     void read_noFormatAfterANumberFormat() {
-        // Regression test: one presenter served all a table's columns, and a column with no format
+        // Regression test: one controller served all a table's columns, and a column with no format
         // was shown with the number settings of the last column shown
         controller.read(new Format(Type.NUMBER, new NumberFormatSettings(2, true), null));
         Mockito.clearInvocations(view);

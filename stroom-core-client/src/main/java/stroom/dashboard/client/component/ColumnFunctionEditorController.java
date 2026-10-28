@@ -77,10 +77,10 @@ public class ColumnFunctionEditorController extends Controller {
         view.setQueryHelp(queryHelp);
     }
 
-    /// Shows a column's expression in a dialog, owned by `tablePresenter` until it is closed. OK
+    /// Shows a column's expression in a dialog, owned by `tableController` until it is closed. OK
     /// validates a changed expression before giving it.
     ///
-    /// @param tablePresenter       The table, whose data source's fields the help lists.
+    /// @param tableController      The table, whose data source's fields the help lists.
     /// @param column               The column.
     /// @param columnChangeConsumer Given the column and the column with its new expression, once
     ///                             OK is pressed with a valid changed expression.

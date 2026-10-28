@@ -56,7 +56,7 @@ public class Components implements Iterable<DashboardPane> {
         this.context = new JSONObject().getJavaScriptObject();
     }
 
-    /// @param owner What owns the components made, e.g. the dashboard's presenter.
+    /// @param owner What owns the components made, e.g. the dashboard's controller.
     public void setOwner(final HasControllerNode owner) {
         this.owner = owner.getControllerNode();
     }

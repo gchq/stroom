@@ -83,7 +83,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// Everything a real Stroom screen (presenter and view) needs to run in a story with fake data:
+/// Everything a real Stroom screen (controller and component) needs to run in a story with fake data:
 ///
 /// * a [ScreenGinjector] with an event bus, Stroom's real `RestFactory` and the services screens
 ///   commonly need ([UiConfigCache], [DateTimeFormatter], a configurable
@@ -98,7 +98,7 @@ import java.util.function.Consumer;
 /// * spies on the requests made, unhandled requests, alerts, confirmations, downloads and
 ///   uploads, which play functions check with `play.expect(play.spy(name))`.
 ///
-/// The story creates its controller or presenter with `new`, passing it what the harness provides,
+/// The story creates its controller with `new`, passing it what the harness provides,
 /// then returns [#asWidget()], e.g.
 /// ```
 /// final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
@@ -115,11 +115,11 @@ import java.util.function.Consumer;
 /// When the story renders again (rerun, rewind, args changed, another story) the harness is
 /// disposed through [StoryContext#addCleanUp(Runnable)], which it registers first, so even a
 /// harness whose construction failed is undone: its dispatcher cancels the pending replies and
-/// drops any later request (an old presenter keeps its injector's `RestFactory`, so its timers and
+/// drops any later request (an old controller keeps its injector's `RestFactory`, so its timers and
 /// chained requests can only reach this dispatcher), its upload transport does the same for
 /// uploads and restores Stroom's default transport, Stroom's `UiConfigCache` stops refreshing,
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
-/// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers and handlers
+/// through Stroom's own `HidePopupEvent` (which unbinds their controllers), the timers and handlers
 /// registered with [#addTimer(Timer)] and [#addRegistration(HandlerRegistration)] are stopped, the
 /// story's root, which owns what the story shows ([#show(Controller)], [#own(HasControllerNode)]), is
 /// disposed, and the event bus is switched off.
@@ -278,7 +278,7 @@ public final class ScreenHarness {
         return injector;
     }
 
-    /// @return The event bus to give the screen's presenters.
+    /// @return The event bus to give the screen's controllers.
     public EventBus getEventBus() {
         return eventBus;
     }
@@ -405,7 +405,7 @@ public final class ScreenHarness {
     /// it is disposed, with everything it owns, when the story renders again or the leak probe
     /// closes it.
     ///
-    /// @param screen The screen, a component or a presenter.
+    /// @param screen The screen, a controller.
     /// @param <C>    The screen's type.
     /// @return The screen.
     public <C extends Controller> C show(final C screen) {
@@ -428,7 +428,7 @@ public final class ScreenHarness {
     /// story's canvas and owned as [#show] does. The page decides where its focus goes itself, so
     /// the test runner's focus check, which focuses a screen as the tab pane does, doesn't apply.
     ///
-    /// @param page The page, a component or a presenter.
+    /// @param page The page, a controller.
     /// @param <C>  The page's type.
     /// @return The page.
     public <C extends Controller> C showPage(final C page) {
@@ -519,7 +519,7 @@ public final class ScreenHarness {
     /// takes the focus when it has none), and the name of what has it.
     private static native void exposeContentFocus(Object controller, Element content) /*-{
         $wnd.__workbenchContentFocus = function () {
-            @stroom.widget.util.client.ContentFocus::focus(Ljava/lang/Object;)(presenter);
+            @stroom.widget.util.client.ContentFocus::focus(Ljava/lang/Object;)(controller);
             var active = $doc.activeElement;
             var inside = !!active && active !== $doc.body && content.contains(active);
             var firstTabStop = @stroom.widget.util.client.ContentFocus::firstTabStop(*)(content);
@@ -535,10 +535,10 @@ public final class ScreenHarness {
 
     /// For the leak check's probe (see [LeakProbe]): closes the screen as closing a Stroom tab does,
     /// hiding the popups and removing the widgets its opening added and, if asked, disposing the
-    /// presenters made while opening it (as `DocumentPlugin` does) and running the clean ups its
+    /// controllers made while opening it (as `DocumentPlugin` does) and running the clean ups its
     /// opening registered.
     ///
-    /// @param dispose Whether to dispose the screen's presenters and run its clean ups.
+    /// @param dispose Whether to dispose the screen's controllers and run its clean ups.
     void probeClose(final boolean dispose) {
         // Popups that must be asked to close are, as their Close buttons would, and forgotten, else
         // the list would keep each opening's popup
@@ -611,7 +611,7 @@ public final class ScreenHarness {
     /// it: it is disposed, with everything it owns, when the story renders again or the leak probe
     /// closes the screen.
     ///
-    /// @param screen The component or presenter.
+    /// @param screen The controller.
     /// @param <C>    Its type.
     /// @return It.
     public <C extends HasControllerNode> C own(final C screen) {
@@ -798,13 +798,13 @@ public final class ScreenHarness {
             return this;
         }
 
-        /// Uses an injector that extends [ScreenGinjector] with the screen's presenters, e.g. one of
+        /// Uses an injector that extends [ScreenGinjector] with the screen's controllers, e.g. one of
         /// the area injectors in `stroom.gwt.workbench.client.app.gin`, in place of a plain
-        /// [ScreenGinjector], so the story can get its presenter from GIN as Stroom does:
+        /// [ScreenGinjector], so the story can get its controller from GIN as Stroom does:
         /// ```
         /// final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
         /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-        /// final JobsController presenter = injector.getJobsController();
+        /// final JobsController controller = injector.getJobsController();
         /// ```
         /// Create a new injector for each harness (i.e. each time the story renders): its
         /// singletons (event bus, REST factory, security context...) belong to the harness.

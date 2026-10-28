@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 ///
 /// * Holding a permission: Stroom's `CurrentUser.hasAppPermission` (`ADMINISTRATOR` implies every
 ///   permission), checked against `CurrentUser`s holding each case's permissions;
-/// * The user tab's label: `UserTabController.setUserRef`'s tab label, read from real presenters (from
+/// * The user tab's label: `UserTabController.setUserRef`'s tab label, read from real controllers (from
 ///   GIN) given each case's user. The story shows each case and its label, and the play checks
 ///   them.
 public final class AppPermissionsStories {

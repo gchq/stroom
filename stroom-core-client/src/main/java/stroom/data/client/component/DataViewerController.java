@@ -293,7 +293,7 @@ public class DataViewerController
         // Make sure tabs don't do anything in stepping mode.
         if (!steppingSource) {
             if (tab != null) {
-                // Clear the text presenter while we wait for the new data to come down
+                // Clear the text controller while we wait for the new data to come down
                 textPane.setText(null);
 
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {

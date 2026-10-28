@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The stories answer Stroom's `ExplorerResource`: `POST /explorer/v2/advancedFind` (the documents)
 /// and `POST /explorer/v2/changeDocumentPermissions` (the change, checked on the request spy).
-/// Confirmations are Stroom's real dialogs. The presenter comes from GIN and is opened as
+/// Confirmations are Stroom's real dialogs. The controller comes from GIN and is opened as
 /// `DocumentPermissionsPlugin.open` opens it (filtered to the descendants of System).
 public final class DocumentPermissionsScreenStories {
 

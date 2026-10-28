@@ -236,7 +236,7 @@ public final class SourceViewerStories {
         return harness.asWidget();
     }
 
-    /// Creates the presenter and its views, as GIN would.
+    /// Creates the controller and its components, as GIN would.
     private static DataViewerController dataController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final ItemNavigatorController itemNavigator = new ItemNavigatorController(

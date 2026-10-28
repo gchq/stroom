@@ -31,10 +31,10 @@ import com.google.gwt.inject.client.AbstractGinModule;
 /// Stroom.
 public class ShellAppScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
-        // AppModule (the main presenter is created by the story, with the app's key handler)
+        // AppModule (the main controller is created by the story, with the app's key handler)
 
         // UserPreferencesModule
 

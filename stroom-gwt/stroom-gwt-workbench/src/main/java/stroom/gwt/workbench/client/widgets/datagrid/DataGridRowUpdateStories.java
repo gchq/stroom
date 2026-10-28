@@ -333,7 +333,7 @@ public final class DataGridRowUpdateStories {
             grid.setRowData(0, copies);
             grid.setRowCount(copies.size());
         };
-        // Saved by the row's name, as a presenter saves by its id: the row given is as it was when the
+        // Saved by the row's name, as a controller saves by its id: the row given is as it was when the
         // list opened, which a poll may have changed since
         kind.setFieldUpdater((index, row, value) -> {
             for (int i = 0; i < rows.size(); i++) {

@@ -63,7 +63,7 @@ public class AnalyticDataShardsController
     /// @param view                    The content.
     /// @param queryToolbar            Runs the query, over a time range.
     /// @param analyticDataShardList   The rule's data shards.
-    /// @param tablePresenter          The rows of the shard selected.
+    /// @param tableController         The rows of the shard selected.
     /// @param restFactory             Fetches the rows.
     /// @param dateTimeSettingsFactory Gives the request the user's time settings.
     @Inject

@@ -48,7 +48,7 @@ import java.util.List;
 /// (`POST /explorer/v2/fetchExplorerNodeTagsByDocRefs`), and setting (`PUT /explorer/v2/tags`),
 /// adding (`PUT /explorer/v2/addTags`) and removing (`DELETE /explorer/v2/removeTags`) tags,
 /// checked on the request spy. The dialogs are opened as the explorer's menu does, by firing their
-/// events, with the presenters (from GIN) registered as the events' handlers in place of their
+/// events, with the controllers (from GIN) registered as the events' handlers in place of their
 /// listeners. A chained request: the edit dialog fetches all tags, then the node's own tags, before
 /// it shows.
 public final class EditTagsDialogStories {

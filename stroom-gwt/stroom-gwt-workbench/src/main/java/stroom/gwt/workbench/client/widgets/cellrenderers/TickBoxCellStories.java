@@ -125,7 +125,7 @@ public final class TickBoxCellStories {
         return play.within(play.getByText(name).closest("[role='row']")).querySelector(".tick-box");
     }
 
-    /// A grid of [#NAMES] with a tick box column, as Stroom's list presenters build them.
+    /// A grid of [#NAMES] with a tick box column, as Stroom's list controllers build them.
     ///
     /// @param updatable Whether the user can change the ticks: if so, the header has a tick box.
     /// @param ticked    The names that start ticked.

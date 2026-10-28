@@ -238,8 +238,8 @@ public class QueryPaneController
             }
 
 //            if (component instanceof HasAbstractFields) {
-//                final VisPresenter visPresenter = (VisPresenter) component;
-//                final List<Map<String, String>> selection = visPresenter.getCurrentSelection();
+//                final VisPresenter visController = (VisPresenter) component;
+//                final List<Map<String, String>> selection = visController.getCurrentSelection();
 //                String params = "";
 //                if (selection != null) {
 //                    for (final Map<String, String> map : selection) {
@@ -253,13 +253,13 @@ public class QueryPaneController
 
 //                if (getTextSettings().getTableId() == null) {
 //                    if (component instanceof TableController) {
-//                        currentTablePresenter = (TableController) component;
-//                        update(currentTablePresenter);
+//                        currentTableController = (TableController) component;
+//                        update(currentTableController);
 //                    }
 //                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
 //                    if (component instanceof TableController) {
-//                        currentTablePresenter = (TableController) component;
-//                        update(currentTablePresenter);
+//                        currentTableController = (TableController) component;
+//                        update(currentTableController);
 //                    }
 //                }
 //            }

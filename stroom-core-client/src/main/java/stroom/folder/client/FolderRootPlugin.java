@@ -71,25 +71,25 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 //                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
 //                        final ExplorerNode selected = event.getSelectionModel().getSelected();
 //                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
-//                            if (presenter == null && selectionType.isDoubleSelect()) {
-//                                // If the presenter is null then we haven't got
+//                            if (controller == null && selectionType.isDoubleSelect()) {
+//                                // If the controller is null then we haven't got
 //                                // this tab open.
-//                                // Create a new presenter.
-//                                presenter = createEditor();
+//                                // Create a new controller.
+//                                controller = createEditor();
 //                            }
 //
-//                            if (presenter != null) {
+//                            if (controller != null) {
 //                                final CloseContentEvent.Handler closeHandler = evt -> {
 //                                    // Give the content manager the ok to
 //                                    // close the tab.
 //                                    evt.getCallback().closeTab(true);
 //
 //                                    // After we close the tab set the
-//                                    // presenter back to null so
+//                                    // controller back to null so
 //                                    // that we can open it again.
-//                                    presenter = null;
+//                                    controller = null;
 //                                };
-//                                contentManager.open(closeHandler, presenter, presenter);
+//                                contentManager.open(closeHandler, controller, controller);
 //                            }
 //                        }
 //                    }

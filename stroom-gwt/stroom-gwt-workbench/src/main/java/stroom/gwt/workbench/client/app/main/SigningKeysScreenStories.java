@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// revoking one (`POST /signingKey/v1/revoke?id=N`) and revoking all
 /// (`POST /signingKey/v1/revokeAll`); the calls are checked on the request spy. The user is an
 /// administrator, as `SigningKeyPlugin` requires. Confirmations are Stroom's real dialogs. The
-/// presenter comes from GIN and is opened as `SigningKeyPlugin` opens it (refreshed).
+/// controller comes from GIN and is opened as `SigningKeyPlugin` opens it (refreshed).
 public final class SigningKeysScreenStories {
 
     private static final String REVOKE_TITLE = "Revoke Selected Signing Key";

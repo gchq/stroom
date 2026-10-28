@@ -52,7 +52,7 @@ import java.util.List;
 /// | `POST /processorTask/v1/find` | the tasks of the selected summary row, in the lower pane |
 ///
 /// The summary is fetched again when a column is sorted or the pager's Refresh is pressed; the
-/// presenter then selects the row that was selected again, if the reply still has it.
+/// controller then selects the row that was selected again, if the reply still has it.
 ///
 /// The `openDocument` spy records the type and name of each [OpenDocumentEvent] fired (the
 /// Pipeline column's open button), and `openFeed` the name of each [OpenFeedEvent] (the Feed

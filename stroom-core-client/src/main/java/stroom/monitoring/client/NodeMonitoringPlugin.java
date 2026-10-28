@@ -92,12 +92,12 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodesController> {
     }
 
 //    private void openNode(final String nodeName) {
-//        final NodesController nodePresenter = open();
-//        nodePresenter.setSelected(nodeName);
+//        final NodesController nodeController = open();
+//        nodeController.setSelected(nodeName);
 //    }
 //
 //    private void openNodeJob(final JobNode jobNode) {
-//        final NodesController nodePresenter = open();
-//        nodePresenter.setSelected(jobNode);
+//        final NodesController nodeController = open();
+//        nodeController.setSelected(jobNode);
 //    }
 }

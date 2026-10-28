@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Stories for Stroom's [ExplorerPopupController] (the explorer tree dialog that a document
 /// selection box opens, with a quick filter above the tree).
 ///
-/// The presenter fetches its tree from the explorer service, which the harness answers from the
+/// The controller fetches its tree from the explorer service, which the harness answers from the
 /// fixture tree (`TreeFixtures.fixtureTree()`); it is created with
 /// `SelectorWidgets.explorerPopup`, as its constructor is only visible to GIN.
 public final class ExplorerDropdownPopupStories {

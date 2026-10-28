@@ -361,7 +361,7 @@ class TestFloorMapEntityList {
     // -----------------------------------------------------------------------
 
     /// The change flag is true only when membership actually changes, so the
-    /// presenter can skip grid refreshes for repeat data.
+    /// controller can skip grid refreshes for repeat data.
     @Test
     void testChangeFlag() {
         assertThat(entityList.update(Collections.singletonList(person())))

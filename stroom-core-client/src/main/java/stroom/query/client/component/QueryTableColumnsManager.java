@@ -386,14 +386,14 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private List<Column> getColumns() {
         return tableController.getCurrentColumns();
 //
-//        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
-//            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
+//      if (tableController.getSettings() != null && tableController.getTableComponentSettings().getColumns() != null) {
+//            return new ArrayList<>(tableController.getTableComponentSettings().getColumns());
 //        }
 //        return new ArrayList<>();
     }
 
 //    private void updateColumns(final List<Column> columns) {
-//        tablePresenter.setPreferredColumns(columns);
+//        tableController.setPreferredColumns(columns);
 //    }
 
     private void showColumn(final Column column) {
@@ -626,9 +626,9 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 //        if (!Objects.equals(column.getGroup(), group)) {
 //            replaceColumn(column, column.copy().group(group).build());
 //            fixGroups(getColumns());
-//            tablePresenter.setDirty(true);
-//            tablePresenter.updateColumns();
-//            tablePresenter.refresh();
+//            tableController.setDirty(true);
+//            tableController.updateColumns();
+//            tableController.refresh();
 //        }
 //    }
 //

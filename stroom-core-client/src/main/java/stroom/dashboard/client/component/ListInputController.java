@@ -58,10 +58,10 @@ public class ListInputController extends DashboardComponentController implements
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus                  The application's event bus.
-    /// @param view                      The content.
-    /// @param settingsPresenterProvider Makes the pane's settings dialog.
-    /// @param restFactory               Fetches a dictionary's words.
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       The content.
+    /// @param settingsControllerProvider Makes the pane's settings dialog.
+    /// @param restFactory                Fetches a dictionary's words.
     @Inject
     public ListInputController(final EventBus eventBus,
                                final ListInput view,

@@ -377,7 +377,7 @@ public final class DictionaryEditorStories {
                 // leaves nothing unowned behind
                 .story("CloseWhileLoading", context -> renderComponent(context, false, LATE_FAILURE_FIXTURES))
                 .withPlay(play -> {
-                    // Presenters the story's harness makes for itself are counted too
+                    // Controllers the story's harness makes for itself are counted too
                     final Value<Integer> unownedBefore = play.capture("unowned", ControllerChecks::unownedCount);
                     openTab(play, "Effective Words");
                     play.run("close the editor, as closing its tab does", ScreenHarness::closeShownComponents);

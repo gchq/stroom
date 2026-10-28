@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | the 'Uploaded file' message | its Close refreshes the data and closes the dialog |
 ///
 /// The dialog is shown as the feed's data browser (`MetaBrowserController`) shows it, with that browser
-/// (from GIN, not shown) as the presenter it refreshes after an upload.
+/// (from GIN, not shown) as the controller it refreshes after an upload.
 public final class DataUploadDialogStories {
 
     private static final String FEED_UUID = "feed-1";

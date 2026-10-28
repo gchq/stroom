@@ -70,7 +70,7 @@ public class LinkedEventsController extends Controller {
     /// @param eventBus                 The application's event bus.
     /// @param view                     The content.
     /// @param annotationResourceClient Links, unlinks and lists the events.
-    /// @param dataPresenter            The data of the event selected.
+    /// @param dataController           The data of the event selected.
     /// @param addEventLinkProvider     Makes the dialog that asks which event to link.
     @Inject
     public LinkedEventsController(final EventBus eventBus,

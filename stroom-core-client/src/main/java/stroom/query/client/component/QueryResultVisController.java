@@ -286,7 +286,7 @@ public class QueryResultVisController
 
         getRefreshButton().setRefreshing(true);
         searchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
-            // This presenter may have been removed while the refresh was in flight, e.g. when the
+            // This controller may have been removed while the refresh was in flight, e.g. when the
             // search ended with no vis data, so only use the result if it is still wanted
             if (searchModel == currentSearchModel) {
                 try {

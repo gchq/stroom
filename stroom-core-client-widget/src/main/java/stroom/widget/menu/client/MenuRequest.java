@@ -28,7 +28,7 @@ import java.util.List;
 
 /// Shows a menu from a widget that has no event bus to fire a [ShowMenuEvent] on (e.g. a split
 /// pane's splitter). The widget makes a request with [#fire], which bubbles up the page as a DOM
-/// event to the one relay installed for the page ([#relay], by Stroom's core presenter, in Stroom
+/// event to the one relay installed for the page ([#relay], by Stroom's core controller, in Stroom
 /// and the standalone dashboard), which fires the [ShowMenuEvent] on the event bus. So no view has
 /// to pass its widgets' menus on.
 public final class MenuRequest {
@@ -121,7 +121,7 @@ public final class MenuRequest {
 
     /// Shows the menus that widgets on the page ask for, by firing a [ShowMenuEvent] for each.
     ///
-    /// @param handlers What the [ShowMenuEvent]s are fired on, e.g. a presenter, or an event bus's
+    /// @param handlers What the [ShowMenuEvent]s are fired on, e.g. a controller, or an event bus's
     ///                 `fireEvent`.
     /// @return The registration that stops the relay.
     public static HandlerRegistration relay(final HasHandlers handlers) {

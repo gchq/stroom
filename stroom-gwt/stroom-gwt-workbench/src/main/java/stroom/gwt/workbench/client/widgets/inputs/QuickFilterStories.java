@@ -293,7 +293,7 @@ public final class QuickFilterStories {
     }
 
     // Gives the quick filter a context, with a stand-in for the server that accepts or rejects
-    // each filter applied, as Stroom's list presenters report the server's answer
+    // each filter applied, as Stroom's list controllers report the server's answer
     private static Widget withContext(final StoryContext context, final QuickFilter quickFilter) {
         quickFilter.setContextHandler(new RecentFiltersHandler(
                 context.fn(ON_SHOW_RECENT_FILTERS), context.fn(ON_RECORD_USE)));

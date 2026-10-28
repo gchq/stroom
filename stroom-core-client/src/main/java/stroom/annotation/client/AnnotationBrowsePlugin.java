@@ -88,8 +88,8 @@ public class AnnotationBrowsePlugin extends Plugin {
 
     private void open() {
         if (controller == null) {
-            // If the presenter is null then we haven't got this tab open.
-            // Create a new presenter.
+            // If the controller is null then we haven't got this tab open.
+            // Create a new controller.
             controller = controllerProvider.get();
         }
 
@@ -97,7 +97,7 @@ public class AnnotationBrowsePlugin extends Plugin {
             // Give the content manager the ok to close the tab.
             event.getCallback().closeTab(true);
 
-            // After we close the tab set the presenter back to null so
+            // After we close the tab set the controller back to null so
             // that we can open it again.
             controller = null;
         };

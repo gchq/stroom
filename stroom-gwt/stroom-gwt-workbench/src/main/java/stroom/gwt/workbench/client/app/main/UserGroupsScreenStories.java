@@ -54,7 +54,7 @@ import java.util.List;
 /// | a spy on Stroom's `OpenUsersScreenEvent` | opening a user |
 ///
 /// The user holds `MANAGE_USERS_PERMISSION`, which `UsersAndGroupsPlugin` requires to open the
-/// screen. The presenter comes from GIN and is opened as `UsersAndGroupsPlugin.open` opens it
+/// screen. The controller comes from GIN and is opened as `UsersAndGroupsPlugin.open` opens it
 /// (refreshed).
 public final class UserGroupsScreenStories {
 

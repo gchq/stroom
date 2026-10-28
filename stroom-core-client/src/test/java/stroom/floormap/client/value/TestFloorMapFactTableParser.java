@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// Covers the Map tab's ingest path, which until this class was extracted from
 /// `FloorMapMapController` could not be tested at all — it was a private method on a GWT
-/// presenter, so the largest single body of parsing logic in the feature had no coverage while
+/// controller, so the largest single body of parsing logic in the feature had no coverage while
 /// its structured-value sibling [FloorMapEntryParser] had a full suite.
 class TestFloorMapFactTableParser {
 

@@ -178,7 +178,7 @@ public class FloorMapIconPicker extends Widget {
         return selected;
     }
 
-    /// Selects an icon without firing the change handler, so the presenter can
+    /// Selects an icon without firing the change handler, so the controller can
     /// populate the grid without it looking like a user edit.
     ///
     /// @param icon the icon to select, or `null` to select none

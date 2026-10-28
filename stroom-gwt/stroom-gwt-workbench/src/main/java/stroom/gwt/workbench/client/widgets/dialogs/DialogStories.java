@@ -38,10 +38,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's dialogs.
 ///
-/// Stroom has no dialog widget that a screen creates itself: a presenter is shown in a dialog
+/// Stroom has no dialog widget that a screen creates itself: a controller is shown in a dialog
 /// with `ShowPopupEvent`, whose `PopupType` picks the buttons (`CloseContent`, `OkCancelContent`,
 /// `AcceptRejectContent`, ...) and whose `PopupSize` makes it a `ResizableDialog` rather than a
-/// `Dialog`. Each story shows a stand-in presenter holding some text in a kind of dialog, with
+/// `Dialog`. Each story shows a stand-in controller holding some text in a kind of dialog, with
 /// Stroom's `PopupManager`.
 public final class DialogStories {
 
@@ -321,8 +321,8 @@ public final class DialogStories {
         }
 
         private void show(final StoryPopups popups) {
-            // A new presenter each time, as Stroom's presenters are, since PopupManager toggles a
-            // presenter that is shown twice
+            // A new controller each time, as Stroom's controllers are, since PopupManager toggles a
+            // controller that is shown twice
             final StoryContent controller = StoryContent.html(popups.getEventBus(), html);
             ShowPopupEvent.builder(controller)
                     .popupType(popupType)

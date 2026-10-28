@@ -43,7 +43,7 @@ import java.util.List;
 /// operation and timing the next painted frame as well. The grid gets five columns and generated
 /// rows.
 ///
-/// For the behaviour measurements, `replace` sends different data as a presenter would,
+/// For the behaviour measurements, `replace` sends different data as a controller would,
 /// `rebuildColumns` removes and re-adds every column as the dashboard does on a settings change,
 /// and `state` reports the keyboard row, focus, selection and scroll position.
 public final class BenchmarkStories {
@@ -150,7 +150,7 @@ public final class BenchmarkStories {
         return now() - start;
     }
 
-    /// Send different data, as a presenter does when new data arrives.
+    /// Send different data, as a controller does when new data arrives.
     ///
     /// @param what `same` (an unchanged refresh), `changed` (every row's values changed, same keys),
     ///             `fewer` (the first 3 rows only), `empty` (no rows) or `restore` (the rows the

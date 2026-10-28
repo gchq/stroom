@@ -76,7 +76,7 @@ import java.util.function.Consumer;
 
 /// The Map (visualisation) tab of a [FloorMapDoc] ([FloorMapMap]).
 ///
-/// This presenter coordinates the floor-map canvas and the timeline scrubber. Facts are
+/// This controller coordinates the floor-map canvas and the timeline scrubber. Facts are
 /// loaded by running a StroomQL query via [QueryModel]. Results are parsed by
 /// [#parseFacts(List, List)].
 ///
@@ -256,7 +256,7 @@ public class FloorMapMapController
     /// Whether the Map is the content on screen: this document's tab is fronted and the Map is its
     /// selected inner tab. Kept by [#onContentTabVisible].
     ///
-    /// Starts `true` because this presenter is created lazily, when the Map tab is first shown,
+    /// Starts `true` because this controller is created lazily, when the Map tab is first shown,
     /// and the Map is the tab a floor map opens on.
     private boolean mapOnScreen = true;
 
@@ -272,7 +272,7 @@ public class FloorMapMapController
     /// [FloorMapCanvasController] animates.
     ///
     /// The Map tab owns this query rather than [FloorMapQueryController] (the Events Query
-    /// tab): that presenter is created lazily, the first time its tab is opened, so a Map tab
+    /// tab): that controller is created lazily, the first time its tab is opened, so a Map tab
     /// depending on it showed no live entities at all — and therefore no movement animation — until
     /// the user happened to visit another tab.
     ///
@@ -350,7 +350,7 @@ public class FloorMapMapController
     private String docUuid;
 
     /// True once the document tab has been closed. Closing does not unbind this
-    /// presenter, so its event-bus handlers stay registered for the lifetime of
+    /// controller, so its event-bus handlers stay registered for the lifetime of
     /// the session; this stops a closed tab from taking any further part in the
     /// document's data flow. See [#onClose()].
     private boolean closed;
@@ -604,7 +604,7 @@ public class FloorMapMapController
     /// [QueryModel]s and the histogram query helper — then starts the timeline and
     /// triggers an initial time-change to load facts. The timeline range is only initialised on
     /// the first read; save-triggered re-reads preserve it. This tab no longer holds an
-    /// object-edit presenter; that form belongs to the Editor tab.
+    /// object-edit controller; that form belongs to the Editor tab.
     ///
     /// @param docRef   The floor map.
     /// @param document The floor map.
@@ -1207,14 +1207,14 @@ public class FloorMapMapController
     /// [FloorMapObject] is the event-entity type - this method does not produce them.
     private void parseFacts(final List<Column> resultColumns, final List<Row> resultRows) {
         // Same guard as publishEventEntities: a facts result already in flight when the
-        // tab was closed has nothing left to update, and this presenter is not unbound
+        // tab was closed has nothing left to update, and this controller isn't disposed
         // on close so the callback still arrives.
         if (closed || entity == null) {
             return;
         }
         // Column matching and row parsing live in FloorMapFactTableParser, on the JVM side
         // of the fence, so they can be tested. What stays here is the part that genuinely
-        // needs the presenter: resolving aliases from the document's schema, and the side
+        // needs the controller: resolving aliases from the document's schema, and the side
         // effects below.
         final ValueFormat vf = entity.getValueFormat();
         final Map<Role, String> aliasByRole = new HashMap<>();
@@ -1707,7 +1707,7 @@ public class FloorMapMapController
 
     /// Stops the clock and every search this tab owns when the document is closed.
     ///
-    /// Closing a document tab does not unbind its presenters, so without this a
+    /// Closing a document tab does not unbind its controllers, so without this a
     /// closed Map tab keeps a paused-but-live pipeline: the timeline's playback
     /// loop, three result stores on the server, and an event-bus handler that still
     /// accepts entity data for this document's UUID. A reopened copy of the

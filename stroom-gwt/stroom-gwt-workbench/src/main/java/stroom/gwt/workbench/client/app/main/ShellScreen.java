@@ -242,7 +242,7 @@ final class ShellScreen {
     // --------------------------------------------------------------------------------
 
     /// Passes keys to Stroom's app-wide key handler until stopped (when the story renders again),
-    /// as the main presenter's handlers on the page's body are never removed.
+    /// as the main controller's handlers on the page's body are never removed.
     private static final class StoryKeyHandler implements GlobalKeyHandler {
 
         private final GlobalKeyHandler delegate;

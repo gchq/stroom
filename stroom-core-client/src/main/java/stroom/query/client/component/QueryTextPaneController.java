@@ -141,8 +141,8 @@ public class QueryTextPaneController extends Controller {
                 }
 
                 editor.setText(data, true);
-////                rawPresenter.setHighlights(highlights);
-//                rawPresenter.setControlsVisible(playButtonVisible);
+////                rawController.setHighlights(highlights);
+//                rawController.setControlsVisible(playButtonVisible);
             }
         });
     }
@@ -291,7 +291,7 @@ public class QueryTextPaneController extends Controller {
     }
 
 //
-//    private void update(final TableController tablePresenter) {
+//    private void update(final TableController tableController) {
 //        boolean updating = false;
 //        String message = "";
 //
@@ -307,16 +307,16 @@ public class QueryTextPaneController extends Controller {
 //            currentRecordIndex = null;
 //            currentHighlightStrings = null;
 //
-//            if (tablePresenter != null) {
-//                final List<TableRow> selection = tablePresenter.getSelectedRows();
+//            if (tableController != null) {
+//                final List<TableRow> selection = tableController.getSelectedRows();
 //                if (selection != null && selection.size() == 1) {
-//                    final Field streamIdField = chooseBestField(tablePresenter, getTextSettings().getStreamIdField());
-//                    final Field partNoField = chooseBestField(tablePresenter, getTextSettings().getPartNoField());
-//                    final Field recordNoField = chooseBestField(tablePresenter, getTextSettings().getRecordNoField());
-//                    final Field lineFromField = chooseBestField(tablePresenter, getTextSettings().getLineFromField());
-//                    final Field colFromField = chooseBestField(tablePresenter, getTextSettings().getColFromField());
-//                    final Field lineToField = chooseBestField(tablePresenter, getTextSettings().getLineToField());
-//                    final Field colToField = chooseBestField(tablePresenter, getTextSettings().getColToField());
+//                  final Field streamIdField = chooseBestField(tableController, getTextSettings().getStreamIdField());
+//                    final Field partNoField = chooseBestField(tableController, getTextSettings().getPartNoField());
+//                  final Field recordNoField = chooseBestField(tableController, getTextSettings().getRecordNoField());
+//                  final Field lineFromField = chooseBestField(tableController, getTextSettings().getLineFromField());
+//                    final Field colFromField = chooseBestField(tableController, getTextSettings().getColFromField());
+//                    final Field lineToField = chooseBestField(tableController, getTextSettings().getLineToField());
+//                    final Field colToField = chooseBestField(tableController, getTextSettings().getColToField());
 //
 //                    // Just use the first row.
 //                    final TableRow selected = selection.get(0);
@@ -387,7 +387,7 @@ public class QueryTextPaneController extends Controller {
 //                                .withHighlight(highlight)
 //                                .build();
 //
-//                        currentHighlightStrings = tablePresenter.getHighlights();
+//                        currentHighlightStrings = tableController.getHighlights();
 //
 ////                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
 //
@@ -446,9 +446,9 @@ public class QueryTextPaneController extends Controller {
 //        }
 //    }
 //
-//    private Field chooseBestField(final TableController tablePresenter, final Field field) {
+//    private Field chooseBestField(final TableController tableController, final Field field) {
 //        if (field != null) {
-//            final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
+//            final TableComponentSettings tableComponentSettings = tableController.getTableSettings();
 //            final List<Field> fields = tableComponentSettings.getFields();
 //            // Try and choose by id.
 //            for (final Field f : fields) {
@@ -672,13 +672,13 @@ public class QueryTextPaneController extends Controller {
 //                .copy()
 //                .tableId(newTableId)
 //                .build());
-//        update(currentTablePresenter);
+//        update(currentTableController);
 //    }
 //
 //    @Override
 //    public void changeSettings() {
 //        super.changeSettings();
-//        update(currentTablePresenter);
+//        update(currentTableController);
 //    }
 //
 //    @Override

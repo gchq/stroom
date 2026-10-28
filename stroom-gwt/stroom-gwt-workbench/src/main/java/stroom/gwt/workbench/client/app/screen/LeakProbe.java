@@ -27,9 +27,9 @@ import com.google.gwt.user.client.Window;
 /// the screen many times and measure what each close leaves behind:
 ///
 /// * `close(dispose)` closes the screen as closing a Stroom tab does: its popups are hidden, its
-///   widgets removed, and, if `dispose` is true, the presenters made while opening it are disposed
+///   widgets removed, and, if `dispose` is true, the controllers made while opening it are disposed
 ///   (as `DocumentPlugin` does) and the clean ups its opening registered are run.
-/// * `open()` opens the screen again, as the story did (usually with new presenters).
+/// * `open()` opens the screen again, as the story did (usually with new controllers).
 /// * `shown()` is the number of widgets the opening has shown, and of popups shown.
 /// * `pending()` is the number of REST requests not yet answered.
 /// * `unowned()` is the number of live components that nothing owns (see [ControllerChecks]),

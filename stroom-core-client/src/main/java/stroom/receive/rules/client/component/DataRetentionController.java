@@ -81,7 +81,7 @@ public class DataRetentionController extends ContentTabController
         retentionPolicy.setOnDirtyChange(this::setDirty);
         this.dataRetentionImpactProvider = dataRetentionImpactProvider;
 
-//        settingsPresenter.addDirtyHandler(event -> {
+//        settingsController.addDirtyHandler(event -> {
 //            if (event.isDirty()) {
 //                setDirty(true);
 //            }
@@ -182,7 +182,7 @@ public class DataRetentionController extends ContentTabController
     }
 
     private boolean isDirty() {
-//        return retentionPolicyPresenter != null && retentionPolicyPresenter.isDirty();
+//        return retentionPolicyController != null && retentionPolicyController.isDirty();
         return dirty;
     }
 

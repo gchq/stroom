@@ -83,12 +83,12 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //    /**
 //     * 1. This method will create a new document and show it in the content pane.
 //     */
-//    void createDocument(final Presenter<?, ?> popup,
+//    void createDocument(final Controller<?, ?> popup,
 //    final DocRef folder,
 //    final String name,
 //    final PermissionInheritance permissionInheritance) {
 //        create(getType(), name, folder, permissionInheritance).onSuccess(docRef -> {
-//            // Hide the create document presenter.
+//            // Hide the create document controller.
 //            HidePopupEvent.fire(DocumentPlugin.this, popup);
 //
 //            highlight(docRef);
@@ -153,7 +153,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             if (!existing.isEmpty() && !duplicate) {
                 @SuppressWarnings("SequencedCollectionMethodCanBeUsed") // Not in GWT
                 final DocumentTabData existingTab = existing.get(0);
-                // Tell the content presenter to select this existing tab.
+                // Tell the content controller to select this existing tab.
                 SelectContentTabEvent.fire(this, existingTab);
 
                 if (existingTab instanceof DocumentEditorHost) {
@@ -342,7 +342,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
      * Called after {@link DocumentEditorHost#write} but before the document is sent to the server.
      * Subclasses may override to block the save when the document is in an invalid state.
      *
-     * @param doc The document as produced by the presenter's write step.
+     * @param doc The document as produced by the controller's write step.
      * @return A user-facing validation error message to display, or {@code null} if the
      *         document is valid and the save should proceed.
      */
@@ -360,7 +360,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
                 final DocRef newDocRef = newNode.getDocRef();
                 final Consumer<D> saveConsumer = saved -> {
-                    // Read the new document into this presenter.
+                    // Read the new document into this controller.
                     controller.setReadOnly(false);
                     controller.read(newDocRef, saved);
                     // Record that the open document has been switched.
@@ -371,7 +371,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 final Consumer<D> loadConsumer = document -> {
                     // Write to the newly created document.
                     document = controller.write(document);
-                    // Save the new document and read it back into the presenter.
+                    // Save the new document and read it back into the controller.
                     save(newDocRef,
                             document,
                             controller.getPostSaveAsCallback(),
@@ -435,7 +435,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     public void reload(final DocRef docRef) {
         // Get the existing tab data for this document.
         final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
-        // If we have an document edit presenter then reload the document.
+        // If we have an document edit controller then reload the document.
         for (final DocumentTabData tabData : tabDataList) {
             if (tabData instanceof DocumentEditorHost<?>) {
                 final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
@@ -584,13 +584,13 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                    final DocumentEditorHost<D> controller,
                                    final boolean ok) {
             if (ok) {
-                // Tell the presenter we are closing.
+                // Tell the controller we are closing.
                 controller.onClose();
                 // Cleanup reference to this tab data.
                 removeTabData(tabData);
             }
             // Tell the callback to close the tab if ok.
-            // Closing the tab releases the editor and all its presenters
+            // Closing the tab releases the editor and all its controllers
             callback.closeTab(ok);
         }
     }

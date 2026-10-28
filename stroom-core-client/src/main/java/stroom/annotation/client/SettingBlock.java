@@ -110,7 +110,7 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         return "button".equals(icon.getElement().getAttribute("role"));
     }
 
-    /// Makes the setting read only: its value is greyed and its chooser doesn't open (the presenter
+    /// Makes the setting read only: its value is greyed and its chooser doesn't open (the controller
     /// refuses the change too), and its ellipsis hint is hidden.
     ///
     /// @param readOnly Whether the setting is read only.

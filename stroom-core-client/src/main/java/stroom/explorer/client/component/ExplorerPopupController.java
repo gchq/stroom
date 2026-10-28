@@ -346,7 +346,7 @@ public class ExplorerPopupController extends Controller {
                                      final boolean initial) {
         // Is the selection type valid?
         if (isSelectionAllowed(selected)) {
-            // Drop down presenters need to know what the initial selection was so that they can
+            // Drop-down pickers need to know what the initial selection was so that they can
             // update the name of their selected item properly.
             if (initial) {
                 selectionChangeConsumer.accept(selected);

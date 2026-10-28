@@ -153,7 +153,7 @@ public class ProcessorList extends Component {
         // TODO Add tooltips to all the cols
 
         // TODO Why show the Pipeline col when you are viewing a PipelineDoc? Appreciate the filter
-        //  automatically includes a term for the pipe and that this presenter is used on folders but might
+        //  automatically includes a term for the pipe and that this controller is used on folders but might
         //  be better to hard code the pipe term on a PipelineDoc, make it not visible in the filter and prevent
         //  its use. Then you can remove the col.
 

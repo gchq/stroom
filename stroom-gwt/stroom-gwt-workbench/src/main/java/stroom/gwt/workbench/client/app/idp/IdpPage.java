@@ -45,7 +45,7 @@ import java.util.function.Consumer;
 ///   to the sign in page), which would navigate the story away. The story page's `navigate` events
 ///   (the browser's Navigation API) are cancelled and their URLs given to a listener, so a play can
 ///   check where Stroom would have gone;
-/// * showing: Stroom's `App.onModuleLoad` shows the page's presenter with `show()`, which makes it
+/// * showing: Stroom's `App.onModuleLoad` shows the page's controller with `show()`, which makes it
 ///   the whole page; a story adds its widget to itself instead, then calls its `onShown()`.
 public final class IdpPage {
 

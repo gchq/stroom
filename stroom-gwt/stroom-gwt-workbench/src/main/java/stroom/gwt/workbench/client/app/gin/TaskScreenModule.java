@@ -19,13 +19,13 @@ package stroom.gwt.workbench.client.app.gin;
 import com.google.gwt.inject.client.AbstractGinModule;
 
 
-/// The presenter and view bindings of Stroom's `TaskModule`
+/// The controller and component bindings of Stroom's `TaskModule`
 /// (`stroom/task/client/gin/TaskModule.java`), without its plugins and app services.
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
 public class TaskScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
     }

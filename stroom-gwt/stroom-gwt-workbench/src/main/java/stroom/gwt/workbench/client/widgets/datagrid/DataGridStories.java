@@ -690,7 +690,7 @@ public final class DataGridStories {
         final List<Person> original = DataGridRows.people();
         addSortableColumns(grid);
         final Spy onSortChange = context.fn(ON_SORT_CHANGE);
-        // As Stroom's client-sorted list presenters: the data model sorts on the grid's sort list
+        // As Stroom's client-sorted list controllers: the data model sorts on the grid's sort list
         grid.addColumnSortHandler(event -> {
             final List<Person> rows = new ArrayList<>(original);
             final Comparator<Person> comparator = comparator(grid.getColumnSortList());
@@ -1046,7 +1046,7 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Layout
 
-    /// The grid in Stroom's [PagerPanel], as Stroom's list presenters show their grids.
+    /// The grid in Stroom's [PagerPanel], as Stroom's list controllers show their grids.
     private static Widget paged(final DataGrid<?> grid) {
         final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);

@@ -70,7 +70,7 @@ public class FloorMapDockController extends Controller {
     /// Adds a tab showing the given content; its owner keeps owning it.
     ///
     /// @param label   the tab label
-    /// @param content the panel shown when the tab is active, e.g. a presenter or component
+    /// @param content the panel shown when the tab is active, e.g. a component
     /// @return the [TabData] handle for the new tab
     public TabData addTab(final String label, final IsWidget content) {
         final TabData tab = new TabDataImpl(label);
@@ -82,7 +82,7 @@ public class FloorMapDockController extends Controller {
     /// tab's presentation (icon/tooltip/closeable) via the supplied [TabData].
     ///
     /// @param tab     the tab descriptor
-    /// @param content the panel shown when the tab is active, e.g. a presenter or component
+    /// @param content the panel shown when the tab is active, e.g. a component
     public void addTab(final TabData tab, final IsWidget content) {
         tabContent.put(tab, content instanceof final Layer layer
                 ? layer

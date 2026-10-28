@@ -18,11 +18,11 @@ package stroom.data.client;
 
 public enum DisplayMode {
     /**
-     * Displays the presenter in a popup modal dialog
+     * Displays the controller in a popup modal dialog
      */
     DIALOG("dialog"),
     /**
-     * Displays the presenter in a top level stroom tab (not a browser tab)
+     * Displays the controller in a top level stroom tab (not a browser tab)
      */
     STROOM_TAB("tab");
 

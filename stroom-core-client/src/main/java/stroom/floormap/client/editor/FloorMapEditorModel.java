@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 /// GWT-free model for the FloorMap Editor tab.
 ///
 /// Holds the Editor's shared selection state and its pure business logic, kept
-/// out of the GWT presenter. It has no dependencies on GWT, presenters, or any
+/// out of the GWT controller. It has no dependencies on GWT, controllers, or any
 /// client-side framework, making it fully testable with standard JUnit.
 ///
 /// ### Shared selection model (single source of truth)
@@ -60,7 +60,7 @@ import java.util.function.Consumer;
 /// ### Staged saves
 ///
 /// All edits are buffered in [FloorMapPendingChanges], which is an
-/// append-only journal. The presenter flushes it to the server and then clears
+/// append-only journal. The controller flushes it to the server and then clears
 /// **only the prefix it actually sent**: it snapshots the sent count
 /// before the request and calls [FloorMapPendingChanges#clearSent(int)] on
 /// success.
@@ -76,7 +76,7 @@ import java.util.function.Consumer;
 ///   unsaved edits survive to be retried.
 ///
 /// Do not clear the whole buffer as part of a flush. An earlier version of this
-/// documentation told the presenter to do exactly that "on success or failure",
+/// documentation told the controller to do exactly that "on success or failure",
 /// which would have discarded concurrent edits on success and thrown away the
 /// user's work on failure. The method it referred to has been removed.
 public class FloorMapEditorModel {

@@ -106,9 +106,9 @@ import java.util.function.Consumer;
 ///
 /// ### Shared selection model (single source of truth)
 ///
-/// The state itself lives in [FloorMapEditorModel], which this presenter
+/// The state itself lives in [FloorMapEditorModel], which this controller
 /// owns and is the only thing that mutates. Child panels signal changes to this
-/// presenter only; they never call each other directly. What the model holds:
+/// controller only; they never call each other directly. What the model holds:
 ///
 /// - `selectedFactKey` — key of the selected fact, or `null`
 /// - `selectedTime` — current timeline position in ms
@@ -140,7 +140,7 @@ public class FloorMapEditorController
     private static final int DISCOVER_PAGE_SIZE = 10_000;
 
     // -----------------------------------------------------------------------
-    // Child presenters
+    // Child controllers
     // -----------------------------------------------------------------------
 
     private final FloorMapEditor view;
@@ -236,7 +236,7 @@ public class FloorMapEditorController
                 new java.util.Random(), Console::warn);
 
         // Each child is obtained via Provider so GIN creates a fresh instance
-        // for this presenter rather than sharing singletons used elsewhere.
+        // for this controller rather than sharing singletons used elsewhere.
         this.canvas = make(canvasProvider);
         this.floorMapTimeline = make(timelineProvider);
         this.floorMapFactList = make(factListProvider);
@@ -281,7 +281,7 @@ public class FloorMapEditorController
         // canvas itself. The timeline gets its own help button; the Editor-only
         // Fact List and Time List panels add theirs. (The read-only Map tab
         // reuses the canvas and timeline but is not a HasToolbar for this
-        // presenter, so no map-help button appears there.)
+        // controller, so no map-help button appears there.)
         helpToolbar = createHelpToolbar();
         floorMapTimeline.setHelpContent(FloorMapEditorHelp.timeline());
 
@@ -471,7 +471,7 @@ public class FloorMapEditorController
 
     /// The document as this editing session sees it: the loaded entity with any
     /// pending area upgrade applied. Must be used wherever the document is
-    /// handed to a child presenter that resolves schema roles itself (the
+    /// handed to a child controller that resolves schema roles itself (the
     /// object-edit dialog), or fill/opacity/geometry would silently resolve
     /// against the pre-upgrade schema until the document is saved.
     private FloorMapDoc sessionEntity() {
@@ -608,7 +608,7 @@ public class FloorMapEditorController
 
     /// Stops the clock when the document is closed.
     ///
-    /// Closing a document tab does not unbind its presenters, so a timeline
+    /// Closing a document tab does not unbind its controllers, so a timeline
     /// left playing keeps its animation loop — and the per-tick fetches it drives
     /// — running for the rest of the session.
     private void onClose() {
@@ -675,7 +675,7 @@ public class FloorMapEditorController
     }
 
     /// Builds an [ApplyChangesRequest] from the model's pending changes.
-    /// This method lives in the presenter (not the model) because the
+    /// This method lives in the controller (not the model) because the
     /// `sqlstore.shared` types are not available in `stroom-core-shared`.
     private ApplyChangesRequest buildApplyChangesRequest() {
         final List<ChangeOperation> ops = new ArrayList<>();

@@ -237,7 +237,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
         });
     }
 
-    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    /// Says what shows the progress of the requests this makes, e.g. the controller that uses it.
     ///
     /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {

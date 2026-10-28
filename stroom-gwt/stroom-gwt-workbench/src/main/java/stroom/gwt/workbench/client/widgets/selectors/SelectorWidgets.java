@@ -28,7 +28,7 @@ import stroom.widget.dropdowntree.client.DropDownBox;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Provider;
 
-/// Creates Stroom's selection box presenters as Stroom's GIN modules would, with the services of
+/// Creates Stroom's selection box controllers as Stroom's GIN modules would, with the services of
 /// a story's [ScreenHarness], for the `Widgets/Selectors/*` stories and the widgets that contain
 /// them (e.g. the expression builder's term editors).
 public final class SelectorWidgets {

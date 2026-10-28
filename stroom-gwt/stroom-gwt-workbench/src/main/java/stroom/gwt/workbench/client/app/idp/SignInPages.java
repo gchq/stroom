@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 /// Renders one of the internal identity provider's pages (sign in, authentication error, password
 /// reset) as Stroom's sign in host page shows it, for the stories of `App/IdP/*`: the page's
-/// presenter from an [IdpScreenGinjector], filling the canvas, revealed once the harness has
+/// controller from an [IdpScreenGinjector], filling the canvas, revealed once the harness has
 /// started up, with the URL's query parameters and navigation handled by [IdpPage].
 ///
 /// When Stroom navigates away (e.g. after signing in), a message says where it went: in place of

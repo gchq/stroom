@@ -289,7 +289,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         this.fetchDraftAssets(document);
     }
 
-    /// Called by the owning presenter (e.g. VisualisationEditor, FloorMapDocEditor) via the
+    /// Called by the owning controller (e.g. VisualisationEditor, FloorMapDocEditor) via the
     /// DocumentPlugin post-save callback, to save the assets.
     /// Requests the server to copy data from the draft area to the live area of the database.
     ///
@@ -309,7 +309,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         }
     }
 
-    /// Called by the owning presenter via the DocumentPlugin post-save callback, to do SaveAs.
+    /// Called by the owning controller via the DocumentPlugin post-save callback, to do SaveAs.
     /// SaveAs does the following:
     ///
     /// 1. Copies the live assets to the new document

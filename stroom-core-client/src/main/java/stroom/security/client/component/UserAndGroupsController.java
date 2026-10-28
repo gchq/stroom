@@ -76,14 +76,14 @@ public class UserAndGroupsController extends Controller {
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus                  The application's event bus.
-    /// @param view                      The content.
-    /// @param userListPresenterProvider Makes the three lists.
-    /// @param createUserProvider        Makes the dialog that creates a group (or user).
-    /// @param actions                   Edits and deletes groups.
-    /// @param userRefPopupProvider      Makes the popup that picks a user or group.
-    /// @param uiConfigCache             Says whether users come from an external identity provider.
-    /// @param restFactory               Changes group membership.
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       The content.
+    /// @param userListControllerProvider Makes the three lists.
+    /// @param createUserProvider         Makes the dialog that creates a group (or user).
+    /// @param actions                    Edits and deletes groups.
+    /// @param userRefPopupProvider       Makes the popup that picks a user or group.
+    /// @param uiConfigCache              Says whether users come from an external identity provider.
+    /// @param restFactory                Changes group membership.
     @Inject
     public UserAndGroupsController(final EventBus eventBus,
                                    final UserAndGroups view,

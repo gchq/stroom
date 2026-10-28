@@ -49,8 +49,7 @@ import java.util.List;
 ///     <dg:DataGrid ui:field="dataGrid" tableName="Caches"/>
 /// </dg:PagerPanel>
 /// ```
-///
-/// A presenter's view as well as a component, until the list presenters become controllers.
+
 public class PagerPanel extends Component implements TaskMonitorFactory, HasWidgets {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -72,7 +71,7 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
     private final List<Widget> children = new ArrayList<>();
     private int taskCount;
 
-    /// Makes an empty panel, e.g. one a template declares, or one GIN makes for a list presenter.
+    /// Makes an empty panel, e.g. one a template declares, or one GIN makes for a list controller.
     public PagerPanel() {
         initWidget(BINDER.createAndBindUi(this));
     }

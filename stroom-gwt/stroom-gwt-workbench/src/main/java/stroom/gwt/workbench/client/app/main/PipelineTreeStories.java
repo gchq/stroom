@@ -140,7 +140,7 @@ public final class PipelineTreeStories {
                     play.expect("the elements after removing xslt", () -> elementIds(withoutXslt()))
                             .toEqual(List.of("Source", "parser"));
                     // Property and reference edits are made by the property and reference list
-                    // presenters, not PipelineModel (see PipelineEditor's stories), and Stroom always
+                    // controllers, not PipelineModel (see PipelineEditor's stories), and Stroom always
                     // adds Source (fixSourceNodes), so this story makes no model checks of those
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();

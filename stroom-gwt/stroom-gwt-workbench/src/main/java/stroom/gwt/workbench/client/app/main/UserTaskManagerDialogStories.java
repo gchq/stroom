@@ -42,7 +42,7 @@ import java.util.List;
 /// fetches the user's tasks from each (`GET /task/v1/user/{node}`), so the fixtures answer every
 /// poll with the same reply. Its timer only stops when the dialog is asked to close, so the story
 /// registers it with `ScreenHarness.ownPopup`. Terminating a task is
-/// `POST /task/v1/terminate/{node}`, checked with the request spy. The presenter comes from GIN and
+/// `POST /task/v1/terminate/{node}`, checked with the request spy. The controller comes from GIN and
 /// is opened by its event, as `TaskManagerPlugin` opens it.
 public final class UserTaskManagerDialogStories {
 

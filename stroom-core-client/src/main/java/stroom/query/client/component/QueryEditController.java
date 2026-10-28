@@ -107,8 +107,8 @@ public class QueryEditController
     /// @param queryHelp               The query's help.
     /// @param queryToolbar            Runs the query, over a time range.
     /// @param editor                  The query's editor.
-    /// @param queryResultPresenter    The results as a table.
-    /// @param visPresenterProvider    Makes the results' visualisation.
+    /// @param queryResultController   The results as a table.
+    /// @param visControllerProvider   Makes the results' visualisation.
     /// @param restFactory             Runs the query.
     /// @param dateTimeSettingsFactory Gives the query the user's time settings.
     /// @param resultStoreModel        Keeps the query's results.

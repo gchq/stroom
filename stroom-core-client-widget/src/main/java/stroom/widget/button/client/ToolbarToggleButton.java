@@ -43,7 +43,7 @@ public class ToolbarToggleButton extends ToolbarButton implements ToggleButtonVi
         return pressed;
     }
 
-    /// As [#setPressed(boolean)], for presenters given it as a [ToggleButtonView].
+    /// As [#setPressed(boolean)], for controllers given it as a [ToggleButtonView].
     ///
     /// @param on Whether the button is pressed (on).
     @Override
@@ -51,7 +51,7 @@ public class ToolbarToggleButton extends ToolbarButton implements ToggleButtonVi
         setPressed(on);
     }
 
-    /// As [#isPressed()], for presenters given it as a [ToggleButtonView].
+    /// As [#isPressed()], for controllers given it as a [ToggleButtonView].
     ///
     /// @return Whether the button is pressed (on).
     @Override

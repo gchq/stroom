@@ -53,7 +53,7 @@ import com.google.gwt.inject.client.GinModules;
 
 /// A [ScreenGinjector] for the 'processing' screens (node groups, processors and their filters,
 /// processor profiles, pipelines and stepping, data retention and receipt rules, execution
-/// schedules and the data browser), which creates their presenters and views as Stroom's GIN
+/// schedules and the data browser), which creates their controllers and components as Stroom's GIN
 /// modules do. Create one each time the story renders and give it to the harness with
 /// `ScreenHarness.builder(...).injector(...)`.
 ///

@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Objects;
 
 /// Shows a controller's widget in a [LayerContainer], e.g. as the body of one of a document's
-/// tabs, as a presenter is shown. Make one per controller and keep it, as the container tells its
+/// tabs. Make one per controller and keep it, as the container tells its
 /// layers apart by identity. Focusing the layer focuses the controller.
 public final class ControllerLayer implements Layer, Focus {
 
@@ -60,7 +60,7 @@ public final class ControllerLayer implements Layer, Focus {
         }
     }
 
-    /// Puts the focus in the content, as a presenter shown as a layer is focused, e.g. when its tab
+    /// Puts the focus in the content, e.g. when its tab
     /// is chosen: a content that is a [Focus] focuses itself, any other its first tab stop
     /// ([ContentFocus]).
     @Override

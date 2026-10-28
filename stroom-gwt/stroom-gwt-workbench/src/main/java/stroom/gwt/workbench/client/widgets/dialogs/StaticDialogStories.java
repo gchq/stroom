@@ -64,7 +64,7 @@ public final class StaticDialogStories {
                     style.setProperty("color", "var(--text-color)");
                     final StoryContent controller = new StoryContent(popups.getEventBus(), body);
 
-                    // As the IdP presenters show themselves
+                    // As the IdP controllers show themselves
                     ShowPopupEvent.builder(controller)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .icon(SvgImage.PASSWORD)

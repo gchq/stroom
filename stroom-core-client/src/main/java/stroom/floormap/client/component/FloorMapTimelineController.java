@@ -448,7 +448,7 @@ public class FloorMapTimelineController extends Controller {
     }
 
     /// Registers a callback to be invoked whenever the current time jumps non-continuously
-    /// (scrub commit, step, stop-at-end, loop-around).  Used by the canvas presenter to
+    /// (scrub commit, step, stop-at-end, loop-around).  Used by the canvas controller to
     /// discard any in-flight movement animations and trail data.
     ///
     /// @param handler Called on every discontinuous time jump.
@@ -748,7 +748,7 @@ public class FloorMapTimelineController extends Controller {
     /// Adds a help button to the timeline's right-hand controls.
     ///
     /// Called by the Editor tab only, so the read-only Map tab (which shares
-    /// this presenter) shows no help button. Clicking the button (or activating
+    /// this controller) shows no help button. Clicking the button (or activating
     /// it from the keyboard) opens the standard in-app help popup.
     ///
     /// @param helpContent the HTML help body to show in the popup

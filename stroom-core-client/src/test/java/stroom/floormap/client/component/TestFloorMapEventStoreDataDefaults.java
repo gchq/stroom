@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// The Data tab's default query, and its agreement with the events query it borrows columns from.
 ///
-/// These live off the presenter because `AbstractQueryDataController` calls
+/// These live off the controller because `AbstractQueryDataController` calls
 /// `GWT.create()` in a static initialiser: referring to any static member of a subclass, even
 /// a string constant, initialises that superclass and throws `ExceptionInInitializerError`
 /// outside a browser. Holding them apart is what makes them reachable at all.

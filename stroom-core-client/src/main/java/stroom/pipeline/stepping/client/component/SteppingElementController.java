@@ -571,7 +571,7 @@ public class SteppingElementController extends Controller {
             codeEditor.setMode(getMode(element));
             codeEditor.getFormatAction().setAvailable(true);
 
-            // Fire a change event on any edit so the enclosing presenter re-evaluates dirty state via
+            // Fire a change event on any edit so the enclosing controller re-evaluates dirty state via
             // onChange(). This is a "something changed" signal, not a dirty assertion - the actual
             // dirtiness is recomputed by comparison in refreshDirty(), so a reverted edit returns to
             // clean. Note that element code is not part of the pipeline structure, so this must not

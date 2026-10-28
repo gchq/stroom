@@ -23,7 +23,7 @@ import com.google.gwt.inject.client.AbstractGinModule;
 /// (`stroom/sqlstore/client/gin/SqlTemporalStoreModule.java`).
 public class SqlTemporalStoreScreenModule extends AbstractGinModule {
 
-    /// Binds the presenter and view.
+    /// Binds the controller and component.
     @Override
     protected void configure() {
     }

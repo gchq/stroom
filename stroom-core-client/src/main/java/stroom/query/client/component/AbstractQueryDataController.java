@@ -75,7 +75,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
 
     /// @param eventBus                The application's event bus.
     /// @param view                    The content.
-    /// @param tablePresenter          The results table.
+    /// @param tableController         The results table.
     /// @param restFactory             Runs the query and makes the dashboard.
     /// @param dateTimeSettingsFactory Gives the query the user's time settings.
     /// @param resultStoreModel        Keeps the query's results.

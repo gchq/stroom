@@ -47,7 +47,7 @@ import java.util.List;
 ///
 /// It creates an event bus with Stroom's [PopupManager], so popups shown with `ShowPopupEvent`
 /// appear on the page's body as in Stroom, and hides those still open with Stroom's
-/// `HidePopupEvent` when the story renders again (which unbinds their presenters and restores
+/// `HidePopupEvent` when the story renders again (which disposes those shown once and restores
 /// the focus). Create it in `render`, each time the story renders.
 public final class StoryPopups {
 
@@ -98,7 +98,7 @@ public final class StoryPopups {
         return this;
     }
 
-    /// Passes on what widgets with no event bus ask of the app, as Stroom's core presenter does:
+    /// Passes on what widgets with no event bus ask of the app, as Stroom's core controller does:
     /// the menus they ask for (e.g. a split pane's splitter's, or a data grid's context menu, with
     /// `MenuRequest`), shown with [#withMenus]'s menus, and the links they open
     /// (`OpenHyperlinkRequest`) and the tables they ask Stroom AI about (`AskStroomAiTableRequest`),

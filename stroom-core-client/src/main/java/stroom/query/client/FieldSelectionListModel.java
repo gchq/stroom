@@ -26,7 +26,7 @@ public interface FieldSelectionListModel extends
         SelectionListModel<QueryField, FieldInfoSelectionItem> {
     void findFieldByName(String fieldName, Consumer<QueryField> consumer);
 
-    /// Says what shows the progress of the requests it makes, e.g. the presenter that uses it.
+    /// Says what shows the progress of the requests it makes, e.g. the controller that uses it.
     ///
     /// @param taskMonitorFactory What shows their progress.
     void setTaskMonitorFactory(TaskMonitorFactory taskMonitorFactory);

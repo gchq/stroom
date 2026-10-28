@@ -31,21 +31,21 @@ import stroom.task.client.component.UserTaskManagerController;
 
 import com.google.gwt.inject.client.GinModules;
 
-/// A [ScreenGinjector] that also creates Stroom's screens (presenters and their views) as Stroom's
-/// GIN modules do, for stories to get their presenter from rather than creating it, and its
-/// graph of child presenters and views, with `new`:
+/// A [ScreenGinjector] that also creates Stroom's screens (controllers and their components) as Stroom's
+/// GIN modules do, for stories to get their controller from rather than creating it, and its
+/// graph of child controllers and components, with `new`:
 /// ```
 /// final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final JobsController presenter = injector.getJobsController();
+/// final JobsController controller = injector.getJobsController();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
 /// Its modules mirror Stroom's (`XxxScreenModule` for Stroom's `XxxModule`), without the plugins
-/// and app services, and [ScreenViewsModule] binds the shared widgets. Presenters are created as
+/// and app services, and [ScreenViewsModule] binds the shared widgets. Controllers are created as
 /// in Stroom, so they are bound (`onBind`) as soon as they are created.
 ///
-/// To add a screen: add a getter for its presenter here, under its area's comment, and, if GIN
+/// To add a screen: add a getter for its controller here, under its area's comment, and, if GIN
 /// reports a missing binding, add the mirror of the Stroom module that binds it to the
 /// `@GinModules` list (one module per line, so that parallel work rarely touches the same lines).
 /// See WRITING-STORIES.md.

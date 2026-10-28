@@ -51,7 +51,7 @@ import java.util.List;
 /// | `POST /explorer/v2/advancedFindWithPermissions` | the Document Permissions tab |
 ///
 /// The signed in user is `admin` holding `MANAGE_USERS_PERMISSION` (not `MANAGE_API_KEYS`), so the
-/// tab set has Application Permissions and not API Keys. The presenter comes from GIN; a user's tab
+/// tab set has Application Permissions and not API Keys. The controller comes from GIN; a user's tab
 /// is opened as `UserTabPlugin.open` opens it (`setUserRef(bob)`), the 'User Profile' tab as
 /// `UserPlugin.open` does (`setUserRef` with the signed in user).
 public final class UserTabScreenStories {

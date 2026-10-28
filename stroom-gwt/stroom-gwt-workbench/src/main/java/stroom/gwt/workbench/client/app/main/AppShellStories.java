@@ -59,7 +59,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stories of `App/Main/AppShell`: Stroom's app shell put together by [ShellScreen] from Stroom's
-/// real presenters and plugins: the main view (its main menu), the explorer (`NavigationController`:
+/// real controllers and plugins: the main view (its main menu), the explorer (`NavigationController`:
 /// the tree, its toolbar and the current activity), the document tabs (`ContentTabPaneController`),
 /// the explorer's and tabs' menus and document actions (`DocumentPluginEventManager`), keyboard
 /// shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary, Feed and Folder editors.

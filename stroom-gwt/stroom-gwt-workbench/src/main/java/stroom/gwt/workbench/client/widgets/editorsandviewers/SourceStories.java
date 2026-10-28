@@ -201,7 +201,7 @@ public final class SourceStories {
         return harness.asWidget();
     }
 
-    /// Creates the presenter and its views, as GIN would.
+    /// Creates the controller and its components, as GIN would.
     static SourceViewerController sourceController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final SourceProgressBar sourceProgressBar = new SourceProgressBar();

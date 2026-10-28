@@ -28,7 +28,7 @@ import com.google.inject.Singleton;
 /// the event, as the screen's area plugin does in Stroom.
 public class ContentAppScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
         bind(ContentManager.class).in(Singleton.class);

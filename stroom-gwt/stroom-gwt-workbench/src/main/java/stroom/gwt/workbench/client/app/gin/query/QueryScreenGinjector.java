@@ -38,7 +38,7 @@ import com.google.gwt.inject.client.GinModules;
 
 /// A [ScreenGinjector] for the query batch's stories (`App/Editors/QueryEditor`, the View,
 /// Plan B, analytic rule, report and statistic store editors, and the query result table and
-/// visualisation), creating Stroom's presenters and views as Stroom's GIN modules do, as
+/// visualisation), creating Stroom's controllers and components as Stroom's GIN modules do, as
 /// `AppScreenGinjector` does for the pilot's stories. Create one each time the story renders.
 @GinModules({
         ScreenViewsModule.class,

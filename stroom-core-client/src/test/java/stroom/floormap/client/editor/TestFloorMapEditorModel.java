@@ -714,7 +714,7 @@ class TestFloorMapEditorModel {
         model.getPendingChanges().recordCreation(entry("k1", 100, "{}"));
         assertThat(model.hasPendingChanges()).isTrue();
 
-        // The presenter snapshots how much it is about to send.
+        // The controller snapshots how much it is about to send.
         final int sentCount = model.getPendingChanges().getChanges().size();
 
         // The user edits again while the request is in flight.

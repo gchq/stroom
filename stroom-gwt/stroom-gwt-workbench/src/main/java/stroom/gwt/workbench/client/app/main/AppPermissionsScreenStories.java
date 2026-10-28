@@ -55,7 +55,7 @@ import java.util.Set;
 /// | `POST /permission/app/v1/changeAppPermission` (the request spy) | changing a permission |
 /// | a spy on Stroom's `OpenApiKeysScreenEvent` | opening a user's API keys |
 ///
-/// The user holds `MANAGE_USERS_PERMISSION` (none for `ReadOnlyWithoutManageUsers`). The presenter
+/// The user holds `MANAGE_USERS_PERMISSION` (none for `ReadOnlyWithoutManageUsers`). The controller
 /// comes from GIN and is opened as `AppPermissionsPlugin` opens it (refreshed).
 public final class AppPermissionsScreenStories {
 

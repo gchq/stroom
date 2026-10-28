@@ -190,7 +190,7 @@ public class Main extends Component {
     // Persistent content widgets (westWidget, centerWidget, state.dockedWidget,
     // mainToolbar) are detached from their current parents and re-attached
     // into fresh disposable containers. This preserves all DOM state, event
-    // handlers, scroll positions, and presenter bindings.
+    // handlers, scroll positions, and controller bindings.
     private void rebuildLayout() {
         // ── Step 1: Detach all persistent widgets from current parents ──
         if (westWidget != null) {

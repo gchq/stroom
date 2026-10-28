@@ -33,7 +33,7 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    /// Whether the presenter allows Accept, as set by [#setEnabled(DialogAction, boolean)]. Kept
+    /// Whether the controller allows Accept, as set by [#setEnabled(DialogAction, boolean)]. Kept
     /// apart from the button's own state, which [#setEnabled(boolean)] toggles around every hide
     /// request.
     private boolean acceptAllowed = true;

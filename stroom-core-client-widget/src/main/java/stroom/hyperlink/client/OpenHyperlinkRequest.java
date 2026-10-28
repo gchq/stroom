@@ -25,7 +25,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /// Opens a link from a widget that has no event bus to fire a [HyperlinkEvent] on (e.g. a data
 /// grid's context menu). The widget makes a request with [#fire], which bubbles up the page to the
-/// one relay installed for the page ([#relay], by Stroom's core presenter), which fires the
+/// one relay installed for the page ([#relay], by Stroom's core controller), which fires the
 /// [HyperlinkEvent] on the event bus.
 public final class OpenHyperlinkRequest {
 
@@ -46,7 +46,7 @@ public final class OpenHyperlinkRequest {
     /// Opens the links that widgets on the page ask for, by firing a [HyperlinkEvent] for each,
     /// whose work is shown as the app's (a [DefaultTaskMonitorFactory] on the same handlers).
     ///
-    /// @param handlers What the [HyperlinkEvent]s are fired on, e.g. a presenter, or an event bus's
+    /// @param handlers What the [HyperlinkEvent]s are fired on, e.g. a controller, or an event bus's
     ///                 `fireEvent`.
     /// @return The registration that stops the relay.
     public static HandlerRegistration relay(final HasHandlers handlers) {

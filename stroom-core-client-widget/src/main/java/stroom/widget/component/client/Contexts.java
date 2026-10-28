@@ -45,7 +45,7 @@ public final class Contexts {
     public static final ContextKey<DocRef> DOCUMENT = ContextKey.of("document", null);
 
     /// What to tell when the user changes something the document holds, so that it can work out
-    /// whether it is dirty; see [DirtyTracker]. Provided by a document's presenter or controller.
+    /// whether it is dirty; see [DirtyTracker]. Provided by a document's controller.
     /// Parts tell it through `markChanged()`, which asks their owner's, so a document part that
     /// is itself a document tells the one above it. It tells nothing when nothing provides it.
     public static final ContextKey<DirtyTracker> DIRTY = ContextKey.of("dirty", DirtyTracker.NONE);

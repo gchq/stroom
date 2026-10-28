@@ -143,11 +143,11 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
 
 
     /**
-     * A link/sub tab that is common to all document presenters
+     * A link/sub tab that is common to all document controllers
      */
     public enum CommonDocLinkTab {
         /**
-         * The link/sub tab that the presenter deems to be its default tab.
+         * The link/sub tab that the controller deems to be its default tab.
          */
         DEFAULT,
         /**

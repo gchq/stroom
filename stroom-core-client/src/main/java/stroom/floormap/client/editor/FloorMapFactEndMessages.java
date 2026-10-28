@@ -25,7 +25,7 @@ import java.util.Map;
 /// Builds the messages shown when deleting facts from a point in time (see
 /// [FloorMapEditorModel#stageFactEnd]).
 ///
-/// Pure string logic, kept out of the GWT presenter so it is unit-testable on the JVM.
+/// Pure string logic, kept out of the GWT controller so it is unit-testable on the JVM.
 public final class FloorMapFactEndMessages {
 
     /// The most objects named in one sentence, so a large selection does not produce an

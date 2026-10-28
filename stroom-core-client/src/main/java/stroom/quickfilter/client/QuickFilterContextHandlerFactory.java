@@ -84,8 +84,8 @@ public class QuickFilterContextHandlerFactory {
 
     /**
      * @param context            which quick filter this is - see {@link QuickFilterContext}
-     * @param hasHandlers        where to fire the drop-down menu from; normally the presenter
-     * @param taskMonitorFactory what to show busy while the history loads; normally the presenter
+     * @param hasHandlers        where to fire the drop-down menu from; normally the controller
+     * @param taskMonitorFactory what to show busy while the history loads; normally the controller
      */
     public QuickFilterContextHandler create(final QuickFilterContext context,
                                             final HasHandlers hasHandlers,

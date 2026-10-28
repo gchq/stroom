@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The screen only makes Stroom's start-up requests (the session info and the UI config's
 /// `welcomeHtml`), so the story has no fixtures of its own: the harness's start-up fixtures answer
 /// them with their defaults (the `admin` user, build `SNAPSHOT`, node `node1a`, the usual "About
-/// Stroom" HTML). The presenter's UI config cache and date formatter come from the harness's
+/// Stroom" HTML). The controller's UI config cache and date formatter come from the harness's
 /// injector.
 public final class WelcomeScreenStories {
 

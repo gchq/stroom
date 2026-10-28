@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// sent are checked on the request spy), `GET /account/v1/{id}` (the re-read after
 /// Unlock/Reactivate) and `POST /account/v1/` (a create). The account is given to the dialog as
 /// `AccountsListController` gives it (the selected row), and `onChanged` is a spy on the dialog's
-/// change handler (which Stroom gives the grid's `refresh`). The presenter comes from GIN.
+/// change handler (which Stroom gives the grid's `refresh`). The controller comes from GIN.
 public final class EditAccountDialogStories {
 
     /// The name of the spy recording the dialog's change handler (the host grid's refresh).

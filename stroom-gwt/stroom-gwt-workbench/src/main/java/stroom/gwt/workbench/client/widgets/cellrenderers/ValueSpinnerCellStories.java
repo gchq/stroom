@@ -165,7 +165,7 @@ public final class ValueSpinnerCellStories {
         return within(play, row).getByRole("spinbutton", NAME);
     }
 
-    /// A grid of [#ROWS] with a column of spinners, as Stroom's list presenters build them.
+    /// A grid of [#ROWS] with a column of spinners, as Stroom's list controllers build them.
     private static Widget grid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Map<String, Integer> values = new LinkedHashMap<>();

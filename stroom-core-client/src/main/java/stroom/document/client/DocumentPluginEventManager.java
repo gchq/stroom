@@ -351,7 +351,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getDestinationFolder(),
                         event.getPermissionInheritance(),
                         explorerNode -> {
-                            // Hide the create document presenter.
+                            // Hide the create document controller.
                             event.getHidePopupRequestEvent().hide();
 
                             highlight(explorerNode);
@@ -385,7 +385,7 @@ public class DocumentPluginEventManager extends Plugin {
                 event.isAllowRename(),
                 event.getDocName(),
                 event.getPermissionInheritance(), result -> {
-                    // Hide the copy document presenter.
+                    // Hide the copy document controller.
                     event.getHidePopupRequestEvent().hide();
 
                     if (NullSafe.isNonEmptyString(result.getMessage())) {
@@ -404,7 +404,7 @@ public class DocumentPluginEventManager extends Plugin {
         // 8.3. Handle entity move events.
         getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
-                    // Hide the move document presenter.
+                    // Hide the move document controller.
                     event.getHidePopupRequestEvent().hide();
 
                     if (NullSafe.isNonEmptyString(result.getMessage())) {
@@ -445,7 +445,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 9. Handle entity rename events.
         getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
-            // Hide the rename document presenter.
+            // Hide the rename document controller.
             event.getHidePopupRequestEvent().hide();
 
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
@@ -715,7 +715,7 @@ public class DocumentPluginEventManager extends Plugin {
 //    void copyDocument(final Controller popup, final DocRef document, final DocRef folder,
 //                      final PermissionInheritance permissionInheritance) {
 //        copy(document, folder, permissionInheritance).onSuccess(newDocRef -> {
-//            // Hide the copy document presenter.
+//            // Hide the copy document controller.
 //            HidePopupEvent.fire(DocumentPluginEventManager.this, popup);
 //
 //            // Select it in the explorer tree.
@@ -1034,7 +1034,7 @@ public class DocumentPluginEventManager extends Plugin {
         if (docRef != null && docRef.getType() != null) {
             final TabPlugin tabPlugin = documentPluginRegistry.get(docRef.getType());
             if (tabPlugin instanceof final DocumentPlugin<?> documentPlugin) {
-                // Decorate the DocRef with its name from the info service (required by the doc presenter)
+                // Decorate the DocRef with its name from the info service (required by the doc controller)
                 restFactory
                         .create(EXPLORER_RESOURCE)
                         .method(res ->

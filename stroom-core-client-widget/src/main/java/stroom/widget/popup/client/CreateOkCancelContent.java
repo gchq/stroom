@@ -33,7 +33,7 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
+    /// Whether the controller allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
     /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
     private boolean okAllowed = true;
     /// As [#okAllowed], for New.

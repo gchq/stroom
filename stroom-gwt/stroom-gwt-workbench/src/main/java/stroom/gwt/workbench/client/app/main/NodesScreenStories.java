@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// `GET /node/v1/ping/{node}`; enabling, `PUT /node/v1/enabled/{node}`; the enabled nodes,
 /// `GET /node/v1/enabled`) and `JobNodeResource` (a node's jobs, `POST /jobNode/v1/find`, by the
 /// criteria's `nodeName`), and the requests are checked on the request spy. The `nodeMonitoring` UI
-/// config is the harness's. The presenter comes from GIN.
+/// config is the harness's. The controller comes from GIN.
 public final class NodesScreenStories {
 
     private static final String TEXT_ALL_JOBS_ON_NODE1A = "All jobs on node 'node1a'";

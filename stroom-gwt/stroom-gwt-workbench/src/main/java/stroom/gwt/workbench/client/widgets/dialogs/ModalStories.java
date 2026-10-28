@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's modal OK/Cancel dialog.
 ///
-/// Each story shows a presenter with `ShowPopupEvent` as a modal `OK_CANCEL_DIALOG`, with
+/// Each story shows a controller with `ShowPopupEvent` as a modal `OK_CANCEL_DIALOG`, with
 /// `onHideRequest` telling OK from Cancel.
 public final class ModalStories {
 

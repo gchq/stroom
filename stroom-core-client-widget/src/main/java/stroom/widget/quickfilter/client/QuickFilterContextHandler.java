@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * <p>
  * The widget lives in a module with no access to the REST layer or the event bus, so it cannot
  * fetch history or show a menu itself. It knows <em>when</em> - the user clicked the arrow, the
- * user committed a filter - and delegates the <em>how</em> to the presenter through this. A
+ * user committed a filter - and delegates the <em>how</em> to the controller through this. A
  * {@code QuickFilter} with no handler shows no arrow and records nothing.
  */
 public interface QuickFilterContextHandler {

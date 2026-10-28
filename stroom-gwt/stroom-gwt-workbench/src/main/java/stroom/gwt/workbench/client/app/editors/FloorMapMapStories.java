@@ -408,6 +408,6 @@ public final class FloorMapMapStories {
 
     // FloorMapMapController's private facts cadence timer
     private static native Timer factsCadenceTimer(FloorMapMapController controller) /*-{
-        return presenter.@stroom.floormap.client.component.FloorMapMapController::factsCadenceTimer;
+        return controller.@stroom.floormap.client.component.FloorMapMapController::factsCadenceTimer;
     }-*/;
 }

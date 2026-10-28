@@ -777,7 +777,7 @@ public class FloorMapCanvasController extends Controller {
             pendingClickClusterKey = clusterKey(event.getNativeEvent().getEventTarget());
 
             // Read-only (Map tab) mode: pressing an object shape announces it so
-            // the parent presenter can select/track it (the parent filters to
+            // the parent controller can select/track it (the parent filters to
             // its roster). Backgrounds and areas are excluded — their clickable
             // surface can cover most of the map, and this fires on mousedown,
             // so a press over them must stay a plain pan; they remain trackable

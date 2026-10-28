@@ -45,7 +45,7 @@ import javax.inject.Singleton;
 
 /// Document plugin for [FloorMapDoc] documents.
 /// Handles loading and saving floor map documents via the REST API
-/// and provides the editor presenter for the content manager.
+/// and provides the editor controller for the content manager.
 @Singleton
 public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 

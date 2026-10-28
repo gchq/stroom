@@ -33,7 +33,7 @@ import java.util.Objects;
 /// create the fixture dispatcher, as that needs the story's fixtures).
 ///
 /// Each injector has its own, so the requests of each harness go to its own fixtures, and a
-/// presenter of an old rendering, which keeps its injector's `RestFactory`, can only reach that
+/// controller of an old rendering, which keeps its injector's `RestFactory`, can only reach that
 /// rendering's (disposed) dispatcher.
 public final class StoryDispatcher implements Dispatcher {
 

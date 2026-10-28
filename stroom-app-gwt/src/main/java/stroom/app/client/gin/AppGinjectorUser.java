@@ -150,7 +150,7 @@ public interface AppGinjectorUser extends
     @SuppressWarnings("unused")
     EventBus getEventBus();
 
-    // Presenters
+    // Controllers
     Provider<CoreController> getCoreController();
 
     @SuppressWarnings("unused")

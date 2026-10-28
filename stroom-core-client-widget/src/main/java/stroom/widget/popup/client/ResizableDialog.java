@@ -181,8 +181,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     }
 
     /**
-     * This is overridden as we don't want popups to hide without the presenter
-     * to get a chance to do something about it. When hide occurs the presenter
+     * This is overridden as we don't want popups to hide without the controller
+     * to get a chance to do something about it. When hide occurs the controller
      * will be notified via the event and will then choose whether or not to
      * force the popup to hide.
      */

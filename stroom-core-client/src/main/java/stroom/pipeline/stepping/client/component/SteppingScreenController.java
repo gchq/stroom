@@ -472,7 +472,7 @@ public class SteppingScreenController extends Controller {
             SteppingElementController steppingElement = elementMap.get(elementId);
             if (steppingElement == null) {
                 // Editing element code (e.g. XSLT) calls the element's change callback ("something
-                // changed"), which we relay up as our own so the enclosing pipeline presenter re-evaluates Save
+                // changed"), which we relay up as our own so the enclosing pipeline controller re-evaluates Save
                 // via onChange(). The authoritative dirty verdict is recomputed there by comparison, so a
                 // reverted edit correctly returns to clean. It must NOT rebuild the pipeline model/tree -
                 // the code content is not part of the pipeline structure, and doing so on every keypress
@@ -632,7 +632,7 @@ public class SteppingScreenController extends Controller {
             logPaneTitle = msg;
         }
 
-        // Now set the button state based on the desired state from the presenter
+        // Now set the button state based on the desired state from the controller
         view.setLogPaneToggle(isButtonVisible, isLogPaneVisible, logPaneTitle);
     }
 

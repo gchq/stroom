@@ -26,7 +26,7 @@ import com.google.inject.Singleton;
 /// as in Stroom).
 public class ProcessingExtrasScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
         bind(ContentManager.class).in(Singleton.class);

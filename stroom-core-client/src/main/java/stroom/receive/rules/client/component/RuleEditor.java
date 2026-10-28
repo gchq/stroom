@@ -49,7 +49,7 @@ public class RuleEditor extends Component {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param expressionEditor The expression's editor, a presenter its controller owns.
+    /// @param expressionEditor The expression's editor, a controller its controller owns.
     public void setExpressionEditor(final IsWidget expressionEditor) {
         expression.setWidget(expressionEditor);
     }

@@ -53,7 +53,7 @@ import stroom.xmlschema.client.XMLSchemaPlugin;
 import com.google.gwt.inject.client.GinModules;
 
 /// The `content` batch's [ScreenGinjector]: it creates the screens of the `App/Main` content,
-/// annotation, activity and monitoring stories (presenters and their views) as Stroom's GIN
+/// annotation, activity and monitoring stories (controllers and their components) as Stroom's GIN
 /// modules do, as `AppScreenGinjector` does for the pilot's screens. Create one each time the
 /// story renders and give it to the harness with `ScreenHarness.Builder.injector(...)`.
 ///

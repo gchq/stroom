@@ -45,8 +45,8 @@ import java.util.function.Consumer;
 /// [#onAttach()] and [#onDetach()] are called as the widget enters and leaves the page, e.g. as its
 /// tab is shown and hidden; being hidden doesn't dispose it.
 ///
-/// A controller made with the event bus can be the source of app-wide requests, as a presenter
-/// can: `AlertEvent.fireWarn(this, ...)`, `ConfirmEvent.fire(this, ...)`.
+/// A controller made with the event bus can be the source of app-wide requests:
+/// `AlertEvent.fireWarn(this, ...)`, `ConfirmEvent.fire(this, ...)`.
 public abstract class Controller implements IsWidget, HasControllerNode, HasHandlers {
 
     private final ControllerNode node;
@@ -135,7 +135,7 @@ public abstract class Controller implements IsWidget, HasControllerNode, HasHand
         });
     }
 
-    /// Makes a controller (or presenter) and owns it until this one is disposed, e.g. a tab, a list
+    /// Makes a controller and owns it until this one is disposed, e.g. a tab, a list
     /// or a settings panel: `final FieldList list = make(fieldListProvider);`.
     ///
     /// @param provider What makes it, e.g. a GIN provider.

@@ -67,7 +67,7 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getLinkedEvents(),
                     e.getLinkedAnnotations());
             annotationResourceClient.createAnnotation(request, annotation -> {
-                // Made once there is something to show, and released, with all its presenters, when
+                // Made once there is something to show, and released, with all its controllers, when
                 // its tab is closed
                 final AnnotationTabs tabs = tabsProvider.get();
                 tabs.setInitialComment(e.getComment());
@@ -78,7 +78,7 @@ public class AnnotationEditSupport implements HasHandlers {
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
             annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
-                    // Made once there is something to show, and released, with all its presenters,
+                    // Made once there is something to show, and released, with all its controllers,
                     // when its tab is closed
                     show(tabsProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
         });

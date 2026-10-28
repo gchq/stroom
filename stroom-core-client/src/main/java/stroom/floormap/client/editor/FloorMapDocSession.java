@@ -38,7 +38,7 @@ import java.util.Objects;
 /// document on save. The tricky rules — when a staged edit has been persisted and
 /// can be dropped ([#reconcileAfterRead]), and how the type-styles edits
 /// combine on write so a Layers edit can't drop the area style
-/// ([#applyToWrite]) — are extracted from the GWT presenters so they are
+/// ([#applyToWrite]) — are extracted from the GWT controllers so they are
 /// unit-testable on the JVM.
 ///
 /// Each tab owns its own instance and stages only the fields it edits, so two

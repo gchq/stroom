@@ -28,12 +28,12 @@ import java.util.function.Supplier;
 /// `AskStroomAiEvent` (a table's 'Ask Stroom AI' button) and `ShowAskStroomAiEvent` (the toolbar's
 /// AI toggle), as `AskStroomAiScreens` does in Stroom.
 ///
-/// Like that, it creates the presenter only when the first of those events
-/// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The presenter reads its
+/// Like that, it creates the controller only when the first of those events
+/// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The controller reads its
 /// configuration from the user's preferences as it is created (`AskStroomAiClient.getConfig`), and
 /// when they have no `askStroomAiConfig` (Stroom's default preferences have none) it fetches the
 /// default config and stores it in a copy of the current preferences. Created after start-up, the
-/// preferences are loaded and the default is stored in them, as in Stroom. (A presenter created
+/// preferences are loaded and the default is stored in them, as in Stroom. (A controller created
 /// before the preferences had loaded once failed copying null preferences; `AskStroomAiClient` now
 /// waits for the user's preferences (`UserPreferencesManager.whenLoaded`), so the lazy creation is
 /// only for fidelity.)
@@ -51,12 +51,12 @@ public final class AskStroomAiChat {
     }
 
     /// Registers the chat as the handler of `AskStroomAiEvent` and `ShowAskStroomAiEvent` on the
-    /// harness's event bus. The presenter is created (with `factory`, e.g. the story's injector's
+    /// harness's event bus. The controller is created (with `factory`, e.g. the story's injector's
     /// getter) when the first event is fired, and is closed and unbound when the story renders again.
     ///
     /// @param harness The story's harness.
-    /// @param factory Creates the presenter, e.g. `injector::getAskStroomAiController`.
-    /// @return The registered chat, e.g. to get its presenter once shown.
+    /// @param factory Creates the controller, e.g. `injector::getAskStroomAiController`.
+    /// @return The registered chat, e.g. to get its controller once shown.
     public static AskStroomAiChat register(final ScreenHarness harness,
                                            final Supplier<AskStroomAiController> factory) {
         final AskStroomAiChat chat = new AskStroomAiChat(Objects.requireNonNull(harness),
@@ -68,14 +68,14 @@ public final class AskStroomAiChat {
         return chat;
     }
 
-    /// @return Whether the presenter has been created, i.e. whether either event has been fired.
+    /// @return Whether the controller has been created, i.e. whether either event has been fired.
     public boolean isCreated() {
         return controller != null;
     }
 
-    /// Gets the chat's presenter, creating it if no event has created it yet.
+    /// Gets the chat's controller, creating it if no event has created it yet.
     ///
-    /// @return The presenter.
+    /// @return The controller.
     public AskStroomAiController getController() {
         if (controller == null) {
             controller = factory.get();

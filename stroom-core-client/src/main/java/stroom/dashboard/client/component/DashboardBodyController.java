@@ -225,9 +225,9 @@ public class DashboardBodyController
         setParamsFromLink(urlParameters.getParams());
         setEmbedded(urlParameters.isEmbedded());
         setQueryOnOpen(urlParameters.isQueryOnOpen());
-//        dashboardPresenter.setParamsFromLink(params);
-//        dashboardPresenter.setEmbedded(embedded);
-//        dashboardPresenter.setQueryOnOpen(queryOnOpen);
+//        dashboardController.setParamsFromLink(params);
+//        dashboardController.setEmbedded(embedded);
+//        dashboardController.setQueryOnOpen(queryOnOpen);
 
         queryToolbar.setOnStart(this::toggleStart);
         queryToolbar.setOnTimeRangeChange(() -> {
@@ -366,7 +366,7 @@ public class DashboardBodyController
     }
 
     public void setParamsFromLink(final String params) {
-        logger.log(Level.INFO, "Dashboard Presenter setParamsFromLink " + params);
+        logger.log(Level.INFO, "Dashboard setParamsFromLink " + params);
         this.externalLinkParameters = params;
         dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
     }

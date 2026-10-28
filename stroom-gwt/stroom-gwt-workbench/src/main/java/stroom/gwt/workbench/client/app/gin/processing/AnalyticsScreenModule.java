@@ -25,7 +25,7 @@ import com.google.gwt.inject.client.AbstractGinModule;
 /// (whose graph needs the query and dashboard modules) or the module's plugin.
 public class AnalyticsScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
     }

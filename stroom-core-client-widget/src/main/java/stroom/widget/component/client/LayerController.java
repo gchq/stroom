@@ -20,7 +20,7 @@ package stroom.widget.component.client;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// A controller that is itself a [Layer] of a [LayerContainer], as a presenter is: a dashboard pane
+/// A controller that is itself a [Layer] of a [LayerContainer]: a dashboard pane
 /// (a tab of the dashboard's layout), a tab of a pane's settings dialog, or a screen shown as one of
 /// Stroom's tabs, which their hosts tell apart by identity and ask about (e.g. its type, its label),
 /// so they can't be wrapped in a `ControllerLayer`. Its widget is the one given to [#initWidget].

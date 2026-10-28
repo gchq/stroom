@@ -49,7 +49,7 @@ import java.util.function.Supplier;
 /// `POST /task/v1/terminate/{node}`). The server works out which tasks match the name filter: a
 /// route for a request filtering on 'Processor A' marks only that task `MATCHED`. The requests are
 /// checked on the request spy, and the `onOpenDoc`/`onOpenData`/`onShowFilterTasks` spies record
-/// Stroom's `OpenDocumentEvent`, `ShowDataEvent` and `OpenProcessorTaskEvent`. The presenter comes
+/// Stroom's `OpenDocumentEvent`, `ShowDataEvent` and `OpenProcessorTaskEvent`. The controller comes
 /// from GIN.
 ///
 /// The list refreshes when Stroom's content pane asks it to (`Refreshable`), which the stories

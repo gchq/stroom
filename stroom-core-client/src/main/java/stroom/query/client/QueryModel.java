@@ -218,7 +218,7 @@ public class QueryModel implements HasHandlers {
         if (query != null) {
 //            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
 //            if (dataSourceRef != null && expression != null) {
-            // Let the query presenter know search is active.
+            // Let the query controller know search is active.
             setSearching(true);
 
             // Reset all result components and tell them that search is
@@ -376,7 +376,7 @@ public class QueryModel implements HasHandlers {
                                 // no longer want data.
                                 resultComponents.values().forEach(ResultComponent::endSearch);
 
-                                // Let the query presenter know search is inactive.
+                                // Let the query controller know search is inactive.
                                 setSearching(false);
 
                                 // If we have completed search then stop the task spinner.
@@ -431,7 +431,7 @@ public class QueryModel implements HasHandlers {
         }
 
         if (response.isComplete()) {
-            // Let the query presenter know search is inactive.
+            // Let the query controller know search is inactive.
             setSearching(false);
 
             // If we have completed search then stop the task spinner.
@@ -497,7 +497,7 @@ public class QueryModel implements HasHandlers {
         this.sourceType = sourceType;
     }
 
-    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    /// Says what shows the progress of the requests this makes, e.g. the controller that uses it.
     ///
     /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {

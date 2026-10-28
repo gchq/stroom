@@ -29,16 +29,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 
 /// The bindings of [ExplorerGinjector]: the explorer popup's view as Stroom binds it, and the
-/// services of the harness that the presenter is being created for (see
+/// services of the harness that the controller is being created for (see
 /// [SelectorWidgets#explorerPopup]), so the popup shares them with the rest of the story.
 public class ExplorerGinModule extends AbstractGinModule {
 
-    // The harness the presenter being created belongs to, set only while it is created
+    // The harness the controller being created belongs to, set only while it is created
     private static ScreenHarness current;
 
-    /// Sets the harness whose services new presenters get, or clears it.
+    /// Sets the harness whose services new controllers get, or clears it.
     ///
-    /// @param harness The harness, or null once the presenter has been created.
+    /// @param harness The harness, or null once the controller has been created.
     static void setCurrent(final ScreenHarness harness) {
         current = harness;
     }
@@ -71,6 +71,6 @@ public class ExplorerGinModule extends AbstractGinModule {
     }
 
     private static ScreenHarness harness() {
-        return Objects.requireNonNull(current, "Create presenters with SelectorWidgets");
+        return Objects.requireNonNull(current, "Create controllers with SelectorWidgets");
     }
 }

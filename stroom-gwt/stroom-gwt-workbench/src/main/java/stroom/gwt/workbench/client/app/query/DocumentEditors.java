@@ -120,13 +120,13 @@ public final class DocumentEditors {
     /// editor as the harness's content and tells it that its tab is selected
     /// (`ContentTabSelectionChangeEvent`).
     ///
-    /// @param harness   The story's harness.
-    /// @param presenter The editor, e.g. from the batch's ginjector.
-    /// @param docRef    The document.
-    /// @param resource  The document's REST resource, e.g. `GWT.create(ViewResource.class)`.
-    /// @param fetch     Fetches the document with the resource, e.g. `res -> res.fetch(uuid)`.
-    /// @param <T>       The type of the resource.
-    /// @param <D>       The type of the document.
+    /// @param harness    The story's harness.
+    /// @param controller The editor, e.g. from the batch's ginjector.
+    /// @param docRef     The document.
+    /// @param resource   The document's REST resource, e.g. `GWT.create(ViewResource.class)`.
+    /// @param fetch      Fetches the document with the resource, e.g. `res -> res.fetch(uuid)`.
+    /// @param <T>        The type of the resource.
+    /// @param <D>        The type of the document.
     public static <T extends DirectRestService, D> void open(
             final ScreenHarness harness,
             final DocumentEditorHost<D> controller,

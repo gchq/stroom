@@ -44,8 +44,8 @@ public final class CriteriaUtil {
      * untouched when the grid has none of its own</b>.
      * <p>
      * The grid contributes nothing until the user clicks a column heading, so replacing the list
-     * unconditionally discarded the default sort several presenters seed in their constructor — the
-     * grid then opened in whatever order the server happened to return. Presenters that seed nothing
+     * unconditionally discarded the default sort several controllers seed in their constructor — the
+     * grid then opened in whatever order the server happened to return. Controllers that seed nothing
      * are unaffected: an empty list replacing an empty list.
      */
     public static void setSortList(final BaseCriteria criteria,

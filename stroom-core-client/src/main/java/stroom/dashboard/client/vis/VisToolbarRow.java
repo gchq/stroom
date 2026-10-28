@@ -57,7 +57,7 @@ public class VisToolbarRow extends Component {
         this.onPress = onPress;
     }
 
-    /// @return The pause and resume button, which the presenter gives what it does.
+    /// @return The pause and resume button, which the controller gives what it does.
     public RefreshButton getRefreshButton() {
         return refreshButton;
     }

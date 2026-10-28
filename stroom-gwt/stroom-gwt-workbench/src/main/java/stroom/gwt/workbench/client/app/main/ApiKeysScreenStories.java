@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The stories answer Stroom's `ApiKeyResource`: `POST /apikey/v2/find` and `PUT /apikey/v2/{id}`
 /// (an echo, checked on the request spy). The user holds `MANAGE_USERS_PERMISSION`, so the Owner
-/// column is shown. The presenter comes from GIN and is opened as `ApiKeysPlugin` opens it
+/// column is shown. The controller comes from GIN and is opened as `ApiKeysPlugin` opens it
 /// (refreshed).
 public final class ApiKeysScreenStories {
 

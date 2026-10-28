@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `GET /users/v1/fetchBySubjectId/{subjectId}` | an account's user |
 /// | a spy on Stroom's `OpenUsersAndGroupsScreenEvent` | opening the user |
 ///
-/// The user holds `MANAGE_USERS_PERMISSION`, which `AccountsPlugin` requires. The presenter comes
+/// The user holds `MANAGE_USERS_PERMISSION`, which `AccountsPlugin` requires. The controller comes
 /// from GIN and is opened as `AccountsPlugin.open` opens it (refreshed).
 public final class AccountsScreenStories {
 

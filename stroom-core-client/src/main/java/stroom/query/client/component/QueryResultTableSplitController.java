@@ -46,10 +46,10 @@ public class QueryResultTableSplitController
 
     /// Made by GIN, with its content and its parts.
     ///
-    /// @param eventBus       The application's event bus.
-    /// @param view           The content.
-    /// @param tablePresenter The results table.
-    /// @param textPane       The source of the row selected.
+    /// @param eventBus        The application's event bus.
+    /// @param view            The content.
+    /// @param tableController The results table.
+    /// @param textPane        The source of the row selected.
     @Inject
     public QueryResultTableSplitController(final EventBus eventBus,
                                            final QueryResultTableSplit view,

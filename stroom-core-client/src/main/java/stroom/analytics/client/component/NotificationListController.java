@@ -51,9 +51,9 @@ public class NotificationListController extends Controller {
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus              The application's event bus.
-    /// @param view                  The content.
-    /// @param editPresenterProvider Makes a notification's editor.
+    /// @param eventBus               The application's event bus.
+    /// @param view                   The content.
+    /// @param editControllerProvider Makes a notification's editor.
     @Inject
     public NotificationListController(final EventBus eventBus,
                                       final NotificationList view,
@@ -188,7 +188,7 @@ public class NotificationListController extends Controller {
         this.docRef = docRef;
         // Deliberately not taking the processing type from the document. This tab is read lazily on first
         // open, which can be after the type has been changed on the execution tab, so the document would be
-        // stale. The owning presenter tells us instead, see setAnalyticProcessType.
+        // stale. The owning controller tells us instead, see setAnalyticProcessType.
         list.clear();
         if (notifications != null) {
             list.addAll(notifications);

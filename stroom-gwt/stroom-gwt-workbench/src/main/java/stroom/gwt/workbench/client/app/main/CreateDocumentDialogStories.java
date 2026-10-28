@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The folder picker's tree comes from `POST /explorer/v2/fetchExplorerNodes` (the shared
 /// [ExplorerFixture]). The dialog is shown by firing `ShowCreateDocumentDialogEvent`, as the
-/// explorer's 'New' menu and 'Save As' do, with the presenter (from GIN) registered as its handler
+/// explorer's 'New' menu and 'Save As' do, with the controller (from GIN) registered as its handler
 /// in place of its listener.
 public final class CreateDocumentDialogStories {
 

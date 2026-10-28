@@ -113,9 +113,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             final DocRef docRef = new DocRef(DashboardDoc.TYPE, uuid);
 
             // If the item isn't already open but we are forcing it open then,
-            // create a new presenter and register it as open.
+            // create a new controller and register it as open.
             // As DocumentPlugin opens a document: the content manager releases it, with every
-            // presenter it owns, when its tab is closed
+            // controller it owns, when its tab is closed
             final DashboardEditor editor = dashboardEditorProvider.get();
             editor.setParentContext(context);
             editor.setParamsFromLink(params);
@@ -129,9 +129,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
             // Load the document and show the tab.
             final CloseContentEvent.Handler closeHandler = event -> {
-                // Tell the presenter we are closing.
+                // Tell the controller we are closing.
                 controller.onClose();
-                // Actually close the tab, which releases the dashboard and all its presenters
+                // Actually close the tab, which releases the dashboard and all its controllers
                 event.getCallback().closeTab(true);
             };
             showDocument(docRef,
@@ -178,16 +178,16 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             final DocRef docRef = source.getOwnerDocRef();
             if (docRef != null) {
                 // If the item isn't already open but we are forcing it open then,
-                // create a new presenter and register it as open.
+                // create a new controller and register it as open.
                 final DashboardEditor editor = dashboardEditorProvider.get();
                 editor.setResultStoreInfo(resultStoreInfo);
                 final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
 
                 // Load the document and show the tab.
                 final CloseContentEvent.Handler closeHandler = event -> {
-                    // Tell the presenter we are closing.
+                    // Tell the controller we are closing.
                     controller.onClose();
-                    // Actually close the tab, which releases the dashboard and all its presenters
+                    // Actually close the tab, which releases the dashboard and all its controllers
                     event.getCallback().closeTab(true);
                 };
                 showDocument(docRef,

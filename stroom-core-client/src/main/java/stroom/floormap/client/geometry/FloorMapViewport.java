@@ -31,7 +31,7 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 /// ```
 ///
 /// This class holds no GWT or DOM types so it can be unit-tested on the JVM.
-/// The presenter is responsible for pulling coordinates out of native mouse
+/// The controller is responsible for pulling coordinates out of native mouse
 /// events and pushing the resulting state into the view; all the arithmetic
 /// lives here. See `FloorMapNotes.md` section 3.
 public final class FloorMapViewport {

@@ -45,7 +45,7 @@ public class DashboardAppModule extends AbstractGinModule {
         bind(DelegatingAceCompleter.class).asEagerSingleton();
         bind(DataDisplaySupport.class).asEagerSingleton();
 
-        // Presenters
+        // Controllers
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
         bind(CoreController.class).in(Singleton.class);

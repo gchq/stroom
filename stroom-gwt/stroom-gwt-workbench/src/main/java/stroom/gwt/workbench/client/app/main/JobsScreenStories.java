@@ -63,7 +63,7 @@ import java.util.Set;
 /// | `PUT /jobNode/v1/schedule` | setting several job nodes' schedules |
 ///
 /// The requests made are checked on the request spy. `onOpenNode`/`onShowTasks` are spies
-/// on Stroom's `OpenNodeEvent`/`OpenTaskManagerEvent`. The presenter comes from GIN.
+/// on Stroom's `OpenNodeEvent`/`OpenTaskManagerEvent`. The controller comes from GIN.
 public final class JobsScreenStories {
 
     /// The name of the spy recording the nodes opened (Stroom's `OpenNodeEvent`).
@@ -80,7 +80,7 @@ public final class JobsScreenStories {
 
     private static final String JOB_NODE_FIND_PATH = "/jobNode/v1/find";
 
-    // JobResource.list(). GWT sorts advanced jobs last (the server does); the presenter adds an
+    // JobResource.list(). GWT sorts advanced jobs last (the server does); the controller adds an
     // empty row before the first advanced one
     private static final String JOBS = """
             {

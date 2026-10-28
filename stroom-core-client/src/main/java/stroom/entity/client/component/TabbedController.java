@@ -43,7 +43,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /// Something shown in tabs, e.g. a document ([DocumentEditor]) or a folder: a tab bar, a row for
-/// toolbars, and the tab showing. Each tab's content, a controller or a presenter, is made and owned
+/// toolbars, and the tab showing. Each tab's content, a controller, is made and owned
 /// when the tab is first shown, is read into whenever this is ([#read(DocRef, Object)]), and may
 /// write what it shows back ([#write()]).
 ///
@@ -161,7 +161,7 @@ public abstract class TabbedController<D> extends Controller {
     /// Adds a tab that only shows what is read, e.g. a document's permissions.
     ///
     /// @param tab    The tab.
-    /// @param make   Makes its content, a controller or a presenter, when it is first shown.
+    /// @param make   Makes its content, a controller, when it is first shown.
     /// @param reader Reads what is shown into it.
     /// @param <C>    Its content's type.
     protected final <C extends HasControllerNode & IsWidget> void addTab(final TabData tab,
@@ -173,7 +173,7 @@ public abstract class TabbedController<D> extends Controller {
     /// Adds a tab that shows and changes part of what is read.
     ///
     /// @param tab    The tab.
-    /// @param make   Makes its content, a controller or a presenter, when it is first shown.
+    /// @param make   Makes its content, a controller, when it is first shown.
     /// @param reader Reads what is shown into it.
     /// @param writer Writes what it shows into a copy of what is shown.
     /// @param <C>    Its content's type.

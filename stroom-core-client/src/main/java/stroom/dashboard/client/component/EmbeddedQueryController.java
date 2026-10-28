@@ -203,8 +203,8 @@ public class EmbeddedQueryController
                 }
 //                else {
 //                    if (start) {
-//                        currentTablePresenter.reset();
-//                        currentTablePresenter.endSearch();
+//                        currentTableController.reset();
+//                        currentTableController.endSearch();
 //                        start = false;
 //                        hasData = false;
 //                        destroyCurrentTable();
@@ -282,8 +282,8 @@ public class EmbeddedQueryController
                 }
 //                else {
 //                    if (start) {
-//                        currentVisPresenter.clear();
-//                        currentVisPresenter.endSearch();
+//                        currentVisController.clear();
+//                        currentVisController.endSearch();
 //                        start = false;
 //                        hasData = false;
 //                        destroyCurrentVis();
@@ -422,8 +422,8 @@ public class EmbeddedQueryController
             }
 
 //            if (component instanceof HasAbstractFields) {
-//                final VisPresenter visPresenter = (VisPresenter) component;
-//                final List<Map<String, String>> selection = visPresenter.getCurrentSelection();
+//                final VisPresenter visController = (VisPresenter) component;
+//                final List<Map<String, String>> selection = visController.getCurrentSelection();
 //                String params = "";
 //                if (selection != null) {
 //                    for (final Map<String, String> map : selection) {
@@ -437,13 +437,13 @@ public class EmbeddedQueryController
 
 //                if (getTextSettings().getTableId() == null) {
 //                    if (component instanceof TableController) {
-//                        currentTablePresenter = (TableController) component;
-//                        update(currentTablePresenter);
+//                        currentTableController = (TableController) component;
+//                        update(currentTableController);
 //                    }
 //                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
 //                    if (component instanceof TableController) {
-//                        currentTablePresenter = (TableController) component;
-//                        update(currentTablePresenter);
+//                        currentTableController = (TableController) component;
+//                        update(currentTableController);
 //                    }
 //                }
 //            }
@@ -787,7 +787,7 @@ public class EmbeddedQueryController
 
     @Override
     public void onSearching(final boolean searching) {
-//        tablePresenter.onSearching(searching);
+//        tableController.onSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
         if (!searching) {

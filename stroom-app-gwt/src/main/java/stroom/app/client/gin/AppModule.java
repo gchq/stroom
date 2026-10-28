@@ -57,7 +57,7 @@ public class AppModule extends AbstractGinModule {
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
 
-        // Presenters
+        // Controllers
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
         bind(MainScreens.class).asEagerSingleton();

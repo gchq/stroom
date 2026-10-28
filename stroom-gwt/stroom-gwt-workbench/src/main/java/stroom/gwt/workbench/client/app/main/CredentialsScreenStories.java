@@ -54,7 +54,7 @@ import java.util.Map;
 /// an Access Token the user can't edit and an editable Key Store File (`File Store`, a JKS file at
 /// `/etc/stroom/ks.jks`).
 ///
-/// The presenter comes from GIN and is shown as `CredentialsPlugin` shows it.
+/// The controller comes from GIN and is shown as `CredentialsPlugin` shows it.
 public final class CredentialsScreenStories {
 
     private static final String FIND_CREDENTIALS = "/credentials/findCredentialsWithPermissions";

@@ -38,7 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// [AskStroomAiController] (its view, which Stroom shows docked or in the 'Ask Stroom AI' dialog) in
 /// a 480 by 560 pixel box, with fake REST replies ([AiFixtures]).
 ///
-/// Viewing an attachment opens Stroom's attachment data dialog, which the presenter opens itself;
+/// Viewing an attachment opens Stroom's attachment data dialog, which the controller opens itself;
 /// the play checks the data it asks for.
 public final class AskAiChatPanelStories {
 

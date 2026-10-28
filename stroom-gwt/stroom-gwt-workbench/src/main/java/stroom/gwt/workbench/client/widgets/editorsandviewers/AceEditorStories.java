@@ -44,7 +44,7 @@ import java.util.List;
 
 /// Stories for Stroom's Ace based editor ([CodeEditorController] attached to its `CodeEditor`).
 ///
-/// The stories set the presenter's options: `setMode`, `setReadOnly`, the line numbers and line
+/// The stories set the controller's options: `setMode`, `setReadOnly`, the line numbers and line
 /// wrap options, the format action and `setIndicators`.
 public final class AceEditorStories {
 

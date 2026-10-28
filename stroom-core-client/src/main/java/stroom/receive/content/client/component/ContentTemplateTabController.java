@@ -90,7 +90,7 @@ public class ContentTemplateTabController extends ContentTabController
 
     private boolean dirty;
     private String lastLabel;
-//    private DataRetentionPresenter dataRetentionPresenter;
+//    private DataRetentionPresenter dataRetentionController;
 
     /// Made by GIN, with its screen and its parts.
     @Inject

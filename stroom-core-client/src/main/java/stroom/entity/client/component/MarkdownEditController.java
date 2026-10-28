@@ -248,7 +248,7 @@ public class MarkdownEditController extends Controller implements HasToolbar {
             if (!Objects.equals(iFrameHtmlContent, lastRenderedMarkdown)) {
                 lastRenderedMarkdown = iFrameHtmlContent;
                 preview.setSrcDoc(iFrameHtmlContent.asString());
-//                iFramePresenter.getWidget().getElement().setScrollTop(50);
+//                iFrameController.getWidget().getElement().setScrollTop(50);
             }
         }
     }

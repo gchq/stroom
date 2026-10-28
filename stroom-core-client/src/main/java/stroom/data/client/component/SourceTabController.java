@@ -87,7 +87,7 @@ public class SourceTabController extends ContentTabController {
 //    public void setSourceKey(final SourceKey sourceKey) {
 //        this.sourceKey = sourceKey;
 //
-//        sourcePresenter.setSourceLocation(SourceLocation.builder(sourceKey.getMetaId())
+//        sourceController.setSourceLocation(SourceLocation.builder(sourceKey.getMetaId())
 //                .withChildStreamType(sourceKey.getOptChildStreamType().orElse(null))
 //                .build());
 //    }

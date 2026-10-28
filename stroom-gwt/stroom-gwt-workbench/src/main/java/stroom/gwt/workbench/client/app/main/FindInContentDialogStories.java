@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The stories answer `POST /explorer/v2/findInContent` and `POST /explorer/v2/fetchHighlights`
 /// (one reply per document, routed by the request's document). The dialog is shown by firing
-/// `ShowFindInContentEvent`, with the presenter (from GIN) as its handler in place of its
+/// `ShowFindInContentEvent`, with the controller (from GIN) as its handler in place of its
 /// listener.
 public final class FindInContentDialogStories {
 

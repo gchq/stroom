@@ -76,10 +76,10 @@ public class QueryDocEditController
 
     /// Made by GIN, with its parts.
     ///
-    /// @param eventBus           The application's event bus.
-    /// @param queryEditPresenter The query.
-    /// @param restFactory        Makes the rule or report.
-    /// @param uiConfigCache      Gives a new rule's or report's defaults.
+    /// @param eventBus            The application's event bus.
+    /// @param queryEditController The query.
+    /// @param restFactory         Makes the rule or report.
+    /// @param uiConfigCache       Gives a new rule's or report's defaults.
     @Inject
     public QueryDocEditController(final EventBus eventBus,
                                   final QueryEditController queryEditController,

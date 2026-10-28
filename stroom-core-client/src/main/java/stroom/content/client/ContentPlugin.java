@@ -63,8 +63,8 @@ public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin
 
     public void open(final Consumer<P> consumer) {
         if (controller == null) {
-            // If the presenter is null then we haven't got this tab open.
-            // Create a new presenter, which the content manager releases, with every presenter it
+            // If the controller is null then we haven't got this tab open.
+            // Create a new controller, which the content manager releases, with every controller it
             // owns, when the tab is closed
             controller = controllerProvider.get();
         }
@@ -73,7 +73,7 @@ public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin
             if (controller instanceof CloseContentEvent.Handler) {
                 final Callback callback = ok -> {
                     event.getCallback().closeTab(ok);
-                    // After we close the tab set the presenter back to null so
+                    // After we close the tab set the controller back to null so
                     // that we can open it again.
                     if (ok) {
                         controller = null;
@@ -85,7 +85,7 @@ public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin
                 // Give the content manager the ok to close the tab.
             } else {
                 event.getCallback().closeTab(true);
-                // After we close the tab set the presenter back to null so
+                // After we close the tab set the controller back to null so
                 // that we can open it again.
                 controller = null;
             }
@@ -94,7 +94,7 @@ public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin
         // Tell the content manager to open the tab.
         contentManager.open(closeHandler, controller, controller);
 
-        // If the presenter is refreshable then refresh it.
+        // If the controller is refreshable then refresh it.
         if (controller instanceof final Refreshable refreshable) {
             refreshable.refresh();
         }

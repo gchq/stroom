@@ -39,7 +39,7 @@ import java.util.function.Consumer;
 public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
         extends Plugin {
 
-    // Bi-directional maps to hold the open presenters
+    // Bi-directional maps to hold the open controllers
     private final Map<K, T> keyToControllerMap = new HashMap<>();
     private final Map<T, K> controllerToKeyMap = new HashMap<>();
 
@@ -55,14 +55,14 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
     }
 
     /**
-     * @return The name of the presenter being opened
+     * @return The name of the controller being opened
      */
     protected abstract String getName();
 
     /**
-     * @param forceOpen            If false will not open the presenter if it is not already open
-     * @param presenterKey         The unique key that identifies the presenter
-     * @param tabPresenterConsumer Method to modify the presenter before it is opened, i.e. telling
+     * @param forceOpen            If false will not open the controller if it is not already open
+     * @param controllerKey         The unique key that identifies the controller
+     * @param tabControllerConsumer Method to modify the controller before it is opened, i.e. telling
      *                             it what content to display.
      * @return The
      */
@@ -87,10 +87,10 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
                 // Start spinning.
                 taskMonitor.onStart(task);
 
-                // Let the caller set what it wants on the presenter
+                // Let the caller set what it wants on the controller
                 tabControllerConsumer.accept(tabController);
 
-                // Tell the content presenter to select this existing tab.
+                // Tell the content controller to select this existing tab.
                 SelectContentTabEvent.fire(this, tabController);
 
                 // Stop spinning.
@@ -101,10 +101,10 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
                 taskMonitor.onStart(task);
 
                 // If the item isn't already open but we are forcing it open then,
-                // create a new presenter and register it as open.
+                // create a new controller and register it as open.
                 tabController = tabControllerProvider.get();
 
-                // Let the caller set what it wants on the presenter
+                // Let the caller set what it wants on the controller
                 tabControllerConsumer.accept(tabController);
 
                 // Register the tab as being open.
@@ -153,8 +153,8 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
     private CloseContentEvent.Handler createCloseHandler(final T tabController) {
         return event -> {
             if (tabController != null) {
-                // Tell the presenter we are closing.
-//                    sourceTabPresenter.onClose();
+                // Tell the controller we are closing.
+//                    sourceTabController.onClose();
                 // Cleanup reference to this tab data.
                 removeTabData(tabController);
                 // Tell the callback to close the tab if ok.

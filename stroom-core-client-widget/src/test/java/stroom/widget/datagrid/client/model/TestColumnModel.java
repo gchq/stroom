@@ -91,7 +91,7 @@ class TestColumnModel {
 
     @Test
     void testResolveWaitsForColumns() {
-        // A presenter that adds its columns once a fetch returns: the grid is laid out first
+        // A controller that adds its columns once a fetch returns: the grid is laid out first
         final ColumnModel<String> model = new ColumnModel<>();
         assertThat(model.resolve(500)).isFalse();
         assertThat(model.isResolved()).isFalse();

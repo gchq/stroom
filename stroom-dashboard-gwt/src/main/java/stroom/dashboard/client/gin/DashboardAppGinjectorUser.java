@@ -70,7 +70,7 @@ public interface DashboardAppGinjectorUser extends
     // Default implementation of standard resources
     EventBus getEventBus();
 
-    // Presenters
+    // Controllers
     Provider<CoreController> getCoreController();
 
     Provider<FullScreenController> getFullScreenController();

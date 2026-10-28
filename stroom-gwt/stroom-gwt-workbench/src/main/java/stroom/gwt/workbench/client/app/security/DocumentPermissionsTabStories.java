@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The plays check the requests with the request spy. The tab is opened as
 /// `DocumentPermissionsPlugin` opens it for a `ShowDocumentPermissionsEvent` (`setDocRef`).
-/// Confirmations are Stroom's real dialogs. The presenter comes from GIN.
+/// Confirmations are Stroom's real dialogs. The controller comes from GIN.
 public final class DocumentPermissionsTabStories {
 
     private static final String EDIT_TITLE = "edit permissions";

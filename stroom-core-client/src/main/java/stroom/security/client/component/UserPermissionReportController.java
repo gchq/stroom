@@ -224,7 +224,7 @@ public class UserPermissionReportController extends Controller {
 //
 //        // We only want to see documents tha the current user is effectively the owner of as they can't change
 //        // permissions on anything else.
-//        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
+//        documentListController.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
 //        refresh();
 //    }
 

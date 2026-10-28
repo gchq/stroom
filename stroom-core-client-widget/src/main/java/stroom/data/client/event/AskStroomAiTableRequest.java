@@ -26,7 +26,7 @@ import com.google.gwt.event.shared.HasHandlers;
 /// Asks Stroom AI about a table's data from a widget that has no event bus to fire an
 /// [AskStroomAiEvent] on (a data grid's context menu). The widget makes a request with [#fire],
 /// which bubbles up the page to the one relay installed for the page ([#relay], by Stroom's core
-/// presenter), which fires the [AskStroomAiEvent] on the event bus. (Not `AskStroomAiRequest`, the
+/// controller), which fires the [AskStroomAiEvent] on the event bus. (Not `AskStroomAiRequest`, the
 /// name of the server's request.)
 public final class AskStroomAiTableRequest {
 
@@ -46,7 +46,7 @@ public final class AskStroomAiTableRequest {
 
     /// Asks Stroom AI what widgets on the page ask, by firing an [AskStroomAiEvent] for each.
     ///
-    /// @param handlers What the [AskStroomAiEvent]s are fired on, e.g. a presenter, or an event bus's
+    /// @param handlers What the [AskStroomAiEvent]s are fired on, e.g. a controller, or an event bus's
     ///                 `fireEvent`.
     /// @return The registration that stops the relay.
     public static HandlerRegistration relay(final HasHandlers handlers) {

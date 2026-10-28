@@ -266,7 +266,7 @@ public final class PlanBEditorStories {
                 })
                 // The document is locked and unlocked while it is open, as reading it again does
                 // when its lock changes: every settings field follows, as they watch READ_ONLY
-                // (from the document) rather than being told by the presenters between
+                // (from the document) rather than being told by the controllers between
                 .story("LockChangeWhileOpen", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).not().toHaveAttribute("readonly"));

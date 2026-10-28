@@ -29,7 +29,7 @@ public final class Page {
 
     /// Shows a screen as the whole page, in place of what the page held.
     ///
-    /// @param content The screen, a component's controller or a presenter.
+    /// @param content The screen, a component's controller.
     public static void show(final Controller content) {
         RootLayoutPanel.get().clear();
         RootPanel.get().clear();

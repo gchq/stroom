@@ -40,7 +40,7 @@ import com.google.gwt.inject.client.GinModules;
 
 /// A [ScreenGinjector] for the dashboard batch's stories (`App/Editors/DashboardEditor`, the
 /// dashboard table's expression editor and `App/Dashboard/TableFilterSettings`), creating Stroom's
-/// presenters and views as Stroom's GIN modules do, as `AppScreenGinjector` does for the pilot.
+/// controllers and components as Stroom's GIN modules do, as `AppScreenGinjector` does for the pilot.
 /// Create one each time the story renders: its singletons (e.g. the dashboard's
 /// `ComponentRegistry`) belong to that rendering's harness.
 ///

@@ -213,7 +213,7 @@ public class FloorMapPendingChanges {
     }
 
     /// Returns an unmodifiable view of the staged operations, in the order
-    /// they were recorded. Used by the presenter to build a REST request.
+    /// they were recorded. Used by the controller to build a REST request.
     ///
     /// @return the list of pending changes; never `null`
     public List<PendingChange> getChanges() {

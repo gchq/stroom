@@ -103,15 +103,15 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     public void open() {
 //        userRefPopupProvider.get().show(userRef -> {
-//            final UserPermissionReportController presenter = userPermissionReportProvider.get();
-//            presenter.setUserRef(userRef);
+//            final UserPermissionReportController controller = userPermissionReportProvider.get();
+//            controller.setUserRef(userRef);
 //            final CloseContentEvent.Handler closeHandler = (event) -> {
-//                if (presenter instanceof CloseContentEvent.Handler) {
+//                if (controller instanceof CloseContentEvent.Handler) {
 //                    final Callback callback = ok -> {
 //                        event.getCallback().closeTab(ok);
 //                    };
 //
-//                    ((CloseContentEvent.Handler) presenter)
+//                    ((CloseContentEvent.Handler) controller)
 //                            .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
 //                } else {
 //                    // Give the content manager the ok to close the tab.
@@ -120,7 +120,7 @@ public class UserPermissionsReportPlugin extends Plugin {
 //            };
 //
 //            // Tell the content manager to open the tab.
-//            contentManager.open(closeHandler, presenter, presenter);
+//            contentManager.open(closeHandler, controller, controller);
 //        });
     }
 

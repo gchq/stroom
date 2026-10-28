@@ -51,7 +51,7 @@ import com.google.gwt.inject.client.GinModules;
 
 /// A [ScreenGinjector] for the `editors` batch of screen stories (the document editors of
 /// `App/Editors/*`, `App/Index/*` and `App/Feed/*`, and the `App/AI/*` dialogs), creating Stroom's
-/// presenters and views as Stroom's GIN modules do, as `AppScreenGinjector` does for the pilot:
+/// controllers and components as Stroom's GIN modules do, as `AppScreenGinjector` does for the pilot:
 /// ```
 /// final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();

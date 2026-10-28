@@ -45,7 +45,7 @@ public final class DropDownSelectorStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // Stroom's presenters always set the text ("None" when nothing is selected) and handle
+        // Stroom's controllers always set the text ("None" when nothing is selected) and handle
         // the warning button themselves.
         registry.component("Widgets/Selectors/DropDownSelector", DropDownSelectorStories.class)
                 .layout(StoryLayout.CENTERED)

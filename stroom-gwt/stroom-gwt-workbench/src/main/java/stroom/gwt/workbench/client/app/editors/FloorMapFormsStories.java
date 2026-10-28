@@ -168,7 +168,7 @@ public final class FloorMapFormsStories {
                 });
     }
 
-    // The layer style dialog's content, drawing a graphic, with no image chosen, as its presenter
+    // The layer style dialog's content, drawing a graphic, with no image chosen, as its controller
     // shows it
     private static Widget layerStyle(final GraphicMode mode) {
         final FloorMapLayerStyle view = new FloorMapLayerStyle();

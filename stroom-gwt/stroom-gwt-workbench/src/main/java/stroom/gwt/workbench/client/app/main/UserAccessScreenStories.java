@@ -52,7 +52,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The calls are checked on the request spy, and the `openScreen` spy records Stroom's
 /// `OpenUserEvent`. The user holds `MANAGE_USERS_PERMISSION`.
-/// Confirmations are Stroom's real dialogs. The presenter comes from GIN and is opened as
+/// Confirmations are Stroom's real dialogs. The controller comes from GIN and is opened as
 /// `UserAccessPlugin` opens it (refreshed).
 public final class UserAccessScreenStories {
 

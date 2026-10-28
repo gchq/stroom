@@ -133,7 +133,7 @@ public class FloorMapQueryController
         }));
 
         // This tab does NOT follow the timeline. The playback events query is
-        // owned by FloorMapMapController, because this presenter is created
+        // owned by FloorMapMapController, because this controller is created
         // lazily (only when its tab is first opened) and the Map tab's animated
         // entity overlay must not depend on that. Running it here as well would
         // fire a second, identical query per playback tick.

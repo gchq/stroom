@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The fixtures answer Stroom's `UserResource` (`POST /users/v1/find`, `POST /users/v1/createUser`,
 /// `POST /users/v1/createUsers`), and the requests are checked on the request spy. The user holds
 /// `MANAGE_USERS_PERMISSION` (and not `ADMINISTRATOR`). The `openScreen` spy records Stroom's
-/// `OpenAppPermissionsScreenEvent`. The presenter comes from GIN.
+/// `OpenAppPermissionsScreenEvent`. The controller comes from GIN.
 public final class UsersScreenStories {
 
     /// The name of the spy recording the screens opened from the action menu.

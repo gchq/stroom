@@ -47,9 +47,9 @@ public class KeyValueInputController extends DashboardComponentController implem
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus                  The application's event bus.
-    /// @param view                      The content.
-    /// @param settingsPresenterProvider Makes the pane's settings dialog.
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       The content.
+    /// @param settingsControllerProvider Makes the pane's settings dialog.
     @Inject
     public KeyValueInputController(final EventBus eventBus,
                                    final KeyValueInput view,

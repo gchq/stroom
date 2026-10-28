@@ -57,7 +57,7 @@ import java.util.Set;
 /// They check that [DataGrid] works with Stroom's existing GWT cells unchanged: the cells get
 /// their events, their field updaters fire, a click on a control in a cell does not select the row,
 /// a cell that redraws itself is put right when the row is sent again, and a cell being edited keeps
-/// the focus while its row is redrawn. The columns are built as Stroom's presenters build them.
+/// the focus while its row is redrawn. The columns are built as Stroom's controllers build them.
 final class InteractiveCellGrids {
 
     static final String ON_CHANGE = "onChange";
@@ -127,7 +127,7 @@ final class InteractiveCellGrids {
         });
         column.setFieldUpdater((index, person, value) -> {
             if (LOCKED.equals(person.getName())) {
-                // Refused: send the rows again, as a presenter refreshing from the server would
+                // Refused: send the rows again, as a controller refreshing from the server would
                 grid.setRowData(0, rows);
                 return;
             }
@@ -299,7 +299,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Action menu column, as the rule list presenters' row menus
+    // Action menu column, as the rule list controllers' row menus
 
     static Widget actionMenuGrid(final StoryContext context) {
         final Spy onAction = context.fn(ON_ACTION);

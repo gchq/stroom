@@ -49,7 +49,7 @@ import java.util.function.IntSupplier;
 /// the same play. The behaviour was measured on the old grid (`MyDataGrid`, since removed) first;
 /// the plays record it, so the grid is still held to it.
 ///
-/// The buttons send data as a presenter does: the same rows again (a poll with no change), every
+/// The buttons send data as a controller does: the same rows again (a poll with no change), every
 /// row's values changed (new row objects, so new keys), the first three rows only, and back.
 /// Rebuild columns removes and re-adds every column, as the dashboard's `updateColumns` does.
 public final class BehaviourStories {

@@ -59,7 +59,7 @@ public class CoreController extends Controller
         initWidget(view);
         // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter).
         // Here, as both Stroom and the standalone dashboard show this, and only Stroom shows its
-        // main presenter
+        // main controller
         own(MenuRequest.relay(this));
         // and the links and Stroom AI questions they ask for (e.g. a data grid's context menu's)
         own(OpenHyperlinkRequest.relay(this));
@@ -116,7 +116,7 @@ public class CoreController extends Controller
                 OpenDocumentEvent.fire(this, new DocRef(type, uuid), true, true);
 
             } else {
-                // Show the main presenter without an initial document.
+                // Show the main controller without an initial document.
                 ShowMainEvent.fire(this, null);
             }
         }

@@ -34,8 +34,8 @@ public abstract class RefreshableDashboardComponentController
     private boolean allowRefresh = true;
     private Timer refreshTimer;
 
-    /// @param eventBus                  The application's event bus.
-    /// @param settingsPresenterProvider Makes the pane's settings dialog.
+    /// @param eventBus                   The application's event bus.
+    /// @param settingsControllerProvider Makes the pane's settings dialog.
     protected RefreshableDashboardComponentController(
             final EventBus eventBus,
             final Provider<? extends ComponentSettingsDialogController> settingsControllerProvider) {

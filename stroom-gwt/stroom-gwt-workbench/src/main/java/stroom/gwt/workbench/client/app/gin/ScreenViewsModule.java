@@ -19,18 +19,18 @@ package stroom.gwt.workbench.client.app.gin;
 import com.google.gwt.inject.client.AbstractGinModule;
 
 
-/// The views and small presenters that Stroom binds for every screen, copied from Stroom's
+/// The views and small controllers that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,
-/// but without plugins or the app shell, so that e.g. a list presenter's `PagerPanel` is created
+/// but without plugins or the app shell, so that e.g. a list controller's `PagerPanel` is created
 /// as in Stroom.
 ///
 /// GIN checks the whole graph of every binding of an injector's modules, used or not, so a widget
 /// bound here must be left out of the area modules (a key bound twice fails the GIN compile).
-/// Add a binding here (copied from Stroom's module) when a view or presenter is a widget shared
+/// Add a binding here (copied from Stroom's module) when a component or controller is a widget shared
 /// by several areas' screens.
 public class ScreenViewsModule extends AbstractGinModule {
 
-    /// Binds the shared views and presenters.
+    /// Binds the shared components and controllers.
     @Override
     protected void configure() {
         // AppModule: widgets
