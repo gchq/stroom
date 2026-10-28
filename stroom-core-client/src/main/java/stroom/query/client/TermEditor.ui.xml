@@ -5,7 +5,7 @@
              xmlns:dt="urn:import:stroom.widget.datepicker.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <!--
-      A term's editor (TermEditor.css): its field, its condition and the value boxes the condition
+      A term's editor (term-editor.css): its field, its condition and the value boxes the condition
       takes, which the Java shows for the field's type and condition, then the field's type. It is
       shown while its term is edited
     -->

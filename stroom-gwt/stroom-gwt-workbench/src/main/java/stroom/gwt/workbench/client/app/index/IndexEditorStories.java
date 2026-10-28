@@ -250,7 +250,7 @@ public final class IndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, false, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab as an editable partner for SettingsReadOnly
@@ -279,7 +279,7 @@ public final class IndexEditorStories {
                 .story("SettingsReadOnly", context -> render(context, false, true))
                 .withPlay(play -> {
                     openSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Reset Data, once confirmed, deletes the index's shards and says how many were

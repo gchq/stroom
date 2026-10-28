@@ -92,7 +92,7 @@ public final class StatisticStoreEditorStories {
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Statistic Type", "label")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Fields tab, to compare with 'ReadOnly'
@@ -116,7 +116,7 @@ public final class StatisticStoreEditorStories {
                     openTab(play, "Custom Roll-ups");
                     play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
                             .toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Fields tab: the fields, sorted; adding one with the dialog makes the document

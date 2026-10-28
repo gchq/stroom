@@ -13,36 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.maximised .dashboard-body {
-    padding-left: var(--control__padding--horizontal);
-}
-
-.dashboard-body__top {
-    gap: var(--control__padding--horizontal);
-    padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.dashboard-body__design-buttons {
-    display: none;
-}
-
-.dashboard__designMode .dashboard-body__design-buttons {
-    display: flex;
-}
-
-.dashboard-body .tab-bar--link .tab-bar__tab {
-    opacity: 0.8 !important;
-    color: var(--link-tab__text-color) !important;
-    transition: none;
-    -webkit-transition: none;
-}
-
-.dashboard-body .navigation__name-filter {
-    margin: 0 0 var(--control__padding--vertical) 0;
-}
 
 /*
 .dashboard-body .tab-bar--link .tab-bar__tab {
@@ -62,36 +32,6 @@
     text-decoration: underline;
 }
 */
-
-.dashboard-body__top-buttons {
-    display: flex;
-    gap: var(--control__gap--horizontal);
-    align-items: center;
-    justify-content: space-between;
-}
-
-.dashboard-body__content {
-    display: flex;
-    flex-grow: 1;
-	background-color: var(--content-box__background-color);
-}
-
-.full-screen {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.full-screen__content-panel {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    /*background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
-    background-color: rgb(223, 234, 248);*/
-}
 
 .dashboard-outerPanel {
     display: flex;
@@ -117,10 +57,6 @@
 
 .dashboard-scrollPanel--vertical-scroll {
     overflow-y: auto;
-}
-
-.result-table .pager {
-    padding: 0 5px;
 }
 
 .dashboard-layout {
@@ -273,11 +209,6 @@
 	background-color: yellow;
 }
 
-.result-table__grid th span,
-.result-table__grid .data-grid__header-cell span {
-    display: flex;
-}
-
 .column-top {
     display: flex;
     width: 100%;
@@ -333,24 +264,6 @@
     flex-grow: 1;
     flex-direction: row-reverse;
     padding-right: 5px;
-}
-
-.result-table__grid input {
-    width: 100%;
-    display: none;
-}
-
-.result-table__grid .data-grid__header-cell {
-    min-height: 16px;
-    vertical-align: top;
-}
-
-.result-table__grid.showValueFilters input {
-    display: inline-block;
-}
-
-.result-table__grid.showValueFilters .data-grid__header-cell {
-    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
 }
 
 /* Fills the component's tab content, below its tab bar. Not absolute, as the tab content isn't
@@ -413,11 +326,6 @@
     background-color: blue;
 }
 */
-
-.query-edit__results-outer {
-    padding: 5px 5px 0 5px;
-    z-index: 5;
-}
 
 /* Fills the query's result pane below its tabs, as .dashboardVis-outerLayout does */
 .queryVis-outerLayout {

@@ -283,7 +283,7 @@ public final class PlanBEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Temporal Resolution", "label"))
                             .toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // SESSION read only: the same settings as Session, when the user may only view the store
@@ -291,14 +291,14 @@ public final class PlanBEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Condense Data", GROUP_LABEL))
                             .toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // TRACE read only: the same settings as Trace, when the user may only view the store
                 .story("TraceReadOnly", context -> render(context, "planb-TRACE", true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Storage", GROUP_LABEL)).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // TEMPORAL_STATE read only: its condense settings can't be changed either
@@ -307,7 +307,7 @@ public final class PlanBEditorStories {
                     final Play condense = play.within(play.findByText("Condense Data", GROUP_LABEL).closest(GROUP));
                     play.expect(condense.getByRole("checkbox", "Enabled")).toHaveAttribute("aria-readonly", "true");
                     play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // HISTOGRAM read only: its settings can't be changed
@@ -317,7 +317,7 @@ public final class PlanBEditorStories {
                             .toBeInTheDocument());
                     play.expect(maxStoreSize(play)).toHaveAttribute("readonly");
                     play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Unset schema fields show the Java defaults of their schemas

@@ -413,10 +413,10 @@ public final class AnnotationEditorStories {
                     final Query assignYourself = play.getByRole("button", "Assign Yourself");
                     play.expect(assignYourself).toHaveAttribute("aria-disabled", "true");
                     play.expect(assignYourself).toHaveAttribute("title", "You don't have permission to change this");
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     // The status is at the end of the tab bar's row, not on the toolbar, and says why
                     // the annotation is read only, in a tooltip and to screen readers
-                    final Query status = play.querySelector(".link-tab-panel > .docTab-readOnlyStatus");
+                    final Query status = play.querySelector(".link-tab-panel > .link-tab-panel__read-only-status");
                     play.expect(status).toHaveAttribute("title", "You don't have permission to change this");
                     play.expect(status).toHaveTextContent(
                             TextMatch.containing("You don't have permission to change this."));
@@ -444,7 +444,7 @@ public final class AnnotationEditorStories {
                 .story("AnnotationReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
                 .withPlay(play -> {
                     waitForAnnotation(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // The Events tab as an editable partner for EventsReadOnly
@@ -457,7 +457,7 @@ public final class AnnotationEditorStories {
                 .story("EventsReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
                 .withPlay(play -> {
                     openTab(play, "Events", "Add Event Link");
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // The Link To tab as an editable partner for LinkToReadOnly
@@ -470,7 +470,7 @@ public final class AnnotationEditorStories {
                 .story("LinkToReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
                 .withPlay(play -> {
                     openTab(play, "Link To", "Add Annotation Link");
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // The Status block shows the current value; clicking it opens a chooser; picking a

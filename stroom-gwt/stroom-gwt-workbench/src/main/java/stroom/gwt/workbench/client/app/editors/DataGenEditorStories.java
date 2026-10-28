@@ -119,7 +119,7 @@ public final class DataGenEditorStories {
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     waitForSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Execution tab lists the document's schedules; Add opens the Create dialog
@@ -165,7 +165,7 @@ public final class DataGenEditorStories {
                 .story("ExecutionReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     showExecution(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

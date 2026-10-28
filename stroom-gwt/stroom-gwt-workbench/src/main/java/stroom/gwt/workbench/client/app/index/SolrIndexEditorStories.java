@@ -185,7 +185,7 @@ public final class SolrIndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, FIELDS, true))
                 .withPlay(play -> {
                     waitForFields(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab as an editable partner for SettingsReadOnly
@@ -198,7 +198,7 @@ public final class SolrIndexEditorStories {
                 .story("SettingsReadOnly", context -> render(context, FIELDS, true))
                 .withPlay(play -> {
                     openSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

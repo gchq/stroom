@@ -121,7 +121,8 @@ public class LinkTabPanel extends Component {
     // "Read only" with a lock, and the reason for screen readers, which a tooltip doesn't give them
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<span class=\"docTab-readOnlyNote\"><span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">"
+        @Template("<span class=\"link-tab-panel__read-only-note\">"
+                  + "<span class=\"link-tab-panel__read-only-icon\" aria-hidden=\"true\">"
                   + "{0}</span>Read only</span><span class=\"sr-only\">{1}</span>")
         SafeHtml readOnlyChip(SafeHtml lock, String reason);
     }

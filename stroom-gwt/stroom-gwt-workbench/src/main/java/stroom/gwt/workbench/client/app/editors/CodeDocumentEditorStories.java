@@ -115,7 +115,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "XSLT", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("TextConverter", context -> textConverter(context, false))
@@ -131,7 +131,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Converter Type", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Conversion tab (the default), to compare with its read only partner
@@ -146,7 +146,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Conversion", "Settings", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("Script", context -> script(context, false))
@@ -162,7 +162,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Base Script")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Script (code) tab, the default, to compare with its read only partner
@@ -177,7 +177,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Script", "Settings", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Config (default), Documentation and Permissions, and a Download Kafka Config toolbar button
@@ -194,7 +194,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("S3Config", context -> s3(context, false))
@@ -210,7 +210,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("XmlSchema", context -> schema(context, false))
@@ -259,7 +259,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Text");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab, to compare with its read only partner
@@ -274,7 +274,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Namespace URI", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only (no EDIT permission): the code editor and settings are read only

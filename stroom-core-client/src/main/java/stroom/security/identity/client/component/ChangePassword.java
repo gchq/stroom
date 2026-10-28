@@ -44,7 +44,7 @@ public class ChangePassword extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    // The strength meter's bar and the length badge (BEM blocks, ChangePassword.css)
+    // The strength meter's bar and the length badge (BEM blocks, change-password.css)
     private static final String STRENGTH_BAR = "password-strength__bar";
     private static final String LENGTH_BLOCK = "password-length";
     // The strength meter's values, 0 (nothing typed) to 5, as a screen reader says them

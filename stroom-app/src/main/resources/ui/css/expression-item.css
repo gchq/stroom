@@ -17,7 +17,7 @@
 /*
  * An item of a query expression tree (ExpressionItemBox), a term or an operator, named BEM style:
  * its row (__row), which its looks are drawn on, is its label (__label) or the row of its editor's
- * fields (TermEditor.css), with the "not allowed" icon at its start while it refuses what is moved
+ * fields (term-editor.css), with the "not allowed" icon at its start while it refuses what is moved
  * to it (__refused-icon).
  * Its states come from its ARIA attributes where it has them (aria-selected, which only the items
  * of a tree that can be changed have, and the focus), and from modifiers: --disabled for an item

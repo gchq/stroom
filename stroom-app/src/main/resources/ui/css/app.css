@@ -1,7 +1,7 @@
 /* Material Design Lite */
 /* @import ../mdl/material.min.css" /> */
 /* <script type="text/javascript" src='../mdl/material.min.js'></script> */
-@import url("material_design_colors.css");
+@import url("material-design-colors.css");
 
 @import url("theme.css");
 @import url("layout.css");
@@ -12,12 +12,13 @@
 
 /* Standard GWT CSS plus Stroom modifications */
 @import url("standard.css");
-@import url("standard_mod.css");
+@import url("standard-mod.css");
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
 @import url("button.css");
 @import url("stroom.css");
+@import url("query-data-pane.css");
 /* Straight after stroom.css, where the text box rules it replaces were, so later rules still win */
 @import url("text-field.css");
 @import url("radio-button.css");
@@ -64,8 +65,9 @@
 @import url("file-chooser.css");
 @import url("popup.css");
 @import url("dialog.css");
-@import url("ChangePassword.css");
-@import url("Login.css");
+@import url("change-password.css");
+@import url("sign-in-page.css");
+@import url("authentication-error.css");
 @import url("refresh-button.css");
 
 @import url("explorer-tree.css");
@@ -97,8 +99,8 @@
 @import url("expression-editor.css");
 @import url("secret-form.css");
 @import url("shared-file-store-settings.css");
-@import url("CommandLinkCell.css");
-@import url("TermEditor.css");
+@import url("command-link-cell.css");
+@import url("term-editor.css");
 @import url("common-alert.css");
 @import url("key-shortcut-recorder.css");
 @import url("busy-spinner.css");
@@ -114,7 +116,7 @@
 @import url("line-col-input.css");
 @import url("expander-cell.css");
 @import url("icon-cell.css");
-@import url("CellList.css");
+@import url("cell-list.css");
 @import url("form-label.css");
 @import url("form.css");
 @import url("form-group.css");
@@ -124,6 +126,15 @@
 @import url("user-task.css");
 @import url("main-toolbar.css");
 @import url("components.css");
+@import url("content-store-tab.css");
+@import url("link-tab-panel.css");
+@import url("elastic-index-field-list.css");
+@import url("source-viewer.css");
+@import url("data-viewer.css");
+@import url("data-retention.css");
+@import url("welcome-tab.css");
+@import url("main.css");
+@import url("curve-tab-layout.css");
 @import url("find-panel.css");
 @import url("column-values-filter.css");
 @import url("explorer-node-edit-tags.css");
@@ -151,6 +162,11 @@
 @import url("column-value-cell.css");
 @import url("link-button.css");
 @import url("dashboard.css");
+@import url("full-screen.css");
+@import url("result-table.css");
+@import url("query-edit.css");
+@import url("dashboard-body.css");
+@import url("navigation.css");
 @import url("vis-toolbar-row.css");
 @import url("query-cell.css");
 @import url("flex-layout.css");

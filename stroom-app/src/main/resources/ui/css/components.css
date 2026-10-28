@@ -13,9 +13,6 @@
     margin-left: 5px;
 }
 */
-.elastic-index-field-list__status-message {
-    padding: 5px;
-}
 
 .info-layout {
 	width: 100%;
@@ -69,45 +66,6 @@
     margin: 0 2px 0 6px;
 }
 
-.curve-tab-layout__layout {
-    display: flex;
-    flex-direction: column;
-}
-
-.curve-tab-layout__layer-container-outer {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.curve-tab-layout__tab-bar-outer {
-    height: 33px;
-    margin-right: 95px;
-    flex-grow: 1;
-}
-
-.source-viewer__character-navigator {
-}
-
-.source-viewer__title-text {
-    display: inline-block;
-    padding-top: 3px;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
-}
-
-.source-viewer__title-heading {
-    display: inline-block;
-    padding-top: 3px;
-    padding-left: 0.5em;
-    font-weight: 500;
-}
-
-.source-viewer__progress-bar-panel {
-    display: inline-block;
-    width: 100%;
-    height: 10px;
-}
-
 .pager-toolbar {
     display: flex;
     flex-grow: 1;
@@ -121,54 +79,6 @@
 .pager-button {
     padding: 1px;
     text-align: center;
-}
-
-.data-viewer__tab-bar {
-    align-items: center;
-    padding: 0 .75rem;
-    gap: .75rem;
-    min-height: 27px;
-}
-
-.data-viewer__tab-bar-outer {
-    overflow: hidden;
-    flex-shrink: 1;
-}
-
-.data-viewer__tab-bar-inner {
-    position: relative;
-}
-
-.data-viewer__right-panel {
-    display: flex;
-    flex-shrink: 0;
-    justify-content: flex-end;
-    padding-right: 0.25em;
-    padding-top: 1px;
-    align-items: center;
-    gap: .75rem;
-}
-
-.data-viewer__button-panel {
-    float: left;
-}
-
-.data-viewer__navigator-container {
-    float: left;
-}
-
-.data-viewer__progress-bar-panel {
-    width: 100%;
-    height: 10px;
-}
-
-.data-viewer__layer-container {
-    /* To make the info pane fit the remaining space in the parent rather
-    than 100% of the content */
-    height: 0px;
-}
-
-.data-viewer__source-link-label {
 }
 
 .resizableAcceptRejectContent-button {
@@ -362,70 +272,9 @@
    width: auto;
 }
 
-.link-tab-panel {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 25px;
-    padding: 0 5px;
-}
-
-.link-tab-panel__middle {
-    flex-grow: 1;
-}
-
-.toolbarContainer {
-    display: flex;
-}
-
-/* Docked AI panel styles */
-.main__outer-split-panel {
-    width: 100%;
-    height: 100%;
-}
-
-.query-edit {
-    border-top: 1px solid var(--control__border-color);
-    background-color: var(--dashboard-panel__background-color);
-    overflow: hidden;
-    user-select: none;
-}
-
 .characterNavigator-button {
     padding: 1px;
     text-align: center;
-}
-
-.main {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 0px;
-    bottom: 0px;
-    overflow: hidden;
-	display: flex;
-	flex-direction: column;
-	background-color: var(--page__background-color);
-}
-
-/* The main area, below the maintenance banner while it is shown */
-.main.main--banner {
-    top: 20px;
-}
-
-.main__banner {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 0px;
-    height: 20px;
-    overflow: hidden;
-    text-align: center;
-    font-weight: 500;
-    background-color: yellow;
-    color: black;
-    border: 1px solid black;
-    padding: 1px;
 }
 
 /*
@@ -439,64 +288,12 @@
 }
 */
 
-.main__content-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.main__content-panel {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.data-retention__tab-bar-outer {
-    padding-left: 10px;
-    padding-right: 3px;
-    padding-top: 1px;
-    /* Keeps the toolbar below clear of the tabs: a tab under 24px high needs 12px from its centre to
-       its neighbours (WCAG 2.5.8), which the toolbar was half a pixel short of */
-    padding-bottom: 1px;
-}
-
-.data-retention__tab-bar-inner {
-    position: relative;
-}
-
 .dataRetention--defaultRule {
     color: #484848;
 }
 
 .dataRetention--disabledRule {
     color: #A9A9A9;
-}
-
-.welcome-tab__body {
-    padding: 5px !important;
-    /* Its text can be selected, so copied */
-    user-select: text;
-}
-
-.welcome-tab__build-info {
-    display: flex;
-    justify-content: flex-end;
-    position: absolute;
-    right: 5px;
-    bottom: 5px;
-}
-
-.welcome-tab__build-info > tbody > tr > td:first-child {
-    font-weight: bold;
-}
-
-.welcome-tab__build-info > tbody > tr > td:last-child {
-    user-select: text;
-}
-
-.navigation__name-filter {
-    margin: var(--control__padding--vertical) var(--control__padding--horizontal);
 }
 
 .button-group {
@@ -535,27 +332,6 @@
     box-shadow: var(--focus-shadow);
 }
 
-.navigation {
-    background-color: var(--navigation__background-color);
-    color: var(--navigation__text-color);
-    overflow: hidden;
-}
-
-/* Icon buttons in the explorer (its toolbar, its quick filter's) are in the explorer's colours */
-.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
-    background-color: var(--navigation-icon-button__background-color--hover);
-    border: thin solid var(--navigation-icon-button__border-color--hover);
-}
-
-.navigation .toolbar-button[aria-pressed="true"]::before {
-    background-color: var(--navigation-icon-button__background-color--on);
-    border: thin solid var(--navigation-icon-button__border-color--on);
-}
-
-.navigation .toolbar-button__icon {
-    color: var(--navigation-icon-button__color);
-}
-
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
@@ -566,9 +342,6 @@
    otherwise cut off */
 .navigation-title-bar > .toolbar {
     margin: 0 6px 0 0;
-}
-
-.navigation .navigation__name-filter-panel {
 }
 
 .navigation-logo {
@@ -1039,15 +812,6 @@
 .contentstore-details {
     display: flex;
 }
-/** Allows things to scroll in y-direction */
-.contentstore-scroll-y {
-    overflow-y: auto;
-}
-/* The details take the keyboard focus, to be scrolled with it */
-.contentstore-scroll-y:focus-visible {
-    outline: none;
-    box-shadow: inset var(--focus-shadow);
-}
 /* Details title */
 .contentstore-details .contentstore-details-heading {
     font-size: 120%;
@@ -1268,43 +1032,3 @@
     color: var(--text-color--disabled);
 }
 
-/* The "Read only" status at the far right of a read-only document's tab bar (LinkTabPanel) */
-.docTab-readOnlyStatus {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    cursor: default;
-}
-
-/* Empty, it is out of the layout (no gap either) but stays in the page, so screen readers announce
-   it when it is filled */
-.docTab-readOnlyStatus:empty {
-    position: absolute;
-}
-
-.docTab-readOnlyNote {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0 6px;
-    border-radius: .25rem;
-    font-size: var(--font-size-12);
-    line-height: 18px;
-    color: var(--text-color);
-    border: 1px solid var(--control__border-color);
-    white-space: nowrap;
-}
-
-.docTab-readOnlyIcon {
-    display: flex;
-}
-
-.docTab-readOnlyIcon svg {
-    width: 10px;
-    height: 10px;
-}
-
-/* In the chip's colour rather than the lock's usual orange, which would read as a warning */
-.docTab-readOnlyIcon svg path {
-    fill: currentColor !important;
-}

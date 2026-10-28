@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The explorer pane (stroom.explorer.client.component.Navigation), named BEM style. Its rules were in `components.css`, `dashboard-body.css`.
+*/
+
+.navigation__name-filter {
+    margin: var(--control__padding--vertical) var(--control__padding--horizontal);
+}
+
+.navigation {
+    background-color: var(--navigation__background-color);
+    color: var(--navigation__text-color);
+    overflow: hidden;
+}
+
+/* Icon buttons in the explorer (its toolbar, its quick filter's) are in the explorer's colours */
+.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.navigation .toolbar-button[aria-pressed="true"]::before {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
+}
+
+.navigation .toolbar-button__icon {
+    color: var(--navigation-icon-button__color);
+}
+
+.navigation .navigation__name-filter-panel {
+}
+
+.dashboard-body .navigation__name-filter {
+    margin: 0 0 var(--control__padding--vertical) 0;
+}

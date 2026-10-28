@@ -193,7 +193,7 @@ public final class FeedEditorStories {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Classification", "label")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(CLASSIFICATION)).toHaveValue("OFFICIAL"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

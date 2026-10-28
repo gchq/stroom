@@ -112,7 +112,7 @@
     padding: 0;
 }
 
-/* In an expression's term, as flat as the term's other fields (TermEditor.css) */
+/* In an expression's term, as flat as the term's other fields (term-editor.css) */
 .termEditor-inner .selection-box__value {
     border: none !important;
     border-radius: 0 !important;

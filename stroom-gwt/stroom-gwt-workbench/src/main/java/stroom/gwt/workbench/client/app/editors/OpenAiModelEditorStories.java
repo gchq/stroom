@@ -265,7 +265,7 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
                     play.waitFor(() -> play.expect(play.within(play.querySelector(API_KEY))
                             .querySelector(StroomDom.SELECTION_BOX)).toHaveValue("openai-key"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The HTTP client configuration dialog, editable: the partner of
@@ -283,7 +283,7 @@ public final class OpenAiModelEditorStories {
                 .story("HttpClientConfigReadOnly", context -> render(context, null, true))
                 .withPlay(play -> {
                     showHttpClientConfig(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The TLS dialog's Key Store picker offers both kinds of key store credential: an

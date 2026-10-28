@@ -202,9 +202,9 @@ public final class ElasticClusterEditorStories {
                     play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--read-only");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     // The tab says it is read only, as a status that screen readers announce
-                    final Query note = play.getByText("Read only", ".docTab-readOnlyNote");
+                    final Query note = play.getByText("Read only", ".link-tab-panel__read-only-note");
                     play.expect(note).toBeVisible();
-                    play.expect(note.closest(".docTab-readOnlyStatus")).toHaveAttribute("role", "status");
+                    play.expect(note.closest(".link-tab-panel__read-only-status")).toHaveAttribute("role", "status");
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only, with nothing typed (ReadOnly types into a field): the partner
@@ -214,7 +214,7 @@ public final class ElasticClusterEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Connection URLs", "label")).toBeInTheDocument());
                     play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
                     play.waitFor(() -> play.expect(apiKeyBox(play)).toHaveValue("elastic-key"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

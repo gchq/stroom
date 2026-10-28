@@ -213,7 +213,7 @@ public final class ReportEditorStories {
     // A read-only document's tab says so
     private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
         if (readOnly) {
-            play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+            play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
         }
     }
 

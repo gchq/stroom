@@ -11,7 +11,7 @@
             <!-- The details scroll, so the keyboard must be able to reach them to scroll them, even
                  when they hold nothing else the keyboard reaches (e.g. a pack with no links and both
                  buttons disabled). A named region, so screen readers say what has the focus -->
-            <c:AriaPanel ui:field="contentPackDetails" styleName="max dashboard-panel contentstore-scroll-y"
+            <c:AriaPanel ui:field="contentPackDetails" styleName="max dashboard-panel content-store-tab__details"
                          role="region" tabIndex="0" ariaLabel="Content pack details"/>
         </split:SplitPane>
     </g:SimplePanel>

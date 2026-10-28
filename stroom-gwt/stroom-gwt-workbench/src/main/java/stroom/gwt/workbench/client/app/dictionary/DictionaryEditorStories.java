@@ -242,7 +242,7 @@ public final class DictionaryEditorStories {
                     play.click(tab(play, "Imports"));
                     final Play grid = play.within(play.findByText("Document Name").closest(".data-grid"));
                     play.waitFor(() -> play.expect(grid.getByTitle("Open Dictionary 'Cities'.")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
                 })
                 // The Imports tab is a grid (DocRefList.addColumn("Document Name",
@@ -345,7 +345,7 @@ public final class DictionaryEditorStories {
 
                     play.run("lock the document", () -> editor().setReadOnly(true));
                     play.expect(play.findByRole("button", "Save (read only)")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     play.expect(play.getByRole("button", "Add Imported Dictionary (dictionary is read only)"))
                             .toHaveAttribute("aria-disabled", "true");
 

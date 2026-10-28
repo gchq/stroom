@@ -28,7 +28,7 @@ import com.google.gwt.user.client.ui.HTML;
 /// Stroom has no rounded panel widget: it is the centred, rounded card that `Login.ui.xml`
 /// builds (`sign-in-page` > `sign-in-page__form-panel` >
 /// `max form-padding form sign-in-page__form`), so these stories build the same panels, styled by
-/// Stroom's `Login.css`.
+/// Stroom's `sign-in-page.css`.
 public final class RoundedPanelStories {
 
     private RoundedPanelStories() {

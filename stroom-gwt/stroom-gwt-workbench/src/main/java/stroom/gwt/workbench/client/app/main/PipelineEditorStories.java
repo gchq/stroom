@@ -1131,7 +1131,7 @@ public final class PipelineEditorStories {
                 .story("StructureReadOnly", context -> render(context, FIXTURES, true))
                 .withPlay(play -> {
                     waitForStructure(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
                 })
                 // The xslt element's properties and reference loaders, as an editable partner for
@@ -1146,7 +1146,7 @@ public final class PipelineEditorStories {
                 .story("PropertiesReadOnly", context -> render(context, FIXTURES, true))
                 .withPlay(play -> {
                     selectXslt(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
                 });
     }

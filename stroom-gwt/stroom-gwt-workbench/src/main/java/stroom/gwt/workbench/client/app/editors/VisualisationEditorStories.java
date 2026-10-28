@@ -242,7 +242,7 @@ public final class VisualisationEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Assets");
                     play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Saving the document publishes the asset draft (the editor's post save callback

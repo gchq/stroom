@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
-  An expression operator's editor (TermEditor.css, as a term's): its row, holding the operator's
+  An expression operator's editor (term-editor.css, as a term's): its row, holding the operator's
   box. Hidden until an operator is edited.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"

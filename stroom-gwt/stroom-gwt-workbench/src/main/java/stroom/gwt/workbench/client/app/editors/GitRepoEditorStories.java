@@ -330,7 +330,7 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Git repository URL", "label")).toBeInTheDocument());
                     play.waitFor(() -> play.expect(play.querySelector(URL_INPUT))
                             .toHaveValue("https://github.com/example/repo.git"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

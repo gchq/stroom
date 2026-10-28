@@ -19,7 +19,7 @@
 /* Where it sits: */
 
 /* In an expression term, as wide as elsewhere (a narrow term field is 175px), its field as wide as
-   that (icon-box.css gives a field 200px at least). With .narrow, to outrank TermEditor.css's
+   that (icon-box.css gives a field 200px at least). With .narrow, to outrank term-editor.css's
    width, which comes later */
 .termEditor-item.narrow.date-time-box {
     width: calc(var(--font-size-13) * 17);

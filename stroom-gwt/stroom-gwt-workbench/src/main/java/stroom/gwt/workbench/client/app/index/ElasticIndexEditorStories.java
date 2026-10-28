@@ -114,7 +114,7 @@ public final class ElasticIndexEditorStories {
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     waitForSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     play.expect(play.getByLabelText("Index name or pattern")).toHaveAttribute("readonly");
                     play.expect(play.getByLabelText("Rerank score field suffix")).toHaveAttribute("readonly");
                     DocEditors.expectNoProblems(play);
@@ -130,7 +130,7 @@ public final class ElasticIndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     openFields(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

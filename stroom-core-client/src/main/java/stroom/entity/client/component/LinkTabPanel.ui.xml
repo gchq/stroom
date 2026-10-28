@@ -10,9 +10,9 @@
         <g:FlowPanel styleName="dock-min link-tab-panel">
             <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
             <!-- Empty unless it says something; a polite status, so screen readers announce it -->
-            <c:AriaPanel ui:field="status" styleName="docTab-readOnlyStatus" role="status"/>
+            <c:AriaPanel ui:field="status" styleName="link-tab-panel__read-only-status" role="status"/>
         </g:FlowPanel>
-        <g:FlowPanel ui:field="toolbarContainer" styleName="dock-min toolbarContainer">
+        <g:FlowPanel ui:field="toolbarContainer" styleName="dock-min link-tab-panel__toolbar">
             <b:Toolbar ui:field="toolbar" name="Document actions" visible="false"/>
         </g:FlowPanel>
         <tab:LayerContainerImpl ui:field="layerContainer" addStyleNames="dock-max"/>
