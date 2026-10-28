@@ -26,8 +26,8 @@ import com.google.gwt.user.client.ui.HTML;
 /// Stories for the rounded card of Stroom's login screen.
 ///
 /// Stroom has no rounded panel widget: it is the centred, rounded card that `Login.ui.xml`
-/// builds (`LoginView` > `LoginViewFormPanel` >
-/// `max form-padding form LoginViewForm`), so these stories build the same panels, styled by
+/// builds (`sign-in-page` > `sign-in-page__form-panel` >
+/// `max form-padding form sign-in-page__form`), so these stories build the same panels, styled by
 /// Stroom's `Login.css`.
 public final class RoundedPanelStories {
 
@@ -45,11 +45,11 @@ public final class RoundedPanelStories {
                 .story("Default", context -> {
                     // Login's outer panel is a div, not a <main> landmark.
                     final FlowPanel view = new FlowPanel();
-                    view.setStyleName("LoginView");
+                    view.setStyleName("sign-in-page");
                     final FlowPanel formPanel = new FlowPanel();
-                    formPanel.setStyleName("LoginViewFormPanel");
+                    formPanel.setStyleName("sign-in-page__form-panel");
                     final FlowPanel form = new FlowPanel();
-                    form.setStyleName("max form-padding form LoginViewForm");
+                    form.setStyleName("max form-padding form sign-in-page__form");
                     form.add(new HTML("<h2 style=\"margin: 0 0 12px\">Sign in</h2>"
                                       + "<p style=\"margin: 0\">Placeholder content inside the rounded panel.</p>"));
                     formPanel.add(form);

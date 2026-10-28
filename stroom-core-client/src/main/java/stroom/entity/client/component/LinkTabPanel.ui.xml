@@ -7,8 +7,8 @@
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
-            <tab:LinkTabBar ui:field="tabBar" addStyleNames="linkTabPanelViewImpl-middle"/>
+        <g:FlowPanel styleName="dock-min link-tab-panel">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
             <!-- Empty unless it says something; a polite status, so screen readers announce it -->
             <c:AriaPanel ui:field="status" styleName="docTab-readOnlyStatus" role="status"/>
         </g:FlowPanel>

@@ -3,8 +3,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:fl="urn:import:stroom.dashboard.client.flexlayout">
-    <g:FlowPanel ui:field="root" styleName="DashboardViewImpl max dock-container-vertical">
-        <g:SimplePanel styleName="dock-max DashboardViewImpl-content">
+    <g:FlowPanel ui:field="root" styleName="dashboard-body max dock-container-vertical">
+        <g:SimplePanel styleName="dock-max dashboard-body__content">
             <fl:FlexLayout ui:field="layout"/>
         </g:SimplePanel>
     </g:FlowPanel>

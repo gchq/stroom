@@ -3,8 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min dataRetentionViewImpl-tabBarOuter">
-            <tab:LinkTabBar ui:field="tabBar" addStyleNames="max dataRetentionViewImpl-tabBarInner"/>
+        <g:FlowPanel styleName="dock-min data-retention__tab-bar-outer">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="max data-retention__tab-bar-inner"/>
         </g:FlowPanel>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
     </g:FlowPanel>

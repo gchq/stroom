@@ -1,17 +1,17 @@
-.askStroomAiViewImpl {
+.ask-stroom-ai {
     overflow: hidden;
     background-color: var(--content-box__background-color);
     color: var(--control__text-color);
     display: flex;
 }
 
-.dialog__content .askStroomAiViewImpl {
+.dialog__content .ask-stroom-ai {
   border: 1px solid var(--control__border-color);
   border-radius: .25rem;
   overflow: auto;
 }
 
-.askStroomAiViewImpl-top {
+.ask-stroom-ai__top {
     display: flex;
     border-bottom: 1px solid var(--border-color);
     padding: 0 5px;
@@ -19,7 +19,7 @@
     min-height: 34px;
 }
 
-.askStroomAiViewImpl-title {
+.ask-stroom-ai__title {
     display: flex;
     flex-grow: 1;
     align-items: center;
@@ -27,28 +27,28 @@
     overflow: hidden;
 }
 
-.askStroomAiViewImpl-title div {
+.ask-stroom-ai__title div {
     text-overflow: ellipsis;
     width: 100%;
     overflow: hidden;
 }
 
-.askStroomAiViewImpl-buttons {
+.ask-stroom-ai__buttons {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     margin: 0;
 }
 
-.askStroomAiViewImpl-middle {
+.ask-stroom-ai__middle {
     padding: 2px 5px;
 }
 
-.askStroomAiViewImpl-bottom {
+.ask-stroom-ai__bottom {
     padding: 10px;
 }
 
-.askStroomAiViewImpl-bottom-inner {
+.ask-stroom-ai__bottom-inner {
     display: flex;
     gap: 5px;
     overflow: hidden;
@@ -58,14 +58,14 @@
     padding: 5px;
 }
 
-.askStroomAiViewImpl-messagePane {
+.ask-stroom-ai__message-pane {
     gap: 5px;
     align-items: center;
 }
 
 /* Hidden until there is a context by the view (setVisible), not here: a display: none rule here
    once kept it hidden for good, as showing it only clears the inline style */
-.askStroomAiViewImpl-contextChip {
+.ask-stroom-ai__context-chip {
     font-size: 0.75rem;
     line-height: 1;
     padding: 3px 8px;
@@ -77,43 +77,41 @@
     flex-shrink: 0;
 }
 
-.askStroomAiViewImpl-messagePane input,
-.askStroomAiViewImpl-modelPane .drop-down {
+.ask-stroom-ai__message-pane input,
+.ask-stroom-ai__model-pane .drop-down {
     border: 1px solid transparent;
     background: none;
 }
 
-.askStroomAiViewImpl-modelPane {
+.ask-stroom-ai__model-pane {
     display: flex;
     gap: 5px;
     align-items: center;
 }
 
-.askStroomAiViewImpl-modelPane .play svg {
+.ask-stroom-ai__model-pane .play svg {
     color: #4caf50;
 }
 
-.askStroomAiViewImpl-modelPane .pause svg {
+.ask-stroom-ai__model-pane .pause svg {
     color: #2196f3;
 }
 
-.askStroomAiViewImpl-modelPane .stop svg {
+.ask-stroom-ai__model-pane .stop svg {
     color: #d32f2f;
 }
 
-.askStroomAiViewImpl-modelPane .drop-down {
+.ask-stroom-ai__model-pane .drop-down {
     width: 100%;
 }
 
-.askStroomAiViewImpl-modelPane .drop-down__icon {
+.ask-stroom-ai__model-pane .drop-down__icon {
     bottom: 3px;
 }
 
-.askStroomAiViewImpl-bottom button.button {
+.ask-stroom-ai__bottom button.button {
     min-width: 80px;
 }
-
-
 
 /* ---- Message thread ---- */
 
@@ -177,11 +175,11 @@
 }
 
 /* ---- Empty state (centered input, ChatGPT-style) ---- */
-.askStroomAiViewImpl.empty .markdown-container {
+.ask-stroom-ai.empty .markdown-container {
     display: none;
 }
 
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom {
+.ask-stroom-ai.empty .ask-stroom-ai__bottom {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -190,12 +188,12 @@
     padding: 20px;
 }
 
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom-inner {
+.ask-stroom-ai.empty .ask-stroom-ai__bottom-inner {
     width: 100%;
     max-width: 500px;
 }
 
-.askStroomAiViewImpl-emptyPrompt {
+.ask-stroom-ai__empty-prompt {
     display: none;
     font-size: 1.25em;
     color: var(--control__text-color--disabled);
@@ -204,7 +202,7 @@
     user-select: none;
 }
 
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-emptyPrompt {
+.ask-stroom-ai.empty .ask-stroom-ai__empty-prompt {
     display: block;
 }
 

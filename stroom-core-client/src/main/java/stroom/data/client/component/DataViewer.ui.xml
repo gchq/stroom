@@ -9,22 +9,22 @@
     <d:ClassificationWrapper ui:field="classificationWrapper">
         <d:content>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <g:FlowPanel styleName="dock-container-horizontal dock-min dataViewImpl-tabBar">
-                    <g:FlowPanel styleName="dock-max dataViewImpl-tabBarOuter">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min data-viewer__tab-bar">
+                    <g:FlowPanel styleName="dock-max data-viewer__tab-bar-outer">
                         <tab:LinkTabBar ui:field="tabBar"
-                                        addStyleNames="max dataViewImpl-tabBarInner"/>
+                                        addStyleNames="max data-viewer__tab-bar-inner"/>
                     </g:FlowPanel>
-                    <g:HTMLPanel ui:field="rightPanel" styleName="dock-min dataViewImpl-rightPanel">
-                        <div class="dataViewImpl-buttonPanel"></div>
+                    <g:HTMLPanel ui:field="rightPanel" styleName="dock-min data-viewer__right-panel">
+                        <div class="data-viewer__button-panel"></div>
                         <g:SimplePanel ui:field="navigatorContainer"
-                                       styleName="dataViewImpl-navigatorContainer"/>
+                                       styleName="data-viewer__navigator-container"/>
                         <!-- A link drawn as text: a button that the keyboard can reach and press -->
-                        <div ui:field="sourceLink" class="dataViewImpl-sourceLinkLabel clickableLabel"
+                        <div ui:field="sourceLink" class="data-viewer__source-link-label clickableLabel"
                              role="button" tabindex="0">View Source</div>
                     </g:HTMLPanel>
                 </g:FlowPanel>
-                <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min dataViewImpl-progressBarPanel"/>
-                <tab:LayerContainerImpl ui:field="layerContainer" styleName="dataViewImpl-layerContainer dock-max"
+                <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min data-viewer__progress-bar-panel"/>
+                <tab:LayerContainerImpl ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"
                                         fade="true"/>
                 <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
             </g:FlowPanel>

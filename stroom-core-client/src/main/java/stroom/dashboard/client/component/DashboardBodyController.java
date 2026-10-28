@@ -205,14 +205,14 @@ public class DashboardBodyController
         restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore Pane Layout", this::onRestoreTabs);
         restoreTabsButton.setVisible(false);
 
-//                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
+//                <g:FlowPanel styleName="dashboard-body__top dock-min dock-container-horizontal">
 //            <g:FlowPanel styleName="dock-max">
 //                <g:Button ui:field="designModeButton" text="Enter Design Mode" width="200px"/>
 //            </g:FlowPanel>
 //        </g:FlowPanel>
 //        <g:FlowPanel
-//                styleName="DashboardViewImpl-top DashboardViewImpl-designButtons dock-min dock-container-horizontal">
-//            <g:FlowPanel styleName="dock-min DashboardViewImpl-top-buttons">
+//                styleName="dashboard-body__top dashboard-body__design-buttons dock-min dock-container-horizontal">
+//            <g:FlowPanel styleName="dock-min dashboard-body__top-buttons">
 //                <g:Button ui:field="addPanelButton" text="Add Panel"/>
 //                <g:Button ui:field="addInputButton" text="Add Input"/>
 //                <g:Button ui:field="constraintsButton" text="Constraints"/>

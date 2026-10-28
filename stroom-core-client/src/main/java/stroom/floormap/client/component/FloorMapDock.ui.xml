@@ -19,8 +19,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
-            <tab:LinkTabBar ui:field="tabBar" addStyleNames="linkTabPanelViewImpl-middle"/>
+        <g:FlowPanel styleName="dock-min link-tab-panel">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
         </g:FlowPanel>
         <tab:LayerContainerImpl ui:field="layerContainer" addStyleNames="dock-max"/>
     </g:FlowPanel>

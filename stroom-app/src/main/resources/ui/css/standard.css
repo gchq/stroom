@@ -44,8 +44,8 @@ a, a:visited, a:hover {
 .markdown a,
 .info-page a,
 .help-popup__content a,
-.welcomeViewImpl-body a,
-.AuthErrorViewGenericMessageContainer a {
+.welcome-tab__body a,
+.authentication-error__message-container a {
   text-decoration: underline;
 }
 

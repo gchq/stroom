@@ -110,7 +110,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     for (final String tab : List.of("Dashboard", "Documentation", "Permissions")) {
                         // Stroom's link tabs have no role="tab"
-                        play.expect(play.getByText(tab, ".linkTabPanelViewImpl .tab-bar__label")).toBeInTheDocument();
+                        play.expect(play.getByText(tab, ".link-tab-panel .tab-bar__label")).toBeInTheDocument();
                     }
                     play.expect(DashboardPlays.tab(play, "My Panel")).toBeInTheDocument();
                     // An Embedded Query shows only its results, with no Execute button of its own;
@@ -128,7 +128,7 @@ public final class DashboardLayoutStories {
                     play.expect(DashboardPlays.tab(play, "Right Panel")).toBeInTheDocument();
                     // Embedded Queries have no Execute buttons, so the play checks that both panels
                     // show their (results) views, and that the reference panel loaded its query
-                    play.waitFor(() -> play.expect(play.querySelectorAll(".tabLayout-content .TableViewImpl"))
+                    play.waitFor(() -> play.expect(play.querySelectorAll(".tabLayout-content .result-table"))
                             .toHaveLength(2));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/query/v1/q-ref").toSpyMatcher()));

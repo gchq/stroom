@@ -3,12 +3,6 @@
     background: none;
 }
 
-.itemSelectionViewImpl-panelChild {
-}
-
-.ruleView-bottom {
-    padding-top: 5px;
-}
 /*
 .ruleView-name {
     display: inline-block;
@@ -19,7 +13,7 @@
     margin-left: 5px;
 }
 */
-.elasticFieldListView-statusMessage {
+.elastic-index-field-list__status-message {
     padding: 5px;
 }
 
@@ -63,7 +57,6 @@
 }
 */
 
-
 .tabBarContainer {
     display: flex;
     align-items: center;
@@ -76,60 +69,40 @@
     margin: 0 2px 0 6px;
 }
 
-.curveTabLayoutViewImpl-layout {
+.curve-tab-layout__layout {
     display: flex;
     flex-direction: column;
 }
 
-.curveTabLayoutViewImpl-layerContainerOuter {
+.curve-tab-layout__layer-container-outer {
     flex-grow: 1;
     overflow: hidden;
 }
 
-.curveTabLayoutViewImpl-tabBarOuter {
+.curve-tab-layout__tab-bar-outer {
     height: 33px;
     margin-right: 95px;
     flex-grow: 1;
 }
 
-.documentPermissionsViewImpl-copyPermissionsFromParentButton {
-    width: 259px;
+.source-viewer__character-navigator {
 }
 
-.pipelineStructureViewImpl-buttons {
-    position: relative;
-	top: -1px;
-}
-
-
-
-
-
-
-
-.sourceViewImpl-buttonPanel {
-    float: right;
-    padding-right: 0.25em;
-}
-
-.sourceViewImpl-characterNavigator {
-}
-
-.sourceViewImpl-titleText {
+.source-viewer__title-text {
     display: inline-block;
     padding-top: 3px;
     padding-left: 0.5em;
     padding-right: 0.5em;
 }
 
-.sourceViewImpl-titleHeading {
+.source-viewer__title-heading {
     display: inline-block;
     padding-top: 3px;
     padding-left: 0.5em;
     font-weight: 500;
 }
 
-.sourceViewImpl-progressBarPanel {
+.source-viewer__progress-bar-panel {
     display: inline-block;
     width: 100%;
     height: 10px;
@@ -143,7 +116,6 @@
 
 .pager-heading {
 
-
 }
 
 .pager-button {
@@ -151,27 +123,23 @@
     text-align: center;
 }
 
-.selectionHandlerViewImpl-bottom {
-    padding-top: 5px;
-}
-
-.dataViewImpl-tabBar {
+.data-viewer__tab-bar {
     align-items: center;
     padding: 0 .75rem;
     gap: .75rem;
     min-height: 27px;
 }
 
-.dataViewImpl-tabBarOuter {
+.data-viewer__tab-bar-outer {
     overflow: hidden;
     flex-shrink: 1;
 }
 
-.dataViewImpl-tabBarInner {
+.data-viewer__tab-bar-inner {
     position: relative;
 }
 
-.dataViewImpl-rightPanel {
+.data-viewer__right-panel {
     display: flex;
     flex-shrink: 0;
     justify-content: flex-end;
@@ -181,26 +149,26 @@
     gap: .75rem;
 }
 
-.dataViewImpl-buttonPanel {
+.data-viewer__button-panel {
     float: left;
 }
 
-.dataViewImpl-navigatorContainer {
+.data-viewer__navigator-container {
     float: left;
 }
 
-.dataViewImpl-progressBarPanel {
+.data-viewer__progress-bar-panel {
     width: 100%;
     height: 10px;
 }
 
-.dataViewImpl-layerContainer {
+.data-viewer__layer-container {
     /* To make the info pane fit the remaining space in the parent rather
     than 100% of the content */
     height: 0px;
 }
 
-.dataViewImpl-sourceLinkLabel {
+.data-viewer__source-link-label {
 }
 
 .resizableAcceptRejectContent-button {
@@ -236,7 +204,6 @@
     background-color: #bdbdbd;
     color: #fafafa;
 }
-
 
 .resizableAcceptRejectContent-accept {
     background-color: #388e3c;
@@ -309,18 +276,6 @@
 .dataNavigator-button {
     padding: 1px;
     text-align: center;
-}
-
-.aboutViewImpl-stroom-body {
-    height: 50px;
-    display: flex;
-    align-items: center;
-}
-
-.aboutViewImpl-stroom-background {
-    position: absolute;
-    width: 500px;
-    height: 30px;
 }
 
 .subStreamNavigator {
@@ -407,7 +362,7 @@
    width: auto;
 }
 
-.linkTabPanelViewImpl {
+.link-tab-panel {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -415,7 +370,7 @@
     padding: 0 5px;
 }
 
-.linkTabPanelViewImpl-middle {
+.link-tab-panel__middle {
     flex-grow: 1;
 }
 
@@ -424,12 +379,12 @@
 }
 
 /* Docked AI panel styles */
-.mainViewImpl-outerSplitPanel {
+.main__outer-split-panel {
     width: 100%;
     height: 100%;
 }
 
-.QueryEditViewImpl {
+.query-edit {
     border-top: 1px solid var(--control__border-color);
     background-color: var(--dashboard-panel__background-color);
     overflow: hidden;
@@ -441,7 +396,7 @@
     text-align: center;
 }
 
-.mainViewImpl {
+.main {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -454,11 +409,11 @@
 }
 
 /* The main area, below the maintenance banner while it is shown */
-.mainViewImpl.mainViewImpl--banner {
+.main.main--banner {
     top: 20px;
 }
 
-.mainViewImpl-banner {
+.main__banner {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -484,42 +439,20 @@
 }
 */
 
-.mainViewImpl-contentWrapper {
+.main__content-wrapper {
     position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.mainViewImpl-contentPanel {
+.main__content-panel {
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.solrIndexFieldListViewImpl-synchState {
-    padding: 5px;
-}
-
-.taskManangerViewImpl-nameFilter {
-    width: 100%;
-}
-
-.solrIndexSettingsViewImpl-label {
-    width: 110px;
-    margin-top: 2px;
-    vertical-align: top;
-    white-space: nowrap;
-}
-
-.elasticIndexSettingsViewImpl-label {
-    width: 110px;
-    margin-top: 2px;
-    vertical-align: top;
-    white-space: nowrap;
-}
-
-.dataRetentionViewImpl-tabBarOuter {
+.data-retention__tab-bar-outer {
     padding-left: 10px;
     padding-right: 3px;
     padding-top: 1px;
@@ -528,7 +461,7 @@
     padding-bottom: 1px;
 }
 
-.dataRetentionViewImpl-tabBarInner {
+.data-retention__tab-bar-inner {
     position: relative;
 }
 
@@ -540,19 +473,13 @@
     color: #A9A9A9;
 }
 
-.importConfigViewImpl-label {
-    float: left;
-    width: 100px;
-    clear: left;
-}
-
-.welcomeViewImpl-body {
+.welcome-tab__body {
     padding: 5px !important;
     /* Its text can be selected, so copied */
     user-select: text;
 }
 
-.welcomeViewImpl-buildInfo {
+.welcome-tab__build-info {
     display: flex;
     justify-content: flex-end;
     position: absolute;
@@ -560,51 +487,16 @@
     bottom: 5px;
 }
 
-.welcomeViewImpl-buildInfo > tbody > tr > td:first-child {
+.welcome-tab__build-info > tbody > tr > td:first-child {
     font-weight: bold;
 }
 
-.welcomeViewImpl-buildInfo > tbody > tr > td:last-child {
+.welcome-tab__build-info > tbody > tr > td:last-child {
     user-select: text;
 }
 
-.explorerTreeViewImpl-bar div {
-    display: inline-block;
-    white-space: nowrap;
-}
-
-.explorerTreeViewImpl-nameFilter {
+.navigation__name-filter {
     margin: var(--control__padding--vertical) var(--control__padding--horizontal);
-}
-
-.chooserViewImpl-container {
-    display: flex;
-    flex-flow: column;
-}
-
-.chooserViewImpl-top {
-    flex-shrink: 0;
-}
-
-.chooserViewImpl-bottom {
-    flex-grow: 1;
-    max-height: 400px;
-    max-width: 420px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 0px 2px;
-    scrollbar-gutter: stable;
-}
-
-.stepLocationViewImpl-layout {
-    white-space: nowrap;
-}
-
-.dictionarySettingsViewImpl-label {
-    width: 110px;
-    margin-top: 2px;
-    vertical-align: top;
-    white-space: nowrap;
 }
 
 .button-group {
@@ -676,7 +568,7 @@
     margin: 0 6px 0 0;
 }
 
-.navigation .explorerTreeViewImpl-nameFilterPanel {
+.navigation .navigation__name-filter-panel {
 }
 
 .navigation-logo {
@@ -1247,7 +1139,6 @@
     width: 650px;
 }
 
-
 /* --- */
 .multiChooser .tick-box {
     cursor: pointer;
@@ -1270,9 +1161,6 @@
 .stroom-theme-dark .lozenge {
     border: 1px solid rgba(255,255,255,.3);
 }
-
-
-
 
 .table-filter-outer {
     width: 100%;
@@ -1346,7 +1234,6 @@
     font-size: 0;
     border-radius: .25rem;
 }
-
 
 /* Visualisation Assets */
 .visualisation-asset-tree table {

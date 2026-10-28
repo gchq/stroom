@@ -1,8 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel styleName="max welcomeViewImpl-body">
+    <g:FlowPanel styleName="max welcome-tab__body">
         <g:SimplePanel ui:field="html"/>
-            <g:Grid ui:field="buildInfo" styleName="welcomeViewImpl-buildInfo stroom-control-grid w-100">
+            <g:Grid ui:field="buildInfo" styleName="welcome-tab__build-info stroom-control-grid w-100">
                 <g:row>
                     <g:cell>User Unique Identity:</g:cell>
                     <g:customCell>

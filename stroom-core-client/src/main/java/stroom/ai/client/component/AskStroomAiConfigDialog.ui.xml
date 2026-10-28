@@ -5,8 +5,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
-        <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
-            <tab:LinkTabBar ui:field="tabBar" addStyleNames="linkTabPanelViewImpl-middle"/>
+        <g:FlowPanel styleName="dock-min link-tab-panel">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
         </g:FlowPanel>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
         <g:FlowPanel styleName="button-group dock-min">

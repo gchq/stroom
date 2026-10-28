@@ -4,14 +4,14 @@
              xmlns:s="urn:import:stroom.main.client.component">
     <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
          stop it held the whole app, with no name -->
-    <g:SimplePanel ui:field="root" styleName="mainViewImpl">
-        <g:FlowPanel styleName="mainViewImpl">
-            <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
+    <g:SimplePanel ui:field="root" styleName="main">
+        <g:FlowPanel styleName="main">
+            <g:SimplePanel ui:field="banner" styleName="main__banner"/>
             <!-- The main toolbar is shown at the top right, over the content, but comes first so
                  that the Tab key reaches it before the content -->
-            <g:FlowPanel ui:field="main" styleName="mainViewImpl">
+            <g:FlowPanel ui:field="main" styleName="main">
                 <s:MainToolbar ui:field="mainToolbar"/>
-                <g:ResizeLayoutPanel ui:field="contentPanel" styleName="mainViewImpl-contentPanel"/>
+                <g:ResizeLayoutPanel ui:field="contentPanel" styleName="main__content-panel"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:SimplePanel>

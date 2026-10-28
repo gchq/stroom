@@ -6,7 +6,7 @@
              xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <split:SplitPane vertical="true" thin="true" sizes="600px, *"
-                     names="Query, Results" addStyleNames="QueryEditViewImpl max">
+                     names="Query, Results" addStyleNames="query-edit max">
         <split:SplitPane thin="true" sizes="300px, *"
                          names="Help, Query" addStyleNames="max">
             <g:SimplePanel ui:field="help" styleName="max"/>
@@ -15,8 +15,8 @@
             </g:SimplePanel>
         </split:SplitPane>
         <g:SimplePanel styleName="max">
-            <g:FlowPanel styleName="QueryResultTabsViewImpl max dock-container-vertical">
-                <g:SimplePanel styleName="QueryResultTabsViewImpl-outer">
+            <g:FlowPanel styleName="query-edit__results max dock-container-vertical">
+                <g:SimplePanel styleName="query-edit__results-outer">
                     <tab:LinkTabBar ui:field="tabBar" addStyleNames="dock-min"/>
                 </g:SimplePanel>
                 <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max" fade="true"/>

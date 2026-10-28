@@ -52,7 +52,7 @@ public class Main extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // The main area, below the maintenance banner while it is shown (components.css)
-    private static final String BANNER_SHOWN = "mainViewImpl--banner";
+    private static final String BANNER_SHOWN = "main--banner";
 
     private Consumer<Size> onDockResize = size -> {
     };
@@ -71,7 +71,7 @@ public class Main extends Component {
     // Where F6 puts the focus in the explorer and the content: the explorer's tree, and the open
     // document's layers, below the content's tab bar
     private static final String EXPLORER_START_SELECTOR = "[role=\"tree\"]";
-    private static final String DOCUMENT_SELECTOR = ".curveTabLayoutViewImpl-layerContainerOuter";
+    private static final String DOCUMENT_SELECTOR = ".curve-tab-layout__layer-container-outer";
 
     // Persistent content widgets — set by setExplorerView and setContentView, never destroyed.
     private Widget westWidget;
@@ -252,7 +252,7 @@ public class Main extends Component {
             // The docked panel on its edge of the content (and the main toolbar), at the size it
             // was given; a size the user drags it to is reported
             final ResizeFlowPanel contentWrapper = new ResizeFlowPanel();
-            contentWrapper.addStyleName("mainViewImpl-contentWrapper");
+            contentWrapper.addStyleName("main__content-wrapper");
             innerContent.setSize("100%", "100%");
             // The toolbar first, so that the Tab key reaches it before the content it is shown over
             contentWrapper.add(mainToolbar);
@@ -265,7 +265,7 @@ public class Main extends Component {
             outerSplitPanel.setThin(true);
             outerSplitPanel.setVertical(state.dockLocation == DockLocation.TOP
                                         || state.dockLocation == DockLocation.BOTTOM);
-            outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
+            outerSplitPanel.addStyleName("main__outer-split-panel");
             outerSplitPanel.setOnResized(this::scheduleDockResizeCheck);
             if (dockedFirst) {
                 outerSplitPanel.setSizes(dockSize + ", *");

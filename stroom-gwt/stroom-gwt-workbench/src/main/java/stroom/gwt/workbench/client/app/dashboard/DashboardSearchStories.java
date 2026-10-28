@@ -369,7 +369,7 @@ public final class DashboardSearchStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     // Only the table has a pager here (the Query has none)
-                    play.click(play.within(play.querySelector(".TableViewImpl")).getByTitle("Forward"));
+                    play.click(play.within(play.querySelector(".result-table")).getByTitle("Forward"));
                     play.waitFor(() -> play.expect("a request for a later page of t1",
                             () -> offsets(requests).stream().anyMatch(offset -> offset > 0)).toBe(true));
                     final Value<Integer> before = play.capture("before", requests.callCount());

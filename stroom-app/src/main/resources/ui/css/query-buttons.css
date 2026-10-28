@@ -21,7 +21,7 @@
    Terminate).
 */
 
-.DashboardViewImpl-top .query-buttons__button svg {
+.dashboard-body__top .query-buttons__button svg {
 	width: 20px;
 	height: 20px;
 }

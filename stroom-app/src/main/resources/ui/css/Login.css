@@ -1,4 +1,4 @@
-.LoginView, .AuthErrorView {
+.sign-in-page, .authentication-error {
     position: absolute;
     top: 0;
     left: 0;
@@ -10,23 +10,14 @@
     justify-content: center;
 }
 
-.LoginView .LoginViewLogo svg {
-    position: absolute;
-    top: 6px;
-    left: 0px;
-    width: 146px;
-    height: 35px;
-    color: #fff;
-}
-
-.LoginView .LoginViewFormPanel,
-.AuthErrorView .AuthErrorViewFormPanel {
+.sign-in-page .sign-in-page__form-panel,
+.authentication-error .authentication-error__form-panel {
     border-radius: var(--dialog__border-radius);
     background-color: var(--dialog__background-color);
     color: var(--page__text-color);
 }
 
-.LoginView .LoginViewFormPanel .LoginViewForm {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__form {
     padding: 2rem;
     border-radius: .5rem;
     width: 18rem;
@@ -36,27 +27,27 @@
     margin-bottom: .25rem;
 }
 
-.LoginView .LoginViewFormPanel .LoginViewUserImageContainer {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__user-image-container {
     display: flex;
     justify-content: center;
     margin: 0 0 2rem;
 }
 
-.LoginView .LoginViewFormPanel .LoginViewUserImageContainer .LoginViewUserImage svg {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__user-image-container .sign-in-page__user-image svg {
     width: 8rem;
     height: 8rem;
     border-radius: 4rem;
 }
 
-.LoginView .LoginViewFormPanel .userNameTextBoxOuter {
+.sign-in-page .sign-in-page__form-panel .userNameTextBoxOuter {
 
 }
 
-.LoginView .LoginViewFormPanel .userNameTextBox {
+.sign-in-page .sign-in-page__form-panel .userNameTextBox {
     width: 100%;
 }
 
-.LoginView .LoginViewFormPanel .feedback {
+.sign-in-page .sign-in-page__form-panel .feedback {
     display: block;
     width: 100%;
     margin-top: .25rem;
@@ -65,10 +56,10 @@
     color: var(--feedback);
 }
 
-.LoginView .LoginViewFormPanel .LoginViewSignInButton {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__sign-in-button {
 }
 
-.LoginView .LoginViewFormPanel .LoginViewForgotPassword {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__forgot-password {
     /* A button (LinkButton), centred under the form as the link it replaced was */
     display: block;
     margin: 0 auto;
@@ -79,17 +70,16 @@
     transition: color .3s;
 }
 
-
-.AuthErrorView {
+.authentication-error {
 }
 
-.AuthErrorViewFormPanel {
+.authentication-error__form-panel {
 }
 
-.AuthErrorViewForm{
+.authentication-error__form{
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm {
+.authentication-error .authentication-error__form-panel .authentication-error__form {
     padding: 2rem;
     border-radius: 0.5rem;
     width: 30rem;
@@ -101,22 +91,22 @@
     justify-content: center;
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewImageContainer {
+.authentication-error .authentication-error__form-panel .authentication-error__image-container {
     display: flex;
     justify-content: center;
     margin-bottom: 0.5rem;
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewImageContainer .AuthErrorViewImage svg {
+.authentication-error .authentication-error__form-panel .authentication-error__image-container .authentication-error__image svg {
     width: 4rem;
     height: 4rem;
     border-radius: 4rem;
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group__label {
+.authentication-error .authentication-error__form-panel .authentication-error__form .form-group__label {
     font-size: var(--font-size-15);
 }
 
-.AuthErrorView .AuthErrorViewGenericMessageContainer > div {
+.authentication-error .authentication-error__message-container > div {
     padding-top: 1em;
 }

@@ -11,31 +11,31 @@
     <split:SplitPane vertical="true" thin="true" sizes="300px, *"
                      names="Streams, Data" addStyleNames="max dock-container-vertical">
         <g:SimplePanel ui:field="metaListContainer" styleName="max"/>
-        <g:FlowPanel styleName="SourceViewImpl max dock-container-vertical">
+        <g:FlowPanel styleName="source-viewer max dock-container-vertical">
             <g:FlowPanel styleName="dock-min dock-container-horizontal">
                 <g:FlowPanel styleName="dock-max">
-                    <g:Label styleName="sourceViewImpl-titleHeading">Feed:</g:Label>
-                    <g:Label ui:field="lblFeed" styleName="sourceViewImpl-titleText"/>
+                    <g:Label styleName="source-viewer__title-heading">Feed:</g:Label>
+                    <g:Label ui:field="lblFeed" styleName="source-viewer__title-text"/>
 
-                    <g:Label styleName="sourceViewImpl-titleHeading">ID:</g:Label>
-                    <g:Label ui:field="lblId" styleName="sourceViewImpl-titleText"/>
+                    <g:Label styleName="source-viewer__title-heading">ID:</g:Label>
+                    <g:Label ui:field="lblId" styleName="source-viewer__title-text"/>
 
-                    <g:Label ui:field="lblPartNoHeading" styleName="sourceViewImpl-titleHeading">Part:</g:Label>
-                    <g:Label ui:field="lblPartNo" styleName="sourceViewImpl-titleText"/>
+                    <g:Label ui:field="lblPartNoHeading" styleName="source-viewer__title-heading">Part:</g:Label>
+                    <g:Label ui:field="lblPartNo" styleName="source-viewer__title-text"/>
 
-                    <g:Label ui:field="lblSegmentNoHeading" styleName="sourceViewImpl-titleHeading">Record:</g:Label>
-                    <g:Label ui:field="lblSegmentNo" styleName="sourceViewImpl-titleText"/>
+                    <g:Label ui:field="lblSegmentNoHeading" styleName="source-viewer__title-heading">Record:</g:Label>
+                    <g:Label ui:field="lblSegmentNo" styleName="source-viewer__title-text"/>
 
-                    <g:Label styleName="sourceViewImpl-titleHeading">Stream Type:</g:Label>
-                    <g:Label ui:field="lblType" styleName="sourceViewImpl-titleText"/>
+                    <g:Label styleName="source-viewer__title-heading">Stream Type:</g:Label>
+                    <g:Label ui:field="lblType" styleName="source-viewer__title-text"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-min">
-                    <g:SimplePanel ui:field="navigatorContainer" styleName="sourceViewImpl-characterNavigator"/>
+                    <g:SimplePanel ui:field="navigatorContainer" styleName="source-viewer__character-navigator"/>
                 </g:FlowPanel>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-max dock-container-vertical">
                 <g:SimplePanel ui:field="progressBarPanel"
-                               styleName="dock-min sourceViewImpl-progressBarPanel"/>
+                               styleName="dock-min source-viewer__progress-bar-panel"/>
                 <g:FlowPanel ui:field="container"
                              styleName="dock-max default-min-sizes stepping-button-container">
                     <btn:FabButton ui:field="steppingButton"

@@ -17,7 +17,7 @@
                         label="Rule Name (optional)"
                         helpText="An optional name to help you tell rules apart. It does not affect which data the rule matches."
                         screenReaderText="For your reference only.">
-            <form:TextBox ui:field="name" addStyleNames="ruleViewImpl-name"/>
+            <form:TextBox ui:field="name"/>
         </form:FormGroup>
 
         <form:FormGroup identity="ruleAction"

@@ -416,7 +416,7 @@ public final class AnnotationEditorStories {
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     // The status is at the end of the tab bar's row, not on the toolbar, and says why
                     // the annotation is read only, in a tooltip and to screen readers
-                    final Query status = play.querySelector(".linkTabPanelViewImpl > .docTab-readOnlyStatus");
+                    final Query status = play.querySelector(".link-tab-panel > .docTab-readOnlyStatus");
                     play.expect(status).toHaveAttribute("title", "You don't have permission to change this");
                     play.expect(status).toHaveTextContent(
                             TextMatch.containing("You don't have permission to change this."));

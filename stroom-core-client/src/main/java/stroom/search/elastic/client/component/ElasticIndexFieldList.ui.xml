@@ -10,7 +10,7 @@
             </dg:PagerPanel>
         </g:SimplePanel>
         <g:ScrollPanel styleName="dock-min">
-            <g:HTMLPanel styleName="elasticFieldListView-statusMessage">
+            <g:HTMLPanel styleName="elastic-index-field-list__status-message">
                 <span ui:field="status">Field list updated at: <span ui:field="updatedAt"/></span>
             </g:HTMLPanel>
         </g:ScrollPanel>

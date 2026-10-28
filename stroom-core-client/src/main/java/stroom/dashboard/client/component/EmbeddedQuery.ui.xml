@@ -2,5 +2,5 @@
 <!-- A dashboard's Embedded Query pane: its query's results, a table or a visualisation -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel ui:field="result" styleName="TableViewImpl max stroom-dashboard-table"/>
+    <g:SimplePanel ui:field="result" styleName="result-table max stroom-dashboard-table"/>
 </ui:UiBinder>

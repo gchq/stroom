@@ -5,12 +5,12 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
-    <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
-        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
-            <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
+    <g:FlowPanel ui:field="root" styleName="ask-stroom-ai max default-min-sizes dock-container-vertical empty">
+        <g:FlowPanel styleName="dock-min ask-stroom-ai__top">
+            <g:FlowPanel styleName="dock-max ask-stroom-ai__title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
             </g:FlowPanel>
-            <p:Toolbar name="Conversation" addStyleNames="dock-min askStroomAiViewImpl-buttons toolbar--quiet">
+            <p:Toolbar name="Conversation" addStyleNames="dock-min ask-stroom-ai__buttons toolbar--quiet">
                 <p:ToolbarButton ui:field="newChat" svg="ADD" title="New Conversation"/>
                 <p:ToolbarButton ui:field="chatHistory" svg="HISTORY" title="Conversation History"/>
                 <p:ToolbarButton ui:field="download" svg="DOWN" title="Download" enabled="false"/>
@@ -18,19 +18,19 @@
                 <p:ToolbarButton ui:field="configure" svg="SETTINGS" title="Configure"/>
             </p:Toolbar>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
-        <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
-            <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
-            <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
-                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
+        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
+        <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom">
+            <g:Label ui:field="emptyPrompt" styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
+            <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom-inner">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__message-pane">
                     <g:Label ui:field="contextIndicator"
-                             styleName="askStroomAiViewImpl-contextChip"
+                             styleName="ask-stroom-ai__context-chip"
                              visible="false"/>
                     <!-- Named for screen readers, as the placeholder is only a hint, lost once something is typed -->
                     <form:TextArea ui:field="message" addStyleNames="dock-max w-100"
                                    placeholder="How can I help?" ariaLabel="Message"/>
                 </g:FlowPanel>
-                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__model-pane">
                     <g:SimplePanel styleName="dock-max">
                         <dd:DropDownBox ui:field="modelRef"/>
                     </g:SimplePanel>

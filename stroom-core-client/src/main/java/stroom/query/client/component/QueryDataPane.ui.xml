@@ -21,9 +21,9 @@
                                  addStyleNames="query-buttons__button"/>
             </b:Toolbar>
         </g:FlowPanel>
-        <g:ScrollPanel ui:field="errorContainer" styleName="queryDataView-errorContainer" visible="false">
-            <g:Label ui:field="errorLabel" styleName="queryDataView-errorLabel"/>
+        <g:ScrollPanel ui:field="errorContainer" styleName="query-data-pane__error-container" visible="false">
+            <g:Label ui:field="errorLabel" styleName="query-data-pane__error-label"/>
         </g:ScrollPanel>
-        <g:SimplePanel ui:field="tableContainer" styleName="max dock-max TablePresenter"/>
+        <g:SimplePanel ui:field="tableContainer" styleName="max dock-max result-table__grid"/>
     </g:FlowPanel>
 </ui:UiBinder>

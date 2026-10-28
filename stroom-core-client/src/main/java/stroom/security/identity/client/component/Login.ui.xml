@@ -5,15 +5,15 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:c="urn:import:stroom.widget.component.client">
     <!-- The page is its main content, a landmark screen readers can go to -->
-    <c:AriaPanel styleName="LoginView" role="main">
+    <c:AriaPanel styleName="sign-in-page" role="main">
         <!-- The page's heading, for screen readers (the logo and form say it to sighted users) -->
         <g:HTML styleName="sr-only"><h1>Sign in to Stroom</h1></g:HTML>
 
-        <g:FlowPanel styleName="LoginViewFormPanel">
-            <g:FlowPanel styleName="max form-padding form LoginViewForm">
+        <g:FlowPanel styleName="sign-in-page__form-panel">
+            <g:FlowPanel styleName="max form-padding form sign-in-page__form">
 
-                <g:SimplePanel styleName="LoginViewUserImageContainer">
-                    <g:SimplePanel ui:field="userImage" styleName="LoginViewUserImage"/>
+                <g:SimplePanel styleName="sign-in-page__user-image-container">
+                    <g:SimplePanel ui:field="userImage" styleName="sign-in-page__user-image"/>
                 </g:SimplePanel>
 
                 <!-- User Name -->
@@ -39,9 +39,9 @@
                 </form:FormGroup>
 
 
-                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="LoginViewSignInButton button--contained-primary allow-focus"/>
+                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="sign-in-page__sign-in-button button--contained-primary allow-focus"/>
 
-                <b:LinkButton ui:field="forgotPasswordLink" addStyleNames="LoginViewForgotPassword">Forgot password?</b:LinkButton>
+                <b:LinkButton ui:field="forgotPasswordLink" addStyleNames="sign-in-page__forgot-password">Forgot password?</b:LinkButton>
 
             </g:FlowPanel>
         </g:FlowPanel>

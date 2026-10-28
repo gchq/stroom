@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.maximised .DashboardViewImpl {
+.maximised .dashboard-body {
     padding-left: var(--control__padding--horizontal);
 }
 
-.DashboardViewImpl-top {
+.dashboard-body__top {
     gap: var(--control__padding--horizontal);
     padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
     display: flex;
@@ -25,58 +25,58 @@
     justify-content: space-between;
 }
 
-.DashboardViewImpl-designButtons {
+.dashboard-body__design-buttons {
     display: none;
 }
 
-.dashboard__designMode .DashboardViewImpl-designButtons {
+.dashboard__designMode .dashboard-body__design-buttons {
     display: flex;
 }
 
-.DashboardViewImpl .tab-bar--link .tab-bar__tab {
+.dashboard-body .tab-bar--link .tab-bar__tab {
     opacity: 0.8 !important;
     color: var(--link-tab__text-color) !important;
     transition: none;
     -webkit-transition: none;
 }
 
-.DashboardViewImpl .explorerTreeViewImpl-nameFilter {
+.dashboard-body .navigation__name-filter {
     margin: 0 0 var(--control__padding--vertical) 0;
 }
 
 /*
-.DashboardViewImpl .tab-bar--link .tab-bar__tab {
+.dashboard-body .tab-bar--link .tab-bar__tab {
     cursor: default;
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab {
+.dashboard-body.dashboard__designMode .tab-bar--link .tab-bar__tab {
   cursor: pointer;
 }
 
-.DashboardViewImpl .tab-bar--link .tab-bar__tab:hover {
+.dashboard-body .tab-bar--link .tab-bar__tab:hover {
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
+.dashboard-body.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
     text-decoration: underline;
 }
 */
 
-.DashboardViewImpl-top-buttons {
+.dashboard-body__top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
     align-items: center;
     justify-content: space-between;
 }
 
-.DashboardViewImpl-content {
+.dashboard-body__content {
     display: flex;
     flex-grow: 1;
 	background-color: var(--content-box__background-color);
 }
 
-.fullScreenViewImpl-root {
+.full-screen {
     position: absolute;
     left: 0;
     top: 0;
@@ -85,7 +85,7 @@
     overflow: hidden;
 }
 
-.fullScreenViewImpl-contentPanel {
+.full-screen__content-panel {
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -119,7 +119,7 @@
     overflow-y: auto;
 }
 
-.TableViewImpl .pager {
+.result-table .pager {
     padding: 0 5px;
 }
 
@@ -273,8 +273,8 @@
 	background-color: yellow;
 }
 
-.TablePresenter th span,
-.TablePresenter .data-grid__header-cell span {
+.result-table__grid th span,
+.result-table__grid .data-grid__header-cell span {
     display: flex;
 }
 
@@ -335,21 +335,21 @@
     padding-right: 5px;
 }
 
-.TablePresenter input {
+.result-table__grid input {
     width: 100%;
     display: none;
 }
 
-.TablePresenter .data-grid__header-cell {
+.result-table__grid .data-grid__header-cell {
     min-height: 16px;
     vertical-align: top;
 }
 
-.TablePresenter.showValueFilters input {
+.result-table__grid.showValueFilters input {
     display: inline-block;
 }
 
-.TablePresenter.showValueFilters .data-grid__header-cell {
+.result-table__grid.showValueFilters .data-grid__header-cell {
     padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
 }
 
@@ -414,7 +414,7 @@
 }
 */
 
-.QueryResultTabsViewImpl-outer {
+.query-edit__results-outer {
     padding: 5px 5px 0 5px;
     z-index: 5;
 }

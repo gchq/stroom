@@ -42,7 +42,7 @@ function tabState(page) {
     const active = document.activeElement;
     return {
       tab: tab ? tab.textContent.trim() : null,
-      inContent: Boolean(active && active.closest('.curveTabLayoutViewImpl-layerContainerOuter')),
+      inContent: Boolean(active && active.closest('.curve-tab-layout__layer-container-outer')),
     };
   });
 }

@@ -36,7 +36,7 @@ function area(page) {
     if (active.closest('[role="navigation"] [role="tree"]')) {
       return 'explorer';
     }
-    if (active.closest('[role="main"] .curveTabLayoutViewImpl-layerContainerOuter')) {
+    if (active.closest('[role="main"] .curve-tab-layout__layer-container-outer')) {
       return 'content';
     }
     return null;

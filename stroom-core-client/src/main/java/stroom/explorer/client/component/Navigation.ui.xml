@@ -13,8 +13,8 @@
             </b:Toolbar>
         </g:FlowPanel>
 
-        <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">
-            <v:QuickFilter accessibleName="Filter explorer" ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+        <g:SimplePanel styleName="dock-min navigation__name-filter-panel">
+            <v:QuickFilter accessibleName="Filter explorer" ui:field="nameFilter" addStyleNames="dock-min navigation__name-filter"/>
         </g:SimplePanel>
         <b:ToolbarRow addStyleNames="navigation-toolbar">
             <b:Toolbar ui:field="toolbar" name="Explorer" addStyleNames="toolbar--navigation"/>
