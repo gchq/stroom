@@ -23,8 +23,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -65,7 +65,7 @@ public final class StaticDialogStories {
                     final StoryContent controller = new StoryContent(popups.getEventBus(), body);
 
                     // As the IdP controllers show themselves
-                    ShowPopupEvent.builder(controller)
+                    ControllerDialog.showOnce(popups, controller)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .icon(SvgImage.PASSWORD)
                             .caption("Change Password")

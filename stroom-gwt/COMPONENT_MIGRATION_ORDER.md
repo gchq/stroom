@@ -1141,6 +1141,15 @@ after wave 19.
 > Stroom AI keep their markup in their templates and their state behind their components' methods,
 > the constructors' javadoc is complete, and the quick filters use their callbacks. See `wave-20.md`.
 
+## 21. Tests and tooling
+
+Record: [`component-migration/wave-21.md`](component-migration/wave-21.md). Added 28 October 2026,
+after wave 20.
+
+> **Done, 28 October 2026**: stories for the editors and dialogs that had none, a test for the
+> document's dirty rule, one way for a story to open a document, and dialog stories owned. See
+> `wave-21.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

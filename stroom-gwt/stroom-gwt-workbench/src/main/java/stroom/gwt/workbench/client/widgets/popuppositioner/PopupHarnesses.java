@@ -27,6 +27,7 @@ import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
@@ -121,13 +122,14 @@ final class PopupHarnesses {
     static Widget settingBlock(final StoryPopups popups) {
         final SettingBlock settingBlock = new SettingBlock();
         settingBlock.add(new Label("Setting: current"));
-        final StoryContent editor = StoryContent.html(popups.getEventBus(),
-                "<div class=\"popover-body\">Editor body</div>");
+        // Shown again on each click, so owned by the story's popups until it renders again
+        final StoryContent editor = popups.own(StoryContent.html(popups.getEventBus(),
+                "<div class=\"popover-body\">Editor body</div>"));
         settingBlock.addClickHandler(event -> {
             final Element element = settingBlock.getElement();
             final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                     element.getAbsoluteTop() + element.getClientHeight() + 2);
-            ShowPopupEvent.builder(editor)
+            ControllerDialog.show(editor)
                     .popupType(PopupType.POPUP)
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(element)
@@ -193,7 +195,7 @@ final class PopupHarnesses {
     }
 
     private static void showAt(final StoryContent controller, final int left, final Widget trigger) {
-        ShowPopupEvent.builder(controller)
+        ControllerDialog.show(controller)
                 .popupType(PopupType.POPUP)
                 .popupPosition(new PopupPosition(left, CASCADE_TOP))
                 .addAutoHidePartner(trigger.getElement())

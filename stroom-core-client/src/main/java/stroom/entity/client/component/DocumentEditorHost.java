@@ -170,7 +170,7 @@ public class DocumentEditorHost<D>
     // its dirty state out itself)
     private void onChange() {
         if (!isReadOnly()) {
-            setDirty(!Objects.equals(document, write(document)));
+            setDirty(DocumentChanges.hasChanges(document, () -> write(document), () -> false));
         }
     }
 

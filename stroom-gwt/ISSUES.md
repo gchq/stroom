@@ -420,8 +420,8 @@ run of 22 October 2026 (1,538 stories).
 
 ### A dictionary's word list ignores its secondary sort orders
 
-**Looks fixed** (checked 28 October 2026, in wave 17's audit: `EffectiveWordsList`, the list's
-component now, chains its secondary orders; no test checks it). **Confirmed.**
+**Fixed** (checked 28 October 2026, in wave 17's audit: `EffectiveWordsList`, the list's
+component now, chains its secondary orders; `TestEffectiveWordsList` checks it since wave 21). **Confirmed.**
 `WordListPresenter.buildComparator` was given a primary comparator and the ones to
 break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
 `thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
@@ -1600,9 +1600,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * ~~**Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
   its parts." without an `@param` per part (e.g. `SteppingScreenController`,
   `MetaBrowserController`, `TableController`, `QueryPaneController`).~~ Done in wave 20 (28 October 2026). Every client `@Inject` constructor documents each parameter (570 added, in 103 classes).
-* **The Data tabs' query on close.** Closing an index's or store's Data tab now destroys its query
+* ~~**The Data tabs' query on close.** Closing an index's or store's Data tab now destroys its query
   (`TAB_CLOSE`), as the query editor does; no story checks the destroy request, as a story's tab
-  isn't closed.
+  isn't closed.~~ Done in wave 21 (28 October 2026). `App/Editors/IndexEditor` `DataTabRun` closes the editor as its tab does and expects the destroy.
 
 ### Left from wave 14's audit
 
@@ -1617,12 +1617,12 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   type tell the Conversion tab, so the code is highlighted for the new type at once; it is still
   chosen only when the converter is read (after a save), as before. `TextConverterSettingsController`
   would need a `setOnTypeChange`.~~ Fixed in wave 19 (28 October 2026).
-* **No stories for two editors.** `SqlTemporalStoreEditor` and `FloorMapEventStoreEditor` have no
-  workbench stories (default, read only, leak check), as before the wave.
-* **No unit tests for the document host.** `TestDocPresenter` went with `DocPresenter`; the read-only
+* ~~**No stories for two editors.** `SqlTemporalStoreEditor` and `FloorMapEventStoreEditor` have no
+  workbench stories (default, read only, leak check), as before the wave.~~ Done in wave 21 (28 October 2026). `StoreEditorStories`.
+* ~~**No unit tests for the document host.** `TestDocPresenter` went with `DocPresenter`; the read-only
   narrowing and dirty rules now in `DocumentEditorHost` and `DocumentEditor` are covered only by
   stories (a `Composite` can't be made on the JVM). To do: move the rules into a plain helper and
-  test it.
+  test it.~~ Done in wave 21 (28 October 2026). The dirty rule is `DocumentChanges` (`TestDocumentChanges`), used by both; the read-only narrowing is `Contexts.READ_ONLY`'s, tested in `TestControllerNode`.
 * ~~**Traces shown without a document.** Opened from a pathway (`ShowTracesEvent`), the traces editor
   still shows its Settings, Documentation and Permissions tabs, which have nothing to read.~~ Fixed in wave 19 (28 October 2026). Only the Traces tab shows.
 * ~~**A query opened from an embedded query pane closes with it.** `EmbeddedQueryController.editQuery`
@@ -1632,11 +1632,11 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   Roll-ups tab adds the "no roll-up" row to a store with none, so undoing an edit leaves the store
   dirty (as before).~~ Fixed in wave 19 (28 October 2026).
 * **One implementation.** `HasCommonTabs` is implemented only by `DocumentEditorHost`.
-* **Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
+* ~~**Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
   tooltip), `AppShell.ExplorerItemKeys` (a renamed item's text) and `DataGrid.ValueSpinnerColumn`
-  differ a little from their baselines; to check whether they differ from run to run.
-* **The story helpers.** `DocEditors.open` and `DocumentEditors.open` do much the same, and neither
-  owns the editor's host until its document is fetched (a failed fetch leaves it unowned).
+  differ a little from their baselines; to check whether they differ from run to run.~~ Done in wave 21 (28 October 2026). The first two haven't differed since; the third differs in every run (see "Screenshots that differ in every run").
+* ~~**The story helpers.** `DocEditors.open` and `DocumentEditors.open` do much the same, and neither
+  owns the editor's host until its document is fetched (a failed fetch leaves it unowned).~~ Done in wave 21 (28 October 2026). `DocumentEditors.open` uses `DocEditors.open`, which owns the host from the start.
 
 ### Left from wave 15
 
@@ -1697,9 +1697,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **The test suite's inventories** (`stroom-gwt/stroom-gwt-suite/oracles/gwt-inventory.csv`,
   `capability-specs.json`, generated) still list `MyPresenterWidget`, `PresenterAdapter`, the deleted
   cells and `MyTreeLayout`, and the old packages of the classes wave 17 moved; regenerate them (`tools/build-capability-specs.mjs` and the inventory
-  tool) before a tool reads them as current.
-* **Dialog stories show `StoryContent` with `ShowPopupEvent.builder`** directly, unowned, as they
-  showed `ContentPresenter`, rather than through `ControllerDialog` as the plan said.
+  tool) before a tool reads them as current. Tried in wave 21 (28 October 2026): the miners look for presenters (`MyPresenterWidget`, `bindPresenterWidget`), so with none left they mine almost nothing (the reachability graph and route recipes come out empty), and `build-door-preconditions` needs a walk's `out/` evidence. The oracles were left as they were; the miners need to learn controllers (`ControllerDialog`, `make`, GIN providers) first.
+* ~~**Dialog stories show `StoryContent` with `ShowPopupEvent.builder`** directly, unowned, as they
+  showed `ContentPresenter`, rather than through `ControllerDialog` as the plan said.~~ Done in wave 21 (28 October 2026). `StoryPopups` owns them (`ControllerDialog.showOnce`, or `own` and `show` for one shown again).
 
 ### Left from wave 17
 
@@ -1716,6 +1716,16 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   code clean-up.
 * **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
+
+### Screenshots that differ in every run
+
+**Reported** (28 October 2026, wave 21). About 90 of the full run's screenshots differ from their
+baselines in every run, so a change to them can't be seen: every visualisation story (their layouts
+are random), the annotation screens and the query editor's annotation stories (they show times
+relative to now), the floor map editor's (its timeline is relative to now) and
+`Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`. To do: give those stories a fixed clock and
+seed, or leave them out of the screenshot diff, and take new baselines for any that differ for
+good.
 
 ### Some components wire their handlers with `@UiHandler`
 

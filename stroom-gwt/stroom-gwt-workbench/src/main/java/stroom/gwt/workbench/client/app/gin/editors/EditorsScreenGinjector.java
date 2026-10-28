@@ -24,6 +24,7 @@ import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.documentation.client.component.DocumentationEditor;
 import stroom.feed.client.component.FeedEditor;
 import stroom.floormap.client.component.FloorMapEditorController;
+import stroom.floormap.client.component.FloorMapEventStoreEditor;
 import stroom.floormap.client.component.FloorMapInitController;
 import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.component.FloorMapSettingsController;
@@ -42,6 +43,7 @@ import stroom.script.client.component.ScriptEditor;
 import stroom.search.elastic.client.component.ElasticClusterEditor;
 import stroom.search.elastic.client.component.ElasticIndexEditor;
 import stroom.search.solr.client.component.SolrIndexEditor;
+import stroom.sqlstore.client.component.SqlTemporalStoreEditor;
 import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
 import stroom.visualisation.client.component.VisualisationEditor;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -116,6 +118,12 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A SQL temporal store's 'Settings' tab (its entry count and Reset Store).
     SqlTemporalStoreSettingsController getSqlTemporalStoreSettingsController();
+
+    /// @return A SQL temporal store's editor, as `SqlTemporalStorePlugin` opens it.
+    SqlTemporalStoreEditor getSqlTemporalStoreEditor();
+
+    /// @return A floor map event store's editor, as `FloorMapEventStorePlugin` opens it.
+    FloorMapEventStoreEditor getFloorMapEventStoreEditor();
 
     // Code documents
 

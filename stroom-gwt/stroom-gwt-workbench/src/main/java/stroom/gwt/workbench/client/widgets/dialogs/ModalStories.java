@@ -26,6 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.DialogAction;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -194,7 +195,7 @@ public final class ModalStories {
                 pending[0] = null;
             }
         }));
-        ShowPopupEvent.builder(new StoryContent(popups.getEventBus(), content))
+        ControllerDialog.showOnce(popups, new StoryContent(popups.getEventBus(), content))
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Save")
                 .modal()
@@ -223,7 +224,7 @@ public final class ModalStories {
                 DisablePopupEvent.builder(controller).action(DialogAction.OK).fire()));
         content.add(DialogWidgets.button(ENABLE_OK, DialogWidgets.SECONDARY, event ->
                 EnablePopupEvent.builder(controller).action(DialogAction.OK).fire()));
-        ShowPopupEvent.builder(controller)
+        ControllerDialog.showOnce(popups, controller)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Edit")
                 .modal()
@@ -253,7 +254,7 @@ public final class ModalStories {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
         final StoryContent controller = StoryContent.html(popups.getEventBus(), "<p>" + text + "</p>");
-        ShowPopupEvent.builder(controller)
+        ControllerDialog.showOnce(popups, controller)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .icon(icon)
                 .caption(caption)

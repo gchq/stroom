@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.dispatch.client.RestFactory.MethodExecutor;
 import stroom.docref.DocRef;
@@ -39,6 +40,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.help.client.HelpManager;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -278,16 +280,21 @@ public final class DocEditors {
         return host;
     }
 
-    // Fetches the document, checks the user may edit it, reads it in and shows the editor, and
-    // answers its Save as DocumentPlugin does
+    // Fetches the document, checks the user may edit it, reads it in and shows the editor, tells
+    // it that its tab is selected and answers its Save, as DocumentPlugin and the content pane do.
+    // The story owns it from the start, so that a fetch that fails leaves nothing unowned
     private static <D> void open(final ScreenHarness harness,
                                  final DocRef docRef,
                                  final Controller shown,
                                  final Opened<D> editor,
                                  final DocResource<D> resource) {
-        final TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(harness.getHasHandlers());
-        // A whole editor's Save (a tab on its own has none)
-        if (shown instanceof DocumentEditorHost) {
+        harness.own(shown);
+        // An editor's host shows the request's progress, as in Stroom
+        final TaskMonitorFactory taskMonitorFactory = shown instanceof final TaskMonitorFactory hostMonitor
+                ? hostMonitor
+                : new DefaultTaskMonitorFactory(harness.getHasHandlers());
+        // A whole editor's Save (a tab on its own has none), unless the story can't save
+        if (shown instanceof DocumentEditorHost && resource.canUpdate()) {
             harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
                 if (event.getTabData() == shown) {
                     save(harness, docRef, editor, resource, taskMonitorFactory);
@@ -302,6 +309,10 @@ public final class DocEditors {
                             editor.setReadOnly(!allowUpdate);
                             editor.read(docRef, doc);
                             harness.show(shown);
+                            // As Stroom's content pane does when it selects the editor's tab
+                            if (shown instanceof final TabData tab) {
+                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), tab);
+                            }
                         },
                         error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
                         taskMonitorFactory))
@@ -401,6 +412,36 @@ public final class DocEditors {
         ///
         /// @param fetch  Creates the request that fetches the document.
         /// @param update Creates the request that updates the document.
+        /// @return Whether the story can save the document: false for one only fetched, whose Save
+        /// nothing answers.
+        default boolean canUpdate() {
+            return true;
+        }
+
+        /// Creates a resource that only fetches the document, for a story that doesn't save it.
+        ///
+        /// @param fetch Creates the request that fetches the document.
+        /// @param <D>   The document type.
+        /// @return The resource.
+        static <D> DocResource<D> fetchOnly(final Function<RestFactory, MethodExecutor<?, D>> fetch) {
+            return new DocResource<>() {
+                @Override
+                public MethodExecutor<?, D> fetch(final RestFactory restFactory) {
+                    return fetch.apply(restFactory);
+                }
+
+                @Override
+                public MethodExecutor<?, D> update(final RestFactory restFactory, final D document) {
+                    throw new UnsupportedOperationException("The story doesn't save the document");
+                }
+
+                @Override
+                public boolean canUpdate() {
+                    return false;
+                }
+            };
+        }
+
         /// @param <D>    The document type.
         /// @return The resource.
         static <D> DocResource<D> of(final Function<RestFactory, MethodExecutor<?, D>> fetch,

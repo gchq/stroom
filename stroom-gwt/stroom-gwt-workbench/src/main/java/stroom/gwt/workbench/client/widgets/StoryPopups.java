@@ -25,6 +25,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.help.client.HelpManager;
 import stroom.widget.menu.client.Menu;
@@ -49,9 +51,11 @@ import java.util.List;
 /// appear on the page's body as in Stroom, and hides those still open with Stroom's
 /// `HidePopupEvent` when the story renders again (which disposes those shown once and restores
 /// the focus). Create it in `render`, each time the story renders.
-public final class StoryPopups {
+public final class StoryPopups implements HasControllerNode {
 
     private final EventBus eventBus = new SimpleEventBus();
+    // Owns the story's dialogs: those shown once until hidden, and those shown again and again
+    private final ControllerNode root = ControllerNode.root("StoryPopups");
     private final List<Controller> openPopups = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private boolean disposed;
@@ -69,6 +73,21 @@ public final class StoryPopups {
     /// @return The popup plumbing.
     public static StoryPopups create(final StoryContext context) {
         return new StoryPopups(context);
+    }
+
+    @Override
+    public ControllerNode getControllerNode() {
+        return root;
+    }
+
+    /// Owns a popup the story shows again and again, until the story renders again.
+    ///
+    /// @param popup The popup's controller.
+    /// @param <C>   Its type.
+    /// @return It.
+    public <C extends Controller> C own(final C popup) {
+        root.adopt(popup.getControllerNode());
+        return popup;
     }
 
     /// @return The event bus that popups are shown with.
@@ -166,5 +185,6 @@ public final class StoryPopups {
             cleanUps.get(i).run();
         }
         cleanUps.clear();
+        root.dispose();
     }
 }

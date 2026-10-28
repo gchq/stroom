@@ -180,10 +180,24 @@ public class EffectiveWordsList extends Component {
         if (fieldSort == null) {
             return null;
         }
+        return comparator(fieldSort.getId(), fieldSort.isDesc(), this::getSourceName, this::getImportType);
+    }
+
+    /// The order of the words for a sort on one column, with ties broken by the other columns: by
+    /// word then source, by source then word, or by type then source then word.
+    ///
+    /// @param sortId     The column sorted on: `Word`, `SourceName` or `Types`.
+    /// @param desc       Whether in descending order.
+    /// @param sourceName A word's source's name.
+    /// @param type       A word's type, local or imported.
+    /// @return The order, or null for a column that isn't sorted on.
+    static Comparator<Word> comparator(final String sortId,
+                                       final boolean desc,
+                                       final Function<Word, String> sourceName,
+                                       final Function<Word, String> type) {
         final Comparator<Word> byWord = textOrder(Word::getWord);
-        final Comparator<Word> bySourceName = textOrder(this::getSourceName);
-        final Comparator<Word> byType = textOrder(this::getImportType);
-        final String sortId = fieldSort.getId();
+        final Comparator<Word> bySourceName = textOrder(sourceName);
+        final Comparator<Word> byType = textOrder(type);
         final Comparator<Word> comparator;
         if (FIELD_WORD.equals(sortId)) {
             comparator = byWord.thenComparing(bySourceName);
@@ -194,7 +208,7 @@ public class EffectiveWordsList extends Component {
         } else {
             return null;
         }
-        return Comparator.nullsFirst(fieldSort.isDesc()
+        return Comparator.nullsFirst(desc
                 ? comparator.reversed()
                 : comparator);
     }

@@ -28,6 +28,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -324,7 +325,7 @@ public final class DialogStories {
             // A new controller each time, as Stroom's controllers are, since PopupManager toggles a
             // controller that is shown twice
             final StoryContent controller = StoryContent.html(popups.getEventBus(), html);
-            ShowPopupEvent.builder(controller)
+            ControllerDialog.showOnce(popups, controller)
                     .popupType(popupType)
                     .popupSize(popupSize)
                     .icon(icon)

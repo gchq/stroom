@@ -54,6 +54,7 @@ import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.editors.ReportEditorStories;
 import stroom.gwt.workbench.client.app.editors.SqlTemporalStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.StatisticStoreEditorStories;
+import stroom.gwt.workbench.client.app.editors.StoreEditorStories;
 import stroom.gwt.workbench.client.app.editors.ViewEditorStories;
 import stroom.gwt.workbench.client.app.editors.VisualisationEditorStories;
 import stroom.gwt.workbench.client.app.feed.FeedEditorStories;
@@ -106,6 +107,7 @@ import stroom.gwt.workbench.client.app.main.FindInContentDialogStories;
 import stroom.gwt.workbench.client.app.main.ImportDialogStories;
 import stroom.gwt.workbench.client.app.main.IndexVolumesScreenStories;
 import stroom.gwt.workbench.client.app.main.JobsScreenStories;
+import stroom.gwt.workbench.client.app.main.LinkPageStories;
 import stroom.gwt.workbench.client.app.main.ManageActivityDialogStories;
 import stroom.gwt.workbench.client.app.main.NodeGroupMembersDialogStories;
 import stroom.gwt.workbench.client.app.main.NodeGroupsScreenStories;
@@ -291,6 +293,7 @@ public final class AppStories {
         SteppingScreenStories.addTo(registry);
         // App/Main/TabSessionChooserDialog
         TabSessionChooserDialogStories.addTo(registry);
+        LinkPageStories.addTo(registry);
         // App/Main/TopBar
         TopBarStories.addTo(registry);
         // App/Main/TracesScreen
@@ -406,6 +409,7 @@ public final class AppStories {
         IndexEditorStories.addTo(registry);
         // App/Editors/SqlTemporalStoreSettings
         SqlTemporalStoreSettingsStories.addTo(registry);
+        StoreEditorStories.addTo(registry);
         // App/Editors/FloorMapEventStoreSettings
         FloorMapEventStoreSettingsStories.addTo(registry);
         // App/Index/SolrIndexEditor

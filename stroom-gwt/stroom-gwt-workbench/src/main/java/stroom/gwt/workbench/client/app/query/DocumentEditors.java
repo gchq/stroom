@@ -20,6 +20,8 @@ import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.DocumentEditorHost;
+import stroom.gwt.workbench.client.app.editors.DocEditors;
+import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -28,8 +30,6 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
-import stroom.security.shared.DocumentPermission;
-import stroom.widget.tab.client.TabData;
 
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -115,10 +115,11 @@ public final class DocumentEditors {
         return host;
     }
 
-    /// Opens a document's editor as Stroom's `DocumentPlugin` does: fetches the document, checks
-    /// whether the user may edit it, reads it into the editor (read only if not), shows the
-    /// editor as the harness's content and tells it that its tab is selected
-    /// (`ContentTabSelectionChangeEvent`).
+    /// Opens a document's editor as Stroom's `DocumentPlugin` does, as
+    /// [DocEditors#open(ScreenHarness, DocRef, DocumentEditorHost, DocEditors.DocResource)] does for a
+    /// story that doesn't save the document: fetches it, checks whether the user may edit it, reads it
+    /// into the editor (read only if not), shows the editor as the harness's content and tells it
+    /// that its tab is selected (`ContentTabSelectionChangeEvent`).
     ///
     /// @param harness    The story's harness.
     /// @param controller The editor, e.g. from the batch's ginjector.
@@ -133,25 +134,8 @@ public final class DocumentEditors {
             final DocRef docRef,
             final T resource,
             final Function<T, D> fetch) {
-        harness.getRestFactory()
-                .create(resource)
-                .method(fetch)
-                .onSuccess(doc -> harness.getSecurityContext().hasDocumentPermission(
-                        docRef,
-                        DocumentPermission.EDIT,
-                        allowUpdate -> {
-                            controller.setReadOnly(!allowUpdate);
-                            controller.read(docRef, doc);
-                            harness.show(controller);
-                            // As Stroom's content pane does when it selects the editor's tab
-                            if (controller instanceof TabData) {
-                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), (TabData) controller);
-                            }
-                        },
-                        error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
-                        controller))
-                .taskMonitorFactory(controller)
-                .exec();
+        DocEditors.open(harness, docRef, controller,
+                DocResource.fetchOnly(restFactory -> restFactory.create(resource).method(fetch)));
     }
 
     /// Finds a sub-tab of a document editor by its label.

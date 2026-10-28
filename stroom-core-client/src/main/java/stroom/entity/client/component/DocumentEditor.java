@@ -146,9 +146,7 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     /// whether the document is dirty.
     protected final void onChange() {
         if (getDocument() != null && !context(Contexts.READ_ONLY)) {
-            // What the document has but doesn't hold first, as comparing the document, on every
-            // key press in an editor, may cost more
-            setDirty(hasAssociatedDirty() || !Objects.equals(getDocument(), write()));
+            setDirty(DocumentChanges.hasChanges(getDocument(), this::write, this::hasAssociatedDirty));
         }
     }
 

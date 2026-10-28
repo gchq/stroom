@@ -310,6 +310,11 @@ public final class IndexEditorStories {
                             .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
                     play.waitFor(() -> play.expect(play.getByText("alice")).toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
+                    // Closing the editor's tab destroys the search's results on the server
+                    play.run("close the editor's tab", ScreenHarness::closeShownComponents);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/result-store/v1/destroy/" + RequestMatcher.PATH_WILDCARD)
+                                    .toSpyMatcher()));
                 })
                 // Enter in the query runs it, and Reset to Default puts the default query back
                 .story("DataTabEnterAndReset", context -> render(context, false, false, DATA_FIXTURES))

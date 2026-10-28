@@ -25,6 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -153,7 +154,7 @@ public final class EscapeStories {
                              final Runnable focus) {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
-        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(
+        final ShowPopupEvent.Builder builder = ControllerDialog.showOnce(popups,
                         new StoryContent(popups.getEventBus(), content))
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption(CAPTION)

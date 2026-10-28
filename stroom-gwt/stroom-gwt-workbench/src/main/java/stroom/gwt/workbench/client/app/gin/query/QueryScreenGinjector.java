@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
+import stroom.iframe.client.component.IFrameContentController;
 import stroom.planb.client.component.PlanBEditor;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.ResultStoreModel;
@@ -75,6 +76,9 @@ public interface QueryScreenGinjector extends ScreenGinjector {
 
     /// @return Stroom's handler of `HyperlinkEvent`s (a table's links), which Stroom creates eagerly.
     HyperlinkEventHandlerImpl getHyperlinkEventHandler();
+
+    /// @return A link's page as a tab, as `HyperlinkEventHandlerImpl` opens a `tab` link.
+    IFrameContentController getIFrameContentController();
 
     /// @return Stroom's handler of `ShowDataEvent`s (a data link's dialog), which Stroom creates
     /// eagerly.
