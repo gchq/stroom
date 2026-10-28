@@ -17,8 +17,8 @@
 package stroom.credentials.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.credentials.client.CredentialClient;
 import stroom.credentials.client.component.CredentialEditController.CreationState;
-import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;

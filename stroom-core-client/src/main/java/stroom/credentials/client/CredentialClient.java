@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.presenter;
+package stroom.credentials.client;
 
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;

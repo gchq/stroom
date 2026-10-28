@@ -16,7 +16,7 @@
 
 package stroom.http.client.component;
 
-import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.CredentialClient;
 import stroom.util.shared.http.HttpTlsConfig;
 
 import com.google.gwt.junit.GWTMockUtilities;

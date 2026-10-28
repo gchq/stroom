@@ -18,7 +18,7 @@ package stroom.credentials.client.component;
 
 import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
-import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.CredentialClient;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.ReplaceSecretRequest;
