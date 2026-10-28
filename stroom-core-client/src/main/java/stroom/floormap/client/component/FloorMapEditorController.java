@@ -608,7 +608,7 @@ public class FloorMapEditorController
 
     /// Stops the clock when the document is closed.
     ///
-    /// Closing a document tab does not unbind its controllers, so a timeline
+    /// Closing a document tab does not dispose its controllers, so a timeline
     /// left playing keeps its animation loop — and the per-tick fetches it drives
     /// — running for the rest of the session.
     private void onClose() {

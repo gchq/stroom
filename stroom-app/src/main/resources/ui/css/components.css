@@ -3,17 +3,6 @@
     background: none;
 }
 
-/*
-.ruleView-name {
-    display: inline-block;
-}
-
-.ruleView-optional {
-    display: inline-block;
-    margin-left: 5px;
-}
-*/
-
 .info-layout {
 	width: 100%;
 	height: 100%;
@@ -39,20 +28,6 @@
 .commandLinkOpen {
     cursor: pointer;
 }
-
-/*
-.entityTreeView-nameFilter {
-    width: 100%;
-    border: none !important;
-    background: var(--control__background-color);
-    color: var(--control__text-color);
-}
-
-.entityTreeView-nameFilter input[type="text"] {
-    border: none !important;
-    border-bottom: 1px solid var(--border-color) !important;
-}
-*/
 
 .tabBarContainer {
     display: flex;
@@ -276,17 +251,6 @@
     padding: 1px;
     text-align: center;
 }
-
-/*
-.mainViewImpl-topPanel {
-
-}
-
-.mainViewImpl-bottomPanel {
-	overflow: hidden;
-	flex-grow: 1;
-}
-*/
 
 .dataRetention--defaultRule {
     color: #484848;

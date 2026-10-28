@@ -119,7 +119,7 @@ import java.util.function.Consumer;
 /// chained requests can only reach this dispatcher), its upload transport does the same for
 /// uploads and restores Stroom's default transport, Stroom's `UiConfigCache` stops refreshing,
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
-/// through Stroom's own `HidePopupEvent` (which unbinds their controllers), the timers and handlers
+/// through Stroom's own `HidePopupEvent` (which disposes their controllers), the timers and handlers
 /// registered with [#addTimer(Timer)] and [#addRegistration(HandlerRegistration)] are stopped, the
 /// story's root, which owns what the story shows ([#show(Controller)], [#own(HasControllerNode)]), is
 /// disposed, and the event bus is switched off.

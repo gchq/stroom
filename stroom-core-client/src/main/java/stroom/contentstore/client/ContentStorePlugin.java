@@ -48,7 +48,7 @@ public class ContentStorePlugin extends ContentPlugin<ContentStoreTabController>
      * @param eventBus GWT event bus
      * @param contentManager Not sure yet...
      * @param controllerProvider The controller that will be opened when the
-     *                          menu button is clicked to show the app store.
+     *                           menu button is clicked to show the app store.
      * @param securityContext Permissions object.
      */
     @SuppressWarnings("unused")

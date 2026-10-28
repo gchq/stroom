@@ -16,7 +16,6 @@
 
 package stroom.widget.component.client;
 
-
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.EventBus;
 

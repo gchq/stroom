@@ -15,7 +15,7 @@
  */
 
 /*
-   The explorer pane (stroom.explorer.client.component.Navigation), named BEM style. Its rules were in `components.css`, `dashboard-body.css`.
+   The explorer pane (stroom.explorer.client.component.Navigation), named BEM style. Its rules were in `components.css`.
 */
 
 .navigation__name-filter {
@@ -44,8 +44,4 @@
 }
 
 .navigation .navigation__name-filter-panel {
-}
-
-.dashboard-body .navigation__name-filter {
-    margin: 0 0 var(--control__padding--vertical) 0;
 }

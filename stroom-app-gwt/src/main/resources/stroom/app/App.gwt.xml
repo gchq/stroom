@@ -62,6 +62,7 @@
 
     <inherits name="stroom.widget.debug.Debug" />
     <inherits name="stroom.widget.dropdowntree.DropDownTree" />
+    <!-- The quick filter box (the widget library) -->
     <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.layout.Layout" />
     <inherits name="stroom.item.Item" />
@@ -128,6 +129,7 @@
 
     <inherits name="stroom.query.Query" />
 
+    <!-- The advanced quick filter, which builds on the box (the app) -->
     <inherits name="stroom.quickfilter.QuickFilter" />
 
     <inherits name="stroom.statistics.impl.sql.SqlStatistics"/>

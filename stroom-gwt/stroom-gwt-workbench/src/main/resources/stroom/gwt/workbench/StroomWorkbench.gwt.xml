@@ -78,11 +78,13 @@
     <inherits name='stroom.item.Item'/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
+    <!-- The quick filter box (the widget library) -->
     <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
     <inherits name="stroom.widget.progress.Progress"/>
     <inherits name='stroom.entity.Entity'/>
     <inherits name='stroom.query.Query'/>
+    <!-- The advanced quick filter, which builds on the box (the app) -->
     <inherits name='stroom.quickfilter.QuickFilter'/>
     <!-- As App.gwt.xml: the SQL temporal store (whose document the pipeline's references use) and
          the floor map, with its histogram -->

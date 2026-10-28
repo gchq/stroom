@@ -3,7 +3,11 @@
 **Since 27 October 2026:** the GWT migration made the Advanced Query dialog a component with a
 controller (`AdvancedQuickFilter` and `AdvancedQuickFilterController` in
 `stroom.quickfilter.client.component`, made for each use) and deleted `QuickFilterModule`; the
-column value filter is `ColumnValuesFilter`. The names below are as first built.
+column value filter is `ColumnValuesFilter`. Since 28 October 2026 the widget `QuickFilter` is in
+`stroom.widget.quickfilter.client`, `RecentItems` in `stroom.explorer.client`, `EditExpressionPresenter`
+is `ExpressionEditorController` (`stroom.query.client.component`) and `ProcessorEditPresenter` is
+`ProcessorEditController` (`stroom.processor.client.component`). The names, paths and line numbers
+below are as first built.
 
 **Status:** reviewed 2026-09-18; decisions in §8 taken. **A1–A3 implemented 2026-09-18** on
 `gh-5740_quick_filter` (uncommitted): shared `QuickFilterContext` / `QuickFilterHistoryKey`,

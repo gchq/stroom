@@ -49,11 +49,11 @@ import java.util.Objects;
 ///
 /// When a user opens a Floor Map document in the Stroom UI, the
 /// `FloorMapDocEditor`
-/// builds several tabs, each backed by a sub-presenter:
+/// builds several tabs, each backed by a controller:
 ///
-/// Floor Map tabs and their presenters
+/// Floor Map tabs and their controllers
 ///
-/// | Tab | Presenter | Purpose |
+/// | Tab | Controller | Purpose |
 /// |---|---|---|
 /// | Settings | `FloorMapSettingsController` | Configures store references, value format, and value schema |
 /// | Events Query | `FloorMapQueryController` | Edits the StroomQL query for the events store |

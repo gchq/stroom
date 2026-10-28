@@ -126,6 +126,7 @@
 @import url("user-task.css");
 @import url("main-toolbar.css");
 @import url("components.css");
+@import url("navigation.css");
 @import url("content-store-tab.css");
 @import url("link-tab-panel.css");
 @import url("elastic-index-field-list.css");
@@ -133,7 +134,7 @@
 @import url("data-viewer.css");
 @import url("data-retention.css");
 @import url("welcome-tab.css");
-@import url("main.css");
+@import url("main-screen.css");
 @import url("curve-tab-layout.css");
 @import url("find-panel.css");
 @import url("column-values-filter.css");
@@ -166,7 +167,6 @@
 @import url("result-table.css");
 @import url("query-edit.css");
 @import url("dashboard-body.css");
-@import url("navigation.css");
 @import url("vis-toolbar-row.css");
 @import url("query-cell.css");
 @import url("flex-layout.css");

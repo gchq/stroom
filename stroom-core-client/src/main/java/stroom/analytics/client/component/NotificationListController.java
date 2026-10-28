@@ -51,9 +51,9 @@ public class NotificationListController extends Controller {
 
     /// Made by GIN, with its content.
     ///
-    /// @param eventBus               The application's event bus.
-    /// @param view                   The content.
-    /// @param editControllerProvider Makes a notification's editor.
+    /// @param eventBus     The application's event bus.
+    /// @param view         The content.
+    /// @param editProvider Makes a notification's editor.
     @Inject
     public NotificationListController(final EventBus eventBus,
                                       final NotificationList view,

@@ -61,7 +61,7 @@ public class RuleSetSettings extends Component {
 
     /// Shows the list of rules, and puts the actions on its toolbar.
     ///
-    /// @param ruleList The list, a controller its controller owns.
+    /// @param ruleList The list, a controller owned by this component's controller.
     /// @param toolbar  The list's toolbar.
     public void setRuleList(final IsWidget ruleList, final Toolbar toolbar) {
         table.setWidget(ruleList);
@@ -75,7 +75,7 @@ public class RuleSetSettings extends Component {
         addButton(toolbar, RuleAction.MOVE_DOWN, SvgImage.DOWN, "Move Rule Down");
     }
 
-    /// @param expressionTree The selected rule's expression, a controller its controller owns.
+    /// @param expressionTree The selected rule's expression, a controller owned by this component's controller.
     public void setExpression(final IsWidget expressionTree) {
         expression.setWidget(expressionTree);
     }

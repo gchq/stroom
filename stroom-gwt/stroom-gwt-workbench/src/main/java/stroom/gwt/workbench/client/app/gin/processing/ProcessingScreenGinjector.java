@@ -99,7 +99,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorTasksListController getProcessorTasksListController();
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
-    /// list), as `FolderPresenter`, `FeedEditor` and `PipelineEditor` create it.
+    /// list), as `FolderTabs`, `FeedEditor` and `PipelineEditor` create it.
     ProcessorTasksTabController getProcessorTasksTabController();
 
     /// @return A processor filter's 'Tasks' tab, as `ProcessorTaskPlugin` opens it.

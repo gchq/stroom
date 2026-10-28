@@ -464,7 +464,7 @@ public final class AppShellStories {
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
                     // The banner is an alert, so a screen reader says it when it is shown
-                    play.waitFor(() -> play.expect(play.querySelector(".main__banner"))
+                    play.waitFor(() -> play.expect(play.querySelector(".main-screen__banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
                     play.expect(play.getByRole("alert")).toHaveTextContent(
                             TextMatch.containingIgnoreCase("system maintenance"));
@@ -609,7 +609,7 @@ public final class AppShellStories {
                     play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
                     // The main view round it all isn't a tab stop (it was: a nameless stop holding
                     // the whole app, which Shift+Tab from the first button landed on)
-                    play.expect(play.querySelector(".main[tabindex]")).not().toBeInTheDocument();
+                    play.expect(play.querySelector(".main-screen[tabindex]")).not().toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened

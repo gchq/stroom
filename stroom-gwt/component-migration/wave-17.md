@@ -11,6 +11,35 @@ that no longer exist. This wave changes nothing a user sees: it moves, renames a
 same look, so every step is checked by compiling, the JVM tests and a screenshot diff that must show
 no change.
 
+## Audited (28 October 2026)
+
+Reviewers read the wave against this plan, "Done means" and the UI guide (the package moves; the
+names, comments and javadoc; the CSS; the workbench and the docs). Nothing a user sees was wrong;
+fixed, with the wave:
+
+- **The main screen's block is `main-screen`**, not `main` (in `main-screen.css`): `main` is a
+  likely class name for a page's main area, and a page shown in the Documentation tab's frame, or
+  a later Stroom block, would have been styled by it.
+- **Dead and commented-out CSS** the moves carried along went: the dashboard body's top bar and
+  design buttons (their markup is commented out in `DashboardBodyController`), the explorer filter's
+  rule inside a dashboard (a dashboard has no explorer), the rule editor's, old explorer filter's and
+  main screen's commented-out rules in `components.css`, three empty rules in
+  `authentication-error.css`, and a class `Main` added that no rule matched
+  (`mainViewImpl-splitPanel`). `navigation.css` is imported straight after `components.css`, where
+  all its rules now came from, and the query buttons' block comment is back in `query-buttons.css`.
+- **Comments and javadoc:** a few renames read oddly ("a controller its controller owns",
+  "unbinds", a history note that called a presenter a controller), two named classes that are gone
+  (`FolderPresenter`, `DocumentAssetAddDialogPresenter`), and some `@param` blocks were misaligned or
+  named the old parameter. The floor map's shared and server comments say controllers.
+- **Docs:** the design doc, the quick filter design and the story guide named old packages and two
+  workbench modules that don't exist; ISSUES.md's paths are the new ones. Both apps' GWT modules say
+  which of the two `QuickFilter` modules is which.
+
+Recorded in ISSUES.md: the workbench's `ScreenViewsModule`, which binds nothing now. One reviewer
+point was wrong: `TestFloorMapEventRowParsing` tests `FloorMapEventQuery`, in its own package.
+
+Checked by both apps' GWT compiles, checkstyle, the JVM tests and a full workbench run with the leak check: all 1,722 stories passed (three visualisation and dashboard stories flaky, passing when retried), and the screenshots that changed are the same set as the wave's own run (visualisations and the annotation screens' dates) but for three more visualisations, so nothing a user sees changed.
+
 ## Done (28 October 2026)
 
 Every step, in 41 commits, each a move or a rename that compiled, passed checkstyle and was
@@ -37,19 +66,22 @@ What was decided on the way, where it differs from the plan below:
   their helpers are parts of the widget.
 - **Block names:** `sign-in-page` for the `LoginView*` classes (the sign-in and reset password
   pages share them), `result-table` for both results tables (`TableViewImpl`, `TablePresenter`),
-  `main` for the main screen; the rest after their components. `showValueFilters` stays (it is a
+  `main` for the main screen (`main-screen` since the audit); the rest after their components. `showValueFilters` stays (it is a
   saved settings' JSON property too), and `toolbarContainer` was renamed only as a class.
-- **Dead styling:** the rule editor's `ruleViewImpl-name` class, which no rule matched, went with the
-  `.ruleView-name` and `.ruleView-optional` rules meant for it, rather than making them apply (a look
-  change).
+- **Dead styling:** the rule editor's `ruleViewImpl-name` class, which no rule matched, went, rather
+  than making the `.ruleView-name` and `.ruleView-optional` rules meant for it apply (a look change).
+  Those rules were already commented out; the audit deleted them.
 - **The cascade:** each new stylesheet is imported straight after the last one its rules came from;
-  the dark theme's rules stay in `theme.css`. A rule naming two blocks went to `navigation.css`.
+  the dark theme's rules stay in `theme.css`. A rule naming two blocks went to `navigation.css`
+  (the audit found it dead, and deleted it).
 - **Comments that record history** ("as it was in the presenter") kept their wording; commented-out
   code was renamed with its fields.
 - **Tool slips caught:** the first CSS clean-up treated commented-out CSS as rules and cut into it (the
   stylesheets were restored and the step redone with comments masked); two JSNI bodies still named
   renamed parameters (fixed before the GWT compile); the quick filter's new package had no GWT module
-  (the GWT compile caught it).
+  (the GWT compile caught it). So five commits don't GWT compile on their own: `3ed25416c5`,
+  `3020edac7b`, `a58855963a` and `0c840861a6` (no quick filter module yet) and `c1e5363e6d` (the
+  JSNI bodies); each compiles as Java and passes the JVM tests.
 
 The user's decisions (28 October 2026): the Ace editor wrapper's classes go to
 `stroom.editor.client.ace`; the quick filter's to `stroom.widget.quickfilter.client`; Plan B's

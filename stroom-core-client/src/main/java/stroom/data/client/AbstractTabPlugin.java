@@ -60,10 +60,10 @@ public abstract class AbstractTabPlugin<K, T extends Layer & TabData>
     protected abstract String getName();
 
     /**
-     * @param forceOpen            If false will not open the controller if it is not already open
+     * @param forceOpen             If false will not open the controller if it is not already open
      * @param controllerKey         The unique key that identifies the controller
      * @param tabControllerConsumer Method to modify the controller before it is opened, i.e. telling
-     *                             it what content to display.
+     *                              it what content to display.
      * @return The
      */
     protected Optional<T> openTabController(final boolean forceOpen,

@@ -420,14 +420,16 @@ run of 22 October 2026 (1,538 stories).
 
 ### A dictionary's word list ignores its secondary sort orders
 
-**Confirmed.** `WordListPresenter.buildComparator` is given a primary comparator and the ones to
+**Looks fixed** (checked 28 October 2026, in wave 17's audit: `EffectiveWordsList`, the list's
+component now, chains its secondary orders; no test checks it). **Confirmed.**
+`WordListPresenter.buildComparator` was given a primary comparator and the ones to
 break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
 `thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
 tie on that column, e.g. words of one type stay in whatever order they came in. Fix: chain
 `subsequentComparator`.
 
-* `stroom-core-client/src/main/java/stroom/dictionary/client/presenter/WordListPresenter.java`
-  (`buildComparator`)
+* `stroom-core-client/src/main/java/stroom/dictionary/client/component/EffectiveWordsList.java`
+  (the sort's comparator; was `WordListPresenter.buildComparator`)
 
 ### A duplicated selection handler has the same id as its original
 
@@ -463,21 +465,21 @@ they click. The Cancel path is fine, as Cancel is enabled again. Fix: when the b
 disabled, give the focus to the dialog's next control (or its first tab stop). The story doesn't
 check the focus until then.
 
-* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/DialogButtonAction.java`
+* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/DialogButtonAction.java`
   (`keepFocus`), used by `OkCancelContent.onDialogAction` and the other `*Content` classes
 
 ### A trace's operation list can't be scrolled with the keyboard
 
 **Fixed** (2026-10-22: the list is a named region that takes the focus; a keyboard list or tree of
 its rows would still be better). **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
-operation list (`#operationList`, built by `TraceOverviewWidget`) is taller than its pane, it
+operation list (`#operationList`, built by `TraceOverviewChart`) is taller than its pane, it
 scrolls, but nothing in it can take the focus, so a keyboard user can't scroll it
 (`scrollable-region-focusable`). Seen once the workbench's screens fitted the window (see Fixed), which
 made the pane shorter; any short enough window shows it in Stroom. Baselined for
 `App/Main/TracesScreen` `Traces` in `test-runner/a11y-baseline.json`. Fix: make the list (or its
 rows) focusable, ideally with the keys of a tree, as the rows expand.
 
-* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceOverviewWidget.java`
+* `stroom-core-client/src/main/java/stroom/pathways/client/component/TraceOverviewChart.java`
   (`appendOperationList`)
 
 ### Some visualisation stories' screenshots differ from run to run
@@ -573,7 +575,7 @@ most visualisations send (`series`, `x`, `y`, `path`, `lat`, `lon`, `campus`, `f
 its inputs are) and offer those.
 
 * `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java`
-* `stroom-core-client/src/main/java/stroom/query/client/presenter/VisComponentSelection.java`
+* `stroom-core-client/src/main/java/stroom/query/client/VisComponentSelection.java`
 
 ### GeoMap's map tiles are blocked in an asset-based visualisation
 
@@ -928,8 +930,8 @@ last closed dialog for a moment only.
 
 * `stroom-core-client-widget/src/main/java/edu/ycp/cs/dh/acegwt/client/ace/AceEditor.java`
   (`destroy()`, line 398; protected directory: ask before editing)
-* `stroom-core-client-widget/src/main/java/stroom/editor/client/presenter/AbstractEditorPresenter.java`
-  (line 58)
+* `stroom-core-client-widget/src/main/java/stroom/editor/client/component/AceEditorController.java`
+  (`editor.destroy()`; was `AbstractEditorPresenter`)
 * `stroom-core-client/src/main/java/stroom/document/client/DocumentPlugin.java` (`actuallyClose`)
 * ~~`stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)~~
   Fixed in wave 3: the view went, and `IFramePresenter` stops its title poll in `onDispose`
@@ -971,7 +973,7 @@ colour, kept distinct by its style (e.g. italic), not by a fainter colour.
 
 **Reported.**
 
-* Traces: the Service & Operation list (`#operationList`, `TraceOverviewWidget`) scrolls when it is
+* Traces: the Service & Operation list (`#operationList`, `TraceOverviewChart`) scrolls when it is
   taller than its pane, but neither it nor its rows take the focus, so a keyboard user can't scroll
   it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
   once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
@@ -1694,7 +1696,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   refreshing the hidden popup. As before the wave. Fix: add the listener only when not shown.
 * **The test suite's inventories** (`stroom-gwt/stroom-gwt-suite/oracles/gwt-inventory.csv`,
   `capability-specs.json`, generated) still list `MyPresenterWidget`, `PresenterAdapter`, the deleted
-  cells and `MyTreeLayout`; regenerate them (`tools/build-capability-specs.mjs` and the inventory
+  cells and `MyTreeLayout`, and the old packages of the classes wave 17 moved; regenerate them (`tools/build-capability-specs.mjs` and the inventory
   tool) before a tool reads them as current.
 * **Dialog stories show `StoryContent` with `ShowPopupEvent.builder`** directly, unowned, as they
   showed `ContentPresenter`, rather than through `ControllerDialog` as the plan said.
@@ -1709,9 +1711,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **Four types keep "View" in their names**, as they aren't presenters' views: `ButtonView` and
   `ToggleButtonView` (the buttons as controllers see them), `SidebarView` (the workbench framework's
   sidebar) and `DataGridView` (the bridge between the two grids, to go with `MyDataGrid`).
-* **Comments in shared and server code** (`FloorMapDoc`, `FloorMapGroup`,
-  `TestFloorMapDocCollections`, `FloorMapEventStoreSearchProvider`) still describe the floor map's
-  client as presenters.
+* **`ScreenViewsModule`** (the workbench's) binds nothing and is named for views, but nine
+  ginjectors list it: delete it, or rename it for the shared bindings it is there for, with the dead
+  code clean-up.
 * **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
@@ -1804,7 +1806,7 @@ this extends it to every handler. When counted (wave 13), the converted componen
   reached with the keyboard, so couldn't be scrolled without a mouse (found 25 October 2026 in wave
   6, by a new story's accessibility check; older).~~ Fixed: a named region that takes the focus, as
   the operation list is (`App/Main/TracesScreen` `SpanInfo`).
-* `TraceOverviewWidget` draws the trace as HTML again on every change, so its fixed text and ARIA
+* `TraceOverviewChart` draws the trace as HTML again on every change, so its fixed text and ARIA
   are in that HTML, not its template (found 25 October 2026, in wave 6): the operation list's
   heading ("Service & Operation") and its region's role and name, the Span Info's title, its close
   button ("×", titled "Close") and its region's role and name, and Reset Range and Full Range. They
@@ -1906,8 +1908,8 @@ this extends it to every handler. When counted (wave 13), the converted componen
   allowed.
 * Unused code met in wave 11 (27 October 2026): `FloorMapAria.label(UIObject, String)`,
   `label(Element, String)` and `hide` (the floor map object form names its controls in its
-  template now), `stroom.data.client.view.FileData` (only the old upload presenter made one) and
-  `stroom.analytics.client.presenter.ProcessingStatusUiHandlers`. Delete them once removals are
+  template now), `stroom.data.client.FileData` (only the old upload presenter made one); `ProcessingStatusUiHandlers`
+  went in wave 16. Delete them once removals are
   allowed.
 * Two dialogs that fetch before they show can't hear that the fetch failed (found 27 October 2026,
   in wave 11's audit): the API key dialog's create path and the activity chooser at start-up wait
@@ -1920,11 +1922,11 @@ this extends it to every handler. When counted (wave 13), the converted componen
   chosen (it warns and stays open) and its Cancel; and Choose Annotation shown a second time
   through the one controller the app keeps (it should keep its last filter; the stories make a new
   one each time).
-* The sign-in pages and Change Password keep their old shared classes (found 27 October 2026, in
-  wave 11's audit): `LoginView`, `userNameTextBoxOuter`, `userNameTextBox`, `AuthErrorView*`,
-  `emailTextBox` and `passwordPolicyMessage`, in `Login.css` and `ChangePassword.css`. Give them
-  BEM blocks in kebab-case stylesheets of their own in one pass, as the five pages share the two
-  files.
+* The sign-in pages and Change Password keep some old shared classes (found 27 October 2026, in
+  wave 11's audit; wave 17 made `LoginView*` and `AuthErrorView*` BEM blocks and gave the
+  stylesheets kebab-case names): `userNameTextBoxOuter` and `userNameTextBox` in `sign-in-page.css`,
+  and `emailTextBox` and `passwordPolicyMessage` in `change-password.css`. Give them BEM names in
+  one pass, as the five pages share the two files.
 * A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
   (found 27 October 2026, in wave 12; as on master), before the typed character is in the field, so
   the change the user sees isn't the one compared; a paste with the mouse marks nothing. Use the

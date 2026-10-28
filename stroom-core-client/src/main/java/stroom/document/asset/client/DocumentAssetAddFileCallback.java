@@ -21,7 +21,7 @@ import stroom.util.shared.ResourceKey;
 
 /**
  * Callback interface, so that the Add File dialog can record what it has done back
- * into the DocumentAssetAddDialogPresenter.
+ * into whoever opened it (DocumentAssetsTabController or DocumentAssetQuickUploadController).
  */
 public interface DocumentAssetAddFileCallback {
 

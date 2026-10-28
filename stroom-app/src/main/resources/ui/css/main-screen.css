@@ -19,12 +19,12 @@
 */
 
 /* Docked AI panel styles */
-.main__outer-split-panel {
+.main-screen__outer-split-panel {
     width: 100%;
     height: 100%;
 }
 
-.main {
+.main-screen {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -37,11 +37,11 @@
 }
 
 /* The main area, below the maintenance banner while it is shown */
-.main.main--banner {
+.main-screen.main-screen--banner {
     top: 20px;
 }
 
-.main__banner {
+.main-screen__banner {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -56,14 +56,14 @@
     padding: 1px;
 }
 
-.main__content-wrapper {
+.main-screen__content-wrapper {
     position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.main__content-panel {
+.main-screen__content-panel {
     width: 100%;
     height: 100%;
     overflow: hidden;

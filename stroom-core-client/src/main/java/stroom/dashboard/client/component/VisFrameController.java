@@ -31,7 +31,7 @@ import java.util.Objects;
 /// visualisation's refresh button.
 ///
 /// ```java
-/// // The frame is the controller's, shown by its view; its controller is owned by the controller
+/// // The frame is in the owner's component; the owner makes and owns the frame's controller
 /// make(visFrameControllerProvider).attach(visFrame);
 /// ```
 public class VisFrameController extends Controller {

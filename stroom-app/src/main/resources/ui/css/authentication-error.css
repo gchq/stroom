@@ -15,17 +15,9 @@
  */
 
 /*
-   The authentication error page (stroom.security.identity.client.component.AuthenticationError), named BEM style. Its rules were in `sign-in-page.css`.
+   The authentication error page (stroom.security.identity.client.component.AuthenticationError), named BEM style. Its rules were in `Login.css` (now
+   `sign-in-page.css`), which still holds the rules the page shares with the sign-in page.
 */
-
-.authentication-error {
-}
-
-.authentication-error__form-panel {
-}
-
-.authentication-error__form{
-}
 
 .authentication-error .authentication-error__form-panel .authentication-error__form {
     padding: 2rem;

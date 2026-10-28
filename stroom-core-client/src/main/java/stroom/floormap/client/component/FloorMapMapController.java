@@ -1707,7 +1707,7 @@ public class FloorMapMapController
 
     /// Stops the clock and every search this tab owns when the document is closed.
     ///
-    /// Closing a document tab does not unbind its controllers, so without this a
+    /// Closing a document tab does not dispose its controllers, so without this a
     /// closed Map tab keeps a paused-but-live pipeline: the timeline's playback
     /// loop, three result stores on the server, and an event-bus handler that still
     /// accepts entity data for this document's UUID. A reopened copy of the

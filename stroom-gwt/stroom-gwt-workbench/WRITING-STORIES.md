@@ -482,8 +482,9 @@ RestFixtures.builder()
   modules mirror Stroom's GIN modules (`XxxScreenModule` for `stroom...gin.XxxModule`) with their
   `bind(X)` lines copied, and plugins (`bindPlugin`), eager singletons and app services
   (`ClientSecurityContext`, `LoginManager`) left out (the story registers the controller as its
-  event's handler instead). What several areas share (menus, tool tips, editors, expression trees,
-  date pickers) is bound once, in `ScreenViewsModule`.
+  event's handler instead). A binding several areas share goes once in `ScreenViewsModule`, which
+  binds nothing today: the menus, tool tips, editors, expression trees and date pickers it bound are
+  controllers and components, which need no binding.
 * GIN checks the whole graph of **every** binding of the injector's modules, used or not, and the
   compile fails if a key is bound twice. So when GIN reports `No @Inject or default constructor
   found for X`, read its "Path to required node", find the Stroom module that binds `X`
@@ -548,8 +549,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   its tab is visible); `ownerPermissions(builder)` and `decorated(builder, docRefJson...)` answer the
   Permissions tab and doc pickers. The ginjector also gives `HyperlinkEventHandlerImpl` and
   `DataDisplaySupport` (Stroom creates both eagerly), `DateTimeSettingsFactory` and
-  `ResultStoreModel`; its `QueryExtrasScreenModule` holds single bindings these screens need
-  (`IFrameContentController`).
+  `ResultStoreModel`.
 * **Searches** (`client/app/query/QueryFixtures`, also for dashboards): a search is a poll of
   `POST /query/v1/search/{node}` (`/dashboard/v1/search/{node}` for a dashboard's `SearchModel`)
   until a reply is `complete` or `null`: route `QueryFixtures.SEARCH` with a reply sequence
@@ -566,8 +566,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
 * **Content screens** (content, monitoring, volume, activity and annotation screens):
   `ContentStorySupport` (`expectNoProblems`, `queryParam`, `decorate`, which answers the explorer's
   `decorate` with the document asked about), `ActivityFixtures`, `AnnotationFixtures`.
-* **Security** (`client/app/gin/security/SecurityScreenGinjector`, whose `IdentityScreenModule`
-  mirrors Stroom's `ChangePasswordModule` without the sign-in pages): `CurrentPasswordController`
+* **Security** (`client/app/gin/security/SecurityScreenGinjector`): `CurrentPasswordController`
   needs Stroom's concrete `CurrentUser` (whose graph GIN can't build here): create it with `new`,
   giving it `new CurrentUser(eventBus, restFactory, null, null)` signed in with
   `setUserAndPermissions(aup, false)`. RestyGWT ignores `@JsonInclude(NON_NULL)`, so a change such
