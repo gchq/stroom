@@ -24,6 +24,9 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.form.client.HasInvalidInput;
+import stroom.widget.form.client.InvalidInputs;
+import stroom.widget.form.client.RefusesInvalidInput;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -52,7 +55,7 @@ import java.util.function.Supplier;
 ///
 /// @param <D> The type of what is shown, e.g. a document's, which must compare by value (`equals`)
 ///            if it is written.
-public abstract class TabbedController<D> extends Controller {
+public abstract class TabbedController<D> extends Controller implements RefusesInvalidInput {
 
     private final LinkTabPanel view;
     private final Toolbar toolbar;
@@ -145,6 +148,40 @@ public abstract class TabbedController<D> extends Controller {
     /// @return The reference of what is shown, or null before it is read.
     public final DocRef getDocRef() {
         return docRef;
+    }
+
+    /// Refuses to save while a tab holds a field whose input can't be kept, e.g. a size box holding
+    /// text that isn't a size: shows that tab, says why under the field and focuses it.
+    ///
+    /// @return Whether it refused.
+    @Override
+    public final boolean refuseInvalidInput() {
+        for (final Map.Entry<TabData, Tab<?>> entry : tabs.entrySet()) {
+            final HasInvalidInput input = findInvalidInput(entry.getValue());
+            if (input != null) {
+                selectTab(entry.getKey());
+                InvalidInputs.show(input);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// @return Whether a tab holds a field whose input can't be kept. Such input is a change that
+    /// isn't saved, though the document written keeps the value read (so that closing asks first).
+    public final boolean hasInvalidInput() {
+        for (final Tab<?> tab : tabs.values()) {
+            if (findInvalidInput(tab) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static HasInvalidInput findInvalidInput(final TabbedController<?>.Tab<?> tab) {
+        return tab.content == null
+                ? null
+                : InvalidInputs.find(tab.content.asWidget());
     }
 
     /// Focuses the selected tab, e.g. when what is shown is opened.

@@ -202,6 +202,29 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Renamed Table")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Maximum Results that aren't numbers are refused, even from another tab: OK shows
+                // the Basic tab again, says why under the box and focuses it. Before, the parts that
+                // weren't numbers were dropped
+                .story("TableMaxResultsRefused", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "The Table");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Settings");
+                    final Query maxResults = dialog.getByLabelText("Maximum Results");
+                    play.clear(maxResults);
+                    play.type(maxResults, "100,lots");
+                    play.click(dialog.getByRole("tab", "Conditional Formatting"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(dialog.getByText(
+                            "Must be whole numbers separated by commas, e.g. 1000000,100,10")).toBeInTheDocument());
+                    play.expect(dialog.getByLabelText("Maximum Results")).toHaveFocus();
+                    play.expect(screen.getByText("Settings", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The table's Download exports its results
                 .story("TableDownload", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         routes -> routes.route(RequestMatcher.post("/dashboard/v1/downloadSearchResults/"

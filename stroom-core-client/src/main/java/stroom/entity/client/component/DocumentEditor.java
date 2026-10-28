@@ -146,7 +146,9 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     /// whether the document is dirty.
     protected final void onChange() {
         if (getDocument() != null && !context(Contexts.READ_ONLY)) {
-            setDirty(DocumentChanges.hasChanges(getDocument(), this::write, this::hasAssociatedDirty));
+            // Input a field can't keep is a change too, though what is written keeps the value read
+            setDirty(DocumentChanges.hasChanges(getDocument(), this::write,
+                    () -> hasAssociatedDirty() || hasInvalidInput()));
         }
     }
 

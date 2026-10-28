@@ -16,6 +16,9 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.form.client.HasInvalidInput;
+import stroom.widget.form.client.InvalidInputs;
+
 import com.google.gwt.user.client.ui.Composite;
 
 /// A dumb part of the UI: a UiBinder template (`Foo.ui.xml`, next to `Foo.java`) and the Java that
@@ -49,6 +52,17 @@ public abstract class Component extends Composite {
     /// @return True if the user may not change what it shows.
     public final boolean isReadOnly() {
         return readOnly;
+    }
+
+    /// Finds the first field it shows holding input that can't be kept, e.g. text in a date box
+    /// that isn't a date, for a dialog's OK or a document's Save to refuse (see [InvalidInputs]). A
+    /// read-only component has none, as nothing in it can be changed.
+    ///
+    /// @return The field, or null if there is none.
+    public HasInvalidInput findInvalidInput() {
+        return readOnly
+                ? null
+                : InvalidInputs.find(getWidget());
     }
 
     /// Applies a change of [#setReadOnly(boolean)] to its widgets, e.g. disabling its fields and

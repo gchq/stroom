@@ -56,8 +56,17 @@ public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrap
         model.setRenderFunction(renderFunction);
     }
 
+    /// Offers an item that stands for no value, first in the list.
+    ///
+    /// @param nonSelectString What it is called, e.g. `Never`, which the box shows when its value is
+    ///                        null.
     public void setNonSelectString(final String nonSelectString) {
         model.setNonSelectString(nonSelectString);
+    }
+
+    @Override
+    protected SelectionItem getNoValueItem() {
+        return model.wrap(null);
     }
 
     public void addItems(final Collection<T> items) {

@@ -219,6 +219,34 @@ public final class IndexEditorStories {
                                     + " \"rerankScoreMinimum\": 0.5}}}").toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
+                // A rerank score that isn't a score is refused: OK says why under it and keeps the
+                // dialog. Before, the text became the default, 0.8, and was saved
+                .story("DenseVectorFieldBadScoreRefused", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Embedding")).toBeInTheDocument());
+                    play.click(play.getByText("Embedding"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
+                    final Query score = screen.findByLabelText("Minimum Rerank Score");
+                    play.clear(score);
+                    play.type(score, "high");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Must be a number from 0 to 1"))
+                            .toBeInTheDocument());
+                    play.expect(score).toHaveFocus();
+                    play.expect(score).toHaveAttribute("aria-invalid", "true");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).toSpyMatcher());
+                    // Put right, OK saves it
+                    play.clear(score);
+                    play.type(score, "0.5");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).withJsonBodyContaining(
+                                    "{\"indexField\": {\"denseVectorFieldConfig\": {\"rerankScoreMinimum\": 0.5}}}")
+                                    .toSpyMatcher()));
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Fields tab (the default) as an editable partner for FieldsReadOnly
                 .story("FieldsEditable", context -> render(context, false, false))
                 .withPlay(play -> {

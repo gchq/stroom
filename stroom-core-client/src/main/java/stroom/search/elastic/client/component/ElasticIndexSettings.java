@@ -20,6 +20,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.InputChecks;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -61,6 +62,8 @@ public class ElasticIndexSettings extends Component {
     @UiField
     DropDownBox defaultExtractionPipeline;
 
+    // The minimum rerank score read, kept while the one entered isn't a score
+    private Float rerankScoreMinimumRead;
     private Runnable onChange = () -> {
     };
 
@@ -74,6 +77,8 @@ public class ElasticIndexSettings extends Component {
         rerankTextFieldSuffix.addValueChangeHandler(e -> onChange.run());
         rerankScoreFieldSuffix.addValueChangeHandler(e -> onChange.run());
         rerankScoreMinimum.addValueChangeHandler(e -> onChange.run());
+        // Save refuses while it isn't a score (see write)
+        rerankScoreMinimum.setInvalidReason(InputChecks.numberFrom(0, 1));
     }
 
     /// @return The cluster's picker, for the controller to attach to.
@@ -106,7 +111,8 @@ public class ElasticIndexSettings extends Component {
         timeField.setValue(index.getTimeField());
         rerankTextFieldSuffix.setValue(index.getRerankTextFieldSuffix());
         rerankScoreFieldSuffix.setValue(index.getRerankScoreFieldSuffix());
-        rerankScoreMinimum.setValue(index.getRerankScoreMinimum().toString());
+        rerankScoreMinimumRead = index.getRerankScoreMinimum();
+        rerankScoreMinimum.setValue(String.valueOf(rerankScoreMinimumRead));
     }
 
     /// Writes the settings shown, but for the pickers, into an index's builder.
@@ -121,7 +127,16 @@ public class ElasticIndexSettings extends Component {
                 .timeField(timeField.getValue())
                 .rerankTextFieldSuffix(rerankTextFieldSuffix.getValue())
                 .rerankScoreFieldSuffix(rerankScoreFieldSuffix.getValue())
-                .rerankScoreMinimum(Float.parseFloat(rerankScoreMinimum.getValue()));
+                .rerankScoreMinimum(getRerankScoreMinimum());
+    }
+
+    // The score entered or, while it isn't a score (when Save refuses, so it is never saved), the one
+    // read. Before, text that wasn't a number threw as soon as the field was left
+    private Float getRerankScoreMinimum() {
+        final Double score = InputChecks.parseNumber(rerankScoreMinimum.getValue());
+        return score == null
+                ? rerankScoreMinimumRead
+                : Float.valueOf(score.floatValue());
     }
 
     /// @param onChange What to run when the user changes a setting.

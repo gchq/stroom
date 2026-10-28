@@ -66,6 +66,8 @@ says.
   Don't take or pass on a `readOnly` argument: a document's opener calls `setReadOnly(...)` before `read(docRef, doc)`, and its parts follow it.
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the controller is disposed before the reply.
+
+* **Input that can't be kept is refused, never changed.** A field whose text must be a value of some kind is a `DateTimeBox`, or a `TextBox` given a check (`setInvalidReason(InputChecks.numberFrom(0, 1))`, or a function of its own giving the reason). While a field shown in a dialog or a document holds such text, OK and Save refuse: the field says why under it (in its `FormGroup`) and takes the focus, on whichever tab it is (`InvalidInputs`; content with tabs implements `RefusesInvalidInput`). Never drop, replace or default what was typed; keep the last value read until the user puts the field right. A duration whose meaning includes 0 says `zeroAllowed="true"`, and one that may be none names it (`noneText="Never"`).
   A client that takes a task monitor is given `taskMonitor()`: the one the controller's owners provide when the request starts (its tab's or dialog's), else Stroom's own busy indicator.
 
 ## Kinds of screen

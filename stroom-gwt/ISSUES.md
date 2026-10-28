@@ -76,7 +76,7 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### Elastic number fields can fail when blank
 
-**Open, with "Values quietly replaced or dropped"** (28 October 2026, wave 23): the rerank score is part of the invalid input design asked about there.
+**Fixed** (28 October 2026, wave 24). The Minimum Rerank Score says why under it while it isn't a number from 0 to 1, and Save refuses (`App/Index/ElasticIndexEditor` `RerankScoreNotAScore`); leaving the box no longer throws. On master too.
 
 **Reported.**
 
@@ -112,6 +112,8 @@ isn't one of the options (Comfortable, Compact).
 
 ### Some HTTP client durations can't be set to 0
 
+**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `zeroAllowed` on Timeout, Connection Timeout, Keep Alive and Validate After Inactivity Period (`App/Editors/ElasticClusterEditor` `KeepAliveTakesZero`). On master too.
+
 **Reported.** The duration picker's minimum is 1, but the help (and the defaults) for some HTTP
 client durations treat 0 as meaningful ("no timeout", or Keep Alive "close after each request"). It
 isn't clear whether a typed 0 is clamped when saved.
@@ -120,6 +122,8 @@ isn't clear whether a typed 0 is clamped when saved.
 * `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/DurationPicker.java`
 
 ### Values quietly replaced or dropped
+
+**Fixed** (28 October 2026, wave 24), as the user decided: bad input blocks OK and Save. A field that can hold input that can't be kept (`HasInvalidInput`: `DateTimeBox`, and a `TextBox` given a check) says why under it, and every dialog's OK and a document's Save and Save As refuse while one is shown, taking the user to it, on whichever tab (`InvalidInputs`, `RefusesInvalidInput`; UI-GUIDE.md). Each field below now refuses rather than changes: stories `IndexEditor` `DenseVectorFieldBadScoreRefused`, `PlanBEditor` `MaxStoreSizeNotASizeIsRefused`, `DashboardEditor` `TableMaxResultsRefused`, `ProcessChoiceDialog` `CreateTimeNotATimeRefused`. On master too.
 
 **Reported.** These fields silently change what the user entered instead of saying what is wrong:
 
@@ -181,6 +185,8 @@ day, so the part after midnight never matches.
 that into Month, so the choice can never be kept (`IndexSettings`).
 
 ### Duration fields can't be left blank
+
+**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `noneText`: Resume Notifications After may be Never, and a table builder's retention Keep all, both none to the server (`App/Editors/AnalyticRuleEditor` `ResumeAfterNever`). A table builder whose retention is none showed 1 hour, which a save stored; it shows Keep all. On master too.
 
 **Reported.** Duration pickers have a minimum of 1, so settings whose meaning includes "blank" can't
 be blank: an analytic notification's Resume Notifications After (blank meant "never resume") and a
@@ -522,6 +528,15 @@ the layouts and the Force2D and Force3D flows are the same each run; two runs of
 `Force2D`, `Force3D` and `Tree` story against new baselines differed only in `Tree` `Keyboard` and
 `Force` `SelectionPayload`, each by the same pixels both times, so each flips between two states
 (a tooltip shown on focus, or not). Those two are still open, as below.
+
+**Not fixed under load** (28 October 2026, wave 24's full run): in a full run (1,741 stories, 8
+workers) 35 `Force2D` and `Force3D` stories, `Force` `Keyboard` and two `Accessibility` stories
+differed again from baselines taken in a run of the visualisations alone. The seed fixes where the
+simulations start, but how far they have run by the screenshot depends on the frames the browser
+had time for. A fix: the screenshot runs stop each simulation at a fixed step count (or tick it a
+fixed number of times and pause it) before the screenshot, rather than letting it run in real time.
+Until then, their baselines are taken from a run of the visualisations alone, and a full run's
+differences in them are not looked at.
 
 **Confirmed** (two screenshot runs of the same code, 21 October 2026). The stories pass, but their
 screenshots can't be used for a screenshot diff: they change between runs of the same code, so a
@@ -1494,7 +1509,12 @@ Left as they are, on purpose:
   names are `<th>`; the name and value rows read in order, and row headers there would need `<th>`'s
   heading look or a new `TableCell` option.
 * GWT's `SuggestBox` in the term editor (`TermEditor`): the Term editor in `COMPONENTS.md` replaces
-  it.
+  it. **Decided** (28 October 2026, the wave after 24): not with `SelectionBox`, whose behaviour stays
+  as it is, but with a new Stroom `SuggestionBox` on `BaseSelectionBox`'s popup list, keys and async
+  model: its value is the field's text (suggestions are hints), typing opens the list filtered by
+  what was typed (an editable combobox with list autocomplete), choosing one fills the text, Escape
+  closes the list keeping the text; BEM block `suggestion-box`. `AsyncSuggestOracle` becomes an async
+  list model.
 * GWT's `PopupPanel` for the editor's indicator popup (`IndicatorPopup`): part of the Ace editor
   work.
 * GWT's `FormPanel` round the asset add and rename dialogs and the step location dialog,

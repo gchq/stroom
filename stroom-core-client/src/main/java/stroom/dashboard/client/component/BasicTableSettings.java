@@ -20,6 +20,7 @@ import stroom.dashboard.client.main.DashboardPane;
 import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.InputChecks;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -72,6 +73,8 @@ public class BasicTableSettings extends Component implements BasicSettingsFields
     public BasicTableSettings() {
         initWidget(BINDER.createAndBindUi(this));
         pageSize.setValue(100);
+        // OK refuses while it isn't a list of numbers. Before, the parts that weren't were dropped
+        maxResults.setInvalidReason(InputChecks.wholeNumberList("1000000,100,10"));
         useDefaultExtractionPipeline.addValueChangeHandler(event ->
                 onUseDefaultExtractionPipelineChange.accept(useDefaultExtractionPipeline.getValue()));
         overrideMaxStringFieldLength.addValueChangeHandler(event ->

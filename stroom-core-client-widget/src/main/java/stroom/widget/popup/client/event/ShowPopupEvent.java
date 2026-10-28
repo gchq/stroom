@@ -19,6 +19,8 @@ package stroom.widget.popup.client.event;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
+import stroom.widget.form.client.InvalidInputs;
+import stroom.widget.form.client.RefusesInvalidInput;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
@@ -233,6 +235,13 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             return this;
         }
 
+        // Whether the dialog holds a field whose input can't be kept, which is then shown
+        private boolean refuseInvalidInput() {
+            return controller instanceof final RefusesInvalidInput refuses
+                    ? refuses.refuseInvalidInput()
+                    : InvalidInputs.refuse(controller.asWidget());
+        }
+
         public void fire() {
             // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
@@ -244,6 +253,16 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                             .fire();
                 };
             }
+            // OK is refused while the dialog shows a field whose input can't be kept, e.g. a date
+            // box holding text that isn't a date: the field says why and takes the focus
+            final HidePopupRequestEvent.Handler handler = hideRequestHandler;
+            hideRequestHandler = e -> {
+                if (e.isOk() && refuseInvalidInput()) {
+                    e.reset();
+                } else {
+                    handler.onHideRequest(e);
+                }
+            };
 
             Element[] elements = null;
             if (NullSafe.hasItems(autoHidePartners)) {

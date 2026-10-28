@@ -22,6 +22,7 @@ import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.InputChecks;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -60,6 +61,9 @@ public class DenseVectorField extends Component {
         initWidget(BINDER.createAndBindUi(this));
         vectorSimilarityFunctionType.addItems(VectorSimilarityFunctionType.values());
         rerankModelType.addItems(RerankModelType.values());
+        // The field's dialog refuses OK while it isn't a score. Before, other text became the
+        // default, 0.8
+        rerankScoreMinimum.setInvalidReason(InputChecks.numberFrom(0, 1));
     }
 
     /// @return The embedding model's picker, for its controller to attach to.
@@ -99,7 +103,8 @@ public class DenseVectorField extends Component {
                 .rerankScoreMinimum(getRerankScoreMinimum());
     }
 
-    // The minimum rerank score entered, or the default if it isn't a number
+    // The minimum rerank score entered, or the default if it isn't a number (only before OK, which
+    // refuses such text)
     private float getRerankScoreMinimum() {
         try {
             return Float.parseFloat(rerankScoreMinimum.getValue());

@@ -331,8 +331,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         String newText = "";
         String newHTML = "";
-        if (value != null) {
-            final SelectionItem selectionItem = model.wrap(value);
+        final SelectionItem selectionItem = value != null
+                ? model.wrap(value)
+                : getNoValueItem();
+        if (selectionItem != null) {
             newText = selectionItem.getLabel();
             newHTML = selectionItem.getRenderedLabel().asString();
         }
@@ -343,6 +345,12 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         if (fireEvents && changed) {
             fireChange();
         }
+    }
+
+    /// @return The item that stands for no value, e.g. `Never`, shown when the value is null, or
+    /// null for none (the box is then empty).
+    protected SelectionItem getNoValueItem() {
+        return null;
     }
 
     public String getText() {

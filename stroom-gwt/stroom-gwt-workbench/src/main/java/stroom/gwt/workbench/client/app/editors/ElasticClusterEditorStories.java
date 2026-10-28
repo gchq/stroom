@@ -190,6 +190,23 @@ public final class ElasticClusterEditorStories {
                             .toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
+                // Keep Alive takes 0, which closes the connection after each request (its default).
+                // Before, its least was 1, so 0 couldn't be kept once it was changed
+                .story("KeepAliveTakesZero", context -> render(context, true, null, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByRole("button", "Save");
+                    showHttpClientConfig(play);
+                    final Query amount = screen.within(screen.getByRole("group", "Keep Alive"))
+                            .getByRole("spinbutton", "Amount");
+                    play.clear(amount);
+                    play.type(amount, "0");
+                    play.tab();
+                    play.expect(amount).toHaveValue("0");
+                    play.expect(amount).not().toHaveAttribute("aria-invalid", "true");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("ReadOnly", context -> render(context, true, null, true))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save (read only)");

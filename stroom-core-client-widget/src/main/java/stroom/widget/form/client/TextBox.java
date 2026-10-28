@@ -20,6 +20,8 @@ import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
 
+import java.util.function.Function;
+
 /// A text box whose type, placeholder, ARIA role and states a template can set, which UiBinder
 /// can't write on a widget's element itself:
 ///
@@ -29,9 +31,41 @@ import com.google.gwt.dom.client.Element;
 /// ```
 ///
 /// A blank or null value removes the attribute.
+///
+/// A box whose text must be a value of some kind (e.g. a number) is given a check of its text
+/// ([#setInvalidReason(Function)]): while its text fails it, a dialog's OK and a document's Save
+/// refuse, and when the box is left the reason is said under it ([InvalidInputs]).
 // Stroom's copy of GWT's TextBox (stroom-core-client-widget's com.google.gwt.user.client.ui), which
 // gives every text field its text-field.css look
-public class TextBox extends com.google.gwt.user.client.ui.TextBox {
+public class TextBox extends com.google.gwt.user.client.ui.TextBox implements HasInvalidInput {
+
+    // Why the text can't be kept, or null if it can; null for a box whose text is anything
+    private Function<String, String> invalidReason;
+
+    /// Checks the box's text, e.g. that it is a number from 0 to 1. While the text fails the check,
+    /// a dialog's OK and a document's Save refuse, and when the box is left (or Enter is pressed)
+    /// the reason is said under it, in its form group.
+    ///
+    /// @param invalidReason Given the text, says why it can't be kept, e.g. `Must be a number from
+    ///                      0 to 1`, or gives null if it can.
+    public void setInvalidReason(final Function<String, String> invalidReason) {
+        if (this.invalidReason == null && invalidReason != null) {
+            addValueChangeHandler(event -> InvalidInputs.showReason(this));
+        }
+        this.invalidReason = invalidReason;
+    }
+
+    @Override
+    public String getInvalidReason() {
+        return invalidReason == null || !isEnabled() || isReadOnly()
+                ? null
+                : invalidReason.apply(getText());
+    }
+
+    @Override
+    public void focusInvalidInput() {
+        setFocus(true);
+    }
 
     /// @param type The input's type, e.g. `search`.
     public void setType(final String type) {

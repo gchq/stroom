@@ -94,7 +94,12 @@ public class DocumentEditorHost<D>
         if (editor instanceof final DocumentEditor<D> documentEditor) {
             documentEditor.setOnDirtyChange(this::setDirty);
             documentEditor.setOnSave(this::fireSave);
-            documentEditor.setOnSaveAs(() -> SaveAsDocumentEvent.fire(this, this));
+            documentEditor.setOnSaveAs(() -> {
+                // Not while a field holds input that can't be kept, which the field says
+                if (!refuseInvalidInput()) {
+                    SaveAsDocumentEvent.fire(this, this);
+                }
+            });
         }
         listen(ContentTabSelectionChangeEvent.getType(),
                 event -> editor.onContentTabVisible(event.getTabData() == this));
@@ -172,7 +177,8 @@ public class DocumentEditorHost<D>
     // its dirty state out itself)
     private void onChange() {
         if (!isReadOnly()) {
-            setDirty(DocumentChanges.hasChanges(document, () -> write(document), () -> false));
+            // Input a field can't keep is a change too, though what is written keeps the value read
+            setDirty(DocumentChanges.hasChanges(document, () -> write(document), editor::hasInvalidInput));
         }
     }
 
@@ -194,9 +200,10 @@ public class DocumentEditorHost<D>
         }
     }
 
-    // Asks DocumentPlugin to save the document
+    // Asks DocumentPlugin to save the document, unless a field holds input that can't be kept, which
+    // the field then says (DocumentPlugin checks too, for saves that don't come through here)
     private void fireSave() {
-        if (isDirty()) {
+        if (isDirty() && !refuseInvalidInput()) {
             SaveDocumentEvent.fire(this, this);
         }
     }
@@ -204,6 +211,14 @@ public class DocumentEditorHost<D>
     @Override
     public boolean handleKeyAction(final Action action) {
         return editor.handleKeyAction(action);
+    }
+
+    /// Refuses to save while a tab holds a field whose input can't be kept: shows that tab, says why
+    /// under the field and focuses it (see [TabbedController#refuseInvalidInput()]).
+    ///
+    /// @return Whether it refused.
+    public boolean refuseInvalidInput() {
+        return editor.refuseInvalidInput();
     }
 
     /// Focuses the document's selected tab when it is opened, so its tabs' keys work at once.

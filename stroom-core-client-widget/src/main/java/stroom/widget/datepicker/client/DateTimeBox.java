@@ -19,6 +19,8 @@ package stroom.widget.datepicker.client;
 import stroom.svg.client.IconBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.HasInvalidInput;
+import stroom.widget.form.client.InvalidInputs;
 import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
@@ -52,10 +54,12 @@ import com.google.gwt.user.client.ui.Focus;
 /// `DateTimeBox.ui.xml`.
 public class DateTimeBox
         extends Component
-        implements Focus, HasValueChangeHandlers<String> {
+        implements Focus, HasValueChangeHandlers<String>, HasInvalidInput {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final DateTimeModel FORMAT_MODEL = new DateTimeModel();
+    private static final String NOT_A_TIME = "Must be a date and time";
+    private static final String NO_TIME = "A date and time is needed";
 
     @UiField
     IconBox iconBox;
@@ -229,6 +233,8 @@ public class DateTimeBox
         stringValue = text;
         textBox.setValue(text);
         FieldValidity.setInvalid(textBox.getElement(), false);
+        // Text set by the screen replaces what was typed, so what was said about that goes
+        InvalidInputs.showReason(this);
         if (fireEvents) {
             changed();
         }
@@ -263,6 +269,28 @@ public class DateTimeBox
                               || !isEnabled()
                               || isValid();
         FieldValidity.setInvalid(textBox.getElement(), !valid);
+        InvalidInputs.showReason(this);
+    }
+
+    /// @return Why the box's text can't be kept (it isn't a time, or the box is empty and may not
+    /// be), or null if it can, or the box is disabled or read only.
+    @Override
+    public String getInvalidReason() {
+        if (!isEnabled() || isReadOnly() || expressionsAllowed) {
+            return null;
+        } else if (isEmpty()) {
+            return optional || stringValue == null
+                    ? null
+                    : NO_TIME;
+        }
+        return isValid()
+                ? null
+                : NOT_A_TIME;
+    }
+
+    @Override
+    public void focusInvalidInput() {
+        focus();
     }
 
     /// @param optional Whether the box may be left empty.

@@ -40,7 +40,8 @@ default), Process Data's Max Create Time (its help says so).
 ## Not done
 
 - **Values quietly replaced or dropped** (number and date fields whose bad text is dropped or
-  replaced, and durations that can't be 0 or blank): a design for invalid input, put to the user.
+  replaced, and durations that can't be 0 or blank): a design for invalid input, put to the user,
+  who chose bad input blocking OK and Save; done in wave 24.
 - **Pathways' constraints and paths:** need model work.
 - **Helpers' late replies:** an ownership pass of its own.
 - **Index No partition:** server side.

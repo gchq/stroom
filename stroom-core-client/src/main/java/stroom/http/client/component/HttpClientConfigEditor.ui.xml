@@ -12,13 +12,13 @@
                         label="Timeout"
                         helpText="How long to wait for a response once a request has been sent. 0 means wait indefinitely. Default is 3 minutes."
                         screenReaderText="0 waits indefinitely. Default is 3 minutes.">
-            <d:DurationPicker ui:field="timeout"/>
+            <d:DurationPicker ui:field="timeout" zeroAllowed="true"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientConnectionTimeout"
                         label="Connection Timeout"
                         helpText="How long to wait for a new connection to be established, including any TLS negotiation. 0 means wait indefinitely. Default is 3 minutes."
                         screenReaderText="Includes TLS negotiation; 0 waits indefinitely. Default is 3 minutes.">
-            <d:DurationPicker ui:field="connectionTimeout"/>
+            <d:DurationPicker ui:field="connectionTimeout" zeroAllowed="true"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientConnectionRequestTimeout"
                         label="Connection Request Timeout"
@@ -62,7 +62,7 @@
                         label="Keep Alive"
                         helpText="How long a connection is kept open for reuse before it is reconnected. 0 closes the connection after every request. Default is 0."
                         screenReaderText="0 closes the connection after each request. Default is 0.">
-            <d:DurationPicker ui:field="keepAlive"/>
+            <d:DurationPicker ui:field="keepAlive" zeroAllowed="true"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientRetries"
                         label="Retries"
@@ -80,7 +80,7 @@
                         label="Validate After Inactivity Period"
                         helpText="How long a pooled connection can be idle before it is checked as still usable before reuse. 0 checks it every time. Default is 0."
                         screenReaderText="Idle time before a reused connection is checked. Default is 0.">
-            <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
+            <d:DurationPicker ui:field="validateAfterInactivityPeriod" zeroAllowed="true"/>
         </form:FormGroup>
         <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config"
                   addStyleNames="allow-focus http-config__button"/>

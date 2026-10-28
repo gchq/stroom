@@ -1168,6 +1168,15 @@ after wave 22.
 > changelog entry, and four checked and kept. Invalid input in number, date and duration fields is
 > left for a design decision. See `wave-23.md`.
 
+## 24. Input that can't be kept
+
+Record: [`component-migration/wave-24.md`](component-migration/wave-24.md). Added 28 October 2026,
+after wave 23.
+
+> **Done, 28 October 2026**: a dialog's OK and a document's Save refuse while a field holds input
+> that can't be kept, which says why and takes the focus; no field drops or replaces what was typed;
+> durations allow 0 or none where that means something. See `wave-24.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

@@ -33,9 +33,9 @@
             <d:DurationPicker ui:field="timeToWaitForData"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Table"
-                        helpText="Data older than this, measured back from the latest event time in the table, is deleted. Default is 1 Hours."
-                        screenReaderText="Older data is deleted. Default is 1 Hours.">
-            <d:DurationPicker ui:field="dataRetention"/>
+                        helpText="Data older than this, measured back from the latest event time in the table, is deleted; Keep all deletes nothing. Default is 1 Hours."
+                        screenReaderText="Older data is deleted; Keep all deletes nothing. Default is 1 Hours.">
+            <d:DurationPicker ui:field="dataRetention" noneText="Keep all"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info"
                         helpText="Shows the table builder's progress, such as the last run time, streams and events processed and any message. Select Refresh to update it.">

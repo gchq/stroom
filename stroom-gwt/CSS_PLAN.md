@@ -111,7 +111,8 @@ declarations.
 
 Each step is checked by the screenshot diff of a full workbench run, so first:
 
-0. **Make the screenshots trustworthy.** About 90 differ from their baselines in every run (see
+0. **Make the screenshots trustworthy.** Done in wave 22 (28 October 2026): two visualisation
+   stories still flip between two states (ISSUES.md). About 90 differed from their baselines in every run (see
    ISSUES.md): stale baselines from earlier waves' deliberate changes, to look at and take again, and
    the visualisations' random layouts, to seed or leave out. Until then a change to them can't be
    seen.
@@ -119,22 +120,29 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    ten unloaded files; delete the unused classes' rules (the 54 maybe built at runtime checked by
    hand), the rules for GWT widgets no longer used, the unused custom properties, and the classes
    set that nothing styles (or list them as hooks).
-2. **Rename what isn't BEM**, block by block (annotation, dashboard, term editor, pathways, floor
+2. **Replace the remaining GWT widgets first** (the user's direction, 28 October 2026): every GWT
+   widget still used gets a Stroom widget of its own, even if it only wraps GWT's (as Stroom's
+   `TextBox` extends GWT's), with its own BEM block and stylesheet, so no screen relies on a `gwt-*`
+   class (e.g. `.gwt-Label`'s `nowrap`, which cut off Replace Secret's warning). The inventory is
+   ISSUES.md's "GWT widgets and raw controls used where a Stroom component should be". This leaves
+   `standard.css` and `standard-mod.css` styling nothing Stroom shows, so step 4 can delete them
+   rather than move their rules.
+3. **Rename what isn't BEM**, block by block (annotation, dashboard, term editor, pathways, floor
    map, conditional formatting, AI messages, sign-in and password, data grid's cells), and split
    the sheets that hold several blocks; move styling of one block from another's sheet to a
    modifier. As wave 17 did for the view-named classes.
-3. **Dissolve `components.css`, `stroom.css`, `standard.css` and `standard-mod.css`**: element
+4. **Dissolve `components.css`, `stroom.css`, `standard.css` and `standard-mod.css`**: element
    rules to the base sheet, layout helpers and shared patterns to theirs, old component classes to
    their components' sheets with BEM names, and the live GWT widgets' styling onto classes Stroom
    sets (so nothing relies on `gwt-*`).
-4. **Remove Bootstrap**: its few classes in the code replaced by layout helpers, `custom-bootstrap.css`'s
+5. **Remove Bootstrap**: its few classes in the code replaced by layout helpers, `custom-bootstrap.css`'s
    rules moved to their components, the element defaults the app relies on written into the base
    sheet (found by diffing every screen with and without it), then `bootstrap.min.css` gone. The
    riskiest step, so on its own, with a full screenshot review.
-5. **Rationalise**: duplicates merged into the shared patterns or removed; the common combinations
+6. **Rationalise**: duplicates merged into the shared patterns or removed; the common combinations
    given a named class each, or folded into the components' blocks; the remaining inline styles moved
    to classes and custom properties.
-6. **Enforce**: the check above, in the build.
+7. **Enforce**: the check above, in the build.
 
 ## Decisions to take
 

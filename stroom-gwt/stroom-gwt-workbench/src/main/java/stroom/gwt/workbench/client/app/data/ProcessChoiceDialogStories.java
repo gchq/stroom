@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -83,6 +84,20 @@ public final class ProcessChoiceDialogStories {
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ON_OK)).toHaveBeenCalledWith(
                             matchesChoice(10, true, true, true)));
+                    expectNoProblems(play);
+                })
+                // A create time that isn't a time is refused: OK says why under it and keeps the
+                // dialog. Before, the text was taken as no time, so no lower limit
+                .story("CreateTimeNotATimeRefused", ProcessChoiceDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByText("Create Processors")).toBeInTheDocument());
+                    final Query minTime = screen.getByLabelText("Min Create Time");
+                    play.type(minTime, "soon");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Must be a date and time")).toBeInTheDocument());
+                    play.expect(minTime).toHaveFocus();
+                    play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
                     expectNoProblems(play);
                 })
                 // Turning "Enable new filters" off is reflected in the choice

@@ -256,6 +256,27 @@ public final class PlanBEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A store size that isn't a size is refused: it says why under the box, and Save
+                // doesn't save but takes the user to it. Before, the text became 10 GiB and was saved
+                .story("MaxStoreSizeNotASizeIsRefused", context -> renderSaving(context, "planb-STATE"))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    play.click(maxStoreSize(play));
+                    play.clear(maxStoreSize(play));
+                    play.type(maxStoreSize(play), "lots");
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.getByText("Must be a size, e.g. 10 GiB")).toBeInTheDocument());
+                    play.expect(maxStoreSize(play)).toHaveValue("lots");
+                    play.expect(maxStoreSize(play)).toHaveAttribute("aria-invalid", "true");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveFocus());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put("/planB/v1/planb-STATE").toSpyMatcher());
+                    play.expect(maxStoreSize(play)).toHaveValue("lots");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Read only: the settings are disabled and Save can never be enabled
                 .story("ReadOnly", context -> render(context, "planb-STATE", true))
                 .withPlay(play -> {

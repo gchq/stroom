@@ -47,12 +47,18 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     @UiField
     SelectionBox<TimeUnit> timeUnit;
     private Consumer<SimpleDuration> onChange;
+    // Whether the duration may be none, chosen as the unit's first item (setNoneText)
+    private boolean noneAllowed;
+    private boolean enabled = true;
 
     public DurationPicker() {
         initWidget(BINDER.createAndBindUi(this));
         // Its own children's handlers, which go with them
         time.addValueChangeHandler(event -> fireChange());
-        timeUnit.addValueChangeHandler(event -> fireChange());
+        timeUnit.addValueChangeHandler(event -> {
+            updateAmountEnabled();
+            fireChange();
+        });
 
         // Its bounds are longs, which a template can't give
         time.setMin(1);
@@ -79,6 +85,26 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         }
     }
 
+    /// Allows an amount of 0, for a duration where 0 means something (e.g. "wait indefinitely"); the
+    /// least is otherwise 1. Bound to the `zeroAllowed` attribute in ui.xml.
+    ///
+    /// @param zeroAllowed Whether the amount may be 0.
+    public void setZeroAllowed(final boolean zeroAllowed) {
+        time.setMin(zeroAllowed
+                ? 0
+                : 1);
+    }
+
+    /// Allows no duration, for a setting where none means something (e.g. "never"): it is chosen as
+    /// the unit's first item, named by `noneText`, which leaves the amount aside. Bound to the
+    /// `noneText` attribute in ui.xml.
+    ///
+    /// @param noneText What no duration is called, e.g. `Never` or `Keep all`.
+    public void setNoneText(final String noneText) {
+        noneAllowed = true;
+        timeUnit.setNonSelectString(noneText);
+    }
+
     public void smallTimeMode() {
         time.setMin(0);
         time.setMax(1000000);
@@ -95,20 +121,34 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         time.focus();
     }
 
+    /// @return The duration, or null for none where that is allowed ([#setNoneText(String)]).
     @Override
     public SimpleDuration getValue() {
+        if (noneAllowed && timeUnit.getValue() == null) {
+            return null;
+        }
         return SimpleDuration.builder().time(time.getValue()).timeUnit(timeUnit.getValue()).build();
     }
 
+    /// @param value The duration, or null for none where that is allowed ([#setNoneText(String)]),
+    ///              otherwise for 1 day.
     @Override
     public void setValue(final SimpleDuration value) {
         if (value != null) {
             time.setValue(value.getTime());
             timeUnit.setValue(value.getTimeUnit());
+        } else if (noneAllowed) {
+            timeUnit.setValue(null);
         } else {
             time.setValue(1);
             timeUnit.setValue(TimeUnit.DAYS);
         }
+        updateAmountEnabled();
+    }
+
+    // No duration has no amount to change
+    private void updateAmountEnabled() {
+        time.setEnabled(enabled && !(noneAllowed && timeUnit.getValue() == null));
     }
 
     @Override
@@ -127,8 +167,9 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     }
 
     public void setEnabled(final boolean enabled) {
-        time.setEnabled(enabled);
+        this.enabled = enabled;
         timeUnit.setEnabled(enabled);
+        updateAmountEnabled();
     }
 
     /// Makes the duration read only: it can be read and stays in the tab order, but neither the

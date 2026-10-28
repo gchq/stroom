@@ -329,7 +329,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     public void save(final DocumentTabData tabData, final Runnable onComplete) {
         if (tabData instanceof DocumentEditorHost<?>) {
             final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
-            if (controller.isDirty()) {
+            // Not saved while a field holds input that can't be kept, which the field says
+            if (controller.isDirty() && !controller.refuseInvalidInput()) {
                 D document = controller.getEntity();
                 document = controller.write(document);
                 if (document != null) {
@@ -379,6 +380,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         final DocRef docRef = explorerNode.getDocRef();
         if (tabData instanceof DocumentEditorHost<?>) {
             final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
+            // Not saved while a field holds input that can't be kept, which the field says
+            if (controller.refuseInvalidInput()) {
+                return;
+            }
 
             final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
                 final DocRef newDocRef = newNode.getDocRef();

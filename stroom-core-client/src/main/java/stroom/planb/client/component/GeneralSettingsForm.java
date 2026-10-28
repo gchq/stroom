@@ -50,37 +50,55 @@ public class GeneralSettingsForm extends Component {
     TickBox overwrite;
 
     private boolean writeOptionsVisible = true;
+    // The size last set, kept while the text entered isn't a size
+    private Long maxStoreSizeSet = AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE;
 
     /// Makes the settings, at their defaults.
     public GeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
         maxStoreSize.addValueChangeHandler(this::onMaxStoreSize);
+        maxStoreSize.setInvalidReason(text -> text.trim().isEmpty() || parseSize(text.trim()) != null
+                ? null
+                : "Must be a size, e.g. 10 GiB");
         synchroniseMerge.setOnChange(value -> onSynchroniseMerge());
         overwrite.setOnChange(value -> onOverwrite());
         setOverwrite(true);
     }
 
+    /// @return The size entered: the default if the box is blank or, while its text isn't a size
+    /// (when Save refuses, so it is never saved), the size last set. Before, such text was replaced
+    /// by the default, 10 GiB, and saved.
     public Long getMaxStoreSize() {
-        final String value = maxStoreSize.getValue();
-        try {
-            final String string = value.trim();
-            if (!string.isEmpty()) {
-                return ModelStringUtil.parseIECByteSizeString(string);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
+        final String text = maxStoreSize.getValue().trim();
+        if (text.isEmpty()) {
+            return AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE;
         }
-        setMaxStoreSize(AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
-        return AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE;
+        final Long size = parseSize(text);
+        return size == null
+                ? maxStoreSizeSet
+                : size;
     }
 
+    /// @param maxStoreSize The size to show, or null for the default.
     public void setMaxStoreSize(final Long maxStoreSize) {
+        maxStoreSizeSet = maxStoreSize == null
+                ? AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE
+                : maxStoreSize;
         this.maxStoreSize.setValue(ModelStringUtil.formatIECByteSizeString(
                 maxStoreSize == null
                         ? AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE
                         : maxStoreSize,
                 true,
                 ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
+    }
+
+    // A size, e.g. 10 GiB, or null if the text isn't one
+    private static Long parseSize(final String text) {
+        try {
+            return ModelStringUtil.parseIECByteSizeString(text);
+        } catch (final RuntimeException e) {
+            return null;
+        }
     }
 
     /**

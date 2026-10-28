@@ -265,6 +265,23 @@ public final class AnalyticRuleEditorStories {
                     play.waitFor(() -> play.expect(toField(dialog)).toHaveValue("ops@example.com"));
                     expectNoProblems(play);
                 })
+                // Resume Notifications After starts at a day, and may be Never, which keeps sending
+                // stopped until Stroom restarts. Before, it couldn't be none, though none means never
+                .story("ResumeAfterNever", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    final Play resume = dialog.within(dialog.getByRole("group", "Resume Notifications After"));
+                    play.expect(resume.getByRole("spinbutton", "Amount")).toHaveValue("1");
+                    play.expect(resume.getByLabelText("Unit")).toHaveValue("Days");
+                    play.click(resume.getByLabelText("Unit"));
+                    play.click(screen.findByText("Never", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(resume.getByLabelText("Unit")).toHaveValue("Never"));
+                    play.expect(resume.getByRole("spinbutton", "Amount")).toBeDisabled();
+                    expectNoProblems(play);
+                })
                 // An email notification's subject template is tested on the server, which shows its
                 // output in an alert
                 .story("EmailTestTemplate", context -> render(context, FIXTURES, UI_CONFIG))

@@ -21,10 +21,14 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Layer;
+import stroom.widget.form.client.HasInvalidInput;
+import stroom.widget.form.client.InvalidInputs;
+import stroom.widget.form.client.RefusesInvalidInput;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
@@ -36,7 +40,7 @@ import java.util.Map.Entry;
 /// that is a [ComponentDataModifier] reads and writes the config, and a hidden tab doesn't.
 ///
 /// The pane keeps it and shows it again each time, with `ControllerDialog.show`.
-public class ComponentSettingsDialogController extends Controller implements Focus {
+public class ComponentSettingsDialogController extends Controller implements Focus, RefusesInvalidInput {
 
     private final ComponentSettingsDialog view;
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
@@ -135,6 +139,26 @@ public class ComponentSettingsDialogController extends Controller implements Foc
             }
         }
         return result;
+    }
+
+    /// Refuses OK while a tab holds a field whose input can't be kept, e.g. text in Maximum Results
+    /// that isn't a list of numbers: shows that tab, says why under the field and focuses it. Every
+    /// tab is looked in, as only the one showing is on the page.
+    ///
+    /// @return Whether it refused.
+    @Override
+    public boolean refuseInvalidInput() {
+        for (final Entry<TabData, Layer> entry : tabViewMap.entrySet()) {
+            if (!view.isTabHidden(entry.getKey()) && entry.getValue() instanceof final IsWidget content) {
+                final HasInvalidInput input = InvalidInputs.find(content.asWidget());
+                if (input != null) {
+                    changeSelectedTab(entry.getKey());
+                    InvalidInputs.show(input);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// @return Whether every tab's values are valid.

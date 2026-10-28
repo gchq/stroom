@@ -146,6 +146,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element requiredControl;
     // What is wrong with the control's value, or null if nothing is
     private String feedback;
+    // The feedback last set by the control's own check of its input, or null (setInvalidReason)
+    private String invalidReason;
     // The full form of the feedback, the tooltip and what screen readers read, or null if the shown
     // feedback says it all
     private String fullFeedback;
@@ -586,6 +588,23 @@ public class FormGroup extends Composite implements HasWidgets {
     /// Clears any feedback, marking the control valid again.
     public void clearFeedback() {
         setFeedback(null);
+    }
+
+    /// Says why the control's input can't be kept, as [#setFeedback(String)] does, or clears that
+    /// once it can, leaving feedback set otherwise (e.g. by a controller) alone. A field that checks
+    /// its own input calls it (see [InvalidInputs#showReason(HasInvalidInput)]).
+    ///
+    /// @param reason Why the input can't be kept, or null if it can.
+    public void setInvalidReason(final String reason) {
+        if (reason != null) {
+            invalidReason = reason;
+            setFeedback(reason);
+        } else if (invalidReason != null) {
+            if (invalidReason.equals(feedback)) {
+                clearFeedback();
+            }
+            invalidReason = null;
+        }
     }
 
     /// @return What is wrong with the control's value, or null if nothing is.

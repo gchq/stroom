@@ -118,9 +118,9 @@ public class TableBuilderProcessing extends Component {
         if (config.getTimeToWaitForData() != null) {
             timeToWaitForData.setValue(config.getTimeToWaitForData());
         }
-        if (config.getDataRetention() != null) {
-            dataRetention.setValue(config.getDataRetention());
-        }
+        // None keeps all the data, which the server takes it to mean. Before, none showed the
+        // picker's 1 hour, which a save then stored
+        dataRetention.setValue(config.getDataRetention());
     }
 
     /// @return The settings shown.

@@ -33,9 +33,9 @@
         </form:FormGroup>
         <form:FormGroup identity="analyticNotificationResumeAfter"
                         label="Resume Notifications After"
-                        helpText="How long to wait after the last notification before sending starts again, once the limit has been reached. Only used when Limit Notifications is ticked. Default is 1 Days."
+                        helpText="How long to wait after the last notification before sending starts again, once the limit has been reached. Never keeps sending stopped until Stroom restarts. Only used when Limit Notifications is ticked. Default is 1 Days."
                         screenReaderText="Wait before sending resumes. Used only when Limit Notifications is ticked.">
-            <d:DurationPicker ui:field="resumeAfter"/>
+            <d:DurationPicker ui:field="resumeAfter" noneText="Never"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

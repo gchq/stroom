@@ -41,27 +41,46 @@ public class TraceGeneralSettingsForm extends Component {
     @UiField
     TextBox maxSpansPerTrace;
 
+    // The number last set, kept while the text entered isn't a number
+    private Long maxSpansPerTraceSet = TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE;
+
     /// Makes the settings, at their defaults.
     public TraceGeneralSettingsForm() {
         initWidget(BINDER.createAndBindUi(this));
         maxSpansPerTrace.addValueChangeHandler(this::onMaxSpansPerTrace);
+        maxSpansPerTrace.setInvalidReason(text -> text.trim().isEmpty() || parseNumber(text.trim()) != null
+                ? null
+                : "Must be a number, e.g. 100000");
     }
 
+    /// @return The number entered: the default if the box is blank or, while its text isn't a number
+    /// (when Save refuses, so it is never saved), the number last set. Before, such text was
+    /// replaced by the default, 100,000, and saved.
     public Long getMaxSpansPerTrace() {
-        final String value = maxSpansPerTrace.getValue();
-        try {
-            final String string = value.trim();
-            if (!string.isEmpty()) {
-                return ModelStringUtil.parseNumberString(string);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
+        final String text = maxSpansPerTrace.getValue().trim();
+        if (text.isEmpty()) {
+            return TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE;
         }
-        setMaxSpansPerTrace(TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE);
-        return TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE;
+        final Long number = parseNumber(text);
+        return number == null
+                ? maxSpansPerTraceSet
+                : number;
     }
 
+    // A number, e.g. 100000, or null if the text isn't one
+    private static Long parseNumber(final String text) {
+        try {
+            return ModelStringUtil.parseNumberString(text);
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    /// @param maxSpansPerTrace The number to show, or null for the default.
     public void setMaxSpansPerTrace(final Long maxSpansPerTrace) {
+        maxSpansPerTraceSet = maxSpansPerTrace == null
+                ? TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE
+                : maxSpansPerTrace;
         this.maxSpansPerTrace.setValue(String.valueOf(maxSpansPerTrace == null
                 ? TraceSettings.DEFAULT_MAX_SPANS_PER_TRACE
                 : maxSpansPerTrace));

@@ -110,6 +110,24 @@ public final class ElasticIndexEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // A minimum rerank score that isn't a score says why under it, and Save takes the user
+                // to it rather than saving. Before, leaving the box threw, as the tab is written on
+                // every change
+                .story("RerankScoreNotAScore", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query score = play.getByLabelText("Minimum Rerank Score");
+                    play.clear(score);
+                    play.type(score, "high");
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.getByText("Must be a number from 0 to 1")).toBeInTheDocument());
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(score).toHaveFocus());
+                    play.expect(score).toHaveValue("high");
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab (the default) when the user may only view the index
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {

@@ -25,6 +25,8 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.config.global.client.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
@@ -87,9 +89,11 @@ public class NotificationListController extends Controller {
             return;
         }
         // A new notification goes to a stream unless the user chooses otherwise; without a
-        // destination type it would be added with none
+        // destination type it would be added with none. It resumes a day after its limit is reached
+        // (none means never, until Stroom restarts)
         final NotificationConfig newNotification = NotificationConfig.builder()
                 .destinationType(NotificationDestinationType.STREAM)
+                .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.DAYS).build())
                 .build();
         editProvider.get().edit(this, docRef, analyticProcessType, newNotification, "Add Notification",
                 notification -> {
