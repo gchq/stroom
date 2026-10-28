@@ -16,7 +16,7 @@
 
 package stroom.search.elastic.client.component;
 
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.shared.ElasticIndexDoc;

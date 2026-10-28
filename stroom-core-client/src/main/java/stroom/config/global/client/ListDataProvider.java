@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.config.global.client.presenter;
+package stroom.config.global.client;
 
 import stroom.entity.client.presenter.TreeRowHandler;
 

@@ -18,7 +18,7 @@ package stroom.search.solr.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;

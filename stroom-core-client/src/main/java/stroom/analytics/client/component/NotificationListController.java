@@ -22,7 +22,7 @@ import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;

@@ -21,7 +21,7 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ScheduleBounds;
-import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.client.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;

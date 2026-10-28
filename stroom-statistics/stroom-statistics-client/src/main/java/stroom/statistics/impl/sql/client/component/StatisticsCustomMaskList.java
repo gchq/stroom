@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.client.presenter.State.Mask;
 import stroom.widget.button.client.ToolbarButton;

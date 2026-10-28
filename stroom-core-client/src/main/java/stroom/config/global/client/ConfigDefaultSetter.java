@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.config.global.client.presenter;
+package stroom.config.global.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;

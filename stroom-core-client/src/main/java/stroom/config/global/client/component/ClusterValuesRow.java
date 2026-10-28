@@ -16,7 +16,7 @@
 
 package stroom.config.global.client.component;
 
-import stroom.config.global.client.presenter.NodeSource;
+import stroom.config.global.client.NodeSource;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 

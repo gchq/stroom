@@ -17,8 +17,8 @@
 package stroom.config.global.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.config.global.client.presenter.ListDataProvider;
-import stroom.config.global.client.presenter.NodeSource;
+import stroom.config.global.client.ListDataProvider;
+import stroom.config.global.client.NodeSource;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
 import stroom.widget.component.client.Component;

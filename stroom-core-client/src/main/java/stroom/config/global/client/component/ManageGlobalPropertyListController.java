@@ -17,7 +17,7 @@
 package stroom.config.global.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;

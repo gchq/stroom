@@ -18,7 +18,7 @@ package stroom.pipeline.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.ListDataProvider;
 import stroom.data.client.component.DocRefCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.docref.DocRef;

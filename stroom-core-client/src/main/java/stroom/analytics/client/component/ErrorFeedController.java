@@ -17,7 +17,7 @@
 package stroom.analytics.client.component;
 
 import stroom.analytics.shared.ReportDoc;
-import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.client.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
