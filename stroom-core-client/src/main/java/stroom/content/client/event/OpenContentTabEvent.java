@@ -18,7 +18,7 @@ package stroom.content.client.event;
 
 import stroom.widget.component.client.Controller;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

@@ -20,9 +20,9 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabBar;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;

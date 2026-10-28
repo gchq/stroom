@@ -23,8 +23,8 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

@@ -14,31 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
-import stroom.widget.tab.client.event.HasShowTabMenuHandlers;
-import stroom.widget.tab.client.event.ShowTabMenuEvent;
-import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
-import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiTemplate;
+import com.google.gwt.user.client.DOM;
 
-/// The document tabs' bar, whose tabs can be dragged to reorder them. Its markup is
-/// `CurveTabBar.ui.xml`.
-public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandlers {
+/// The link tabs' bar, its tabs separated by "|". Its markup is `LinkTabBar.ui.xml`.
+public class LinkTabBar extends AbstractTabBar {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    public CurveTabBar() {
+    public LinkTabBar() {
         this(new Parts());
     }
 
-    private CurveTabBar(final Parts parts) {
+    private LinkTabBar(final Parts parts) {
         super(BINDER.createAndBindUi(parts), parts.tabList);
     }
 
@@ -55,25 +51,18 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
     }
 
     @Override
-    protected AbstractTab createDraggableTab(final TabData tabData) {
-        return new CurveTab(tabData.getIcon(),
-                tabData.getIconColour(),
+    protected AbstractTab createTab(final TabData tabData) {
+        return new LinkTab(
                 tabData.getLabel(),
-                tabData.getTooltip().orElse(null),
-                tabData.isCloseable());
-    }
-
-    /// The room between document tabs, for a focused tab's focus ring, which is drawn outside it.
-    ///
-    /// @return The gap in pixels.
-    @Override
-    protected int getTabGap() {
-        return 6;
+                tabData.getTooltip().orElse(null));
     }
 
     @Override
-    public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
-        return addHandler(handler, ShowTabMenuEvent.getType());
+    protected Element createSeparator() {
+        final Element separator = DOM.createDiv();
+        separator.setClassName("tab-bar__separator");
+        separator.setInnerText("|");
+        return separator;
     }
 
 
@@ -91,7 +80,7 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
     // --------------------------------------------------------------------------------
 
 
-    @UiTemplate("CurveTabBar.ui.xml")
+    @UiTemplate("LinkTabBar.ui.xml")
     interface Binder extends UiBinder<DivElement, Parts> {
 
     }

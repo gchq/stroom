@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
 import com.google.gwt.dom.client.Element;
 
@@ -53,7 +53,7 @@ public class GlobalResizeObserver {
     // The browser calls the handler outside any GWT event, so it is wrapped in $entry: without it,
     // work a listener schedules with Scheduler.scheduleFinally waits for some later event.
     private static native void init()/*-{
-        $wnd.globalResizeHandler = $entry(@stroom.widget.tab.client.view.GlobalResizeObserver::elementResize(*));
+        $wnd.globalResizeHandler = $entry(@stroom.widget.tab.client.GlobalResizeObserver::elementResize(*));
     }-*/;
 
     private static native void disconnect() /*-{

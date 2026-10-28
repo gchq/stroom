@@ -19,7 +19,7 @@ package stroom.editor.client.component;
 import stroom.editor.client.view.Editor;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

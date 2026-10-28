@@ -30,7 +30,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.popup.client.PopupPosition;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;

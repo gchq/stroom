@@ -22,7 +22,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;

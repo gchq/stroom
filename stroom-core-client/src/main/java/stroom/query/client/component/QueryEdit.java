@@ -19,9 +19,9 @@ package stroom.query.client.component;
 import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.LinkTabBar;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

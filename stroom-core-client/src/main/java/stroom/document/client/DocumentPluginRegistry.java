@@ -18,7 +18,7 @@ package stroom.document.client;
 
 import stroom.core.client.TabPlugin;
 import stroom.docref.DocRef;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import java.util.HashMap;
 import java.util.Map;

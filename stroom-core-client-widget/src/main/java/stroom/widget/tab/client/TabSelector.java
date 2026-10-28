@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
 import stroom.widget.component.client.AriaPanel;
 

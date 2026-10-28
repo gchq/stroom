@@ -19,9 +19,9 @@ package stroom.dashboard.client.flexlayout;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.item.client.EventBinder;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.LinkTabBar;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;

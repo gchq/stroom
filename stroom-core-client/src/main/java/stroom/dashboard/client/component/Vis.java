@@ -21,7 +21,7 @@ import stroom.dashboard.client.vis.VisToolbarRow;
 import stroom.data.pager.client.RefreshButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.MessagePanel;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

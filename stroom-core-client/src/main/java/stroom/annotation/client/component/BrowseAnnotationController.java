@@ -22,7 +22,7 @@ import stroom.explorer.client.component.FindPanel;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.LayerController;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;

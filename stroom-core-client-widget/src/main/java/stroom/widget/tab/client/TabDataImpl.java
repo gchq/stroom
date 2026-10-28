@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.presenter;
+package stroom.widget.tab.client;
 
 import stroom.svg.shared.SvgImage;
 

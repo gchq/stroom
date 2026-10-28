@@ -15,7 +15,7 @@
  */
 
 /*
-   A tab bar's overflow selector (stroom.widget.tab.client.view.TabSelector), named BEM style: shown
+   A tab bar's overflow selector (stroom.widget.tab.client.TabSelector), named BEM style: shown
    when some tabs don't fit, a button showing every tab in a menu, its arrows (tab-selector__arrows)
    then the number of tabs hidden (tab-selector__count). Its bar places it (--tab-selector__left) and
    hides it while every tab fits (tab-selector--hidden); it looks like the bar's tabs, curved or link.

@@ -20,11 +20,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.tab.client.CurveTabBar;
+import stroom.widget.tab.client.CurveTabLayoutPanel;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.TabBar;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.view.CurveTabBar;
-import stroom.widget.tab.client.view.CurveTabLayoutPanel;
-import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;

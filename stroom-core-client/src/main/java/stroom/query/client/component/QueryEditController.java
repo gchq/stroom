@@ -45,8 +45,8 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;

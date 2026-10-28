@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view"
+             xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <tab:CurveTabLayoutPanel ui:field="layout" styleName="curveTabLayoutViewImpl-layout">
         <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">

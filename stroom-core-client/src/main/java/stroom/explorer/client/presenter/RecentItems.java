@@ -18,7 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.inject.Singleton;
 

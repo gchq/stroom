@@ -42,8 +42,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Listeners;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -24,8 +24,6 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
@@ -612,7 +610,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
         var self = this;
         bar.addEventListener('focusout', $entry(function (event) {
             if (!event.relatedTarget || !bar.contains(event.relatedTarget)) {
-                self.@stroom.widget.tab.client.view.AbstractTabBar::onFocusLeft()();
+                self.@stroom.widget.tab.client.AbstractTabBar::onFocusLeft()();
             }
         }));
     }-*/;

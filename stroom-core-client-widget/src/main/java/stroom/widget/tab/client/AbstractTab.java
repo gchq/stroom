@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;

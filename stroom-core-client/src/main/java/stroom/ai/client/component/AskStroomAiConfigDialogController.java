@@ -29,8 +29,8 @@ import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

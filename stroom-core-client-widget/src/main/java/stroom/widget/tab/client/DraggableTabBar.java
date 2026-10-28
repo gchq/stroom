@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.widget.tab.client;
 
-import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.dom.client.DataTransfer.DropEffect;
 import com.google.gwt.dom.client.Element;

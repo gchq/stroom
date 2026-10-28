@@ -23,8 +23,8 @@ import stroom.entity.client.component.MarkdownEditController;
 import stroom.floormap.client.presenter.FloorMapEventQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.presenter;
+package stroom.widget.tab.client;
 
 import stroom.widget.menu.client.presenter.ShowMenuEvent.HasShowMenuHandlers;
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
-import stroom.widget.tab.client.view.AbstractTab;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;

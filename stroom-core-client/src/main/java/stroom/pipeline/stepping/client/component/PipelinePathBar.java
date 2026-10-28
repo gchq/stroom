@@ -35,7 +35,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SvgImageUtil;

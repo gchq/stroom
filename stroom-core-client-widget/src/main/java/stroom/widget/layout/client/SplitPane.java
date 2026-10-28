@@ -22,7 +22,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.popup.client.PopupPosition;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;

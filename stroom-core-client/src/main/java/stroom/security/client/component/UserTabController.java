@@ -29,8 +29,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
 
 import com.google.gwt.core.client.Scheduler;

@@ -3,7 +3,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+             xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="user-preferences-dialog max dock-container-vertical form">
         <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
             <tab:LinkTabBar ui:field="tabBar" addStyleNames="linkTabPanelViewImpl-middle"/>

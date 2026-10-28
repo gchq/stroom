@@ -4,7 +4,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view"
+             xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <d:ClassificationWrapper ui:field="classificationWrapper">
         <d:content>

@@ -24,8 +24,8 @@ import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

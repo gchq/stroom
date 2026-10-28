@@ -4,7 +4,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:ed="urn:import:stroom.editor.client.component"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+             xmlns:tab="urn:import:stroom.widget.tab.client">
     <split:SplitPane vertical="true" thin="true" sizes="600px, *"
                      names="Query, Results" addStyleNames="QueryEditViewImpl max">
         <split:SplitPane thin="true" sizes="300px, *"

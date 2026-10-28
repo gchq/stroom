@@ -21,8 +21,8 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.component.client.Controller;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;

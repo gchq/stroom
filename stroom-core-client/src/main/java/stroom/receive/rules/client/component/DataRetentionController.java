@@ -28,8 +28,8 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;

@@ -24,7 +24,7 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.Scheduler;

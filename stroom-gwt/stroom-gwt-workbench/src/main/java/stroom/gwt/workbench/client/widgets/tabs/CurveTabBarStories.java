@@ -28,10 +28,10 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
+import stroom.widget.tab.client.CurveTabBar;
+import stroom.widget.tab.client.TabBar;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.component.CurveTabLayout;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.CurveTabBar;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;

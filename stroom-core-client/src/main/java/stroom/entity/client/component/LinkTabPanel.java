@@ -21,9 +21,9 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.LinkTabBar;
+import stroom.widget.tab.client.TabBar;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;

@@ -22,8 +22,8 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.widget.component.client.Controller;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
-import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.Objects;
 

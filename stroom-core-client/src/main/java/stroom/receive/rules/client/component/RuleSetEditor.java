@@ -31,8 +31,8 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.DirtyTracker;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;

@@ -22,9 +22,9 @@ import stroom.widget.component.client.Component;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.spinner.client.SpinnerLarge;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.LinkTabBar;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.DisabledState;
 
 import com.google.gwt.core.client.GWT;

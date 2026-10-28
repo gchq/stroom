@@ -18,7 +18,7 @@ package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.shared.Dimension;
 import stroom.util.shared.NullSafe;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;

@@ -17,7 +17,7 @@
 package stroom.main.client.presenter;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;

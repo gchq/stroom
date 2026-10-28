@@ -29,7 +29,7 @@ import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;

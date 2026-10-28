@@ -28,13 +28,13 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.presenter.client.Layer;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
-import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

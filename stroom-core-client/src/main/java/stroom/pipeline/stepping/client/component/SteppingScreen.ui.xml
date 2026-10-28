@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:pp="urn:import:stroom.pipeline.stepping.client.component"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+             xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="stepping-screen max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal stepping-screen__top">
             <g:SimplePanel styleName="stepping-screen__pipeline">

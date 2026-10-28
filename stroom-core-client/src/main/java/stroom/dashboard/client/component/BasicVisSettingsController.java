@@ -33,7 +33,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;

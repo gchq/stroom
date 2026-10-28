@@ -15,7 +15,7 @@
  */
 
 /*
-   Tab bars (stroom.widget.tab.client.view.AbstractTabBar), named BEM style (block, block__element,
+   Tab bars (stroom.widget.tab.client.AbstractTabBar), named BEM style (block, block__element,
    block--modifier): the document tabs' curved bar (tab-bar--curved) and the link tabs' bar
    (tab-bar--link). States come from ARIA attributes and pseudo-classes, not modifiers: a selected
    tab is [aria-selected="true"], the tab stop [tabindex="0"], and keyboard focus :focus-visible.

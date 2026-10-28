@@ -23,7 +23,7 @@ import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
