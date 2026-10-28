@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,6 +73,9 @@ import java.util.TreeSet;
 /// @param style            How the indexing XSLT is written, as an Events translation's is (naming, variables,
 ///                         layout): from an XSLT style section in the standing instructions (AGENTS docs); otherwise
 ///                         the defaults.
+/// @param standIns         `stand_ins`: values the Events hold for none (e.g. `-`), each with what the user chose to
+///                         index it as: left out, or null (Elasticsearch), or kept as written (see
+///                         [Discovery#STAND_IN_TREATMENTS]). Not in the Stroom MCP server; asked for by the user.
 public record FieldPlan(String backend,
                         String indexName,
                         String timeField,
@@ -83,7 +87,8 @@ public record FieldPlan(String backend,
                         boolean subobjects,
                         String convention,
                         List<String> customNamespaces,
-                        XsltStyle style) {
+                        XsltStyle style,
+                        Map<String, String> standIns) {
 
     /// The Elasticsearch backend.
     public static final String ELASTICSEARCH = "elasticsearch";
@@ -100,6 +105,7 @@ public record FieldPlan(String backend,
         shared = List.copyOf(Objects.requireNonNullElse(shared, List.of()));
         customNamespaces = List.copyOf(Objects.requireNonNullElse(customNamespaces, List.of()));
         style = Objects.requireNonNullElse(style, XsltStyle.DEFAULT);
+        standIns = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(standIns, Map.of())));
         if (discovery != null) {
             fields = discoveryFields(discovery);
             timeField = "@timestamp";
@@ -116,7 +122,7 @@ public record FieldPlan(String backend,
                                final String timeField,
                                final List<PlannedField> fields) {
         return new FieldPlan(backend, indexName, timeField, fields, List.of(), null, List.of(), List.of(), true, null,
-                List.of(), XsltStyle.DEFAULT);
+                List.of(), XsltStyle.DEFAULT, Map.of());
     }
 
     /// @param indexName The discovery index's name.
@@ -124,7 +130,7 @@ public record FieldPlan(String backend,
     /// @return The discovery plan: Elasticsearch, StreamId, EventId and @timestamp.
     public static FieldPlan forDiscovery(final String indexName, final Discovery discovery) {
         return new FieldPlan(ELASTICSEARCH, indexName, "@timestamp", discoveryFields(discovery), List.of(), discovery,
-                List.of(), List.of(), true, null, List.of(), XsltStyle.DEFAULT);
+                List.of(), List.of(), true, null, List.of(), XsltStyle.DEFAULT, Map.of());
     }
 
     /// @param json A plan as JSON-like values, e.g. as kept in an XSLT doc's description.
@@ -167,7 +173,8 @@ public record FieldPlan(String backend,
                 fields.bool("subobjects", true),
                 fields.optionalString("convention"),
                 fields.strings("custom_namespaces"),
-                fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT));
+                fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT),
+                Discovery.standIns(reader, fields.stringMap("stand_ins"), loc));
         return fields.ok()
                 ? plan
                 : null;
@@ -191,6 +198,10 @@ public record FieldPlan(String backend,
         json.put("convention", convention);
         json.put("custom_namespaces", new ArrayList<>(customNamespaces));
         json.put("style", style.toJson(DumpMode.ALL));
+        // Only when there are any, so a plan without them is written as the Python model writes it.
+        if (!standIns.isEmpty()) {
+            json.put("stand_ins", new LinkedHashMap<>(standIns));
+        }
         return json;
     }
 
@@ -198,14 +209,14 @@ public record FieldPlan(String backend,
     /// @return This plan with them.
     public FieldPlan withFields(final List<PlannedField> fields) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
+                convention, customNamespaces, style, standIns);
     }
 
     /// @param indexName Another index name.
     /// @return This plan for that index.
     public FieldPlan withIndexName(final String indexName) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
+                convention, customNamespaces, style, standIns);
     }
 
     /// @param convention       The convention the plan follows, or null.
@@ -213,14 +224,32 @@ public record FieldPlan(String backend,
     /// @return This plan following it.
     public FieldPlan withConvention(final String convention, final List<String> customNamespaces) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
+                convention, customNamespaces, style, standIns);
     }
 
     /// @param style How the indexing XSLT is written.
     /// @return This plan written so.
     public FieldPlan withStyle(final XsltStyle style) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
+                convention, customNamespaces, style, standIns);
+    }
+
+    /// @param chosen What the user chose for stand-ins for none, by value; added to (and replacing) those it has.
+    /// @return This plan with them.
+    public FieldPlan withStandIns(final Map<String, String> chosen) {
+        final Map<String, String> all = new LinkedHashMap<>(standIns);
+        all.putAll(chosen);
+        return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
+                convention, customNamespaces, style, all);
+    }
+
+    /// @param treatment One of [Discovery#STAND_IN_TREATMENTS].
+    /// @return The stand-ins the user chose to index so, in the order given.
+    public List<String> standIns(final String treatment) {
+        return standIns.entrySet().stream()
+                .filter(entry -> treatment.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     /// @return True for an Elasticsearch plan.

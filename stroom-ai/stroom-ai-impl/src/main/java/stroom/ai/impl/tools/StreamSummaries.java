@@ -77,6 +77,12 @@ public class StreamSummaries {
     /// The key of each TypeId's share of all events (%), by the action element of its events: for the tools' own
     /// use, not for summarise_events' reply.
     public static final String TYPE_IDS_BY_ACTION = "type_ids_by_action";
+    /// The key of each path's values in the events read (a Data entry's as `<path>[@Name='<name>']/@Value`), up to
+    /// [#MAX_VALUES_PER_PATH] each: what the indexing tools look in for stand-ins for none (`-`). Not in the Stroom
+    /// MCP server.
+    public static final String VALUES_BY_PATH = "values_by_path";
+    /// The most values kept of a path.
+    static final int MAX_VALUES_PER_PATH = 500;
     /// The most Error children of a stream summarised.
     static final int MAX_ERROR_STREAMS = 20;
     /// The most markers read from one Error stream.
@@ -236,6 +242,7 @@ public class StreamSummaries {
         // Each path (and named Data entry) by the action element of the events that have it.
         final Map<String, Map<String, Integer>> byAction = new TreeMap<>();
         final Map<String, Map<String, Integer>> typeIdsByAction = new TreeMap<>();
+        final Map<String, List<String>> valuesByPath = new TreeMap<>();
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
         for (final long streamId : streamIds) {
@@ -284,6 +291,7 @@ public class StreamSummaries {
                             ofAction.merge(path, 1, Integer::sum);
                         }
                     });
+                    values(event, valuesByPath);
                     dataNames(event).forEach(name -> {
                         dataNames.merge(name, 1, Integer::sum);
                         if (ofAction != null) {
@@ -345,6 +353,7 @@ public class StreamSummaries {
             });
         }
         result.put(TYPE_IDS_BY_ACTION, typeIdShares);
+        result.put(VALUES_BY_PATH, valuesByPath);
         result.put("hint", count >= maxEvents
                 ? "Percentages are of events sampled; raise max_events for a fuller picture."
                 : null);
@@ -384,6 +393,31 @@ public class StreamSummaries {
             }
         }
         return paths;
+    }
+
+    // Each element's text and each Data entry's Value in the event, added to its path's values (up to
+    // MAX_VALUES_PER_PATH).
+    private static void values(final Element event, final Map<String, List<String>> valuesByPath) {
+        final NodeList all = event.getElementsByTagName("*");
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element node = (Element) all.item(i);
+            final String text = leadingText(node);
+            if (!text.isBlank()) {
+                addValue(valuesByPath, path(node, event), text.strip());
+            }
+            if (EVT.equals(node.getNamespaceURI()) && "Data".equals(node.getLocalName())
+                && NullSafe.isNonEmptyString(node.getAttribute("Name")) && node.hasAttribute("Value")) {
+                addValue(valuesByPath, path(node, event) + "[@Name='" + node.getAttribute("Name") + "']/@Value",
+                        node.getAttribute("Value").strip());
+            }
+        }
+    }
+
+    private static void addValue(final Map<String, List<String>> valuesByPath, final String path, final String value) {
+        final List<String> values = valuesByPath.computeIfAbsent(path, key -> new ArrayList<>());
+        if (values.size() < MAX_VALUES_PER_PATH) {
+            values.add(value);
+        }
     }
 
     // (path of the Data element, its Name) for each Data element with a value, ignoring repeats.

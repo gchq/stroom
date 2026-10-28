@@ -22,8 +22,8 @@
   <xsl:template name="leaf">
     <xsl:param name="key" as="xs:string" />
     <xsl:param name="value" as="xs:string" />
-    <string key="{$key}"><xsl:value-of select="$value" /></string>
-@@UNPACK@@  </xsl:template>
+@@STAND_INS_OPEN@@    <string key="{$key}"><xsl:value-of select="$value" /></string>
+@@UNPACK@@@@STAND_INS_CLOSE@@  </xsl:template>
   <!-- Keys Elasticsearch cannot take as field names (empty, or with an empty dotted part: .a, a..b) are repaired;
        keys starting with _, which Stroom's indexing filter drops at any depth, become <key>_original without it. -->
   <xsl:function name="d:key" as="xs:string">

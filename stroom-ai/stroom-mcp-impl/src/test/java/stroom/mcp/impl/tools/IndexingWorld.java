@@ -145,7 +145,16 @@ final class IndexingWorld {
 
     /// The Events streams' summary: how often each path is populated, and the Data names by path.
     void populated(final Map<String, ? extends Number> population, final Map<String, Map<String, Double>> names) {
+        populated(population, names, Map.of());
+    }
+
+    /// The Events streams' summary: how often each path is populated, the Data names by path, and the values read
+    /// of each path.
+    void populated(final Map<String, ? extends Number> population,
+                   final Map<String, Map<String, Double>> names,
+                   final Map<String, List<String>> values) {
         final Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put(StreamSummaries.VALUES_BY_PATH, values);
         final Map<String, Double> shares = new LinkedHashMap<>();
         population.forEach((path, share) -> shares.put(path, share.doubleValue()));
         summary.put("path_population", shares);

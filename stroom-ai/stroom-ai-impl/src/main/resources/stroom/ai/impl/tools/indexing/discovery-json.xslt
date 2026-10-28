@@ -29,7 +29,7 @@
       <xsl:apply-templates mode="copy" />
     </xsl:element>
   </xsl:template>
-  <xsl:template match="*" mode="copy">
+@@STAND_INS@@  <xsl:template match="*" mode="copy">
     <xsl:element name="{local-name()}">
       <xsl:if test="@key"><xsl:attribute name="key" select="d:key(@key)" /></xsl:if>
       <xsl:apply-templates mode="copy" />
