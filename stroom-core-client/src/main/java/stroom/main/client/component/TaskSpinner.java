@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.main.client.view;
+package stroom.main.client.component;
 
 import stroom.widget.spinner.client.SpinnerLarge;
 

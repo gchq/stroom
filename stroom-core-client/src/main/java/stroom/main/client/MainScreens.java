@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.main.client.presenter;
+package stroom.main.client;
 
 import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.CloseContentTabEvent;

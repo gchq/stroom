@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.main.client.presenter;
+package stroom.main.client;
 
 import stroom.util.shared.NullSafe;
 

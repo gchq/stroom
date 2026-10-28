@@ -33,7 +33,7 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.main.client.view.MainToolbar;
+import stroom.main.client.component.MainToolbar;
 
 import com.google.gwt.user.client.ui.Widget;
 

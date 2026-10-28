@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.main.client.view.DynamicStyles;
+import stroom.main.client.DynamicStyles;
 import stroom.query.api.CustomConditionalFormattingStyle;
 import stroom.query.api.CustomRowStyle;
 

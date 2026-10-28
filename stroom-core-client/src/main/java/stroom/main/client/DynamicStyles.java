@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.main.client.view;
+package stroom.main.client;
 
 import stroom.widget.util.client.HtmlBuilder;
 

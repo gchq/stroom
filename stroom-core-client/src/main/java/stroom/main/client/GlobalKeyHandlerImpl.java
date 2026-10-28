@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.main.client.presenter;
+package stroom.main.client;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.widget.tab.client.TabData;

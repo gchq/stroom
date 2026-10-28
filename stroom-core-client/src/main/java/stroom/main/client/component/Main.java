@@ -17,8 +17,7 @@
 package stroom.main.client.component;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
-import stroom.main.client.view.DynamicStyles;
-import stroom.main.client.view.MainToolbar;
+import stroom.main.client.DynamicStyles;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
 import stroom.widget.util.client.ContentFocus;

@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:s="urn:import:stroom.main.client.view">
+             xmlns:s="urn:import:stroom.main.client.component">
     <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
          stop it held the whole app, with no name -->
     <g:SimplePanel ui:field="root" styleName="mainViewImpl">

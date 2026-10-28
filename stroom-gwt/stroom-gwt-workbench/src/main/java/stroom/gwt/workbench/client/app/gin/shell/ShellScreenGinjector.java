@@ -60,7 +60,7 @@ import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
-import stroom.main.client.presenter.GlobalKeyHandlerImpl;
+import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;

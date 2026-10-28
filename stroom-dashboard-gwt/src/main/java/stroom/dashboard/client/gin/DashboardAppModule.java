@@ -23,7 +23,7 @@ import stroom.core.client.component.FullScreenController;
 import stroom.data.client.DataDisplaySupport;
 import stroom.editor.client.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
-import stroom.main.client.presenter.GlobalKeyHandlerImpl;
+import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.inject.client.AbstractGinModule;
