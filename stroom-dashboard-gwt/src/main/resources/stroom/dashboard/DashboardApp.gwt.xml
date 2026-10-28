@@ -59,6 +59,7 @@
 
     <inherits name="stroom.widget.debug.Debug"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
+    <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.layout.Layout"/>
     <inherits name="stroom.item.Item"/>
     <inherits name="stroom.widget.menu.Menu"/>

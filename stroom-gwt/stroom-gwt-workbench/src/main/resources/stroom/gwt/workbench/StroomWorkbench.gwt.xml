@@ -78,6 +78,7 @@
     <inherits name='stroom.item.Item'/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
+    <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
     <inherits name="stroom.widget.progress.Progress"/>
     <inherits name='stroom.entity.Entity'/>

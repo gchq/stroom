@@ -9,8 +9,9 @@
     <inherits name="com.google.gwt.user.User"/>
     <inherits name="stroom.Stroom"/>
     <inherits name="stroom.task.Task"/>
-    <!-- Layers (LayerController) -->
-    <inherits name="stroom.widget.presenter.Presenter"/>
+    <inherits name="com.google.gwt.inject.Inject"/>
+    <!-- Dialogs (ControllerDialog) -->
+    <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.util.Util"/>
 
     <!--
