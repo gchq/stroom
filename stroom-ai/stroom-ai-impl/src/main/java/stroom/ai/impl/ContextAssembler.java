@@ -369,6 +369,10 @@ public class ContextAssembler {
             earlier turn, read it again with read_turn, or find it with search_history. Never guess a figure from \
             an earlier turn; read it again or re-run the query. If a workspace file a digest refers to has gone, \
             re-run the query or ask the user to attach the data again.""";
+    /// Put after a question that follows one the model didn't finish, whose steps it is given in full.
+    static final String UNFINISHED_TURN_NOTE = "[You didn't finish the previous question: your steps on it are above, "
+                                               + "with what they found. If this asks you to carry on, carry on from "
+                                               + "where you were, rather than working it out again.]";
     static final String EARLIER_TURNS_ACK = "Understood. I'll read earlier turns again if I need exact detail.";
 
     private static final SimpleTokenCountEstimator ESTIMATOR = new SimpleTokenCountEstimator();
@@ -526,6 +530,9 @@ public class ContextAssembler {
             messages.add(new AiMessage(EARLIER_TURNS_ACK));
         }
 
+        // The question before this one, if the model didn't finish it (see #unfinishedTurnId).
+        final int unfinishedTurnId = unfinishedTurnId(history, compaction);
+
         // The last message is the question, which is added from the request.
         for (int i = 0; i < relevantHistory.size() - 1; i++) {
             final AiChatMessage msg = relevantHistory.get(i);
@@ -546,6 +553,15 @@ public class ContextAssembler {
             } else if (!compaction.covers(msg.getTurnId())) {
                 switch (msg.getMessageType()) {
                     case USER_MESSAGE -> {
+                        if (msg.getTurnId() == unfinishedTurnId) {
+                            // Its steps in full, with anything the user added as it worked, so the model carries
+                            // on from them.
+                            messages.add(new UserMessage(earlierTabNote(msg) + msg.getMessage()));
+                            messages.addAll(turnSteps(history.stream()
+                                    .filter(message -> message.getTurnId() == unfinishedTurnId)
+                                    .toList()));
+                            continue;
+                        }
                         // Say which tools were used for the answer, so the model knows what it has already
                         // looked at.
                         final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
@@ -553,7 +569,12 @@ public class ContextAssembler {
                                 ? msg.getMessage() + "\n\n[" + toolLog + "]"
                                 : msg.getMessage())));
                     }
-                    case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
+                    case STEER_MESSAGE -> {
+                        // An unfinished turn's are given with its steps.
+                        if (msg.getTurnId() != unfinishedTurnId) {
+                            messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
+                        }
+                    }
                     case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
                     default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
                 }
@@ -561,9 +582,12 @@ public class ContextAssembler {
         }
 
         // Only the latest question is given its tab in full; earlier ones say where theirs is.
+        final String question = unfinishedTurnId > 0
+                ? request.getMessage() + "\n\n" + UNFINISHED_TURN_NOTE
+                : request.getMessage();
         messages.add(new UserMessage(tab != null
-                ? request.getMessage() + "\n\n" + tabSnapshots.note(chatId, tab)
-                : request.getMessage() + detachedTabNote(chatId)));
+                ? question + "\n\n" + tabSnapshots.note(chatId, tab)
+                : question + detachedTabNote(chatId)));
         // A run carrying on with the question (e.g. after the user approved tool calls) picks up where it was.
         messages.addAll(currentTurn(history));
         return messages;
@@ -581,11 +605,51 @@ public class ContextAssembler {
         while (question >= 0 && history.get(question).getMessageType() != AiMessageType.USER_MESSAGE) {
             question--;
         }
-        final List<ChatMessage> messages = new ArrayList<>();
         if (question < 0) {
-            return messages;
+            return new ArrayList<>();
         }
-        final List<AiChatMessage> turn = history.subList(question + 1, history.size());
+        return turnSteps(history.subList(question + 1, history.size()));
+    }
+
+    /// @param history    All the messages in the chat, in order, ending with the question being answered.
+    /// @param compaction Which earlier turns the model sees as digests or a summary.
+    /// @return The turn id of the question before the one being answered if the model didn't finish it, or 0. It
+    /// didn't if its last reply only said what it would do next ([UnfinishedReplies]), or it stopped at the step
+    /// limit. The user then says to carry on (seen: "go"), and given only the tools it used, the model worked
+    /// everything out again.
+    static int unfinishedTurnId(final List<AiChatMessage> history, final CompactionRecord compaction) {
+        final List<AiChatMessage> questions = history.stream()
+                .filter(message -> message.getMessageType() == AiMessageType.USER_MESSAGE)
+                .toList();
+        if (questions.size() < 2) {
+            return 0;
+        }
+        final int turnId = questions.get(questions.size() - 2).getTurnId();
+        if (compaction.covers(turnId)) {
+            return 0;
+        }
+        final List<AiChatMessage> turn = history.stream()
+                .filter(message -> message.getTurnId() == turnId)
+                .toList();
+        final boolean atStepLimit = turn.stream()
+                .anyMatch(message -> message.getMessageType() == AiMessageType.WARNING
+                                     && NullSafe.string(message.getMessage())
+                                             .endsWith(McpAgentChat.STEP_LIMIT_WARNING_END));
+        final boolean announced = turn.reversed().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.AI_RESPONSE)
+                .findFirst()
+                .map(message -> UnfinishedReplies.announcesMoreWork(message.getMessage()))
+                .orElse(false);
+        return atStepLimit || announced
+                ? turnId
+                : 0;
+    }
+
+    /// @param turn The messages of a turn, in order.
+    /// @return The turn's tool calls that have results, and anything the user added, in order, for the model.
+    /// Calls made together, with what the model said as it made them, are given as one step.
+    private static List<ChatMessage> turnSteps(final List<AiChatMessage> turn) {
+        final List<ChatMessage> messages = new ArrayList<>();
         final Map<String, ToolResultRecord> results = new HashMap<>();
         for (final AiChatMessage message : turn) {
             if (message.getMessageType() == AiMessageType.TOOL_RESULT) {

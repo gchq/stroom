@@ -537,6 +537,84 @@ class TestContextAssembler {
         assertThat(((ToolExecutionResultMessage) replay.get(4)).text()).isEqualTo("r3");
     }
 
+    @Test
+    void testAnUnfinishedQuestionsStepsAreGivenInFullWithTheNext() {
+        // Seen: the model worked out the fix, said it would make it and stopped; told "go", it was given only the
+        // tools it had used, and worked everything out again.
+        final List<AiChatMessage> history = unfinishedTurn("Found it: the guard isn't in the XSLT. Let me rebuild "
+                                                           + "the translation with it.");
+
+        final List<ChatMessage> messages = assembleFor(history);
+
+        assertThat(messages).hasSize(7);
+        assertThat(((UserMessage) messages.get(1)).singleText()).isEqualTo("fix the '-' in Server-IP");
+        assertThat(((AiMessage) messages.get(2)).text()).isEqualTo("Reading the generated XSLT.");
+        assertThat(((AiMessage) messages.get(2)).toolExecutionRequests().getFirst().id()).isEqualTo("a");
+        assertThat(((ToolExecutionResultMessage) messages.get(3)).text()).isEqualTo("mcp:data('Server-IP', ...)");
+        // What the user added as it worked, given once, in its place.
+        assertThat(((UserMessage) messages.get(4)).singleText())
+                .isEqualTo(McpAgentChat.STEER_PREFIX + "Connect events too");
+        assertThat(((AiMessage) messages.get(5)).text()).startsWith("Found it");
+        assertThat(((UserMessage) messages.get(6)).singleText())
+                .startsWith("go\n\n" + ContextAssembler.UNFINISHED_TURN_NOTE);
+    }
+
+    @Test
+    void testAFinishedQuestionIsGivenWithTheToolsItUsed() {
+        final List<AiChatMessage> history = unfinishedTurn("Fixed: Server-IP is left out when it is '-'.");
+
+        final List<ChatMessage> messages = assembleFor(history);
+
+        assertThat(ContextAssembler.unfinishedTurnId(history, CompactionRecord.NONE)).isZero();
+        assertThat(messages).hasSize(5);
+        assertThat(((UserMessage) messages.get(1)).singleText())
+                .startsWith("fix the '-' in Server-IP\n\n[Tools you used to answer this:");
+        assertThat(((UserMessage) messages.getLast()).singleText())
+                .doesNotContain(ContextAssembler.UNFINISHED_TURN_NOTE);
+    }
+
+    @Test
+    void testAQuestionStoppedAtTheStepLimitIsUnfinished() {
+        final List<AiChatMessage> history = new java.util.ArrayList<>(unfinishedTurn("Done so far: the XSLT read."));
+        history.add(history.size() - 1, new AiChatMessage(7, 1, 0L, AiMessageType.WARNING, null,
+                "Stopped after 50" + McpAgentChat.STEP_LIMIT_WARNING_END, 1, null));
+
+        assertThat(ContextAssembler.unfinishedTurnId(history, CompactionRecord.NONE)).isEqualTo(1);
+    }
+
+    @Test
+    void testAnUnfinishedQuestionCompactedIsLeftToItsDigest() {
+        final List<AiChatMessage> history = unfinishedTurn("Let me rebuild the translation.");
+
+        assertThat(ContextAssembler.unfinishedTurnId(history, CompactionRecord.NONE)).isEqualTo(1);
+        assertThat(ContextAssembler.unfinishedTurnId(history, CompactionRecord.NONE.withDigestsUpTo(1))).isZero();
+        // Only the question before the latest one counts.
+        assertThat(ContextAssembler.unfinishedTurnId(history.subList(0, history.size() - 1), CompactionRecord.NONE))
+                .isZero();
+    }
+
+    // A question with one tool call and a message the user added, answered with the reply given, then "go".
+    private static List<AiChatMessage> unfinishedTurn(final String reply) {
+        return List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "fix the '-' in Server-IP", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.TOOL_CALL, null, JsonUtil.writeValueAsString(
+                        new ToolCallRecord("a", "read_file", "{}", "Reading the generated XSLT."), false), 1, null),
+                new AiChatMessage(3, 1, 0L, AiMessageType.TOOL_RESULT, null, JsonUtil.writeValueAsString(
+                        new ToolResultRecord("a", "read_file", false, "mcp:data('Server-IP', ...)", null, 2, 1, null),
+                        false), 1, null),
+                new AiChatMessage(4, 1, 0L, AiMessageType.STEER_MESSAGE, null, "Connect events too", 1, null),
+                new AiChatMessage(5, 1, 0L, AiMessageType.AI_RESPONSE, null, reply, 1, null),
+                new AiChatMessage(10, 1, 0L, AiMessageType.USER_MESSAGE, null, "go", 10, null));
+    }
+
+    private static List<ChatMessage> assembleFor(final List<AiChatMessage> history) {
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null, null, Mockito.mock(TabSnapshots.class));
+        return assembler.assemble(new AskStroomAiRequest(null, null, null, "go"), 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, true);
+    }
+
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
         return new AiChatMessage(id, 1, 0L, type, null, text, id < 10
                 ? 1
