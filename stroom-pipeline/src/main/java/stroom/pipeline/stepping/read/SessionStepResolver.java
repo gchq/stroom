@@ -292,7 +292,11 @@ public class SessionStepResolver {
             return new SessionStepResult(false, true, null, null, null, null, false);
         }
 
-        static SessionStepResult incomplete(final StepLocation progressLocation) {
+        /// A step that has not resolved yet; the client polls again.
+        ///
+        /// @param progressLocation The furthest-captured record, for progress display, or null if unknown.
+        /// @return The unfinished result.
+        public static SessionStepResult incomplete(final StepLocation progressLocation) {
             return new SessionStepResult(false, false, null, null, progressLocation, null, false);
         }
 
