@@ -18,8 +18,8 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.presenter.SearchErrorListener;
-import stroom.query.client.presenter.SearchStateListener;
+import stroom.query.client.SearchErrorListener;
+import stroom.query.client.SearchStateListener;
 import stroom.util.shared.ErrorMessage;
 
 import java.util.List;

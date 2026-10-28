@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:q="urn:import:stroom.query.client.view"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:SimplePanel styleName="query-toolbar">
         <g:FlowPanel styleName="query-toolbar__inner">

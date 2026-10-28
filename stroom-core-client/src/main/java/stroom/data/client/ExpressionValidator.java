@@ -23,7 +23,7 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.Status;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.task.client.TaskMonitorFactory;

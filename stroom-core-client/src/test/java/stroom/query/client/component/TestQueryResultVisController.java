@@ -18,7 +18,7 @@ package stroom.query.client.component;
 
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.api.Result;
-import stroom.query.client.presenter.QueryModel;
+import stroom.query.client.QueryModel;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import org.junit.jupiter.api.AfterEach;

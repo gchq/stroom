@@ -27,10 +27,10 @@ import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.planb.client.component.PlanBEditor;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.QueryDocEditor;
 import stroom.query.client.component.QueryResultTableController;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
 import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.view.client.component.ViewDocEditor;
 

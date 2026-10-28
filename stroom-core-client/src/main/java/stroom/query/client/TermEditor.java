@@ -23,8 +23,6 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.presenter.FieldInfoSelectionItem;
-import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.util.shared.NullSafe;

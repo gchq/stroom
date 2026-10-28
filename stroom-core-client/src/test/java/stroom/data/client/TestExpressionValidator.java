@@ -22,7 +22,7 @@ import stroom.dispatch.client.FakeRestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.DateTimeSettingsFactory;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.HasHandlers;

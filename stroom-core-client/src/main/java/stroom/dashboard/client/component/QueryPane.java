@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.query.client.view.QueryButtons;
+import stroom.query.client.component.QueryButtons;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ToolbarButton;

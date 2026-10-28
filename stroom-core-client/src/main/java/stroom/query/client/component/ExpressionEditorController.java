@@ -19,7 +19,7 @@ package stroom.query.client.component;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;

@@ -25,7 +25,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.presenter.SimpleFieldSelectionListModel;
+import stroom.query.client.SimpleFieldSelectionListModel;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;

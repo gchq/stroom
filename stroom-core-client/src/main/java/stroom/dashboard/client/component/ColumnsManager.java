@@ -25,7 +25,7 @@ import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
-import stroom.query.client.presenter.ColumnHeaderHtmlUtil;
+import stroom.query.client.ColumnHeaderHtmlUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.Heading;

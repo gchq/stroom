@@ -23,7 +23,7 @@ import stroom.query.api.Format.Type;
 import stroom.query.api.FormatSettings;
 import stroom.query.api.NumberFormatSettings;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.presenter.TimeZones;
+import stroom.query.client.TimeZones;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;

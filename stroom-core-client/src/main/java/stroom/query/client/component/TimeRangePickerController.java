@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 /// Shows the Time Range dialog ([TimeRangePicker]) for one use, below what opens it (a
-/// [stroom.query.client.view.TimeRangeSelector]), as a picker whose value goes back into a field
+/// [stroom.query.client.component.TimeRangeSelector]), as a picker whose value goes back into a field
 /// is. So it is a `dialog` named by its title, the focus is kept in it (starting in After Time),
 /// Escape cancels it, and the focus goes back to the selector when it closes.
 public class TimeRangePickerController extends Controller {

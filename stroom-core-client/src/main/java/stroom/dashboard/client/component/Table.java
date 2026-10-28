@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.query.client.presenter.TableRow;
+import stroom.query.client.TableRow;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;

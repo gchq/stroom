@@ -22,9 +22,9 @@ import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.SpecialColumns;
-import stroom.query.client.presenter.QueryModel;
-import stroom.query.client.presenter.ResultComponent;
-import stroom.query.client.presenter.TableRow;
+import stroom.query.client.QueryModel;
+import stroom.query.client.ResultComponent;
+import stroom.query.client.TableRow;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.widget.component.client.LayerController;
 

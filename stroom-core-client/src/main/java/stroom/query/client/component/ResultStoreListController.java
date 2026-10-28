@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.ResultStoreModel;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;

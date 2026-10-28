@@ -42,14 +42,14 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
+import stroom.query.client.DynamicFieldSelectionListModel;
+import stroom.query.client.FieldSelectionListModel;
+import stroom.query.client.SimpleFieldSelectionListModel;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.component.ExpressionTree;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.component.TermEditorController;
-import stroom.query.client.presenter.DynamicFieldSelectionListModel;
-import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;

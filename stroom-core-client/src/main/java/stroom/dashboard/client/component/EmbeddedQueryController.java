@@ -50,16 +50,16 @@ import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.TableResult;
+import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryClient;
+import stroom.query.client.QueryModel;
+import stroom.query.client.ResultComponent;
+import stroom.query.client.ResultStoreModel;
+import stroom.query.client.SearchErrorListener;
+import stroom.query.client.SearchStateListener;
 import stroom.query.client.component.QueryDocEditor;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.component.QueryResultVisController;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.QueryModel;
-import stroom.query.client.presenter.ResultComponent;
-import stroom.query.client.presenter.ResultStoreModel;
-import stroom.query.client.presenter.SearchErrorListener;
-import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
@@ -136,7 +136,7 @@ public class EmbeddedQueryController
         this.queryDocEditorProvider = queryDocEditorProvider;
         this.contentManager = contentManager;
 
-        final stroom.query.client.presenter.ResultComponent tableResultConsumer = new ResultComponent() {
+        final stroom.query.client.ResultComponent tableResultConsumer = new ResultComponent() {
             boolean start;
             boolean hasData;
 
@@ -221,7 +221,7 @@ public class EmbeddedQueryController
             }
         };
 
-        final stroom.query.client.presenter.ResultComponent visResultConsumer = new ResultComponent() {
+        final stroom.query.client.ResultComponent visResultConsumer = new ResultComponent() {
             boolean start;
             boolean hasData;
 

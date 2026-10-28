@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table.gin;
 
 import stroom.dashboard.client.table.TablePlugin;
-import stroom.query.client.presenter.TimeZones;
+import stroom.query.client.TimeZones;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 

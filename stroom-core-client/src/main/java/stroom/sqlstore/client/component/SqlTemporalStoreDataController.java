@@ -19,11 +19,11 @@ package stroom.sqlstore.client.component;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.AbstractQueryDataController;
 import stroom.query.client.component.QueryDataPane;
 import stroom.query.client.component.QueryResultTableController;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 
 import com.google.inject.Inject;

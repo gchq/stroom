@@ -18,8 +18,6 @@ package stroom.query.client.component;
 
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
-import stroom.query.client.view.QueryButtons;
-import stroom.query.client.view.TimeRangeSelector;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.Toolbar;

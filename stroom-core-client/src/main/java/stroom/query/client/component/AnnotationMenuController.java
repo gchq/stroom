@@ -33,7 +33,7 @@ import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.Column;
 import stroom.query.api.SpecialColumns;
-import stroom.query.client.presenter.TableRow;
+import stroom.query.client.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;

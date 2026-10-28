@@ -21,7 +21,6 @@ import stroom.core.client.Plugin;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.query.client.component.SearchResultStoresController;
-import stroom.query.client.presenter.ResultStoreModel;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;

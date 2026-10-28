@@ -21,7 +21,7 @@ import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.node.shared.NodeGroup;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeZoneBox;
+import stroom.query.client.component.TimeZoneBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
 

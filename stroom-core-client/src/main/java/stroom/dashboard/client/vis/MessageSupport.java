@@ -20,7 +20,7 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.dashboard.client.vis.VisTooltipPlacement.Direction;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.query.client.presenter.VisComponentSelection;
+import stroom.query.client.VisComponentSelection;
 import stroom.util.client.JSONUtil;
 import stroom.widget.util.client.Rect;
 

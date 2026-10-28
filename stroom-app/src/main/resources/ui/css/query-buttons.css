@@ -15,7 +15,7 @@
  */
 
 /*
-   A query's run button (stroom.query.client.view.QueryButtons), named BEM style: its button
+   A query's run button (stroom.query.client.component.QueryButtons), named BEM style: its button
    (query-buttons__button), green to run (--play), red to stop (--stop) and blue to pause (--pause).
    Other run, stop and reset buttons borrow the look (the query's data, the stepping screen's
    Terminate).

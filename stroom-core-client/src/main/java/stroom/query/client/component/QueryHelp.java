@@ -17,7 +17,7 @@
 package stroom.query.client.component;
 
 import stroom.item.client.SelectionList;
-import stroom.query.client.presenter.QueryHelpSelectionItem;
+import stroom.query.client.QueryHelpSelectionItem;
 import stroom.query.shared.QueryHelpRow;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;

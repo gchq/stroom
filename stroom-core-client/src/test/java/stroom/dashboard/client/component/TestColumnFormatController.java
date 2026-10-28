@@ -21,7 +21,7 @@ import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.NumberFormatSettings;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.presenter.TimeZones;
+import stroom.query.client.TimeZones;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;

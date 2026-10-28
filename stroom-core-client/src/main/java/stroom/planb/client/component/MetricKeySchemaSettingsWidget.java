@@ -22,7 +22,7 @@ import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeZoneBox;
+import stroom.query.client.component.TimeZoneBox;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;

@@ -29,8 +29,8 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableResult;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.ResultStoreModel;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 

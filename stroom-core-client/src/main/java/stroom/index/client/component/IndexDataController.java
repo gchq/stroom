@@ -25,11 +25,11 @@ import stroom.query.api.Column;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.api.token.QuotedStringUtil;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.AbstractQueryDataController;
 import stroom.query.client.component.QueryDataPane;
 import stroom.query.client.component.QueryResultTableController;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
 import stroom.util.shared.PageRequest;
 
 import com.google.gwt.core.client.GWT;

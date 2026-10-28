@@ -36,7 +36,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;

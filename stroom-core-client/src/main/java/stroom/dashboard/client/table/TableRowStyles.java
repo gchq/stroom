@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.client.presenter.TableRow;
+import stroom.query.client.TableRow;
 
 public class TableRowStyles extends AbstractRowStyles<TableRow> {
 
