@@ -348,6 +348,7 @@ releaseToDockerHub() {
     fi
   done
 
+  echo "::group::Docker build (${dockerRepo})"
   echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
@@ -357,8 +358,10 @@ releaseToDockerHub() {
     --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
+  echo "::endgroup::"
 
-  # Ones with no-fix available, so just log them so we can investigate
+  # Vulns with no-fix available, so just log them so we can investigate
+  echo "::group::Docker Scout un-fixed scan (${dockerRepo})"
   echo -e "Doing Scout un-fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
     "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
   docker scout \
@@ -366,18 +369,22 @@ releaseToDockerHub() {
     "${firstTag}" \
     --only-unfixed \
     --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+  echo "::endgroup::"
 
-    # TODO uncomment when the vulns are fixed and the vex files added
-  # Ones with a fix available, so error if we find any so we can fix
-  #echo -e "Doing Scout fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
-    #"and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
-  #docker scout \
-    #cves \
-    #"${firstTag}" \
-    #--exit-code \
-    #--only-fixed \
-    #--only-severity "${DOCKER_SCOUT_THRESHOLD}"
+  # TODO add '--exit-code' arg back in once vulns are fixed and vex files are in place
+  # Vulns with a fix available, so error. Either we fix and re-build or create
+  # a vex file to explain why we can ignore.
+  echo "::group::Docker Scout fixed scan (${dockerRepo})"
+  echo -e "Doing Scout fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
+    "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
+  docker scout \
+    cves \
+    "${firstTag}" \
+    --only-fixed \
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+  echo "::endgroup::"
 
+  echo "::group::Docker release (${dockerRepo})"
   if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
@@ -385,11 +392,11 @@ releaseToDockerHub() {
       push \
       --all-tags \
       "${dockerRepo}"
+    echo -e "Completed Docker release"
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker push${NC}"
   fi
-
-  echo -e "Completed Docker release"
+  echo "::endgroup::"
 }
 
 docker_login() {
@@ -660,7 +667,6 @@ if [ "$doDockerBuild" = true ]; then
     | sh -s --
   echo "::endgroup::"
 
-  echo "::group::DockerHub release"
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
@@ -672,7 +678,6 @@ if [ "$doDockerBuild" = true ]; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
-  echo "::endgroup::"
 fi
 
 # If it is a tagged build copy all the files needed for the github release
