@@ -24,7 +24,8 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -33,7 +34,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
+public abstract class NodeToolsContentPlugin<P extends Layer & TabData>
         extends ContentPlugin<P> {
 
     private final ClientSecurityContext securityContext;

@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
+import stroom.config.global.client.component.GlobalPropertyTabController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -36,7 +36,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/PropertiesScreen`, showing Stroom's real [GlobalPropertyTabPresenter] (the
+/// Stories of `App/Main/PropertiesScreen`, showing Stroom's real [GlobalPropertyTabController] (the
 /// 'Properties' tab and its property edit dialog) with fake REST replies, for Stroom's
 /// `GlobalConfigResource` and `NodeResource`:
 ///
@@ -196,7 +196,7 @@ public final class PropertiesScreenStories {
                 // The warnings are shown in Stroom's real alert dialog
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getGlobalPropertyTabPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getGlobalPropertyTabController()));
         return harness.asWidget();
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.ai.client;
 
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 
@@ -30,11 +31,11 @@ public class AskStroomAiScreens {
     /// Adds the handlers of the events that open the screens.
     ///
     /// @param eventBus The application's event bus.
-    /// @param askStroomAiPresenterProvider Makes the AskStroomAiPresenter.
+    /// @param askStroomAiControllerProvider Makes the AskStroomAiController.
     @Inject
     public AskStroomAiScreens(final EventBus eventBus,
-                              final Provider<AskStroomAiPresenter> askStroomAiPresenterProvider) {
-        eventBus.addHandler(AskStroomAiEvent.getType(), event -> askStroomAiPresenterProvider.get().onAsk(event));
-        eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> askStroomAiPresenterProvider.get().onShow(event));
+                              final Provider<AskStroomAiController> askStroomAiControllerProvider) {
+        eventBus.addHandler(AskStroomAiEvent.getType(), event -> askStroomAiControllerProvider.get().onAsk(event));
+        eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> askStroomAiControllerProvider.get().onShow(event));
     }
 }

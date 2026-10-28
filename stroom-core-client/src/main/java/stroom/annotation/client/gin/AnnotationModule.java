@@ -24,8 +24,6 @@ import stroom.annotation.client.AnnotationEditSupport;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
 import stroom.core.client.gin.PluginModule;
-import stroom.explorer.client.component.FindPanel;
-import stroom.explorer.client.presenter.FindView;
 
 public class AnnotationModule extends PluginModule {
 
@@ -38,6 +36,5 @@ public class AnnotationModule extends PluginModule {
         bindPlugin(AnnotationCollectionPlugin.class);
         bindPlugin(AnnotationCommentPlugin.class);
         bind(AnnotationEditSupport.class).asEagerSingleton();
-        bindSharedView(FindView.class, FindPanel.class);
     }
 }

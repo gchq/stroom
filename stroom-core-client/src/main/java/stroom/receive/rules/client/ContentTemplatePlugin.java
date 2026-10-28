@@ -21,10 +21,9 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
+import stroom.receive.content.client.component.ContentTemplateTabController;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -37,12 +36,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPresenter> {
+public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabController> {
 
     @Inject
     public ContentTemplatePlugin(final EventBus eventBus,
                                  final ContentManager eventManager,
-                                 final Provider<ContentTemplateTabPresenter> presenterProvider,
+                                 final Provider<ContentTemplateTabController> presenterProvider,
                                  final ClientSecurityContext securityContext,
                                  final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -80,6 +79,6 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
 
     @Override
     public String getType() {
-        return ContentTemplateTabPresenter.TAB_TYPE;
+        return ContentTemplateTabController.TAB_TYPE;
     }
 }

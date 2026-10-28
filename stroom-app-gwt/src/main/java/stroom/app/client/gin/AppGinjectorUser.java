@@ -26,8 +26,8 @@ import stroom.annotation.client.gin.AnnotationModule;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheModule;
 import stroom.contentstore.client.gin.ContentStoreModule;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.core.client.component.CoreController;
+import stroom.core.client.component.FullScreenController;
 import stroom.credentials.client.gin.CredentialsModule;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
@@ -151,8 +151,8 @@ public interface AppGinjectorUser extends
     EventBus getEventBus();
 
     // Presenters
-    Provider<CorePresenter> getCorePresenter();
+    Provider<CoreController> getCoreController();
 
     @SuppressWarnings("unused")
-    Provider<FullScreenPresenter> getFullScreenPresenter();
+    Provider<FullScreenController> getFullScreenController();
 }

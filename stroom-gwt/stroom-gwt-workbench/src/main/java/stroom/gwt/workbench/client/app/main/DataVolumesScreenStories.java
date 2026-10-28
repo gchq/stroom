@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupsController;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/DataVolumesScreen`, showing Stroom's real [FsVolumeGroupPresenter] (the
+/// Stories of `App/Main/DataVolumesScreen`, showing Stroom's real [FsVolumeGroupsController] (the
 /// 'Data Volumes' tab, its 'Edit Data Volume Group' dialog and 'New Data Volume' dialog) with fake REST
 /// replies.
 ///
@@ -168,7 +168,7 @@ public final class DataVolumesScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getFsVolumeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getFsVolumeGroupsController()));
         return harness.asWidget();
     }
 }

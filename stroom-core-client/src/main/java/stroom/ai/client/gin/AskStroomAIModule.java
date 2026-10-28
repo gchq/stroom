@@ -16,11 +16,11 @@
 
 package stroom.ai.client.gin;
 
-import stroom.ai.client.AskStroomAiPresenter;
-import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.client.AskStroomAiScreens;
-import stroom.ai.client.AskStroomAiViewImpl;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
+
+import com.google.inject.Singleton;
 
 public class AskStroomAIModule extends AbstractPresenterModule {
 
@@ -28,9 +28,6 @@ public class AskStroomAIModule extends AbstractPresenterModule {
     protected void configure() {
         // Hear the app-wide events that open its screens, for the life of the app
         bind(AskStroomAiScreens.class).asEagerSingleton();
-        bindPresenter(
-                AskStroomAiPresenter.class,
-                AskStroomAiView.class,
-                AskStroomAiViewImpl.class);
+        bind(AskStroomAiController.class).in(Singleton.class);
     }
 }

@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /// Stories of `App/Main/QuickFilterHistory`: a quick filter's recent filters and its Advanced
-/// Query dialog, on Stroom's real Users screen ([stroom.security.client.presenter.UsersPresenter]),
+/// Query dialog, on Stroom's real Users screen ([stroom.security.client.component.UsersController]),
 /// whose filter has fields, so it offers both. The screen's own stories are in
 /// [UsersScreenStories].
 ///
@@ -259,7 +259,7 @@ public final class QuickFilterHistoryStories {
                 .realAlerts()
                 .build();
         // As UsersPlugin.open opens it, refreshed
-        harness.show(injector.getUsersPresenter()).refresh();
+        harness.show(injector.getUsersController()).refresh();
         return harness.asWidget();
     }
 

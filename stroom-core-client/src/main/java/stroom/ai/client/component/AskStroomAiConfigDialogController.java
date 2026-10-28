@@ -17,7 +17,7 @@
 package stroom.ai.client.component;
 
 import stroom.ai.client.AskStroomAiClient;
-import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.client.component.AskStroomAiController.DockBehaviour;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;

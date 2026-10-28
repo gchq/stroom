@@ -21,9 +21,8 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
+import stroom.receive.rules.client.component.DataRetentionController;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -37,12 +36,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter> {
+public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionController> {
 
     @Inject
     public DataRetentionPlugin(final EventBus eventBus,
                                final ContentManager eventManager,
-                               final Provider<DataRetentionPresenter> presenterProvider,
+                               final Provider<DataRetentionController> presenterProvider,
                                final ClientSecurityContext securityContext,
                                final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -78,6 +77,6 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
 
     @Override
     public String getType() {
-        return DataRetentionPresenter.TAB_TYPE;
+        return DataRetentionController.TAB_TYPE;
     }
 }

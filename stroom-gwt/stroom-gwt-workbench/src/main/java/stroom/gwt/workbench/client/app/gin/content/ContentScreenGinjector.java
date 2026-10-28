@@ -20,37 +20,34 @@ package stroom.gwt.workbench.client.app.gin.content;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.component.ManageActivityController;
 import stroom.annotation.client.AnnotationResourceClient;
-import stroom.annotation.client.AnnotationTagPresenter;
-import stroom.annotation.client.BrowseAnnotationPresenter;
 import stroom.annotation.client.component.AnnotationTabs;
+import stroom.annotation.client.component.AnnotationTagsController;
+import stroom.annotation.client.component.BrowseAnnotationController;
 import stroom.annotation.client.component.FindAnnotationController;
-import stroom.cache.client.presenter.CachePresenter;
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.contentstore.client.presenter.ContentStorePresenter;
+import stroom.cache.client.component.CachesController;
+import stroom.config.global.client.component.GlobalPropertyTabController;
+import stroom.content.client.component.ContentTabPaneController;
+import stroom.contentstore.client.component.ContentStoreTabController;
 import stroom.core.client.ContentManager;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupsController;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.CreateDocumentController;
 import stroom.explorer.client.component.FindController;
 import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.importexport.client.component.DependenciesInfoController;
+import stroom.importexport.client.component.DependenciesTabController;
 import stroom.importexport.client.component.ImportConfigConfirmController;
 import stroom.importexport.client.component.ImportConfigController;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
+import stroom.index.client.component.IndexVolumeGroupsController;
+import stroom.monitoring.client.component.DatabaseTablesMonitoringController;
 import stroom.pathways.client.component.TracesEditor;
 import stroom.query.client.component.SearchResultStoresController;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
+import stroom.receive.content.client.component.ContentTemplateTabController;
 import stroom.xmlschema.client.XMLSchemaPlugin;
 
 import com.google.gwt.inject.client.GinModules;
@@ -64,44 +61,33 @@ import com.google.gwt.inject.client.GinModules;
 /// this package's mirrors of Stroom's modules.
 @GinModules({
         ScreenViewsModule.class,
-        CredentialsScreenModule.class,
         EntityScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
         TaskScreenModule.class,
-        PipelineScreenModule.class,
-        StreamStoreScreenModule.class,
-        CacheScreenModule.class,
-        ImportExportScreenModule.class,
-        AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ContentStoreScreenModule.class,
-        IndexVolumeScreenModule.class,
-        ContentTemplateScreenModule.class,
 })
 public interface ContentScreenGinjector extends ScreenGinjector {
 
     // Monitoring
 
     /// @return The 'Caches' tab.
-    CachePresenter getCachePresenter();
+    CachesController getCachesController();
 
     /// @return The 'Database Tables' tab.
-    DatabaseTablesMonitoringPresenter getDatabaseTablesMonitoringPresenter();
+    DatabaseTablesMonitoringController getDatabaseTablesController();
 
     /// @return The 'Index Volumes' tab.
-    IndexVolumeGroupPresenter getIndexVolumeGroupPresenter();
+    IndexVolumeGroupsController getIndexVolumeGroupsController();
 
     /// @return The 'Data Volumes' tab.
-    FsVolumeGroupPresenter getFsVolumeGroupPresenter();
+    FsVolumeGroupsController getFsVolumeGroupsController();
 
     /// @return The 'Properties' tab.
-    GlobalPropertyTabPresenter getGlobalPropertyTabPresenter();
+    GlobalPropertyTabController getGlobalPropertyTabController();
 
     // Content
 
     /// @return The document tab pane, shown by registering it as the content events' handler.
-    ContentTabPanePresenter getContentTabPanePresenter();
+    ContentTabPaneController getContentTabPaneController();
 
     /// @return The content manager (a singleton), which opens tabs in the tab pane.
     ContentManager getContentManager();
@@ -114,15 +100,15 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     XMLSchemaPlugin getXMLSchemaPlugin();
 
     /// @return The 'Content Store' tab.
-    ContentStorePresenter getContentStorePresenter();
+    ContentStoreTabController getContentStoreTabController();
 
     /// @return The 'Content Templates' tab.
-    ContentTemplateTabPresenter getContentTemplateTabPresenter();
+    ContentTemplateTabController getContentTemplateTabController();
 
     // Import, export and dependencies
 
     /// @return The 'Dependencies' tab.
-    DependenciesTabPresenter getDependenciesTabPresenter();
+    DependenciesTabController getDependenciesTabController();
 
     /// @return The 'Confirm Import' dialog, made for one use when `ImportConfigConfirmEvent` fires.
     ImportConfigConfirmController getImportConfigConfirmController();
@@ -162,7 +148,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     // Annotations
 
     /// @return An annotation tags tab (labels, statuses, comments...), as `AnnotationPlugin` creates it.
-    AnnotationTagPresenter getAnnotationTagPresenter();
+    AnnotationTagsController getAnnotationTagsController();
 
     /// @return An annotation's tab (the editor and its sub-tabs), as `AnnotationEditSupport` creates it.
     AnnotationTabs getAnnotationTabs();
@@ -175,7 +161,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     AnnotationResourceClient getAnnotationResourceClient();
 
     /// @return The 'Annotations' (browse) tab.
-    BrowseAnnotationPresenter getBrowseAnnotationPresenter();
+    BrowseAnnotationController getBrowseAnnotationController();
 
     // Queries
 

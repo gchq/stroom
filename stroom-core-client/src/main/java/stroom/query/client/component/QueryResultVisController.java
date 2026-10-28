@@ -16,7 +16,6 @@
 
 package stroom.query.client.component;
 
-import stroom.dashboard.client.component.LayerController;
 import stroom.dashboard.client.component.VisFrame;
 import stroom.dashboard.client.component.VisFrameController;
 import stroom.dashboard.client.table.ComponentSelection;
@@ -51,6 +50,7 @@ import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.LayerController;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 

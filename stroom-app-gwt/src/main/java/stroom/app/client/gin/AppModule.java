@@ -16,36 +16,23 @@
 
 package stroom.app.client.gin;
 
-import stroom.content.client.presenter.ContentTabPanePresenter;
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.LocationManager;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.component.CoreController;
+import stroom.core.client.component.FullScreenController;
 import stroom.core.client.presenter.CoreScreens;
-import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
-import stroom.core.client.view.CoreViewImpl;
-import stroom.core.client.view.FullScreenViewImpl;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
-import stroom.explorer.client.view.NavigationViewImpl;
+import stroom.explorer.client.component.NavigationController;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
-import stroom.iframe.client.presenter.IFrameContentPresenter;
-import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.iframe.client.view.IFrameContentViewImpl;
+import stroom.main.client.component.MainController;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
-import stroom.main.client.presenter.MainPresenter;
-import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.presenter.MainScreens;
-import stroom.main.client.view.MainViewImpl;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.tab.client.presenter.CurveTabLayoutView;
-import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
@@ -74,21 +61,13 @@ public class AppModule extends AbstractPresenterModule {
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
         bind(MainScreens.class).asEagerSingleton();
-        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class);
+        bind(CoreController.class).in(Singleton.class);
 
-        bindPresenter(
-                FullScreenPresenter.class,
-                FullScreenView.class,
-                FullScreenViewImpl.class);
+        bind(FullScreenController.class).in(Singleton.class);
 
-        bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class);
-        bindPresenter(
-                NavigationPresenter.class,
-                NavigationView.class,
-                NavigationViewImpl.class);
-        bindPresenter(ContentTabPanePresenter.class);
-
-        bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
+        bind(MainController.class).in(Singleton.class);
+        bind(NavigationController.class).in(Singleton.class);
+        bind(ContentTabPaneController.class).in(Singleton.class);
 
         // Menu
         bind(MenuManager.class).asEagerSingleton();
@@ -97,6 +76,5 @@ public class AppModule extends AbstractPresenterModule {
         bind(MenuItems.class).in(Singleton.class);
 
         // Widgets
-        bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
     }
 }

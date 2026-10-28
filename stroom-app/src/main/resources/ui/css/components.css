@@ -453,6 +453,11 @@
 	background-color: var(--page__background-color);
 }
 
+/* The main area, below the maintenance banner while it is shown */
+.mainViewImpl.mainViewImpl--banner {
+    top: 20px;
+}
+
 .mainViewImpl-banner {
     position: absolute;
     left: 0px;

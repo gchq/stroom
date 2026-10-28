@@ -16,7 +16,7 @@
 
 package stroom.monitoring.client;
 
-import stroom.analytics.client.presenter.ExecutionScheduleManager;
+import stroom.analytics.client.component.ExecutionSchedulesController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
@@ -36,12 +36,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ExecutionScheduleManagerPlugin extends MonitoringPlugin<ExecutionScheduleManager> {
+public class ExecutionScheduleManagerPlugin extends MonitoringPlugin<ExecutionSchedulesController> {
 
     @Inject
     public ExecutionScheduleManagerPlugin(final EventBus eventBus,
                                           final ContentManager eventManager,
-                                          final Provider<ExecutionScheduleManager> presenterProvider,
+                                          final Provider<ExecutionSchedulesController> presenterProvider,
                                           final ClientSecurityContext securityContext,
                                           final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -75,6 +75,6 @@ public class ExecutionScheduleManagerPlugin extends MonitoringPlugin<ExecutionSc
 
     @Override
     public String getType() {
-        return ExecutionScheduleManager.TAB_TYPE;
+        return ExecutionSchedulesController.TAB_TYPE;
     }
 }

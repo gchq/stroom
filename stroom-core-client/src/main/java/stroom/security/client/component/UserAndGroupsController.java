@@ -149,7 +149,7 @@ public class UserAndGroupsController extends Controller {
             }
         }), taskMonitor());
 
-        // You can only delete groups on this screen, UsersPresenter for user deletion
+        // You can only delete groups on this screen, UsersController for user deletion
         deleteButton = userActions.button(SvgImage.DELETE, "Delete Selected Group", this::onDelete);
         deleteButton.setEnabled(false);
 

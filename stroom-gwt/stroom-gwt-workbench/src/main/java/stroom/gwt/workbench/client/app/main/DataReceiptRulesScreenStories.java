@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.receive.rules.client.component.RuleSetTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
@@ -47,7 +47,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/DataReceiptRulesScreen`, showing Stroom's real [RuleSetPresenter] (the
+/// Stories of `App/Main/DataReceiptRulesScreen`, showing Stroom's real [RuleSetTabController] (the
 /// 'Data Receipt Rules' tab, as `ReceiveDataRuleSetPlugin` opens it: the Rules, Fields and
 /// Documentation sub-tabs) with fake REST replies.
 ///
@@ -171,7 +171,7 @@ public final class DataReceiptRulesScreenStories {
                 .withPlay(play -> {
                     play.findByText("Reject test feeds");
                     play.run("save another document, with changes", () -> SaveDocumentEvent.fire(
-                            ScreenHarness.<RuleSetPresenter>shownContent(), new OtherDocument()));
+                            ScreenHarness.<RuleSetTabController>shownComponent(), new OtherDocument()));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.put(RULES_PATH).toSpyMatcher());
                     expectNoProblems(play);
@@ -395,8 +395,8 @@ public final class DataReceiptRulesScreenStories {
                 // opens and closes the screen
                 harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(true));
             }
-            final RuleSetPresenter presenter = injector.getRuleSetPresenter();
-            harness.show(presenter);
+            final RuleSetTabController screen = injector.getRuleSetTabController();
+            harness.show(screen);
         });
         return harness.asWidget();
     }

@@ -31,13 +31,13 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
+import stroom.receive.content.client.component.ContentTemplateTabController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/ContentTemplatesScreen`, showing Stroom's real
-/// [ContentTemplateTabPresenter] (the 'Content Templates' tab, with its 'Edit Template' dialog)
+/// [ContentTemplateTabController] (the 'Content Templates' tab, with its 'Edit Template' dialog)
 /// with fake REST replies.
 ///
 /// The stories answer Stroom's `ContentTemplateResource` (`/contentTemplates/v1/`): `GET` (the
@@ -233,7 +233,7 @@ public final class ContentTemplatesScreenStories {
                 // The validation errors are shown in Stroom's real alert dialog
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getContentTemplateTabPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getContentTemplateTabController()));
         return harness.asWidget();
     }
 }

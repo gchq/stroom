@@ -18,6 +18,7 @@ package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.ComponentDataModifier;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.widget.component.client.LayerController;
 
 import com.google.web.bindery.event.shared.EventBus;
 

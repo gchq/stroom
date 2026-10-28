@@ -57,7 +57,7 @@ public class DocumentPluginRegistry {
     /**
      * The DocRef of a tab that can actually be revealed in the explorer tree, else null.
      *
-     * <p>Every content tab reports a non-null DocRef — {@code ContentTabPresenter} synthesises one
+     * <p>Every content tab reports a non-null DocRef — {@code ContentTabController} synthesises one
      * from the tab's type so a tab SESSION can be saved and restored — so a non-null DocRef is not
      * evidence that the tab is in the tree. The plugin registry is: it holds a
      * {@code DocumentPlugin} only for types the explorer can contain, whereas screen tabs

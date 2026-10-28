@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for the Stroom wordmark logo in the navigation header.
 ///
-/// There is no logo widget in GWT: the stories build it as Stroom's `NavigationViewImpl` does, a
+/// There is no logo widget in GWT: the stories build it as Stroom's `Navigation` does, a
 /// `navigation-logo` button holding the [SvgImage#LOGO] image, whose click (with the primary
 /// button) opens the main menu in Stroom.
 public final class LogoStories {
@@ -57,7 +57,7 @@ public final class LogoStories {
     private static Widget clickable(final StoryContext context) {
         final Button logo = logo();
         final Spy onClick = context.fn(ON_CLICK);
-        // As NavigationViewImpl.onLogoClick handles it
+        // As Navigation handles a click on it
         logo.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event.getNativeEvent())) {
                 onClick.call("logo clicked");
@@ -66,7 +66,7 @@ public final class LogoStories {
         return wrap(logo);
     }
 
-    /// The logo, as `NavigationViewImpl`'s UiBinder template and constructor build it.
+    /// The logo, as `Navigation`'s UiBinder template and constructor build it.
     private static Button logo() {
         final Button logo = new Button();
         logo.setStyleName("navigation-logo");

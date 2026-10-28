@@ -22,8 +22,8 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.UsersController;
 import stroom.security.client.event.OpenUsersScreenEvent;
-import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
+public class UsersPlugin extends MonitoringPlugin<UsersController> {
 
     public static final String SCREEN_NAME = "Users";
     public static final SvgImage ICON = SvgImage.USER;
@@ -45,7 +45,7 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
     @Inject
     public UsersPlugin(final EventBus eventBus,
                        final ContentManager contentManager,
-                       final Provider<UsersPresenter> presenterProvider,
+                       final Provider<UsersController> presenterProvider,
                        final ClientSecurityContext securityContext,
                        final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -72,7 +72,7 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
     }
 
     @Override
-    public void open(final Consumer<UsersPresenter> consumer) {
+    public void open(final Consumer<UsersController> consumer) {
         super.open(presenter -> {
             presenter.refresh();
             consumer.accept(presenter);
@@ -91,6 +91,6 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
 
     @Override
     public String getType() {
-        return UsersPresenter.TAB_TYPE;
+        return UsersController.TAB_TYPE;
     }
 }

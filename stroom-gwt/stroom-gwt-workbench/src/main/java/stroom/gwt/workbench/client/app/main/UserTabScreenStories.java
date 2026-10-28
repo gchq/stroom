@@ -29,7 +29,7 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.UserRef;
 
@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories of `App/Main/UserTabScreen`, showing Stroom's real [UserTabPresenter] (a user's tab, and
+/// Stories of `App/Main/UserTabScreen`, showing Stroom's real [UserTabController] (a user's tab, and
 /// the 'User Profile' tab) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -213,7 +213,7 @@ public final class UserTabScreenStories {
         // Opened once Stroom has started (the tabs' lists read the UI config), as UserTabPlugin
         // opens a user's tab, or UserPlugin.open the signed in user's profile
         harness.afterStartUp(() -> {
-            final UserTabPresenter presenter = harness.show(injector.getUserTabPresenter());
+            final UserTabController presenter = harness.show(injector.getUserTabController());
             presenter.setUserRef(user != null
                     ? user
                     : harness.getSecurityContext().getUserRef());

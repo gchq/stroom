@@ -20,8 +20,8 @@ import stroom.about.client.gin.AboutModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.gin.AnnotationModule;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.core.client.component.CoreController;
+import stroom.core.client.component.FullScreenController;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
@@ -71,7 +71,7 @@ public interface DashboardAppGinjectorUser extends
     EventBus getEventBus();
 
     // Presenters
-    Provider<CorePresenter> getCorePresenter();
+    Provider<CoreController> getCoreController();
 
-    Provider<FullScreenPresenter> getFullScreenPresenter();
+    Provider<FullScreenController> getFullScreenController();
 }

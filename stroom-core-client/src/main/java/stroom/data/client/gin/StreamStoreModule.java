@@ -20,15 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
-import stroom.data.client.presenter.SourceTabPresenter;
-import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
-import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.SourceTabViewImpl;
-import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 
 public class StreamStoreModule extends PluginModule {
@@ -41,19 +32,6 @@ public class StreamStoreModule extends PluginModule {
         bindPlugin(DataPreviewTabPlugin.class);
 
         bind(DelegatingAceCompleter.class).asEagerSingleton();
-
-        bindPresenterWidget(
-                DataPreviewTabPresenter.class,
-                DataPreviewTabView.class,
-                DataPreviewTabViewImpl.class);
-        bindPresenterWidget(
-                ProcessorTaskPresenter.class,
-                StreamTaskView.class,
-                StreamTaskViewImpl.class);
-        bindPresenterWidget(
-                SourceTabPresenter.class,
-                SourceTabView.class,
-                SourceTabViewImpl.class);
 
     }
 }

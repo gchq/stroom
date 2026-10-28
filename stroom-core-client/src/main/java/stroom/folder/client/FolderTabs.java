@@ -17,7 +17,7 @@
 package stroom.folder.client;
 
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
+import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.LinkTabPanel;
@@ -50,7 +50,7 @@ public class FolderTabs extends TabbedController<DocRef> {
     private final ClientSecurityContext securityContext;
     private final Provider<MetaBrowserController> metaPresenterProvider;
     private final Provider<ProcessorsController> processorsProvider;
-    private final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider;
+    private final Provider<ProcessorTasksTabController> processorTaskPresenterProvider;
     private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private boolean tabsAdded;
 
@@ -60,7 +60,7 @@ public class FolderTabs extends TabbedController<DocRef> {
                       final ClientSecurityContext securityContext,
                       final Provider<MetaBrowserController> metaPresenterProvider,
                       final Provider<ProcessorsController> processorsProvider,
-                      final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
+                      final Provider<ProcessorTasksTabController> processorTaskPresenterProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;

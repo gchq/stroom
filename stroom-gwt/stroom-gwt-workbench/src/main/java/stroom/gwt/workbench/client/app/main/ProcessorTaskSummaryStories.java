@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.data.client.component.ProcessorTaskSummaryListController;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
+import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.ExplorerConstants;
@@ -43,8 +43,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /// Stories of `App/Main/ProcessorTaskSummary`, showing Stroom's real [ProcessorTaskSummaryListController]
-/// in the upper pane of a folder's 'Active Tasks' tab ([ProcessorTaskPresenter], as
-/// `FolderPresenter` creates and reads it), with fake REST replies.
+/// in the upper pane of a folder's 'Active Tasks' tab ([ProcessorTasksTabController], as
+/// `FolderTabs` creates and reads it), with fake REST replies.
 ///
 /// | Request | Reply |
 /// |---|---|
@@ -97,7 +97,7 @@ public final class ProcessorTaskSummaryStories {
                     "pipelineUuid": "pipe-events"}}],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
-    // The terms ProcessorTaskPresenter gives the task list for the 'Events Pipeline', 'EVENTS',
+    // The terms ProcessorTasksTabController gives the task list for the 'Events Pipeline', 'EVENTS',
     // 'Processing' row
     private static final String EVENTS_PROCESSING_TASKS_EXPRESSION = """
             {"expression": {"children": [
@@ -394,8 +394,8 @@ public final class ProcessorTaskSummaryStories {
         harness.addRegistration(harness.getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 openFeed.call(event.getName())));
         harness.afterStartUp(() -> {
-            final ProcessorTaskPresenter presenter = injector.getProcessorTaskPresenter();
-            // As a folder's 'Active Tasks' tab reads it (FolderPresenter)
+            final ProcessorTasksTabController presenter = injector.getProcessorTasksTabController();
+            // As a folder's 'Active Tasks' tab reads it (FolderTabs)
             presenter.read(FOLDER, null);
             harness.show(presenter);
         });

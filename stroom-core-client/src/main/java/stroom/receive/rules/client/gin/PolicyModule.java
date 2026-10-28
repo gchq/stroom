@@ -19,9 +19,6 @@ package stroom.receive.rules.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.receive.rules.client.DataRetentionPlugin;
 import stroom.receive.rules.client.ReceiveDataRuleSetPlugin;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
-import stroom.receive.rules.client.view.DataRetentionViewImpl;
 
 public class PolicyModule extends PluginModule {
 
@@ -29,6 +26,5 @@ public class PolicyModule extends PluginModule {
     protected void configure() {
         bindPlugin(ReceiveDataRuleSetPlugin.class);
         bindPlugin(DataRetentionPlugin.class);
-        bindPresenterWidget(DataRetentionPresenter.class, DataRetentionView.class, DataRetentionViewImpl.class);
     }
 }

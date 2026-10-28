@@ -17,9 +17,6 @@
 package stroom.receive.content.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
-import stroom.receive.content.client.view.ContentTemplateTabViewImpl;
 import stroom.receive.rules.client.ContentTemplatePlugin;
 
 public class ContentTemplateModule extends PluginModule {
@@ -28,8 +25,5 @@ public class ContentTemplateModule extends PluginModule {
     protected void configure() {
 
         bindPlugin(ContentTemplatePlugin.class);
-        bindPresenterWidget(ContentTemplateTabPresenter.class,
-                ContentTemplateTabView.class,
-                ContentTemplateTabViewImpl.class);
     }
 }

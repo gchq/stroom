@@ -29,12 +29,12 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.SigningKeyPresenter;
+import stroom.security.client.component.SigningKeysController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/SigningKeysScreen`, showing Stroom's real [SigningKeyPresenter] (the
+/// Stories of `App/Main/SigningKeysScreen`, showing Stroom's real [SigningKeysController] (the
 /// 'Signing Keys' tab) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `SigningKeyResource`: the keys (`GET /signingKey/v1/list`),
@@ -167,7 +167,7 @@ public final class SigningKeysScreenStories {
         // Opened as SigningKeyPlugin opens it (refreshed), once Stroom has started (the dates are
         // formatted with the user's preferences)
         harness.afterStartUp(() -> {
-            final SigningKeyPresenter presenter = harness.show(injector.getSigningKeyPresenter());
+            final SigningKeysController presenter = harness.show(injector.getSigningKeysController());
             presenter.refresh();
         });
         return harness.asWidget();

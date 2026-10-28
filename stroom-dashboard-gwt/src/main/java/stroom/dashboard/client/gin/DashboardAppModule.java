@@ -17,28 +17,13 @@
 package stroom.dashboard.client.gin;
 
 import stroom.core.client.UrlParameters;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.component.CoreController;
+import stroom.core.client.component.FullScreenController;
 import stroom.core.client.presenter.CoreScreens;
-import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
-import stroom.core.client.view.CoreViewImpl;
-import stroom.core.client.view.FullScreenViewImpl;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.SourceTabPresenter;
-import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
-import stroom.data.client.view.DataPreviewTabViewImpl;
-import stroom.data.client.view.SourceTabViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
-import stroom.iframe.client.presenter.IFrameContentPresenter;
-import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
-import stroom.widget.datagrid.client.WrapperView;
-import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.util.client.GlobalKeyHandler;
 
@@ -63,27 +48,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
         // Presenters
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
-        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class);
+        bind(CoreController.class).in(Singleton.class);
 
-        bindPresenter(
-                FullScreenPresenter.class,
-                FullScreenView.class,
-                FullScreenViewImpl.class);
-
-
-
-        bindPresenterWidget(
-                IFrameContentPresenter.class,
-                IFrameContentView.class,
-                IFrameContentViewImpl.class);
-        bindPresenterWidget(
-                DataPreviewTabPresenter.class,
-                DataPreviewTabView.class,
-                DataPreviewTabViewImpl.class);
-        bindPresenterWidget(
-                SourceTabPresenter.class,
-                SourceTabView.class,
-                SourceTabViewImpl.class);
-        bindSharedView(WrapperView.class, WrapperViewImpl.class);
+        bind(FullScreenController.class).in(Singleton.class);
     }
 }

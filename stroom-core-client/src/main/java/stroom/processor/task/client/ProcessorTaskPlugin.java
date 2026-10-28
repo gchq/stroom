@@ -19,8 +19,8 @@ package stroom.processor.task.client;
 import stroom.core.client.ContentManager;
 import stroom.data.client.AbstractTabPresenterPlugin;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.task.client.component.ProcessorFilterTasksTabController;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
-import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -29,12 +29,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProcessorTaskPlugin extends AbstractTabPresenterPlugin<ProcessorFilter, ProcessorTaskPresenter> {
+public class ProcessorTaskPlugin
+        extends AbstractTabPresenterPlugin<ProcessorFilter, ProcessorFilterTasksTabController> {
 
     @Inject
     public ProcessorTaskPlugin(final EventBus eventBus,
                                final ContentManager contentManager,
-                               final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider) {
+                               final Provider<ProcessorFilterTasksTabController> processorTaskPresenterProvider) {
         super(eventBus, contentManager, processorTaskPresenterProvider);
 
         getEventBus().addHandler(OpenProcessorTaskEvent.getType(), event -> {

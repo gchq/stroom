@@ -19,7 +19,7 @@ package stroom.widget.tab.client.view;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 
-/// The curved tab layout's root ([CurveTabLayoutViewImpl]): its tab bar and its content. It can be
+/// The curved tab layout's root (`CurveTabLayout`): its tab bar and its content. It can be
 /// given the focus as a whole (the main view focuses its centre so), which goes where it is told.
 public class CurveTabLayoutPanel extends FlowPanel implements Focus {
 

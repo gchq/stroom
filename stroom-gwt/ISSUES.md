@@ -1651,8 +1651,61 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   the `docTab-readOnly*` classes are to become a `link-tab-panel` BEM block.
 * **One task monitor helper, copied.** About two dozen controllers carry the same lazy `taskMonitor()`
   (the provided monitor, or one of their own); it could be a `Controller` method.
+* **Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
+  tooltip), `AppShell.ExplorerItemKeys` (a renamed item's text) and `DataGrid.ValueSpinnerColumn`
+  differ a little from their baselines; to check whether they differ from run to run.
 * **The story helpers.** `DocEditors.open` and `DocumentEditors.open` do much the same, and neither
   owns the editor's host until its document is fetched (a failed fetch leaves it unowned).
+
+### Left from wave 15
+
+**Reported** (28 October 2026, overnight; decisions taken without the user, to check).
+
+* **Two screens share a tab type.** `GlobalPropertyTabController.TAB_TYPE` is "Caches", as
+  `CachesController`'s is (master too), so a saved tab session holding Properties opens Caches (or
+  nothing). `BatchDocumentPermissionsController` and `DocumentUserPermissionsContentTabController`
+  share "DocumentPermissions". Not changed: a new type changes what saved sessions hold.
+* **Screens left as the plan's "stays" or for later.** `WelcomeTab` keeps its `g:Grid` and sets its
+  name cells' `rowheader` role in Java (the plan's `<th scope="row">` table changes the cells'
+  look); `Main` still builds its split panes in Java on each layout change, sets the theme's page
+  border as the root's `style` (a config value of any CSS declarations), puts the selected tab's
+  colour in `DynamicStyles`, sizes the inner content with `setSize` and sets the explorer's and
+  content's landmarks on them; `Navigation` still builds its explorer toolbar's buttons and its
+  `ExplorerTree` in its controller, and sets the logo's tab index and `aria-hidden` in Java.
+* **Screens whose component is a part's.** NodeGroups, IndexVolumeGroups, ProcessorProfiles,
+  FsVolumeGroups and AnnotationTags (once `WrapperView`), and the content tab shells for processor
+  filter tasks, users and groups, a document's permissions and the receipt rules, have no component
+  of their own: the controller's widget is its list's or editor's. The plan named components for
+  some.
+* **`CurveTabLayout`'s right indent.** `setRightIndent(32)` set `right` on the tab bar's row, which
+  isn't positioned, so it did nothing; it went rather than becoming a class.
+* **Old names in the components' classes.** `CurveTabLayout`, `Main`, `Navigation`, `FullScreen`,
+  `DataRetention` and `AskStroomAi` keep their `curveTabLayoutViewImpl-*`, `mainViewImpl*`,
+  `navigation*`, `fullScreenViewImpl-*`, `dataRetentionViewImpl-*` and `askStroomAiViewImpl*`
+  classes (stories and CSS use them), and `ContentStoreTab` uses `contentstore-scroll-y` from
+  `components.css`; each is to become a BEM block in its own stylesheet.
+* **From the wave's audit, left on purpose** (28 October 2026):
+  * A controller shown with `ControllerDialog.show` is shown through a `DialogHost` it owns, so
+    the dialog's spinner (`PopupSupportImpl.setTaskMonitor` gives it to the shown presenter) never
+    reaches the controller: Ask Stroom AI's requests in dialog mode show on the app's spinner, not
+    the dialog's. The host should provide its task monitor to its content while shown.
+  * Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its model picker is still
+    a `DocSelectionBoxPresenter` in a slot (the plan: a `DropDownBox` with a
+    `DocSelectionController`); its controller works on the component's message panel directly
+    (HTML, scrolling, a click handler) where the plan wants component methods and callbacks; its
+    dialog opened from the toolbar doesn't focus the message box (as before); `AskStroomAiClient`'s
+    methods, now public, have no javadoc; and the controller keeps the presenter's `/** */`
+    comments.
+  * Main's maintenance banner is hidden and given `role="alert"` in Java; the activity button's
+    "Current Activity" heading is built by `ActivitySummary`.
+  * `UserTabController` keeps the hand-rolled tabs (`LazyValue`s, `getContent`) rather than
+    `TabbedController<UserRef>` as the plan says.
+  * The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
+    `QuickFilter.setOnChange` exists (to check they fire alike first).
+  * Unused `view` fields in about a dozen of the new controllers (assigned, only the constructor's
+    parameter used), dead code carried over (`UsersController.onEditUserOrGroup`, commented-out code
+    in the API keys, retention, source and template screens), and "presenter" names left in the
+    plugins' fields and parameters and the stories' variables.
 
 ### Some components wire their handlers with `@UiHandler`
 

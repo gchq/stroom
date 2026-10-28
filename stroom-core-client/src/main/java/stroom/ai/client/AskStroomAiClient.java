@@ -71,7 +71,7 @@ public class AskStroomAiClient {
         });
     }
 
-    void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
+    public void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
         // Wait for the user's preferences, so that the user's own config is used if they have one
         userPreferencesManager.whenLoaded(userPreferences -> {
             final AskStroomAiConfig config = userPreferences.getAskStroomAiConfig();
@@ -124,7 +124,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void sendMessage(final AskStroomAiRequest request,
+    public void sendMessage(final AskStroomAiRequest request,
                      final Consumer<AskStroomAiResponse> consumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
@@ -138,7 +138,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void createChat(final Consumer<AiChat> consumer,
+    public void createChat(final Consumer<AiChat> consumer,
                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
@@ -148,7 +148,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void listChats(final FindAiChatHistoryCriteria criteria,
+    public void listChats(final FindAiChatHistoryCriteria criteria,
                    final Consumer<ResultPage<AiChat>> consumer,
                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -159,7 +159,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getChat(final int chatId,
+    public void getChat(final int chatId,
                  final Consumer<AiChat> consumer,
                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -170,7 +170,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteChat(final int chatId,
+    public void deleteChat(final int chatId,
                     final Consumer<Boolean> consumer,
                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -181,7 +181,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteMessage(final int chatId,
+    public void deleteMessage(final int chatId,
                        final int messageId,
                        final Consumer<Boolean> consumer,
                        final TaskMonitorFactory taskMonitorFactory) {
@@ -193,7 +193,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteAllMessages(final int chatId,
+    public void deleteAllMessages(final int chatId,
                            final Consumer<Boolean> consumer,
                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -204,7 +204,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getMessages(final int chatId,
+    public void getMessages(final int chatId,
                      final Consumer<List<AiChatMessage>> consumer,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -215,7 +215,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void updateChatTitle(final int chatId,
+    public void updateChatTitle(final int chatId,
                          final String title,
                          final Consumer<Boolean> consumer,
                          final TaskMonitorFactory taskMonitorFactory) {
@@ -227,7 +227,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void pollMessages(final int chatId,
+    public void pollMessages(final int chatId,
                       final int lastSeenMessageId,
                       final Consumer<AiChatPollResponse> consumer,
                       final RestErrorHandler errorHandler,
@@ -241,7 +241,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void cancelProcessing(final int chatId,
+    public void cancelProcessing(final int chatId,
                           final Consumer<Boolean> consumer,
                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
@@ -252,7 +252,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void downloadChatHistory(final DownloadChatHistoryRequest request,
+    public void downloadChatHistory(final DownloadChatHistoryRequest request,
                              final Consumer<ResourceGeneration> consumer,
                              final RestErrorHandler errorHandler,
                              final TaskMonitorFactory taskMonitorFactory) {

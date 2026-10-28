@@ -16,7 +16,7 @@
 
 package stroom.node.client;
 
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
+import stroom.config.global.client.component.GlobalPropertyTabController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.document.client.DocumentPluginRegistry;
@@ -34,12 +34,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalPropertyTabPresenter> {
+public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalPropertyTabController> {
 
     @Inject
     ManageGlobalPropertiesPlugin(final EventBus eventBus,
                                  final ContentManager contentManager,
-                                 final Provider<GlobalPropertyTabPresenter> presenterProvider,
+                                 final Provider<GlobalPropertyTabController> presenterProvider,
                                  final DocumentPluginRegistry documentPluginRegistry,
                                  final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
@@ -73,6 +73,6 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
 
     @Override
     public String getType() {
-        return GlobalPropertyTabPresenter.TAB_TYPE;
+        return GlobalPropertyTabController.TAB_TYPE;
     }
 }

@@ -1,0 +1,6 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The page's root: the main screen or a full screen view (app-panel, stroom.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:SimplePanel ui:field="content" styleName="app-panel"/>
+</ui:UiBinder>

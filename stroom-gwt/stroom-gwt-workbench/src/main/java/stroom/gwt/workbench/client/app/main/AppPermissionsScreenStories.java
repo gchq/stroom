@@ -29,8 +29,8 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.security.client.component.AppPermissionsController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/// Stories of `App/Main/AppPermissionsScreen`, showing Stroom's real [AppPermissionsPresenter] (the
+/// Stories of `App/Main/AppPermissionsScreen`, showing Stroom's real [AppPermissionsController] (the
 /// 'Application Permissions' tab) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -192,7 +192,7 @@ public final class AppPermissionsScreenStories {
         // Opened as AppPermissionsPlugin opens it (refreshed), once Stroom has started (the list
         // reads the UI config)
         harness.afterStartUp(() -> {
-            final AppPermissionsPresenter presenter = harness.show(injector.getAppPermissionsPresenter());
+            final AppPermissionsController presenter = harness.show(injector.getAppPermissionsController());
             presenter.refresh();
         });
         return harness.asWidget();

@@ -17,8 +17,8 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.annotation.client.BrowseAnnotationPresenter;
 import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.component.BrowseAnnotationController;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/BrowseAnnotationsScreen`, showing Stroom's real [BrowseAnnotationPresenter]
+/// Stories of `App/Main/BrowseAnnotationsScreen`, showing Stroom's real [BrowseAnnotationController]
 /// (the 'Annotations' tab) with fake REST replies.
 ///
 /// The annotations come from `POST /annotation/v1/findAnnotations`, and `onOpenAnnotation` is a spy
@@ -91,7 +91,7 @@ public final class BrowseAnnotationsScreenStories {
                 harness.spy(ON_OPEN_ANNOTATION, String.valueOf(event.getAnnotationId()))));
         harness.afterStartUp(() -> {
             // As AnnotationBrowsePlugin opens the tab
-            final BrowseAnnotationPresenter presenter = injector.getBrowseAnnotationPresenter();
+            final BrowseAnnotationController presenter = injector.getBrowseAnnotationController();
             presenter.refresh();
             harness.show(presenter);
         });

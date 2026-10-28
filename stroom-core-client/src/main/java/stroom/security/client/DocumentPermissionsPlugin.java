@@ -29,9 +29,8 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.BatchDocumentPermissionsController;
+import stroom.security.client.component.DocumentUserPermissionsContentTabController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.shared.SvgImage;
@@ -46,13 +45,13 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPermissionsPresenter> {
+public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPermissionsController> {
 
     @Inject
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
-                                     final Provider<BatchDocumentPermissionsPresenter> presenterProvider,
-                                     final Provider<DocumentUserPermissionsPresenter>
+                                     final Provider<BatchDocumentPermissionsController> presenterProvider,
+                                     final Provider<DocumentUserPermissionsContentTabController>
                                              documentPermissionsPresenterProvider,
                                      final ClientSecurityContext securityContext,
                                      final DocumentPluginRegistry documentPluginRegistry) {
@@ -60,7 +59,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
-            final DocumentUserPermissionsPresenter presenter = documentPermissionsPresenterProvider.get();
+            final DocumentUserPermissionsContentTabController presenter = documentPermissionsPresenterProvider.get();
             presenter.setDocRef(event.getDocRef());
             final CloseContentEvent.Handler closeHandler = closeEvent -> {
                 if (presenter instanceof CloseContentEvent.Handler) {
@@ -97,7 +96,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     }
 
     @Override
-    public void open(final Consumer<BatchDocumentPermissionsPresenter> consumer) {
+    public void open(final Consumer<BatchDocumentPermissionsController> consumer) {
         super.open(presenter -> {
             final ExpressionTerm term = ExpressionTerm
                     .builder()
@@ -126,6 +125,6 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
 
     @Override
     public String getType() {
-        return BatchDocumentPermissionsPresenter.TAB_TYPE;
+        return BatchDocumentPermissionsController.TAB_TYPE;
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.query.client.component;
 
-import stroom.dashboard.client.component.LayerController;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.GroupSelection;
@@ -27,6 +26,7 @@ import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.TableRow;
 import stroom.query.shared.QueryTablePreferences;
+import stroom.widget.component.client.LayerController;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

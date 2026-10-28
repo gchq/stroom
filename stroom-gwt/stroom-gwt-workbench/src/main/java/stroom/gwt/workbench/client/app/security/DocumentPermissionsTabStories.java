@@ -30,13 +30,13 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsContentTabController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/Security/DocumentPermissionsTab` stories, showing Stroom's real
-/// [DocumentUserPermissionsPresenter] (a document's 'Permissions' tab) with fake REST replies.
+/// [DocumentUserPermissionsContentTabController] (a document's 'Permissions' tab) with fake REST replies.
 ///
 /// | Stroom REST endpoint | Used for |
 /// |---|---|
@@ -255,8 +255,8 @@ public final class DocumentPermissionsTabStories {
         // Opened as DocumentPermissionsPlugin opens it for a ShowDocumentPermissionsEvent, once
         // Stroom has started (the list reads the UI config)
         harness.afterStartUp(() -> {
-            final DocumentUserPermissionsPresenter presenter =
-                    harness.show(injector.getDocumentUserPermissionsPresenter());
+            final DocumentUserPermissionsContentTabController presenter =
+                    harness.show(injector.getDocumentUserPermissionsContentTabController());
             presenter.setDocRef(docRef);
         });
         return harness.asWidget();

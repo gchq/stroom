@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
-import stroom.task.client.presenter.TaskManagerPresenter;
+import stroom.task.client.component.ServerTasksController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-/// Stories of `App/Main/ServerTasksScreen`, showing Stroom's real [TaskManagerPresenter] (the
+/// Stories of `App/Main/ServerTasksScreen`, showing Stroom's real [ServerTasksController] (the
 /// 'Server Tasks' tab) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `NodeResource` (the nodes, `POST /node/v1/find`) and `TaskResource`
@@ -368,7 +368,7 @@ public final class ServerTasksScreenStories {
         // Opened once Stroom has started (the screen reads the UI config), as TaskManagerPlugin
         // opens it, with the name filter of an OpenTaskManagerEvent if there is one
         harness.afterStartUp(() -> {
-            final TaskManagerPresenter presenter = harness.show(injector.getTaskManagerPresenter());
+            final ServerTasksController presenter = harness.show(injector.getServerTasksController());
             if (filter != null) {
                 presenter.changeNameFilter(filter);
             }

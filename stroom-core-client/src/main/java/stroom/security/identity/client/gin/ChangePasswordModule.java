@@ -19,9 +19,6 @@ package stroom.security.identity.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
-import stroom.security.identity.client.presenter.AccountsPresenter;
-import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.view.AccountsViewImpl;
 
 public class ChangePasswordModule extends PluginModule {
 
@@ -29,9 +26,5 @@ public class ChangePasswordModule extends PluginModule {
     protected void configure() {
         bindPlugin(AccountsPlugin.class);
         bindPlugin(ChangePasswordPlugin.class);
-
-        bindPresenterWidget(AccountsPresenter.class,
-                AccountsView.class,
-                AccountsViewImpl.class);
     }
 }

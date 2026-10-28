@@ -16,13 +16,14 @@
 
 package stroom.main.client.presenter;
 
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.core.client.presenter.CorePresenter;
+import stroom.core.client.component.CoreController;
+import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
 
 import com.google.inject.Inject;
@@ -36,31 +37,31 @@ public class MainScreens {
     /// Adds the handlers of the events that open the screens.
     ///
     /// @param eventBus The application's event bus.
-    /// @param contentTabPanePresenterProvider Makes the ContentTabPanePresenter.
-    /// @param corePresenterProvider Makes the CorePresenter.
-    /// @param mainPresenterProvider Makes the MainPresenter.
+    /// @param contentTabPaneControllerProvider Makes the ContentTabPaneController.
+    /// @param coreControllerProvider Makes the CoreController.
+    /// @param mainControllerProvider Makes the MainController.
     @Inject
     public MainScreens(final EventBus eventBus,
-                       final Provider<ContentTabPanePresenter> contentTabPanePresenterProvider,
-                       final Provider<CorePresenter> corePresenterProvider,
-                       final Provider<MainPresenter> mainPresenterProvider) {
+                       final Provider<ContentTabPaneController> contentTabPaneControllerProvider,
+                       final Provider<CoreController> coreControllerProvider,
+                       final Provider<MainController> mainControllerProvider) {
         // The main screen first, so that it is shown before a tab opens in it
         eventBus.addHandler(ShowMainEvent.getType(), event -> {
-            corePresenterProvider.get().setContent(mainPresenterProvider.get());
-            mainPresenterProvider.get().onShowMain(event);
+            coreControllerProvider.get().setContent(mainControllerProvider.get());
+            mainControllerProvider.get().onShowMain(event);
         });
         eventBus.addHandler(OpenContentTabEvent.getType(), event ->
-                corePresenterProvider.get().setContent(mainPresenterProvider.get()));
+                coreControllerProvider.get().setContent(mainControllerProvider.get()));
         // The content tabs
         eventBus.addHandler(OpenContentTabEvent.getType(), event ->
-                contentTabPanePresenterProvider.get().onOpen(event));
+                contentTabPaneControllerProvider.get().onOpen(event));
         eventBus.addHandler(CloseContentTabEvent.getType(), event ->
-                contentTabPanePresenterProvider.get().onClose(event));
+                contentTabPaneControllerProvider.get().onClose(event));
         eventBus.addHandler(SelectContentTabEvent.getType(), event ->
-                contentTabPanePresenterProvider.get().onSelect(event));
+                contentTabPaneControllerProvider.get().onSelect(event));
         eventBus.addHandler(RefreshContentTabEvent.getType(), event ->
-                contentTabPanePresenterProvider.get().onRefresh(event));
+                contentTabPaneControllerProvider.get().onRefresh(event));
         eventBus.addHandler(MoveContentTabEvent.getType(), event ->
-                contentTabPanePresenterProvider.get().onMove(event));
+                contentTabPaneControllerProvider.get().onMove(event));
     }
 }

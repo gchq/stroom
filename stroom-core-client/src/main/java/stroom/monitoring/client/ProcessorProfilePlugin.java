@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.processor.client.presenter.ProcessorProfilePresenter;
+import stroom.processor.client.component.ProcessorProfilesController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -36,12 +36,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProcessorProfilePlugin extends MonitoringPlugin<ProcessorProfilePresenter> {
+public class ProcessorProfilePlugin extends MonitoringPlugin<ProcessorProfilesController> {
 
     @Inject
     ProcessorProfilePlugin(final EventBus eventBus,
                            final ContentManager contentManager,
-                           final Provider<ProcessorProfilePresenter> presenterProvider,
+                           final Provider<ProcessorProfilesController> presenterProvider,
                            final ClientSecurityContext securityContext,
                            final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -74,6 +74,6 @@ public class ProcessorProfilePlugin extends MonitoringPlugin<ProcessorProfilePre
 
     @Override
     public String getType() {
-        return ProcessorProfilePresenter.TAB_TYPE;
+        return ProcessorProfilesController.TAB_TYPE;
     }
 }

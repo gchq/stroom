@@ -16,17 +16,14 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.analytics.client.component.AnalyticRuleEditor;
 import stroom.analytics.client.component.ReportEditor;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
-import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.planb.client.component.PlanBEditor;
@@ -46,15 +43,8 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         EntityScreenModule.class,
-        SecurityScreenModule.class,
-        MonitoringScreenModule.class,
         TaskScreenModule.class,
-        PipelineScreenModule.class,
-        AnnotationScreenModule.class,
-        StreamStoreScreenModule.class,
         AlertScreenModule.class,
-        QueryExtrasScreenModule.class,
-        AskStroomAIScreenModule.class,
 })
 public interface QueryScreenGinjector extends ScreenGinjector {
 
@@ -98,5 +88,5 @@ public interface QueryScreenGinjector extends ScreenGinjector {
 
     /// @return The 'Ask Stroom AI' chat, which a results table's 'Ask Stroom AI' button opens (show
     /// it with `AskStroomAiChat`).
-    AskStroomAiPresenter getAskStroomAiPresenter();
+    AskStroomAiController getAskStroomAiController();
 }

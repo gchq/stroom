@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.gin.shell;
 import stroom.about.client.AboutPlugin;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashScreen;
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
 import stroom.annotation.client.AnnotationCommentPlugin;
@@ -27,7 +27,7 @@ import stroom.annotation.client.AnnotationCreatePlugin;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
 import stroom.cache.client.CacheMonitoringPlugin;
-import stroom.content.client.presenter.ContentTabPanePresenter;
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.contentstore.client.ContentStorePlugin;
 import stroom.core.client.ContentManager;
 import stroom.credentials.client.CredentialsPlugin;
@@ -43,31 +43,17 @@ import stroom.entity.client.component.MoveDocumentController;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
-import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.component.NavigationController;
 import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.feed.client.FeedPlugin;
 import stroom.folder.client.FolderFavouritesPlugin;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderRootPlugin;
-import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.AnnotationScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.CacheScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentAppScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.ContentStoreScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.ContentTemplateScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.ImportExportScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.IndexVolumeScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.PipelineScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.StreamStoreScreenModule;
-import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.AnalyticsScreenModule;
-import stroom.gwt.workbench.client.app.gin.processing.PolicyScreenModule;
-import stroom.gwt.workbench.client.app.gin.security.IdentityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.help.client.HelpPlugin;
 import stroom.importexport.client.DependenciesPlugin;
@@ -75,7 +61,6 @@ import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
-import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
@@ -117,41 +102,24 @@ import com.google.gwt.inject.client.GinModules;
 /// harness has been built.
 @GinModules({
         ScreenViewsModule.class,
-        CredentialsScreenModule.class,
         EntityScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
         TaskScreenModule.class,
-        PipelineScreenModule.class,
-        StreamStoreScreenModule.class,
-        CacheScreenModule.class,
-        ImportExportScreenModule.class,
-        AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ContentStoreScreenModule.class,
-        IndexVolumeScreenModule.class,
-        ContentTemplateScreenModule.class,
         AnalyticsScreenModule.class,
-        PolicyScreenModule.class,
-        IdentityScreenModule.class,
         ShellAppScreenModule.class,
-        AskStroomAIScreenModule.class,
 })
 public interface ShellScreenGinjector extends ScreenGinjector {
 
     // The shell
 
     /// @return The explorer (Stroom's navigation panel), shown in the main view.
-    NavigationPresenter getNavigationPresenter();
+    NavigationController getNavigationController();
 
-    /// @return The main view (the menu bar and the explorer and content split), for the story's `MainPresenter`.
-    MainView getMainView();
-
-    /// @return Stroom's app-wide key handler (keyboard shortcuts), which the story gives its `MainPresenter`.
+    /// @return Stroom's app-wide key handler (keyboard shortcuts), which the story gives its `MainController`.
     GlobalKeyHandlerImpl getGlobalKeyHandlerImpl();
 
     /// @return The document tab pane, shown in the main view.
-    ContentTabPanePresenter getContentTabPanePresenter();
+    ContentTabPaneController getContentTabPaneController();
 
     /// @return The content manager (a singleton), which opens tabs in the tab pane.
     ContentManager getContentManager();
@@ -347,5 +315,5 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return The 'Ask Stroom AI' chat, shown (docked, when its config says so) by firing
     /// `ShowAskStroomAiEvent`.
-    AskStroomAiPresenter getAskStroomAiPresenter();
+    AskStroomAiController getAskStroomAiController();
 }

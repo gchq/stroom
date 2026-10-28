@@ -56,7 +56,7 @@ public final class PresenterCoverage {
 
     /// The types whose concrete subclasses are screens.
     static final Set<String> SCREEN_BASE_TYPES = Set.of(
-            "ContentTabPresenter",
+            "ContentTabController",
             "DocTabPresenter",
             "DocumentEditor",
             "TabData",

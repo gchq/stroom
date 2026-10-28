@@ -16,9 +16,9 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.component.DataPreviewTabController;
+import stroom.data.client.component.SourceTabController;
 import stroom.data.client.presenter.DataViewType;
-import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -42,8 +42,8 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/DataScreen`, showing Stroom's real data tabs for a query result's data link
-/// (`HyperlinkEventHandlerImpl.openData` with display type `STROOM_TAB`): [DataPreviewTabPresenter]
-/// for a `PREVIEW` link and [SourceTabPresenter] for a `SOURCE` link, as `DataDisplaySupport` opens
+/// (`HyperlinkEventHandlerImpl.openData` with display type `STROOM_TAB`): [DataPreviewTabController]
+/// for a `PREVIEW` link and [SourceTabController] for a `SOURCE` link, as `DataDisplaySupport` opens
 /// them.
 ///
 /// The data comes from `POST /data/v1/fetch` (with `GET /meta/v1/{id}` for the stream's details);
@@ -163,12 +163,12 @@ public final class DataScreenStories {
         harness.afterStartUp(() -> {
             // As DataDisplaySupport.openStroomTab opens it (DataPreviewTabPlugin/SourceTabPlugin)
             if (DataViewType.PREVIEW.equals(dataViewType)) {
-                final DataPreviewTabPresenter presenter = injector.getDataPreviewTabPresenter();
+                final DataPreviewTabController presenter = injector.getDataPreviewTabController();
                 harness.show(presenter);
                 presenter.setInitDataViewType(dataViewType);
                 presenter.setSourceLocation(sourceLocation);
             } else {
-                final SourceTabPresenter presenter = injector.getSourceTabPresenter();
+                final SourceTabController presenter = injector.getSourceTabController();
                 harness.show(presenter);
                 presenter.setSourceLocationUsingHighlight(sourceLocation);
             }

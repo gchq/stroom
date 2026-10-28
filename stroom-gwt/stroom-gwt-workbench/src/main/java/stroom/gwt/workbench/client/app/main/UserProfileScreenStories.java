@@ -87,7 +87,7 @@ public final class UserProfileScreenStories {
                 .user(ALICE)
                 .appPermissions(appPermissions)
                 .build();
-        // Shown as UserTabPresenter shows its Info tab
+        // Shown as UserTabController shows its Info tab
         harness.afterStartUp(() -> {
             final UserInfoTabController userInfo = harness.show(injector.getUserInfoTabController());
             userInfo.setUserRef(userRef);

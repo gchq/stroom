@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.BrowseAnnotationController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.event.CloseContentEvent;
@@ -42,14 +43,14 @@ public class AnnotationBrowsePlugin extends Plugin {
 
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
-    private final Provider<BrowseAnnotationPresenter> presenterProvider;
-    private BrowseAnnotationPresenter presenter;
+    private final Provider<BrowseAnnotationController> presenterProvider;
+    private BrowseAnnotationController presenter;
 
     @Inject
     public AnnotationBrowsePlugin(final EventBus eventBus,
                                   final ClientSecurityContext securityContext,
                                   final ContentManager contentManager,
-                                  final Provider<BrowseAnnotationPresenter> presenterProvider) {
+                                  final Provider<BrowseAnnotationController> presenterProvider) {
         super(eventBus);
         this.securityContext = securityContext;
         this.contentManager = contentManager;

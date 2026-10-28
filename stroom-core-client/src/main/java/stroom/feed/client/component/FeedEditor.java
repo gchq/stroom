@@ -17,7 +17,7 @@
 package stroom.feed.client.component;
 
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
+import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
@@ -50,7 +50,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                       final ClientSecurityContext securityContext,
                       final Provider<FeedSettingsController> settingsProvider,
                       final Provider<MetaBrowserController> metaBrowserProvider,
-                      final Provider<ProcessorTaskPresenter> taskPresenterProvider,
+                      final Provider<ProcessorTasksTabController> taskPresenterProvider,
                       final Provider<MarkdownEditController> markdownEditProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);

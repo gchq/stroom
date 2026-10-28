@@ -16,14 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.shell;
 
-import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
-import stroom.explorer.client.view.NavigationViewImpl;
-import stroom.main.client.presenter.MainPresenter.MainView;
-import stroom.main.client.view.MainViewImpl;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
-import stroom.welcome.client.view.WelcomeViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of Stroom's app shell that the `shell` batch's `App/Main/AppShell` stories need and
@@ -42,17 +34,10 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         // AppModule (the main presenter is created by the story, with the app's key handler)
-        bind(MainView.class).to(MainViewImpl.class);
-        bindPresenterWidget(NavigationPresenter.class,
-                NavigationView.class,
-                NavigationViewImpl.class);
 
         // UserPreferencesModule
 
         // WelcomeModule
-        bindPresenterWidget(WelcomePresenter.class,
-                WelcomeView.class,
-                WelcomeViewImpl.class);
 
         // FeedModule
     }

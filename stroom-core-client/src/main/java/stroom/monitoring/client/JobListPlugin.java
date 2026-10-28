@@ -20,8 +20,8 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.job.client.component.JobsController;
 import stroom.job.client.event.OpenJobNodeEvent;
-import stroom.job.client.presenter.JobPresenter;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -38,12 +38,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
+public class JobListPlugin extends MonitoringPlugin<JobsController> {
 
     @Inject
     public JobListPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
-                         final Provider<JobPresenter> presenterProvider,
+                         final Provider<JobsController> presenterProvider,
                          final ClientSecurityContext securityContext,
                          final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -84,6 +84,6 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
 
     @Override
     public String getType() {
-        return JobPresenter.TAB_TYPE;
+        return JobsController.TAB_TYPE;
     }
 }

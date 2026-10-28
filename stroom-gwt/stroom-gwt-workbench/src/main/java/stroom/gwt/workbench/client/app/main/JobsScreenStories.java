@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.job.client.presenter.JobPresenter;
+import stroom.job.client.component.JobsController;
 import stroom.node.client.event.OpenNodeEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Stories of `App/Main/JobsScreen`, showing Stroom's real [JobPresenter] (the 'Jobs' tab: the jobs
+/// Stories of `App/Main/JobsScreen`, showing Stroom's real [JobsController] (the 'Jobs' tab: the jobs
 /// list and the selected job's per-node list) with fake REST replies.
 ///
 /// The stories answer Stroom's `JobResource`, `JobNodeResource`, `NodeResource` and
@@ -258,7 +258,7 @@ public final class JobsScreenStories {
                     play.click(screen.findByText("Show in Server Tasks (node1)"));
                     // The spy records OpenTaskManagerEvent's node and task names;
                     // the 'node:node1 name:"Data Retention"' filter is built from them by the Server
-                    // Tasks screen (TaskManagerPresenter.changeNameFilter)
+                    // Tasks screen (ServerTasksController.changeNameFilter)
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_TASKS))
                             .toHaveBeenCalledWith("node=node1, task=Data Retention"));
 
@@ -440,7 +440,7 @@ public final class JobsScreenStories {
         harness.getEventBus().addHandler(OpenTaskManagerEvent.getType(), event ->
                 harness.spy(ON_SHOW_TASKS, "node=" + event.getNodeName() + ", task=" + event.getTaskName()));
 
-        harness.show(injector.getJobPresenter());
+        harness.show(injector.getJobsController());
         return harness.asWidget();
     }
 }

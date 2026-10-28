@@ -21,15 +21,14 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.component.ServerTasksController;
 import stroom.task.client.component.UserTaskManagerController;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
-import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -41,14 +40,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
+public class TaskManagerPlugin extends MonitoringPlugin<ServerTasksController> {
 
     private UserTaskManagerController userTaskManager;
 
     @Inject
     public TaskManagerPlugin(final EventBus eventBus,
                              final ContentManager eventManager,
-                             final Provider<TaskManagerPresenter> presenterProvider,
+                             final Provider<ServerTasksController> presenterProvider,
                              final ClientSecurityContext securityContext,
                              final DocumentPluginRegistry documentPluginRegistry,
                              final AppRoot appRoot,
@@ -101,6 +100,6 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
 
     @Override
     public String getType() {
-        return TaskManagerPresenter.TAB_TYPE;
+        return ServerTasksController.TAB_TYPE;
     }
 }

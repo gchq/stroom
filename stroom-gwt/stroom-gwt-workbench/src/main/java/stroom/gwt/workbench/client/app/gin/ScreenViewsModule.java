@@ -16,14 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.widget.datagrid.client.WrapperView;
-import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
-import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
@@ -41,14 +35,11 @@ public class ScreenViewsModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         // AppModule: widgets
-        bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         // AppModule: menus and tool tips
 
         // SecurityModule
-        bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
 
         // MonitoringModule
-        bindSharedView(WrapperView.class, WrapperViewImpl.class);
 
         // StreamStoreModule: editors, expressions and the explorer drop downs
 

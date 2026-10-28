@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.presenter.NodeGroupPresenter;
+import stroom.node.client.component.NodeGroupsController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -36,12 +36,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupPresenter> {
+public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupsController> {
 
     @Inject
     NodeGroupsPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<NodeGroupPresenter> presenterProvider,
+                     final Provider<NodeGroupsController> presenterProvider,
                      final ClientSecurityContext securityContext,
                      final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -74,6 +74,6 @@ public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupPresenter> {
 
     @Override
     public String getType() {
-        return NodeGroupPresenter.TAB_TYPE;
+        return NodeGroupsController.TAB_TYPE;
     }
 }

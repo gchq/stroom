@@ -55,7 +55,7 @@ public final class AiFixtures {
             {"dockType": "DIALOG", "dockLocation": "RIGHT"}""";
 
     /// The chat's Run button.
-    /// It has no title or accessible name (`AskStroomAiViewImpl` sets its text, which
+    /// It has no title or accessible name (`AskStroomAi` sets its text, which
     /// `ToolbarButton` doesn't show), so it is found by its 'play' class.
     static final String RUN = "button.play";
 

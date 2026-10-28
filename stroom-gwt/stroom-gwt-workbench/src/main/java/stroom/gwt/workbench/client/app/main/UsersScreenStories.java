@@ -28,15 +28,15 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.security.client.component.UsersController;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
-import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/UsersScreen`, showing Stroom's real [UsersPresenter] (the 'Users' tab) with
+/// Stories of `App/Main/UsersScreen`, showing Stroom's real [UsersController] (the 'Users' tab) with
 /// fake REST replies.
 ///
 /// The fixtures answer Stroom's `UserResource` (`POST /users/v1/find`, `POST /users/v1/createUser`,
@@ -275,13 +275,13 @@ public final class UsersScreenStories {
             // Opened at once, before the UI config is cached: the list reads it when it refreshes,
             // and UiConfigCache fetches it then (it once also called the list back with null at
             // once, which failed), as UsersPlugin.open opens it, refreshed
-            harness.show(injector.getUsersPresenter()).refresh();
+            harness.show(injector.getUsersController()).refresh();
         } else {
             // Opened at once, as for an OpenUsersScreenEvent: refreshed, then showing the user.
             // Both refreshes wait for the UI config; only the first sets up the list (the second
             // once set it up again, duplicating its columns and rows, which the play's
             // findByText would now find twice)
-            final UsersPresenter presenter = harness.show(injector.getUsersPresenter());
+            final UsersController presenter = harness.show(injector.getUsersController());
             presenter.refresh();
             presenter.showUser(focus);
         }

@@ -38,7 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories of `App/Main/CredentialsScreen`, showing Stroom's real `CredentialsPresenter` (the
+/// Stories of `App/Main/CredentialsScreen`, showing Stroom's real `CredentialsController` (the
 /// 'Credentials' tab) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -540,7 +540,7 @@ public final class CredentialsScreenStories {
         }
         final ScreenHarness harness = builder.build();
         // Shown as CredentialsPlugin shows it, once Stroom has started
-        harness.afterStartUp(() -> harness.show(injector.getCredentialsPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getCredentialsController()));
         return harness.asWidget();
     }
 }

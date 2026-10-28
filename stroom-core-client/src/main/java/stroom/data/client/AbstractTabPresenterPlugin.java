@@ -18,7 +18,6 @@ package stroom.data.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.presenter.Plugin;
@@ -26,6 +25,8 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresenter<?>>
+public abstract class AbstractTabPresenterPlugin<K, T extends Layer & TabData>
         extends Plugin {
 
     // Bi-directional maps to hold the open presenters

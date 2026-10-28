@@ -22,7 +22,7 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -31,7 +31,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabPlugin {
+public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin {
 
     private final ContentManager contentManager;
     private final Provider<P> presenterProvider;
@@ -92,8 +92,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabP
         };
 
         // Tell the content manager to open the tab.
-        final TabData tabData = (TabData) presenter;
-        contentManager.open(closeHandler, tabData, presenter);
+        contentManager.open(closeHandler, presenter, presenter);
 
         // If the presenter is refreshable then refresh it.
         if (presenter instanceof final Refreshable refreshable) {

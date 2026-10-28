@@ -64,7 +64,7 @@ It is wrapped by `QuickFilterPageViewImpl` / `QuickFilterDialogViewImpl` (form-g
 and used directly from 16 `ui.xml` files. There are ~80 client files touching it; every surface
 that registers a tooltip does so via `QuickFilterTooltipUtil.createTooltip(title, …,
 FIELD_DEFINITIONS, …)` — roughly 25 call sites, all shaped like
-`DependenciesTabPresenter.java:60`.
+`DependenciesTabController.java:60`.
 
 The widget module has **no access to `RestFactory`** (that is `stroom-core-client`), so the widget
 cannot fetch history itself; it needs hooks set by the presenter.

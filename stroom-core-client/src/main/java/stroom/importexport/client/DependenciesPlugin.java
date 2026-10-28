@@ -21,10 +21,10 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.importexport.client.component.DependenciesInfoController;
+import stroom.importexport.client.component.DependenciesTabController;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -41,12 +41,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
+public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabController> {
 
     @Inject
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,
-                              final Provider<DependenciesTabPresenter> presenterProvider,
+                              final Provider<DependenciesTabController> presenterProvider,
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry,
                               final Provider<DependenciesInfoController> dependenciesInfoControllerProvider,
@@ -92,6 +92,6 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
 
     @Override
     public String getType() {
-        return DependenciesTabPresenter.TAB_TYPE;
+        return DependenciesTabController.TAB_TYPE;
     }
 }

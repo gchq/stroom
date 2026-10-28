@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.processor.client.presenter.ProcessorProfilePresenter;
+import stroom.processor.client.component.ProcessorProfilesController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,7 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/ProcessorProfilesScreen`, showing Stroom's real [ProcessorProfilePresenter]
+/// Stories of `App/Main/ProcessorProfilesScreen`, showing Stroom's real [ProcessorProfilesController]
 /// (the 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -283,7 +283,7 @@ public final class ProcessorProfilesScreenStories {
         }
         final ScreenHarness harness = builder.build();
         harness.afterStartUp(() -> {
-            final ProcessorProfilePresenter presenter = injector.getProcessorProfilePresenter();
+            final ProcessorProfilesController presenter = injector.getProcessorProfilesController();
             harness.show(presenter);
             // As the content pane does when it shows a Refreshable tab
             presenter.refresh();

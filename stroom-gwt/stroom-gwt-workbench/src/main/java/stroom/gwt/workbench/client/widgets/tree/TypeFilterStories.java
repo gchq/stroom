@@ -150,7 +150,7 @@ public final class TypeFilterStories {
             update.run();
             onIncludedTypesChange.call(echo.getText());
         }));
-        // As NavigationPresenter shows it: by its button, hidden by clicking outside it or (here)
+        // As NavigationController shows it: by its button, hidden by clicking outside it or (here)
         // the button
         final boolean[] showing = {false};
         typeFilter.setOnHidden(() -> {

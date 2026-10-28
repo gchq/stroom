@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:c="urn:import:stroom.widget.component.client">
+    <g:SimplePanel styleName="max">
+
+        <split:SplitPane vertical="true" thin="true" sizes="400px, *"
+                         names="Content packs, Content pack details" addStyleNames="max">
+            <g:SimplePanel ui:field="contentPackList" styleName="max dashboard-panel"/>
+            <!-- The details scroll, so the keyboard must be able to reach them to scroll them, even
+                 when they hold nothing else the keyboard reaches (e.g. a pack with no links and both
+                 buttons disabled). A named region, so screen readers say what has the focus -->
+            <c:AriaPanel ui:field="contentPackDetails" styleName="max dashboard-panel contentstore-scroll-y"
+                         role="region" tabIndex="0" ariaLabel="Content pack details"/>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder>

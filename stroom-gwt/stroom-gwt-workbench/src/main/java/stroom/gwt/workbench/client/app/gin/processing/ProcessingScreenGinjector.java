@@ -16,25 +16,23 @@
 
 package stroom.gwt.workbench.client.app.gin.processing;
 
-import stroom.analytics.client.presenter.ExecutionScheduleManager;
+import stroom.analytics.client.component.ExecutionSchedulesController;
 import stroom.dashboard.client.component.ProcessorLimitsController;
+import stroom.data.client.component.DataPreviewTabController;
 import stroom.data.client.component.DataUploadController;
 import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.component.ProcessorTasksListController;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.component.ProcessorTasksTabController;
+import stroom.data.client.component.SourceTabController;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.node.client.component.NodeGroupEditController;
-import stroom.node.client.presenter.NodeGroupPresenter;
+import stroom.node.client.component.NodeGroupsController;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.component.DocRefSelectionController;
@@ -45,11 +43,11 @@ import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
 import stroom.processor.client.component.ProcessorEditController;
+import stroom.processor.client.component.ProcessorProfilesController;
 import stroom.processor.client.component.ProcessorsController;
-import stroom.processor.client.presenter.ProcessorProfilePresenter;
 import stroom.processor.task.client.component.ProcessorFilterTasksController;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
-import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.receive.rules.client.component.DataRetentionController;
+import stroom.receive.rules.client.component.RuleSetTabController;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -64,12 +62,7 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         EntityScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
         TaskScreenModule.class,
-        PipelineScreenModule.class,
-        PolicyScreenModule.class,
-        StreamStoreScreenModule.class,
         ProcessingExtrasScreenModule.class,
         AnalyticsScreenModule.class,
 })
@@ -78,7 +71,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Node groups
 
     /// @return The 'Node Groups' tab, as `NodeGroupsPlugin` opens it.
-    NodeGroupPresenter getNodeGroupPresenter();
+    NodeGroupsController getNodeGroupsController();
 
     /// @return The node group members dialog ('Edit Node Group - name').
     NodeGroupEditController getNodeGroupEditController();
@@ -86,12 +79,12 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Execution schedules
 
     /// @return The 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it.
-    ExecutionScheduleManager getExecutionScheduleManager();
+    ExecutionSchedulesController getExecutionSchedulesController();
 
     // Processors
 
     /// @return The 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it.
-    ProcessorProfilePresenter getProcessorProfilePresenter();
+    ProcessorProfilesController getProcessorProfilesController();
 
     /// @return A pipeline's 'Processors' tab (the processor and filter tree).
     ProcessorsController getProcessors();
@@ -107,7 +100,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
     /// list), as `FolderPresenter`, `FeedEditor` and `PipelineEditor` create it.
-    ProcessorTaskPresenter getProcessorTaskPresenter();
+    ProcessorTasksTabController getProcessorTasksTabController();
 
     /// @return A processor filter's 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
     ProcessorFilterTasksController getProcessorFilterTasksController();
@@ -118,10 +111,10 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     MetaBrowserController getMetaBrowser();
 
     /// @return A 'Data Preview' tab, as `DataPreviewTabPlugin` opens it.
-    DataPreviewTabPresenter getDataPreviewTabPresenter();
+    DataPreviewTabController getDataPreviewTabController();
 
     /// @return A 'Source' tab, as `SourceTabPlugin` opens it.
-    SourceTabPresenter getSourceTabPresenter();
+    SourceTabController getSourceTabController();
 
     /// @return The 'Create Processors' dialog, as the data browser's meta list shows it.
     ProcessChoiceDialogController getProcessChoiceDialogController();
@@ -171,8 +164,8 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Data retention and receipt rules
 
     /// @return The 'Data Retention' tab, as `DataRetentionPlugin` opens it.
-    DataRetentionPresenter getDataRetentionPresenter();
+    DataRetentionController getDataRetentionController();
 
     /// @return The 'Data Receipt Rules' tab, as `ReceiveDataRuleSetPlugin` opens it.
-    RuleSetPresenter getRuleSetPresenter();
+    RuleSetTabController getRuleSetTabController();
 }

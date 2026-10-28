@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.dashboard.client.component.DashboardEditor;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
 import stroom.dashboard.client.input.KeyValueInputPlugin;
@@ -30,16 +30,9 @@ import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
-import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.AlertScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.AnnotationScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.PipelineScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.QueryExtrasScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.StreamStoreScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 
@@ -62,15 +55,8 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         EntityScreenModule.class,
-        SecurityScreenModule.class,
-        MonitoringScreenModule.class,
         TaskScreenModule.class,
-        PipelineScreenModule.class,
-        AnnotationScreenModule.class,
-        StreamStoreScreenModule.class,
         AlertScreenModule.class,
-        QueryExtrasScreenModule.class,
-        AskStroomAIScreenModule.class,
         DashboardScreenModule.class,
 })
 public interface DashboardScreenGinjector extends ScreenGinjector {
@@ -80,7 +66,7 @@ public interface DashboardScreenGinjector extends ScreenGinjector {
     DashboardEditor getDashboardEditor();
 
     /// @return The 'Ask Stroom AI' chat, shown by firing `AskStroomAiEvent`.
-    AskStroomAiPresenter getAskStroomAiPresenter();
+    AskStroomAiController getAskStroomAiController();
 
     /// @return Stroom's handler of `HyperlinkEvent`s (a table's links), which Stroom creates eagerly.
     HyperlinkEventHandlerImpl getHyperlinkEventHandler();

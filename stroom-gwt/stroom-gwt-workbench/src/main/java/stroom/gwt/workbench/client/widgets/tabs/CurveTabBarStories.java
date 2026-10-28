@@ -28,13 +28,11 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
+import stroom.widget.tab.client.component.CurveTabLayout;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.CurveTabBar;
-import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
-import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
@@ -47,11 +45,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayoutViewImpl`
+/// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayout`
 /// (`tabBarContainer` > optional sidebar toggle toolbar > `curveTabLayoutViewImpl-tabBarOuter` >
 /// `tab-bar--curved`).
 /// The stories without the sidebar toggle build that row as the view does; the one with it uses
-/// the real [CurveTabLayoutViewImpl]. The overflow selector shows Stroom's real menu.
+/// the real [CurveTabLayout]. The overflow selector shows Stroom's real menu.
 public final class CurveTabBarStories {
 
     private static final String ON_SELECT = "onSelect";
@@ -308,13 +306,12 @@ public final class CurveTabBarStories {
         final TabBar tabBar;
         final Widget row;
         if (sidebar) {
-            final CurveTabLayoutViewImpl view = new CurveTabLayoutViewImpl(
-                    GWT.create(CurveTabLayoutViewImpl.Binder.class));
-            view.setUiHandlers(new SidebarToggle(onToggleSidebar));
+            final CurveTabLayout view = new CurveTabLayout();
+            view.setOnToggleSidebar(onToggleSidebar::call);
             tabBar = view.getTabBar();
             row = view.asWidget();
         } else {
-            // CurveTabLayoutViewImpl's tab bar row, without the sidebar toggle
+            // CurveTabLayout's tab bar row, without the sidebar toggle
             final CurveTabBar curveTabBar = new CurveTabBar();
             final SimplePanel tabBarOuter = new SimplePanel(curveTabBar);
             tabBarOuter.setStyleName("curveTabLayoutViewImpl-tabBarOuter");
@@ -325,7 +322,7 @@ public final class CurveTabBarStories {
             row = tabBarContainer;
         }
 
-        // As CurveTabLayoutPresenter handles the bar's events
+        // As ContentTabPaneController handles the bar's events
         harness.addRegistration(tabBar.addSelectionHandler(event -> {
             tabBar.selectTab(event.getSelectedItem());
             onSelect.call(((StoryTab) event.getSelectedItem()).getId());
@@ -390,24 +387,5 @@ public final class CurveTabBarStories {
                 new StoryTab("index", "Example Index", "Index", SvgImage.DOCUMENT_INDEX, true),
                 new StoryTab("dash", "Operations Dashboard", "Dashboard", SvgImage.DOCUMENT_DASHBOARD, true),
                 new StoryTab("folder", "System Folder", "Folder", SvgImage.DOCUMENT_FOLDER, true));
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The sidebar toggle's handler: Stroom's `CurveTabLayoutPresenter` maximises the content.
-    private static final class SidebarToggle implements CurveTabLayoutUiHandlers {
-
-        private final Spy onToggleSidebar;
-
-        private SidebarToggle(final Spy onToggleSidebar) {
-            this.onToggleSidebar = onToggleSidebar;
-        }
-
-        @Override
-        public void maximise() {
-            onToggleSidebar.call();
-        }
     }
 }

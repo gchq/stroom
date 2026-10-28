@@ -17,11 +17,11 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.content.client.component.ContentTabController;
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.docref.DocRef;
 import stroom.document.client.HasMultipleInstances;
@@ -39,15 +39,13 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerNode;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPanePresenter] (the
+/// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPaneController] (the
 /// document tabs) and its tab menu, built by Stroom's real `DocumentPluginEventManager` for a tab's
 /// `ShowTabMenuEvent`.
 ///
@@ -127,7 +125,7 @@ public final class ContentTabPaneStories {
                 .build();
         final EventBus eventBus = harness.getEventBus();
         // The tab pane, registered for the content events as MainScreens registers it
-        final ContentTabPanePresenter pane = injector.getContentTabPanePresenter();
+        final ContentTabPaneController pane = injector.getContentTabPaneController();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), pane));
@@ -154,7 +152,7 @@ public final class ContentTabPaneStories {
     // --------------------------------------------------------------------------------
 
     /// A stand-in document editor tab.
-    private static class DocumentTab extends ContentTabPresenter<View> {
+    private static class DocumentTab extends ContentTabController {
 
         private final DocRef docRef;
 
@@ -163,8 +161,9 @@ public final class ContentTabPaneStories {
         }
 
         DocumentTab(final EventBus eventBus, final DocRef docRef, final String text) {
-            super(eventBus, new TextView(text));
+            super(eventBus);
             this.docRef = docRef;
+            initWidget(new Label(text));
         }
 
         @Override
@@ -215,23 +214,6 @@ public final class ContentTabPaneStories {
         @Override
         public void setInstance(final int instance) {
             this.instance = instance;
-        }
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /// A view showing some text.
-    private static final class TextView extends ViewImpl {
-
-        private final Label label;
-
-        TextView(final String text) {
-            label = new Label(text);
-        }
-
-        @Override
-        public Widget asWidget() {
-            return label;
         }
     }
 }

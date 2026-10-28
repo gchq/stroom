@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.aws.s3.client.component.S3ConfigEditor;
 import stroom.datagen.client.component.DataGenEditor;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
@@ -29,11 +29,8 @@ import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.component.GitRepoEditor;
-import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.index.client.component.LuceneIndexEditor;
 import stroom.kafka.client.component.KafkaConfigEditor;
@@ -66,15 +63,9 @@ import com.google.gwt.inject.client.GinModules;
 /// the editors (`XxxScreenModule` for Stroom's `XxxModule`), without plugins and app services.
 @GinModules({
         ScreenViewsModule.class,
-        CredentialsScreenModule.class,
         EntityScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
         AlertScreenModule.class,
-        AskStroomAIScreenModule.class,
-        IndexScreenModule.class,
         ScheduleScreenModule.class,
-        StreamStoreScreenModule.class,
         SqlTemporalStoreScreenModule.class,
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
@@ -169,5 +160,5 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     // AI
 
     /// @return The 'Ask Stroom AI' chat, shown by firing `ShowAskStroomAiEvent`.
-    AskStroomAiPresenter getAskStroomAiPresenter();
+    AskStroomAiController getAskStroomAiController();
 }

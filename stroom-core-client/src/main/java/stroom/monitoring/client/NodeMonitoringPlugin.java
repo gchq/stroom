@@ -22,10 +22,9 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.node.client.component.NodesController;
 import stroom.node.client.event.OpenNodeEvent;
-import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -39,12 +38,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
+public class NodeMonitoringPlugin extends MonitoringPlugin<NodesController> {
 
     @Inject
     public NodeMonitoringPlugin(final EventBus eventBus,
                                 final ContentManager eventManager,
-                                final Provider<NodePresenter> presenterProvider,
+                                final Provider<NodesController> presenterProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -89,16 +88,16 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
 
     @Override
     public String getType() {
-        return NodePresenter.TAB_TYPE;
+        return NodesController.TAB_TYPE;
     }
 
 //    private void openNode(final String nodeName) {
-//        final NodePresenter nodePresenter = open();
+//        final NodesController nodePresenter = open();
 //        nodePresenter.setSelected(nodeName);
 //    }
 //
 //    private void openNodeJob(final JobNode jobNode) {
-//        final NodePresenter nodePresenter = open();
+//        final NodesController nodePresenter = open();
 //        nodePresenter.setSelected(jobNode);
 //    }
 }

@@ -1072,11 +1072,7 @@ public class DocumentPluginEventManager extends Plugin {
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             } else if (tabPlugin instanceof final ContentPlugin<?> contentPlugin) {
-                contentPlugin.open(p -> {
-                    if (callbackOnOpen != null) {
-                        callbackOnOpen.accept(p);
-                    }
-                });
+                contentPlugin.open(ContentOpenCallback.of(callbackOnOpen));
             } else {
                 Console.error(() -> "Document type '" + docRef.getType() + "' not registered");
             }

@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.annotation.client.AnnotationTagPresenter;
+import stroom.annotation.client.component.AnnotationTagsController;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories of `App/Main/AnnotationTagScreen`, showing Stroom's real [AnnotationTagPresenter] (the
+/// Stories of `App/Main/AnnotationTagScreen`, showing Stroom's real [AnnotationTagsController] (the
 /// 'Annotation Labels/Statuses/Comments' tabs, with their create and edit dialogs) with fake REST
 /// replies.
 ///
@@ -159,7 +159,7 @@ public final class AnnotationTagScreenStories {
                 .build();
         harness.afterStartUp(() -> {
             // As AnnotationPlugin opens the tab
-            final AnnotationTagPresenter presenter = injector.getAnnotationTagPresenter();
+            final AnnotationTagsController presenter = injector.getAnnotationTagsController();
             presenter.setTabLabel(label);
             presenter.setAnnotationTagType(type);
             presenter.refresh();

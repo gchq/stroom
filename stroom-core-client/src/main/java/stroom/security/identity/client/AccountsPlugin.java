@@ -23,13 +23,12 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.identity.client.component.AccountsController;
 import stroom.security.identity.client.event.OpenAccountEvent;
-import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -41,7 +40,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
+public class AccountsPlugin extends MonitoringPlugin<AccountsController> {
 
     public static final String SCREEN_NAME = "Accounts";
     public static final SvgImage ICON = SvgImage.USER;
@@ -52,7 +51,7 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     public AccountsPlugin(final EventBus eventBus,
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<AccountsPresenter> accountsPresenterProvider,
+                          final Provider<AccountsController> accountsPresenterProvider,
                           final Provider<UiConfigCache> uiConfigCacheProvider,
                           final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, accountsPresenterProvider, securityContext, documentPluginRegistry);
@@ -83,7 +82,7 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     }
 
     @Override
-    public void open(final Consumer<AccountsPresenter> consumer) {
+    public void open(final Consumer<AccountsController> consumer) {
         super.open(presenter -> {
             presenter.refresh();
             consumer.accept(presenter);
@@ -118,6 +117,6 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
     @Override
     public String getType() {
-        return AccountsPresenter.TAB_TYPE;
+        return AccountsController.TAB_TYPE;
     }
 }

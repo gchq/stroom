@@ -16,8 +16,8 @@
 
 package stroom.main.client.event;
 
-import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.ai.client.component.AskStroomAiController.DockBehaviour;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -28,31 +28,31 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final MyPresenterWidget<?> presenter;
+    private final Controller controller;
     private final DockBehaviour dockBehaviour;
     private final Size size;
     private final DockAction action;
 
-    private DockEvent(final MyPresenterWidget<?> presenter,
+    private DockEvent(final Controller controller,
                       final DockBehaviour dockBehaviour,
                       final Size size,
                       final DockAction action) {
-        this.presenter = presenter;
+        this.controller = controller;
         this.dockBehaviour = dockBehaviour;
         this.size = size;
         this.action = action;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final MyPresenterWidget<?> presenter,
+                            final Controller controller,
                             final DockBehaviour dockBehaviour,
                             final Size size) {
-        handlers.fireEvent(new DockEvent(presenter, dockBehaviour, size, DockAction.DOCK));
+        handlers.fireEvent(new DockEvent(controller, dockBehaviour, size, DockAction.DOCK));
     }
 
     public static void fireUndock(final HasHandlers handlers,
-                                  final MyPresenterWidget<?> presenter) {
-        handlers.fireEvent(new DockEvent(presenter, null, null, DockAction.UNDOCK));
+                                  final Controller controller) {
+        handlers.fireEvent(new DockEvent(controller, null, null, DockAction.UNDOCK));
     }
 
     public static Type<Handler> getType() {
@@ -72,8 +72,8 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
         handler.onDock(this);
     }
 
-    public MyPresenterWidget<?> getPresenter() {
-        return presenter;
+    public Controller getController() {
+        return controller;
     }
 
     public DockBehaviour getDockBehaviour() {

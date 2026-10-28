@@ -21,7 +21,6 @@ import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
 import stroom.processor.task.client.ProcessorTaskPlugin;
-import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 
 public class PipelineModule extends PluginModule {
 
@@ -37,6 +36,5 @@ public class PipelineModule extends PluginModule {
         // Add processor bindings.
 
         bindPlugin(ProcessorTaskPlugin.class);
-        bind(ProcessorTaskPresenter.class);
     }
 }

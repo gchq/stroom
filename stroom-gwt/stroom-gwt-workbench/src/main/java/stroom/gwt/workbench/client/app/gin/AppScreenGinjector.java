@@ -23,11 +23,11 @@ import stroom.entity.client.component.InfoDocumentController;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.job.client.presenter.JobPresenter;
-import stroom.node.client.presenter.NodePresenter;
-import stroom.security.client.presenter.UsersPresenter;
+import stroom.job.client.component.JobsController;
+import stroom.node.client.component.NodesController;
+import stroom.security.client.component.UsersController;
+import stroom.task.client.component.ServerTasksController;
 import stroom.task.client.component.UserTaskManagerController;
-import stroom.task.client.presenter.TaskManagerPresenter;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -37,7 +37,7 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final JobPresenter presenter = injector.getJobPresenter();
+/// final JobsController presenter = injector.getJobsController();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
@@ -51,10 +51,7 @@ import com.google.gwt.inject.client.GinModules;
 /// See WRITING-STORIES.md.
 @GinModules({
         ScreenViewsModule.class,
-        CredentialsScreenModule.class,
         EntityScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
         TaskScreenModule.class,
 })
 public interface AppScreenGinjector extends ScreenGinjector {
@@ -80,13 +77,13 @@ public interface AppScreenGinjector extends ScreenGinjector {
     // Monitoring
 
     /// @return The 'Jobs' tab.
-    JobPresenter getJobPresenter();
+    JobsController getJobsController();
 
     /// @return The 'Nodes' tab.
-    NodePresenter getNodePresenter();
+    NodesController getNodesController();
 
     /// @return The 'Server Tasks' tab.
-    TaskManagerPresenter getTaskManagerPresenter();
+    ServerTasksController getServerTasksController();
 
     /// @return The user's task manager dialog, as `TaskManagerPlugin` shows it on `OpenUserTaskManagerEvent`.
     UserTaskManagerController getUserTaskManagerController();
@@ -94,7 +91,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
     // Security
 
     /// @return The 'Users' tab.
-    UsersPresenter getUsersPresenter();
+    UsersController getUsersController();
 
     // Dictionaries
 

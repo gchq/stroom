@@ -29,13 +29,13 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.index.client.presenter.IndexVolumeGroupPresenter;
+import stroom.index.client.component.IndexVolumeGroupsController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/IndexVolumesScreen`, showing Stroom's real [IndexVolumeGroupPresenter] (the
+/// Stories of `App/Main/IndexVolumesScreen`, showing Stroom's real [IndexVolumeGroupsController] (the
 /// 'Index Volumes' tab, its 'Edit Index Volume Group' dialog and 'New Index Volume' dialog) with fake REST
 /// replies.
 ///
@@ -223,7 +223,7 @@ public final class IndexVolumesScreenStories {
             builder.realAlerts();
         }
         final ScreenHarness harness = builder.build();
-        harness.afterStartUp(() -> harness.show(injector.getIndexVolumeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getIndexVolumeGroupsController()));
         return harness.asWidget();
     }
 }

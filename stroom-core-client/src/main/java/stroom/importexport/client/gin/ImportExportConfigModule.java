@@ -20,8 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.importexport.client.view.DependenciesTabViewImpl;
 
 public class ImportExportConfigModule extends PluginModule {
 
@@ -35,10 +33,5 @@ public class ImportExportConfigModule extends PluginModule {
 
         // Dependencies.
         bindPlugin(DependenciesPlugin.class);
-
-        bindPresenterWidget(
-                DependenciesTabPresenter.class,
-                DependenciesTabPresenter.DependenciesTabView.class,
-                DependenciesTabViewImpl.class);
     }
 }

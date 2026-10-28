@@ -16,6 +16,8 @@
 
 package stroom.core.client.presenter;
 
+import stroom.core.client.component.CoreController;
+import stroom.core.client.component.FullScreenController;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.task.client.TaskEndEvent;
@@ -32,19 +34,19 @@ public class CoreScreens {
     /// Adds the handlers of the events that open the screens.
     ///
     /// @param eventBus The application's event bus.
-    /// @param corePresenterProvider Makes the CorePresenter.
-    /// @param fullScreenPresenterProvider Makes the FullScreenPresenter.
+    /// @param coreControllerProvider Makes the CoreController.
+    /// @param fullScreenControllerProvider Makes the FullScreenController.
     @Inject
     public CoreScreens(final EventBus eventBus,
-                       final Provider<CorePresenter> corePresenterProvider,
-                       final Provider<FullScreenPresenter> fullScreenPresenterProvider) {
-        eventBus.addHandler(TaskStartEvent.getType(), event -> corePresenterProvider.get().onTaskStart(event));
-        eventBus.addHandler(TaskEndEvent.getType(), event -> corePresenterProvider.get().onTaskEnd(event));
+                       final Provider<CoreController> coreControllerProvider,
+                       final Provider<FullScreenController> fullScreenControllerProvider) {
+        eventBus.addHandler(TaskStartEvent.getType(), event -> coreControllerProvider.get().onTaskStart(event));
+        eventBus.addHandler(TaskEndEvent.getType(), event -> coreControllerProvider.get().onTaskEnd(event));
         eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->
-                corePresenterProvider.get().onCurrentUserChanged(event));
+                coreControllerProvider.get().onCurrentUserChanged(event));
         eventBus.addHandler(ShowFullScreenEvent.getType(), event -> {
-            fullScreenPresenterProvider.get().onShowFullScreen(event);
-            corePresenterProvider.get().setContent(fullScreenPresenterProvider.get());
+            fullScreenControllerProvider.get().onShowFullScreen(event);
+            coreControllerProvider.get().setContent(fullScreenControllerProvider.get());
         });
     }
 }

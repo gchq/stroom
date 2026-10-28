@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.CurrentUser;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.util.shared.UserRef;
@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 ///
 /// * Holding a permission: Stroom's `CurrentUser.hasAppPermission` (`ADMINISTRATOR` implies every
 ///   permission), checked against `CurrentUser`s holding each case's permissions;
-/// * The user tab's label: `UserTabPresenter.setUserRef`'s tab label, read from real presenters (from
+/// * The user tab's label: `UserTabController.setUserRef`'s tab label, read from real presenters (from
 ///   GIN) given each case's user. The story shows each case and its label, and the play checks
 ///   them.
 public final class AppPermissionsStories {
@@ -152,12 +152,12 @@ public final class AppPermissionsStories {
         return harness.asWidget();
     }
 
-    /// Shows the caption `UserTabPresenter` gives a user's tab.
+    /// Shows the caption `UserTabController` gives a user's tab.
     private static void addCaption(final SecurityScreenGinjector injector,
                                    final FlowPanel panel,
                                    final String id,
                                    final UserRef userRef) {
-        final UserTabPresenter presenter = injector.getUserTabPresenter();
+        final UserTabController presenter = injector.getUserTabController();
         String note = "";
         try {
             presenter.setUserRef(userRef);

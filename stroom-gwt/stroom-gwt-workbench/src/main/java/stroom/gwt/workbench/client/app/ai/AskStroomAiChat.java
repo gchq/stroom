@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.ai;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -24,7 +24,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiPresenter]) for the app events that open it,
+/// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiController]) for the app events that open it,
 /// `AskStroomAiEvent` (a table's 'Ask Stroom AI' button) and `ShowAskStroomAiEvent` (the toolbar's
 /// AI toggle), as `AskStroomAiScreens` does in Stroom.
 ///
@@ -42,10 +42,10 @@ import java.util.function.Supplier;
 public final class AskStroomAiChat {
 
     private final ScreenHarness harness;
-    private final Supplier<AskStroomAiPresenter> factory;
-    private AskStroomAiPresenter presenter;
+    private final Supplier<AskStroomAiController> factory;
+    private AskStroomAiController presenter;
 
-    private AskStroomAiChat(final ScreenHarness harness, final Supplier<AskStroomAiPresenter> factory) {
+    private AskStroomAiChat(final ScreenHarness harness, final Supplier<AskStroomAiController> factory) {
         this.harness = harness;
         this.factory = factory;
     }
@@ -55,10 +55,10 @@ public final class AskStroomAiChat {
     /// getter) when the first event is fired, and is closed and unbound when the story renders again.
     ///
     /// @param harness The story's harness.
-    /// @param factory Creates the presenter, e.g. `injector::getAskStroomAiPresenter`.
+    /// @param factory Creates the presenter, e.g. `injector::getAskStroomAiController`.
     /// @return The registered chat, e.g. to get its presenter once shown.
     public static AskStroomAiChat register(final ScreenHarness harness,
-                                           final Supplier<AskStroomAiPresenter> factory) {
+                                           final Supplier<AskStroomAiController> factory) {
         final AskStroomAiChat chat = new AskStroomAiChat(Objects.requireNonNull(harness),
                 Objects.requireNonNull(factory));
         harness.addRegistration(harness.getEventBus().addHandler(AskStroomAiEvent.getType(),
@@ -76,7 +76,7 @@ public final class AskStroomAiChat {
     /// Gets the chat's presenter, creating it if no event has created it yet.
     ///
     /// @return The presenter.
-    public AskStroomAiPresenter getPresenter() {
+    public AskStroomAiController getPresenter() {
         if (presenter == null) {
             presenter = factory.get();
             harness.ownPopup(presenter);

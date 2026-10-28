@@ -32,8 +32,8 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.security.client.component.UsersAndGroupsTabController;
 import stroom.security.client.event.OpenUsersScreenEvent;
-import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
@@ -43,7 +43,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories of `App/Main/UserGroupsScreen`, showing Stroom's real [UserAndGroupsPresenter] (the
+/// Stories of `App/Main/UserGroupsScreen`, showing Stroom's real [UsersAndGroupsTabController] (the
 /// 'User Groups' tab) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -334,7 +334,7 @@ public final class UserGroupsScreenStories {
         // Opened as UsersAndGroupsPlugin.open opens it (refreshed), once Stroom has started (it
         // reads the UI config)
         harness.afterStartUp(() -> {
-            final UserAndGroupsPresenter presenter = harness.show(injector.getUserAndGroupsPresenter());
+            final UsersAndGroupsTabController presenter = harness.show(injector.getUsersAndGroupsTabController());
             presenter.refresh();
         });
         return harness.asWidget();

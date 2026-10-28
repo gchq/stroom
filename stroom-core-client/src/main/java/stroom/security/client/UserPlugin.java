@@ -22,7 +22,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
 import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -34,14 +34,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
+public class UserPlugin extends MonitoringPlugin<UserTabController> {
 
     private final ClientSecurityContext securityContext;
 
     @Inject
     public UserPlugin(final EventBus eventBus,
                       final ContentManager contentManager,
-                      final Provider<UserTabPresenter> presenterProvider,
+                      final Provider<UserTabController> presenterProvider,
                       final ClientSecurityContext securityContext,
                       final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -86,6 +86,6 @@ public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
 
     @Override
     public String getType() {
-        return UserTabPresenter.TAB_TYPE;
+        return UserTabController.TAB_TYPE;
     }
 }

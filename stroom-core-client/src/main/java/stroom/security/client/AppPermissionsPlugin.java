@@ -22,13 +22,12 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.AppPermissionsController;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
-import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -40,7 +39,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresenter> {
+public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsController> {
 
     public static final String SCREEN_NAME = "Application Permissions";
     public static final SvgImage ICON = SvgImage.SHIELD;
@@ -48,7 +47,7 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
     @Inject
     public AppPermissionsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<AppPermissionsPresenter> presenterProvider,
+                                final Provider<AppPermissionsController> presenterProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -85,7 +84,7 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
     }
 
     @Override
-    public void open(final Consumer<AppPermissionsPresenter> consumer) {
+    public void open(final Consumer<AppPermissionsController> consumer) {
         super.open(presenter -> {
             presenter.refresh();
             consumer.accept(presenter);
@@ -104,6 +103,6 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
 
     @Override
     public String getType() {
-        return AppPermissionsPresenter.TAB_TYPE;
+        return AppPermissionsController.TAB_TYPE;
     }
 }

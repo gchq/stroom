@@ -31,14 +31,14 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.security.client.component.UserAccessController;
 import stroom.security.client.event.OpenUserEvent;
-import stroom.security.client.presenter.UserAccessPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/UserAccessScreen`, showing Stroom's real [UserAccessPresenter] (the 'User
+/// Stories of `App/Main/UserAccessScreen`, showing Stroom's real [UserAccessController] (the 'User
 /// Access' tab: users with sessions or tokens above, the selected user's sessions below) with fake
 /// REST replies.
 ///
@@ -275,7 +275,7 @@ public final class UserAccessScreenStories {
         // Opened as UserAccessPlugin opens it (refreshed), once Stroom has started (it reads the
         // UI config for the identity provider)
         harness.afterStartUp(() -> {
-            final UserAccessPresenter presenter = harness.show(injector.getUserAccessPresenter());
+            final UserAccessController presenter = harness.show(injector.getUserAccessController());
             presenter.refresh();
         });
         return harness.asWidget();

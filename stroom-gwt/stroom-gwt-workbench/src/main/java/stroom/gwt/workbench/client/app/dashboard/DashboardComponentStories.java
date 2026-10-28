@@ -128,7 +128,7 @@ public final class DashboardComponentStories {
                 .story("TableAskAiButton", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         AiFixtures::chatRoutes,
                         options -> options.setup((harness, injector) ->
-                                AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter))))
+                                AskStroomAiChat.register(harness, injector::getAskStroomAiController))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     DashboardPlays.opened(play);

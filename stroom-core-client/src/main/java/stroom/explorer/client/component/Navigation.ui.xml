@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
+        <g:FlowPanel styleName="dock-min navigation-title-bar">
+            <b:Button ui:field="logo" styleName="navigation-logo"/>
+            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
+                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
+            </b:Toolbar>
+        </g:FlowPanel>
+
+        <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">
+            <v:QuickFilter accessibleName="Filter explorer" ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+        </g:SimplePanel>
+        <b:ToolbarRow addStyleNames="navigation-toolbar">
+            <b:Toolbar ui:field="toolbar" name="Explorer" addStyleNames="toolbar--navigation"/>
+            <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+        </b:ToolbarRow>
+        <layout:ScrollPane addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
+        <!-- The current activity, when activities are used: pressing it chooses another -->
+        <g:SimplePanel styleName="dock-min">
+            <g:SimplePanel ui:field="activityOuter" styleName="activityOuter" visible="false">
+                <b:Button ui:field="activityButton" styleName="activityButton dashboard-panel"/>
+            </g:SimplePanel>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

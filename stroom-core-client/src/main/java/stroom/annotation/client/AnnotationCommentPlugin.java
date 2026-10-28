@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationTagsController;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.document.client.DocumentPluginRegistry;
@@ -33,7 +34,7 @@ public class AnnotationCommentPlugin extends AnnotationPlugin {
     @Inject
     AnnotationCommentPlugin(final EventBus eventBus,
                             final ContentManager contentManager,
-                            final Provider<AnnotationTagPresenter> presenterProvider,
+                            final Provider<AnnotationTagsController> presenterProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
                             final ClientSecurityContext securityContext) {
         super(eventBus,
@@ -47,6 +48,6 @@ public class AnnotationCommentPlugin extends AnnotationPlugin {
 
     @Override
     public String getType() {
-        return AnnotationTagPresenter.TAB_TYPE + AnnotationTagType.COMMENT.getDisplayValue();
+        return AnnotationTagsController.TAB_TYPE + AnnotationTagType.COMMENT.getDisplayValue();
     }
 }

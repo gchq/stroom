@@ -31,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
+import stroom.receive.rules.client.component.DataRetentionController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/DataRetentionScreen`, showing Stroom's real [DataRetentionPresenter] (the
+/// Stories of `App/Main/DataRetentionScreen`, showing Stroom's real [DataRetentionController] (the
 /// 'Data Retention' tab, as `DataRetentionPlugin` opens it: the Rules and Impact Summary sub-tabs)
 /// with fake REST replies.
 ///
@@ -387,7 +387,7 @@ public final class DataRetentionScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getDataRetentionPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getDataRetentionController()));
         return harness.asWidget();
     }
 }

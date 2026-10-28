@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.ContentManager;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -33,6 +32,5 @@ public class ContentAppScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ContentManager.class).in(Singleton.class);
-        bind(ContentTabPanePresenter.class);
     }
 }

@@ -34,10 +34,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.importexport.client.component.DependenciesTabController;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 
 import com.google.gwt.core.client.GWT;
@@ -49,7 +49,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/DependenciesScreen`, showing Stroom's real [DependenciesTabPresenter] (the
+/// Stories of `App/Main/DependenciesScreen`, showing Stroom's real [DependenciesTabController] (the
 /// 'Dependencies' tab) with fake REST replies.
 ///
 /// The dependencies (`POST /content/v1/fetchDependencies`, `ContentResource.fetchDependencies`) are
@@ -289,7 +289,7 @@ public final class DependenciesScreenStories {
             }
         }));
         harness.afterStartUp(() -> {
-            final DependenciesTabPresenter presenter = harness.show(injector.getDependenciesTabPresenter());
+            final DependenciesTabController presenter = harness.show(injector.getDependenciesTabController());
             // As DependenciesPlugin does
             harness.addRegistration(harness.getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(),
                     event -> {

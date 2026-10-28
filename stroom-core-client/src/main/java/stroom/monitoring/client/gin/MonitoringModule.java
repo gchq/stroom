@@ -16,14 +16,9 @@
 
 package stroom.monitoring.client.gin;
 
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
-import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
-import stroom.job.client.presenter.JobPresenter;
-import stroom.job.client.presenter.JobPresenter.JobView;
-import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
@@ -31,16 +26,8 @@ import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.monitoring.client.ProcessorProfilePlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
-import stroom.node.client.presenter.NodePresenter;
-import stroom.node.client.presenter.NodePresenter.NodeView;
-import stroom.node.client.view.NodeViewImpl;
 import stroom.task.client.TaskManagerPlugin;
-import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
-import stroom.task.client.view.TaskManagerViewImpl;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.datagrid.client.WrapperView;
-import stroom.widget.datagrid.client.WrapperViewImpl;
 
 public class MonitoringModule extends PluginModule {
 
@@ -59,32 +46,10 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(NodeMonitoringPlugin.class);
         bindPlugin(ProcessorProfilePlugin.class);
 
-        bindPresenterWidget(
-                NodePresenter.class,
-                NodeView.class,
-                NodeViewImpl.class);
-
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);
         bindPlugin(ManageGlobalPropertiesPlugin.class);
 
-        bindSharedView(WrapperView.class, WrapperViewImpl.class);
-
-        bindPresenterWidget(
-                JobPresenter.class,
-                JobView.class,
-                JobViewImpl.class);
-
-        // Global properties.
-        bindPresenterWidget(
-                GlobalPropertyTabPresenter.class,
-                GlobalPropertyTabPresenter.GlobalPropertyTabView.class,
-                GlobalPropertyTabViewImpl.class);
-
         bindPlugin(TaskManagerPlugin.class);
-        bindPresenterWidget(
-                TaskManagerPresenter.class,
-                TaskManagerView.class,
-                TaskManagerViewImpl.class);
     }
 }

@@ -59,8 +59,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stories of `App/Main/AppShell`: Stroom's app shell put together by [ShellScreen] from Stroom's
-/// real presenters and plugins: the main view (its main menu), the explorer (`NavigationPresenter`:
-/// the tree, its toolbar and the current activity), the document tabs (`ContentTabPanePresenter`),
+/// real presenters and plugins: the main view (its main menu), the explorer (`NavigationController`:
+/// the tree, its toolbar and the current activity), the document tabs (`ContentTabPaneController`),
 /// the explorer's and tabs' menus and document actions (`DocumentPluginEventManager`), keyboard
 /// shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary, Feed and Folder editors.
 ///
@@ -87,7 +87,7 @@ public final class AppShellStories {
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
-    // The explorer panel is NavigationViewImpl's '.navigation'
+    // The explorer panel is Navigation's '.navigation'
     private static final String NAVIGATION = ".navigation";
     // The document tabs' labels
     private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
@@ -97,7 +97,7 @@ public final class AppShellStories {
     private static final String MENU_SHORTCUT = ".menu__shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
-    // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
+    // The content tab pane (CurveTabLayout) when the focus is in it
     private static final String CONTENT_WITH_FOCUS = ".curveTabLayoutViewImpl-layerContainerOuter:focus-within";
 
     private static final String DICTIONARY_PATH = "/dictionary/v1/";
@@ -223,7 +223,7 @@ public final class AppShellStories {
                 .story("Embedded", AppShellStories::renderEmbedded)
                 .withPlay(play -> {
                     // Stroom shows a document without the shell for a URL that
-                    // names it without the open-doc action (CorePresenter); with open-doc (a deep
+                    // names it without the open-doc action (CoreController); with open-doc (a deep
                     // link) it shows the whole shell, embedded or not. So the story opens the
                     // document as Stroom's embedded view does: its editor, without the explorer or
                     // the Ask Stroom AI button
@@ -1305,7 +1305,7 @@ public final class AppShellStories {
                 routes -> AiFixtures.chatRoutes(routes, "{\"dockType\": \"DOCK\", \"dockLocation\": \"RIGHT\"}"),
                 builder -> {
                 });
-        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiPresenter);
+        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiController);
         shell.start(null);
         return shell.asWidget();
     }

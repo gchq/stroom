@@ -1359,7 +1359,7 @@ public final class QueryEditorStories {
 
     // As the app does: Stroom's chat handles the table's AskStroomAiEvent
     private static void askAi(final ScreenHarness harness, final QueryScreenGinjector injector) {
-        AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter);
+        AskStroomAiChat.register(harness, injector::getAskStroomAiController);
     }
 
     // The number of searches made

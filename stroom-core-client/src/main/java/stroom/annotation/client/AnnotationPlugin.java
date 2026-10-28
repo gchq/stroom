@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationTagsController;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
@@ -32,19 +33,19 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPresenter> {
+abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagsController> {
 
     private final String tabLabel;
 
     AnnotationPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<AnnotationTagPresenter> presenterProvider,
+                     final Provider<AnnotationTagsController> presenterProvider,
                      final DocumentPluginRegistry documentPluginRegistry,
                      final ClientSecurityContext securityContext,
                      final String tabLabel,
                      final AnnotationTagType annotationTagType) {
         super(eventBus, contentManager, () -> {
-            final AnnotationTagPresenter annotationTagPresenter = presenterProvider.get();
+            final AnnotationTagsController annotationTagPresenter = presenterProvider.get();
             annotationTagPresenter.setTabLabel(tabLabel);
             annotationTagPresenter.setAnnotationTagType(annotationTagType);
             annotationTagPresenter.refresh();

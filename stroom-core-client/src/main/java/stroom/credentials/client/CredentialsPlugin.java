@@ -19,11 +19,10 @@ package stroom.credentials.client;
 import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.credentials.client.presenter.CredentialsPresenter;
+import stroom.credentials.client.component.CredentialsController;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -38,7 +37,7 @@ import javax.inject.Singleton;
  * Shows the Credentials UI when the menu item is selected.
  */
 @Singleton
-public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
+public class CredentialsPlugin extends ContentPlugin<CredentialsController> {
 
     /** Used to check whether user can access the App Store */
     private final ClientSecurityContext securityContext;
@@ -55,7 +54,7 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
     @Inject
     public CredentialsPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
-                             final Provider<CredentialsPresenter> presenterProvider,
+                             final Provider<CredentialsController> presenterProvider,
                              final ClientSecurityContext securityContext,
                              final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
@@ -84,6 +83,6 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
 
     @Override
     public String getType() {
-        return CredentialsPresenter.TAB_TYPE;
+        return CredentialsController.TAB_TYPE;
     }
 }

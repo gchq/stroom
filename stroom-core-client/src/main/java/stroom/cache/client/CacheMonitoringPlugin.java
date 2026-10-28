@@ -16,14 +16,13 @@
 
 package stroom.cache.client;
 
-import stroom.cache.client.presenter.CachePresenter;
+import stroom.cache.client.component.CachesController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -37,11 +36,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
+public class CacheMonitoringPlugin extends MonitoringPlugin<CachesController> {
 
     @Inject
     public CacheMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                 final Provider<CachePresenter> presenterProvider,
+                                 final Provider<CachesController> presenterProvider,
                                  final ClientSecurityContext securityContext,
                                  final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -74,6 +73,6 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
 
     @Override
     public String getType() {
-        return CachePresenter.TAB_TYPE;
+        return CachesController.TAB_TYPE;
     }
 }

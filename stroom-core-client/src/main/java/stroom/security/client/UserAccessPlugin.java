@@ -22,7 +22,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserAccessPresenter;
+import stroom.security.client.component.UserAccessController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -35,7 +35,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class UserAccessPlugin extends MonitoringPlugin<UserAccessPresenter> {
+public class UserAccessPlugin extends MonitoringPlugin<UserAccessController> {
 
     public static final String SCREEN_NAME = "User Access";
     public static final SvgImage ICON = SvgImage.SHIELD;
@@ -44,7 +44,7 @@ public class UserAccessPlugin extends MonitoringPlugin<UserAccessPresenter> {
     public UserAccessPlugin(final EventBus eventBus,
                             final ContentManager eventManager,
                             final ClientSecurityContext securityContext,
-                            final Provider<UserAccessPresenter> userAccessPresenterProvider,
+                            final Provider<UserAccessController> userAccessPresenterProvider,
                             final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, userAccessPresenterProvider, securityContext, documentPluginRegistry);
     }
@@ -82,6 +82,6 @@ public class UserAccessPlugin extends MonitoringPlugin<UserAccessPresenter> {
 
     @Override
     public String getType() {
-        return UserAccessPresenter.TAB_TYPE;
+        return UserAccessController.TAB_TYPE;
     }
 }

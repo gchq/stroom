@@ -275,7 +275,7 @@ public final class QuickFilterStories {
     }-*/;
 
     // A quick filter with the syntax help popup populated, as Stroom's screens register it, e.g.
-    // TaskManagerPresenter
+    // ServerTasksController
     private static QuickFilter quickFilterWithHelp(final StoryContext context) {
         final QuickFilter quickFilter = quickFilter(context);
         quickFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(

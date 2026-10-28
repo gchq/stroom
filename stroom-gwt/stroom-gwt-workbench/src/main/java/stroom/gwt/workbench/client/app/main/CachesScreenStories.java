@@ -17,14 +17,13 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.cache.client.presenter.CachePresenter;
+import stroom.cache.client.component.CachesController;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -33,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/CachesScreen`, showing Stroom's real [CachePresenter] (the 'Caches' tab:
+/// Stories of `App/Main/CachesScreen`, showing Stroom's real [CachesController] (the 'Caches' tab:
 /// the caches list and the selected cache's per-node statistics) with fake REST replies.
 ///
 /// The stories answer Stroom's `NodeResource` and `CacheResource`:
@@ -131,7 +130,7 @@ public final class CachesScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.show(injector.getCachePresenter());
+        harness.show(injector.getCachesController());
         return harness.asWidget();
     }
 }

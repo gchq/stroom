@@ -551,7 +551,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   Permissions tab and doc pickers. The ginjector also gives `HyperlinkEventHandlerImpl` and
   `DataDisplaySupport` (Stroom creates both eagerly), `DateTimeSettingsFactory` and
   `ResultStoreModel`; its `QueryExtrasScreenModule` holds single bindings these screens need
-  (`IFrameContentPresenter`).
+  (`IFrameContentController`).
 * **Searches** (`client/app/query/QueryFixtures`, also for dashboards): a search is a poll of
   `POST /query/v1/search/{node}` (`/dashboard/v1/search/{node}` for a dashboard's `SearchModel`)
   until a reply is `complete` or `null`: route `QueryFixtures.SEARCH` with a reply sequence
@@ -604,10 +604,10 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   shell, the explorer, the main menu or opening documents from the explorer.
   The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
   adds it to the story, as `MainScreens` puts it in the page, and it shows the explorer
-  (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
+  (`MainController.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
   instead. Its ginjector adds `ShellAppScreenModule` (the main view,
-  `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
-  cancels `MainPresenter`'s 30 second refresh timer on re-render. `MainPresenter` adds `GlobalKeyHandler` DOM handlers to the
+  `NavigationController`, About, User Preferences, Welcome, current password and Feed), and it
+  cancels `MainController`'s 30 second refresh timer on re-render. `MainController` adds `GlobalKeyHandler` DOM handlers to the
   page's body and never removes them, so the shell passes keys to Stroom's real
   `GlobalKeyHandlerImpl` only until the story renders again; `KeyBinding`'s commands are static, so
   the last shell rendered owns them. Fixture shapes: `fetchDocumentTypes` needs `visibleTypes` as
@@ -641,10 +641,10 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   request bodies. A search whose result handling throws ends with the error shown in the Query's
   errors, so a play that waits for nothing in particular should check no error is shown.
 * **Ask Stroom AI opened by another screen** (a results table's 'Ask Stroom AI' button fires
-  `AskStroomAiEvent`): add the ginjector's `AskStroomAIScreenModule` and a getter for
-  `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
+  `AskStroomAiEvent`): add a getter for
+  `AskStroomAiController`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
-  with `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`. It creates the
+  with `AskStroomAiChat.register(harness, injector::getAskStroomAiController)`. It creates the
   presenter on the first event, as `AskStroomAiScreens` does, i.e. after start-up.
 
 ## Play functions
@@ -883,7 +883,7 @@ Also:
   `x == null` is true for both. Check with `== null` when a value may come from a builder that left
   it unset.
 * Don't create a presenter that reads the user's preferences before start-up (e.g.
-  `AskStroomAiPresenter`, whose constructor reads the AI config): create it in `afterStartUp`, as
+  `AskStroomAiController`, whose constructor reads the AI config): create it in `afterStartUp`, as
   Stroom does.
 * A leftover workbench server (e.g. after a Gradle daemon is killed for memory) keeps the test port;
   stop it by its PID (`ss -ltnp | grep <port>`) before the next run.

@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.contentstore.client.presenter.ContentStorePresenter;
+import stroom.contentstore.client.component.ContentStoreTabController;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/ContentStoreScreen`, showing Stroom's real [ContentStorePresenter] (the
+/// Stories of `App/Main/ContentStoreScreen`, showing Stroom's real [ContentStoreTabController] (the
 /// 'Content Store' tab: the content pack list and the selected pack's details) with fake REST
 /// replies.
 ///
@@ -184,7 +184,7 @@ public final class ContentStoreScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getContentStorePresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getContentStoreTabController()));
         return harness.asWidget();
     }
 }

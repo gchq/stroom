@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.ai;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/AI/AskStroomAiDialog` stories, showing Stroom's real [AskStroomAiPresenter] as the 'Ask
+/// The `App/AI/AskStroomAiDialog` stories, showing Stroom's real [AskStroomAiController] as the 'Ask
 /// Stroom AI' dialog, opened by `ShowAskStroomAiEvent` as the app's toolbar opens it, with fake
 /// REST replies ([AiFixtures]): a reply with an attachment, two past chats (`listChats`, filtered
 /// by the request's filter), a past chat's messages (`getMessages`), the attachment's data
@@ -47,7 +47,7 @@ import java.util.List;
 /// `DOWNLOAD_SPY`).
 ///
 /// `ToolbarEntryPoint` shows Stroom's `MainToolbar` (the app's top bar) with its AI toggle wired
-/// as `MainPresenter` wires it.
+/// as `MainController` wires it.
 public final class AskStroomAiDialogStories {
 
     private static final String CAPTION = "Ask Stroom AI";
@@ -269,9 +269,9 @@ public final class AskStroomAiDialogStories {
     }
 
     // As the AI toolbar button does: the presenter handles ShowAskStroomAiEvent (its listener event)
-    private static AskStroomAiPresenter showPresenter(final ScreenHarness harness,
+    private static AskStroomAiController showPresenter(final ScreenHarness harness,
                                                       final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
+        final AskStroomAiController presenter = injector.getAskStroomAiController();
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), presenter));
         harness.own(presenter);
         return presenter;
@@ -284,14 +284,14 @@ public final class AskStroomAiDialogStories {
     }
 
     private static void showDialog(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = showPresenter(harness, injector);
+        final AskStroomAiController presenter = showPresenter(harness, injector);
         harness.ownPopup(presenter);
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
     }
 
     private static void showDialogWithContext(final ScreenHarness harness,
                                               final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = showPresenter(harness, injector);
+        final AskStroomAiController presenter = showPresenter(harness, injector);
         harness.ownPopup(presenter);
         presenter.setContext(new GeneralTableContext("Orders table",
                 List.of("Order", "Total"),
@@ -305,7 +305,7 @@ public final class AskStroomAiDialogStories {
                 AskStroomAiDialogStories::showToolbar);
     }
 
-    // As MainPresenter wires the toolbar's AI toggle
+    // As MainController wires the toolbar's AI toggle
     private static void showToolbar(final ScreenHarness harness, final EditorsScreenGinjector injector) {
         showPresenter(harness, injector);
         final MainToolbar toolbar = new MainToolbar();

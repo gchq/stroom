@@ -28,13 +28,13 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.ApiKeysPresenter;
+import stroom.security.client.component.ApiKeysController;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/ApiKeysScreen`, showing Stroom's real [ApiKeysPresenter] (the 'Manage API
+/// Stories of `App/Main/ApiKeysScreen`, showing Stroom's real [ApiKeysController] (the 'Manage API
 /// Keys' tab) with fake REST replies.
 ///
 /// The stories answer Stroom's `ApiKeyResource`: `POST /apikey/v2/find` and `PUT /apikey/v2/{id}`
@@ -99,7 +99,7 @@ public final class ApiKeysScreenStories {
         // Opened as ApiKeysPlugin opens it (refreshed), once Stroom has started (the list reads the
         // UI config and formats dates with the user's preferences)
         harness.afterStartUp(() -> {
-            final ApiKeysPresenter presenter = harness.show(injector.getApiKeysPresenter());
+            final ApiKeysController presenter = harness.show(injector.getApiKeysController());
             presenter.refresh();
         });
         return harness.asWidget();

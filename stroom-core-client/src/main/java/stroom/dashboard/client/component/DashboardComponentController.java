@@ -24,6 +24,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.LayerController;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 

@@ -77,7 +77,7 @@ public class App implements EntryPoint {
                 userPreferencesManager.setCurrentPreferences(preferences);
 
                 // Show the application panel.
-                Page.show(ginjector.getCorePresenter().get());
+                Page.show(ginjector.getCoreController().get());
 
                 // Register all plugins that will respond to
 

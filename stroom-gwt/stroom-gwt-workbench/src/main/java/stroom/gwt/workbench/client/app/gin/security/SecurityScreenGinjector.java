@@ -16,25 +16,23 @@
 
 package stroom.gwt.workbench.client.app.gin.security;
 
-import stroom.credentials.client.presenter.CredentialsPresenter;
-import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
+import stroom.credentials.client.component.CredentialsController;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
+import stroom.security.client.component.ApiKeysController;
+import stroom.security.client.component.AppPermissionsController;
+import stroom.security.client.component.BatchDocumentPermissionsController;
 import stroom.security.client.component.DocumentCreatePermissionsListController;
+import stroom.security.client.component.DocumentUserPermissionsContentTabController;
+import stroom.security.client.component.SigningKeysController;
+import stroom.security.client.component.UserAccessController;
 import stroom.security.client.component.UserInfoTabController;
-import stroom.security.client.presenter.ApiKeysPresenter;
-import stroom.security.client.presenter.AppPermissionsPresenter;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
-import stroom.security.client.presenter.SigningKeyPresenter;
-import stroom.security.client.presenter.UserAccessPresenter;
-import stroom.security.client.presenter.UserAndGroupsPresenter;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
+import stroom.security.client.component.UsersAndGroupsTabController;
+import stroom.security.identity.client.component.AccountsController;
 import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.component.EditAccountController;
-import stroom.security.identity.client.presenter.AccountsPresenter;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -44,25 +42,22 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final SigningKeyPresenter presenter = injector.getSigningKeyPresenter();
+/// final SigningKeysController screen = injector.getSigningKeysController();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
-/// It lists the shared base modules (as `AppScreenGinjector` does) and [IdentityScreenModule],
-/// the mirror of Stroom's `ChangePasswordModule`.
+/// It lists the shared base modules only (as `AppScreenGinjector` does): the screens are controllers,
+/// which need no bindings.
 @GinModules({
         ScreenViewsModule.class,
-        CredentialsScreenModule.class,
         EntityScreenModule.class,
-        IdentityScreenModule.class,
-        SecurityScreenModule.class,
 })
 public interface SecurityScreenGinjector extends ScreenGinjector {
 
     // Accounts and passwords (the internal identity provider)
 
     /// @return The 'Manage Accounts' tab.
-    AccountsPresenter getAccountsPresenter();
+    AccountsController getAccountsController();
 
     /// @return A new 'Edit Account'/'Create Account' dialog.
     EditAccountController getEditAccountController();
@@ -72,35 +67,35 @@ public interface SecurityScreenGinjector extends ScreenGinjector {
     ChangePasswordController getChangePasswordController();
 
     /// @return The 'Signing Keys' tab.
-    SigningKeyPresenter getSigningKeyPresenter();
+    SigningKeysController getSigningKeysController();
 
     // Users, groups and their permissions
 
     /// @return The 'User Access' tab.
-    UserAccessPresenter getUserAccessPresenter();
+    UserAccessController getUserAccessController();
 
     /// @return The 'User Groups' tab (also a user tab's 'User Groups' sub-tab).
-    UserAndGroupsPresenter getUserAndGroupsPresenter();
+    UsersAndGroupsTabController getUsersAndGroupsTabController();
 
     /// @return A user's tab, as `UserTabPlugin` and `UserPlugin` ('User Profile') open it.
-    UserTabPresenter getUserTabPresenter();
+    UserTabController getUserTabController();
 
     /// @return A user tab's 'Info' sub-tab.
     UserInfoTabController getUserInfoTabController();
 
     /// @return The 'Application Permissions' tab.
-    AppPermissionsPresenter getAppPermissionsPresenter();
+    AppPermissionsController getAppPermissionsController();
 
     /// @return The 'Manage API Keys' tab.
-    ApiKeysPresenter getApiKeysPresenter();
+    ApiKeysController getApiKeysController();
 
     // Document permissions
 
     /// @return The 'Document Permissions' tab (batch changes for the filtered documents).
-    BatchDocumentPermissionsPresenter getBatchDocumentPermissionsPresenter();
+    BatchDocumentPermissionsController getBatchDocumentPermissionsController();
 
     /// @return A document's 'Permissions' tab, as `DocumentPermissionsPlugin` opens it.
-    DocumentUserPermissionsPresenter getDocumentUserPermissionsPresenter();
+    DocumentUserPermissionsContentTabController getDocumentUserPermissionsContentTabController();
 
     /// @return The grid of document types a user may create in a folder.
     DocumentCreatePermissionsListController getDocumentCreatePermissionsListController();
@@ -108,5 +103,5 @@ public interface SecurityScreenGinjector extends ScreenGinjector {
     // Credentials
 
     /// @return The 'Credentials' tab.
-    CredentialsPresenter getCredentialsPresenter();
+    CredentialsController getCredentialsController();
 }

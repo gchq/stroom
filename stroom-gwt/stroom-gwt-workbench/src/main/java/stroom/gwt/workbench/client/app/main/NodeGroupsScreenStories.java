@@ -27,12 +27,12 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.node.client.presenter.NodeGroupPresenter;
+import stroom.node.client.component.NodeGroupsController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/NodeGroupsScreen`, showing Stroom's real [NodeGroupPresenter] (the 'Node
+/// Stories of `App/Main/NodeGroupsScreen`, showing Stroom's real [NodeGroupsController] (the 'Node
 /// Groups' tab, as `NodeGroupsPlugin` opens it) with fake REST replies, for Stroom's
 /// `NodeGroupResource`:
 ///
@@ -90,7 +90,7 @@ public final class NodeGroupsScreenStories {
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             // The list as loaded, after 'Processing' is enabled and after 'Reporting' is created
-            // (NodeGroupPresenter's constructor and the grid's first range change each load it)
+            // (NodeGroupsController's constructor and the grid's first range change each load it)
             .post(FIND_PATH,
                     RestReply.json(GROUPS),
                     RestReply.json(GROUPS),
@@ -185,7 +185,7 @@ public final class NodeGroupsScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getNodeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getNodeGroupsController()));
         return harness.asWidget();
     }
 }

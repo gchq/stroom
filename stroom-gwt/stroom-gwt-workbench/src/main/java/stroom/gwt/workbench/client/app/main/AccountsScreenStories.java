@@ -32,14 +32,14 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
-import stroom.security.identity.client.presenter.AccountsPresenter;
+import stroom.security.identity.client.component.AccountsController;
 import stroom.security.shared.AppPermission;
 import stroom.widget.datagrid.client.SortIcon;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/AccountsScreen`, showing Stroom's real [AccountsPresenter] (the 'Manage
+/// Stories of `App/Main/AccountsScreen`, showing Stroom's real [AccountsController] (the 'Manage
 /// Accounts' tab) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -194,7 +194,7 @@ public final class AccountsScreenStories {
 
         // Opened as AccountsPlugin.open opens it (refreshed), once Stroom has started (the grid
         // reads the UI config and formats dates with the user's preferences)
-        harness.afterStartUp(() -> harness.show(injector.getAccountsPresenter()).refresh());
+        harness.afterStartUp(() -> harness.show(injector.getAccountsController()).refresh());
         return harness.asWidget();
     }
 }

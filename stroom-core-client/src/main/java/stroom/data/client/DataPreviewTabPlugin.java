@@ -17,7 +17,7 @@
 package stroom.data.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.component.DataPreviewTabController;
 import stroom.data.client.presenter.DataViewType;
 import stroom.pipeline.shared.SourceLocation;
 
@@ -29,12 +29,12 @@ import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabPresenter> {
+public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabController> {
 
     @Inject
     public DataPreviewTabPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<DataPreviewTabPresenter> dataPreviewTabPresenterProvider) {
+                                final Provider<DataPreviewTabController> dataPreviewTabPresenterProvider) {
         super(eventBus, contentManager, dataPreviewTabPresenterProvider);
     }
 
@@ -46,7 +46,7 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
     /**
      * 4. This method will open the source and show it in the content pane.
      */
-    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
+    public Optional<DataPreviewTabController> open(final SourceLocation sourceLocation,
                                                   final DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 

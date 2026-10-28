@@ -22,8 +22,8 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.UsersAndGroupsTabController;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
-import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresenter> {
+public class UsersAndGroupsPlugin extends MonitoringPlugin<UsersAndGroupsTabController> {
 
     public static final String SCREEN_NAME = "User Groups";
     public static final SvgImage ICON = SvgImage.USERS;
@@ -45,7 +45,7 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<UserAndGroupsPresenter> presenterProvider,
+                                final Provider<UsersAndGroupsTabController> presenterProvider,
                                 final ClientSecurityContext securityContext,
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
@@ -72,7 +72,7 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
     }
 
     @Override
-    public void open(final Consumer<UserAndGroupsPresenter> consumer) {
+    public void open(final Consumer<UsersAndGroupsTabController> consumer) {
         super.open(presenter -> {
             presenter.refresh();
             consumer.accept(presenter);
@@ -91,6 +91,6 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
 
     @Override
     public String getType() {
-        return UserAndGroupsPresenter.TAB_TYPE;
+        return UsersAndGroupsTabController.TAB_TYPE;
     }
 }

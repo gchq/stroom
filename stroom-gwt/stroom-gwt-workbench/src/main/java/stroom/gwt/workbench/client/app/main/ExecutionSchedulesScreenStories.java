@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.analytics.client.presenter.ExecutionScheduleManager;
+import stroom.analytics.client.component.ExecutionSchedulesController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/ExecutionSchedulesScreen`, showing Stroom's real [ExecutionScheduleManager]
+/// Stories of `App/Main/ExecutionSchedulesScreen`, showing Stroom's real [ExecutionSchedulesController]
 /// (the 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it) with fake
 /// REST replies.
 ///
@@ -195,7 +195,7 @@ public final class ExecutionSchedulesScreenStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/expression/v1/validate").toSpyMatcher()));
                     // The filter is applied: the find re-runs with the (empty) expression, which has no
-                    // children; the dialog closes and nothing fails (ExecutionScheduleManager's
+                    // children; the dialog closes and nothing fails (ExecutionSchedulesController's
                     // formatISOExpressions once failed for an operator with no children)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(FETCH_PATH)
@@ -499,7 +499,7 @@ public final class ExecutionSchedulesScreenStories {
                 .appPermissions(permissions)
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.show(injector.getExecutionScheduleManager()));
+        harness.afterStartUp(() -> harness.show(injector.getExecutionSchedulesController()));
         return harness.asWidget();
     }
 }

@@ -16,23 +16,24 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.component.NavigationController;
 import stroom.gwt.workbench.client.app.gin.shell.ShellScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.main.client.component.Main;
+import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
-import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.util.client.GlobalKeyHandler;
@@ -47,22 +48,22 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stroom's app shell, put together for the `App/Main/AppShell` stories as Stroom's GIN modules and
-/// start-up put it together: the main view ([MainPresenter], with the main menu button), the
-/// explorer ([NavigationPresenter]) and the document tabs ([ContentTabPanePresenter]) in it, every
+/// start-up put it together: the main view ([MainController], with the main menu button), the
+/// explorer ([NavigationController]) and the document tabs ([ContentTabPaneController]) in it, every
 /// plugin that adds to the main menu (and binds keyboard shortcuts), the Dictionary, Feed and Folder
 /// document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
 /// the dialogs that the listeners would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
 ///
-/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CorePresenter` do once the harness has
+/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CoreController` do once the harness has
 /// loaded the UI config and preferences: the splash screen (if enabled), the initial activity
 /// chooser (if enabled), then `ShowMainEvent`, which shows the explorer and opens the initial
 /// document, if any.
 ///
-/// Stroom's `MainPresenter` adds its keyboard handlers to the page's body and never removes them;
-/// the story gives it a key handler that passes keys to Stroom's `GlobalKeyHandlerImpl` only until
-/// the story renders again. Its 30 second refresh timer is cancelled on re-render.
+/// Stroom's `MainController` adds its keyboard handlers to the page's body, and starts its 30 second
+/// refresh timer, until it is disposed (when the story renders again); the story gives it a key
+/// handler that passes keys to Stroom's `GlobalKeyHandlerImpl` only until then.
 final class ShellScreen {
 
     private final ShellScreenGinjector injector;
@@ -112,7 +113,7 @@ final class ShellScreen {
         });
     }
 
-    /// Opens a document in a full screen view, as Stroom's `CorePresenter` does for a URL naming a
+    /// Opens a document in a full screen view, as Stroom's `CoreController` does for a URL naming a
     /// document without the `open-doc` action (Stroom's embedded view), instead of showing the
     /// shell.
     ///
@@ -132,27 +133,26 @@ final class ShellScreen {
         final EventBus eventBus = harness.getEventBus();
 
         // The document tabs, registered for the content events as their listener would be
-        final ContentTabPanePresenter tabPane = injector.getContentTabPanePresenter();
+        final ContentTabPaneController tabPane = injector.getContentTabPaneController();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(MoveContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(RefreshContentTabEvent.getType(), tabPane));
 
-        final NavigationPresenter navigation = injector.getNavigationPresenter();
+        final NavigationController navigation = injector.getNavigationController();
 
         // The main view, with the app's keyboard shortcuts, which owns the tabs and the explorer
         final StoryKeyHandler keyHandler = new StoryKeyHandler(injector.getGlobalKeyHandlerImpl());
         harness.addCleanUp(keyHandler::stop);
-        final MainPresenter main = new MainPresenter(eventBus,
-                injector.getMainView(),
+        final MainController main = new MainController(eventBus,
+                new Main(),
                 new MenuItems(),
                 harness.getUiConfigCache(),
                 keyHandler,
                 navigation,
                 tabPane);
         harness.own(main);
-        harness.addCleanUp(() -> cancelRefreshTimer(main));
 
         // As Stroom shows it for ShowMainEvent, once the user has logged in: MainScreens puts it in the
         // page (here, the story's), then it shows the explorer
@@ -238,12 +238,6 @@ final class ShellScreen {
         injector.getFolderFavouritesPlugin();
         injector.getFolderRootPlugin();
     }
-
-    // MainPresenter's refresh timer (it fires RefreshCurrentContentTabEvent every 30 seconds) is
-    // never cancelled by Stroom, which has one main presenter for the page's life
-    private static native void cancelRefreshTimer(MainPresenter main) /*-{
-        main.@stroom.main.client.presenter.MainPresenter::refreshTimer.@com.google.gwt.user.client.Timer::cancel()();
-    }-*/;
 
     // --------------------------------------------------------------------------------
 

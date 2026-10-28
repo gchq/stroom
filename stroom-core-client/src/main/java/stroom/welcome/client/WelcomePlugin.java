@@ -20,7 +20,7 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.main.client.event.ShowMainEvent;
-import stroom.welcome.client.presenter.WelcomePresenter;
+import stroom.welcome.client.component.WelcomeTabController;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -29,11 +29,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements ShowMainEvent.Handler {
+public class WelcomePlugin extends ContentPlugin<WelcomeTabController> implements ShowMainEvent.Handler {
 
     @Inject
     public WelcomePlugin(final EventBus eventBus, final ContentManager eventManager,
-                         final Provider<WelcomePresenter> presenterProvider,
+                         final Provider<WelcomeTabController> presenterProvider,
                          final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, documentPluginRegistry);
 
@@ -50,6 +50,6 @@ public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements Sh
 
     @Override
     public String getType() {
-        return WelcomePresenter.TAB_TYPE;
+        return WelcomeTabController.TAB_TYPE;
     }
 }

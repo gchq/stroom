@@ -16,19 +16,15 @@
 
 package stroom.explorer.client.component;
 
-import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.explorer.client.presenter.FindView;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -39,8 +35,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// A filter above a list of what it finds, its owner's: the content of Find, Recent Items and the
-/// annotation finders. The annotation presenters not yet split see it as a [FindView].
-public class FindPanel extends Component implements FindView {
+/// annotation finders.
+public class FindPanel extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String DIALOG = "find-panel--dialog";
@@ -60,6 +56,8 @@ public class FindPanel extends Component implements FindView {
     /// Makes an empty panel, as a dialog's content.
     public FindPanel() {
         initWidget(BINDER.createAndBindUi(this));
+        nameFilter.addValueChangeHandler(event -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.addKeyDownHandler(event -> onFilterKeyDown.accept(event));
     }
 
     /// @param onFilterChange Given the filter's text whenever it changes.
@@ -73,56 +71,48 @@ public class FindPanel extends Component implements FindView {
         this.onFilterKeyDown = Objects.requireNonNull(onFilterKeyDown, "onFilterKeyDown");
     }
 
-    @Override
-    public void setUiHandlers(final FindUiHandlers uiHandlers) {
-        setOnFilterChange(uiHandlers::changeQuickFilter);
-        setOnFilterKeyDown(uiHandlers::onFilterKeyDown);
-    }
-
-    @Override
+    /// Shows why the server rejected the filter, or clears it when passed null. See
+    /// `ResultPage.filterError`.
+    ///
+    /// @param filterError Why, or null.
     public void setFilterError(final String filterError) {
         nameFilter.setFilterError(filterError);
     }
 
-    @Override
+    /// @param contextHandler Gives the filter its recent filters.
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         nameFilter.setContextHandler(contextHandler);
     }
 
-    @Override
+    /// @param view The list of what is found.
     public void setResultView(final IsWidget view) {
         bottomPanel.setWidget(view.asWidget());
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         nameFilter.forceFocus();
     }
 
-    @Override
+    /// @param dialog Whether it is a dialog's content, whose top then has no padding of its own.
     public void setDialogMode(final boolean dialog) {
         panel.setStyleName(DIALOG, dialog);
     }
 
-    @Override
+    /// Says what the filter is for and what may be typed in it, for screen readers.
+    ///
+    /// @param accessibleName What the filter is for, e.g. `Find by name`.
+    /// @param description    What may be typed, or null for nothing.
     public void setFilterGuidance(final String accessibleName, final String description) {
         nameFilter.setAccessibleName(accessibleName);
         nameFilter.setDescription(description);
     }
 
-    @Override
+    /// Sets the help shown by the filter's syntax help button.
+    ///
+    /// @param popupTextSupplier Supplies the help.
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
-    }
-
-    @UiHandler("nameFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
-        onFilterChange.accept(nameFilter.getText());
-    }
-
-    @UiHandler("nameFilter")
-    void onFilterKeyDown(final KeyDownEvent event) {
-        onFilterKeyDown.accept(event);
     }
 
 

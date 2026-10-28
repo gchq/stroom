@@ -17,8 +17,8 @@
 package stroom.pipeline.client.component;
 
 import stroom.data.client.component.MetaBrowserController;
+import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.data.client.presenter.ExpressionValidator;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.LinkTabPanel;
@@ -91,7 +91,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                           final Provider<MetaBrowserController> metaBrowserProvider,
                           final Provider<PipelineStructureController> structureProvider,
                           final ProcessorsController processors,
-                          final Provider<ProcessorTaskPresenter> taskPresenterProvider,
+                          final Provider<ProcessorTasksTabController> taskPresenterProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                           final ClientSecurityContext securityContext,

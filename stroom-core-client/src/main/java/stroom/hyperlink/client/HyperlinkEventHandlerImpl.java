@@ -26,7 +26,7 @@ import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.document.client.event.CloseSelectedDocumentEvent;
-import stroom.iframe.client.presenter.IFrameContentPresenter;
+import stroom.iframe.client.component.IFrameContentController;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -51,7 +51,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ import java.util.function.Function;
 public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHandlers {
 
     private final EventBus eventBus;
-    private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
+    private final Provider<IFrameContentController> iFrameContentPresenterProvider;
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
 
@@ -71,7 +70,7 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFramePresenter> iFramePresenterProvider,
-                                     final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
+                                     final Provider<IFrameContentController> iFrameContentPresenterProvider,
                                      final ContentManager contentManager,
                                      final AppRoot appRoot) {
         this.appRoot = appRoot;
@@ -294,7 +293,7 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
     }
 
     private void openTab(final Hyperlink hyperlink, final String customTitle) {
-        final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
+        final IFrameContentController presenter = iFrameContentPresenterProvider.get();
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
         presenter.setIcon(hyperlink.getIcon());
@@ -302,9 +301,6 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
                 ConfirmEvent.fire(this,
                         "Are you sure you want to close?",
                         res -> {
-                            if (res) {
-                                presenter.close();
-                            }
                             event.getCallback().closeTab(res);
                         });
         contentManager.open(

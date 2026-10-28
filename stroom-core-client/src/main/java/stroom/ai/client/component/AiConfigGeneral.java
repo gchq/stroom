@@ -16,7 +16,7 @@
 
 package stroom.ai.client.component;
 
-import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.client.component.AskStroomAiController.DockBehaviour;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;

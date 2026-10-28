@@ -27,12 +27,12 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.node.client.presenter.NodePresenter;
+import stroom.node.client.component.NodesController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/NodesScreen`, showing Stroom's real [NodePresenter] (the 'Nodes' tab: the
+/// Stories of `App/Main/NodesScreen`, showing Stroom's real [NodesController] (the 'Nodes' tab: the
 /// node list and the selected node's jobs) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `NodeResource` (the nodes, `POST /node/v1/find`; ping,
@@ -186,7 +186,7 @@ public final class NodesScreenStories {
                 .injector(injector)
                 .uiConfig(UI_CONFIG)
                 .build();
-        final NodePresenter presenter = harness.show(injector.getNodePresenter());
+        final NodesController presenter = harness.show(injector.getNodesController());
         if (selectedNode != null) {
             // As NodeMonitoringPlugin does for an OpenNodeEvent with a node name
             presenter.setSelected(selectedNode);

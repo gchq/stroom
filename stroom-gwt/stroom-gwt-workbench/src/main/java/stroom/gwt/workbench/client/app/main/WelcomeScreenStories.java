@@ -23,13 +23,12 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.welcome.client.view.WelcomeViewImpl;
+import stroom.welcome.client.component.WelcomeTab;
+import stroom.welcome.client.component.WelcomeTabController;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/WelcomeScreen`, showing Stroom's real [WelcomePresenter] (the start-up
+/// Stories of `App/Main/WelcomeScreen`, showing Stroom's real [WelcomeTabController] (the start-up
 /// Welcome tab) with fake REST replies.
 ///
 /// The screen only makes Stroom's start-up requests (the session info and the UI config's
@@ -70,14 +69,14 @@ public final class WelcomeScreenStories {
     private static Widget render(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
 
-        final WelcomePresenter presenter = new WelcomePresenter(
+        final WelcomeTabController controller = new WelcomeTabController(
                 harness.getEventBus(),
-                new WelcomeViewImpl(GWT.create(WelcomeViewImpl.Binder.class)),
+                new WelcomeTab(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 harness.getDateTimeFormatter());
         // A tab's content, so shown in the story's canvas rather than as a popup
-        harness.add(harness.own(presenter).getWidget());
+        harness.add(harness.own(controller).asWidget());
         return harness.asWidget();
     }
 }

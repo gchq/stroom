@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// activity chooser (`ManageActivityController`, opened by [CurrentActivity]) with fake REST
 /// replies.
 ///
-/// Stroom has no separate badge widget: the summary button is built by `NavigationPresenter`
+/// Stroom has no separate badge widget: the summary button is built by `NavigationController`
 /// (`activityButton`, `updateActivitySummary`), whose code the story copies; clicking it opens the
 /// chooser (`CurrentActivity.showActivityChooser`), and choosing an activity fires
 /// `ActivityChangedEvent`, which updates the summary. The activities are the `GET /activity/v1`
@@ -109,7 +109,7 @@ public final class ActivityChooserStories {
                 .uiConfig(ActivityFixtures.uiConfig(title))
                 .build();
 
-        // As NavigationPresenter builds its activity button
+        // As NavigationController builds its activity button
         final CurrentActivity currentActivity = injector.getCurrentActivity();
         final Button activityButton = new Button();
         activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);

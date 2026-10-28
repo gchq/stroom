@@ -31,14 +31,14 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
+import stroom.security.client.component.BatchDocumentPermissionsController;
 import stroom.security.shared.DocumentPermissionFields;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/DocumentPermissionsScreen`, showing Stroom's real
-/// [BatchDocumentPermissionsPresenter] (the 'Document Permissions' tab) with fake REST replies.
+/// [BatchDocumentPermissionsController] (the 'Document Permissions' tab) with fake REST replies.
 ///
 /// The stories answer Stroom's `ExplorerResource`: `POST /explorer/v2/advancedFind` (the documents)
 /// and `POST /explorer/v2/changeDocumentPermissions` (the change, checked on the request spy).
@@ -116,8 +116,8 @@ public final class DocumentPermissionsScreenStories {
         // Opened as DocumentPermissionsPlugin.open opens it: the descendants of System, once Stroom
         // has started (the list reads the UI config)
         harness.afterStartUp(() -> {
-            final BatchDocumentPermissionsPresenter presenter =
-                    harness.show(injector.getBatchDocumentPermissionsPresenter());
+            final BatchDocumentPermissionsController presenter =
+                    harness.show(injector.getBatchDocumentPermissionsController());
             presenter.setExpression(ExpressionOperator.builder()
                     .addTerm(ExpressionTerm.builder()
                             .field(DocumentPermissionFields.DESCENDANTS.getFldName())
