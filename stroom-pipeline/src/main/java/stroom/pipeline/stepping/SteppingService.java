@@ -884,7 +884,7 @@ public class SteppingService {
             final SessionStepResult sessionResult;
             try {
                 sessionResult = sessionStepResolver.resolve(
-                        session, request, fingerprints, request.getTimeout() == null ? 0L : request.getTimeout());
+                        session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
             } catch (final RuntimeException e) {
                 if (!session.isClosed()) {
                     throw e;
@@ -893,7 +893,7 @@ public class SteppingService {
                 // step failed on a closed session or its deleted store. That is the termination, not an error:
                 // answer as an unfinished step, which a client that has stopped simply drops.
                 LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
-                        session.getSessionId(), e.getMessage()));
+                        session.getSessionId(), LogUtil.exceptionMessage(e)));
                 return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
             }
 
