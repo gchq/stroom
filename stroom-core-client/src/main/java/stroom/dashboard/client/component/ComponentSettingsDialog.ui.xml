@@ -1,9 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A dashboard pane's settings (dashboard-settings.css): a tab bar above the tab showing -->
+<!-- A dashboard pane's settings: a tab bar above the tab showing -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client">
-    <g:FlowPanel styleName="max dock-container-vertical default-min-sizes dashboard-settings">
+    <g:FlowPanel styleName="max dock-container-vertical default-min-sizes">
         <tab:LinkTabBar ui:field="tabBar" addStyleNames="dock-min"/>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
     </g:FlowPanel>

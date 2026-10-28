@@ -38,6 +38,12 @@ public class XsltEditor extends DocumentEditor<XsltDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its XSLT, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param codeTabProvider      Makes the code tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public XsltEditor(final EventBus eventBus,
                       final LinkTabPanel view,

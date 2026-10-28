@@ -21,7 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,8 +32,6 @@ public class WelcomeTab extends Component {
 
     @UiField
     SimplePanel html;
-    @UiField
-    Grid buildInfo;
     @UiField
     Label userIdentity;
     @UiField
@@ -53,11 +50,6 @@ public class WelcomeTab extends Component {
     /// Makes the screen, with no content until it is given it.
     public WelcomeTab() {
         initWidget(BINDER.createAndBindUi(this));
-        // Each row is a name and its value: the name cells are row headers, so a screen reader
-        // reads the name with its value
-        for (int row = 0; row < buildInfo.getRowCount(); row++) {
-            buildInfo.getCellFormatter().getElement(row, 0).setAttribute("role", "rowheader");
-        }
     }
 
     /// @param html The site's welcome text, as HTML set by the administrator.

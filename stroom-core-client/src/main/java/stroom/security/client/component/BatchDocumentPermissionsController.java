@@ -53,6 +53,13 @@ public class BatchDocumentPermissionsController extends ContentTabController {
     private ResultPage<FindResult> docs;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                             The application's event bus.
+    /// @param view                                 Its component.
+    /// @param filterDialogProvider                 Makes the filter dialog.
+    /// @param documentList                         The document list.
+    /// @param batchDocumentPermissionsEditProvider Makes the batch document permissions edit.
+    /// @param quickFilterContextHandlerFactory     Adds the quick filter's history and Advanced Query.
     @Inject
     public BatchDocumentPermissionsController(final EventBus eventBus,
                                               final QuickFilterPage view,

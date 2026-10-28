@@ -32,13 +32,15 @@ public class AppPermissionsController extends ContentTabController {
 
     public static final String TAB_TYPE = "ApplicationPermissions";
 
-    private final AppPermissions view;
-
     private final AppUserPermissionsListController appUserPermissionsList;
     private final AppPermissionsEditController appPermissionsEdit;
 
-
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   Its component.
+    /// @param appUserPermissionsList The app user permissions list.
+    /// @param appPermissionsEdit     The app permissions edit.
     @Inject
     public AppPermissionsController(
             final EventBus eventBus,
@@ -47,8 +49,6 @@ public class AppPermissionsController extends ContentTabController {
             final AppPermissionsEditController appPermissionsEdit) {
 
         super(eventBus);
-
-        this.view = view;
 
         initWidget(view);
         own(appUserPermissionsList);

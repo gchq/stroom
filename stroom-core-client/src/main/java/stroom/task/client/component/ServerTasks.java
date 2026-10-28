@@ -48,7 +48,7 @@ public class ServerTasks extends Component {
     /// Makes the screen, with no content until it is given it.
     public ServerTasks() {
         initWidget(BINDER.createAndBindUi(this));
-        nameFilter.addValueChangeHandler(event -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @param onFilterChange Given the filter's text when the user changes it.

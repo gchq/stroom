@@ -34,6 +34,9 @@ public class StepLocationPickerController extends Controller {
     private final StepLocationPicker view;
 
     /// Made by GIN for one use, with the dialog's content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Its component.
     @Inject
     public StepLocationPickerController(final EventBus eventBus, final StepLocationPicker view) {
         super(eventBus);

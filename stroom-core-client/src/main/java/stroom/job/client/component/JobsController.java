@@ -33,19 +33,21 @@ public class JobsController extends ContentTabController implements Refreshable 
 
     public static final String TAB_TYPE = "Jobs";
 
-    private final Jobs view;
-
     private final JobListController jobList;
     private final JobNodeListController jobNodeList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        Its component.
+    /// @param jobList     The job list.
+    /// @param jobNodeList The job node list.
     @Inject
     public JobsController(final EventBus eventBus,
                           final Jobs view,
                           final JobListController jobList,
                           final JobNodeListController jobNodeList) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(jobList);
         own(jobNodeList);

@@ -36,6 +36,11 @@ public class ContentStoreTabController extends ContentTabController {
     private final ContentStoreContentPackDetailsController contentPackDetails;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus           The application's event bus.
+    /// @param view               Its component.
+    /// @param contentPackList    The content pack list.
+    /// @param contentPackDetails The content pack details.
     @Inject
     public ContentStoreTabController(final EventBus eventBus,
                                      final ContentStoreTab view,

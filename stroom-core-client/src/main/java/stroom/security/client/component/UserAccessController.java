@@ -46,8 +46,6 @@ public class UserAccessController extends ContentTabController
     private static final UserAccessResource USER_ACCESS_RESOURCE = GWT.create(UserAccessResource.class);
     public static final String TAB_TYPE = "UserAccess";
 
-    private final UserAccess view;
-
     private final UserAccessListController userAccessList;
     private final UserSessionsListController userSessionsList;
     private final RestFactory restFactory;
@@ -57,6 +55,13 @@ public class UserAccessController extends ContentTabController
     private boolean isExternalIdp = false;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus         The application's event bus.
+    /// @param view             Its component.
+    /// @param userAccessList   The user access list.
+    /// @param userSessionsList The user sessions list.
+    /// @param restFactory      Makes REST requests.
+    /// @param uiConfigCache    The UI's configuration.
     @Inject
     public UserAccessController(final EventBus eventBus,
                                 final UserAccess view,
@@ -65,7 +70,6 @@ public class UserAccessController extends ContentTabController
                                 final RestFactory restFactory,
                                 final UiConfigCache uiConfigCache) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(userAccessList);
         own(userSessionsList);

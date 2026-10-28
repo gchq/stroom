@@ -1590,16 +1590,16 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported** (27 October 2026).
 
-* **A scroll rule that never applied.** `dashboard-settings.css`'s `.dashboard-settings
+* ~~**A scroll rule that never applied.** `dashboard-settings.css`'s `.dashboard-settings
   .layer-container { overflow: auto }` matches nothing: `ComponentSettingsDialog.ui.xml` gives its
   `LayerContainerImpl` `styleName="dock-max"`, which replaces the container's own `layer-container`
   class (`ColumnFilterDialog.ui.xml` does the same). The rule it replaced,
   `.settingsPresenter .layer-container`, never applied either, so nothing changed. To decide:
   `addStyleNames="dock-max"` (the settings tabs then scroll, a look change to check against the
-  screenshots), or drop the rule.
-* **Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
+  screenshots), or drop the rule.~~ Done in wave 20 (28 October 2026). Dropped, with its stylesheet, which held nothing else.
+* ~~**Constructor javadoc.** Most of the wave's controllers say "Made by GIN, with its content and
   its parts." without an `@param` per part (e.g. `SteppingScreenController`,
-  `MetaBrowserController`, `TableController`, `QueryPaneController`).
+  `MetaBrowserController`, `TableController`, `QueryPaneController`).~~ Done in wave 20 (28 October 2026). Every client `@Inject` constructor documents each parameter (570 added, in 103 classes).
 * **The Data tabs' query on close.** Closing an index's or store's Data tab now destroys its query
   (`TAB_CLOSE`), as the query editor does; no story checks the destroy request, as a story's tab
   isn't closed.
@@ -1642,14 +1642,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported** (28 October 2026, overnight; decisions taken without the user, to check).
 
-* **Screens left as the plan's "stays" or for later.** `WelcomeTab` keeps its `g:Grid` and sets its
+* **Screens left as the plan's "stays" or for later.** Wave 20 (28 October 2026): `WelcomeTab`'s build information is a table with `<th scope="row">` headers in its template; `Main`'s banner is an `AriaPanel` with `role="alert"` in its template, and the selected tab's colour the theme's `--curve-tab__selected-color` set on it, not a generated rule; `Navigation`'s toolbar, tree and logo are in its template, wired through `ExplorerAction`. What stays, as it depends on what is known only at runtime: `Main`'s split panes (rebuilt as the AI panel docks), the page border (a config value of any CSS declarations), the inner content's size and the landmarks on the widgets it is given. As reported: `WelcomeTab` keeps its `g:Grid` and sets its
   name cells' `rowheader` role in Java (the plan's `<th scope="row">` table changes the cells'
   look); `Main` still builds its split panes in Java on each layout change, sets the theme's page
   border as the root's `style` (a config value of any CSS declarations), puts the selected tab's
   colour in `DynamicStyles`, sizes the inner content with `setSize` and sets the explorer's and
   content's landmarks on them; `Navigation` still builds its explorer toolbar's buttons and its
   `ExplorerTree` in its controller, and sets the logo's tab index and `aria-hidden` in Java.
-* **Screens whose component is a part's.** NodeGroups, IndexVolumeGroups, ProcessorProfiles,
+* **Screens whose component is a part's.** Decided in wave 20 (28 October 2026): a screen that is one smart part and nothing else keeps showing that part's widget (UI-GUIDE.md), as a component with nothing in it would add a panel and risk the list's resizing. As reported: NodeGroups, IndexVolumeGroups, ProcessorProfiles,
   FsVolumeGroups and AnnotationTags (once `WrapperView`), and the content tab shells for processor
   filter tasks, users and groups, a document's permissions and the receipt rules, have no component
   of their own: the controller's widget is its list's or editor's. The plan named components for
@@ -1657,19 +1657,19 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **`CurveTabLayout`'s right indent.** `setRightIndent(32)` set `right` on the tab bar's row, which
   isn't positioned, so it did nothing; it went rather than becoming a class.
 * **From the wave's audit, left on purpose** (28 October 2026):
-  * Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its controller works on
+  * ~~Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its controller works on
     the component's message panel directly
     (HTML, scrolling, a click handler) where the plan wants component methods and callbacks; its
     dialog opened from the toolbar doesn't focus the message box (as before); `AskStroomAiClient`'s
     methods, now public, have no javadoc; and the controller keeps the presenter's `/** */`
-    comments.
+    comments.~~ Done in wave 20 (28 October 2026). The app root owns it (made once by `AskStroomAiScreens`), the conversation is changed through the component's methods and callbacks, the toolbar's dialog focuses the message box, and the client and controller have `///` javadoc.
   * Main's maintenance banner is hidden and given `role="alert"` in Java; the activity button's
     "Current Activity" heading is built by `ActivitySummary`.
-  * `UserTabController` keeps the hand-rolled tabs (`LazyValue`s, `getContent`) rather than
-    `TabbedController<UserRef>` as the plan says.
-  * The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
-    `QuickFilter.setOnChange` exists (to check they fire alike first).
-  * Unused `view` fields in about a dozen of the new controllers (assigned, only the constructor's
+  * ~~`UserTabController` keeps the hand-rolled tabs (`LazyValue`s, `getContent`) rather than
+    `TabbedController<UserRef>` as the plan says.~~ Done in wave 20 (28 October 2026). `UserTabs` (a `TabbedController<UserRef>`, read with no `DocRef`).
+  * ~~The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
+    `QuickFilter.setOnChange` exists (to check they fire alike first).~~ Done in wave 20 (28 October 2026). They fire together, with the same text; every quick filter uses `setOnChange`.
+  * Unused `view` fields in about a dozen of the new controllers (16 removed in wave 20) (assigned, only the constructor's
     parameter used), and dead code carried over (`UsersController.onEditUserOrGroup`, commented-out
     code in the API keys, retention, source and template screens).
 

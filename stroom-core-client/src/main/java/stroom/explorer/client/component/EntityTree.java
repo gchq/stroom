@@ -47,7 +47,7 @@ public class EntityTree extends Component {
     /// Makes an empty picker.
     public EntityTree() {
         initWidget(BINDER.createAndBindUi(this));
-        nameFilter.addValueChangeHandler(e -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @return The tree, for the controller to attach the tree's controller to.

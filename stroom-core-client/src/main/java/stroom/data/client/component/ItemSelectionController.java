@@ -34,6 +34,9 @@ public class ItemSelectionController extends Controller {
     private final ItemSelection view;
 
     /// Made by GIN for one use, with the dialog's content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Its component.
     @Inject
     public ItemSelectionController(final EventBus eventBus, final ItemSelection view) {
         super(eventBus);

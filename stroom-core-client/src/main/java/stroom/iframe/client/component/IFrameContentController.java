@@ -33,6 +33,9 @@ public class IFrameContentController extends LayerController implements TabData 
     private SvgImage icon = SvgImage.DEPENDENCIES;
 
     /// Made by GIN, with its tab.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Its component.
     @Inject
     public IFrameContentController(final EventBus eventBus, final IFrameContent view) {
         super(eventBus);

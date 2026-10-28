@@ -90,7 +90,7 @@ public class KeyBindingPreferences extends Component {
             dataGrid.redraw();
             onCharacterKeyShortcutsChange.run();
         });
-        quickFilter.addValueChangeHandler(event -> onFilterChange.accept(event.getValue()));
+        quickFilter.setOnChange(text -> onFilterChange.accept(text));
         selectionModel.addSelectionHandler(event -> {
             onSelectionChange.run();
             if (event.getSelectionType().isDoubleSelect()) {

@@ -31,6 +31,9 @@ public class ItemNavigatorController extends Controller {
     private HasItems display;
 
     /// Made by GIN, with its navigator and what makes its selection dialog.
+    ///
+    /// @param view                  Its component.
+    /// @param itemSelectionProvider Makes the item selection.
     @Inject
     public ItemNavigatorController(final ItemNavigator view,
                                    final Provider<ItemSelectionController> itemSelectionProvider) {

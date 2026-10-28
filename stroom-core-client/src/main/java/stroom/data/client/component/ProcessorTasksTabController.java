@@ -29,19 +29,21 @@ import com.google.web.bindery.event.shared.EventBus;
 /// Shows a summary of a document's processor tasks, and the tasks of the selected row.
 public class ProcessorTasksTabController extends Controller {
 
-    private final ProcessorTasksTab view;
-
     private final ProcessorTaskSummaryListController processorTaskSummary;
     private final ProcessorTasksListController processorTaskList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param processorTaskSummary The processor task summary.
+    /// @param processorTaskList    The processor task list.
     @Inject
     public ProcessorTasksTabController(final EventBus eventBus,
                                        final ProcessorTasksTab view,
                                        final ProcessorTaskSummaryListController processorTaskSummary,
                                        final ProcessorTasksListController processorTaskList) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(processorTaskSummary);
         own(processorTaskList);

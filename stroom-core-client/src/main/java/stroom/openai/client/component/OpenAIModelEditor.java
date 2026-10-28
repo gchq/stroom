@@ -37,6 +37,12 @@ public class OpenAIModelEditor extends DocumentEditor<OpenAIModelDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus              The application's event bus.
+    /// @param view                  Its component.
+    /// @param modelSettingsProvider Makes the model settings.
+    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public OpenAIModelEditor(
             final EventBus eventBus,

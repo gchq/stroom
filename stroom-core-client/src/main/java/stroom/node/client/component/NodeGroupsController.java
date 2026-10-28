@@ -40,6 +40,12 @@ public class NodeGroupsController extends ContentTabController {
     private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
     /// Made by GIN, with its parts.
+    ///
+    /// @param eventBus                       The application's event bus.
+    /// @param nodeGroupList                  The node group list.
+    /// @param editProvider                   Makes the edit.
+    /// @param nodeGroupClient                The node group client.
+    /// @param newNodeGroupControllerProvider Makes the new node group controller.
     @Inject
     public NodeGroupsController(
             final EventBus eventBus,

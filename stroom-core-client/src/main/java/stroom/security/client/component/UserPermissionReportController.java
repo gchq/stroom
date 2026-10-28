@@ -47,7 +47,6 @@ public class UserPermissionReportController extends Controller {
     private final DocumentPermissionsListController documentPermissionsList;
     private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
     private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
-    private final UserPermissionReport view;
     private ExpressionOperator filterExpression;
     private String quickFilter;
     private ExpressionOperator combinedExpression;
@@ -76,7 +75,6 @@ public class UserPermissionReportController extends Controller {
                                                   batchDocumentPermissionsEditProvider,
                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(documentPermissionsList);
         this.documentPermissionsList = documentPermissionsList;

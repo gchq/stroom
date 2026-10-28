@@ -24,7 +24,7 @@ says.
   It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
 
 * **A controller wires it.** `FooController.java`, beside it in the area's `client.component` package, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.
-  Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller.
+  Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller. A screen that is one smart part and nothing else (e.g. the node groups' list in a content tab) shows that part's widget as its own, rather than wrap it in a component with nothing in it; give it a component when it gains anything of its own.
 
 * **Named for what it is.** A class's name says what it is, not how it was made (`TickBox`, not `CustomCheckBox`; `IconBox`, not `SvgIconBox`; `Histogram`, not `HistogramWidget`), and its CSS block is the same name in kebab case (`tick-box`, in `tick-box.css`).
 

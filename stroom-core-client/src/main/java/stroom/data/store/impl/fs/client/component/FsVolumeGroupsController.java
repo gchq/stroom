@@ -51,6 +51,12 @@ public class FsVolumeGroupsController extends ContentTabController {
     private final ButtonView deleteButton;
 
     /// Made by GIN, with its parts.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param fsVolumeGroupList                  The fs volume group list.
+    /// @param editProvider                       Makes the edit.
+    /// @param restFactory                        Makes REST requests.
+    /// @param newFsVolumeGroupControllerProvider Makes the new fs volume group controller.
     @Inject
     public FsVolumeGroupsController(
             final EventBus eventBus,

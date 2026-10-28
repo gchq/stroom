@@ -49,6 +49,11 @@ public class CoreController extends Controller
     private Controller content;
 
     /// Made by GIN, once: the page's root.
+    ///
+    /// @param eventBus        The application's event bus.
+    /// @param view            Its component.
+    /// @param securityContext The user's permissions.
+    /// @param urlParameters   The page's URL parameters.
     @Inject
     public CoreController(final EventBus eventBus,
                           final Core view,

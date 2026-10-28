@@ -17,17 +17,15 @@
 package stroom.ai.client.gin;
 
 import stroom.ai.client.AskStroomAiScreens;
-import stroom.ai.client.component.AskStroomAiController;
 
 import com.google.gwt.inject.client.AbstractGinModule;
-import com.google.inject.Singleton;
 
 public class AskStroomAIModule extends AbstractGinModule {
 
     @Override
     protected void configure() {
         // Hear the app-wide events that open its screens, for the life of the app
+        // (which makes the chat once, owned by the app root)
         bind(AskStroomAiScreens.class).asEagerSingleton();
-        bind(AskStroomAiController.class).in(Singleton.class);
     }
 }

@@ -49,6 +49,12 @@ public class IndexVolumeGroupsController extends ContentTabController {
     private final ButtonView deleteButton;
 
     /// Made by GIN, with its parts.
+    ///
+    /// @param eventBus                              The application's event bus.
+    /// @param indexVolumeGroupList                  The index volume group list.
+    /// @param editProvider                          Makes the edit.
+    /// @param restFactory                           Makes REST requests.
+    /// @param newIndexVolumeGroupControllerProvider Makes the new index volume group controller.
     @Inject
     public IndexVolumeGroupsController(
             final EventBus eventBus,

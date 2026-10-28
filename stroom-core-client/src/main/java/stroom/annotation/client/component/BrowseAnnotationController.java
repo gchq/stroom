@@ -37,6 +37,10 @@ public class BrowseAnnotationController extends LayerController implements TabDa
     private final FindAnnotationListController findAnnotationList;
 
     /// Made by GIN, with its screen and its list.
+    ///
+    /// @param eventBus           The application's event bus.
+    /// @param view               Its component.
+    /// @param findAnnotationList The find annotation list.
     @Inject
     public BrowseAnnotationController(final EventBus eventBus,
                                       final FindPanel view,

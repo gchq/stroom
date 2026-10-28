@@ -31,18 +31,19 @@ public class DataPreviewTabController extends ContentTabController {
 
     public static final String TAB_TYPE = "DataPreview";
 
-    private final DataPreviewTab view;
-
     private final DataViewerController dataController;
     private DataPreviewKey dataPreviewKey;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus       The application's event bus.
+    /// @param dataController The data controller.
+    /// @param view           Its component.
     @Inject
     public DataPreviewTabController(final EventBus eventBus,
                                     final DataViewerController dataController,
                                     final DataPreviewTab view) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(dataController);
         this.dataController = dataController;

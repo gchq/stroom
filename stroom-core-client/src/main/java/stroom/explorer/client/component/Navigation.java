@@ -19,8 +19,8 @@ package stroom.explorer.client.component;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
@@ -36,6 +36,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -53,9 +55,23 @@ public class Navigation extends Component {
     @UiField
     QuickFilter nameFilter;
     @UiField
-    Toolbar toolbar;
+    ToolbarButton add;
     @UiField
-    SimplePanel explorerTreeContainer;
+    ToolbarButton delete;
+    @UiField
+    ToolbarToggleButton showAlerts;
+    @UiField
+    ToolbarButton locate;
+    @UiField
+    ToolbarButton expandAll;
+    @UiField
+    ToolbarButton collapseAll;
+    @UiField
+    ToolbarToggleButton filter;
+    @UiField
+    ToolbarButton find;
+    @UiField
+    ExplorerTree explorerTree;
     @UiField
     SimplePanel activityOuter;
     @UiField
@@ -69,6 +85,9 @@ public class Navigation extends Component {
     };
     private Runnable onActivity = () -> {
     };
+    private Consumer<ExplorerAction> onAction = action -> {
+    };
+    private final Map<ExplorerAction, ToolbarButton> buttons = new EnumMap<>(ExplorerAction.class);
 
     /// Makes the screen, with no content until it is given it.
     public Navigation() {
@@ -77,11 +96,6 @@ public class Navigation extends Component {
         logo.setContent(SvgImageUtil.toSafeHtml(
                 SvgImage.LOGO,
                 "navigation-logo-image"));
-        // A click on the logo opens the main menu, as the Main Menu button beside it does, so for
-        // the keyboard and screen readers it would be a second, nameless Main Menu: it is left out
-        // of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and hidden from them
-        logo.getElement().setTabIndex(-2);
-        logo.getElement().setAttribute("aria-hidden", "true");
         logo.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event.getNativeEvent())) {
                 onToggleMenu.accept(event.getRelativeElement());
@@ -92,8 +106,63 @@ public class Navigation extends Component {
                 onToggleMenu.accept(mainMenuButton.getElement());
             }
         });
-        nameFilter.addValueChangeHandler(event -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
         activityButton.setOnClick(() -> onActivity.run());
+
+        buttons.put(ExplorerAction.NEW, add);
+        buttons.put(ExplorerAction.DELETE, delete);
+        buttons.put(ExplorerAction.SHOW_ALERTS, showAlerts);
+        buttons.put(ExplorerAction.LOCATE, locate);
+        buttons.put(ExplorerAction.EXPAND_ALL, expandAll);
+        buttons.put(ExplorerAction.COLLAPSE_ALL, collapseAll);
+        buttons.put(ExplorerAction.FILTER, filter);
+        buttons.put(ExplorerAction.FIND, find);
+        buttons.forEach((action, button) -> button.setOnClick(() -> onAction.accept(action)));
+    }
+
+    /// @param onAction Told which of the explorer's buttons the user pressed.
+    public void setOnAction(final Consumer<ExplorerAction> onAction) {
+        this.onAction = Objects.requireNonNull(onAction, "onAction");
+    }
+
+    /// @param action  One of the explorer's buttons.
+    /// @param enabled Whether the user may press it.
+    public void setActionEnabled(final ExplorerAction action, final boolean enabled) {
+        buttons.get(action).setEnabled(enabled);
+    }
+
+    /// @param action  One of the explorer's buttons.
+    /// @param visible Whether to show it.
+    public void setActionVisible(final ExplorerAction action, final boolean visible) {
+        buttons.get(action).setVisible(visible);
+    }
+
+    /// @param action  One of the explorer's toggle buttons (Show Alerts, Filter Document Types).
+    /// @param pressed Whether it is pressed (on).
+    public void setActionPressed(final ExplorerAction action, final boolean pressed) {
+        ((ToolbarToggleButton) buttons.get(action)).setPressed(pressed);
+    }
+
+    /// @param action One of the explorer's toggle buttons (Show Alerts, Filter Document Types).
+    /// @return Whether it is pressed (on).
+    public boolean isActionPressed(final ExplorerAction action) {
+        return ((ToolbarToggleButton) buttons.get(action)).isPressed();
+    }
+
+    /// @param action One of the explorer's buttons.
+    /// @return Its element, e.g. for a menu to open beside.
+    public Element getActionElement(final ExplorerAction action) {
+        return buttons.get(action).getElement();
+    }
+
+    /// @return The tree of documents, for its controller to attach to.
+    public ExplorerTree getExplorerTree() {
+        return explorerTree;
+    }
+
+    /// Shows the tree of documents, hidden until the explorer is first shown.
+    public void showExplorerTree() {
+        explorerTree.setVisible(true);
     }
 
     /// @param onFilterChange Given the filter's text when the user changes it.
@@ -117,18 +186,6 @@ public class Navigation extends Component {
     /// @param popupTextSupplier Supplies the help.
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
-    }
-
-    /// @return The explorer's toolbar, for its buttons.
-    public Toolbar getToolbar() {
-        return toolbar;
-    }
-
-    /// Shows the explorer's tree.
-    ///
-    /// @param widget The tree.
-    public void setNavigationWidget(final Widget widget) {
-        explorerTreeContainer.setWidget(widget);
     }
 
     /// Shows the current activity below the explorer, or hides it (when activities aren't used).
@@ -167,5 +224,17 @@ public class Navigation extends Component {
 
     interface Binder extends UiBinder<Widget, Navigation> {
 
+    }
+
+    /// The explorer's buttons.
+    public enum ExplorerAction {
+        NEW,
+        DELETE,
+        SHOW_ALERTS,
+        LOCATE,
+        EXPAND_ALL,
+        COLLAPSE_ALL,
+        FILTER,
+        FIND
     }
 }

@@ -71,6 +71,14 @@ public class MainController extends Controller {
     private String selectedTabLabel;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus         The application's event bus.
+    /// @param view             Its component.
+    /// @param menuItems        The menu items.
+    /// @param uiConfigCache    The UI's configuration.
+    /// @param globalKeyHandler The global key handler.
+    /// @param navigation       The navigation.
+    /// @param contentTabPane   The content tab pane.
     @Inject
     public MainController(final EventBus eventBus,
                          final Main view,

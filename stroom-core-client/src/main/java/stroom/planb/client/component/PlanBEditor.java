@@ -40,6 +40,13 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus              The application's event bus.
+    /// @param view                  Its component.
+    /// @param planBDataProvider     Makes the plan bdata.
+    /// @param planBSettingsProvider Makes the plan bsettings.
+    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public PlanBEditor(
             final EventBus eventBus,

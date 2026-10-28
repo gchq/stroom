@@ -32,8 +32,10 @@
     bottom: 5px;
 }
 
-.welcome-tab__build-info > tbody > tr > td:first-child {
+/* A name: a row header, bold and to the start as the name cell it replaced */
+.welcome-tab__build-info > tbody > tr > th {
     font-weight: bold;
+    text-align: start;
 }
 
 .welcome-tab__build-info > tbody > tr > td:last-child {

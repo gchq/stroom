@@ -161,6 +161,8 @@ public final class AskStroomAiDialogStories {
                             .toBeInTheDocument());
                     // The toggle shows its state with the 'on' class
                     play.expect(aiButton).toHaveAttribute("aria-pressed", "true");
+                    // Ready to type a question (it once left the focus on the toolbar)
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Message")).toHaveFocus());
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(aiButton).toHaveAttribute("aria-pressed", "false");

@@ -38,6 +38,13 @@ public class ElasticIndexEditor extends DocumentEditor<ElasticIndexDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   Its component.
+    /// @param indexSettingsProvider  Makes the index settings.
+    /// @param indexFieldListProvider Makes the index field list.
+    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param permissionsProvider    Makes the Permissions tab.
     @Inject
     public ElasticIndexEditor(
             final EventBus eventBus,

@@ -44,7 +44,6 @@ import java.util.Collections;
 /// ([#setFrom(boolean)]), filtered by a quick filter. Choosing one opens it.
 public class AnnotationLinksController extends Controller {
 
-    private final FindPanel view;
     private final AnnotationResourceClient annotationResourceClient;
     private final FindAnnotationListController findAnnotationList;
 
@@ -69,7 +68,6 @@ public class AnnotationLinksController extends Controller {
                                      final AnnotationResourceClient annotationResourceClient,
                                      final FindAnnotationListController findAnnotationList) {
         super(eventBus);
-        this.view = view;
         this.annotationResourceClient = annotationResourceClient;
         this.findAnnotationList = own(findAnnotationList);
         initWidget(view);

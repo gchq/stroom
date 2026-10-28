@@ -42,6 +42,16 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   Its component.
+    /// @param indexSettingsProvider  Makes the index settings.
+    /// @param indexFieldListProvider Makes the index field list.
+    /// @param indexShardListProvider Makes the index shard list.
+    /// @param indexDataProvider      Makes the index data.
+    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param permissionsProvider    Makes the Permissions tab.
+    /// @param securityContext        The user's permissions.
     @Inject
     public LuceneIndexEditor(final EventBus eventBus,
                              final LinkTabPanel view,

@@ -41,6 +41,11 @@ public class ProcessorProfilesController extends ContentTabController implements
     private final ProcessorProfileClient processorProfileClient;
 
     /// Made by GIN, with its parts.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param processorProfileList   The processor profile list.
+    /// @param editProvider           Makes the edit.
+    /// @param processorProfileClient The processor profile client.
     @Inject
     public ProcessorProfilesController(
             final EventBus eventBus,

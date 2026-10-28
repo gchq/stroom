@@ -77,6 +77,10 @@ public class ContentTabPaneController
     private boolean ignoreHistory;
 
     /// Made by GIN, once: the main screen's document tabs.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        Its component.
+    /// @param recentItems The recent items.
     @Inject
     public ContentTabPaneController(final EventBus eventBus,
                                     final CurveTabLayout view,

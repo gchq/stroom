@@ -186,6 +186,18 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         getElement().setAttribute("aria-label", ariaLabel);
     }
 
+    /// Hides the button from assistive technology, e.g. where another button beside it does the same
+    /// and is named (bound to the `ariaHidden` attribute in ui.xml).
+    ///
+    /// @param ariaHidden Whether to hide it.
+    public void setAriaHidden(final boolean ariaHidden) {
+        if (ariaHidden) {
+            getElement().setAttribute("aria-hidden", "true");
+        } else {
+            getElement().removeAttribute("aria-hidden");
+        }
+    }
+
     /// Marks the button as one that opens a dialog, which screen readers announce.
     ///
     /// @param opensDialog Whether pressing the button opens a dialog.

@@ -52,7 +52,7 @@ public class Chooser<T> extends Component {
     public Chooser() {
         initWidget(BINDER.createAndBindUi(this));
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
-        nameFilter.addValueChangeHandler(e -> onFilterChange.accept(e.getValue()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @return The list of values, for the controller to add its columns and selection to.

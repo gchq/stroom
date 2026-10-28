@@ -28,18 +28,21 @@ public class CachesController extends ContentTabController {
 
     public static final String TAB_TYPE = "Caches";
 
-    private final Caches view;
     private final CacheListController cacheList;
     private final CacheNodeListController cacheNodeList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus      The application's event bus.
+    /// @param view          Its component.
+    /// @param cacheList     The cache list.
+    /// @param cacheNodeList The cache node list.
     @Inject
     public CachesController(final EventBus eventBus,
                             final Caches view,
                             final CacheListController cacheList,
                             final CacheNodeListController cacheNodeList) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(cacheList);
         own(cacheNodeList);

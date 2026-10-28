@@ -94,10 +94,11 @@ public abstract class TabbedController<D> extends Controller {
 
     /// Reads what to show into this and its tabs.
     ///
-    /// @param docRef   The reference of what is shown, e.g. the document's.
+    /// @param docRef   The reference of what is shown, e.g. the document's, or null if it isn't a
+    ///                 document (e.g. a user).
     /// @param document What is shown.
     public final void read(final DocRef docRef, final D document) {
-        this.docRef = Objects.requireNonNull(docRef, "docRef");
+        this.docRef = docRef;
         this.document = Objects.requireNonNull(document, "document");
         beforeRead(docRef, document);
         for (final Tab<?> tab : allTabs) {

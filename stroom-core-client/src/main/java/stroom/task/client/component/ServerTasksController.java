@@ -43,6 +43,12 @@ public class ServerTasksController extends ContentTabController
     private final TaskManagerListController taskManagerList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                         The application's event bus.
+    /// @param view                             Its component.
+    /// @param taskManagerList                  The task manager list.
+    /// @param uiConfigCache                    The UI's configuration.
+    /// @param quickFilterContextHandlerFactory Adds the quick filter's history and Advanced Query.
     @Inject
     public ServerTasksController(final EventBus eventBus,
                                  final ServerTasks view,

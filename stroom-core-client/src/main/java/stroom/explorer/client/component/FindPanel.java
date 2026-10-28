@@ -56,7 +56,7 @@ public class FindPanel extends Component {
     /// Makes an empty panel, as a dialog's content.
     public FindPanel() {
         initWidget(BINDER.createAndBindUi(this));
-        nameFilter.addValueChangeHandler(event -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
         nameFilter.addKeyDownHandler(event -> onFilterKeyDown.accept(event));
     }
 

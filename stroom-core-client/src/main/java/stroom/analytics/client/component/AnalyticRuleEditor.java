@@ -50,6 +50,17 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
     private final NotificationListController notificationList;
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        Its component.
+    /// @param analyticQueryEdit           The analytic query edit.
+    /// @param settingsProvider            Makes the Settings tab.
+    /// @param notificationListProvider    Makes the notification list.
+    /// @param analyticProcessingProvider  Makes the analytic processing.
+    /// @param analyticDataShardsProvider  Makes the analytic data shards.
+    /// @param duplicateManagementProvider Makes the duplicate management.
+    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param permissionsProvider         Makes the Permissions tab.
     @Inject
     public AnalyticRuleEditor(final EventBus eventBus,
                               final LinkTabPanel view,

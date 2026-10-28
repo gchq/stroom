@@ -60,7 +60,7 @@ public class KeyboardShortcuts extends Component {
                 DataGridUtil.textColumnBuilder(ShortcutRow::group).build(),
                 "Group",
                 100);
-        quickFilter.addValueChangeHandler(event -> onFilterChange.accept(event.getValue()));
+        quickFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @param rows The rows to show.

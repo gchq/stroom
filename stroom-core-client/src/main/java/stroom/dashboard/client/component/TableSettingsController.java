@@ -24,6 +24,12 @@ import com.google.web.bindery.event.shared.EventBus;
 public class TableSettingsController extends ComponentSettingsDialogController {
 
     /// Made by GIN, with its content and its tabs.
+    ///
+    /// @param eventBus        The application's event bus.
+    /// @param view            Its component.
+    /// @param basicSettings   The basic settings.
+    /// @param rules           The rules.
+    /// @param selectionFilter The selection filter.
     @Inject
     public TableSettingsController(final EventBus eventBus,
                                    final ComponentSettingsDialog view,

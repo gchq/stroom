@@ -93,6 +93,13 @@ public class ContentTemplateTabController extends ContentTabController
 //    private DataRetentionPresenter dataRetentionController;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   Its component.
+    /// @param contentTemplateList    The content template list.
+    /// @param expressionTree         The expression tree.
+    /// @param templateEditorProvider Makes the template editor.
+    /// @param restFactory            Makes REST requests.
     @Inject
     public ContentTemplateTabController(final EventBus eventBus,
                                         final ContentTemplateTab view,

@@ -31,6 +31,7 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.DocumentTypeCache;
+import stroom.explorer.client.component.Navigation.ExplorerAction;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerEndTaskEvent;
 import stroom.explorer.client.event.ExplorerStartTaskEvent;
@@ -57,15 +58,11 @@ import stroom.query.shared.QueryDoc;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
-import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.HideMenuEvent;
 import stroom.widget.menu.client.Item;
@@ -104,14 +101,6 @@ public class NavigationController extends Controller
 
     private final MenuItems menuItems;
 
-    private final ToolbarButton locate;
-    private final ToolbarButton find;
-    private final ToolbarButton collapseAll;
-    private final ToolbarButton expandAll;
-    private final ToolbarButton add;
-    private final ToolbarButton delete;
-    private final ToolbarToggleButton filter;
-    private final ToolbarToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
     private boolean shown;
@@ -120,6 +109,18 @@ public class NavigationController extends Controller
     private DocRef selectedDoc;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                         The application's event bus.
+    /// @param view                             Its component.
+    /// @param menuItems                        The menu items.
+    /// @param restFactory                      Makes REST requests.
+    /// @param explorerTreeControllerProvider   Makes the explorer tree controller.
+    /// @param documentTypeCache                The document type cache.
+    /// @param documentPluginRegistry           The document plugin registry.
+    /// @param typeFilter                       The type filter.
+    /// @param currentActivity                  The current activity.
+    /// @param uiConfigCache                    The UI's configuration.
+    /// @param quickFilterContextHandlerFactory Adds the quick filter's history and Advanced Query.
     @Inject
     public NavigationController(final EventBus eventBus,
                                final Navigation view,
@@ -143,31 +144,16 @@ public class NavigationController extends Controller
         this.currentActivity = currentActivity;
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
-        // The explorer's buttons: one toolbar, so one tab stop
-        final Toolbar toolbar = view.getToolbar();
-        add = toolbar.button(SvgImage.ADD, "New Document", this::onNew);
-        add.setOpensMenu(true);
-        add.setEnabled(false);
-        delete = toolbar.button(SvgImage.DELETE, "Delete Selected Documents", this::deleteItem);
-        delete.setEnabled(false);
-        showAlertsBtn = toolbar.toggle(SvgImage.EXCLAMATION, "Show Alerts", this::onShowAlerts);
-        locate = toolbar.button(SvgImage.LOCATE, "Locate Current Item", this::onLocate);
-        locate.setEnabled(false);
-        expandAll = toolbar.button(SvgImage.EXPAND_ALL, "Expand All Folders", this::onExpandAll);
-        collapseAll = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse All Folders", this::onCollapseAll);
-        filter = toolbar.toggle(SvgImage.FILTER, "Filter Document Types", this::onFilter);
-        filter.setPressed(hasActiveFilter);
-        find = toolbar.button(SvgImage.FIND, "Find in Content", this::onFind);
-
+        view.setOnAction(this::onAction);
+        view.setActionPressed(ExplorerAction.FILTER, hasActiveFilter);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnToggleMenu(this::toggleMenu);
         view.setOnActivity(currentActivity::showActivityChooser);
 
-        explorerTree = new ExplorerTree();
-        explorerTree.setMultiSelect(true);
+        explorerTree = view.getExplorerTree();
         treeController = make(explorerTreeControllerProvider).attach(explorerTree);
         treeController.setTaskMonitorFactory(view.getTaskListener());
-        treeController.setShowAlerts(showAlertsBtn.isPressed());
+        treeController.setShowAlerts(view.isActionPressed(ExplorerAction.SHOW_ALERTS));
 
         // Add views.
         uiConfigCache.get(uiConfig -> {
@@ -179,7 +165,7 @@ public class NavigationController extends Controller
                     activityShown = true;
                     updateActivitySummary();
                 }
-                showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
+                view.setActionVisible(ExplorerAction.SHOW_ALERTS, uiConfig.isDependencyWarningsEnabled());
 
                 view.registerPopupTextProvider(() ->
                         QuickFilterTooltipUtil.createTooltip(
@@ -226,7 +212,7 @@ public class NavigationController extends Controller
         // track the currently selected doc.
         listen(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
-            locate.setEnabled(selectedDoc != null);
+            view.setActionEnabled(ExplorerAction.LOCATE, selectedDoc != null);
         });
 
         // Register for refresh events.
@@ -264,8 +250,8 @@ public class NavigationController extends Controller
             final boolean enabled = NullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
                                     !ExplorerConstants.isFavouritesNode(selectedNode) &&
                                     !ExplorerConstants.isSystemNode(selectedNode);
-            add.setEnabled(enabled);
-            delete.setEnabled(enabled);
+            view.setActionEnabled(ExplorerAction.NEW, enabled);
+            view.setActionEnabled(ExplorerAction.DELETE, enabled);
         }));
         own(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
         own(explorerTree.addItemKeyHandler(event -> getEventBus().fireEvent(event)));
@@ -336,8 +322,17 @@ public class NavigationController extends Controller
         }
     }
 
-    private void onNew() {
-        newItem(add.getElement());
+    private void onAction(final ExplorerAction action) {
+        switch (action) {
+            case NEW -> newItem(view.getActionElement(ExplorerAction.NEW));
+            case DELETE -> deleteItem();
+            case SHOW_ALERTS -> onShowAlerts(view.isActionPressed(ExplorerAction.SHOW_ALERTS));
+            case LOCATE -> onLocate();
+            case EXPAND_ALL -> onExpandAll();
+            case COLLAPSE_ALL -> onCollapseAll();
+            case FILTER -> onFilter();
+            case FIND -> onFind();
+        }
     }
 
     private void onShowAlerts(final boolean showAlerts) {
@@ -360,8 +355,8 @@ public class NavigationController extends Controller
     }
 
     // The filter is only pressed when a filter has been set, not just when clicked
-    private void onFilter(final boolean pressed) {
-        showTypeFilter(filter.getElement());
+    private void onFilter() {
+        showTypeFilter(view.getActionElement(ExplorerAction.FILTER));
     }
 
     private void onFind() {
@@ -374,13 +369,13 @@ public class NavigationController extends Controller
     public void showTypeFilter(final Element target) {
         // Override the default behaviour of the toggle button as we only want
         // it to be ON if a filter has been set, not just when clicked
-        filter.setPressed(hasActiveFilter);
+        view.setActionPressed(ExplorerAction.FILTER, hasActiveFilter);
         typeFilter.show(target, this::setFilterState);
     }
 
     private void setFilterState(final boolean hasActiveFilter) {
         this.hasActiveFilter = hasActiveFilter;
-        filter.setPressed(hasActiveFilter);
+        view.setActionPressed(ExplorerAction.FILTER, hasActiveFilter);
     }
 
     @Override
@@ -397,7 +392,7 @@ public class NavigationController extends Controller
         if (!shown) {
             shown = true;
             treeController.refresh();
-            view.setNavigationWidget(explorerTree);
+            view.showExplorerTree();
             treeController.setOnFilterError(view::setFilterError);
             view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                     ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, taskMonitor()));

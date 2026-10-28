@@ -30,6 +30,10 @@ public class CredentialsController extends ContentTabController {
     private static final String LABEL = "Credentials";
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus        The application's event bus.
+    /// @param view            Its component.
+    /// @param credentialsList The credentials list.
     @Inject
     public CredentialsController(final EventBus eventBus,
                                  final Credentials view,

@@ -197,6 +197,26 @@ public class TableController extends DashboardComponentController
     private final Listeners<Boolean> updateListeners = new Listeners<>();
 
     /// Made by GIN, with its content, its parts and the dialogs it opens.
+    ///
+    /// @param eventBus                       The application's event bus.
+    /// @param view                           Its component.
+    /// @param securityContext                The user's permissions.
+    /// @param locationManager                The browser's location.
+    /// @param renameColumnControllerProvider Makes the rename column controller.
+    /// @param expressionProvider             Makes the expression.
+    /// @param columnFormatProvider           Makes the column format.
+    /// @param columnFilterDialog             The column filter dialog.
+    /// @param settingsControllerProvider     Makes the settings controller.
+    /// @param downloadOptions                The download options.
+    /// @param annotationManager              The annotation manager.
+    /// @param restFactory                    Makes REST requests.
+    /// @param clientPropertyCache            The client's properties.
+    /// @param timeZones                      The time zones.
+    /// @param userPreferencesManager         The user preferences manager.
+    /// @param columnSelectionListModel       The column selection list model.
+    /// @param dataSourceClient               The data source client.
+    /// @param columnValuesFilter             The column values filter.
+    /// @param uiConfigCache                  The UI's configuration.
     @Inject
     public TableController(final EventBus eventBus,
                            final Table view,

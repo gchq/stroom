@@ -36,6 +36,9 @@ public class StepLocationLinkController extends Controller {
     };
 
     /// Made by GIN, with its link and what makes its dialog.
+    ///
+    /// @param view                       Its component.
+    /// @param stepLocationPickerProvider Makes the step location picker.
     @Inject
     public StepLocationLinkController(final StepLocationLink view,
                                       final Provider<StepLocationPickerController> stepLocationPickerProvider) {

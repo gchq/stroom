@@ -67,6 +67,11 @@ public class DataRetentionController extends ContentTabController
     private Integer lastPolicyHash = null;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        Its component.
+    /// @param retentionPolicy             The retention policy.
+    /// @param dataRetentionImpactProvider Makes the data retention impact.
     @Inject
     public DataRetentionController(final EventBus eventBus,
                                    final DataRetention view,

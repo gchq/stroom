@@ -44,8 +44,6 @@ public class SigningKeysController extends ContentTabController implements Refre
     private static final SigningKeyResource SIGNING_KEY_RESOURCE = GWT.create(SigningKeyResource.class);
     public static final String TAB_TYPE = "SigningKeys";
 
-    private final SigningKeys view;
-
     private final SigningKeyListController signingKeyList;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -53,6 +51,12 @@ public class SigningKeysController extends ContentTabController implements Refre
     private final ButtonView revokeAllButton;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              Its component.
+    /// @param signingKeyList    The signing key list.
+    /// @param restFactory       Makes REST requests.
+    /// @param dateTimeFormatter Formats dates and times.
     @Inject
     public SigningKeysController(final EventBus eventBus,
                                  final SigningKeys view,
@@ -60,7 +64,6 @@ public class SigningKeysController extends ContentTabController implements Refre
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(signingKeyList);
         this.signingKeyList = signingKeyList;
@@ -182,7 +185,6 @@ public class SigningKeysController extends ContentTabController implements Refre
         signingKeyList.refresh();
         setButtonStates();
     }
-
 
     @Override
     public SvgImage getIcon() {

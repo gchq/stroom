@@ -42,6 +42,12 @@ public class QueryDocEditor extends DocumentEditor<QueryDoc> {
     private Runnable saveInterceptor;
 
     /// Makes the editor, with its Query, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param queryDocEdit         The query doc edit.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public QueryDocEditor(final EventBus eventBus,
                           final LinkTabPanel view,

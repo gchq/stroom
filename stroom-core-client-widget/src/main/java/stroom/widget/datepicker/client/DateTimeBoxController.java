@@ -37,6 +37,8 @@ public class DateTimeBoxController extends Controller {
     private DateTimeBox box;
 
     /// Made by GIN; [#attach(DateTimeBox)] gives it its box.
+    ///
+    /// @param dateTimePickerProvider Makes the date time picker.
     @Inject
     public DateTimeBoxController(final Provider<DateTimePickerController> dateTimePickerProvider) {
         this.dateTimePickerProvider = dateTimePickerProvider;

@@ -34,19 +34,21 @@ public class NodesController extends ContentTabController
 
     public static final String TAB_TYPE = "Nodes";
 
-    private final Nodes view;
-
     private final NodeStatusListController nodeStatusList;
     private final NodeJobListController nodeJobList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus       The application's event bus.
+    /// @param view           Its component.
+    /// @param nodeStatusList The node status list.
+    /// @param nodeJobList    The node job list.
     @Inject
     public NodesController(final EventBus eventBus,
                            final Nodes view,
                            final NodeStatusListController nodeStatusList,
                            final NodeJobListController nodeJobList) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(nodeStatusList);
         own(nodeJobList);

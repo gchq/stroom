@@ -47,6 +47,9 @@ public class ScheduleBoxController extends Controller {
             consumer.accept(null);
 
     /// Made by GIN; [#attach(ScheduleBox)] gives it its box.
+    ///
+    /// @param schedulePickerProvider Makes the schedule picker.
+    /// @param scheduledTimeClient    The scheduled time client.
     @Inject
     public ScheduleBoxController(final Provider<SchedulePickerController> schedulePickerProvider,
                                  final ScheduledTimeClient scheduledTimeClient) {

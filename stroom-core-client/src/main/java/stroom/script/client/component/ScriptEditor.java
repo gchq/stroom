@@ -46,6 +46,13 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
     private int readCount;
 
     /// Makes the editor, with its Script, Settings, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param codeTabProvider      Makes the code tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public ScriptEditor(final EventBus eventBus,
                         final LinkTabPanel view,

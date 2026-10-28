@@ -31,6 +31,9 @@ public class CharacterNavigatorController extends Controller {
     private HasCharacterData display;
 
     /// Made by GIN, with its navigator and what makes its range dialog.
+    ///
+    /// @param view                            Its component.
+    /// @param characterRangeSelectionProvider Makes the character range selection.
     @Inject
     public CharacterNavigatorController(
             final CharacterNavigator view,

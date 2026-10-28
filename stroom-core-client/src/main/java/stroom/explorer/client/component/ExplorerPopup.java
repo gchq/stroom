@@ -51,7 +51,7 @@ public class ExplorerPopup extends Component {
     public ExplorerPopup() {
         initWidget(BINDER.createAndBindUi(this));
         sinkEvents(Event.ONMOUSEUP | Event.FOCUSEVENTS);
-        nameFilter.addValueChangeHandler(e -> onFilterChange.accept(nameFilter.getText()));
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @return The tree, for the controller to attach the tree's controller to.

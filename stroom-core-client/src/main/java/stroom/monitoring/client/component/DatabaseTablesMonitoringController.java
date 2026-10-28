@@ -55,6 +55,10 @@ public class DatabaseTablesMonitoringController extends ContentTabController {
     private RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        Its component.
+    /// @param restFactory Makes REST requests.
     @Inject
     public DatabaseTablesMonitoringController(final EventBus eventBus,
                                               final PagerPanel view,

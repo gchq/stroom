@@ -24,6 +24,10 @@ import com.google.web.bindery.event.shared.EventBus;
 public class TextSettingsController extends ComponentSettingsDialogController {
 
     /// Made by GIN, with its content and its tabs.
+    ///
+    /// @param eventBus      The application's event bus.
+    /// @param view          Its component.
+    /// @param basicSettings The basic settings.
     @Inject
     public TextSettingsController(final EventBus eventBus,
                                   final ComponentSettingsDialog view,

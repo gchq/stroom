@@ -44,6 +44,10 @@ public class TimeRangePickerController extends Controller {
     private final TimeRangePicker view;
 
     /// Made by GIN for one use, with the dialog's content and what opens its times' dialogs.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          Its component.
+    /// @param dateTimeBoxControllerProvider Makes the date time box controller.
     @Inject
     public TimeRangePickerController(final EventBus eventBus,
                                      final TimeRangePicker view,

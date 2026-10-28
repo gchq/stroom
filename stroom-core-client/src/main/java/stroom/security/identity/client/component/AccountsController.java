@@ -30,18 +30,20 @@ public class AccountsController extends ContentTabController
 
     public static final String TAB_TYPE = "Accounts";
 
-    private final Accounts view;
-
     private final AccountsListController accountsList;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus      The application's event bus.
+    /// @param view          Its component.
+    /// @param accountsList  The accounts list.
+    /// @param uiConfigCache The UI's configuration.
     @Inject
     public AccountsController(final EventBus eventBus,
                               final Accounts view,
                               final AccountsListController accountsList,
                               final UiConfigCache uiConfigCache) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(accountsList);
         this.accountsList = accountsList;

@@ -29,18 +29,19 @@ public class SourceTabController extends ContentTabController {
 
     public static final String TAB_TYPE = "DataSource";
 
-    private final SourceTab view;
-
     private final SourceViewerController sourceController;
     private SourceKey sourceKey;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus         The application's event bus.
+    /// @param sourceController The source controller.
+    /// @param view             Its component.
     @Inject
     public SourceTabController(final EventBus eventBus,
                                final SourceViewerController sourceController,
                                final SourceTab view) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(sourceController);
         this.sourceController = sourceController;

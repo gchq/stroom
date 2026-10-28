@@ -25,7 +25,6 @@ import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,7 +53,7 @@ public class ExportConfigDialog extends Component {
     /// Makes empty content.
     public ExportConfigDialog() {
         initWidget(BINDER.createAndBindUi(this));
-        nameFilter.addValueChangeHandler(this::onFilterChange);
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
         filter.addClickHandler(this::onFilterClick);
     }
 
@@ -101,10 +100,6 @@ public class ExportConfigDialog extends Component {
     /// @return Filter Document Types' element, which the type filter's popup is shown at.
     public Element getFilterTypesElement() {
         return filter.getElement();
-    }
-
-    private void onFilterChange(final ValueChangeEvent<String> event) {
-        onFilterChange.accept(nameFilter.getText());
     }
 
     private void onFilterClick(final ClickEvent event) {

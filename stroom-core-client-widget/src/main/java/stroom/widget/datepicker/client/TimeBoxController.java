@@ -40,6 +40,8 @@ public class TimeBoxController extends Controller {
     private boolean secondVisible = true;
 
     /// Made by GIN; [#attach(TimeBox)] gives it its box.
+    ///
+    /// @param timePickerProvider Makes the time picker.
     @Inject
     public TimeBoxController(final Provider<TimePickerController> timePickerProvider) {
         this.timePickerProvider = timePickerProvider;

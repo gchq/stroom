@@ -117,6 +117,23 @@ public class QueryPaneController
     private ExpressionOperator currentSelectionQuery;
 
     /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                          The application's event bus.
+    /// @param view                              Its component.
+    /// @param settingsControllerProvider        Makes the settings controller.
+    /// @param expressionTree                    The expression tree.
+    /// @param history                           The history.
+    /// @param favourites                        The favourites.
+    /// @param pipelineSelection                 The pipeline selection.
+    /// @param processorLimitsControllerProvider Makes the processor limits controller.
+    /// @param indexLoader                       The index loader.
+    /// @param restFactory                       Makes REST requests.
+    /// @param securityContext                   The user's permissions.
+    /// @param clientPropertyCache               The client's properties.
+    /// @param locationManager                   The browser's location.
+    /// @param dateTimeSettingsFactory           The user's date and time settings.
+    /// @param resultStoreModel                  The result stores.
+    /// @param fieldSelectionBoxModel            The field selection box model.
     @Inject
     public QueryPaneController(final EventBus eventBus,
                                final QueryPane view,

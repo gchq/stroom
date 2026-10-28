@@ -17,10 +17,11 @@
 package stroom.main.client.component;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
-import stroom.main.client.DynamicStyles;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
 import stroom.widget.util.client.ContentFocus;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Size;
 import stroom.widget.util.client.TabOrder;
 
@@ -28,8 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
@@ -60,7 +59,7 @@ public class Main extends Component {
     @UiField
     SimplePanel root;
     @UiField
-    SimplePanel banner;
+    AriaPanel banner;
     @UiField
     FlowPanel main;
     @UiField
@@ -87,10 +86,6 @@ public class Main extends Component {
     /// Makes the screen, with no content until it is given it.
     public Main() {
         initWidget(BINDER.createAndBindUi(this));
-        banner.setVisible(false);
-        // An alert, so that a screen reader says the maintenance message when it is shown. The role
-        // is set before any text is, as a live region must exist before what it announces
-        banner.getElement().setAttribute("role", "alert");
         sinkEvents(Event.KEYEVENTS);
     }
 
@@ -364,9 +359,9 @@ public class Main extends Component {
 
     /// @param colour The theme's colour of the selected document tab, or null or blank for the default.
     public void setSelectedTabColour(final String colour) {
+        // The theme's variable, for the curved tabs, which are all within this screen (tab-bar.css)
         if (colour != null && !colour.isBlank()) {
-            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".tab-bar--curved .tab-bar__tab[aria-selected=\"true\"]"),
-                    SafeStylesUtils.fromTrustedNameAndValue("border-bottom-color", colour));
+            CssProperties.set(main.getElement(), "--curve-tab__selected-color", colour);
         }
     }
 

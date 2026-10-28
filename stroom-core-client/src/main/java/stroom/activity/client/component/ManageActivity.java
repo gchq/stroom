@@ -21,7 +21,6 @@ import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -49,7 +48,7 @@ public class ManageActivity extends Component {
     /// Makes empty content.
     public ManageActivity() {
         initWidget(BINDER.createAndBindUi(this));
-        nameFilter.addValueChangeHandler(this::onFilterChange);
+        nameFilter.setOnChange(text -> onFilterChange.accept(text));
         nameFilter.registerPopupTextProvider(() -> tooltipContentSupplier.get());
     }
 
@@ -83,10 +82,6 @@ public class ManageActivity extends Component {
     /// @param onFilterChange Given the filter's text when it changes.
     public void setOnFilterChange(final Consumer<String> onFilterChange) {
         this.onFilterChange = onFilterChange;
-    }
-
-    private void onFilterChange(final ValueChangeEvent<String> event) {
-        onFilterChange.accept(nameFilter.getText());
     }
 
 

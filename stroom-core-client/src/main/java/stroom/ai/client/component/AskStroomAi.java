@@ -19,16 +19,26 @@ package stroom.ai.client.component;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.Clipboard;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Label;
@@ -36,6 +46,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// The Ask Stroom AI chat: its conversation's title and toolbar, the conversation, and the message
@@ -51,6 +62,10 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     private Consumer<String> onSend = message -> {
     };
     private Consumer<AskStroomAiAction> onAction = action -> {
+    };
+    private BiConsumer<Integer, String> onViewAttachment = (attachmentId, description) -> {
+    };
+    private Consumer<Integer> onDeleteMessage = messageId -> {
     };
 
     @UiField
@@ -106,6 +121,157 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
         chatHistory.setOnClick(() -> onAction.accept(AskStroomAiAction.SHOW_HISTORY));
         download.setOnClick(() -> onAction.accept(AskStroomAiAction.DOWNLOAD));
         deleteAll.setOnClick(() -> onAction.accept(AskStroomAiAction.DELETE_ALL));
+        markdownPreview.addDomHandler(this::onConversationClick, ClickEvent.getType());
+    }
+
+    // The buttons in the conversation's messages: View data, Delete and Copy
+    private void onConversationClick(final ClickEvent event) {
+        if (!MouseUtil.isPrimary(event)) {
+            return;
+        }
+        final Element target = event.getNativeEvent().getEventTarget().cast();
+        final Element button = ElementUtil.findParent(target, element ->
+                element.getTagName().equalsIgnoreCase("button"), 5);
+        if (button == null) {
+            return;
+        }
+        final String attachmentId = button.getAttribute("data-attachment-id");
+        final String messageId = button.getAttribute("data-delete-message-id");
+        final String data = button.getAttribute("data");
+        if (NullSafe.isNonBlankString(attachmentId)) {
+            onViewAttachment.accept(Integer.parseInt(attachmentId), button.getAttribute("data-attachment-desc"));
+        } else if (NullSafe.isNonBlankString(messageId)) {
+            onDeleteMessage.accept(Integer.parseInt(messageId));
+        } else if (NullSafe.isNonBlankString(data)) {
+            Clipboard.writeText(data, () -> showCopied(button), () -> {
+            });
+        }
+    }
+
+    // The Copy button says Copied for a moment
+    private void showCopied(final Element button) {
+        final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
+        final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
+        if (copyIcon != null && copyLabel != null) {
+            copyIcon.setInnerHTML(SvgImage.OK.getSvg());
+            copyLabel.setInnerText("Copied");
+            new Timer() {
+                @Override
+                public void run() {
+                    copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
+                    copyLabel.setInnerText("Copy");
+                }
+            }.schedule(2000);
+        }
+    }
+
+    /// @param onViewAttachment Given an attachment's id and description when the user asks to see
+    ///                         its data.
+    public void setOnViewAttachment(final BiConsumer<Integer, String> onViewAttachment) {
+        this.onViewAttachment = Objects.requireNonNull(onViewAttachment, "onViewAttachment");
+    }
+
+    /// @param onDeleteMessage Given a message's id when the user asks to delete it.
+    public void setOnDeleteMessage(final Consumer<Integer> onDeleteMessage) {
+        this.onDeleteMessage = Objects.requireNonNull(onDeleteMessage, "onDeleteMessage");
+    }
+
+    /// Adds messages to the end of the conversation, and scrolls to them.
+    ///
+    /// @param html The messages.
+    public void appendMessages(final SafeHtml html) {
+        final Element conversation = markdownPreview.getElement();
+        conversation.setInnerHTML(NullSafe.toString(conversation.getInnerHTML()) + html.asString());
+        scrollToLatest();
+    }
+
+    /// Scrolls the conversation to its latest message.
+    public void scrollToLatest() {
+        final Element conversation = markdownPreview.getElement();
+        conversation.setScrollTop(conversation.getScrollHeight());
+    }
+
+    /// Gives the conversation's last message an id, taking it from any other message that had it.
+    ///
+    /// @param id The id.
+    public void markLastMessage(final String id) {
+        final Element previous = findPart(id);
+        if (previous != null) {
+            previous.removeAttribute("id");
+        }
+        final Element last = markdownPreview.getElement().getLastChild().cast();
+        if (last != null) {
+            last.setId(id);
+        }
+    }
+
+    /// Replaces a message.
+    ///
+    /// @param id   The message's id.
+    /// @param html The message to show in its place.
+    /// @return False if there is no message with the id.
+    public boolean replaceMessage(final String id, final SafeHtml html) {
+        final Element existing = findPart(id);
+        if (existing == null) {
+            return false;
+        }
+        final Element temp = Document.get().createDivElement();
+        temp.setInnerHTML(html.asString());
+        final Element replacement = temp.getFirstChildElement();
+        if (replacement == null) {
+            return false;
+        }
+        existing.getParentElement().replaceChild(replacement, existing);
+        return true;
+    }
+
+    /// @param id The id of a part of a message.
+    /// @return Whether the conversation has it.
+    public boolean hasPart(final String id) {
+        return findPart(id) != null;
+    }
+
+    /// Removes a part of a message, if the conversation has it.
+    ///
+    /// @param id The part's id.
+    public void removePart(final String id) {
+        final Element part = findPart(id);
+        if (part != null) {
+            part.removeFromParent();
+        }
+    }
+
+    /// Sets the text of a part of a message, if the conversation has it.
+    ///
+    /// @param id   The part's id.
+    /// @param text Its text.
+    public void setPartText(final String id, final String text) {
+        final Element part = findPart(id);
+        if (part != null) {
+            part.setInnerText(text);
+        }
+    }
+
+    /// Sets the content of a part of a message, if the conversation has it.
+    ///
+    /// @param id   The part's id.
+    /// @param html Its content.
+    public void setPartHtml(final String id, final SafeHtml html) {
+        final Element part = findPart(id);
+        if (part != null) {
+            part.setInnerSafeHtml(html);
+        }
+    }
+
+    // A part of the conversation, by id, looked for only within it
+    private Element findPart(final String id) {
+        final NodeList<Element> elements = markdownPreview.getElement().getElementsByTagName("*");
+        for (int i = 0; i < elements.getLength(); i++) {
+            if (id.equals(elements.getItem(i).getId())) {
+                return elements.getItem(i);
+            }
+        }
+        return null;
     }
 
     /// @param onSend Given the message the user sends.
@@ -122,11 +288,6 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     @Override
     public void focus() {
         message.setFocus(true);
-    }
-
-    /// @return Where the conversation's messages are shown, as HTML.
-    public SimplePanel getMarkdownContainer() {
-        return markdownPreview;
     }
 
     /// @return The message typed.

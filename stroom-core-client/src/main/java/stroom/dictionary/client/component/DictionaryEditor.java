@@ -68,6 +68,16 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
 
     /// Makes the editor, with its Words, Imports, Effective Words, Documentation and Permissions
     /// tabs.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       Its component.
+    /// @param wordsTabProvider           Makes the words tab.
+    /// @param importsTabProvider         Makes the imports tab.
+    /// @param effectiveWordsListProvider Makes the effective words list.
+    /// @param markdownEditProvider       Makes the Documentation tab's editor.
+    /// @param permissionsProvider        Makes the Permissions tab.
+    /// @param restFactory                Makes REST requests.
+    /// @param locationManager            The browser's location.
     @Inject
     public DictionaryEditor(final EventBus eventBus,
                             final LinkTabPanel view,

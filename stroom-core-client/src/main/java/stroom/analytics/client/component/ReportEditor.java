@@ -48,6 +48,15 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
 
     /// Makes the editor, with its Query, Settings, Notifications, Execution, Documentation and
     /// Permissions tabs.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       Its component.
+    /// @param reportQueryEdit            The report query edit.
+    /// @param reportSettingsProvider     Makes the report settings.
+    /// @param notificationListProvider   Makes the notification list.
+    /// @param analyticProcessingProvider Makes the analytic processing.
+    /// @param markdownEditProvider       Makes the Documentation tab's editor.
+    /// @param permissionsProvider        Makes the Permissions tab.
     @Inject
     public ReportEditor(final EventBus eventBus,
                         final LinkTabPanel view,

@@ -1132,6 +1132,15 @@ after wave 18.
 > **Done, 28 October 2026**: the eight bugs (all as on master) are fixed, each with a regression test
 > and a changelog entry. See `wave-19.md`.
 
+## 20. Finishing the component split
+
+Record: [`component-migration/wave-20.md`](component-migration/wave-20.md). Added 28 October 2026,
+after wave 19.
+
+> **Done, 28 October 2026**: the explorer, the main screen, the Welcome tab, the user's tab and Ask
+> Stroom AI keep their markup in their templates and their state behind their components' methods,
+> the constructors' javadoc is complete, and the quick filters use their callbacks. See `wave-20.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

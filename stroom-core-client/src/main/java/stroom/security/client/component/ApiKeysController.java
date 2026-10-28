@@ -47,8 +47,6 @@ public class ApiKeysController extends ContentTabController
     private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
     public static final String TAB_TYPE = "ApiKeys";
 
-    private final ApiKeys view;
-
     private final ApiKeysListController apiKeysList;
     private final Provider<EditApiKeyController> editApiKeyProvider;
     private final RestFactory restFactory;
@@ -58,6 +56,13 @@ public class ApiKeysController extends ContentTabController
     private UserRef owner = null;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus           The application's event bus.
+    /// @param view               Its component.
+    /// @param apiKeysList        The API keys list.
+    /// @param restFactory        Makes REST requests.
+    /// @param uiConfigCache      The UI's configuration.
+    /// @param editApiKeyProvider Makes the edit API key.
     @Inject
     public ApiKeysController(final EventBus eventBus,
                              final ApiKeys view,
@@ -66,7 +71,6 @@ public class ApiKeysController extends ContentTabController
                              final UiConfigCache uiConfigCache,
                              final Provider<EditApiKeyController> editApiKeyProvider) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(apiKeysList);
         this.apiKeysList = apiKeysList;

@@ -35,6 +35,8 @@ public class TimeRangeSelectorController extends Controller {
     private final Provider<TimeRangePickerController> timeRangePickerProvider;
 
     /// Made by GIN; [#attach(TimeRangeSelector)] gives it its selector.
+    ///
+    /// @param timeRangePickerProvider Makes the time range picker.
     @Inject
     public TimeRangeSelectorController(final Provider<TimeRangePickerController> timeRangePickerProvider) {
         this.timeRangePickerProvider = timeRangePickerProvider;

@@ -1,12 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:s="urn:import:stroom.main.client.component">
+             xmlns:s="urn:import:stroom.main.client.component"
+             xmlns:c="urn:import:stroom.widget.component.client">
     <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
          stop it held the whole app, with no name -->
     <g:SimplePanel ui:field="root" styleName="main-screen">
         <g:FlowPanel styleName="main-screen">
-            <g:SimplePanel ui:field="banner" styleName="main-screen__banner"/>
+            <!-- An alert, so that a screen reader says the maintenance message when it is shown.
+                 The role is there before any text is, as a live region must exist before what it
+                 announces -->
+            <c:AriaPanel ui:field="banner" styleName="main-screen__banner" role="alert" visible="false"/>
             <!-- The main toolbar is shown at the top right, over the content, but comes first so
                  that the Tab key reaches it before the content -->
             <g:FlowPanel ui:field="main" styleName="main-screen">

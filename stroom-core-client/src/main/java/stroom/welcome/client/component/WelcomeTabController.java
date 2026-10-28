@@ -38,9 +38,13 @@ public class WelcomeTabController extends ContentTabController {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
-    private final WelcomeTab view;
-
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              Its component.
+    /// @param restFactory       Makes REST requests.
+    /// @param uiConfigCache     The UI's configuration.
+    /// @param dateTimeFormatter Formats dates and times.
     @Inject
     public WelcomeTabController(final EventBus eventBus,
                                 final WelcomeTab view,
@@ -48,7 +52,6 @@ public class WelcomeTabController extends ContentTabController {
                                 final UiConfigCache uiConfigCache,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
 
         restFactory

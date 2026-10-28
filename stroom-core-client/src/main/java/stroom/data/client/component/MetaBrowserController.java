@@ -93,6 +93,18 @@ public class MetaBrowserController
     private boolean hasSetCriteria;
 
     /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                The application's event bus.
+    /// @param view                    Its component.
+    /// @param metaList                The meta list.
+    /// @param metaRelationList        The meta relation list.
+    /// @param dataController          The data controller.
+    /// @param filterDialogProvider    Makes the filter dialog.
+    /// @param dataUploadProvider      Makes the data upload.
+    /// @param securityContext         The user's permissions.
+    /// @param restFactory             Makes REST requests.
+    /// @param dateTimeSettingsFactory The user's date and time settings.
+    /// @param expressionValidator     The expression validator.
     @Inject
     public MetaBrowserController(final EventBus eventBus,
                                  final MetaBrowser view,

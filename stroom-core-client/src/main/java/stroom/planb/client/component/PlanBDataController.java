@@ -80,6 +80,13 @@ public class PlanBDataController extends AbstractQueryDataController<PlanBDoc> {
             .build();
 
     /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                The application's event bus.
+    /// @param view                    Its component.
+    /// @param tableController         The table controller.
+    /// @param restFactory             Makes REST requests.
+    /// @param dateTimeSettingsFactory The user's date and time settings.
+    /// @param resultStoreModel        The result stores.
     @Inject
     public PlanBDataController(final EventBus eventBus,
                                final QueryDataPane view,

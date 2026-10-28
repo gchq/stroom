@@ -49,6 +49,13 @@ public class DocumentationEditor extends DocumentEditor<DocumentationDoc> {
     private final ToolbarButton downloadButton;
 
     /// Makes the editor, with its Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
+    /// @param restFactory          Makes REST requests.
+    /// @param locationManager      The browser's location.
     @Inject
     public DocumentationEditor(final EventBus eventBus,
                                final LinkTabPanel view,

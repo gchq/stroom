@@ -110,6 +110,17 @@ public class ExecutionSchedulesController extends ContentTabController {
     private final RefCellsController refCells;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       Its component.
+    /// @param dateTimeFormatter          Formats dates and times.
+    /// @param restFactory                Makes REST requests.
+    /// @param scheduledProcessEdit       The scheduled process edit.
+    /// @param batchExecutionScheduleEdit The batch execution schedule edit.
+    /// @param runNowProvider             Makes the run now.
+    /// @param filterDialogProvider       Makes the filter dialog.
+    /// @param expressionValidator        The expression validator.
+    /// @param refCells                   The ref cells.
     @Inject
     public ExecutionSchedulesController(final EventBus eventBus,
                                         final PagerPanel view,

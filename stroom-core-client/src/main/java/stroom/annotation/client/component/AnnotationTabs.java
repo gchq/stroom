@@ -62,6 +62,15 @@ public class AnnotationTabs extends TabbedController<Annotation> {
     };
 
     /// Makes the tabs.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     Its component.
+    /// @param annotationResourceClient The annotation resource client.
+    /// @param annotationEdit           The annotation edit.
+    /// @param annotationLinksProvider  Makes the annotation links.
+    /// @param linkedEvents             The linked events.
+    /// @param markdownEditProvider     Makes the Documentation tab's editor.
+    /// @param permissionsProvider      Makes the Permissions tab.
     @Inject
     public AnnotationTabs(final EventBus eventBus,
                           final LinkTabPanel view,

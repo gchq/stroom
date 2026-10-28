@@ -38,6 +38,9 @@ public class CharacterRangeSelectionController extends Controller {
     private final CharacterRangeSelection view;
 
     /// Made by GIN for one use, with the dialog's content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Its component.
     @Inject
     public CharacterRangeSelectionController(final EventBus eventBus, final CharacterRangeSelection view) {
         super(eventBus);

@@ -52,21 +52,14 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.util.client.Clipboard;
-import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Size;
 import stroom.widget.util.client.SvgMarkup;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -110,16 +103,26 @@ public class AskStroomAiController extends Controller
 
     private boolean showing;
     private boolean docked;
-    /**
-     * True while a request is with the server. Polling continues for as long as this is set, since a
-     * poll can otherwise outrun the work and conclude it has finished before it has started.
-     */
+    /// True while a request is with the server. Polling continues for as long as this is set, since a
+    /// poll can otherwise outrun the work and conclude it has finished before it has started.
     private boolean requestInFlight;
     private boolean polling;
     // The next poll for the chat's messages, while it is waiting on them; cancelled when disposed
     private com.google.gwt.user.client.Timer pollTimer;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus                       The application's event bus.
+    /// @param view                           Its component.
+    /// @param docSelectionProvider           Makes the doc selection.
+    /// @param markdownConverter              The markdown converter.
+    /// @param askStroomAiClient              The Ask Stroom AI client.
+    /// @param askStroomAiConfigProvider      Makes the Ask Stroom AI config.
+    /// @param aiChatHistoryProvider          Makes the AI chat history.
+    /// @param downloadChatControllerProvider Makes the download chat controller.
+    /// @param aiAttachmentDataProvider       Makes the AI attachment data.
+    /// @param locationManager                The browser's location.
+    /// @param dateTimeFormatter              Formats dates and times.
     @Inject
     public AskStroomAiController(final EventBus eventBus,
                                 final AskStroomAi view,
@@ -157,51 +160,8 @@ public class AskStroomAiController extends Controller
         own(modelSelection.addSelectionListener(event ->
                 writeModel()));
 
-        own(view.getMarkdownContainer().addDomHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                final Element target = e.getNativeEvent().getEventTarget().cast();
-                final Element button = ElementUtil.findParent(target, element ->
-                        element.getTagName().equalsIgnoreCase("button"), 5);
-                if (button != null) {
-                    // Capture "View data" click events.
-                    final String attachmentIdStr = button.getAttribute("data-attachment-id");
-                    if (NullSafe.isNonBlankString(attachmentIdStr)) {
-                        final String desc = button.getAttribute("data-attachment-desc");
-                        onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
-                        return;
-                    }
-
-                    // Capture delete click events.
-                    final String messageIdStr = button.getAttribute("data-delete-message-id");
-                    if (NullSafe.isNonBlankString(messageIdStr)) {
-                        onDeleteMessage(Integer.parseInt(messageIdStr));
-                        return;
-                    }
-
-                    // Capture copy click events.
-                    final String data = button.getAttribute("data");
-                    if (NullSafe.isNonBlankString(data)) {
-                        Clipboard.writeText(data, () -> {
-                            // Code to change label
-                            final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
-                            final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
-                            if (copyLabel != null) {
-                                copyIcon.setInnerHTML(SvgImage.OK.getSvg());
-                                copyLabel.setInnerHTML("Copied");
-                                new com.google.gwt.user.client.Timer() {
-                                    @Override
-                                    public void run() {
-                                        copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
-                                        copyLabel.setInnerHTML("Copy");
-                                    }
-                                }.schedule(2000);
-                            }
-                        }, () -> {
-                        });
-                    }
-                }
-            }
-        }, ClickEvent.getType()));
+        view.setOnViewAttachment(this::onViewAttachmentData);
+        view.setOnDeleteMessage(this::onDeleteMessage);
 
         // Listen for dock splitter resize events to persist the new size.
         listen(DockResizeEvent.getType(), event -> {
@@ -278,6 +238,8 @@ public class AskStroomAiController extends Controller
                                     .popupType(PopupType.CLOSE_DIALOG)
                                     .popupSize(PopupSize.resizable(700, 500))
                                     .caption("Ask Stroom AI")
+                                    // Ready to type a question, as when it is opened to ask about data
+                                    .onShow(e -> view.focus())
                                     .onHideRequest(e -> {
                                         ShowAskStroomAiEvent.fire(this, false);
                                     })
@@ -422,9 +384,8 @@ public class AskStroomAiController extends Controller
         appendToContainer(hb);
         markPendingUserMessage();
 
-        // Scroll markdown container to bottom, so the user's message is displayed
-        final SimplePanel markdownContainer = view.getMarkdownContainer();
-        markdownContainer.getElement().setScrollTop(markdownContainer.getElement().getScrollHeight());
+        // Scrolled to the bottom, so the user's message is displayed
+        view.scrollToLatest();
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
             final AskStroomAiRequest request = new AskStroomAiRequest(
@@ -471,10 +432,8 @@ public class AskStroomAiController extends Controller
                 callback);
     }
 
-    /**
-     * Poll for new messages since lastSeenMessageId. Renders any new messages
-     * with type-aware formatting and updates the lastSeenMessageId.
-     */
+    /// Poll for new messages since lastSeenMessageId. Renders any new messages
+    /// with type-aware formatting and updates the lastSeenMessageId.
     private void startPolling() {
         if (!polling) {
             polling = true;
@@ -552,46 +511,26 @@ public class AskStroomAiController extends Controller
     /// Marks the last message in the container, the user's message just sent, as pending.
     private void markPendingUserMessage() {
         // Only the latest message sent is pending
-        final Element previous = Document.get().getElementById(PENDING_USER_MESSAGE_ID);
-        if (previous != null) {
-            previous.removeAttribute("id");
-        }
-        final Element message = view.getMarkdownContainer().getElement().getLastChild().cast();
-        if (message != null) {
-            message.setId(PENDING_USER_MESSAGE_ID);
-        }
+        view.markLastMessage(PENDING_USER_MESSAGE_ID);
     }
 
     /// Replaces the pending user message with the stored one.
     ///
     /// @return False if there is no pending message to replace.
     private boolean replacePendingUserMessage(final AiChatMessage msg, final long nowMs) {
-        final Element pending = Document.get().getElementById(PENDING_USER_MESSAGE_ID);
-        if (pending == null) {
+        if (!view.hasPart(PENDING_USER_MESSAGE_ID)) {
             return false;
         }
         final HtmlBuilder hb = new HtmlBuilder();
         renderMessage(hb, msg, nowMs);
-        final Element temp = Document.get().createDivElement();
-        temp.setInnerHTML(hb.toSafeHtml().asString());
-        final Element stored = temp.getFirstChildElement();
-        if (stored == null) {
-            return false;
-        }
-        pending.getParentElement().replaceChild(stored, pending);
-        return true;
+        return view.replaceMessage(PENDING_USER_MESSAGE_ID, hb.toSafeHtml());
     }
 
     void appendToContainer(final HtmlBuilder hb) {
-        final Element markdownContainer = view.getMarkdownContainer().getElement();
-        final String current = NullSafe.toString(markdownContainer.getInnerHTML());
-        markdownContainer.setInnerHTML(current + hb.toSafeHtml().asString());
-        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        view.appendMessages(hb.toSafeHtml());
     }
 
-    /**
-     * Render a single message with type-aware HTML structure.
-     */
+    /// Render a single message with type-aware HTML structure.
     private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg, final long nowMs) {
         final long timeMs = msg.getCreateTimeMs();
         final int messageId = msg.getId();
@@ -636,10 +575,8 @@ public class AskStroomAiController extends Controller
         }
     }
 
-    /**
-     * Append a message div with the given CSS class, markdown content, and timestamp.
-     * If {@code showCopy} is true, a copy button is added for AI responses.
-     */
+    /// Append a message div with the given CSS class, markdown content, and timestamp.
+    /// If `showCopy` is true, a copy button is added for AI responses.
     private void appendMessageHtml(final HtmlBuilder hb,
                                    final String cssClass,
                                    final String markdownText,
@@ -680,10 +617,8 @@ public class AskStroomAiController extends Controller
         }, Attribute.className(cssClass));
     }
 
-    /**
-     * Append a collapsible details/summary element for thinking and data messages.
-     * Uses native HTML {@code <details>/<summary>} so content is collapsed by default.
-     */
+    /// Append a collapsible details/summary element for thinking and data messages.
+    /// Uses native HTML `<details>/<summary>` so content is collapsed by default.
     private void appendDetailsElement(final HtmlBuilder hb,
                                       final String cssClass,
                                       final SvgImage icon,
@@ -708,10 +643,8 @@ public class AskStroomAiController extends Controller
         }, DETAILS, Attribute.className(cssClass));
     }
 
-    /**
-     * Render an ATTACHMENT message with a status line that can be updated in-place
-     * via a unique DOM ID.
-     */
+    /// Render an ATTACHMENT message with a status line that can be updated in-place
+    /// via a unique DOM ID.
     private void appendAttachmentMessage(final HtmlBuilder hb,
                                          final AiChatMessage msg,
                                          final long timeMs,
@@ -756,11 +689,9 @@ public class AskStroomAiController extends Controller
         }, Attribute.className("ai-message ai-message--data"));
     }
 
-    /**
-     * Renders the WORKING message with stable DOM ids, so that polling can update the progress text
-     * where it stands rather than appending a new line every time it changes. The text is in the
-     * summary because that is the part that is visible without expanding it.
-     */
+    /// Renders the WORKING message with stable DOM ids, so that polling can update the progress text
+    /// where it stands rather than appending a new line every time it changes. The text is in the
+    /// summary because that is the part that is visible without expanding it.
     private void appendWorkingMessage(final HtmlBuilder hb,
                                       final AiChatMessage msg,
                                       final long timeMs,
@@ -777,28 +708,18 @@ public class AskStroomAiController extends Controller
             new Attribute("id", WORKING_MESSAGE_ID));
     }
 
-    /**
-     * Adds, updates or removes the progress line to match what the server says it is doing.
-     */
+    /// Adds, updates or removes the progress line to match what the server says it is doing.
     private void updateWorkingMessage(final AiChatMessage workingMessage) {
-        final Document doc = Document.get();
-        final Element existing = doc.getElementById(WORKING_MESSAGE_ID);
-
         if (workingMessage == null) {
             // Nothing is being worked on, so the progress line has served its purpose.
-            if (existing != null) {
-                existing.removeFromParent();
-            }
-        } else if (existing == null) {
+            view.removePart(WORKING_MESSAGE_ID);
+        } else if (!view.hasPart(WORKING_MESSAGE_ID)) {
             final HtmlBuilder hb = new HtmlBuilder();
             appendWorkingMessage(hb, workingMessage,
                     workingMessage.getCreateTimeMs(), System.currentTimeMillis());
             appendToContainer(hb);
         } else {
-            final Element text = doc.getElementById(WORKING_TEXT_ID);
-            if (text != null) {
-                text.setInnerText(workingText(workingMessage));
-            }
+            view.setPartText(WORKING_TEXT_ID, workingText(workingMessage));
         }
     }
 
@@ -811,9 +732,7 @@ public class AskStroomAiController extends Controller
         hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
     }
 
-    /**
-     * @return True if any attachment is still being fetched, so there is more to come.
-     */
+    /// @return True if any attachment is still being fetched, so there is more to come.
     private boolean isDownloading(final java.util.List<AiChatAttachment> attachments) {
         if (attachments != null) {
             for (final AiChatAttachment attachment : attachments) {
@@ -826,26 +745,19 @@ public class AskStroomAiController extends Controller
         return false;
     }
 
-    /**
-     * Update existing attachment status elements in the DOM with current status.
-     */
+    /// Update existing attachment status elements in the DOM with current status.
     private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
         if (attachments == null) {
             return;
         }
         for (final AiChatAttachment attachment : attachments) {
-            final Document doc = Document.get();
-            final Element statusEl = doc.getElementById("ai-attachment-status-" + attachment.getId());
-            if (statusEl != null) {
-                statusEl.setInnerHTML(formatAttachmentStatus(attachment));
-            }
+            view.setPartHtml("ai-attachment-status-" + attachment.getId(),
+                    SafeHtmlUtils.fromTrustedString(formatAttachmentStatus(attachment)));
         }
     }
 
-    /**
-     * Format a human-readable status string with an appropriate icon for the
-     * given attachment status.
-     */
+    /// Format a human-readable status string with an appropriate icon for the
+    /// given attachment status.
     private String formatAttachmentStatus(final AiChatAttachment attachment) {
         final HtmlBuilder hb = new HtmlBuilder();
         switch (attachment.getStatus()) {
@@ -903,9 +815,7 @@ public class AskStroomAiController extends Controller
                 Attribute.title(dateTimeFormatter.format(timeMs)));
     }
 
-    /**
-     * Set the content of a copy button to an SVG icon + label.
-     */
+    /// Set the content of a copy button to an SVG icon + label.
     private static void setCopyButtonContent(final HtmlBuilder button,
                                              final SvgImage icon,
                                              final String label) {
@@ -1028,9 +938,7 @@ public class AskStroomAiController extends Controller
         }, this);
     }
 
-    /**
-     * Ensure a chat exists, creating one if necessary, then run the callback.
-     */
+    /// Ensure a chat exists, creating one if necessary, then run the callback.
     private void ensureChat(final Runnable then) {
         if (currentChat != null) {
             then.run();
@@ -1048,10 +956,8 @@ public class AskStroomAiController extends Controller
         }
     }
 
-    /**
-     * Auto-generate a conversation title from the first user message.
-     * Only fires once per conversation.
-     */
+    /// Auto-generate a conversation title from the first user message.
+    /// Only fires once per conversation.
     private void maybeGenerateTitle(final String userMessage) {
         if (titleGenerated || currentChat == null || userMessage == null) {
             return;
@@ -1071,9 +977,7 @@ public class AskStroomAiController extends Controller
         }, this);
     }
 
-    /**
-     * Returns a human-readable title for the given context type.
-     */
+    /// Returns a human-readable title for the given context type.
     private String getContextTitle(final AskStroomAiContext context) {
         return context.getDescription();
     }

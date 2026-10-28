@@ -41,6 +41,14 @@ public class EmbeddedQuerySettingsController extends ComponentSettingsDialogCont
     private DocRef currentDataSource;
 
     /// Made by GIN, with its content and its tabs.
+    ///
+    /// @param eventBus        The application's event bus.
+    /// @param view            Its component.
+    /// @param basicSettings   The basic settings.
+    /// @param rules           The rules.
+    /// @param selectionQuery  The selection query.
+    /// @param selectionFilter The selection filter.
+    /// @param restFactory     Makes REST requests.
     @Inject
     public EmbeddedQuerySettingsController(final EventBus eventBus,
                                            final ComponentSettingsDialog view,

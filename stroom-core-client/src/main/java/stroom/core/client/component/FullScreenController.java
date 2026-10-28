@@ -35,6 +35,10 @@ public class FullScreenController extends Controller
     private final UrlParameters urlParameters;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus      The application's event bus.
+    /// @param view          Its component.
+    /// @param urlParameters The page's URL parameters.
     @Inject
     public FullScreenController(final EventBus eventBus,
                                final FullScreen view,

@@ -52,6 +52,14 @@ public class KafkaConfigEditor extends DocumentEditor<KafkaConfigDoc> {
     private final ToolbarButton downloadButton;
 
     /// Makes the editor, with its Config, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param codeTabProvider      Makes the code tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
+    /// @param restFactory          Makes REST requests.
+    /// @param locationManager      The browser's location.
     @Inject
     public KafkaConfigEditor(final EventBus eventBus,
                              final LinkTabPanel view,

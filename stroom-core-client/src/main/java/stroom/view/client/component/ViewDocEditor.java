@@ -36,6 +36,12 @@ public class ViewDocEditor extends DocumentEditor<ViewDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public ViewDocEditor(final EventBus eventBus,
                          final LinkTabPanel view,

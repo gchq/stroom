@@ -44,6 +44,12 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
     private final DashboardBodyController dashboardBody;
 
     /// Makes the editor, with its Dashboard, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param dashboardBody        The dashboard body.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public DashboardEditor(final EventBus eventBus,
                            final LinkTabPanel view,

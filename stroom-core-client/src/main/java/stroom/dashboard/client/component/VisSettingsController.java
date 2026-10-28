@@ -25,6 +25,10 @@ import com.google.web.bindery.event.shared.EventBus;
 public class VisSettingsController extends ComponentSettingsDialogController {
 
     /// Made by GIN, with its content and its tabs.
+    ///
+    /// @param eventBus      The application's event bus.
+    /// @param view          Its component.
+    /// @param basicSettings The basic settings.
     @Inject
     public VisSettingsController(final EventBus eventBus,
                                  final ComponentSettingsDialog view,

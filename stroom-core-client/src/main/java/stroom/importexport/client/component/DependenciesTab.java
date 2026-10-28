@@ -47,7 +47,7 @@ public class DependenciesTab extends Component {
     /// Makes the screen, with no content until it is given it.
     public DependenciesTab() {
         initWidget(BINDER.createAndBindUi(this));
-        quickFilter.addValueChangeHandler(event -> onFilterChange.accept(quickFilter.getText()));
+        quickFilter.setOnChange(text -> onFilterChange.accept(text));
     }
 
     /// @param onFilterChange Given the filter's text when the user changes it, or when it is set.

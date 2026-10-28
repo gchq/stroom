@@ -83,6 +83,19 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
     private ExpressionOperator steppingMetaExpression;
 
     /// Makes the editor, with the tabs the user may see.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        Its component.
+    /// @param metaBrowserProvider         Makes the meta browser.
+    /// @param structureProvider           Makes the structure.
+    /// @param processors                  The processors.
+    /// @param taskControllerProvider      Makes the task controller.
+    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param permissionsProvider         Makes the Permissions tab.
+    /// @param securityContext             The user's permissions.
+    /// @param steppingProvider            Makes the stepping.
+    /// @param pipelineElementTypesFactory The pipeline element types factory.
+    /// @param pipelineModelFactory        The pipeline model factory.
     @Inject
     public PipelineEditor(final EventBus eventBus,
                           final LinkTabPanel view,

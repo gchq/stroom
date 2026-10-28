@@ -108,7 +108,7 @@ public class FloorMapClusterDialog extends Component {
                 .br()
                 .toSafeHtml());
 
-        quickFilter.addValueChangeHandler(e -> fireFilterChange());
+        quickFilter.setOnChange(text -> fireFilterChange());
         areaFilter.addValueChangeHandler(e -> fireFilterChange());
         groupFilter.addValueChangeHandler(e -> fireFilterChange());
 

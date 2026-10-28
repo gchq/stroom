@@ -105,7 +105,6 @@ public class FloorMapMapController
 
     private static final int HISTOGRAM_BINS = 100;
 
-    private final FloorMapMap view;
     // The document as it was read
     private FloorMapDoc entity;
     private final FloorMapCanvasController canvas;
@@ -393,7 +392,6 @@ public class FloorMapMapController
                                  final Provider<FloorMapDockController> dockProvider,
                                  final Provider<FloorMapClusterDialogController> clusterDialogProvider) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         // Stops what runs in the background (e.g. the timeline's clock) when the document closes
         onDispose(this::onClose);

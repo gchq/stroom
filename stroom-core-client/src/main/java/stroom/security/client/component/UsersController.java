@@ -39,8 +39,6 @@ public class UsersController extends ContentTabController {
     public static final String TAB_TYPE = "Users";
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final Users view;
-
     private final UserListController userList;
     private final Provider<CreateUserController> createUserProvider;
     private final UserAndGroupActions actions;
@@ -49,6 +47,12 @@ public class UsersController extends ContentTabController {
     private final ToolbarButton deleteButton;
 
     /// Made by GIN, with its screen and its parts.
+    ///
+    /// @param eventBus           The application's event bus.
+    /// @param view               Its component.
+    /// @param userList           The user list.
+    /// @param createUserProvider Makes the create user.
+    /// @param actions            The actions.
     @Inject
     public UsersController(final EventBus eventBus,
                            final Users view,
@@ -56,7 +60,6 @@ public class UsersController extends ContentTabController {
                            final Provider<CreateUserController> createUserProvider,
                            final UserAndGroupActions actions) {
         super(eventBus);
-        this.view = view;
         initWidget(view);
         own(userList);
         this.userList = userList;

@@ -73,6 +73,15 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
     private XmlSchemaValidationResponse validationResponse = new XmlSchemaValidationResponse(true, null);
 
     /// Makes the editor, with its Graphical, Text, Settings, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param xsdBrowserProvider   Makes the xsd browser.
+    /// @param codeTabProvider      Makes the code tab.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param permissionsProvider  Makes the Permissions tab.
+    /// @param restFactory          Makes REST requests.
     @Inject
     public XMLSchemaEditor(final EventBus eventBus,
                            final LinkTabPanel view,

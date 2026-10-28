@@ -39,6 +39,13 @@ public class DataGenEditor extends DocumentEditor<DataGenDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with its Settings, Execution, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        Its component.
+    /// @param dataGenSettingsProvider     Makes the data gen settings.
+    /// @param scheduledProcessingProvider Makes the scheduled processing.
+    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param permissionsProvider         Makes the Permissions tab.
     @Inject
     public DataGenEditor(final EventBus eventBus,
                          final LinkTabPanel view,

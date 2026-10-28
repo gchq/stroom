@@ -51,6 +51,12 @@ public class AnnotationTagsController extends ContentTabController {
     private AnnotationTagType annotationTagType;
 
     /// Made by GIN, with its parts.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param annotationTagList        The annotation tag list.
+    /// @param createProvider           Makes the create.
+    /// @param editProvider             Makes the edit.
+    /// @param annotationResourceClient The annotation resource client.
     @Inject
     public AnnotationTagsController(
             final EventBus eventBus,

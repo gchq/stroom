@@ -37,6 +37,9 @@ public class TimePickerController extends Controller {
     private final TimePicker view;
 
     /// Made by GIN for one use, with the dialog's content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Its component.
     @Inject
     public TimePickerController(final EventBus eventBus, final TimePicker view) {
         super(eventBus);

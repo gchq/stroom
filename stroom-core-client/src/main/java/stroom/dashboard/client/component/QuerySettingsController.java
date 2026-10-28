@@ -24,6 +24,11 @@ import com.google.web.bindery.event.shared.EventBus;
 public class QuerySettingsController extends ComponentSettingsDialogController {
 
     /// Made by GIN, with its content and its tabs.
+    ///
+    /// @param eventBus       The application's event bus.
+    /// @param view           Its component.
+    /// @param basicSettings  The basic settings.
+    /// @param selectionQuery The selection query.
     @Inject
     public QuerySettingsController(final EventBus eventBus,
                                    final ComponentSettingsDialog view,

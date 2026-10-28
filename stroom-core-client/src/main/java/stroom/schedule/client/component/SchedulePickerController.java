@@ -57,6 +57,11 @@ public class SchedulePickerController extends Controller {
     private ScheduleReferenceTime scheduleReferenceTime;
 
     /// Made by GIN for one use, with the dialog's content and what works its times out.
+    ///
+    /// @param eventBus            The application's event bus.
+    /// @param view                Its component.
+    /// @param scheduledTimeClient The scheduled time client.
+    /// @param dateTimeFormatter   Formats dates and times.
     @Inject
     public SchedulePickerController(final EventBus eventBus,
                                     final SchedulePicker view,

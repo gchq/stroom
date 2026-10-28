@@ -140,6 +140,20 @@ public class SteppingScreenController extends Controller {
     };
 
     /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                    The application's event bus.
+    /// @param view                        Its component.
+    /// @param pathBarControllerProvider   Makes the path bar controller.
+    /// @param restFactory                 Makes REST requests.
+    /// @param sourceController            The source controller.
+    /// @param elementProvider             Makes the element.
+    /// @param stepLocationLink            The step location link.
+    /// @param stepControl                 The step control.
+    /// @param steppingFilterEditor        The stepping filter editor.
+    /// @param pipelineElementTypesFactory The pipeline element types factory.
+    /// @param metaListControllerProvider  Makes the meta list controller.
+    /// @param filterDialogProvider        Makes the filter dialog.
+    /// @param expressionValidator         The expression validator.
     @Inject
     public SteppingScreenController(final EventBus eventBus,
                                     final SteppingScreen view,

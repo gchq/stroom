@@ -44,6 +44,15 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     /// Makes the editor, with the tabs the user may see.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   Its component.
+    /// @param securityContext        The user's permissions.
+    /// @param settingsProvider       Makes the Settings tab.
+    /// @param metaBrowserProvider    Makes the meta browser.
+    /// @param taskControllerProvider Makes the task controller.
+    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param permissionsProvider    Makes the Permissions tab.
     @Inject
     public FeedEditor(final EventBus eventBus,
                       final LinkTabPanel view,

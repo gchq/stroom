@@ -63,6 +63,14 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
     };
 
     /// Makes the tabs, and fetches the rules.
+    ///
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param ruleSetSettings      The rule set settings.
+    /// @param fieldList            The field list.
+    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param restFactory          Makes REST requests.
+    /// @param uiConfigCache        The UI's configuration.
     @Inject
     public RuleSetEditor(final EventBus eventBus,
                          final LinkTabPanel view,
