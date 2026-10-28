@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
-public enum DialogAction {
-    CREATE,
-    OK,
-    CANCEL,
-    CLOSE,
-    AUTO_CLOSE
+/// Told of an action asked of a dialog, by a click on one of its buttons or a key (Escape,
+/// Ctrl+Enter).
+@FunctionalInterface
+public interface DialogActionHandler {
+
+    /// @param action The action asked for, e.g. `DialogAction.OK`.
+    void onDialogAction(DialogAction action);
 }

@@ -28,7 +28,7 @@ import stroom.util.shared.Range;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.shared.GWT;

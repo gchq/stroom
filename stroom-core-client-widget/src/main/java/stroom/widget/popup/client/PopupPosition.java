@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.presenter;
+package stroom.widget.popup.client;
 
 import stroom.widget.util.client.Rect;
 

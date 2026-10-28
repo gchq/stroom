@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;

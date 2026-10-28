@@ -31,9 +31,9 @@ import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;

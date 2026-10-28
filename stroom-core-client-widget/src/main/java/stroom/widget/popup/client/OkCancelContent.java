@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
 import stroom.widget.button.client.Button;
 
@@ -27,21 +27,17 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
-/// A dialog's content with New at the start below it and OK and Cancel at the end, in either kind
-/// of dialog (in practice a resizable one). Its markup is `CreateOkCancelContent.ui.xml`.
-public class CreateOkCancelContent extends Composite implements DialogButtons {
+/// A dialog's content with OK and Cancel below it, in either kind of dialog. Its markup is
+/// `OkCancelContent.ui.xml`.
+public class OkCancelContent extends Composite implements DialogButtons {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
     /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
     private boolean okAllowed = true;
-    /// As [#okAllowed], for New.
-    private boolean createAllowed = true;
     private Consumer<HideRequest> onHideRequest;
 
-    @UiField
-    Button create;
     @UiField
     Button ok;
     @UiField
@@ -49,18 +45,17 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
     @UiField
     SimplePanel content;
 
-    /// Makes the bar, with its New, OK and Cancel buttons, and an empty space for the dialog's
+    /// Makes the bar, with its OK and Cancel buttons, and an empty space for the dialog's
     /// content. Give it its content with [#setContent(Widget)] and its handler with
     /// [#setOnHideRequest(Consumer)].
-    public CreateOkCancelContent() {
+    public OkCancelContent() {
         initWidget(BINDER.createAndBindUi(this));
-        create.setOnClick(() -> onDialogAction(DialogAction.CREATE));
         ok.setOnClick(() -> onDialogAction(DialogAction.OK));
         cancel.setOnClick(() -> onDialogAction(DialogAction.CANCEL));
     }
 
-    /// @param onHideRequest Told when the user asks to close the dialog with New, OK or Cancel; it
-    ///                      hides the dialog, or runs the request's cancel handler to keep it open.
+    /// @param onHideRequest Told when the user asks to close the dialog with OK or Cancel; it hides
+    ///                      the dialog, or runs the request's cancel handler to keep it open.
     public void setOnHideRequest(final Consumer<HideRequest> onHideRequest) {
         this.onHideRequest = onHideRequest;
     }
@@ -69,7 +64,6 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
     public void setContent(final Widget widget) {
         content.setWidget(widget);
         okAllowed = true;
-        createAllowed = true;
         ok.setEnabled(true);
         cancel.setEnabled(true);
     }
@@ -81,17 +75,15 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
-        final Button button = getButton(action);
+        final Button button = action == DialogAction.OK
+                ? ok
+                : cancel;
         if (!DialogButtonAction.canRun(button)) {
             return;
         }
         final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
-        if (action == DialogAction.OK) {
-            ok.setLoading(true);
-        } else {
-            cancel.setLoading(true);
-        }
+        button.setLoading(true);
         if (onHideRequest != null) {
             onHideRequest.accept(new HideRequest(action, () -> {
                 setEnabled(true);
@@ -102,28 +94,15 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
         }
     }
 
-    private Button getButton(final DialogAction action) {
-        if (action == DialogAction.OK) {
-            return ok;
-        } else if (action == DialogAction.CREATE) {
-            return create;
-        }
-        return cancel;
-    }
-
     @Override
     public void setEnabled(final boolean enabled) {
-        create.setEnabled(enabled && createAllowed);
         ok.setEnabled(enabled && okAllowed);
         cancel.setEnabled(enabled);
     }
 
     @Override
     public void setEnabled(final DialogAction action, final boolean enabled) {
-        if (DialogAction.CREATE.equals(action)) {
-            createAllowed = enabled;
-            create.setEnabled(enabled);
-        } else if (DialogAction.OK.equals(action)) {
+        if (DialogAction.OK.equals(action)) {
             okAllowed = enabled;
             ok.setEnabled(enabled);
         } else if (DialogAction.CANCEL.equals(action)) {
@@ -135,7 +114,7 @@ public class CreateOkCancelContent extends Composite implements DialogButtons {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, CreateOkCancelContent> {
+    interface Binder extends UiBinder<Widget, OkCancelContent> {
 
     }
 }

@@ -30,7 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

@@ -46,7 +46,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

@@ -17,8 +17,8 @@
 package stroom.widget.popup.client.event;
 
 import stroom.widget.component.client.Controller;
+import stroom.widget.popup.client.DialogAction;
 import stroom.widget.popup.client.event.DialogEvent.Handler;
-import stroom.widget.popup.client.view.DialogAction;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

@@ -19,9 +19,9 @@ package stroom.widget.popup.client.event;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;

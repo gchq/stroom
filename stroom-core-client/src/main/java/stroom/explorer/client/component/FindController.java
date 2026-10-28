@@ -25,10 +25,10 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;

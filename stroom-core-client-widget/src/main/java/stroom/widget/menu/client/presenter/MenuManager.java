@@ -18,7 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.presenter;
+package stroom.widget.popup.client;
 
-public enum PopupType {
-    POPUP,
-    DIALOG,
-    CLOSE_DIALOG,
-    OK_CANCEL_DIALOG,
-    CREATE_OK_CANCEL_DIALOG,
-    ACCEPT_REJECT_DIALOG
+import com.google.gwt.user.client.ui.Focus;
+
+public interface DialogButtons extends Focus, DialogActionHandler {
+
+    void setEnabled(boolean enabled);
+
+    void setEnabled(DialogAction action, boolean enabled);
 }

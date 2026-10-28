@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
-import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.popup.client.PopupUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;

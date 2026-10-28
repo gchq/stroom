@@ -30,11 +30,11 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;

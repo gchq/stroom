@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.presenter;
+package stroom.widget.popup.client;
 
 import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.event.DialogEvent;
@@ -24,7 +24,6 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.view.PopupSupportImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

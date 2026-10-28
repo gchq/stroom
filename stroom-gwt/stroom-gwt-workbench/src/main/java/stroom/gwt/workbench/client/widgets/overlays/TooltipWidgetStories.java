@@ -24,8 +24,8 @@ import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 

@@ -17,12 +17,12 @@
 package stroom.widget.help.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.AbstractPopupPanel;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.Popup;
-import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.popup.client.AbstractPopupPanel;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.Popup;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupType;
+import stroom.widget.popup.client.PopupUtil;
 import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;

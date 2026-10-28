@@ -16,9 +16,9 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;

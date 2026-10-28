@@ -27,7 +27,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 

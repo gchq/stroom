@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
 import stroom.widget.datagrid.client.Glass;
 import stroom.widget.util.client.KeyBinding;
@@ -139,7 +139,7 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
             // The window also loses the focus to another window or tab, which leaves the popup open
             var active = $doc.activeElement;
             if (active && active.tagName === 'IFRAME') {
-                self.@stroom.widget.popup.client.view.AbstractPopupPanel::onFocusInFrame(*)(active);
+                self.@stroom.widget.popup.client.AbstractPopupPanel::onFocusInFrame(*)(active);
             }
         };
         $wnd.addEventListener('blur', listener);

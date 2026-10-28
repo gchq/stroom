@@ -25,7 +25,7 @@ import stroom.util.shared.BuildInfo;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

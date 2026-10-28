@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.component;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 
 import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;

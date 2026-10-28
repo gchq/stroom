@@ -18,8 +18,8 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
 

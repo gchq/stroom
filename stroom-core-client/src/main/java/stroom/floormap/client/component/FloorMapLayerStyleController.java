@@ -26,7 +26,7 @@ import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

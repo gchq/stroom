@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
-import stroom.svg.shared.SvgImage;
-
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
-import com.google.gwt.user.client.ui.Widget;
-
-public interface Popup {
-
-    void setContent(Widget widget);
-
-    void setPopupPosition(int left, int top);
-
-    void forceHide(boolean autoClose);
-
-    void setIcon(SvgImage icon);
-
-    void setCaption(String caption);
-
-    void setPopupPositionAndShow(PositionCallback positionCallback);
+public enum PopupType {
+    POPUP,
+    DIALOG,
+    CLOSE_DIALOG,
+    OK_CANCEL_DIALOG,
+    CREATE_OK_CANCEL_DIALOG,
+    ACCEPT_REJECT_DIALOG
 }

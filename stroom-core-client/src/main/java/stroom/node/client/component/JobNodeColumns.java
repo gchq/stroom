@@ -30,7 +30,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.dom.client.Element;

@@ -19,7 +19,7 @@ package stroom.explorer.client.component;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

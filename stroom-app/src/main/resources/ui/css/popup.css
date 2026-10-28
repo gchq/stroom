@@ -15,7 +15,7 @@
  */
 
 /*
-   The popup (stroom.widget.popup.client.view.SimplePopup, and SimplePopupLayout inside another
+   The popup (stroom.widget.popup.client.SimplePopup, and SimplePopupLayout inside another
    popup panel such as a selection box's list): a menu, a chooser, a filter's list, a tooltip.
    Named BEM style (block, block__element, block--modifier). Its look is on the block itself, its
    content inside (in GWT's popupContent, for a SimplePopup).

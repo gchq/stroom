@@ -65,8 +65,8 @@ import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupSize;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.util.client.SelectionType;
 

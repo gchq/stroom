@@ -55,7 +55,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;

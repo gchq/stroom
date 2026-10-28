@@ -31,7 +31,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.dropdowntree.client.view.QuickFilterPage;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

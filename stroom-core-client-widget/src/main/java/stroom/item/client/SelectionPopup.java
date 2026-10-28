@@ -16,10 +16,10 @@
 
 package stroom.item.client;
 
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.Position;
-import stroom.widget.popup.client.presenter.PositionUtil;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.Position;
+import stroom.widget.popup.client.PositionUtil;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;

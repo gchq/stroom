@@ -34,9 +34,9 @@ import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.core.client.GWT;

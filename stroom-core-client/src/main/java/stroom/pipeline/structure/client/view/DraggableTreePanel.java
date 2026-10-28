@@ -23,7 +23,7 @@ import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 

@@ -427,7 +427,7 @@ public class FloorMapSettings extends Component {
     /// either.
     ///
     /// **Why it is duplicated rather than shared.** The obvious home for this
-    /// already exists — `stroom.widget.popup.client.view.CurrentFocus` declares the
+    /// already exists — `stroom.widget.popup.client.CurrentFocus` declares the
     /// identical method as `public static native`. Its enclosing class is
     /// package-private, though, so nothing outside that package can reach it, and
     /// `AbstractTabBar` carries its own copy for the same reason. This is the third such

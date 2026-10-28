@@ -26,7 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.popup.client.view.Dialog;
+import stroom.widget.popup.client.Dialog;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;

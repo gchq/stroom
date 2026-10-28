@@ -16,8 +16,8 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;

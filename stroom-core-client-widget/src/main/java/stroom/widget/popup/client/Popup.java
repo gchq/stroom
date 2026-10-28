@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
-import com.google.gwt.user.client.ui.Focus;
+import stroom.svg.shared.SvgImage;
 
-public interface DialogButtons extends Focus, DialogActionHandler {
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+import com.google.gwt.user.client.ui.Widget;
 
-    void setEnabled(boolean enabled);
+public interface Popup {
 
-    void setEnabled(DialogAction action, boolean enabled);
+    void setContent(Widget widget);
+
+    void setPopupPosition(int left, int top);
+
+    void forceHide(boolean autoClose);
+
+    void setIcon(SvgImage icon);
+
+    void setCaption(String caption);
+
+    void setPopupPositionAndShow(PositionCallback positionCallback);
 }

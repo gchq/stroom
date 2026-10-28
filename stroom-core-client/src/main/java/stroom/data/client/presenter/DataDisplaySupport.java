@@ -23,8 +23,8 @@ import stroom.data.client.component.SourceViewerController;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

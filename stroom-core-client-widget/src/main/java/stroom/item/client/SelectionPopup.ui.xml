@@ -4,7 +4,7 @@
   selection-popup.css): the list, as big as its options within the popup's limits.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:v="urn:import:stroom.widget.popup.client.view"
+             xmlns:v="urn:import:stroom.widget.popup.client"
              xmlns:i="urn:import:stroom.item.client">
     <v:SimplePopupLayout>
         <i:SelectionList ui:field="selectionList" fitContent="true"/>

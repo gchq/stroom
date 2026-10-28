@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Position;
-import stroom.widget.popup.client.presenter.PositionUtil;
-import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;

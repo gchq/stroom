@@ -23,9 +23,9 @@ import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

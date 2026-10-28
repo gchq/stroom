@@ -57,10 +57,10 @@ import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuRequest;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.PopupManager;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupManager;
-import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.core.client.GWT;

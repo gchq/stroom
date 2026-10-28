@@ -33,7 +33,7 @@ import stroom.util.shared.PageRequest;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;

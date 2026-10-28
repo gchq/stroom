@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.presenter;
+package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionHandler;
 
 public interface PopupSupport extends DialogActionHandler {
 

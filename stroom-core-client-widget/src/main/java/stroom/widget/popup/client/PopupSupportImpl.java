@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
@@ -24,10 +24,6 @@ import stroom.widget.component.client.DialogTaskMonitor;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupSupport;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;

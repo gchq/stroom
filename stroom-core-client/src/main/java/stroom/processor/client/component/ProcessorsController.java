@@ -41,7 +41,7 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.PopupSize;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Selection;
 

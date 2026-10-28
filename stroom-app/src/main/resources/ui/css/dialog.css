@@ -15,7 +15,7 @@
  */
 
 /*
-   The dialog (stroom.widget.popup.client.view.Dialog and ResizableDialog, with the content
+   The dialog (stroom.widget.popup.client.Dialog and ResizableDialog, with the content
    templates holding their buttons). Named BEM style (block, block__element, block--modifier).
 
    dialog                          the popup (role dialog or alertdialog)

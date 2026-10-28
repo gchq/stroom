@@ -40,7 +40,7 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;

@@ -18,7 +18,7 @@
 package stroom.gwt.workbench.client.widgets.popuppositioner;
 
 import stroom.gwt.workbench.client.widgets.StoryPopups;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 
 import com.google.gwt.user.client.ui.Widget;
 

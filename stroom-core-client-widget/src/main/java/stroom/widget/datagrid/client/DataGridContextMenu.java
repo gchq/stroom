@@ -28,7 +28,7 @@ import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.cell.client.Cell;

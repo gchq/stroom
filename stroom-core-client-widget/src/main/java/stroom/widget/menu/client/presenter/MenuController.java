@@ -21,9 +21,9 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 

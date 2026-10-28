@@ -17,8 +17,8 @@
 package stroom.widget.tooltip.client.event;
 
 import stroom.event.client.StaticEventBus;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.tooltip.client.event.ShowHelpEvent.Handler;
 import stroom.widget.util.client.Rect;
 

@@ -39,7 +39,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;

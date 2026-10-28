@@ -27,7 +27,7 @@ import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

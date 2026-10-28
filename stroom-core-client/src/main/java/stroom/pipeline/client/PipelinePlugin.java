@@ -47,7 +47,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

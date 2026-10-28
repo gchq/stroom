@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.popup.client.view;
+package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -22,10 +22,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;
 
@@ -363,13 +360,13 @@ final class DialogWindow {
     private native JavaScriptObject addListeners(Element element) /*-{
         var self = this;
         var key = $entry(function (event) {
-            if (self.@stroom.widget.popup.client.view.DialogWindow::onKey(*)(event)) {
+            if (self.@stroom.widget.popup.client.DialogWindow::onKey(*)(event)) {
                 event.preventDefault();
                 event.stopPropagation();
             }
         });
         var pointer = $entry(function () {
-            self.@stroom.widget.popup.client.view.DialogWindow::leaveMode()();
+            self.@stroom.widget.popup.client.DialogWindow::leaveMode()();
         });
         element.addEventListener('keydown', key, true);
         $doc.addEventListener('pointerdown', pointer, true);

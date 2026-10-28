@@ -25,8 +25,8 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.LayerController;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
