@@ -27,8 +27,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
 
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.SimplePanel;

@@ -26,10 +26,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.menu.client.presenter.HasChildren;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.HasChildren;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.Separator;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.Style;

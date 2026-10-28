@@ -18,10 +18,10 @@ package stroom.data.client.presenter;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;

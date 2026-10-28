@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.ElementUtil;
@@ -510,7 +510,7 @@ public class Menu extends Widget {
     private static native JavaScriptObject addFocusOutListener(Element element,
                                                                FocusOutCallback callback) /*-{
         var listener = $entry(function (event) {
-            callback.@stroom.widget.menu.client.presenter.Menu.FocusOutCallback::onFocusOut(*)(event);
+            callback.@stroom.widget.menu.client.Menu.FocusOutCallback::onFocusOut(*)(event);
         });
         element.addEventListener('focusout', listener);
         return listener;

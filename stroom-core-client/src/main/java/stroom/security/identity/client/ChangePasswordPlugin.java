@@ -25,7 +25,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

@@ -30,8 +30,8 @@ import stroom.main.client.component.MainController;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.main.client.presenter.MainScreens;
 import stroom.widget.contextmenu.client.ContextMenuManager;
-import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuManager;
+import stroom.widget.menu.client.MenuItems;
+import stroom.widget.menu.client.MenuManager;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.inject.client.AbstractGinModule;

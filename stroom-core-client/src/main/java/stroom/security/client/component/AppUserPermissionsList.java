@@ -36,7 +36,7 @@ import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterPage;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.Item;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 

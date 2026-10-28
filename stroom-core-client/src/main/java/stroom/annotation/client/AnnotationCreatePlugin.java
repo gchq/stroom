@@ -23,7 +23,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

@@ -18,7 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.query.api.Column;
 import stroom.widget.datagrid.client.HasContextMenus;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.Item;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.AbstractCell;

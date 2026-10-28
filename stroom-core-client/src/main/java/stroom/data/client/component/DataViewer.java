@@ -19,7 +19,7 @@ package stroom.data.client.component;
 import stroom.data.client.view.ClassificationLabel;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.LayerContainerImpl;

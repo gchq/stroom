@@ -26,7 +26,7 @@ import stroom.security.client.component.UsersController;
 import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;

@@ -24,8 +24,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuController;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuController;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Style;

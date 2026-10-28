@@ -19,10 +19,10 @@ package stroom.widget.contextmenu.client;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.contextmenu.client.TextEditMenu.PasteSupport;
 import stroom.widget.contextmenu.client.TextEditMenu.TextFieldState;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.Separator;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import org.junit.jupiter.api.Test;

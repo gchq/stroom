@@ -35,11 +35,11 @@ import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.Heading;
 import stroom.widget.datagrid.client.HeadingListener;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.ShowMenuEvent;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextInputCell;

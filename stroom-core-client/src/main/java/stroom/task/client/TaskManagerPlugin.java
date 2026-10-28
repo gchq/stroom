@@ -30,7 +30,7 @@ import stroom.task.client.component.UserTaskManagerController;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

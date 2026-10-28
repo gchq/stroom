@@ -35,7 +35,7 @@ import stroom.main.client.component.Main;
 import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.widget.help.client.presenter.HelpManager;
-import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.MenuItems;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.GWT;

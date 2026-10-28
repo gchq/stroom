@@ -27,8 +27,8 @@ import stroom.query.client.component.ExpressionTreeController;
 import stroom.receive.rules.client.component.DataRetentionPolicy.RetentionRuleAction;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Controller;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

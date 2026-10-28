@@ -37,9 +37,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.component.client.Controller;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuBuilder;
+import stroom.widget.menu.client.ShowMenuEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

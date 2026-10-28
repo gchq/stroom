@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.event.HidePopupEvent;

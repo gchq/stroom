@@ -18,7 +18,7 @@ package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.MenuOpener;
+import stroom.widget.menu.client.MenuOpener;
 import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.KeyBinding;
@@ -82,7 +82,7 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
 
     /// Marks the button as one that opens a menu, so screen readers announce that it does and
     /// whether the menu is open. The menu must be opened with this button's element as its opener
-    /// ([stroom.widget.menu.client.presenter.ShowMenuEvent.Builder#opener]), which keeps the open
+    /// ([stroom.widget.menu.client.ShowMenuEvent.Builder#opener]), which keeps the open
     /// state up to date. In a template:
     /// `<b:ToolbarButton svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>`.
     ///

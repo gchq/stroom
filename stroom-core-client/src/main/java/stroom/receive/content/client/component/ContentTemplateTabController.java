@@ -33,8 +33,8 @@ import stroom.receive.content.shared.ContentTemplates;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuBuilder;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;

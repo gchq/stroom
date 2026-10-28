@@ -67,9 +67,9 @@ import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 
 import com.google.gwt.core.client.GWT;

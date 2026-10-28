@@ -58,8 +58,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -331,7 +331,7 @@ public class TaskManagerListController extends Controller implements Refreshable
         }
 
         if (!menuItems.isEmpty()) {
-            menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            menuItems.add(new stroom.widget.menu.client.Separator(1));
         }
         return menuItems;
     }

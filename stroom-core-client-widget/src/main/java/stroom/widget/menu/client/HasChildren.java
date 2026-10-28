@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
-public class Separator extends Item {
+import stroom.widget.util.client.Future;
 
-    public Separator(final int priority) {
-        super(priority);
-    }
+import java.util.List;
+
+public interface HasChildren {
+
+    Future<List<Item>> getChildren();
 }

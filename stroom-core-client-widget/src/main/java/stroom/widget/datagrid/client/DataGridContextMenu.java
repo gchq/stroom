@@ -23,11 +23,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.datagrid.client.model.TableText;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.Separator;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.Clipboard;
 

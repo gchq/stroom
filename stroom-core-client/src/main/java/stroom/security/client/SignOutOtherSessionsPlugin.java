@@ -25,7 +25,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.shared.SessionResource;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

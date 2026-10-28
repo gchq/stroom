@@ -32,7 +32,7 @@ import stroom.widget.component.client.Listeners;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -371,8 +371,8 @@ public class ExpressionTreeController extends Controller implements HasContextMe
     ///
     /// @param priority The priority of the first, after which the others come.
     /// @return The items, none if the tree can't be changed.
-    public List<stroom.widget.menu.client.presenter.Item> getMoveMenuItems(final int priority) {
-        final List<stroom.widget.menu.client.presenter.Item> menuItems = new ArrayList<>();
+    public List<stroom.widget.menu.client.Item> getMoveMenuItems(final int priority) {
+        final List<stroom.widget.menu.client.Item> menuItems = new ArrayList<>();
         if (selectionModel == null) {
             return menuItems;
         }

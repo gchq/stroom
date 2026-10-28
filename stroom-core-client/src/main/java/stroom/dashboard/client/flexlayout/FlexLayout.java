@@ -23,7 +23,7 @@ import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.Glass;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.tab.client.LinkTab;
 import stroom.widget.tab.client.LinkTabBar;

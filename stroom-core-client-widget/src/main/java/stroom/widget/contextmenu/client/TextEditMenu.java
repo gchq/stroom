@@ -16,9 +16,9 @@
 
 package stroom.widget.contextmenu.client;
 
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.Separator;
 
 import java.util.ArrayList;
 import java.util.List;

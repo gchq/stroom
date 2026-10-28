@@ -25,7 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserAccessController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

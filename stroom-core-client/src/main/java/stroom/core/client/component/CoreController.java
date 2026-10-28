@@ -31,7 +31,7 @@ import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
 import stroom.widget.component.client.Controller;
-import stroom.widget.menu.client.presenter.MenuRequest;
+import stroom.widget.menu.client.MenuRequest;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

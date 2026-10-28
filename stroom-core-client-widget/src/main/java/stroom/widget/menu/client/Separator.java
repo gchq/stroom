@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
-public class MenuKey {
+public class Separator extends Item {
 
-    private final String menuName;
-
-    public MenuKey(final String menuName) {
-        this.menuName = menuName;
-    }
-
-    @Override
-    public String toString() {
-        return menuName;
+    public Separator(final int priority) {
+        super(priority);
     }
 }

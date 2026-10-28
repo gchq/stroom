@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
-import stroom.widget.util.client.Future;
+public class MenuKey {
 
-import java.util.List;
+    private final String menuName;
 
-public interface HasChildren {
+    public MenuKey(final String menuName) {
+        this.menuName = menuName;
+    }
 
-    Future<List<Item>> getChildren();
+    @Override
+    public String toString() {
+        return menuName;
+    }
 }

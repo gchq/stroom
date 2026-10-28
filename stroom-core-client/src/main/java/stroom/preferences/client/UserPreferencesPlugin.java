@@ -23,7 +23,7 @@ import stroom.preferences.client.component.KeyboardShortcutsController;
 import stroom.preferences.client.component.UserPreferencesDialogController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 

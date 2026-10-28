@@ -25,8 +25,8 @@ import stroom.receive.content.client.component.ContentTemplateTabController;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.MenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

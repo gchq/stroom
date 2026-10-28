@@ -18,10 +18,10 @@ package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.Separator;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;

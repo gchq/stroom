@@ -23,7 +23,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;

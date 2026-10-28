@@ -23,7 +23,7 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
+import stroom.widget.menu.client.KeyedParentMenuItem;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.KeyBinding;

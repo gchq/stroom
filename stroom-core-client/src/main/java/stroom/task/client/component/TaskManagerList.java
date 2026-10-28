@@ -40,7 +40,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.Item;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.HtmlBuilder;
 

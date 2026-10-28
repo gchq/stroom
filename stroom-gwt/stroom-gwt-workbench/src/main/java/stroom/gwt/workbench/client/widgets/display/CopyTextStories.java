@@ -24,9 +24,9 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.menu.client.presenter.Menu;
-import stroom.widget.menu.client.presenter.MenuController;
-import stroom.widget.menu.client.presenter.MenuManager;
+import stroom.widget.menu.client.Menu;
+import stroom.widget.menu.client.MenuController;
+import stroom.widget.menu.client.MenuManager;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.FlowPanel;

@@ -18,8 +18,8 @@ package stroom.cell.info.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuRequest;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuRequest;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.MouseUtil;

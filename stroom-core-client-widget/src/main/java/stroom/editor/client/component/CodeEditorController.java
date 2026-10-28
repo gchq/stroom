@@ -35,11 +35,11 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
-import stroom.widget.menu.client.presenter.CheckMenuItem;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.CheckMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 
 import com.google.gwt.core.client.Scheduler;

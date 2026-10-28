@@ -41,8 +41,8 @@ import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Separator;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

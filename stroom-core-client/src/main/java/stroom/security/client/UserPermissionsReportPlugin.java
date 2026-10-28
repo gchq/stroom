@@ -25,7 +25,7 @@ import stroom.security.client.component.UserPermissionReportController;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 

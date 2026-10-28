@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
-import stroom.widget.menu.client.presenter.SimpleMenuItem.Builder;
+import stroom.widget.menu.client.SimpleMenuItem.Builder;
 
 import java.util.ArrayList;
 import java.util.List;

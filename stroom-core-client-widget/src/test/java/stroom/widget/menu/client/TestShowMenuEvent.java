@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.menu.client.presenter;
+package stroom.widget.menu.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.web.bindery.event.shared.EventBus;

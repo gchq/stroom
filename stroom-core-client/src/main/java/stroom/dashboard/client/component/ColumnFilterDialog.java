@@ -17,7 +17,7 @@
 package stroom.dashboard.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
