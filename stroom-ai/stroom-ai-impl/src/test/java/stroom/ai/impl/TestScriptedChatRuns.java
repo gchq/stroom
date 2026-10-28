@@ -265,6 +265,24 @@ class TestScriptedChatRuns {
     }
 
     @Test
+    void aReplyThatOnlySaysWhatComesNextCarriesOn() {
+        ask("Which pipelines fork to more than one translation?");
+
+        // Seen in testing: the run ended on the first reply, with nothing done.
+        run(new ScriptedChatModel(
+                ScriptedChatModel.answer("There are 779 pipelines. Let me use the pipeline tool to look at their "
+                                         + "structures."),
+                ScriptedChatModel.toolCalls("Reading the pipelines.",
+                        ScriptedChatModel.call("call-1", "read_turn", "{}")),
+                ScriptedChatModel.answer("Three pipelines fork to more than one translation.")), McpToolset.EMPTY);
+
+        assertMatchesReference("announced-next-step",
+                "A reply that only says what the model will do next, with no tool call, isn't taken as the answer: "
+                + "it is shown as the model's interim words, and the model is told to make the call, which it "
+                + "does, then answers.");
+    }
+
+    @Test
     void aToolCallThatNeedsApprovalRunsOnceApproved() {
         final McpToolset toolset = mcpServer("other", null, List.of(tool("create_feed", null)),
                 request -> textResult("Feed ACME created.", false));

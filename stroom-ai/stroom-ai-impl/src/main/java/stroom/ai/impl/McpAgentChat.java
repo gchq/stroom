@@ -195,6 +195,14 @@ class McpAgentChat {
     static final String SUMMARISING_PROGRESS = "Summarising the steps so far to make room in the context window";
     /// How many replies cut off by the context window filling up the run carries on from in a row.
     static final int MAX_CUT_OFF_CONTINUATIONS = 2;
+    /// How the warning that a question stopped at the step limit ends, after the number of steps.
+    static final String STEP_LIMIT_WARNING_END = " steps, the most for one question. Reply 'continue' to carry on.";
+    /// How many replies that only say what the model will do next the run carries on from in a row.
+    static final int MAX_ANNOUNCED_CONTINUATIONS = 2;
+    static final String ANNOUNCED_NOTE = "[You said what you would do next but didn't call a tool, so nothing was "
+                                         + "done, and your turn would have ended there. Do it now: make the call. "
+                                         + "If you have in fact finished, give your answer, without saying you'll "
+                                         + "do anything more.]";
     static final String CUT_OFF_NOTE = "[Your last reply was cut off because the context window filled up. Earlier "
                                        + "steps have been shortened to make room. Carry on with the task from where "
                                        + "you were; if you were writing your answer, write it again in full, more "
@@ -368,6 +376,7 @@ class McpAgentChat {
                 latestTaskList(aiService.getMessages(chatId)));
         ChatResponse response = null;
         int cutOffs = 0;
+        int announced = 0;
         for (int iteration = 1; iteration <= maxIterations; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
                 throw new TaskTerminatedException();
@@ -426,6 +435,21 @@ class McpAgentChat {
                 }
                 // If the user added something while the model worked, carry on with it.
                 if (iteration < maxIterations && steerFeed.addTo(conversation, aiMessage)) {
+                    continue;
+                }
+                // A reply that only says what the model will do next isn't the answer: carry on, so it does it.
+                if (iteration < maxIterations && announced < MAX_ANNOUNCED_CONTINUATIONS
+                    && UnfinishedReplies.announcesMoreWork(aiMessage.text())) {
+                    announced++;
+                    LOGGER.info(() -> "The model's reply for chatId=" + chatId + " only said what it would do next; "
+                                      + "carrying on");
+                    final String interim = aiMessage.text().strip();
+                    // Shown in its place, as what the model says with its tool calls is.
+                    aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, answerLinks == null
+                            ? interim
+                            : answerLinks.link(chatId, interim));
+                    conversation.add(AiMessage.from(interim));
+                    conversation.add(UserMessage.from(ANNOUNCED_NOTE));
                     continue;
                 }
                 if (iteration == maxIterations) {
@@ -1439,9 +1463,8 @@ class McpAgentChat {
      */
     private void noteStepLimit(final int chatId, final int maxIterations) {
         LOGGER.info("chat: hit the tool iteration cap of {} for chatId={}", maxIterations, chatId);
-        aiService.storeMessage(chatId, AiMessageType.WARNING, "Stopped after " + maxIterations
-                                                              + " steps, the most for one question. Reply "
-                                                              + "'continue' to carry on.");
+        aiService.storeMessage(chatId, AiMessageType.WARNING,
+                "Stopped after " + maxIterations + STEP_LIMIT_WARNING_END);
     }
 
     private int maxToolIterations() {
