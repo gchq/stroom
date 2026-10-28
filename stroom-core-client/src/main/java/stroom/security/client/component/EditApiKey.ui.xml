@@ -7,7 +7,8 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
         <form:FormGroup identity="owner" label="Owner" required="true">
             <form:HelpHTML>
@@ -66,7 +67,7 @@
                     <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions">
                         <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy API Key to Clipboard"/>
                     </b:Toolbar>
-                    <g:Label ui:field="copyToClipboardLabel" text="API Key copied to clipboard" visible="false"/>
+                    <tx:Label ui:field="copyToClipboardLabel" text="API Key copied to clipboard" visible="false"/>
                 </g:FlowPanel>
             </g:FlowPanel>
         </form:FormGroup>

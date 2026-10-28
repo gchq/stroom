@@ -17,11 +17,11 @@
 package stroom.activity.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The splash screen's content: the terms the site asks users to accept, as HTML.
@@ -30,7 +30,7 @@ public class Splash extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    HTML html;
+    Html html;
 
     /// Makes empty content.
     public Splash() {

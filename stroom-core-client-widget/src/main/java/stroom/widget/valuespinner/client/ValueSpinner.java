@@ -21,6 +21,7 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -34,7 +35,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;

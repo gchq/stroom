@@ -26,12 +26,12 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.text.client.Frame;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -259,9 +259,9 @@ public final class SplitPaneStories {
                 // when it is shown, naming the pane
                 .story("MissingSize", context -> {
                     final FlowPanel page = new FlowPanel();
-                    page.add(new HTML(failure("100px", "Users, Groups, Roles")));
-                    page.add(new HTML(failure("*, *", "Users, Groups, Roles")));
-                    page.add(new HTML(failure("100px, 100px, *", "Users")));
+                    page.add(new Html(failure("100px", "Users, Groups, Roles")));
+                    page.add(new Html(failure("*, *", "Users, Groups, Roles")));
+                    page.add(new Html(failure("100px, 100px, *", "Users")));
                     return page;
                 })
                 .withPlay(play -> {
@@ -386,9 +386,9 @@ public final class SplitPaneStories {
     private static String failure(final String sizes, final String names) {
         final SplitPane pane = thin(sizes);
         pane.setNames(names);
-        pane.add(new HTML("Users"));
-        pane.add(new HTML("Groups"));
-        pane.add(new HTML("Roles"));
+        pane.add(new Html("Users"));
+        pane.add(new Html("Groups"));
+        pane.add(new Html("Roles"));
         try {
             RootPanel.get().add(pane);
             return "No error";

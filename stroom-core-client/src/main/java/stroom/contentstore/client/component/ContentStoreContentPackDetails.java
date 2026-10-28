@@ -23,16 +23,16 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
+import stroom.widget.text.client.Link;
 import stroom.widget.util.client.NewTabLink;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The details of the content pack selected in the content store: its icon, name and
@@ -50,23 +50,23 @@ public class ContentStoreContentPackDetails extends Component {
     private static final String GIT_LINK_TEXT = "View Git repository";
 
     @UiField
-    HTML icon;
+    Html icon;
     @UiField
     Label name;
     @UiField
-    HTML details;
+    Html details;
     @UiField
     Label installedStatus;
     @UiField
     Label licence;
     @UiField
-    Anchor licenceLink;
+    Link licenceLink;
     @UiField
     InlineLabel licenceUrl;
     @UiField
     Label installedLocation;
     @UiField
-    Anchor gitLink;
+    Link gitLink;
     @UiField
     InlineLabel gitUrl;
     @UiField
@@ -153,7 +153,7 @@ public class ContentStoreContentPackDetails extends Component {
 
     // Shows a link that opens the URL in a new tab, followed by the URL, or nothing (not an empty
     // link) when there is no URL
-    private static void setLink(final Anchor link,
+    private static void setLink(final Link link,
                                 final InlineLabel urlLabel,
                                 final String url,
                                 final String text) {

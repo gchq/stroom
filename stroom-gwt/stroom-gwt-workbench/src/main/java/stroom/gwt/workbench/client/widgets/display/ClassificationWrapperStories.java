@@ -21,9 +21,9 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ClassificationWrapper] (the component that docks a
@@ -63,7 +63,7 @@ public final class ClassificationWrapperStories {
         DisplayWidgets.whenUiConfigLoaded(harness, () -> {
             final ClassificationWrapper wrapper = new ClassificationWrapper();
             DisplayWidgets.withColours(harness, wrapper.getClassificationLabel());
-            wrapper.setContent(new HTML(contentHtml));
+            wrapper.setContent(new Html(contentHtml));
             wrapper.setClassification(classification);
             container.add(wrapper);
         });

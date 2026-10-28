@@ -28,8 +28,7 @@ import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryRenderer;
-
-import com.google.gwt.user.client.ui.HTML;
+import stroom.widget.text.client.Html;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -459,8 +458,8 @@ public final class VisStories {
     }-*/;
 
     // Says why the story can't be shown
-    private static HTML missing(final String message) {
-        final HTML html = new HTML();
+    private static Html missing(final String message) {
+        final Html html = new Html();
         html.setText(message);
         html.getElement().getStyle().setProperty("padding", "16px");
         return html;

@@ -25,6 +25,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.htree.client.treelayout.Point;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -35,7 +36,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class PathwayTree extends Component {
     @UiField
     ToolbarButton viewTracesButton;
     @UiField
-    HTML tree;
+    Html tree;
 
     private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<>();
     private final Map<String, PathNode> nodeMap = new HashMap<>();

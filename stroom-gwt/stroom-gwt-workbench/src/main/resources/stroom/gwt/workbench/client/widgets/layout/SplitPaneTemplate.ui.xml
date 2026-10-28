@@ -4,12 +4,13 @@
      group. Each pane is named, and so is the splitter that resizes it. -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:l="urn:import:stroom.widget.layout.client">
+             xmlns:l="urn:import:stroom.widget.layout.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <l:SplitPane vertical="true" thin="true" sizes="50%, *" names="Users, Membership">
-        <g:HTML>Users</g:HTML>
+        <tx:Html>Users</tx:Html>
         <l:SplitPane thin="true" sizes="50%, *" names="Member of, Members">
-            <g:HTML>Member of</g:HTML>
-            <g:HTML>Members</g:HTML>
+            <tx:Html>Member of</tx:Html>
+            <tx:Html>Members</tx:Html>
         </l:SplitPane>
     </l:SplitPane>
 </ui:UiBinder>

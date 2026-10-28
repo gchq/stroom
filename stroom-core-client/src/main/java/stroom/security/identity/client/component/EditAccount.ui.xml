@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
         <form:FormGroup identity="accountUserId" label="User ID" required="true"
                         helpText="The name the user signs in with. Must be unique."
@@ -48,14 +49,14 @@
         <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Sign-in lock"
                         helpText="Shows whether the account is locked after repeated failed sign-ins. Select Unlock to clear the lock and the failed sign-in count.">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
-                <g:Label ui:field="lockState" addStyleNames="dock-max" wordWrap="true"/>
+                <tx:Label ui:field="lockState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="unlock" text="Unlock" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Activity"
                         helpText="Shows whether the account has been made inactive because it was not used. Select Reactivate to let the user sign in again.">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
-                <g:Label ui:field="activityState" addStyleNames="dock-max" wordWrap="true"/>
+                <tx:Label ui:field="activityState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="reactivate" text="Reactivate" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>

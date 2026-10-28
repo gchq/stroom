@@ -16,11 +16,12 @@
 
 package stroom.widget.util.client;
 
+import stroom.widget.text.client.Link;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.Anchor;
 
 /// Links that open in a new browser tab (`target="_blank"`), which tell screen readers so.
 ///
@@ -104,7 +105,7 @@ public final class NewTabLink {
     /// @param anchor The anchor.
     /// @param url    The URL the link goes to.
     /// @param text   The link's text.
-    public static void setLink(final Anchor anchor, final String url, final String text) {
+    public static void setLink(final Link anchor, final String url, final String text) {
         anchor.setHref(UriUtils.sanitizeUri(url));
         anchor.setTarget(TARGET);
         anchor.getElement().setAttribute(REL_ATTRIBUTE, REL);

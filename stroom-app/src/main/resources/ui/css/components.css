@@ -133,7 +133,7 @@
    gap: 5px;
 }
 
-.inline-label-icon > .gwt-Label {
+.inline-label-icon > .text-label {
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;

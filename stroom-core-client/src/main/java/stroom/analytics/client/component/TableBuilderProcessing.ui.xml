@@ -6,7 +6,8 @@
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:d="urn:import:stroom.widget.customdatebox.client">
+             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticProcessingEnabled"
                         helpText="Whether the table builder runs for this rule.">
@@ -40,7 +41,7 @@
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info"
                         helpText="Shows the table builder's progress, such as the last run time, streams and events processed and any message. Select Refresh to update it.">
             <g:FlowPanel styleName="form">
-                <g:HTML ui:field="info" styleName="default-min-sizes form-control-border overflow-auto"/>
+                <tx:Html ui:field="info" styleName="default-min-sizes form-control-border overflow-auto"/>
                 <b:Button ui:field="refresh" text="Refresh" icon="REFRESH"/>
             </g:FlowPanel>
         </form:FormGroup>

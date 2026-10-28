@@ -7,7 +7,8 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:f="urn:import:stroom.widget.form.client">
+             xmlns:f="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:HTMLPanel styleName="value-spinner">
         <div class="value-spinner__field">
             <f:TextBox ui:field="valueBox" addStyleNames="allow-focus value-spinner__input" role="spinbutton"/>
@@ -16,7 +17,7 @@
                 <div ui:field="increase" class="value-spinner__step" title="Increase value" aria-hidden="true"></div>
             </div>
         </div>
-        <g:Label ui:field="feedback" styleName="value-spinner__feedback"/>
+        <tx:Label ui:field="feedback" styleName="value-spinner__feedback"/>
         <div ui:field="status" class="value-spinner__status" aria-live="polite"></div>
     </g:HTMLPanel>
 </ui:UiBinder>

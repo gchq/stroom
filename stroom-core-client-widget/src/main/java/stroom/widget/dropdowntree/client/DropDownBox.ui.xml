@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       A picker (drop-down.css). To assistive technology it is a button that opens a dialog to choose
       the value it shows; a FormGroup names it with its label, followed by the value. Its "…" icon is
@@ -9,7 +10,7 @@
     -->
     <c:AriaPanel styleName="drop-down stroom-control allow-focus" tabIndex="0" role="button"
                  ariaHasPopup="dialog">
-        <g:Label ui:field="label" styleName="drop-down__value"/>
+        <tx:Label ui:field="label" styleName="drop-down__value"/>
         <g:SimplePanel ui:field="ellipsesBtnPanel" styleName="drop-down__icon"/>
     </c:AriaPanel>
 </ui:UiBinder>

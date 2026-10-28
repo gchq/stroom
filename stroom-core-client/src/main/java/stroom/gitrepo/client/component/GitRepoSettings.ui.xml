@@ -4,7 +4,8 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:sel="urn:import:stroom.item.client">
+             xmlns:sel="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- A Git repository's Settings tab -->
     <g:FlowPanel styleName="max form-padding form gitrepo-settings-form">
 
@@ -13,14 +14,14 @@
                         label="Content Store"
                         helpText="Content store that this content pack came from. Read-only."
                         ui:field="fgContentStore">
-            <g:Label title="The name of the Content Store that specified this Content Pack"
+            <tx:Label title="The name of the Content Store that specified this Content Pack"
                      ui:field="lblContentStore"/>
         </form:FormGroup>
         <form:FormGroup identity="lblContentPack"
                         label="Content Pack Name"
                         helpText="Name of this content pack. Read-only."
                         ui:field="fgContentPack">
-            <g:Label title="The name of this Content Pack"
+            <tx:Label title="The name of this Content Pack"
                      ui:field="lblContentPack"/>
         </form:FormGroup>
 

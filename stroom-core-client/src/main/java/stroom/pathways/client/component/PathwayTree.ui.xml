@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       A pathway's graph of nodes (pathways.css), under a toolbar of its actions. The graph's HTML
       and SVG are drawn from the pathway in the Java
@@ -18,7 +19,7 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:FlowPanel addStyleNames="listContainer dock-max">
-            <g:HTML ui:field="tree" addStyleNames="max"/>
+            <tx:Html ui:field="tree" addStyleNames="max"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -28,15 +28,15 @@ import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
+import stroom.widget.text.client.Frame;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;

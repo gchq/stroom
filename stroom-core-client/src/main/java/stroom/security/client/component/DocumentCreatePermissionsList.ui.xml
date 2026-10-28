@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The document types a user or group may create in a folder, and below them how they hold
          the selected one (the split pane's classes are added, as styleName would replace its own) -->
     <split:SplitPane vertical="true" sizes="*, 200px" names="Create permissions, Details"
@@ -17,7 +18,7 @@
         </g:FlowPanel>
         <form:FormGroup label="Document Create Permission Details" addStyleNames="max"
                         helpText="Explains how the selected user or group holds permission to create the selected document type here: directly, through 'Create All', through ownership, or inherited from a group.">
-            <g:HTML ui:field="details"
+            <tx:Html ui:field="details"
                     styleName="max form-control-border form-control-background form-padding"/>
         </form:FormGroup>
     </split:SplitPane>

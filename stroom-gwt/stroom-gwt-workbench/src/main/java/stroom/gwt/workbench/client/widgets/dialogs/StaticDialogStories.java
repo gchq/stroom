@@ -25,10 +25,10 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupType;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 
 /// Stories for the dialogs of Stroom's identity provider screens (change password, current
 /// password, reset password).

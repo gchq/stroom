@@ -7,11 +7,12 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:lci="urn:import:stroom.widget.linecolinput.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <g:FlowPanel addStyleNames="character-range-selection__info">
-            <g:Label>Total characters:</g:Label>
-            <g:Label ui:field="lblTotalCharCount"/>
+            <tx:Label>Total characters:</tx:Label>
+            <tx:Label ui:field="lblTotalCharCount"/>
         </g:FlowPanel>
         <form:FormGroup identity="characterRangeSelectionFrom" label="From"
                         helpText="Where the range starts, as a line and column (for example 10:5) or as a character offset. Both are counted from 1 and are inclusive."

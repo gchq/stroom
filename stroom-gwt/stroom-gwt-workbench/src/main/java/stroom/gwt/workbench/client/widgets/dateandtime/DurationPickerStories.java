@@ -30,9 +30,9 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [DurationPicker] (a value spinner and a time unit selection box).

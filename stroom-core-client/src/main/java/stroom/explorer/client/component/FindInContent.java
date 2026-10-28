@@ -28,6 +28,7 @@ import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -40,7 +41,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusUtil;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AbstractDataProvider;
 

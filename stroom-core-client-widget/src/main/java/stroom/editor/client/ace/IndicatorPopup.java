@@ -16,7 +16,8 @@
 
 package stroom.editor.client.ace;
 
-import com.google.gwt.user.client.ui.HTML;
+import stroom.widget.text.client.Html;
+
 import com.google.gwt.user.client.ui.PopupPanel;
 
 /**
@@ -24,10 +25,10 @@ import com.google.gwt.user.client.ui.PopupPanel;
  */
 public class IndicatorPopup extends PopupPanel {
 
-    private final HTML content;
+    private final Html content;
 
     public IndicatorPopup() {
-        content = new HTML();
+        content = new Html();
 
         setModal(false);
         setAutoHideEnabled(true);

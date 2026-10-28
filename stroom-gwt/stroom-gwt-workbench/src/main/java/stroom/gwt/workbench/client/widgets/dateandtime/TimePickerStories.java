@@ -31,8 +31,8 @@ import stroom.widget.datepicker.client.TimeBoxController;
 import stroom.widget.datepicker.client.component.TimePicker;
 import stroom.widget.datepicker.client.component.TimePickerController;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [TimeBox] (a text box for a time, whose clock icon opens the "Set Time"

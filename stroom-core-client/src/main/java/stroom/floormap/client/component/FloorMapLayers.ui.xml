@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       The Layers panel (stroom-floormap.css): a scrolling list of layer rows, which the Java adds
       before the empty messages and the Discover footer. It needs no title of its own: the dock tab
@@ -14,11 +15,11 @@
                 <!-- An empty panel is otherwise indistinguishable from a broken one. The wording
                      differs by tab because so does the remedy: the Editor can add layers, and the
                      read-only Map tab cannot -->
-                <g:Label ui:field="editorEmpty"
+                <tx:Label ui:field="editorEmpty"
                          addStyleNames="floormap-layer-empty"
                          text="No layers yet. Types found in the data appear here, or use Discover types."
                          visible="false"/>
-                <g:Label ui:field="mapEmpty"
+                <tx:Label ui:field="mapEmpty"
                          addStyleNames="floormap-layer-empty"
                          text="No layers configured. They are added on the Editor tab."
                          visible="false"/>
@@ -34,7 +35,7 @@
                          otherwise read "Discover types" twice: once as the button's name, once as
                          loose text that looks interactive and is not focusable -->
                     <c:AriaPanel ariaHidden="true">
-                        <g:Label ui:field="discoverLabel"
+                        <tx:Label ui:field="discoverLabel"
                                  addStyleNames="floormap-layers-footer-label"
                                  text="Discover types"/>
                     </c:AriaPanel>

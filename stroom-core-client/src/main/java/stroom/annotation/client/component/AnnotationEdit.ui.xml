@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:annotation="urn:import:stroom.annotation.client">
+             xmlns:annotation="urn:import:stroom.annotation.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- An annotation's Annotation tab (stroom-annotation.css, annotation-edit.css) -->
     <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
@@ -13,7 +14,7 @@
                          value, for when it is too long to show) would otherwise be read as its name -->
                     <form:TextBox ui:field="titleTextBox" placeholder="Title" ariaLabel="Title"
                                addStyleNames="annotationTitle annotationTitleTextBox annotationTextBox allow-focus"/>
-                    <g:Label ui:field="annotationId" styleName="annotationId"/>
+                    <tx:Label ui:field="annotationId" styleName="annotationId"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
             <annotation:SettingBlock ui:field="subjectBlock">
@@ -30,7 +31,7 @@
                     <g:FlowPanel ui:field="historyContainer"
                                  styleName="max dock-container-vertical annotationHistoryContainer"
                                  visible="false">
-                        <g:HTML ui:field="historyHtml" styleName="dock-max annotationHistoryOuter"/>
+                        <tx:Html ui:field="historyHtml" styleName="dock-max annotationHistoryOuter"/>
                         <b:Button ui:field="copyHistory" icon="COPY" text="Copy History"
                                   addStyleNames="dock-min allow-focus annotationHistoryCopyButton"/>
                     </g:FlowPanel>
@@ -56,7 +57,7 @@
                         <form:FormGroup identity="annotationStatus" label="Status"
                                         helpText="The current status of the annotation. Select it to choose a different status.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:Label ui:field="status" styleName="annotationLabel"/>
+                                <tx:Label ui:field="status" styleName="annotationLabel"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
@@ -64,7 +65,7 @@
                         <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
                                         helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
+                                <tx:Label ui:field="assignedTo" styleName="annotationLabel"/>
                                 <annotation:AssignYourselfLink ui:field="assignYourself"/>
                             </g:FlowPanel>
                         </form:FormGroup>
@@ -73,7 +74,7 @@
                         <form:FormGroup identity="annotationLabel" label="Labels"
                                         helpText="The labels attached to the annotation. Select them to add or remove labels.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:HTML ui:field="labels" styleName="annotationLabel"/>
+                                <tx:Html ui:field="labels" styleName="annotationLabel"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
@@ -81,7 +82,7 @@
                         <form:FormGroup identity="annotationCollection" label="Collections"
                                         helpText="The collections this annotation belongs to. Select them to add or remove collections.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:HTML ui:field="collections" styleName="annotationLabel"/>
+                                <tx:Html ui:field="collections" styleName="annotationLabel"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
@@ -89,7 +90,7 @@
                         <form:FormGroup identity="annotationRetentionPeriod" label="Retain For"
                                         helpText="How long the annotation is kept, measured from when it was created. Select it to change the period or keep it forever.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
+                                <tx:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>

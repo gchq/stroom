@@ -16,7 +16,8 @@
   -->
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The FocusPanel is the map's keyboard host: GWT gives it tabindex="0", and
          the controller binds pan/zoom/traversal keys to it. It therefore needs a
          focus ring of its own, which stroom-floormap.css draws off this class. -->
@@ -31,10 +32,10 @@
                  (paint) order they are a stream of disconnected names and numbers. The summary and
                  the Tracking grid say the same thing usefully -->
             <div ui:field="svgContainer" class="max" role="img" aria-label="Floor map"></div>
-            <g:Label ui:field="areaDrawHint" addStyleNames="stroom-floormap-area-draw-hint"/>
+            <tx:Label ui:field="areaDrawHint" addStyleNames="stroom-floormap-area-draw-hint"/>
             <!-- Follows the cursor during a move or resize, reporting the
                  position or size being dragged out in real-world units. -->
-            <g:Label ui:field="gestureReadout" addStyleNames="stroom-floormap-gesture-readout"/>
+            <tx:Label ui:field="gestureReadout" addStyleNames="stroom-floormap-gesture-readout"/>
             <!-- Describes the glyph under the pointer: the members of a cluster,
                  or one entity's details. Anchored to the glyph rather than the
                  cursor: a panel that slid about while the pointer moved across a
@@ -45,7 +46,7 @@
             <!-- Always-on scale bar: the origin indicator only helps while (0,0)
                  is on screen, which is not the normal state of a map being read. -->
             <g:FlowPanel ui:field="scaleBar" addStyleNames="stroom-floormap-scale-bar">
-                <g:Label ui:field="scaleBarLabel"
+                <tx:Label ui:field="scaleBarLabel"
                          addStyleNames="stroom-floormap-scale-bar__label"/>
                 <g:SimplePanel ui:field="scaleBarLine"
                                addStyleNames="stroom-floormap-scale-bar__line"/>
@@ -58,7 +59,7 @@
                  area-draw hint without ever colliding: that hint belongs to modes
                  that exist only on the Editor tab, and this line is only ever set
                  by the Map tab. -->
-            <g:Label ui:field="emptyStatus"
+            <tx:Label ui:field="emptyStatus"
                      addStyleNames="stroom-floormap-empty-status"/>
             <!-- The map's spoken commentary: selection, tracking, time changes and
                  entities leaving the timeline range. Everything the canvas says

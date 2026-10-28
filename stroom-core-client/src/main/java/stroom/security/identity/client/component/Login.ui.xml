@@ -3,11 +3,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The page is its main content, a landmark screen readers can go to -->
     <c:AriaPanel styleName="sign-in-page" role="main">
         <!-- The page's heading, for screen readers (the logo and form say it to sighted users) -->
-        <g:HTML styleName="sr-only"><h1>Sign in to Stroom</h1></g:HTML>
+        <tx:Html styleName="sr-only"><h1>Sign in to Stroom</h1></tx:Html>
 
         <g:FlowPanel styleName="sign-in-page__form-panel">
             <g:FlowPanel styleName="max form-padding form sign-in-page__form">
@@ -25,7 +26,7 @@
                                           placeholder="Enter User Name"/>
                         </g:FlowPanel>
 
-                        <g:Label ui:field="userNameFeedback" styleName="feedback"/>
+                        <tx:Label ui:field="userNameFeedback" styleName="feedback"/>
                     </g:FlowPanel>
                 </form:FormGroup>
 
@@ -34,7 +35,7 @@
                     <g:FlowPanel>
                         <form:PasswordBox ui:field="password" placeholder="Enter Password"/>
 
-                        <g:Label ui:field="passwordFeedback" styleName="feedback"/>
+                        <tx:Label ui:field="passwordFeedback" styleName="feedback"/>
                     </g:FlowPanel>
                 </form:FormGroup>
 

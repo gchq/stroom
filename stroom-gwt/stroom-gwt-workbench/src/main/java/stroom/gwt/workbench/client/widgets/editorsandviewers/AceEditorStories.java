@@ -32,10 +32,10 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.PreElement;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -291,7 +291,7 @@ public final class AceEditorStories {
     private static Widget editableTyping(final StoryContext context) {
         final CodeEditorController editor = editor(context, "", AceEditorMode.TEXT, false);
         // A probe showing the typed value
-        final HTML probe = new HTML();
+        final Html probe = new Html();
         probe.getElement().setAttribute("data-testid", "typed");
         final PreElement pre = PreElement.as(probe.getElement().appendChild(
                 probe.getElement().getOwnerDocument().createPreElement()));

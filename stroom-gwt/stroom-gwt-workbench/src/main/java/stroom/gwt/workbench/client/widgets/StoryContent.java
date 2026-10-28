@@ -17,8 +17,8 @@
 package stroom.gwt.workbench.client.widgets;
 
 import stroom.widget.component.client.Controller;
+import stroom.widget.text.client.Html;
 
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -42,6 +42,6 @@ public final class StoryContent extends Controller {
     /// @param html     The (trusted, constant) HTML to show.
     /// @return The controller.
     public static StoryContent html(final EventBus eventBus, final String html) {
-        return new StoryContent(eventBus, new HTML(html));
+        return new StoryContent(eventBus, new Html(html));
     }
 }

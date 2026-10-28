@@ -24,13 +24,13 @@ import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.TimeOffset;
 import stroom.widget.datepicker.client.TimeRecord;
 import stroom.widget.datepicker.client.UTCDate;
+import stroom.widget.text.client.Label;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The "Set Date And Time" dialog's content: a calendar for the date and spinners for the time,

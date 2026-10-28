@@ -29,9 +29,9 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.component.UserRefSelectionController;
 import stroom.util.shared.UserRef;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [UserRefSelectionController] attached to a `DropDownBox`: a drop-down

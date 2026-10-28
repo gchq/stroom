@@ -5,11 +5,12 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:date="urn:import:stroom.widget.datepicker.client"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="date-time-view max dock-container-horizontal">
         <g:FlowPanel styleName="date-time-view__column dock-min">
             <form:FormLabel identity="dateHeading" label="Date" addStyleNames="date-time-view__heading"/>
-            <g:Label ui:field="date" addStyleNames="date-time-view__value"/>
+            <tx:Label ui:field="date" addStyleNames="date-time-view__value"/>
             <g:FlowPanel addStyleNames="date-time-view__shortcuts">
                 <b:LinkButton ui:field="today" addStyleNames="date-time-view__shortcut" text="Today"/>
                 <b:LinkButton ui:field="yesterday" addStyleNames="date-time-view__shortcut" text="Yesterday"/>
@@ -22,7 +23,7 @@
         </g:FlowPanel>
         <g:FlowPanel styleName="date-time-view__column date-time-view__column--time dock-max">
             <form:FormLabel identity="timeHeading" label="Time" addStyleNames="date-time-view__heading"/>
-            <g:Label ui:field="time" addStyleNames="date-time-view__value"/>
+            <tx:Label ui:field="time" addStyleNames="date-time-view__value"/>
             <g:FlowPanel addStyleNames="date-time-view__shortcuts">
                 <b:LinkButton ui:field="now" addStyleNames="date-time-view__shortcut" text="Now"/>
                 <b:LinkButton ui:field="midnight" addStyleNames="date-time-view__shortcut" text="Midnight"/>

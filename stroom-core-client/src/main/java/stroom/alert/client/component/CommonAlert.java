@@ -21,6 +21,7 @@ import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.popup.client.PopupUtil;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -32,7 +33,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An alert's or confirmation's content: an icon for its level, its message, and a detail (e.g. a
@@ -48,7 +48,7 @@ public class CommonAlert extends Component {
     @UiField
     DivElement icon;
     @UiField
-    HTML message;
+    Html message;
     @UiField
     LinkButton showHideDetail;
     @UiField

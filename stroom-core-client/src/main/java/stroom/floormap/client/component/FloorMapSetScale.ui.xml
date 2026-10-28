@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       The Set Scale dialog's content (stroom-floormap.css): what the line measured comes to now, and
       what it really is, a distance and its unit. The table only lays the labels beside their
@@ -13,7 +14,7 @@
             <tbody>
                 <tr>
                     <td>The line you measured is currently</td>
-                    <td><g:Label ui:field="currentReading"/></td>
+                    <td><tx:Label ui:field="currentReading"/></td>
                 </tr>
                 <tr>
                     <td ui:field="distanceLabel">It is really</td>

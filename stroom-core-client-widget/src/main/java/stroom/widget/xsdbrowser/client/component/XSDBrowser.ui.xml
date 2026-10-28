@@ -4,7 +4,8 @@
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:view="urn:import:stroom.widget.xsdbrowser.client"
              xmlns:a="urn:import:stroom.widget.component.client"
-             xmlns:btn="urn:import:stroom.widget.button.client">
+             xmlns:btn="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="xsd-browser dock-container-vertical max">
         <a:AriaPanel styleName="dock-min" role="group" ariaLabel="Schema navigation">
             <btn:LinkButton ui:field="homeLink" addStyleNames="xsd-browser__link" text="Home" ariaLabel="Schema Home"
@@ -19,7 +20,7 @@
             <view:XSDDisplay ui:field="diagram" styleName="dashboard-panel xsd-browser__diagram" />
             <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                              names="Documentation, Constraints" addStyleNames="max">
-                <g:HTML ui:field="documentation" styleName="dashboard-panel xsd-browser__documentation"/>
+                <tx:Html ui:field="documentation" styleName="dashboard-panel xsd-browser__documentation"/>
                 <view:XSDConstraintDisplay ui:field="constraints" styleName="dashboard-panel xsd-browser__constraints" />
             </split:SplitPane>
         </split:SplitPane>

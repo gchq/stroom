@@ -18,6 +18,7 @@ package stroom.widget.xsdbrowser.client.component;
 
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 import stroom.widget.xsdbrowser.client.XSDConstraintDisplay;
 import stroom.widget.xsdbrowser.client.XSDDisplay;
 import stroom.widget.xsdbrowser.client.XSDModel;
@@ -26,7 +27,6 @@ import stroom.widget.xsdbrowser.client.XSDNode;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A schema's diagram, with Home, Back and Forward to move around it, and the documentation and
@@ -42,7 +42,7 @@ public class XSDBrowser extends Component {
     @UiField
     LinkButton forwardLink;
     @UiField
-    HTML documentation;
+    Html documentation;
     @UiField
     XSDConstraintDisplay constraints;
     @UiField

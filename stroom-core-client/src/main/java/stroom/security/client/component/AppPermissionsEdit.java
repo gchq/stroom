@@ -28,6 +28,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -36,7 +37,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -61,7 +61,7 @@ public class AppPermissionsEdit extends Component {
     @UiField
     FormGroup detailsFormGroup;
     @UiField
-    HTML details;
+    Html details;
 
     private final MultiSelectionModelImpl<AppPermission> selectionModel = new MultiSelectionModelImpl<>();
     private Function<AppPermission, TickBoxState> permissionState = permission -> TickBoxState.UNTICK;

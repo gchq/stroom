@@ -27,9 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.cellview.client.CellWidget;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [IconCell]. Each cell is a `CellWidget`, whose value is the cell's [CellIcon]

@@ -23,9 +23,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.Expander;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.cellview.client.CellWidget;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ExpanderCell]. Each cell is a `CellWidget` whose value is the row's

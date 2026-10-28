@@ -3,7 +3,8 @@
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:v="urn:import:stroom.widget.button.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
-             xmlns:ps="urn:import:stroom.pipeline.structure.client.component">
+             xmlns:ps="urn:import:stroom.pipeline.structure.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- A pipeline's Structure tab (pipeline-structure.css): its elements above their properties
          and pipeline references -->
     <g:SimplePanel addStyleNames="dock-container-vertical">
@@ -21,7 +22,7 @@
                                          enabled="false"/>
                     </v:Toolbar>
                     <g:FlowPanel styleName="pipeline-structure__bar-right">
-                        <g:Label text="Inherit From: " styleName="gwt-Label pipeline-structure__label"/>
+                        <tx:Label text="Inherit From: " styleName="text-label pipeline-structure__label"/>
                         <g:SimplePanel>
                             <dd:DropDownBox ui:field="inherit"/>
                         </g:SimplePanel>

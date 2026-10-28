@@ -18,13 +18,13 @@ package stroom.security.identity.client.component;
 
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,7 +38,7 @@ public class AuthenticationError extends Component {
     @UiField
     Label errorText;
     @UiField
-    HTML genericMessage;
+    Html genericMessage;
 
     /// Makes an empty page.
     public AuthenticationError() {

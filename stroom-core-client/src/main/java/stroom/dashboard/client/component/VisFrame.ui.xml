@@ -5,8 +5,9 @@
   page until a visualisation with assets of its own sets its URL.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:SimplePanel ui:field="container" addStyleNames="vis-frame">
-        <g:Frame ui:field="frame" addStyleNames="vis-frame__frame" url="ui/vis.html"/>
+        <tx:Frame ui:field="frame" addStyleNames="vis-frame__frame" url="ui/vis.html"/>
     </g:SimplePanel>
 </ui:UiBinder>

@@ -4,11 +4,12 @@
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client"
         xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
-        xmlns:i="urn:import:stroom.item.client">
+        xmlns:i="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id"
                         helpText="The ID of the pipeline element that this reference data lookup belongs to.">
-            <g:Label ui:field="element" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="element" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline"
                         helpText="The reference loader pipeline that loads the reference data. A Plan B store can also be chosen here for state lookups.">

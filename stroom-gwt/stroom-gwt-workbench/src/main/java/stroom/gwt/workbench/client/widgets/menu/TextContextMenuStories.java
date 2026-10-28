@@ -32,9 +32,9 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -181,7 +181,7 @@ public final class TextContextMenuStories {
                 // Selected text that isn't in a field (e.g. help, an alert's message) can be copied:
                 // a right-click on the selection shows Copy, one elsewhere shows nothing
                 .story("SelectedText", context -> {
-                    final HTML text = new HTML("<p class=\"help-popup\" data-testid=\"text\">"
+                    final Html text = new Html("<p class=\"help-popup\" data-testid=\"text\">"
                                                + "Stroom stores and processes event data.</p>"
                                                + "<p data-testid=\"other\">Not selectable.</p>");
                     return withMenus(context, text);
@@ -202,7 +202,7 @@ public final class TextContextMenuStories {
                     play.expect(play.screen().queryByRole("menu")).toBeNull();
                 })
                 // A link (e.g. in help or markdown) can be opened in a new tab or its address copied
-                .story("Link", context -> withMenus(context, new HTML(
+                .story("Link", context -> withMenus(context, new Html(
                         "<a href=\"https://gchq.github.io/stroom-docs/\" target=\"_blank\""
                         + " style=\"display: inline-block; padding: 4px 0\">Stroom's documentation</a>")))
                 .withPlay(play -> {

@@ -38,6 +38,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.StringUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.Glass;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -60,7 +61,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
@@ -86,7 +86,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    HTML panel;
+    Html panel;
     private Trace trace;
     /** Lookup of spanId -&gt; Span for resolving clicks on span rows. */
     private final Map<String, Span> spanById = new HashMap<>();

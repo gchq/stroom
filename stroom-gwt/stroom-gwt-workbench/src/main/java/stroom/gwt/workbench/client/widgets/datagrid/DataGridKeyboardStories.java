@@ -35,11 +35,11 @@ import stroom.item.client.SimpleSelectionListModel;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 

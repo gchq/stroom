@@ -8,13 +8,14 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:svg="urn:import:stroom.svg.client">
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:HTMLPanel styleName="dialog__container">
         <g:SimplePanel styleName="dialog__frame"/>
         <g:FlowPanel styleName="dialog__layout">
             <g:FlowPanel ui:field="titleBar" styleName="dialog__title-bar">
                 <svg:Icon ui:field="icon" addStyleNames="dialog__icon"/>
-                <g:Label ui:field="titleText" styleName="dialog__title">Caption</g:Label>
+                <tx:Label ui:field="titleText" styleName="dialog__title">Caption</tx:Label>
                 <g:SimplePanel styleName="dialog__spinner">
                     <spinner:SpinnerLarge ui:field="spinner" visible="false"/>
                 </g:SimplePanel>

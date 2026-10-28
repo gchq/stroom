@@ -29,13 +29,13 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.Position;
 import stroom.widget.popup.client.PositionUtil;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -112,7 +112,7 @@ public final class PopupContractStories {
         cases.add(PopupCase.of("Popover (SettingBlock)", PopupHarnesses::settingBlock)
                 .opener(".setting-block")
                 // The block and the label inside it
-                .partners(".setting-block", ".setting-block .gwt-Label")
+                .partners(".setting-block", ".setting-block .text-label")
                 .panel(".popup--floating:has(.popover-body)")
                 .insideTarget(".popover-body"));
         cases.add(PopupCase.of("SelectionBox", PopupHarnesses::selectionBox)

@@ -17,11 +17,11 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Shows whether a form field's value is valid, with `aria-invalid`, which both tells assistive

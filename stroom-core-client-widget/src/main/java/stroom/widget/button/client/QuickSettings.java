@@ -16,10 +16,11 @@
 
 package stroom.widget.button.client;
 
+import stroom.widget.text.client.Label;
+
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 
 /// Presets that fill in a value, in titled groups side by side, e.g. a time range's Relative,
 /// Present and Past ranges, or a schedule's Minute and Hour intervals. Each group is a `group`

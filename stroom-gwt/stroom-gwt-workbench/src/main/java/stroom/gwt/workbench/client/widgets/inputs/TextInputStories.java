@@ -24,9 +24,9 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's `TextBox` and `TextArea` (its copies of GWT's: a text box reports a change

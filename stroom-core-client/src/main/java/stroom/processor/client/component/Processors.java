@@ -17,12 +17,12 @@
 package stroom.processor.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,7 +37,7 @@ public class Processors extends Component {
     @UiField
     SimplePanel processorList;
     @UiField
-    HTML info;
+    Html info;
     @UiField
     SimplePanel details;
 

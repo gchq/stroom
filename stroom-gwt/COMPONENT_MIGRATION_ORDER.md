@@ -1194,6 +1194,15 @@ after wave 25.
 > **Done, 28 October 2026**: Font Awesome loaded only by the visualisation frame; the sheets nothing
 > loads, the unused classes' rules and the unused custom properties deleted. See `wave-26.md`.
 
+## 27. CSS step 2: Stroom's own text widgets
+
+Record: [`component-migration/wave-27.md`](component-migration/wave-27.md). Added 28 October 2026,
+after wave 26.
+
+> **Done, 28 October 2026**: GWT's `Label`, `HTML`, `InlineLabel`, `Frame` and `Anchor`, the last GWT
+> widgets that put GWT's classes on the page, replaced by Stroom's (`stroom.widget.text.client`),
+> each with its own BEM class; checkstyle refuses GWT's. See `wave-27.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

@@ -26,9 +26,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.identity.client.component.LoginController;
 import stroom.util.client.RedirectUrlUtil;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;

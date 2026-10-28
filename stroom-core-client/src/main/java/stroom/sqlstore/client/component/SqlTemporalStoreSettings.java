@@ -18,11 +18,11 @@ package stroom.sqlstore.client.component;
 
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A SQL temporal store's Settings tab: how many entries it holds, and a button to remove them all,

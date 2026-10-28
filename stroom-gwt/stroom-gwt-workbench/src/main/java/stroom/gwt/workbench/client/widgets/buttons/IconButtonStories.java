@@ -28,8 +28,8 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.text.client.InlineLabel;
 
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;

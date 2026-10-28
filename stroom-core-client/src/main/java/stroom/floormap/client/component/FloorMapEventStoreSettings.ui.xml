@@ -20,7 +20,8 @@
              xmlns:sg="urn:import:stroom.planb.client.component"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       Deliberately without the Key Schema and Value Schema panels a Plan B store shows here. Those
       are properties of this document type rather than choices: the Map tab's read seeks to each
@@ -51,7 +52,7 @@
                  still emitting. That is a surprising interaction, and it is not visible from either
                  setting alone -->
             <g:FlowPanel>
-                <g:Label addStyleNames="floor-map-event-store-settings__condense-warning"
+                <tx:Label addStyleNames="floor-map-event-store-settings__condense-warning"
                          text="This will cause repeating events to disappear from the map."/>
                 <sg:CondenseSettingsForm ui:field="condenseSettings"/>
             </g:FlowPanel>

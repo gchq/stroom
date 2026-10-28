@@ -7,14 +7,15 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:f="urn:import:stroom.widget.form.client">
+             xmlns:f="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel ui:field="formGroupPanel" styleName="form-group">
         <g:FlowPanel ui:field="labelPanel" styleName="form-group__label-row">
             <f:FormLabel ui:field="formLabel" addStyleNames="form-group__label"/>
             <f:FormGroupHelpButton ui:field="helpButton" title="Click for help"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="descriptionPanel" styleName="form-group__description-row"/>
-        <g:Label ui:field="feedbackLabel" styleName="form-group__feedback"/>
-        <g:Label ui:field="helpDescription" styleName="form-group__help-text" visible="false"/>
+        <tx:Label ui:field="feedbackLabel" styleName="form-group__feedback"/>
+        <tx:Label ui:field="helpDescription" styleName="form-group__help-text" visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

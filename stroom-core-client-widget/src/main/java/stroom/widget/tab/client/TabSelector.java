@@ -17,12 +17,12 @@
 package stroom.widget.tab.client;
 
 import stroom.widget.component.client.AriaPanel;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A tab bar's overflow button, shown when some tabs don't fit: a button showing every tab in a

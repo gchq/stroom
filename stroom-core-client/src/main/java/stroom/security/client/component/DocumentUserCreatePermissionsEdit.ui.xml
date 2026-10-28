@@ -2,15 +2,16 @@
 <!-- The document types a user or group may create in a folder -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="document" label="Document"
                         helpText="The document or folder whose permissions are being edited.">
-            <g:Label ui:field="document"/>
+            <tx:Label ui:field="document"/>
         </form:FormGroup>
         <form:FormGroup ui:field="userFormGroup" identity="user" label="User"
                         helpText="The user or group whose permissions are being edited.">
-            <g:Label ui:field="user"/>
+            <tx:Label ui:field="user"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="createPermissions" styleName="max"/>
         <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus button--contained-primary" text="Apply To Descendants"/>

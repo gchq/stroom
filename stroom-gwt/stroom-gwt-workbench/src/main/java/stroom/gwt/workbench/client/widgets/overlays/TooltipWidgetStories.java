@@ -26,6 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.text.client.Label;
 import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 
@@ -33,7 +34,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [InfoTooltipController] shown at a point.

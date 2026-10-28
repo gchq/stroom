@@ -5,7 +5,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min"
                         helpText="How the schedule is defined. Instant runs as often as possible. Frequency runs at a fixed interval. Cron runs at set times."
@@ -23,14 +24,14 @@
         </form:FormGroup>
         <form:FormGroup ui:field="lastExecutedFormGroup" identity="scheduleLastExecuted" label="Last Executed"
                         helpText="When this last ran, or Never.">
-            <g:Label ui:field="lastExecuted"/>
+            <tx:Label ui:field="lastExecuted"/>
         </form:FormGroup>
         <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time"
                         helpText="When this will next run, based on the expression. Shows an error if the expression is not valid. Select Calculate to update it.">
             <!-- Changes as the expression is calculated, so screen readers are told the new time
                  (or why the expression isn't valid) -->
             <c:AriaPanel ariaLive="polite">
-                <g:Label ui:field="nextScheduledTime"/>
+                <tx:Label ui:field="nextScheduledTime"/>
             </c:AriaPanel>
         </form:FormGroup>
         <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate" icon="HISTORY"/>

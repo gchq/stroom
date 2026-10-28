@@ -23,8 +23,8 @@ import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.TabData;
+import stroom.widget.text.client.Html;
 
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -55,7 +55,7 @@ final class TabWidgets {
     /// @param fontSize The CSS font size, or null to inherit it.
     /// @return The pane.
     static Widget pane(final String text, final String padding, final String fontSize) {
-        final HTML pane = new HTML();
+        final Html pane = new Html();
         pane.setText(text);
         pane.getElement().getStyle().setProperty("padding", padding);
         if (fontSize != null) {

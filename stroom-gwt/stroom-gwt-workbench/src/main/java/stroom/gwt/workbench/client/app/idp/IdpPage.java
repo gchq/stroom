@@ -19,12 +19,12 @@ package stroom.gwt.workbench.client.app.idp;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.security.identity.client.component.LoginController;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.HTML;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -99,8 +99,8 @@ public final class IdpPage {
     ///
     /// @param url The URL, shown in bold, or an empty string for a reload of the page.
     /// @return The message.
-    public static HTML redirectedMessage(final String url) {
-        final HTML message = new HTML();
+    public static Html redirectedMessage(final String url) {
+        final Html message = new Html();
         message.setText("✓ Signed in — redirected to: ");
         final Element strong = Document.get().createElement("strong");
         strong.setInnerText(url.isEmpty()

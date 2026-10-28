@@ -20,6 +20,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -30,7 +31,6 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class ActivityEdit extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    HTML html;
+    Html html;
 
     /// Makes an empty form.
     public ActivityEdit() {

@@ -56,13 +56,13 @@ import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.PopupSize;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -87,7 +87,7 @@ public class ExecutionSchedulesController extends ContentTabController {
 
     private final DataGrid<ExecutionSchedule> dataGrid;
     // How many schedules are selected, after the toolbar
-    private final HTML selectionCountLabel = new HTML();
+    private final Html selectionCountLabel = new Html();
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;

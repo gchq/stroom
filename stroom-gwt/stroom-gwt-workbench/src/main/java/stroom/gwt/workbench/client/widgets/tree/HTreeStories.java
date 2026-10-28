@@ -34,12 +34,12 @@ import stroom.widget.htree.client.treelayout.Configuration.Location;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's horizontal tree (`stroom.widget.htree`): a tree laid out left to right by

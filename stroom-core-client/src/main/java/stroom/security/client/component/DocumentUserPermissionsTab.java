@@ -22,13 +22,13 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -49,7 +49,7 @@ public class DocumentUserPermissionsTab extends Component {
     @UiField
     FormGroup detailsFormGroup;
     @UiField
-    HTML details;
+    Html details;
 
     private Consumer<PermissionShowLevel> onPermissionVisibilityChange = level -> {
     };

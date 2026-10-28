@@ -26,11 +26,11 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [UserRefCell]. Each cell is a `CellWidget` in a box (see

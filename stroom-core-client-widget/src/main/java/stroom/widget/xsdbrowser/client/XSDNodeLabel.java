@@ -16,13 +16,13 @@
 
 package stroom.widget.xsdbrowser.client;
 
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.DoubleSelectTester;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 
 public class XSDNodeLabel extends Composite implements SelectableItem {
 

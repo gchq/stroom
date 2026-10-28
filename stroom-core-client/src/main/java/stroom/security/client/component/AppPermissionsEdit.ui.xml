@@ -5,7 +5,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
 
     <!-- The details below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
@@ -28,7 +29,7 @@
                         helpText="Explains how the user/group has obtained the selected permission."
                         addStyleNames="form-group--indented">
             <g:SimplePanel styleName="max form-padding permissionDetails">
-                <g:HTML ui:field="details" styleName="max"/>
+                <tx:Html ui:field="details" styleName="max"/>
             </g:SimplePanel>
         </form:FormGroup>
     </split:SplitPane>

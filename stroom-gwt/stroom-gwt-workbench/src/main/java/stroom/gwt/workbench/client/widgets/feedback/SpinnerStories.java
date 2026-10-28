@@ -23,10 +23,10 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.button.client.Button;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicBoolean;

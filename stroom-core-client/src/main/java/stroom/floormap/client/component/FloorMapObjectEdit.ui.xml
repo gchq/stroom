@@ -22,7 +22,8 @@
              xmlns:colour="urn:import:stroom.widget.colour.client"
              xmlns:t="urn:import:stroom.widget.tickbox.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
-             xmlns:a="urn:import:stroom.widget.component.client">
+             xmlns:a="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
 
     <g:FlowPanel addStyleNames="floor-map-object-edit max dock-container-vertical form overflow-y-auto">
 
@@ -93,7 +94,7 @@
                             normal selection handles, or delete the area and draw it
                             again to change its outline.</p>
                     </form:HelpHTML>
-                    <g:Label ui:field="vertexCountLabel" />
+                    <tx:Label ui:field="vertexCountLabel" />
                 </form:FormGroup>
 
                 <form:FormGroup label="Effective From Time">
@@ -126,7 +127,7 @@
                                       addStyleNames="stroom-control floor-map-object-edit__number"/>
                         <!-- Each box already says "in metres" -->
                         <a:AriaPanel ariaHidden="true" addStyleNames="floor-map-object-edit__unit">
-                            <g:Label text="m"/>
+                            <tx:Label text="m"/>
                         </a:AriaPanel>
                     </a:AriaPanel>
                 </form:FormGroup>
@@ -151,7 +152,7 @@
                                       addStyleNames="stroom-control floor-map-object-edit__number"/>
                         <!-- Each box already says "in metres" -->
                         <a:AriaPanel ariaHidden="true" addStyleNames="floor-map-object-edit__unit">
-                            <g:Label text="m"/>
+                            <tx:Label text="m"/>
                         </a:AriaPanel>
                     </a:AriaPanel>
                 </form:FormGroup>

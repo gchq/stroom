@@ -25,6 +25,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -34,7 +35,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -54,7 +54,7 @@ public class DocumentCreatePermissionsList extends Component {
     @UiField
     DataGrid<DocumentType> dataGrid;
     @UiField
-    HTML details;
+    Html details;
 
     private final MultiSelectionModelImpl<DocumentType> selectionModel;
     private Function<DocumentType, TickBoxState> permissionState = documentType -> TickBoxState.UNTICK;

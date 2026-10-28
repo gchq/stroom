@@ -26,11 +26,11 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuController;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;

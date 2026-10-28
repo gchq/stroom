@@ -25,6 +25,7 @@ import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.VisFunction;
 import stroom.visualisation.client.VisFunction.LoadStatus;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Frame;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.Callback;
@@ -42,7 +43,6 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;

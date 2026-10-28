@@ -18,7 +18,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- One dropdown per FloorMapEventRole. Declared rather than generated so each keeps the help
          text a human wrote for it; the component pairs them with their roles by field. Each names its
          inner input itself (ariaLabel), as the FormGroup's label can't reach it. -->
@@ -41,7 +42,7 @@
                 <l:SelectionBox ui:field="typeColumn" addStyleNames="w-100" ariaLabel="Type Column"/>
             </form:FormGroup>
             <!-- Shown until the query has been run: before then the lists hold only the mapped columns. -->
-            <g:Label ui:field="columnsHint" styleName="floormap-query-columns-hint"
+            <tx:Label ui:field="columnsHint" styleName="floormap-query-columns-hint"
                      text="Run the query to list its columns"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="queryEditContainer" styleName="dock-max overflow-hidden"/>

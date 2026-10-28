@@ -61,6 +61,7 @@ import stroom.widget.popup.client.DialogAction;
 import stroom.widget.popup.client.PopupManager;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.core.client.GWT;
@@ -69,7 +70,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;

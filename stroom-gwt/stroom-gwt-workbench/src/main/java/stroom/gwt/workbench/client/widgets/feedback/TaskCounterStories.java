@@ -29,10 +29,10 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Button;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;

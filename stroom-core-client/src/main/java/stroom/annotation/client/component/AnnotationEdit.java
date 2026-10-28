@@ -25,6 +25,8 @@ import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 
@@ -40,8 +42,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -74,9 +74,9 @@ public class AnnotationEdit extends Component {
     @UiField
     AssignYourselfLink assignYourself;
     @UiField
-    HTML labels;
+    Html labels;
     @UiField
-    HTML collections;
+    Html collections;
     @UiField
     Label retentionPeriod;
     @UiField
@@ -88,7 +88,7 @@ public class AnnotationEdit extends Component {
     @UiField
     FlowPanel historyContainer;
     @UiField
-    HTML historyHtml;
+    Html historyHtml;
     @UiField
     Button copyHistory;
     @UiField
@@ -227,7 +227,7 @@ public class AnnotationEdit extends Component {
         setTags(this.collections, collections);
     }
 
-    private static void setTags(final HTML html, final List<AnnotationTag> tags) {
+    private static void setTags(final Html html, final List<AnnotationTag> tags) {
         if (tags == null || tags.isEmpty()) {
             html.setText("None");
             html.addStyleName(EMPTY_VALUE_STYLE);

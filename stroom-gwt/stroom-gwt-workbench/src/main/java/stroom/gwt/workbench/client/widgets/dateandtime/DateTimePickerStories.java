@@ -27,8 +27,8 @@ import stroom.svg.client.IconBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [DateTimeBox] (a text box for an ISO date-time, whose calendar icon opens

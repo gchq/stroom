@@ -62,13 +62,13 @@ import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 

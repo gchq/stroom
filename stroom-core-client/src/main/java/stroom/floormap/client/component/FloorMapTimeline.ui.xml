@@ -19,7 +19,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:a="urn:import:stroom.widget.component.client"
              xmlns:h="urn:import:stroom.widget.histogram.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
 
     <!-- Grid layout: columns are [left controls | bar | right controls]; the histogram and
          date-label rows live in the middle column so they always stay in line with the bar,
@@ -47,7 +48,7 @@
                          role="slider" tabIndex="0" ariaValueMin="0" ariaValueMax="100" ariaValueNow="0">
                 <g:FlowPanel addStyleNames="stroom-floormap-timeline-inner-bar"/>
                 <g:FlowPanel addStyleNames="stroom-floormap-timeline-handle"/>
-                <g:Label ui:field="scrubTooltip" addStyleNames="stroom-floormap-timeline-scrub-tooltip"/>
+                <tx:Label ui:field="scrubTooltip" addStyleNames="stroom-floormap-timeline-scrub-tooltip"/>
             </a:AriaPanel>
         </div>
 
@@ -72,10 +73,10 @@
                      class="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--left"
                      title="Object out of range. Extend timeline range to view object."
                      aria-hidden="true">&#171;</div>
-                <g:Label ui:field="startDateLabel" addStyleNames="stroom-floormap-timeline-date-label"/>
+                <tx:Label ui:field="startDateLabel" addStyleNames="stroom-floormap-timeline-date-label"/>
             </div>
             <div class="stroom-floormap-timeline-date-labels-right">
-                <g:Label ui:field="endDateLabel"
+                <tx:Label ui:field="endDateLabel"
                          addStyleNames="stroom-floormap-timeline-date-label stroom-floormap-timeline-date-label-end"/>
                 <div ui:field="outOfRangeRight"
                      class="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--right"

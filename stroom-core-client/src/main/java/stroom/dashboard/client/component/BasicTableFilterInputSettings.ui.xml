@@ -5,11 +5,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:dash="urn:import:stroom.dashboard.client.component"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicTableFilterSettingsId" label="Id"
                         helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. table-filter-AB1C2). It cannot be changed.">
-            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+            <tx:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableFilterSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">

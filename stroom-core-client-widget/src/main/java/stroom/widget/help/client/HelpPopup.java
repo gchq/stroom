@@ -23,6 +23,7 @@ import stroom.widget.popup.client.Popup;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.PopupUtil;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;
@@ -30,7 +31,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -52,7 +52,7 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
     private static final String ARIA_EXPANDED = "aria-expanded";
 
     @UiField
-    HTML content;
+    Html content;
     private Element opener;
     private Runnable onClose;
 

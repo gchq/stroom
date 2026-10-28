@@ -24,10 +24,10 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.progress.client.Progress;
 import stroom.widget.progress.client.component.SourceProgressBar;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [SourceProgressBar], the sliding window progress bar of the source editor.

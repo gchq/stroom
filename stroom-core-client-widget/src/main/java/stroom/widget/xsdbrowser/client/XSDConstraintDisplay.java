@@ -16,11 +16,11 @@
 
 package stroom.widget.xsdbrowser.client;
 
+import stroom.widget.text.client.Label;
 import stroom.widget.xsdbrowser.client.XSDNode.XSDType;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 import java.util.List;

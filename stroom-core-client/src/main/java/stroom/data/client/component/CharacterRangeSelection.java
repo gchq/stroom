@@ -22,13 +22,13 @@ import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.widget.component.client.Component;
 import stroom.widget.linecolinput.client.LineColInput;
+import stroom.widget.text.client.Label;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The "Set Source Range" dialog's content: where the range of the source shown starts (a line and

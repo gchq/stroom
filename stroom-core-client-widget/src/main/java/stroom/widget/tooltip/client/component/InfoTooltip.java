@@ -17,11 +17,11 @@
 package stroom.widget.tooltip.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.HTML;
 
 /// The content of a grid row's "Information" popup (the info column's): text or HTML that the
 /// keyboard can reach and scroll. Its markup is `InfoTooltip.ui.xml`.
@@ -29,7 +29,7 @@ public class InfoTooltip extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final HTML content;
+    private final Html content;
 
     public InfoTooltip() {
         content = BINDER.createAndBindUi(this);
@@ -58,7 +58,7 @@ public class InfoTooltip extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<HTML, InfoTooltip> {
+    interface Binder extends UiBinder<Html, InfoTooltip> {
 
     }
 }

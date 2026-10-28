@@ -16,6 +16,7 @@
 
 package stroom.widget.xsdbrowser.client;
 
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.DoubleSelectTester;
 
 import com.google.gwt.core.client.GWT;
@@ -23,7 +24,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;

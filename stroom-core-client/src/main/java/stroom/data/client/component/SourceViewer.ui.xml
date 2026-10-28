@@ -6,7 +6,8 @@
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:btn="urn:import:stroom.widget.button.client"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
 
     <split:SplitPane vertical="true" thin="true" sizes="300px, *"
                      names="Streams, Data" addStyleNames="max dock-container-vertical">
@@ -14,20 +15,20 @@
         <g:FlowPanel styleName="source-viewer max dock-container-vertical">
             <g:FlowPanel styleName="dock-min dock-container-horizontal">
                 <g:FlowPanel styleName="dock-max">
-                    <g:Label styleName="source-viewer__title-heading">Feed:</g:Label>
-                    <g:Label ui:field="lblFeed" styleName="source-viewer__title-text"/>
+                    <tx:Label styleName="source-viewer__title-heading">Feed:</tx:Label>
+                    <tx:Label ui:field="lblFeed" styleName="source-viewer__title-text"/>
 
-                    <g:Label styleName="source-viewer__title-heading">ID:</g:Label>
-                    <g:Label ui:field="lblId" styleName="source-viewer__title-text"/>
+                    <tx:Label styleName="source-viewer__title-heading">ID:</tx:Label>
+                    <tx:Label ui:field="lblId" styleName="source-viewer__title-text"/>
 
-                    <g:Label ui:field="lblPartNoHeading" styleName="source-viewer__title-heading">Part:</g:Label>
-                    <g:Label ui:field="lblPartNo" styleName="source-viewer__title-text"/>
+                    <tx:Label ui:field="lblPartNoHeading" styleName="source-viewer__title-heading">Part:</tx:Label>
+                    <tx:Label ui:field="lblPartNo" styleName="source-viewer__title-text"/>
 
-                    <g:Label ui:field="lblSegmentNoHeading" styleName="source-viewer__title-heading">Record:</g:Label>
-                    <g:Label ui:field="lblSegmentNo" styleName="source-viewer__title-text"/>
+                    <tx:Label ui:field="lblSegmentNoHeading" styleName="source-viewer__title-heading">Record:</tx:Label>
+                    <tx:Label ui:field="lblSegmentNo" styleName="source-viewer__title-text"/>
 
-                    <g:Label styleName="source-viewer__title-heading">Stream Type:</g:Label>
-                    <g:Label ui:field="lblType" styleName="source-viewer__title-text"/>
+                    <tx:Label styleName="source-viewer__title-heading">Stream Type:</tx:Label>
+                    <tx:Label ui:field="lblType" styleName="source-viewer__title-text"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-min">
                     <g:SimplePanel ui:field="navigatorContainer" styleName="source-viewer__character-navigator"/>

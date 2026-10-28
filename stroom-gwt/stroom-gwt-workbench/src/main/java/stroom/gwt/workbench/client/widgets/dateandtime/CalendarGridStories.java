@@ -26,9 +26,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.datepicker.client.Calendar;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.UTCDate;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.ClientStringUtil;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's calendar, the [Calendar] of `stroom.widget.datepicker.client`

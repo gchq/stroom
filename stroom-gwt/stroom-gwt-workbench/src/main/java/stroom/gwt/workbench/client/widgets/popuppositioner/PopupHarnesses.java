@@ -41,13 +41,13 @@ import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;

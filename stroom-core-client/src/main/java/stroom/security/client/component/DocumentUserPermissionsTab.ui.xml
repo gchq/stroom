@@ -4,7 +4,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The details below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 200px" names="Users and groups, Details"
@@ -43,7 +44,7 @@
         <form:FormGroup ui:field="detailsFormGroup"
                         addStyleNames="form-group--indented">
             <g:SimplePanel styleName="max form-padding document-user-permissions-tab__details">
-                <g:HTML ui:field="details" styleName="max permissionDetails"/>
+                <tx:Html ui:field="details" styleName="max permissionDetails"/>
             </g:SimplePanel>
         </form:FormGroup>
     </split:SplitPane>

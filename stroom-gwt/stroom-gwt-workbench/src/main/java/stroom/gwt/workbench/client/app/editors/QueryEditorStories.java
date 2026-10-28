@@ -48,12 +48,12 @@ import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.widget.button.client.Button;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;

@@ -3,12 +3,13 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.quickfilter.client"
              xmlns:btn="urn:import:stroom.widget.button.client"
-             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="column-values-filter dock-container-vertical">
         <g:FlowPanel styleName="dock-min column-values-filter__bar">
             <btn:LinkButton ui:field="selectAllLink" addStyleNames="column-values-filter__link" text="Select All"/>
             <!-- Only drawn between the two buttons, not read out -->
-            <g:HTML styleName="gwt-Label"><span aria-hidden="true">-</span></g:HTML>
+            <tx:Html styleName="text-label"><span aria-hidden="true">-</span></tx:Html>
             <btn:LinkButton ui:field="selectNoneLink" addStyleNames="column-values-filter__link" text="Select None"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-max dock-container-vertical quick-filter-layout overflow-hidden">

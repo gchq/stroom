@@ -40,6 +40,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuItem;
 import stroom.widget.menu.client.MenuRequest;
 import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextInputCell;
@@ -55,7 +56,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 

@@ -29,9 +29,9 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Label;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;

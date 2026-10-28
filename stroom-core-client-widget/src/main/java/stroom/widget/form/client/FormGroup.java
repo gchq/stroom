@@ -17,6 +17,7 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
+import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
@@ -35,7 +36,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;

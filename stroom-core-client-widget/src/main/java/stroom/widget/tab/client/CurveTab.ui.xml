@@ -8,12 +8,13 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:sp="urn:import:stroom.widget.spinner.client"
-             xmlns:svg="urn:import:stroom.svg.client">
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <c:AriaPanel styleName="tab-bar__tab" role="tab" tabIndex="-1" ariaSelected="false">
         <c:AriaPanel ui:field="iconPanel" styleName="tab-bar__icon" ariaHidden="true">
             <svg:Icon ui:field="icon"/>
         </c:AriaPanel>
-        <g:Label ui:field="label" styleName="tab-bar__label"/>
+        <tx:Label ui:field="label" styleName="tab-bar__label"/>
         <g:FlowPanel styleName="tab-bar__end">
             <sp:SpinnerSmall ui:field="spinner" addStyleNames="tab-bar__spinner"/>
             <c:AriaPanel ui:field="close" styleName="tab-bar__close" ariaHidden="true">

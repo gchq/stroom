@@ -37,9 +37,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;

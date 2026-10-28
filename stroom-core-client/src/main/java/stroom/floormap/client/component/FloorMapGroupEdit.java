@@ -20,6 +20,7 @@ import stroom.floormap.client.FloorMapAria;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -27,7 +28,6 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 

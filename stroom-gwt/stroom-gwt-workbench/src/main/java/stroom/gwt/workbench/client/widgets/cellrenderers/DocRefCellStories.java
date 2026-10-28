@@ -30,6 +30,9 @@ import stroom.widget.menu.client.HasChildren;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuItem;
 import stroom.widget.menu.client.Separator;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.Style;
@@ -37,9 +40,6 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -222,7 +222,7 @@ public final class DocRefCellStories {
         style.setProperty("fontSize", "13px");
         style.setProperty("fontFamily", "monospace");
         panel.add(new Label("DocRefCell.getContextMenuItems(FEED_REF):"));
-        final HTML list = new HTML();
+        final Html list = new Html();
         // Stroom's CSS gives list items their own font, so the list is set to monospace too
         final StringBuilder html = new StringBuilder("<ul style=\"font-family: monospace\">");
         final List<Item> items = cell.getContextMenuItems(null, FEED_REF);

@@ -23,6 +23,7 @@ import stroom.widget.form.client.TextBox;
 import stroom.widget.help.client.HelpPopup;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.FieldEnd;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.Rect;
@@ -48,7 +49,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;

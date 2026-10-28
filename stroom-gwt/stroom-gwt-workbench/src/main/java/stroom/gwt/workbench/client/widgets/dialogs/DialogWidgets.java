@@ -18,10 +18,10 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.widget.button.client.Button;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Widgets shared by the `Widgets/Dialogs/*` stories.

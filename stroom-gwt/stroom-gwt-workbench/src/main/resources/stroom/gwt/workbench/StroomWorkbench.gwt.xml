@@ -35,6 +35,7 @@
     <inherits name="stroom.widget.component.Component"/>
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.form.Form"/>
+    <inherits name="stroom.widget.text.Text"/>
     <inherits name="stroom.widget.help.Help"/>
     <inherits name="stroom.widget.tooltip.Tooltip"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>

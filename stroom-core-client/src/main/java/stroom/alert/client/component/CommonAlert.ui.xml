@@ -4,11 +4,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:HTMLPanel styleName="common-alert">
         <div ui:field="icon" class="common-alert__icon"></div>
         <g:FlowPanel styleName="common-alert__message-area">
-            <g:HTML ui:field="message" styleName="common-alert__message"/>
+            <tx:Html ui:field="message" styleName="common-alert__message"/>
             <b:LinkButton ui:field="showHideDetail" addStyleNames="common-alert__show-hide" visible="false"><span
                     class="common-alert__show-hide-arrow" aria-hidden="true"></span>Show Detail</b:LinkButton>
             <!-- Scrolls when it is long (e.g. a stack trace), so the keyboard can reach it to scroll it -->

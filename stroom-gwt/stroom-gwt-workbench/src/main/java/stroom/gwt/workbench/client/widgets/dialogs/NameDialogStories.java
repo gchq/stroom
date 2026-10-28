@@ -32,9 +32,9 @@ import stroom.widget.component.client.ControllerNode;
 import stroom.widget.popup.client.component.NameDialog;
 import stroom.widget.popup.client.component.NameDialogController;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [NameDialogController] and its [NameDialog].

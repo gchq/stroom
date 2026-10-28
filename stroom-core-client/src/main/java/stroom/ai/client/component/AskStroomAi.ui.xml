@@ -4,11 +4,12 @@
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel ui:field="root" styleName="ask-stroom-ai max default-min-sizes dock-container-vertical empty">
         <g:FlowPanel styleName="dock-min ask-stroom-ai__top">
             <g:FlowPanel styleName="dock-max ask-stroom-ai__title">
-                <g:Label ui:field="chatTitle" text="Agent"/>
+                <tx:Label ui:field="chatTitle" text="Agent"/>
             </g:FlowPanel>
             <p:Toolbar name="Conversation" addStyleNames="dock-min ask-stroom-ai__buttons toolbar--quiet">
                 <p:ToolbarButton ui:field="newChat" svg="ADD" title="New Conversation"/>
@@ -20,10 +21,10 @@
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
         <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom">
-            <g:Label ui:field="emptyPrompt" styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
+            <tx:Label ui:field="emptyPrompt" styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom-inner">
                 <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__message-pane">
-                    <g:Label ui:field="contextIndicator"
+                    <tx:Label ui:field="contextIndicator"
                              styleName="ask-stroom-ai__context-chip"
                              visible="false"/>
                     <!-- Named for screen readers, as the placeholder is only a hint, lost once something is typed -->

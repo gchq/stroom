@@ -31,12 +31,12 @@ import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -396,7 +396,7 @@ public final class SelectionBoxStories {
 
     /// The box, at least 220px wide, with a `Selected: ...` echo below.
     private static Widget withEcho(final SelectionBox<String> box) {
-        final HTML echo = new HTML();
+        final Html echo = new Html();
         echo.getElement().getStyle().setProperty("marginTop", "8px");
         echo.getElement().getStyle().setProperty("fontSize", "12px");
         echo.setText("Selected: none");

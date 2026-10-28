@@ -58,7 +58,7 @@
     cursor: default;
 }
 
-.setting-block.setting-block--read-only .gwt-Label {
+.setting-block.setting-block--read-only .text-label {
     color: var(--control__text-color--readonly);
 }
 

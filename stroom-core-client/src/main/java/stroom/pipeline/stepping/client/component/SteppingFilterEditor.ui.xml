@@ -6,7 +6,8 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client"
-             xmlns:st="urn:import:stroom.pipeline.stepping.client.component">
+             xmlns:st="urn:import:stroom.pipeline.stepping.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <split:SplitPane sizes="245px, *"
                      names="Elements, Filter" addStyleNames="stepping-filter-editor max">
         <split:ScrollPane addStyleNames="max stroom-control">
@@ -19,7 +20,7 @@
             </g:SimplePanel>
         </split:ScrollPane>
         <g:FlowPanel styleName="max form">
-            <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>
+            <tx:Label ui:field="nameLabel" addStyleNames="form-heading"/>
             <form:FormGroup identity="steppingSeverity" label="Minimum Severity"
                             helpText="Stops stepping at the next record where the selected element produced a message of this severity or higher: INFO, WARN, ERROR or FATAL. Leave blank to turn this condition off."
                             screenReaderText="Stops at the next record with a message this severe or worse. Blank turns it off.">

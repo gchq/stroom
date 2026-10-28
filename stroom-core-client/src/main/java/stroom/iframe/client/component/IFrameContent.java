@@ -18,6 +18,7 @@ package stroom.iframe.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.tab.client.GlobalResizeObserver;
+import stroom.widget.text.client.Frame;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.GWT;
@@ -26,7 +27,6 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 

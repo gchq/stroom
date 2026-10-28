@@ -19,12 +19,12 @@ package stroom.gwt.workbench.client.widgets.aceeditor;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [XmlFormatter], what the Ace editor's Format action runs on XML (GWT

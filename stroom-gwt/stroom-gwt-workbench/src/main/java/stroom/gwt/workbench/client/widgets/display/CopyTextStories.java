@@ -27,11 +27,11 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.menu.client.Menu;
 import stroom.widget.menu.client.MenuController;
 import stroom.widget.menu.client.MenuManager;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -113,7 +113,7 @@ public final class CopyTextStories {
                                    final String value,
                                    final boolean showInsert,
                                    final Consumer<String> insertHandler) {
-        final HTML html = new HTML(CopyTextUtil.render(value, showInsert));
+        final Html html = new Html(CopyTextUtil.render(value, showInsert));
         html.addDomHandler(event -> CopyTextUtil.onClick(event.getNativeEvent(), harness.getHasHandlers(),
                 insertHandler), MouseDownEvent.getType());
         return html;

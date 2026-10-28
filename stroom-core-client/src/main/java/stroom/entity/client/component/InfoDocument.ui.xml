@@ -1,8 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A document's details, with its tags and audit history, each part clicked to copy -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:SimplePanel styleName="max">
-        <g:HTML ui:field="info" styleName="info-layout"/>
+        <tx:Html ui:field="info" styleName="info-layout"/>
     </g:SimplePanel>
 </ui:UiBinder>

@@ -2,13 +2,14 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:annotation="urn:import:stroom.annotation.client">
+             xmlns:annotation="urn:import:stroom.annotation.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel addStyleNames="annotationSetting">
         <annotation:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
             <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
                             helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned.">
                 <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                    <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
+                    <tx:Label ui:field="assignedTo" styleName="annotationLabel"/>
                     <annotation:AssignYourselfLink ui:field="assignYourself"/>
                 </g:FlowPanel>
             </form:FormGroup>

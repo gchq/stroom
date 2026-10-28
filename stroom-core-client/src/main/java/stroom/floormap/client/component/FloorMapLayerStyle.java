@@ -27,13 +27,13 @@ import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.RadioGroup;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
@@ -220,7 +220,7 @@ public class FloorMapLayerStyle extends Component {
 
     /// @param style The style the preview draws.
     public void setPreview(final TypeStyle style) {
-        previewPanel.setWidget(new HTML(FloorMapSwatchHtml.mapPreview(style, PREVIEW_SIZE_PX)));
+        previewPanel.setWidget(new Html(FloorMapSwatchHtml.mapPreview(style, PREVIEW_SIZE_PX)));
     }
 
     private void applyModeEnablement() {

@@ -25,8 +25,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.component.StepControl;
 import stroom.pipeline.stepping.client.component.StepControlController;
+import stroom.widget.text.client.InlineLabel;
 
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Locale;

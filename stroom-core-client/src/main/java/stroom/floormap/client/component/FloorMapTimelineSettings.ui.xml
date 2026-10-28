@@ -19,22 +19,23 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
 
     <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-popup">
         <!-- Loop playback toggle -->
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <g:Label text="Loop Playback" addStyleNames="stroom-floormap-timeline-settings-label" />
+            <tx:Label text="Loop Playback" addStyleNames="stroom-floormap-timeline-settings-label" />
             <tickbox:TickBox ui:field="loopCheckBox" identity="floorMapTimelineLoop" label="" ariaLabel="Loop Playback"/>
         </g:FlowPanel>
 
         <!-- Date Range -->
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <g:Label text="Start Date" addStyleNames="stroom-floormap-timeline-settings-label" />
+            <tx:Label text="Start Date" addStyleNames="stroom-floormap-timeline-settings-label" />
             <datetimebox:DateTimeBox ui:field="startDateTimeBox" addStyleNames="stroom-floormap-timeline-settings-date-box" />
         </g:FlowPanel>
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <g:Label text="End Date" addStyleNames="stroom-floormap-timeline-settings-label" />
+            <tx:Label text="End Date" addStyleNames="stroom-floormap-timeline-settings-label" />
             <datetimebox:DateTimeBox ui:field="endDateTimeBox" addStyleNames="stroom-floormap-timeline-settings-date-box" />
         </g:FlowPanel>
 

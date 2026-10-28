@@ -24,9 +24,9 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.datepicker.client.component.DateTimePicker;
 import stroom.widget.datepicker.client.component.DateTimePickerController;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 

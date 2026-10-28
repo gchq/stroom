@@ -19,9 +19,9 @@ package stroom.gwt.workbench.client.widgets.layout;
 
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 
 /// Stories for the rounded card of Stroom's login screen.
 ///
@@ -50,7 +50,7 @@ public final class RoundedPanelStories {
                     formPanel.setStyleName("sign-in-page__form-panel");
                     final FlowPanel form = new FlowPanel();
                     form.setStyleName("max form-padding form sign-in-page__form");
-                    form.add(new HTML("<h2 style=\"margin: 0 0 12px\">Sign in</h2>"
+                    form.add(new Html("<h2 style=\"margin: 0 0 12px\">Sign in</h2>"
                                       + "<p style=\"margin: 0\">Placeholder content inside the rounded panel.</p>"));
                     formPanel.add(form);
                     view.add(formPanel);

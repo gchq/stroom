@@ -27,9 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/currentActivity`: whether a query needs the query info popup, given the
@@ -103,7 +103,7 @@ public final class CurrentActivityStories {
         harness.fn(REQUIRES_QUERY_INFO);
 
         // A heading for the cases
-        final HTML text = new HTML("requiresQueryInfo &mdash; required unless the activity sets "
+        final Html text = new Html("requiresQueryInfo &mdash; required unless the activity sets "
                 + "<code>requireQueryInfo=false</code>.");
         text.getElement().getStyle().setProperty("fontFamily", "monospace");
         text.getElement().getStyle().setFontSize(13, Unit.PX);

@@ -20,6 +20,7 @@ import stroom.pathways.shared.TraceHistogram;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.NumberUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -28,7 +29,6 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class TraceHistogramChart extends Composite {
 
     private static final String BLOCK = "trace-histogram-chart";
 
-    private final HTML panel = new HTML();
+    private final Html panel = new Html();
     private DateTimeFormatter dateTimeFormatter;
     private TraceHistogram data;
     private boolean rendered;

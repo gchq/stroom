@@ -3,7 +3,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:ed="urn:import:stroom.editor.client.component">
+             xmlns:ed="urn:import:stroom.editor.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical column-function-editor">
         <split:SplitPane thin="true" sizes="300px, *"
                          names="Help, Expression" addStyleNames="dock-max form-control-border form-control-background">
@@ -13,10 +14,10 @@
             </g:SimplePanel>
         </split:SplitPane>
         <g:FlowPanel addStyleNames="dock-min dock-container-horizontal column-function-editor__completion">
-            <g:HTML>
+            <tx:Html>
                 <code>ctrl-space</code>
                 for auto-completion
-            </g:HTML>
+            </tx:Html>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

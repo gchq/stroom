@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:dt="urn:import:stroom.widget.datepicker.client"
-             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       A term's editor (term-editor.css): its field, its condition and the value boxes the condition
       takes, which the Java shows for the field's type and condition, then the field's type. It is
@@ -19,7 +20,7 @@
                             visible="false"/>
             <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
                             visible="false"/>
-            <g:Label ui:field="andLabel" addStyleNames="termEditor-label" wordWrap="false" text=" and "
+            <tx:Label ui:field="andLabel" addStyleNames="termEditor-label" wordWrap="false" text=" and "
                      visible="false"/>
             <i:SuggestionBox ui:field="valueTo" addStyleNames="termEditor-item narrow" visible="false"/>
             <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
@@ -28,7 +29,7 @@
                             visible="false"/>
             <dd:DropDownBox ui:field="userRefBox" addStyleNames="termEditor-item docRef" visible="false"/>
         </g:FlowPanel>
-        <g:Label ui:field="fieldTypeLabel" addStyleNames="termEditor-label fieldType" wordWrap="false"
+        <tx:Label ui:field="fieldTypeLabel" addStyleNames="termEditor-label fieldType" wordWrap="false"
                  visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

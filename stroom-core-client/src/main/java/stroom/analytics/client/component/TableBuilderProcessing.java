@@ -24,13 +24,13 @@ import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.text.client.Html;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -54,7 +54,7 @@ public class TableBuilderProcessing extends Component {
     @UiField
     DurationPicker dataRetention;
     @UiField
-    HTML info;
+    Html info;
     @UiField
     Button refresh;
 

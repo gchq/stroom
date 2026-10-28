@@ -9,7 +9,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:f="urn:import:stroom.widget.form.client">
+             xmlns:f="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:HTMLPanel styleName="quick-filter">
         <f:TextBox ui:field="textBox" addStyleNames="quick-filter__input allow-focus"
                      type="search" placeholder="Quick Filter"/>
@@ -19,7 +20,7 @@
                              addStyleNames="quick-filter__recent" opensMenu="true" visible="false"/>
             <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Quick Filter Syntax Help"/>
         </b:Toolbar>
-        <g:Label ui:field="description" visible="false"/>
+        <tx:Label ui:field="description" visible="false"/>
         <div ui:field="errorMessage" class="sr-only" aria-live="polite"></div>
     </g:HTMLPanel>
 </ui:UiBinder>

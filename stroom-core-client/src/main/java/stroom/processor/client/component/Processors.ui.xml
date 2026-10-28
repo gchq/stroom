@@ -3,7 +3,8 @@
      the selected one's details and filter expression below -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client">
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:SimplePanel addStyleNames="max">
         <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                          names="Processors, Settings" addStyleNames="max">
@@ -12,7 +13,7 @@
             <split:SplitPane thin="true" sizes="600px, *"
                              names="Info, Details" addStyleNames="max">
                 <split:ScrollPane addStyleNames="max dashboard-panel">
-                    <g:HTML ui:field="info"/>
+                    <tx:Html ui:field="info"/>
                 </split:ScrollPane>
                 <split:ScrollPane addStyleNames="max dashboard-panel">
                     <g:SimplePanel ui:field="details"/>

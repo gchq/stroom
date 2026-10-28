@@ -18,6 +18,7 @@ package stroom.widget.datagrid.client;
 
 import stroom.util.shared.ErrorMessage;
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -25,7 +26,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class MessagePanel extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    HTML message;
+    Html message;
 
     /// Makes a hidden message panel, e.g. one a template declares.
     public MessagePanel() {

@@ -6,7 +6,8 @@
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client"
-             xmlns:fv="urn:import:stroom.floormap.client.component">
+             xmlns:fv="urn:import:stroom.floormap.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       The layer appearance dialog's content (stroom-floormap.css): the graphic a layer draws (a
       shape, an icon or an image), its colour and a preview. The table only lays the labels beside
@@ -52,7 +53,7 @@
                             <g:SimplePanel ui:field="previewPanel" addStyleNames="floormap-layer-style-preview"/>
                             <!-- Uploaded assets are only served once the document is saved, so an
                                  image picked here can fail to render until then -->
-                            <g:Label addStyleNames="floormap-layer-style-hint"
+                            <tx:Label addStyleNames="floormap-layer-style-hint"
                                      text="Drawn at a fixed size on the map. Newly uploaded images appear after the document is saved."/>
                         </g:FlowPanel>
                     </td>

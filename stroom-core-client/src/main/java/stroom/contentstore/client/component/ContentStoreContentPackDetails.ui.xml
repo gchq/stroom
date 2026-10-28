@@ -2,36 +2,37 @@
 <!-- A content pack's details in the content store (contentstore-* in components.css) -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="contentstore-details">
-        <g:HTML ui:field="icon" addStyleNames="contentstore-details-icon"/>
+        <tx:Html ui:field="icon" addStyleNames="contentstore-details-icon"/>
         <g:FlowPanel styleName="contentstore-details-vertical">
-            <g:Label ui:field="name" addStyleNames="contentstore-details-heading"/>
-            <g:HTML ui:field="details" wordWrap="true"
+            <tx:Label ui:field="name" addStyleNames="contentstore-details-heading"/>
+            <tx:Html ui:field="details" wordWrap="true"
                     addStyleNames="contentstore-details-markdown form-control-border form-control-background"/>
             <g:FlowPanel styleName="contentstore-details-list">
-                <g:Label addStyleNames="contentstore-details-name" text="Installed status:"/>
-                <g:Label ui:field="installedStatus"/>
-                <g:Label addStyleNames="contentstore-details-name" text="Licence:"/>
-                <g:Label ui:field="licence"/>
-                <g:Label addStyleNames="contentstore-details-name" text="Licence details:"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Installed status:"/>
+                <tx:Label ui:field="installedStatus"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Licence:"/>
+                <tx:Label ui:field="licence"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Licence details:"/>
                 <g:FlowPanel>
-                    <g:Anchor ui:field="licenceLink"/>
-                    <g:InlineLabel ui:field="licenceUrl" addStyleNames="contentstore-details-url"/>
+                    <tx:Link ui:field="licenceLink"/>
+                    <tx:InlineLabel ui:field="licenceUrl" addStyleNames="contentstore-details-url"/>
                 </g:FlowPanel>
-                <g:Label addStyleNames="contentstore-details-name" text="Installed location:"/>
-                <g:Label ui:field="installedLocation"/>
-                <g:Label addStyleNames="contentstore-details-name" text="Git URL:"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Installed location:"/>
+                <tx:Label ui:field="installedLocation"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Git URL:"/>
                 <g:FlowPanel>
-                    <g:Anchor ui:field="gitLink"/>
-                    <g:InlineLabel ui:field="gitUrl" addStyleNames="contentstore-details-url"/>
+                    <tx:Link ui:field="gitLink"/>
+                    <tx:InlineLabel ui:field="gitUrl" addStyleNames="contentstore-details-url"/>
                 </g:FlowPanel>
-                <g:Label addStyleNames="contentstore-details-name" text="Git branch:"/>
-                <g:Label ui:field="gitBranch"/>
-                <g:Label addStyleNames="contentstore-details-name" text="Git path:"/>
-                <g:Label ui:field="gitPath"/>
-                <g:Label addStyleNames="contentstore-details-name" text="Git commit:"/>
-                <g:Label ui:field="gitCommit"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Git branch:"/>
+                <tx:Label ui:field="gitBranch"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Git path:"/>
+                <tx:Label ui:field="gitPath"/>
+                <tx:Label addStyleNames="contentstore-details-name" text="Git commit:"/>
+                <tx:Label ui:field="gitCommit"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="contentstore-buttons">
                 <b:Button ui:field="install" text="Install"/>

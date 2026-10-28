@@ -23,6 +23,7 @@ import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.histogram.client.Histogram;
 import stroom.widget.histogram.client.HistogramLayout;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.GWT;
@@ -40,7 +41,6 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 

@@ -461,9 +461,6 @@ textarea:where(:not(.text-field))[readonly],
   opacity: 1;
 }
 
-.gwt-Label-disabled {
-  color: var(--text-color--disabled);
-}
 
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.stroom-DropDownTree { */
 /* 	padding: 1px; */

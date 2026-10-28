@@ -22,12 +22,12 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 
@@ -52,7 +52,7 @@ final class SplitPaneContent {
     /// @param tinted Whether it is tinted, to tell it from the block beside it.
     /// @return The block.
     static Widget block(final String label, final String testId, final boolean tinted) {
-        final HTML block = new HTML(label);
+        final Html block = new Html(label);
         block.getElement().setAttribute("data-testid", testId);
         final Style style = block.getElement().getStyle();
         style.setProperty("overflow", "hidden");

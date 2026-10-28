@@ -16,14 +16,14 @@
 
 package stroom.widget.xsdbrowser.client;
 
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.Label;
 import stroom.widget.xsdbrowser.client.XSDNode.XSDAttribute;
 import stroom.widget.xsdbrowser.client.XSDNode.XSDType;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -456,7 +456,7 @@ public class XSDDisplay extends Composite {
                 builder.appendEscaped(occurrence);
                 builder.appendHtmlConstant("</div>");
 
-                final HTML html = new HTML(builder.toSafeHtml());
+                final Html html = new Html(builder.toSafeHtml());
 
                 final FlowPanel fp = new FlowPanel();
                 fp.add(getImage(type));

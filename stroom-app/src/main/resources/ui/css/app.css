@@ -13,6 +13,9 @@
 /* Standard GWT CSS plus Stroom modifications */
 @import url("standard.css");
 @import url("standard-mod.css");
+/* Stroom's text widgets, where GWT's rules for them were, so components' own rules win */
+@import url("text-label.css");
+@import url("frame.css");
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");

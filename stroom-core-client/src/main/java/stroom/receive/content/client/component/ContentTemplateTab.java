@@ -19,13 +19,13 @@ package stroom.receive.content.client.component;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,7 +40,7 @@ public class ContentTemplateTab extends Component {
     @UiField
     FormGroup descriptionFormGroup;
     @UiField
-    HTML description;
+    Html description;
     @UiField
     FormGroup expressionFormGroup;
     @UiField

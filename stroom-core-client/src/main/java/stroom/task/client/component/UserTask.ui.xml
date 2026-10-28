@@ -5,12 +5,13 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="user-task">
         <g:FlowPanel styleName="user-task__details">
-            <g:Label ui:field="taskName" addStyleNames="user-task__name"/>
-            <g:Label ui:field="taskAge"/>
-            <g:Label ui:field="taskStatus"/>
+            <tx:Label ui:field="taskName" addStyleNames="user-task__name"/>
+            <tx:Label ui:field="taskAge"/>
+            <tx:Label ui:field="taskStatus"/>
         </g:FlowPanel>
         <g:SimplePanel styleName="user-task__actions">
             <b:Toolbar name="Task actions">

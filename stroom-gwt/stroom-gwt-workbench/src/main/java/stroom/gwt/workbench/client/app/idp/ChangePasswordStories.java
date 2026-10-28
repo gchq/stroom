@@ -33,10 +33,10 @@ import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/IdP/ChangePassword` stories, showing Stroom's real 'Change Password' dialog

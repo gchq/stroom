@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                      names="Templates, Template" addStyleNames="max">
         <g:SimplePanel ui:field="table" styleName="max"/>
@@ -12,7 +13,7 @@
                     identity="contentTemplateTabDescription"
                     label="Description"
                     helpText="The description of the selected content template.">
-                <g:HTML ui:field="description" addStyleNames="w-100"/>
+                <tx:Html ui:field="description" addStyleNames="w-100"/>
             </form:FormGroup>
 
             <form:FormGroup

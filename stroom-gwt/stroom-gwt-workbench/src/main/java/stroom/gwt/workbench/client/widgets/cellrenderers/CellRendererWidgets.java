@@ -16,12 +16,13 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
+import stroom.widget.text.client.InlineLabel;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Widgets shared by the `Widgets/Cell Renderers/*` stories.
