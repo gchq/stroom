@@ -26,10 +26,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.xsdbrowser.client.XSDModel;
+import stroom.widget.xsdbrowser.client.XSDNode;
 import stroom.widget.xsdbrowser.client.component.XSDBrowser;
 import stroom.widget.xsdbrowser.client.component.XSDBrowserController;
-import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;

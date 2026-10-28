@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.widget.xsdbrowser.client.view;
+package stroom.widget.xsdbrowser.client;
 
-import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
+import stroom.widget.xsdbrowser.client.XSDNode.XSDAttribute;
 
 import com.google.gwt.xml.client.CharacterData;
 import com.google.gwt.xml.client.Node;

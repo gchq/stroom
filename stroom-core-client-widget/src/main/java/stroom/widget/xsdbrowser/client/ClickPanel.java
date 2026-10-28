@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.xsdbrowser.client.view;
+package stroom.widget.xsdbrowser.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

@@ -2,7 +2,7 @@
 <!-- A schema's diagram, with its navigation, the selected node's documentation and its constraints (xsd-browser.css) -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:view="urn:import:stroom.widget.xsdbrowser.client.view"
+             xmlns:view="urn:import:stroom.widget.xsdbrowser.client"
              xmlns:a="urn:import:stroom.widget.component.client"
              xmlns:btn="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="xsd-browser dock-container-vertical max">

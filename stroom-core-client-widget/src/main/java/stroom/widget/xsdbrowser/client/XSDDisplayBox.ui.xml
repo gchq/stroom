@@ -5,7 +5,7 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.xsdbrowser.client.view">
+             xmlns:v="urn:import:stroom.widget.xsdbrowser.client">
     <g:FlowPanel styleName="xsd-browser__outer-box">
         <g:FlowPanel ui:field="box" styleName="xsd-browser__box">
             <v:ClickPanel ui:field="title" styleName="xsd-browser__box-title">

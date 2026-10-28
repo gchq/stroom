@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.xsdbrowser.client.view;
+package stroom.widget.xsdbrowser.client;
 
 public interface SelectableItem {
 

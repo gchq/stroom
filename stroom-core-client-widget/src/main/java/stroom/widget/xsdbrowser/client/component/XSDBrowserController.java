@@ -17,7 +17,7 @@
 package stroom.widget.xsdbrowser.client.component;
 
 import stroom.widget.component.client.Controller;
-import stroom.widget.xsdbrowser.client.view.XSDModel;
+import stroom.widget.xsdbrowser.client.XSDModel;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

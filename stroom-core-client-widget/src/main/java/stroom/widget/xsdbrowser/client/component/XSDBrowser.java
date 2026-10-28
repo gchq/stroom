@@ -18,10 +18,10 @@ package stroom.widget.xsdbrowser.client.component;
 
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.xsdbrowser.client.view.XSDConstraintDisplay;
-import stroom.widget.xsdbrowser.client.view.XSDDisplay;
-import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.widget.xsdbrowser.client.view.XSDNode;
+import stroom.widget.xsdbrowser.client.XSDConstraintDisplay;
+import stroom.widget.xsdbrowser.client.XSDDisplay;
+import stroom.widget.xsdbrowser.client.XSDModel;
+import stroom.widget.xsdbrowser.client.XSDNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
