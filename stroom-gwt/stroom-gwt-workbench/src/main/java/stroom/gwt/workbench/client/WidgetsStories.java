@@ -109,7 +109,6 @@ import stroom.gwt.workbench.client.widgets.selectors.SelectionListStateStories;
 import stroom.gwt.workbench.client.widgets.selectors.UserRefSelectionBoxStories;
 import stroom.gwt.workbench.client.widgets.tabs.CurveTabBarStories;
 import stroom.gwt.workbench.client.widgets.tabs.LinkTabPanelStories;
-import stroom.gwt.workbench.client.widgets.tabs.LinkTabsWidgetStories;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerTreeStories;
 import stroom.gwt.workbench.client.widgets.tree.HTreeStories;
 import stroom.gwt.workbench.client.widgets.tree.TypeFilterStories;
@@ -226,7 +225,6 @@ public final class WidgetsStories {
         // Widgets/Tabs/LinkTabPanel
         LinkTabPanelStories.addTo(registry);
         // Widgets/Tabs/LinkTabsWidget
-        LinkTabsWidgetStories.addTo(registry);
         // Widgets/Data Grid/DataGrid
         // Widgets/Data Grid/DataGrid
         DataGridStories.addTo(registry);

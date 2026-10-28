@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
@@ -142,9 +142,9 @@ public final class AceEditorFeatureStories {
                 })
                 // Autocompletion (Ctrl+Space): the start of a word is offered the document's words
                 .story("Autocomplete", context -> {
-                    final EditorPresenter editor = editor(SAMPLE_WORDS, AceEditorMode.TEXT, false);
-                    editor.getBasicAutoCompletionOption().setAvailable(true);
-                    editor.getBasicAutoCompletionOption().setOn(true);
+                    final CodeEditorController editor = editor(SAMPLE_WORDS, AceEditorMode.TEXT, false);
+                    editor.getOptions().getBasicAutoCompletionOption().setAvailable(true);
+                    editor.getOptions().getBasicAutoCompletionOption().setOn(true);
                     return framed(editor);
                 })
                 .withPlay(play -> {
@@ -156,9 +156,9 @@ public final class AceEditorFeatureStories {
                 })
                 // A snippet: Stroom's XSLT "apply" snippet, typed then expanded with Tab
                 .story("Snippet", context -> {
-                    final EditorPresenter editor = editor("", AceEditorMode.XML, false);
-                    editor.getSnippetsOption().setAvailable(true);
-                    editor.getSnippetsOption().setOn(true);
+                    final CodeEditorController editor = editor("", AceEditorMode.XML, false);
+                    editor.getOptions().getSnippetsOption().setAvailable(true);
+                    editor.getOptions().getSnippetsOption().setOn(true);
                     return framed(editor);
                 })
                 .withPlay(play -> {
@@ -170,9 +170,9 @@ public final class AceEditorFeatureStories {
                 })
                 // Every severity Stroom shows in the gutter, including a fatal error
                 .story("AllAnnotationTypes", context -> {
-                    final EditorPresenter editor = editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, true);
-                    editor.getIndicatorsOption().setAvailable(true);
-                    editor.getIndicatorsOption().setOn(true);
+                    final CodeEditorController editor = editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, true);
+                    editor.getOptions().getIndicatorsOption().setAvailable(true);
+                    editor.getOptions().getIndicatorsOption().setOn(true);
                     editor.setIndicators(allSeverities());
                     return framed(editor);
                 })
@@ -209,7 +209,7 @@ public final class AceEditorFeatureStories {
                 // Stepping's and the data viewer's highlight of the current record (a
                 // "code-editor__highlight" marker)
                 .story("Highlight", context -> {
-                    final EditorPresenter editor = editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, true);
+                    final CodeEditorController editor = editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, true);
                     editor.setHighlights(List.of(TextRange.of(DefaultLocation.of(5, 5),
                             DefaultLocation.of(8, 19))));
                     return framed(editor);
@@ -220,9 +220,9 @@ public final class AceEditorFeatureStories {
                 // The query editor's error: a "code-editor__error-underline" marker under the bad token,
                 // and its indicator
                 .story("QueryErrorMarker", context -> {
-                    final EditorPresenter editor = editor(SAMPLE_QUERY, AceEditorMode.STROOM_QUERY, false);
-                    editor.getIndicatorsOption().setAvailable(true);
-                    editor.getIndicatorsOption().setOn(true);
+                    final CodeEditorController editor = editor(SAMPLE_QUERY, AceEditorMode.STROOM_QUERY, false);
+                    editor.getOptions().getIndicatorsOption().setAvailable(true);
+                    editor.getOptions().getIndicatorsOption().setOn(true);
                     final Indicators indicators = new Indicators();
                     indicators.add(new StoredError(Severity.ERROR, DefaultLocation.of(5, 12), null,
                             "Unknown function 'floorHour'"));
@@ -243,7 +243,7 @@ public final class AceEditorFeatureStories {
                 // '(OFF)' in their text); turning the line numbers off hides the gutter and unticks them
                 .story("ContextMenu", context -> {
                     final StoryPopups popups = StoryPopups.create(context).withMenus();
-                    final EditorPresenter editor = editor(popups.getEventBus(), AceEditorStories.SAMPLE_XML,
+                    final CodeEditorController editor = editor(popups.getEventBus(), AceEditorStories.SAMPLE_XML,
                             AceEditorMode.XML, false);
                     editor.getFormatAction().setAvailable(true);
                     return framed(editor);
@@ -284,7 +284,7 @@ public final class AceEditorFeatureStories {
                 // Formatting JSON (js-beautify, as the editor isn't XML), from the context menu
                 .story("FormatJson", context -> {
                     final StoryPopups popups = StoryPopups.create(context).withMenus();
-                    final EditorPresenter editor = editor(popups.getEventBus(),
+                    final CodeEditorController editor = editor(popups.getEventBus(),
                             "{\"feed\":\"TEST-EVENTS\",\"streams\":[1,2]}", AceEditorMode.JSON, false);
                     editor.getFormatAction().setAvailable(true);
                     return framed(editor);
@@ -298,9 +298,9 @@ public final class AceEditorFeatureStories {
                 })
                 // Vim keys: in normal mode, x deletes the character under the cursor
                 .story("VimKeys", context -> {
-                    final EditorPresenter editor = editor("first line\nsecond line", AceEditorMode.TEXT, false);
-                    editor.getUseVimBindingsOption().setAvailable(true);
-                    editor.getUseVimBindingsOption().setOn(true);
+                    final CodeEditorController editor = editor("first line\nsecond line", AceEditorMode.TEXT, false);
+                    editor.getOptions().getUseVimBindingsOption().setAvailable(true);
+                    editor.getOptions().getUseVimBindingsOption().setOn(true);
                     return framed(editor);
                 })
                 .withPlay(play -> {
@@ -359,26 +359,26 @@ public final class AceEditorFeatureStories {
     }
 
     /// The editor, with the given text, mode and read only state, and line numbers.
-    static EditorPresenter editor(final String text, final AceEditorMode mode, final boolean readOnly) {
+    static CodeEditorController editor(final String text, final AceEditorMode mode, final boolean readOnly) {
         return editor(new SimpleEventBus(), text, mode, readOnly);
     }
 
     /// The editor, on the given event bus (which shows its context menu), with the given text, mode
     /// and read only state, and line numbers.
-    private static EditorPresenter editor(final EventBus eventBus,
+    private static CodeEditorController editor(final EventBus eventBus,
                                           final String text,
                                           final AceEditorMode mode,
                                           final boolean readOnly) {
-        final EditorPresenter editor = EditorWidgets.editorPresenter(eventBus);
+        final CodeEditorController editor = EditorWidgets.codeEditor(eventBus);
         editor.setMode(mode);
         editor.setReadOnly(readOnly);
-        editor.getLineNumbersOption().setOn(true);
+        editor.getOptions().getLineNumbersOption().setOn(true);
         editor.setText(text);
         return editor;
     }
 
-    static Widget framed(final EditorPresenter editor) {
-        return EditorWidgets.frame(editor.getWidget(), WIDTH, HEIGHT);
+    static Widget framed(final CodeEditorController editor) {
+        return EditorWidgets.frame(editor.asWidget(), WIDTH, HEIGHT);
     }
 
     /// One indicator of each severity (lines are one based).

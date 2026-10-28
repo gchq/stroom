@@ -27,7 +27,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltip;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [TooltipPresenter] shown at a point.
+/// Stories for Stroom's [InfoTooltipController] shown at a point.
 public final class TooltipWidgetStories {
 
     private static final int CURSOR_OFFSET = 12;
@@ -73,11 +73,11 @@ public final class TooltipWidgetStories {
         final Args args = context.getArgs();
         if (StoryArgs.getBoolean(args, VISIBLE, true)) {
             final StoryPopups popups = StoryPopups.create(context);
-            final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(),
+            final InfoTooltipController infoTooltip = new InfoTooltipController(popups.getEventBus(),
                     new InfoTooltip());
             final Long x = StoryArgs.getLong(args, X);
             final Long y = StoryArgs.getLong(args, Y);
-            tooltipPresenter.show(args.getString(TEXT, ""), new PopupPosition(
+            infoTooltip.show(args.getString(TEXT, ""), new PopupPosition(
                     x == null
                             ? 0
                             : x.intValue(),
@@ -91,7 +91,7 @@ public final class TooltipWidgetStories {
 
     private static Widget followsCursor(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new InfoTooltip());
+        final InfoTooltipController infoTooltip = new InfoTooltipController(popups.getEventBus(), new InfoTooltip());
         final Label target = new Label("Hover me");
         final Style style = target.getElement().getStyle();
         style.setProperty("width", "240px");
@@ -104,17 +104,17 @@ public final class TooltipWidgetStories {
         target.addDomHandler(event -> {
             // A Stroom popup can't be moved once shown, so show it again at the new point
             if (showing[0]) {
-                HidePopupEvent.builder(tooltipPresenter).fire();
+                HidePopupEvent.builder(infoTooltip).fire();
             }
             showing[0] = true;
-            tooltipPresenter.show("Following the cursor", new PopupPosition(
+            infoTooltip.show("Following the cursor", new PopupPosition(
                     event.getClientX() + CURSOR_OFFSET,
                     event.getClientY() + CURSOR_OFFSET));
         }, MouseMoveEvent.getType());
         target.addDomHandler(event -> {
             if (showing[0]) {
                 showing[0] = false;
-                HidePopupEvent.builder(tooltipPresenter).fire();
+                HidePopupEvent.builder(infoTooltip).fire();
             }
         }, MouseOutEvent.getType());
         return target;

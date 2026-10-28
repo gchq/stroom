@@ -27,7 +27,7 @@ import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.iframe.client.component.IFrameContentController;
-import stroom.iframe.client.presenter.IFramePresenter;
+import stroom.iframe.client.component.IFrameController;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -37,8 +37,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.popup.client.event.RenamePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -62,20 +61,20 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
 
     private final EventBus eventBus;
     private final Provider<IFrameContentController> iFrameContentPresenterProvider;
-    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final Provider<IFrameController> iFrameProvider;
     private final ContentManager contentManager;
 
     private final AppRoot appRoot;
 
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
-                                     final Provider<IFramePresenter> iFramePresenterProvider,
+                                     final Provider<IFrameController> iFrameProvider,
                                      final Provider<IFrameContentController> iFrameContentPresenterProvider,
                                      final ContentManager contentManager,
                                      final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.eventBus = eventBus;
-        this.iFramePresenterProvider = iFramePresenterProvider;
+        this.iFrameProvider = iFrameProvider;
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.contentManager = contentManager;
 
@@ -276,19 +275,16 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
 
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        final IFramePresenter presenter = appRoot.makeDialog(iFramePresenterProvider);
-        presenter.setOnTitleChange(() ->
-                RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
-        presenter.setUrl(hyperlink.getHref());
-        presenter.setCustomTitle(customTitle);
+        final IFrameController frame = iFrameProvider.get();
+        frame.setOnTitleChange(() -> ControllerDialog.rename(frame, frame.getLabel()));
+        frame.setUrl(hyperlink.getHref());
+        frame.setCustomTitle(customTitle);
 
-        ShowPopupEvent.builder(presenter)
+        // Disposed once hidden, which stops it reading the page's title
+        ControllerDialog.showOnce(appRoot, frame)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
-                .caption(presenter.getLabel())
-                .onHide(ignored -> {
-                    presenter.close();
-                })
+                .caption(frame.getLabel())
                 .fire();
     }
 

@@ -18,13 +18,11 @@ package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.client.component.ExplorerPopupController;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.component.UserRefPopup;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.client.component.UserRefSelectionController;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.core.client.GWT;
@@ -69,12 +67,12 @@ public final class SelectorWidgets {
         }, harness.getAppRoot());
     }
 
-    /// Creates a document selection box: Stroom's [DocSelectionBoxPresenter] with its
-    /// `DropDownBox` and explorer popup.
+    /// Creates a document picker: Stroom's [DocSelectionController] with its explorer popup,
+    /// attached to a `DropDownBox` ([DocSelectionController#getBox()]).
     ///
     /// @param harness The story's harness.
-    /// @return The presenter.
-    public static DocSelectionBoxPresenter docSelectionBox(final ScreenHarness harness) {
+    /// @return The controller.
+    public static DocSelectionController docSelectionBox(final ScreenHarness harness) {
         return docSelectionBox(harness, explorerPopup(harness));
     }
 
@@ -83,29 +81,28 @@ public final class SelectorWidgets {
     ///
     /// @param harness The story's harness.
     /// @param popup   The popup, from [#explorerPopup(ScreenHarness)].
-    /// @return The presenter.
-    public static DocSelectionBoxPresenter docSelectionBox(final ScreenHarness harness,
-                                                           final ExplorerPopupController popup) {
-        return new DocSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownBox(),
+    /// @return The controller.
+    public static DocSelectionController docSelectionBox(final ScreenHarness harness,
+                                                         final ExplorerPopupController popup) {
+        final DocSelectionController controller = new DocSelectionController(harness.getEventBus(),
                 popup,
                 harness.getRestFactory());
+        controller.attach(new DropDownBox());
+        return controller;
     }
 
-    /// Creates a user selection box: Stroom's [UserRefSelectionBoxPresenter] with its
-    /// `DropDownBox` and a [UserRefSelectionController] with its user popup.
+    /// Creates a user picker: Stroom's [UserRefSelectionController] with its user popup, attached
+    /// to a `DropDownBox` ([UserRefSelectionController#getBox()]).
     ///
     /// @param harness The story's harness.
-    /// @return The presenter.
-    public static UserRefSelectionBoxPresenter userRefSelectionBox(final ScreenHarness harness) {
+    /// @return The controller.
+    public static UserRefSelectionController userRefSelectionBox(final ScreenHarness harness) {
         final UserRefPopupController popup = new UserRefPopupController(harness.getEventBus(),
                 new UserRefPopup(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness));
-        return new UserRefSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownBox(),
-                new UserRefSelectionController(popup));
+        return new UserRefSelectionController(popup).attach(new DropDownBox());
     }
 
     /// @param harness The story's harness.
@@ -127,17 +124,5 @@ public final class SelectorWidgets {
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness)));
-    }
-
-    /// @param harness The story's harness.
-    /// @return A provider of document selection boxes, e.g. for the expression builder.
-    public static Provider<DocSelectionBoxPresenter> docSelectionBoxProvider(final ScreenHarness harness) {
-        return () -> docSelectionBox(harness);
-    }
-
-    /// @param harness The story's harness.
-    /// @return A provider of user selection boxes, e.g. for the expression builder.
-    public static Provider<UserRefSelectionBoxPresenter> userRefSelectionBoxProvider(final ScreenHarness harness) {
-        return () -> userRefSelectionBox(harness);
     }
 }

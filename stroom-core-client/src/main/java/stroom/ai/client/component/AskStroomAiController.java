@@ -38,7 +38,7 @@ import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
 import stroom.entity.client.presenter.MarkdownConverter;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -95,7 +95,7 @@ public class AskStroomAiController extends Controller
     // The user's message as rendered when sent, until the poll brings back the stored message
     private static final String WORKING_TEXT_ID = "ai-working-text";
 
-    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
+    private final DocSelectionController modelSelection;
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider;
@@ -124,7 +124,7 @@ public class AskStroomAiController extends Controller
     @Inject
     public AskStroomAiController(final EventBus eventBus,
                                 final AskStroomAi view,
-                                final DocSelectionBoxPresenter docSelectionBoxPresenter,
+                                final Provider<DocSelectionController> docSelectionProvider,
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
                                 final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider,
@@ -136,7 +136,6 @@ public class AskStroomAiController extends Controller
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(docSelectionBoxPresenter);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigProvider = askStroomAiConfigProvider;
@@ -144,19 +143,19 @@ public class AskStroomAiController extends Controller
         this.downloadChatControllerProvider = downloadChatControllerProvider;
         this.aiAttachmentDataProvider = aiAttachmentDataProvider;
         this.locationManager = locationManager;
-        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setModelRefSelection(docSelectionBoxPresenter.getView());
-        docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
-        docSelectionBoxPresenter.setRequiredPermissions(DocumentPermission.USE);
+        modelSelection = make(docSelectionProvider);
+        modelSelection.attach(view.getModelRefBox());
+        modelSelection.setIncludedTypes(OpenAIModelDoc.TYPE);
+        modelSelection.setRequiredPermissions(DocumentPermission.USE);
         view.setOnSend(this::onSendMessage);
         view.setOnAction(this::onAction);
 
-        // Initiate the selection box presenter with the default model if one is set.
+        // Shows the default model, if one is set
         readModel();
 
-        own(docSelectionBoxPresenter.addSelectionListener(event ->
+        own(modelSelection.addSelectionListener(event ->
                 writeModel()));
 
         own(view.getMarkdownContainer().addDomHandler(e -> {
@@ -329,13 +328,13 @@ public class AskStroomAiController extends Controller
 
     private void readModel() {
         askStroomAiClient.getConfig(config ->
-                docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true), this);
+                modelSelection.setSelectedEntityReference(config.getModelRef(), true), this);
     }
 
     private void writeModel() {
         askStroomAiClient.getConfig(config -> {
             final AskStroomAiConfig newConfig = config.copy()
-                    .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                    .modelRef(modelSelection.getSelectedEntityReference())
                     .build();
             askStroomAiClient.setConfig(newConfig, this);
         }, this);

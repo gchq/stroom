@@ -23,7 +23,6 @@ import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.util.client.GlobalKeyHandler;
@@ -48,15 +47,13 @@ public final class EditorWidgets {
         // Static utility
     }
 
-    /// Creates Stroom's real Ace editor presenter, with its controller and component, as GIN would.
+    /// Creates Stroom's real code editor, a controller attached to its component, as Stroom's
+    /// screens make one.
     ///
     /// @param eventBus The event bus, on which the editor's context menu is shown.
-    /// @return The presenter.
-    public static EditorPresenter editorPresenter(final EventBus eventBus) {
-        return new EditorPresenter(
-                eventBus,
-                new CodeEditor(),
-                codeEditorController(eventBus));
+    /// @return The editor's controller, whose widget is the editor.
+    public static CodeEditorController codeEditor(final EventBus eventBus) {
+        return codeEditorController(eventBus).attach(new CodeEditor());
     }
 
     /// Creates Stroom's code editor controller, as GIN would; it is given its editor when attached.

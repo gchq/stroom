@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.layout;
 
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
@@ -92,13 +92,13 @@ final class SplitPaneContent {
     ///
     /// @return The editor.
     static Widget editor() {
-        final EditorPresenter editor = EditorWidgets.editorPresenter(new SimpleEventBus());
+        final CodeEditorController editor = EditorWidgets.codeEditor(new SimpleEventBus());
         final StringBuilder text = new StringBuilder("<pipeline>\n");
         for (int i = 1; i <= 40; i++) {
             text.append("  <element id=\"element").append(i).append("\" type=\"XSLTFilter\"/>\n");
         }
         editor.setText(text.append("</pipeline>\n").toString(), false);
-        return editor.getWidget();
+        return editor.asWidget();
     }
 
     /// A form of two named fields, so a pane has tab stops in it.

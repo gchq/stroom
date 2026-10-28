@@ -32,7 +32,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -64,18 +64,18 @@ public class ProcessorTaskSummaryListController extends Controller implements Ha
     /// @param eventBus         The application's event bus.
     /// @param view             The content.
     /// @param restFactory      Counts the tasks.
-    /// @param tooltipPresenter Shows a row's info.
+    /// @param infoTooltip      Shows a row's info.
     /// @param refCells         Lets the pipeline and feed cells open them.
     @Inject
     public ProcessorTaskSummaryListController(final EventBus eventBus,
                                               final ProcessorTaskSummaryList view,
                                               final RestFactory restFactory,
-                                              final TooltipPresenter tooltipPresenter,
+                                              final InfoTooltipController infoTooltip,
                                               final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
         own(refCells);
-        own(tooltipPresenter);
+        own(infoTooltip);
         this.restFactory = restFactory;
         initWidget(view);
 
@@ -83,7 +83,7 @@ public class ProcessorTaskSummaryListController extends Controller implements Ha
         view.addColumns(refCells.configure(new DocRefCell.Builder<ProcessorTaskSummary>()),
                 refCells.configure(new FeedRefCell.Builder<ProcessorTaskSummary>()));
         view.setOnShowInfo((row, popupPosition, anchor) ->
-                tooltipPresenter.show(info(row), popupPosition, anchor));
+                infoTooltip.show(info(row), popupPosition, anchor));
         view.setOnSortChange(this::refresh);
     }
 

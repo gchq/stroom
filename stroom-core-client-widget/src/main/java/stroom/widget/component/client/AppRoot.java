@@ -16,7 +16,6 @@
 
 package stroom.widget.component.client;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,11 +25,10 @@ import java.util.Objects;
 
 /// The owner of what lasts as long as the page and isn't part of a screen: the dialogs of the
 /// plugins, the managers (e.g. `TabSessionManager`) and the app-wide helpers (e.g. `CurrentUser`),
-/// which are singletons rather than controllers. Inject it, and make a dialog with
-/// [#makeDialog(Provider)]:
+/// which are singletons rather than controllers. Inject it, and show a dialog for one use from it:
 ///
 /// ```java
-/// appRoot.makeDialog(keyboardShortcutsPresenterProvider).show();
+/// ControllerDialog.showOnce(appRoot, frameProvider.get()).caption("Page").fire();
 /// ```
 ///
 /// A dialog left open is then still owned, so it shows in the ownership tree's leak counts, rather
@@ -55,11 +53,11 @@ public final class AppRoot implements HasControllerNode {
     /// popup manager has hidden it).
     ///
     /// @param provider What makes it, e.g. a GIN provider.
-    /// @param <P>      Its type.
+    /// @param <C>      Its type.
     /// @return The dialog, made and owned, ready to show.
-    public <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
+    public <C extends Controller> C makeDialog(final Provider<C> provider) {
         Objects.requireNonNull(provider, "provider");
-        final P dialog = provider.get();
+        final C dialog = provider.get();
         node.adopt(dialog.getControllerNode());
         return ControllerDialog.disposeWhenHidden(dialog);
     }

@@ -84,16 +84,6 @@ public class AnalyticEmailDestinationController extends Controller {
                 testTemplate(NotificationEmailDestination::getBodyTemplate, ValidationMode.BODY));
     }
 
-//    private void initSubjectEditor(final EditorPresenter editorPresenter) {
-//        editorPresenter.setMode(ACE_EDITOR_MODE);
-//        editorPresenter.get
-//        editorPresenter.getIndicatorsOption().setOff();
-//        editorPresenter.getLineWrapOption().setOff();
-//        editorPresenter.getLineNumbersOption().setOff();
-//        editorPresenter.getViewAsHexOption().setOff();
-//        editorPresenter.getViewAsHexOption().setUnavailable();
-//    }
-
     /// @return The settings shown, as they are now.
     public NotificationEmailDestination getCurrentEmailDestination() {
         return new NotificationEmailDestination(
@@ -108,8 +98,6 @@ public class AnalyticEmailDestinationController extends Controller {
     ///
     /// @param destination The settings, or null to leave what is shown.
     public void read(final NotificationEmailDestination destination) {
-//        uiConfigCache.get()
-//                .onSuccess(extendedUiConfig -> {
         if (destination != null) {
             view.setTo(destination.getTo());
             view.setCc(destination.getCc());
@@ -117,10 +105,6 @@ public class AnalyticEmailDestinationController extends Controller {
             subjectEditor.setText(destination.getSubjectTemplate());
             bodyEditor.setText(destination.getBodyTemplate());
         }
-//                    } else {
-//                        subjectEditorPresenter.setText(extendedUiConfig.getDefaultSubjectTemplate());
-//                        bodyEditorPresenter.setText(extendedUiConfig.getDefaultBodyTemplate());
-//                });
     }
 
     /// @return The settings shown.

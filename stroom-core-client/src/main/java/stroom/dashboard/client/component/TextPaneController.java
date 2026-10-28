@@ -28,8 +28,9 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.component.HtmlPane;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -86,7 +87,7 @@ public class TextPaneController extends DashboardComponentController {
     private static final String OLD_EVENT_ID = "EventId";
 
     private final TextPane view;
-    private final Provider<EditorPresenter> rawPresenterProvider;
+    private final Provider<CodeEditorController> rawEditorProvider;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private List<FetchDataRequest> fetchDataQueue;
@@ -99,7 +100,7 @@ public class TextPaneController extends DashboardComponentController {
 
     private HasComponentSelection currentTablePresenter;
 
-    private EditorPresenter rawPresenter;
+    private CodeEditorController rawEditor;
     private HtmlPane htmlPane;
 
     private boolean isHtml;
@@ -109,7 +110,7 @@ public class TextPaneController extends DashboardComponentController {
     /// @param eventBus                      The application's event bus.
     /// @param view                          The content.
     /// @param settingsProvider              Makes the pane's settings dialog.
-    /// @param rawPresenterProvider          Makes the text's editor.
+    /// @param rawEditorProvider             Makes the text's editor.
     /// @param restFactory                   Fetches the source.
     /// @param securityContext               Says whether the user may step.
     /// @param classificationLabelController Shows the data's classification.
@@ -117,14 +118,14 @@ public class TextPaneController extends DashboardComponentController {
     public TextPaneController(final EventBus eventBus,
                               final TextPane view,
                               final Provider<TextSettingsController> settingsProvider,
-                              final Provider<EditorPresenter> rawPresenterProvider,
+                              final Provider<CodeEditorController> rawEditorProvider,
                               final RestFactory restFactory,
                               final ClientSecurityContext securityContext,
                               final ClassificationLabelController classificationLabelController) {
         super(eventBus, settingsProvider);
         this.view = view;
         initWidget(view);
-        this.rawPresenterProvider = rawPresenterProvider;
+        this.rawEditorProvider = rawEditorProvider;
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         own(classificationLabelController).attach(view.getClassificationLabel());
@@ -164,20 +165,20 @@ public class TextPaneController extends DashboardComponentController {
                 view.setContent(htmlPane);
                 htmlPane.setHtml(data);
             } else {
-                initRawPresenter();
+                initRawEditor();
 
-                view.setContent(rawPresenter);
+                view.setContent(rawEditor);
 
                 if (highlightStrings != null && !highlightStrings.isEmpty()) {
-                    rawPresenter.setFormattedHighlights(formattedText ->
+                    rawEditor.setFormattedHighlights(formattedText ->
                             getHighlights(formattedText, highlightStrings));
                 } else {
-                    rawPresenter.setFormattedHighlights(null);
+                    rawEditor.setFormattedHighlights(null);
                 }
 
-                rawPresenter.setText(data, true);
-//                rawPresenter.setHighlights(highlights);
-                rawPresenter.setControlsVisible(playButtonVisible);
+                rawEditor.setText(data, true);
+//                rawEditor.setHighlights(highlights);
+                rawEditor.setControlsVisible(playButtonVisible);
             }
         });
     }
@@ -195,8 +196,8 @@ public class TextPaneController extends DashboardComponentController {
             // Show the play button if we have fetched input data.
             view.setClassification(fetchDataResult.getClassification());
 
-            initRawPresenter();
-            view.setContent(rawPresenter);
+            initRawEditor();
+            view.setContent(rawEditor);
 
             final String title = "Unable to display stream ["
                                  + fetchDataResult.getSourceLocation().getIdentifierString()
@@ -204,16 +205,16 @@ public class TextPaneController extends DashboardComponentController {
 
             final String errorText = String.join("\n", fetchDataResult.getErrors());
 
-            rawPresenter.setErrorText(title, errorText);
+            rawEditor.setErrorText(title, errorText);
         });
     }
 
-    private void initRawPresenter() {
-        if (rawPresenter == null) {
-            rawPresenter = make(rawPresenterProvider);
-            rawPresenter.setReadOnly(true);
-            rawPresenter.getLineNumbersOption().setOn(false);
-            rawPresenter.getLineWrapOption().setOn(true);
+    private void initRawEditor() {
+        if (rawEditor == null) {
+            rawEditor = make(rawEditorProvider).attach(new CodeEditor());
+            rawEditor.setReadOnly(true);
+            rawEditor.getOptions().getLineNumbersOption().setOn(false);
+            rawEditor.getOptions().getLineWrapOption().setOn(true);
         }
     }
 

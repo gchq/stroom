@@ -20,7 +20,7 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableLong;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -332,12 +332,12 @@ public final class ViewStateStories {
     }
 
     private static Widget codeEditor(final ScreenHarness harness, final boolean readOnly) {
-        final EditorPresenter editor = EditorWidgets.editorPresenter(harness.getEventBus());
+        final CodeEditorController editor = EditorWidgets.codeEditor(harness.getEventBus());
         editor.setMode(AceEditorMode.XML);
         editor.setReadOnly(readOnly);
-        editor.getLineNumbersOption().setOn(true);
+        editor.getOptions().getLineNumbersOption().setOn(true);
         editor.setText("<feed>\n  <name>MY_FEED</name>\n</feed>");
-        return editor.getWidget();
+        return editor.asWidget();
     }
 
     private static Widget frame(final Widget widget,
@@ -520,7 +520,7 @@ public final class ViewStateStories {
     // --------------------------------------------------------------------------------
 
 
-    // A document picker (as DocSelectionBoxPresenter shows it), as a widget
+    // A document picker (as DocSelectionController shows it), as a widget
     private static final class PickerField extends Composite {
 
         private final DropDownBox box = new DropDownBox();

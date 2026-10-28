@@ -30,7 +30,6 @@ import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.MouseUtil;
 
@@ -60,9 +59,8 @@ import java.util.stream.Collectors;
 /// its place ([#setErrorText]).
 ///
 /// It is dumb: its [CodeEditorController] sets its text and options, and shows its menu, which it
-/// asks for ([#setOnContextMenu]). It is also the view of the editors that are still presenters
-/// (`EditorPresenter`).
-public class CodeEditor extends Component implements View {
+/// asks for ([#setOnContextMenu]).
+public class CodeEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // Never shown: the overview bar shows its own, which hides itself on a click (see ISSUES.md;

@@ -29,8 +29,7 @@ import com.google.inject.Singleton;
 ///
 /// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
 /// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`
-/// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`), and leaves out the `LinkTabsLayoutView`
-/// that `ScreenViewsModule` already binds.
+/// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`).
 public class DashboardScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

@@ -16,6 +16,7 @@
 
 package stroom.query.client.component;
 
+import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
@@ -40,7 +41,7 @@ public class QueryEdit extends Component {
     @UiField
     SimplePanel help;
     @UiField
-    SimplePanel editor;
+    CodeEditor editor;
     @UiField
     LinkTabBar tabBar;
     @UiField
@@ -57,9 +58,9 @@ public class QueryEdit extends Component {
         this.help.setWidget(help);
     }
 
-    /// @param editor The query's editor.
-    public void setEditor(final IsWidget editor) {
-        this.editor.setWidget(editor);
+    /// @return The query's editor, for its controller to attach to.
+    public CodeEditor getEditor() {
+        return editor;
     }
 
     /// @param tab A results tab to add.

@@ -14,43 +14,52 @@
  * limitations under the License.
  */
 
-package stroom.widget.tooltip.client.presenter;
+package stroom.widget.tooltip.client.component;
 
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
-import stroom.widget.tooltip.client.component.InfoTooltip;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Shows an [InfoTooltip] as a grid row's "Information" popup, beside the icon that opened it. A
-/// thin presenter over the component, kept while its owners (the lists) are presenters, as an owner
-/// keeps one and shows it again (a second click on the icon closes it).
-public class TooltipPresenter extends MyPresenterWidget<View> {
+/// Shows an [InfoTooltip] as a grid row's "Information" popup, beside the icon that opened it. An
+/// owner keeps one and shows it again, so a second click on the icon closes it.
+public class InfoTooltipController extends Controller {
 
     private final InfoTooltip tooltip;
 
+    /// @param eventBus The app's event bus, which the popup manager listens to.
+    /// @param tooltip  The tooltip's content.
     @Inject
-    public TooltipPresenter(final EventBus eventBus, final InfoTooltip tooltip) {
-        super(eventBus, tooltip::asWidget);
+    public InfoTooltipController(final EventBus eventBus, final InfoTooltip tooltip) {
+        super(eventBus);
         this.tooltip = tooltip;
+        initWidget(tooltip);
     }
 
+    /// Shows the tooltip, or hides it if it is shown.
+    ///
+    /// @param text          The tooltip's content, as plain text.
+    /// @param popupPosition Where to show it.
     public void show(final String text, final PopupPosition popupPosition) {
         tooltip.setText(text);
-        show(popupPosition);
+        show(popupPosition, null);
     }
 
+    /// Shows the tooltip, or hides it if it is shown.
+    ///
+    /// @param html          The tooltip's content.
+    /// @param popupPosition Where to show it.
     public void show(final SafeHtml html, final PopupPosition popupPosition) {
         show(html, popupPosition, null);
     }
 
-    /// Shows the tooltip, opened by an element such as an icon.
+    /// Shows the tooltip, opened by an element such as an icon, or hides it if it is shown.
     ///
     /// @param html          The tooltip's content.
     /// @param popupPosition Where to show it.
@@ -62,12 +71,8 @@ public class TooltipPresenter extends MyPresenterWidget<View> {
         show(popupPosition, anchor);
     }
 
-    private void show(final PopupPosition popupPosition) {
-        show(popupPosition, null);
-    }
-
     private void show(final PopupPosition popupPosition, final Element anchor) {
-        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this)
+        final ShowPopupEvent.Builder builder = ControllerDialog.show(this)
                 .popupType(PopupType.POPUP)
                 .caption("Information")
                 .popupPosition(popupPosition)
@@ -77,5 +82,4 @@ public class TooltipPresenter extends MyPresenterWidget<View> {
         }
         builder.fire();
     }
-
 }

@@ -17,7 +17,6 @@
 package stroom.widget.component.client;
 
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -148,16 +147,20 @@ public abstract class Controller implements IsWidget, HasControllerNode, HasHand
 
     /// Makes a dialog for one use, e.g. when a button is pressed, and owns it until it is hidden:
     /// it is then disposed (once the popup manager has hidden it), or with this one if this is
-    /// disposed first. A dialog shown again is made with [#make(Provider)] instead.
+    /// disposed first, e.g. one set up before what it shows has been fetched, and so before it can
+    /// be shown with [ControllerDialog#show(Controller)]. A dialog that shows itself takes its opener
+    /// instead ([ControllerDialog#showOnce]), and one shown again is made with [#make(Provider)].
     ///
     /// ```java
-    /// makeDialog(editPresenterProvider).show(field, updated -> ...);
+    /// final CodeEditorController jsonEditor = makeDialog(jsonEditorProvider).attach(new CodeEditor());
+    /// ...
+    /// ControllerDialog.show(jsonEditor).caption("Pipeline Source").fire();
     /// ```
     ///
     /// @param provider What makes it, e.g. a GIN provider.
-    /// @param <P>      Its type.
+    /// @param <C>      Its type.
     /// @return The dialog, made and owned, ready to show.
-    protected final <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
+    protected final <C extends Controller> C makeDialog(final Provider<C> provider) {
         Objects.requireNonNull(provider, "provider");
         return ControllerDialog.disposeWhenHidden(make(provider));
     }

@@ -3,13 +3,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
     <split:SplitPane vertical="true" thin="true" sizes="600px, *"
                      names="Query, Results" addStyleNames="QueryEditViewImpl max">
         <split:SplitPane thin="true" sizes="300px, *"
                          names="Help, Query" addStyleNames="max">
             <g:SimplePanel ui:field="help" styleName="max"/>
-            <g:SimplePanel ui:field="editor" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <ed:CodeEditor ui:field="editor"/>
+            </g:SimplePanel>
         </split:SplitPane>
         <g:SimplePanel styleName="max">
             <g:FlowPanel styleName="QueryResultTabsViewImpl max dock-container-vertical">

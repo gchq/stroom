@@ -37,7 +37,7 @@ public abstract class InfoColumn<T> extends Column<T, CellIcon> {
         return CellIcon.of(SvgImage.INFO, "Info");
     }
 
-    /// Shows the row's info, e.g. with [stroom.widget.tooltip.client.presenter.TooltipPresenter].
+    /// Shows the row's info, e.g. with [stroom.widget.tooltip.client.component.InfoTooltipController].
     ///
     /// @param row           The row whose info to show.
     /// @param popupPosition Where to show it.

@@ -17,8 +17,6 @@
 package stroom.gwt.workbench.client.app.gin;
 
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
-import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,
@@ -44,6 +42,5 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         // StreamStoreModule: editors, expressions and the explorer drop downs
 
         // DashboardModule
-        bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
     }
 }

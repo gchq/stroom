@@ -27,15 +27,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [UserRefSelectionBoxPresenter]: a drop-down showing the chosen user or
-/// group, which opens Stroom's user picker. The users are found by a [UserFixture].
+/// Stories for Stroom's [UserRefSelectionController] attached to a `DropDownBox`: a drop-down
+/// showing the chosen user or group, which opens Stroom's user picker. The users are found by a
+/// [UserFixture].
 public final class UserRefSelectionBoxStories {
 
     private static final String ON_CHANGE = "onChange";
@@ -107,12 +108,12 @@ public final class UserRefSelectionBoxStories {
                 // Disabled - the picker can't be opened
                 .story("Disabled", context -> {
                     final ScreenHarness harness = harness(context);
-                    final UserRefSelectionBoxPresenter box = box(context, harness);
+                    final UserRefSelectionController box = box(context, harness);
                     box.setSelected(UserFixture.fixtureUsers().get("g-admins"));
                     box.setEnabled(false);
                     final FlowPanel frame = new FlowPanel();
                     frame.getElement().getStyle().setProperty("width", "320px");
-                    frame.add(box.getWidget());
+                    frame.add(box.getBox());
                     harness.add(frame);
                     return harness.asWidget();
                 });
@@ -121,7 +122,7 @@ public final class UserRefSelectionBoxStories {
     /// The box with a `Selected: ...` echo below.
     private static Widget withEcho(final StoryContext context, final UserRef selected) {
         final ScreenHarness harness = harness(context);
-        final UserRefSelectionBoxPresenter box = box(context, harness);
+        final UserRefSelectionController box = box(context, harness);
         final InlineLabel echo = new InlineLabel();
         echo.getElement().getStyle().setProperty("fontSize", "12px");
         if (selected != null) {
@@ -136,7 +137,7 @@ public final class UserRefSelectionBoxStories {
         frame.getElement().getStyle().setProperty("display", "flex");
         frame.getElement().getStyle().setProperty("flexDirection", "column");
         frame.getElement().getStyle().setProperty("gap", "8px");
-        frame.add(box.getWidget());
+        frame.add(box.getBox());
         frame.add(echo);
         harness.add(frame);
         return harness.asWidget();
@@ -158,8 +159,8 @@ public final class UserRefSelectionBoxStories {
                 .build());
     }
 
-    private static UserRefSelectionBoxPresenter box(final StoryContext context, final ScreenHarness harness) {
-        final UserRefSelectionBoxPresenter box = SelectorWidgets.userRefSelectionBox(harness);
+    private static UserRefSelectionController box(final StoryContext context, final ScreenHarness harness) {
+        final UserRefSelectionController box = SelectorWidgets.userRefSelectionBox(harness);
         harness.own(box);
         final Spy onChange = context.fn(ON_CHANGE);
         harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null

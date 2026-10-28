@@ -38,7 +38,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -62,7 +62,7 @@ public class IndexShardListController extends Controller {
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
     private final IndexShardList view;
-    private final TooltipPresenter tooltipPresenter;
+    private final InfoTooltipController infoTooltip;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
     private final ClientSecurityContext securityContext;
@@ -79,7 +79,7 @@ public class IndexShardListController extends Controller {
     ///
     /// @param eventBus          The application's event bus.
     /// @param view              The content.
-    /// @param tooltipPresenter  Shows a shard's info.
+    /// @param infoTooltip       Shows a shard's info.
     /// @param restFactory       Finds, flushes and deletes the shards.
     /// @param nodeClient        Lists the nodes to flush or delete the shards on.
     /// @param securityContext   Tells whether the user may manage shards, or delete the index.
@@ -87,14 +87,14 @@ public class IndexShardListController extends Controller {
     @Inject
     public IndexShardListController(final EventBus eventBus,
                                     final IndexShardList view,
-                                    final TooltipPresenter tooltipPresenter,
+                                    final InfoTooltipController infoTooltip,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient,
                                     final ClientSecurityContext securityContext,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
         this.view = view;
-        this.tooltipPresenter = own(tooltipPresenter);
+        this.infoTooltip = own(infoTooltip);
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.securityContext = securityContext;
@@ -171,7 +171,7 @@ public class IndexShardListController extends Controller {
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
+        infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }
 
     /// Finds the shards again; the first time, starts the list.

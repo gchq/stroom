@@ -42,7 +42,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -67,7 +67,7 @@ public class ProcessorTasksListController extends Controller implements HasDocum
 
     private final ProcessorTasksList view;
     private final RestFactory restFactory;
-    private final TooltipPresenter tooltipPresenter;
+    private final InfoTooltipController infoTooltip;
     private final DateTimeFormatter dateTimeFormatter;
     private final ExpressionCriteria criteria;
     private RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
@@ -79,22 +79,22 @@ public class ProcessorTasksListController extends Controller implements HasDocum
     /// @param eventBus          The application's event bus.
     /// @param view              The content.
     /// @param restFactory       Finds the tasks, and a task's stream for its info.
-    /// @param tooltipPresenter  Shows a task's info.
+    /// @param infoTooltip       Shows a task's info.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     /// @param refCells          Lets the feed and pipeline cells open them.
     @Inject
     public ProcessorTasksListController(final EventBus eventBus,
                                         final ProcessorTasksList view,
                                         final RestFactory restFactory,
-                                        final TooltipPresenter tooltipPresenter,
+                                        final InfoTooltipController infoTooltip,
                                         final DateTimeFormatter dateTimeFormatter,
                                         final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
         own(refCells);
-        own(tooltipPresenter);
+        own(infoTooltip);
         this.restFactory = restFactory;
-        this.tooltipPresenter = tooltipPresenter;
+        this.infoTooltip = infoTooltip;
         this.dateTimeFormatter = dateTimeFormatter;
         initWidget(view);
 
@@ -103,7 +103,7 @@ public class ProcessorTasksListController extends Controller implements HasDocum
                 refCells.configure(new FeedRefCell.Builder<ProcessorTask>()),
                 refCells.configure(new DocRefCell.Builder<ProcessorTask>()));
         view.setOnShowInfo(this::showInfo);
-        own(OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget()));
+        own(OpenLinkUtil.addClickHandler(this, infoTooltip.asWidget()));
         view.setOnSortChange(this::refresh);
     }
 
@@ -200,7 +200,7 @@ public class ProcessorTasksListController extends Controller implements HasDocum
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
+        infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }
 
     private String toDateString(final Long ms) {

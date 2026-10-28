@@ -154,7 +154,7 @@ public final class FloorMapInitStories {
         return screen.within(screen.findByText(CAPTION, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
-    // Opens the dialog's index'th store picker (a DocSelectionBoxPresenter, which opens on a mousedown)
+    // Opens the dialog's index'th store picker (a DropDownBox, which opens on a mousedown)
     // and chooses the named store
     private static void choose(final Play play,
                                final Play dialog,

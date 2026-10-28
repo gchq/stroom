@@ -22,7 +22,8 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -44,13 +45,13 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -92,7 +93,7 @@ public class PipelineStructureController extends Controller {
     private final Provider<NewElementController> newElementProvider;
     private final PropertyListController propertyList;
     private final PipelineReferenceListController pipelineReferenceList;
-    private final Provider<EditorPresenter> jsonEditorProvider;
+    private final Provider<CodeEditorController> jsonEditorProvider;
     private final PipelineTree pipelineTree;
     private PipelineElement selectedElement;
     private PipelineModel pipelineModel;
@@ -124,7 +125,7 @@ public class PipelineStructureController extends Controller {
                                        final Provider<NewElementController> newElementProvider,
                                        final PropertyListController propertyList,
                                        final PipelineReferenceListController pipelineReferenceList,
-                                       final Provider<EditorPresenter> jsonEditorProvider) {
+                                       final Provider<CodeEditorController> jsonEditorProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);
@@ -631,12 +632,12 @@ public class PipelineStructureController extends Controller {
                     "You must save changes to this pipeline before you can view the source",
                     null);
         } else {
-            final EditorPresenter jsonEditor = makeDialog(jsonEditorProvider);
+            final CodeEditorController jsonEditor = makeDialog(jsonEditorProvider).attach(new CodeEditor());
             jsonEditor.setMode(AceEditorMode.JSON);
 //            jsonEditor.getIndicatorsOption().setAvailable(false);
 //            jsonEditor.getIndicatorsOption().setOn(false);
 //            jsonEditor.getStylesOption().setOn(true);
-            jsonEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
+            jsonEditor.asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
@@ -648,7 +649,7 @@ public class PipelineStructureController extends Controller {
                             text = result.getJson();
                         }
                         jsonEditor.setText(text, true);
-                        ShowPopupEvent.builder(jsonEditor)
+                        ControllerDialog.show(jsonEditor)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
                                 .modal()
                                 .popupSize(popupSize)
@@ -673,7 +674,7 @@ public class PipelineStructureController extends Controller {
         }
     }
 
-    private void querySave(final EditorPresenter jsonEditor,
+    private void querySave(final CodeEditorController jsonEditor,
                            final HidePopupRequestEvent event) {
         ConfirmEvent.fire(PipelineStructureController.this,
                 "Are you sure you want to save changes to the underlying JSON?", ok -> {
@@ -685,7 +686,7 @@ public class PipelineStructureController extends Controller {
                 });
     }
 
-    private void doActualSave(final EditorPresenter jsonEditor, final HidePopupRequestEvent event) {
+    private void doActualSave(final CodeEditorController jsonEditor, final HidePopupRequestEvent event) {
         restFactory
                 .create(PIPELINE_RESOURCE)
                 .method(res -> res.savePipelineJson(new SavePipelineJsonRequest(docRef, jsonEditor.getText())))

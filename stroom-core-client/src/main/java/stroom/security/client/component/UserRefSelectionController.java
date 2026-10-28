@@ -68,6 +68,11 @@ public class UserRefSelectionController extends Controller {
         return this;
     }
 
+    /// @return The box this is attached to, or null before [#attach(DropDownBox)].
+    public DropDownBox getBox() {
+        return box;
+    }
+
     /// Puts the focus on the box.
     public void focus() {
         if (box != null) {

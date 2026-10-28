@@ -34,7 +34,7 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -61,7 +61,7 @@ public class NodeStatusListController extends Controller implements Refreshable 
 
     private final NodeStatusList view;
     private final NodeClient nodeClient;
-    private final TooltipPresenter tooltipPresenter;
+    private final InfoTooltipController infoTooltip;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
@@ -77,21 +77,21 @@ public class NodeStatusListController extends Controller implements Refreshable 
     /// @param eventBus          The application's event bus.
     /// @param view              The content.
     /// @param nodeClient        Fetches, pings and changes the nodes.
-    /// @param tooltipPresenter  Shows a node's info.
+    /// @param infoTooltip       Shows a node's info.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     /// @param uiConfigCache     Gives the ping thresholds.
     @Inject
     public NodeStatusListController(final EventBus eventBus,
                                     final NodeStatusList view,
                                     final NodeClient nodeClient,
-                                    final TooltipPresenter tooltipPresenter,
+                                    final InfoTooltipController infoTooltip,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final UiConfigCache uiConfigCache) {
         super(eventBus);
         this.view = view;
-        own(tooltipPresenter);
+        own(infoTooltip);
         this.nodeClient = nodeClient;
-        this.tooltipPresenter = tooltipPresenter;
+        this.infoTooltip = infoTooltip;
         this.dateTimeFormatter = dateTimeFormatter;
         initWidget(view);
 
@@ -236,13 +236,13 @@ public class NodeStatusListController extends Controller implements Refreshable 
         htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
         htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
 
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
+        infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }
 
     private void showNodeInfoError(final Throwable caught,
                                    final PopupPosition popupPosition,
                                    final Element anchor) {
-        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition, anchor);
+        infoTooltip.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition, anchor);
     }
 
     @Override

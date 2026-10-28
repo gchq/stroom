@@ -95,6 +95,11 @@ public class DocSelectionController extends Controller {
         showValue();
     }
 
+    /// @return The picker this is attached to, or null before [#attach(DropDownBox)].
+    public DropDownBox getBox() {
+        return box;
+    }
+
     /// @param taskMonitorFactory What shows that the name is being checked, or null for the task
     ///                           monitor of what owns this ([Contexts#TASK_MONITOR]).
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {

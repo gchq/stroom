@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.iframe.client.presenter;
+package stroom.iframe.client.component;
 
-import stroom.iframe.client.component.IFrame;
-import stroom.iframe.client.component.IFrame.SandboxOption;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
@@ -27,10 +24,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
 
-/// Shows a page in an [IFrame], e.g. a link's page as a dialog or a document's Documentation tab,
-/// and follows the page's title, which names the dialog or tab. A thin presenter over the
-/// component, kept while a dialog that renames itself (`RenamePopupEvent`) needs one.
-public class IFramePresenter extends MyPresenterWidget<View> {
+/// Shows a page in an [IFrame], e.g. a link's page as a dialog, and follows the page's title, which
+/// names the dialog.
+public class IFrameController extends Controller {
 
     private static final String DEFAULT_TITLE = "Loading...";
 
@@ -41,15 +37,17 @@ public class IFramePresenter extends MyPresenterWidget<View> {
     private String lastTitle = DEFAULT_TITLE;
     private String customTitle;
 
+    /// @param eventBus The app's event bus, which the popup manager listens to.
+    /// @param frame    The frame.
     @Inject
-    public IFramePresenter(final EventBus eventBus, final IFrame frame) {
-        super(eventBus, frame::asWidget);
+    public IFrameController(final EventBus eventBus, final IFrame frame) {
+        super(eventBus);
         this.frame = frame;
-        // Reads the page's title every second until it is closed (or given a title of its own)
+        initWidget(frame);
+        // Reads the page's title every second until it is disposed (or given a title of its own)
         Scheduler.get().scheduleFixedDelay(this::readTitle, 1000);
-        // Stops the poll, which would otherwise run, and keep this, for the life of the page (e.g. a
-        // closed document's Documentation tab)
-        onDispose(this::close);
+        // Stops the poll, which would otherwise run, and keep this, for the life of the page
+        onDispose(() -> updateTitle = false);
     }
 
     // Tells the owner when the page's title changes; false once the poll is no longer wanted
@@ -62,11 +60,6 @@ public class IFramePresenter extends MyPresenterWidget<View> {
         return updateTitle && customTitle == null;
     }
 
-    /// @param id The frame's element id.
-    public void setId(final String id) {
-        frame.setId(id);
-    }
-
     /// Shows the page at a URL, whose address is its label until it has a title.
     ///
     /// @param url The page's address.
@@ -75,45 +68,18 @@ public class IFramePresenter extends MyPresenterWidget<View> {
         frame.setUrl(url);
     }
 
-    /// Shows a page of HTML rather than one at a URL.
-    ///
-    /// @param html The page.
-    public void setSrcDoc(final String html) {
-        frame.setSrcDoc(html);
-    }
-
-    /// @param isEnabled      Whether the page is sandboxed.
-    /// @param sandboxOptions What a sandboxed page may still do.
-    public void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions) {
-        frame.setSandboxEnabled(isEnabled, sandboxOptions);
-    }
-
     /// Gives the page a label of its own, which the page's title then doesn't change.
     ///
-    /// @param customTitle The label, e.g. a document's name.
+    /// @param customTitle The label, or null to follow the page's title.
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
     }
 
-    /// Names the frame for assistive technology, which announces a frame by its `title` (WCAG
-    /// 4.1.2). Not the same as [#setCustomTitle(String)], which is the title of the tab showing it.
-    ///
-    /// @param name The frame's name, e.g. `Preview`.
-    public void setAccessibleName(final String name) {
-        frame.setAccessibleName(name);
-    }
-
-    /// @return The label for the tab showing the page: its own label, else its title, else its
-    ///         address.
+    /// @return The label for what shows the page: its own label, else its title, else its address.
     public String getLabel() {
         return customTitle != null
                 ? customTitle
                 : lastTitle;
-    }
-
-    /// Stops reading the page's title.
-    public void close() {
-        updateTitle = false;
     }
 
     /// @param onTitleChange What to run when the page shown changes its title.

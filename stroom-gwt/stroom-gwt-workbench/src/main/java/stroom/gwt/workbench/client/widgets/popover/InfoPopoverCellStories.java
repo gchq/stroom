@@ -29,7 +29,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltip;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -41,7 +41,7 @@ import java.util.Collections;
 /// Stories for Stroom's [InfoColumn].
 ///
 /// An `InfoColumn` is a grid column of info icons; clicking one shows the row's details in a
-/// [TooltipPresenter] to the right of the cell, as Stroom's monitoring screens (e.g.
+/// [InfoTooltipController] to the right of the cell, as Stroom's monitoring screens (e.g.
 /// `ProcessorList`) do. The story shows a one-row grid with just that column.
 public final class InfoPopoverCellStories {
 
@@ -109,13 +109,13 @@ public final class InfoPopoverCellStories {
 
     private static Widget render(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new InfoTooltip());
+        final InfoTooltipController infoTooltip = new InfoTooltipController(popups.getEventBus(), new InfoTooltip());
         final InfoColumn<String> infoColumn = new InfoColumn<String>() {
             @Override
             protected void showInfo(final String row,
                                     final PopupPosition popupPosition,
                                     final Element anchor) {
-                tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition, anchor);
+                infoTooltip.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition, anchor);
             }
         };
         final DataGrid<String> grid = new DataGrid<>();

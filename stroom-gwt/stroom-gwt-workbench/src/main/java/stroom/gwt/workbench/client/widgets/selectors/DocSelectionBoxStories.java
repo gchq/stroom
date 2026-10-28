@@ -18,8 +18,8 @@
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.client.component.ExplorerPopupController;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -42,9 +42,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DocSelectionBoxPresenter]: a drop-down showing the chosen document, which
-/// opens Stroom's explorer popup to choose another. The popup's tree is fetched from an
-/// [ExplorerFixture].
+/// Stories for Stroom's [DocSelectionController] attached to a `DropDownBox`: a drop-down showing
+/// the chosen document, which opens Stroom's explorer popup to choose another. The popup's tree is
+/// fetched from an [ExplorerFixture].
 public final class DocSelectionBoxStories {
 
     private static final String ON_CHANGE = "onChange";
@@ -65,7 +65,7 @@ public final class DocSelectionBoxStories {
                 // document and press OK or double-click it
                 .story("Default", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
-                    final DocSelectionBoxPresenter box = box(context, harness, null);
+                    final DocSelectionController box = box(context, harness, null);
                     final Label echo = echo("Nothing picked yet — click the box.");
                     harness.addRegistration(box.addSelectionListener(selected -> {
                         final DocRef docRef = selected;
@@ -74,7 +74,7 @@ public final class DocSelectionBoxStories {
                                 : "Picked: " + docRef.getName() + " — " + docRef.getType()
                                   + " (" + docRef.getUuid() + ")");
                     }));
-                    return frame(harness, box.getWidget(), echo);
+                    return frame(harness, box.getBox(), echo);
                 })
                 // Pre-selected - the field starts with a chosen document name, and the popup offers a
                 // "None" row to clear it
@@ -131,19 +131,19 @@ public final class DocSelectionBoxStories {
                 // readers); the disabled box doesn't open the popup
                 .story("WarningAndDisabled", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
-                    final DocSelectionBoxPresenter warning = box(context, harness, null);
+                    final DocSelectionController warning = box(context, harness, null);
                     // The warning comes from Stroom checking the document (`decorate` finds no
                     // such feed), so its message is Stroom's
                     warning.setSelectedEntityReference(new DocRef("Feed", "deleted-feed", "Deleted Feed"), true);
-                    final DocSelectionBoxPresenter disabled = box(context, harness, null);
+                    final DocSelectionController disabled = box(context, harness, null);
                     disabled.setSelectedEntityReference(new DocRef("Pipeline", "locked-pipeline", "Locked Pipeline"),
                             false);
                     disabled.setEnabled(false);
-                    final FlowPanel column = frame(harness, warning.getWidget(), null);
+                    final FlowPanel column = frame(harness, warning.getBox(), null);
                     column.getElement().getStyle().setProperty("display", "flex");
                     column.getElement().getStyle().setProperty("flexDirection", "column");
                     column.getElement().getStyle().setProperty("gap", "16px");
-                    column.add(disabled.getWidget());
+                    column.add(disabled.getBox());
                     return harness.asWidget();
                 })
                 .withPlay(play -> {
@@ -168,11 +168,11 @@ public final class DocSelectionBoxStories {
                 // In a form group, the problem is the group's feedback, as any field's is
                 .story("ProblemInAFormGroup", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
-                    final DocSelectionBoxPresenter box = box(context, harness, null);
+                    final DocSelectionController box = box(context, harness, null);
                     final FormGroup formGroup = new FormGroup();
                     formGroup.setIdentity("feed");
                     formGroup.setLabel("Feed");
-                    formGroup.add(box.getWidget());
+                    formGroup.add(box.getBox());
                     box.setSelectedEntityReference(new DocRef("Feed", "deleted-feed", "Deleted Feed"), true);
                     return frame(harness, formGroup, null);
                 })
@@ -187,10 +187,10 @@ public final class DocSelectionBoxStories {
                 // The node flags filter (e.g. data sources) is sent with the popup's tree fetch
                 .story("NodeFlagsForwarded", context -> {
                     final ScreenHarness harness = harness(context, new ExplorerFixture());
-                    final DocSelectionBoxPresenter box = box(context, harness, null);
+                    final DocSelectionController box = box(context, harness, null);
                     box.setNodeFlags(NodeFlag.DATA_SOURCE);
                     box.setItemType("Data Source");
-                    harness.add(box.getWidget());
+                    harness.add(box.getBox());
                     return harness.asWidget();
                 })
                 .withPlay(play -> {
@@ -204,16 +204,16 @@ public final class DocSelectionBoxStories {
                 // Type-filtered popup - only Feed and Pipeline documents (and their folders) are shown
                 .story("TypeFiltered", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
-                    final DocSelectionBoxPresenter box = box(context, harness, null);
+                    final DocSelectionController box = box(context, harness, null);
                     box.setIncludedTypes("Feed", "Pipeline");
-                    return frame(harness, box.getWidget(), echo("Popup shows only Feeds & Pipelines."));
+                    return frame(harness, box.getBox(), echo("Popup shows only Feeds & Pipelines."));
                 });
     }
 
     private static Widget withSelection(final StoryContext context) {
         final ExplorerFixture fixture = TreeFixtures.fixtureTree();
         final ScreenHarness harness = harness(context, fixture);
-        final DocSelectionBoxPresenter box = box(context, harness, "Choose Pipeline");
+        final DocSelectionController box = box(context, harness, "Choose Pipeline");
         box.setItemType("Pipeline");
         box.setSelectedEntityReference(fixture.toDocRef("Ingest"), false);
         final Label echo = echo("Current value: \"Ingest\"");
@@ -221,7 +221,7 @@ public final class DocSelectionBoxStories {
                 "Current value: \"" + (selected == null
                         ? "(none)"
                         : selected.getName()) + "\"")));
-        return frame(harness, box.getWidget(), echo);
+        return frame(harness, box.getBox(), echo);
     }
 
     private static ScreenHarness harness(final StoryContext context, final ExplorerFixture fixture) {
@@ -236,14 +236,14 @@ public final class DocSelectionBoxStories {
                 .build();
     }
 
-    private static DocSelectionBoxPresenter box(final StoryContext context,
+    private static DocSelectionController box(final StoryContext context,
                                                 final ScreenHarness harness,
                                                 final String caption) {
         final ExplorerPopupController popup = SelectorWidgets.explorerPopup(harness);
         if (caption != null) {
             popup.setCaption(caption);
         }
-        final DocSelectionBoxPresenter box = SelectorWidgets.docSelectionBox(harness, popup);
+        final DocSelectionController box = SelectorWidgets.docSelectionBox(harness, popup);
         harness.own(box);
         final Spy onChange = context.fn(ON_CHANGE);
         harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null

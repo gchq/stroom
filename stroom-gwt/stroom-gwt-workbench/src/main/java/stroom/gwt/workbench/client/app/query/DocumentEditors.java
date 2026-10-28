@@ -73,7 +73,7 @@ public final class DocumentEditors {
     }
 
     /// Adds routes of `POST /explorer/v2/decorate` and `POST /explorer/v2/getFromDocRef` for each
-    /// document given, which a document picker (`DocSelectionBoxPresenter`) sends when a document is
+    /// document given, which a document picker (`DocSelectionController`) sends when a document is
     /// selected, replying with the document as it is (it exists and the user may use it; an
     /// `ExplorerNode` has the same `type`, `uuid` and `name` members as a `DocRef`).
     ///

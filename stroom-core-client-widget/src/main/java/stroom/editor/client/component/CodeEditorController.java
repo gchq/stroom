@@ -73,8 +73,6 @@ import java.util.function.Function;
 /// ```java
 /// codeEditor = make(codeEditorControllerProvider).attach(view.getCodeEditor());
 /// ```
-///
-/// Screens that are still presenters use it through `EditorPresenter`.
 public class CodeEditorController extends Controller {
 
     // These modes are all XML and thus can be formatted as XML
@@ -104,12 +102,14 @@ public class CodeEditorController extends Controller {
     }
 
     /// Attaches this to an editor, e.g. one a template declares, setting it up: its options at
-    /// their defaults, as the user prefers, with its menu.
+    /// their defaults, as the user prefers, with its menu. The editor is then this controller's
+    /// widget, e.g. to show it as a dialog.
     ///
     /// @param view The editor.
     /// @return This, for its owner to keep.
     public CodeEditorController attach(final CodeEditor view) {
         this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
         this.editor = view.getEditor();
         options = new CodeEditorOptions(editor, view::setShowIndicators);
         aceEditorController.attach(editor, options);

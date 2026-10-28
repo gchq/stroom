@@ -21,6 +21,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.spinner.client.SpinnerSmall;
 
@@ -79,7 +80,7 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     @UiField
     Label contextIndicator;
     @UiField
-    SimplePanel modelRef;
+    DropDownBox modelRef;
     @UiField
     SpinnerSmall spinner;
 
@@ -153,11 +154,9 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
         }
     }
 
-    /// Shows the picker of the model to ask.
-    ///
-    /// @param view Its view.
-    public void setModelRefSelection(final IsWidget view) {
-        this.modelRef.setWidget(view.asWidget());
+    /// @return The picker of the model to ask, for its controller to attach to.
+    public DropDownBox getModelRefBox() {
+        return modelRef;
     }
 
     /// @return A task monitor shown on the chat's spinner.

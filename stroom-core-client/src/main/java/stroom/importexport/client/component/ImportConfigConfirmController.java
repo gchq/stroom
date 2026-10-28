@@ -52,7 +52,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -80,7 +80,7 @@ public class ImportConfigConfirmController extends Controller {
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
 
-    private final TooltipPresenter tooltipPresenter;
+    private final InfoTooltipController infoTooltip;
     private final ImportConfigConfirm view;
     private final DataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
@@ -93,20 +93,20 @@ public class ImportConfigConfirmController extends Controller {
     ///
     /// @param eventBus                      The application's event bus.
     /// @param view                          The content.
-    /// @param tooltipPresenter              Shows an item's messages.
+    /// @param infoTooltip                   Shows an item's messages.
     /// @param docSelectionProvider          Makes the root folder picker's controller.
     /// @param restFactory                   Refreshes, makes and aborts the import.
     /// @param dateTimeBoxControllerProvider Makes the Process From box's controller.
     @Inject
     public ImportConfigConfirmController(final EventBus eventBus,
                                          final ImportConfigConfirm view,
-                                         final TooltipPresenter tooltipPresenter,
+                                         final InfoTooltipController infoTooltip,
                                          final Provider<DocSelectionController> docSelectionProvider,
                                          final RestFactory restFactory,
                                          final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus);
         this.view = view;
-        this.tooltipPresenter = own(tooltipPresenter);
+        this.infoTooltip = own(infoTooltip);
         this.restFactory = restFactory;
         initWidget(view);
         make(dateTimeBoxControllerProvider).attach(view.getEnableFromBox());
@@ -430,7 +430,7 @@ public class ImportConfigConfirmController extends Controller {
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
+                infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

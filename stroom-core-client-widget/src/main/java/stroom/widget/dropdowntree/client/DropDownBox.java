@@ -21,7 +21,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -46,9 +45,8 @@ import com.google.gwt.user.client.ui.Widget;
 /// while there is a problem.
 ///
 /// It is dumb: a controller (e.g. `DocSelectionController`) attaches to it, sets what it shows and
-/// opens the dialog when it is asked to ([#setOnOpen(Runnable)]). Templates can declare it. It is
-/// also the view of the pickers that are still presenters (e.g. `DocSelectionBoxPresenter`).
-public class DropDownBox extends Component implements View {
+/// opens the dialog when it is asked to ([#setOnOpen(Runnable)]). Templates can declare it.
+public class DropDownBox extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "drop-down";

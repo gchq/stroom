@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
@@ -42,7 +42,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
-/// Stories for Stroom's Ace based editor ([EditorPresenter] with its `CodeEditorController` and `CodeEditor`).
+/// Stories for Stroom's Ace based editor ([CodeEditorController] attached to its `CodeEditor`).
 ///
 /// The stories set the presenter's options: `setMode`, `setReadOnly`, the line numbers and line
 /// wrap options, the format action and `setIndicators`.
@@ -94,12 +94,12 @@ public final class AceEditorStories {
                 .layout(StoryLayout.CENTERED)
                 // Read-only XML viewer, the DataViewerController default (gutter on so line numbers show)
                 .story("XmlReadOnly", context -> {
-                    final EditorPresenter editor = editor(context, SAMPLE_XML, AceEditorMode.XML, true);
+                    final CodeEditorController editor = editor(context, SAMPLE_XML, AceEditorMode.XML, true);
                     return framed(editor);
                 })
                 // Editable XML editor, two-way bound via onChange; Ctrl+Shift+F formats
                 .story("EditableXml", context -> {
-                    final EditorPresenter editor = editor(context, "<root><a>1</a><b><c>2</c></b></root>",
+                    final CodeEditorController editor = editor(context, "<root><a>1</a><b><c>2</c></b></root>",
                             AceEditorMode.XML, false);
                     // Make the format action available
                     editor.getFormatAction().setAvailable(true);
@@ -170,21 +170,21 @@ public final class AceEditorStories {
                 })
                 // Plain text, read-only, not wrapped (no syntax highlighting)
                 .story("PlainText", context -> {
-                    final EditorPresenter editor = editor(context, SAMPLE_TEXT, AceEditorMode.TEXT, true);
-                    editor.getLineWrapOption().setOn(false);
+                    final CodeEditorController editor = editor(context, SAMPLE_TEXT, AceEditorMode.TEXT, true);
+                    editor.getOptions().getLineWrapOption().setOn(false);
                     return framed(editor);
                 })
                 // Validation indicators: gutter glyphs plus the right bar's overview and markers
                 .story("WithAnnotations", context -> {
-                    final EditorPresenter editor = editor(context, SAMPLE_XML, AceEditorMode.XML, true);
-                    editor.getIndicatorsOption().setAvailable(true);
-                    editor.getIndicatorsOption().setOn(true);
+                    final CodeEditorController editor = editor(context, SAMPLE_XML, AceEditorMode.XML, true);
+                    editor.getOptions().getIndicatorsOption().setAvailable(true);
+                    editor.getOptions().getIndicatorsOption().setOn(true);
                     editor.setIndicators(annotations());
                     return framed(editor);
                 })
                 // JavaScript mode, a different Ace syntax mode
                 .story("JavaScriptMode", context -> {
-                    final EditorPresenter editor = editor(context, SAMPLE_JAVASCRIPT, AceEditorMode.JAVASCRIPT,
+                    final CodeEditorController editor = editor(context, SAMPLE_JAVASCRIPT, AceEditorMode.JAVASCRIPT,
                             false);
                     return framed(editor);
                 })
@@ -228,9 +228,9 @@ public final class AceEditorStories {
                 // With the gutter no tab stop, its errors and folds have keys while editing: Alt+E
                 // shows the next error's message under its line, and F2 folds the line's element
                 .story("KeyboardErrorsAndFolds", context -> {
-                    final EditorPresenter editor = editor(context, SAMPLE_XML, AceEditorMode.XML, false);
-                    editor.getIndicatorsOption().setAvailable(true);
-                    editor.getIndicatorsOption().setOn(true);
+                    final CodeEditorController editor = editor(context, SAMPLE_XML, AceEditorMode.XML, false);
+                    editor.getOptions().getIndicatorsOption().setAvailable(true);
+                    editor.getOptions().getIndicatorsOption().setOn(true);
                     editor.setIndicators(annotations());
                     return framed(editor);
                 })
@@ -280,7 +280,7 @@ public final class AceEditorStories {
     // An editor that shows Stroom's menus, as in Stroom
     private static Widget menuEditor(final StoryContext context, final boolean readOnly) {
         final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final EditorPresenter editor = EditorWidgets.editorPresenter(popups.getEventBus());
+        final CodeEditorController editor = EditorWidgets.codeEditor(popups.getEventBus());
         editor.setMode(AceEditorMode.XML);
         editor.setReadOnly(readOnly);
         editor.getFormatAction().setAvailable(!readOnly);
@@ -289,7 +289,7 @@ public final class AceEditorStories {
     }
 
     private static Widget editableTyping(final StoryContext context) {
-        final EditorPresenter editor = editor(context, "", AceEditorMode.TEXT, false);
+        final CodeEditorController editor = editor(context, "", AceEditorMode.TEXT, false);
         // A probe showing the typed value
         final HTML probe = new HTML();
         probe.getElement().setAttribute("data-testid", "typed");
@@ -300,17 +300,17 @@ public final class AceEditorStories {
     }
 
     /// The editor, with the given text, mode and read only state, and line numbers.
-    private static EditorPresenter editor(final StoryContext context,
+    private static CodeEditorController editor(final StoryContext context,
                                           final String text,
                                           final AceEditorMode mode,
                                           final boolean readOnly) {
         // No context menu, as only screen stories (with a popup manager) show
         // Stroom's menus
-        final EditorPresenter editor = EditorWidgets.editorPresenter(new SimpleEventBus());
+        final CodeEditorController editor = EditorWidgets.codeEditor(new SimpleEventBus());
         editor.setMode(mode);
         editor.setReadOnly(readOnly);
         // Show line numbers
-        editor.getLineNumbersOption().setOn(true);
+        editor.getOptions().getLineNumbersOption().setOn(true);
         editor.setText(text);
         final Spy onChange = context.fn(ON_CHANGE);
         // The editor's change events have no value (Editor fires them with null), so read the text
@@ -318,8 +318,8 @@ public final class AceEditorStories {
         return editor;
     }
 
-    private static Widget framed(final EditorPresenter editor) {
-        return EditorWidgets.frame(editor.getWidget(), WIDTH, HEIGHT);
+    private static Widget framed(final CodeEditorController editor) {
+        return EditorWidgets.frame(editor.asWidget(), WIDTH, HEIGHT);
     }
 
     /// The annotations, as Stroom's indicators (lines are one based).

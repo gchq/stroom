@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -85,8 +85,8 @@ public final class AceEditorThemeStories {
     }
 
     private static Widget editor(final String text, final AceEditorMode mode, final AceEditorTheme theme) {
-        final EditorPresenter editor = AceEditorFeatureStories.editor(text, mode, true);
-        editor.getView().setTheme(theme);
+        final CodeEditorController editor = AceEditorFeatureStories.editor(text, mode, true);
+        editor.getCodeEditor().setTheme(theme);
         return AceEditorFeatureStories.framed(editor);
     }
 }

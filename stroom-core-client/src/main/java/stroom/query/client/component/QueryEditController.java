@@ -20,7 +20,7 @@ import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
@@ -85,7 +85,7 @@ public class QueryEditController
 
     private final QueryHelpController queryHelp;
     private final QueryToolbarController queryToolbar;
-    private final EditorPresenter editorPresenter;
+    private final CodeEditorController editor;
     private final QueryResultTableSplitController queryResultPresenter;
     private final QueryModel queryModel;
     private final QueryEdit view;
@@ -108,7 +108,7 @@ public class QueryEditController
     /// @param view                    The content.
     /// @param queryHelp               The query's help.
     /// @param queryToolbar            Runs the query, over a time range.
-    /// @param editorPresenter         The query's editor.
+    /// @param editor                  The query's editor.
     /// @param queryResultPresenter    The results as a table.
     /// @param visPresenterProvider    Makes the results' visualisation.
     /// @param restFactory             Runs the query.
@@ -120,7 +120,7 @@ public class QueryEditController
                                final QueryEdit view,
                                final QueryHelpController queryHelp,
                                final QueryToolbarController queryToolbar,
-                               final EditorPresenter editorPresenter,
+                               final CodeEditorController editor,
                                final QueryResultTableSplitController queryResultPresenter,
                                final Provider<QueryResultVisController> visPresenterProvider,
                                final RestFactory restFactory,
@@ -132,7 +132,6 @@ public class QueryEditController
         initWidget(view);
         own(queryHelp);
         own(queryToolbar);
-        own(editorPresenter);
         own(queryResultPresenter);
         this.queryHelp = queryHelp;
         this.queryToolbar = queryToolbar;
@@ -241,23 +240,22 @@ public class QueryEditController
                     to.getLineNo() - 1,
                     to.getColNo());
             final Marker marker = new Marker(range, "code-editor__error-underline", AceMarkerType.TEXT, true);
-            editorPresenter.setIndicators(indicatorLines);
-            editorPresenter.setMarkers(Collections.singletonList(marker));
+            editor.setIndicators(indicatorLines);
+            editor.setMarkers(Collections.singletonList(marker));
         });
         queryModel.addSearchStateListener(queryToolbar);
 
-        this.editorPresenter = editorPresenter;
-        this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
-        this.editorPresenter.getBasicAutoCompletionOption().setOff();
+        this.editor = own(editor).attach(view.getEditor());
+        this.editor.setMode(AceEditorMode.STROOM_QUERY);
+        this.editor.getOptions().getBasicAutoCompletionOption().setOff();
 
 //        // This glues the editor code completion to the query help's completion provider
 //        // Need to do this via addAttachHandler so the editor is fully loaded
 //        // else it moans about the id not being a thing on the AceEditor
-//        this.editorPresenter.getWidget().addAttachHandler(event ->
-//                this.editorPresenter.registerCompletionProviders(queryHelp.getKeyedAceCompletionProvider()));
+//        this.editor.getWidget().addAttachHandler(event ->
+//                this.editor.registerCompletionProviders(queryHelp.getKeyedAceCompletionProvider()));
 
         view.setHelp(queryHelp);
-        view.setEditor(this.editorPresenter.getView());
 
         view.addTab(TABLE);
         view.addTab(VISUALISATION);
@@ -267,19 +265,19 @@ public class QueryEditController
         queryToolbar.onSearching(false);
 
         //noinspection unused event
-        own(editorPresenter.addValueChangeHandler(event -> {
-            final String query = editorPresenter.getText();
+        own(editor.addValueChangeHandler(event -> {
+            final String query = editor.getText();
             updateQuery(query);
             onChange();
         }));
         //noinspection unused event
-        own(editorPresenter.addFormatHandler(event -> onChange()));
+        own(editor.addFormatListener(event -> onChange()));
         queryToolbar.setOnStart(this::toggleStart);
         queryToolbar.setOnTimeRangeChange(() -> {
             run();
             onChange();
         });
-        queryHelp.linkToEditor(editorPresenter.getController());
+        queryHelp.linkToEditor(editor);
 
         //noinspection unused event
         listen(WindowCloseEvent.getType(), event -> {
@@ -303,7 +301,7 @@ public class QueryEditController
         final Element focusBefore = getActiveElement();
         Scheduler.get().scheduleFixedDelay(() -> {
             if (isFocusUnmoved(focusBefore, asWidget().getElement())) {
-                editorPresenter.focus();
+                editor.focus();
             }
             return false;
         }, 500);
@@ -441,7 +439,7 @@ public class QueryEditController
 
     private void run() {
         // No point running the search if there is no query
-        if (!NullSafe.isBlankString(editorPresenter.getText())) {
+        if (!NullSafe.isBlankString(editor.getText())) {
             queryInfo.prompt(() -> run(Function.identity()), taskMonitor());
         }
     }
@@ -455,8 +453,8 @@ public class QueryEditController
     private void run(final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
         // Clear the table selection and any markers.
         queryResultPresenter.clear();
-        editorPresenter.setMarkers(Collections.emptyList());
-        editorPresenter.setIndicators(new IndicatorLines(new Indicators()));
+        editor.setMarkers(Collections.emptyList());
+        editor.setIndicators(new IndicatorLines(new Indicators()));
 
         // Destroy any previous query.
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
@@ -481,7 +479,7 @@ public class QueryEditController
         queryModel.startNewSearch(
                 null,
                 null,
-                editorPresenter.getText(),
+                editor.getText(),
                 params,
                 queryToolbar.getTimeRange(),
                 true,
@@ -520,21 +518,21 @@ public class QueryEditController
         final boolean readOnly = context(Contexts.READ_ONLY);
         queryModel.init(docRef);
         if (query != null) {
-            if (NullSafe.isBlankString(editorPresenter.getText())
-                || !Objects.equals(editorPresenter.getText(), query)) {
-                editorPresenter.setText(query);
+            if (NullSafe.isBlankString(editor.getText())
+                || !Objects.equals(editor.getText(), query)) {
+                editor.setText(query);
                 updateQuery(query);
             }
         }
 
-        editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getFormatAction().setAvailable(!readOnly);
+        editor.setReadOnly(readOnly);
+        editor.getFormatAction().setAvailable(!readOnly);
         focus();
     }
 
     /// @return The query, as edited.
     public String getQuery() {
-        return editorPresenter.getText();
+        return editor.getText();
     }
 
     private void onChange() {
@@ -567,7 +565,7 @@ public class QueryEditController
     @Override
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
             final ValueChangeHandler<String> handler) {
-        return editorPresenter.addValueChangeHandler(handler);
+        return editor.addValueChangeHandler(handler);
     }
 
     /// @return The results table.

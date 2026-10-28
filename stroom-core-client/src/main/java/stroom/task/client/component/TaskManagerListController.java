@@ -60,7 +60,7 @@ import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -94,7 +94,7 @@ public class TaskManagerListController extends Controller implements Refreshable
     private final DateTimeFormatter dateTimeFormatter;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
-    private final TooltipPresenter tooltipPresenter;
+    private final InfoTooltipController infoTooltip;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
     private final FeedClient feedClient;
@@ -119,7 +119,7 @@ public class TaskManagerListController extends Controller implements Refreshable
     ///
     /// @param eventBus          The application's event bus.
     /// @param view              The content.
-    /// @param tooltipPresenter  Shows a task's info.
+    /// @param infoTooltip       Shows a task's info.
     /// @param restFactory       Fetches and terminates the tasks.
     /// @param nodeClient        Lists the nodes.
     /// @param feedClient        Finds a feed by name, to open it.
@@ -128,7 +128,7 @@ public class TaskManagerListController extends Controller implements Refreshable
     @Inject
     public TaskManagerListController(final EventBus eventBus,
                                      final TaskManagerList view,
-                                     final TooltipPresenter tooltipPresenter,
+                                     final InfoTooltipController infoTooltip,
                                      final RestFactory restFactory,
                                      final NodeClient nodeClient,
                                      final FeedClient feedClient,
@@ -137,8 +137,8 @@ public class TaskManagerListController extends Controller implements Refreshable
         super(eventBus);
         this.view = view;
         own(refCells);
-        own(tooltipPresenter);
-        this.tooltipPresenter = tooltipPresenter;
+        own(infoTooltip);
+        this.infoTooltip = infoTooltip;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
@@ -151,7 +151,7 @@ public class TaskManagerListController extends Controller implements Refreshable
         view.setOnCollapseAll(this::onCollapseAll);
         view.setOnShowWarnings(this::showWarnings);
         view.setOnShowInfo((row, popupPosition, anchor) ->
-                tooltipPresenter.show(buildTooltipHtml(row), popupPosition, anchor));
+                infoTooltip.show(buildTooltipHtml(row), popupPosition, anchor));
         view.setOnExpand((row, expanded) -> {
             treeAction.setRowExpanded(row, expanded);
             // As we get data async from all nodes we can't be sure when we have finished so

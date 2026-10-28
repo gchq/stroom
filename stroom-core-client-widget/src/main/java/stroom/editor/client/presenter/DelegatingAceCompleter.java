@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Thus the idea of this class is to provide a single completion provider instance that is added once
  * but then delegates getting the actual completions to currently registered providers.
  * <p>
- * Each user of an EditorPresenter can register one or more AceCompletionProviders for its
+ * Each user of a code editor can register one or more AceCompletionProviders for its
  * editor instance.  When completions are required this class will consult all currently registered
  * providers for the editor instance requesting completions.
  * <p>

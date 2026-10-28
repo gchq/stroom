@@ -353,7 +353,7 @@ public final class ScreenHarness {
     ///
     /// * some read the cached config at once, rather than with `UiConfigCache.get(consumer)`, which
     ///   fetches it first;
-    /// * editors (`EditorPresenter`) read the editor preferences, which are null until set.
+    /// * editors (`CodeEditorController`) read the editor preferences, which are null until set.
     ///
     /// The action isn't run if the story has rendered again meanwhile; a failure in it is reported
     /// as the story's error, as any other.

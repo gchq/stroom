@@ -41,7 +41,7 @@ import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.query.api.ExpressionOperator;
 import stroom.widget.component.client.Controller;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -78,27 +78,27 @@ public class ProcessorListController extends Controller implements Refreshable, 
     ///
     /// @param eventBus             The application's event bus.
     /// @param view                 The content.
-    /// @param tooltipPresenter     Shows a row's info.
+    /// @param infoTooltip          Shows a row's info.
     /// @param restFactory          Fetches the processors and saves their changes.
     /// @param processorInfoBuilder Writes a row's info.
     /// @param refCells             Lets the pipeline and user cells open their pipelines and users.
     @Inject
     public ProcessorListController(final EventBus eventBus,
                                    final ProcessorList view,
-                                   final TooltipPresenter tooltipPresenter,
+                                   final InfoTooltipController infoTooltip,
                                    final RestFactory restFactory,
                                    final ProcessorInfoBuilder processorInfoBuilder,
                                    final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
         this.refCells = own(refCells);
-        own(tooltipPresenter);
+        own(infoTooltip);
         this.request = new FetchProcessorRequest();
         initWidget(view);
 
         view.setOnShowInfo((row, popupPosition, anchor) ->
-                tooltipPresenter.show(processorInfoBuilder.get(row), popupPosition, anchor));
-        own(OpenLinkUtil.addClickHandler(this, tooltipPresenter.getWidget()));
+                infoTooltip.show(processorInfoBuilder.get(row), popupPosition, anchor));
+        own(OpenLinkUtil.addClickHandler(this, infoTooltip.asWidget()));
         view.setOnExpand((row, expanded) -> {
             request.setRowExpanded(row, expanded);
             refresh();
