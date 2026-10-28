@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/// Stroom documents the user attached to a chat from the Explorer tree ("Attach to chat"). Each becomes an
+/// Stroom documents the user attached to a chat from the Explorer tree ("Attach to Chat"). Each becomes an
 /// attachment of its own, which the chat refers to by its uuid.
 @JsonInclude(Include.NON_NULL)
 public final class DocumentReferenceContext extends AskStroomAiContext {
