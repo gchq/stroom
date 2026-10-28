@@ -18,6 +18,80 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 > **Since wave 12 (27 October 2026):** the document tabs and composite panes are components with a controller each (`stroom.<area>.client.component`). A document shows one as a tab through `ControllerTabProvider`: `new ControllerTabProvider<>(eventBus, provider::get, Foo::read, Foo::write)` for one the tab makes, or `ControllerTabProvider.ofOwned(eventBus, controller, reader[, writer])` for one the document makes and owns (e.g. to give it callbacks before the tab is opened); the tab passes on the controller's toolbars when it is a `HasToolbar`. Hand-rolled tab panes (`SteppingPresenter`, `UserTabPresenter`, `DataRetentionPresenter`) show each controller in a `ControllerLayer`. `ProcessorTaskPresenter` and `UserAndGroupsPresenter` stay as thin `ContentTabPresenter` shells around their controllers until wave 15. Among the new names: `SteppingElement`, `UserInfoTab`, `FloorMapSettings`, `DocumentAssetsTab` (shown through `DocumentAssetsTabProvider`), `ProcessorFilterTasks`, `DuplicateManagement`, `ImportsTab` with `ImportsTabController`, `AnnotationLinksController` (on the shared `FindPanel`), `ScriptSettings`, `UserAndGroups`, `ElasticClusterSettings`, `FeedDependenciesEditor` (`edit(opener, dependencies, onOk)`), `GitRepoSettings`, `AnnotationEdit` (`setOnTitleChange`, `setOnDelete`), `PipelineStructure`, `OpenAIModelSettings`, `PlanBSettings` (also a Traces store's Settings tab, its state type locked), `ScheduledProcessing` (also a data generator's Execution tab; `setIsDocumentDirty`), `PathwaysSplit`, `TracesListTab`, `SolrIndexSettings`, `ProcessorEdit` (`show(opener, ...)`), `DataRetentionImpact`, `DataRetentionPolicy`, `Processors` with `ProcessorsController` (a pipeline's, rule's or folder's Processors tab), `UserPermissionReport`, `StreamingProcessing` and one `AnalyticProcessing` for rules and reports (`setProcessingTypes(...)`; `AbstractProcessingPresenter` and its two subclasses are gone); the notification list is shown directly (`NotificationListController`). `ClassificationWrapper` takes its content in a template (`<d:content>`), and a `QuickFilterPage` takes a `<form:HelpHTML>` child as its filter's help. The plans below keep the old names. See `wave-12.md`.
 
+## Audited (28 October 2026)
+
+Five reviewers read the wave against this plan, "Done means" and AGENTS.md (the security, identity,
+credentials and content store screens; the monitoring and admin screens and the content-tab base;
+the data, receipt, annotation and IFrame screens; the shell; Ask Stroom AI). Fixed, with the wave:
+
+- **Restoring a tab session stopped at the first content tab.** The content plugins' open callback
+  was passed only presenters, and each restored tab opens the next from it; it is now run for any
+  screen (`ContentOpenCallback`, JUnit `TestContentOpenCallback`). The wave's own regression, never
+  in master.
+- **Ask Stroom AI's attached data chip.** It inserted a table's or dashboard's name as HTML; it is
+  escaped now (`ContextChip`, JUnit `TestContextChip`). Master too: changelog entry.
+- **Released on dispose.** The main screen's refresh timer and its two page key handlers (the shell
+  story's JSNI timer cancel went); the IFrame tab's frame and title polling (`close()` went); Ask
+  Stroom AI's replies after it is gone show or dock nothing.
+- **Late replies.** `.owner(...)` on the REST calls of the Welcome, Database Tables, Execution
+  Schedules and Content Templates screens.
+- **Smaller fixes.** The source tab's label checks for no stream before reading it; `WrapperView`
+  and its bindings went (no users left); the commented-out filters of Accounts and API Keys, the
+  unstyled `userViewImpl` and `credentials-manager` classes, the empty `focus()` of Signing Keys,
+  the Main controller's unused `getParentIframe`, `/** */` comments in the new files, stale names
+  (the ginjectors', the stories', `DockEvent`'s `getController`, the screens' providers) and docs
+  (WRITING-STORIES.md, A11Y.md, COMPONENT_MODEL_DESIGN.md); the signing key and user access
+  screens keep their old class docs' reasons.
+
+Left, on purpose (recorded in ISSUES.md, "Left from wave 15"): the dialog host's task monitor; Ask
+Stroom AI's singleton, model picker and message panel; Main's banner markup and the activity
+heading; `UserTabController`'s hand-rolled tabs; the filters' `setOnChange`; unused `view` fields
+and "presenter" names in plugins and stories; the old class names to become BEM blocks; two tab
+types shared by two screens each; the screens with no component of their own; and the plan's
+"stays" left in Java (the welcome grid's row headers, Main's split panes, page border and tab
+colour, Navigation's toolbar buttons and tree).
+
+## Done (28 October 2026)
+
+All of the plan's units: the content-tab base (`ContentTabController`, on `LayerController`, which
+moved to `stroom.widget.component.client`), every content-tab screen, the IFrame tab, the
+document editors' Processor Tasks tab, the shell (Core, FullScreen, the content tab pane with
+`CurveTabLayout`, Main, Navigation; `TabSessionManager` needed nothing) and Ask Stroom AI;
+`ContentTabPresenter`, `CurveTabLayoutPresenter`, `QuickFilterPageView`, `FindView` and
+`WrapperView` are gone. In 1 commit, with the audit's fixes (the content tabs and the shell were committed and run first; that commit was redone with Ask Stroom AI and the fixes, after a slip, below). The full workbench run on the content tabs and the shell
+(1,723 stories, 4 workers, with the leak check) passed all 1,723, and of their screenshots 1,619
+match, 12 are new (wave 13's and 14's stories with no baseline yet) and of the 92 that differ none
+is the wave's: they are the annotation editor's and pipeline editor's from wave 14, wave 13's
+query, floor map and documentation editors' and those that differ from run to run (the force
+visualisations, the data grid's value spinner column, `AppShell.OpensDocument`). The full run after the audit, on the wave's commit, passed all 1,723 too; of their screenshots 1,618 match, the same 12 are new, and the 93 that differ are the same kinds (none the wave's). The app
+and the standalone dashboard GWT compile, checkstyle is clean and the client and workbench
+modules' 2,178 JUnit tests pass. What was decided on the way, where it differs from the plans
+below:
+
+- **Names.** Plurals for the screens that list many (`Caches`, `SigningKeys`, `Jobs`, `Nodes`,
+  `NodeGroups`, ...); shells around an existing controller are `...TabController`
+  (`UsersAndGroupsTabController`, `DocumentUserPermissionsContentTabController`,
+  `ProcessorFilterTasksTabController`, `RuleSetTabController`).
+- **No component of their own.** Where the screen is only a list or an editor, the controller's
+  widget is the part's (the five `WrapperView` screens and the four shells); where a dumb
+  component already fits, it is given it (`PagerPanel` for Database Tables and Execution
+  Schedules, `QuickFilterPage` for Document Permissions, `FindPanel` for Browse Annotations,
+  `LinkTabPanel` for the user tab).
+- **Singletons.** Core, FullScreen, the content tab pane, Main, Navigation and Ask Stroom AI are
+  bound `in(Singleton.class)`, as their presenters were.
+- **Dialogs.** Ask Stroom AI shows itself with `ControllerDialog.show` and docks through
+  `DockEvent`, which carries any controller; its actions are one `AskStroomAiAction` callback.
+- **Removed, never used.** `BatchDocumentPermissionsView` and its template (the presenter took
+  `QuickFilterPageView`) and its two `show(...)` methods; `CurveTabLayout`'s right indent (it set
+  `right` on an unpositioned row, so did nothing).
+- **The shell's styles.** The loading message and the maintenance banner are state classes
+  (`loading--hidden`, `mainViewImpl--banner`); the IFrame tab's frame is `iframe-content__frame`
+  with its place as custom properties; the explorer's activity button is declared in its template.
+- **Tool slips.** The converter's javadoc pattern could span comments (two controllers rebuilt by
+  hand), its view interface cut used offsets from before a package rename of a different length,
+  and its caller rename went by simple name (two `ProcessorTaskPresenter`s); all fixed. A commit
+  of wave 14's record first took wave 15's staged deletions with it; it was redone.
+
 Convert the tool screens onto a content-tab component base: Users, Accounts, API keys, Credentials, Nodes, Jobs, Cache, Volumes, Meta, Retention, Content Store and so on. Then convert the shell: ContentTabPane, CurveTabLayout, Navigation, Main, Core, FullScreen and TabSessionManager. Replace explorer bus events with callbacks and context where possible, and finally delete ContentTabPresenter, WrapperView's GIN binding and the popup bridges.
 
 ## CSS and template notes for the wave

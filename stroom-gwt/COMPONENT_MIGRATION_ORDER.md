@@ -1004,6 +1004,16 @@ Move every DocTabPresenter shell onto DocumentEditor<D> plus DocumentEditorHost,
 
 Each unit's plan (names, template, what goes, every inline style and its replacement, what moves into the template): [`component-migration/wave-15.md`](component-migration/wave-15.md).
 
+> **Done and audited, 28 October 2026** (overnight, decisions to check): every unit, in 1 commit
+> with the audit's fixes. Each content tab is a controller on `ContentTabController`, with a
+> component where it has one; the shell (Core, FullScreen, the content tab pane with
+> `CurveTabLayout`, Main, Navigation) and Ask Stroom AI are components with controllers;
+> `ContentTabPresenter`, `CurveTabLayoutPresenter`, `QuickFilterPageView`, `FindView` and
+> `WrapperView` are gone. Five reviewers audited the wave: a tab session restore that stopped at
+> the first content tab (the wave's own) and Ask Stroom AI's attached data chip shown as HTML
+> (master too) were fixed. The full workbench run after it passed all 1,723 stories with the leak
+> check. `MyPresenterWidget` and the presenter framework stay until agreed. See `wave-15.md`.
+
 Convert the tool screens onto a content-tab component base: Users, Accounts, API keys, Credentials, Nodes, Jobs, Cache, Volumes, Meta, Retention, Content Store and so on. Then convert the shell: ContentTabPane, CurveTabLayout, Navigation, Main, Core, FullScreen and TabSessionManager. Replace explorer bus events with callbacks and context where possible, and finally delete ContentTabPresenter, WrapperView's GIN binding and the popup bridges.
 
 **Why now.** Screens only own lists, dialogs and tabs, all converted by now. The shell owns the screens and the tab pane, so it goes last. NavigationPresenter can only drop its explorer bus events once nothing else listens for them.
