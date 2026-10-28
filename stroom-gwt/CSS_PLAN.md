@@ -144,14 +144,13 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    to classes and custom properties.
 7. **Enforce**: the check above, in the build.
 
-## Decisions to take
+## Decisions (taken 28 October 2026)
 
-* **Removals.** Most of steps 1 to 4 deletes shared CSS and dead code, which the standing rule
-  holds back until the other in-flight work is in. Can it go ahead now, or wait?
-* **The layout helpers' names.** Keep the short names (`max`, `dock-max`, `w-100` …), documented
-  as layout, or rename them to one prefix (e.g. `l-max`, `l-dock-max`)? Keeping them is less churn
-  (about 1,000 uses); a prefix makes them recognisable as layout.
-* **Combinations:** a named class for each common combination (e.g. a form page), or each
-  component's block holding its layout itself (fewer classes in templates, more in sheets)?
-* **Looks:** the aim is no visible change; removing Bootstrap may move things by a pixel. Accept
-  those with new baselines, or match exactly?
+* **Removals go ahead now**, with a full screenshot diff around each step; other branches that touch
+  the same sheets will need merging.
+* **The layout helpers keep their short names** (`max`, `dock-max`, `w-100` …), moved into one layout
+  sheet as deliberate, documented utilities.
+* **Combinations fold into components:** each component's own BEM class takes the declarations; only
+  a pattern shared by many different widgets becomes a named shared class.
+* **Looks:** every changed screenshot is looked at; small shifts that don't harm the look are
+  accepted with new baselines, and anything that looks worse is fixed.
