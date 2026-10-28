@@ -16,7 +16,7 @@
 
 package stroom.contentstore.client.component;
 
-import stroom.contentstore.client.presenter.ImageTagUtil;
+import stroom.contentstore.client.ImageTagUtil;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;

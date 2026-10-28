@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.contentstore.client.presenter;
+package stroom.contentstore.client;
 
 import com.google.gwt.http.client.URL;
 
