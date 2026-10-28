@@ -60,7 +60,7 @@ final class IndexingFixtures {
     static FieldPlan withBackend(final FieldPlan plan, final String backend) {
         return new FieldPlan(backend, plan.indexName(), plan.timeField(), plan.fields(), plan.dropWhen(),
                 plan.discovery(), plan.imports(), plan.shared(), plan.subobjects(), plan.convention(),
-                plan.customNamespaces(), plan.style());
+                plan.customNamespaces(), plan.style(), plan.standIns());
     }
 
     /// @param plan       A plan.
@@ -69,7 +69,7 @@ final class IndexingFixtures {
     static FieldPlan withSubobjects(final FieldPlan plan, final boolean subobjects) {
         return new FieldPlan(plan.backend(), plan.indexName(), plan.timeField(), plan.fields(), plan.dropWhen(),
                 plan.discovery(), plan.imports(), plan.shared(), subobjects, plan.convention(),
-                plan.customNamespaces(), plan.style());
+                plan.customNamespaces(), plan.style(), plan.standIns());
     }
 
     /// @param plan     A plan.
@@ -78,7 +78,7 @@ final class IndexingFixtures {
     static FieldPlan withDropWhen(final FieldPlan plan, final List<String> dropWhen) {
         return new FieldPlan(plan.backend(), plan.indexName(), plan.timeField(), plan.fields(), dropWhen,
                 plan.discovery(), plan.imports(), plan.shared(), plan.subobjects(), plan.convention(),
-                plan.customNamespaces(), plan.style());
+                plan.customNamespaces(), plan.style(), plan.standIns());
     }
 
     /// @param name A file bundled beside the convention profiles.
