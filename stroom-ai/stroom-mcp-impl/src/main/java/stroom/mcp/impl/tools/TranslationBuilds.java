@@ -67,6 +67,8 @@ class TranslationBuilds {
     static final String UNKNOWN_AGREED = "unknown agreed";
     // What the user chose for each field whose Ids carry a domain: split or kept (not in the Stroom MCP server).
     static final String DOMAIN_CHOSEN = "domain split chosen";
+    /// What the user chose for values that stand for none, by value (see [PlaceholderChoices]).
+    static final String PLACEHOLDERS_CHOSEN = "placeholders chosen";
     /// What changes_applied_to says when changes went onto the session's draft.
     static final String ON_THE_DRAFT = "the draft draft_translation_mapping made";
 

@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -44,6 +45,7 @@ import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
+import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -61,6 +63,7 @@ import jakarta.inject.Inject;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -308,7 +311,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         if (discovery != null) {
             final Object timed = discoveryTime(call, context, indexName, discovery, streamIds);
             if (timed instanceof final Discovery chosen) {
-                return draftDiscovery(backend, indexName, chosen);
+                final List<String> warnings = new ArrayList<>();
+                final Discovery settled = discoveryStandIns(call, context, indexName, chosen, streamIds, warnings);
+                return draftDiscovery(backend, indexName, settled, warnings);
             }
             return castMap(timed);
         }
@@ -344,7 +349,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                     : draft.convention) + "'; ask the user for an example index template (or an existing index to "
                                   + "follow), or a convention: get_field_conventions backend=elasticsearch");
         }
-        return planned(call, backend, indexName, streamIds, profiles, draft, pasted);
+        return planned(call, context, backend, indexName, streamIds, profiles, draft, pasted);
     }
 
     // Elasticsearch without an example: the user is asked how fields are named, or confirms drafting from a
@@ -486,6 +491,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
 
     // The plan, from the convention's paths the sample populates, named after the example where there is one.
     private Map<String, Object> planned(final ToolCall call,
+                                        final ToolCallContext context,
                                         final String backend,
                                         final String indexName,
                                         final List<Long> streamIds,
@@ -563,11 +569,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 ToolArgs.strings(call, DROP_WHEN_ARG), null, List.of(), shared, subobjects, draft.convention,
                 "ecs".equals(draft.convention)
                         ? namespaces
-                        : List.of(), XsltStyle.DEFAULT);
+                        : List.of(), XsltStyle.DEFAULT, Map.of());
         if ((pasted != null || draft.likeIndex != null) && FieldPlan.ELASTICSEARCH.equals(backend)) {
             keepExample(draft, indexName, streamIds.getFirst(), pasted, exampleNotes);
         }
         plan = plans.withCardinality(plan);
+        final List<String> standInWarnings = new ArrayList<>();
+        plan = eventStandIns(call, context, indexName, plan, events, standInWarnings);
         final String replaces = stringArg(call, REPLACES_ARG);
         final Map<String, Object> replaced = replaces == null
                 ? null
@@ -591,7 +599,73 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         if (!ecsData.isEmpty()) {
             result.put("ecs_data_elements", ecsData);
         }
+        if (!standInWarnings.isEmpty()) {
+            final List<Object> warnings = result.get("warnings") instanceof final List<?> given
+                    ? new ArrayList<>(given)
+                    : new ArrayList<>();
+            warnings.addAll(standInWarnings);
+            result.put("warnings", warnings);
+        }
         return result;
+    }
+
+    /// Values the Events hold for none in the planned fields (`-`, `N/A`, ...; [Placeholders]), put to the user in
+    /// one form: each indexed as missing (left out), as null, or as written. Not in the Stroom MCP server; asked for
+    /// by the user (seen: W3C logs' `-` for a missing address kept in the Events, and refused by an Elasticsearch ip
+    /// field). Elasticsearch only: a Lucene field takes any text. The answers are kept for the session; without
+    /// forms the agent is told to ask.
+    ///
+    /// @return The plan with what the user chose.
+    @SuppressWarnings("unchecked")
+    private FieldPlan eventStandIns(final ToolCall call,
+                                    final ToolCallContext context,
+                                    final String indexName,
+                                    final FieldPlan plan,
+                                    final Map<String, Object> events,
+                                    final List<String> warnings) {
+        final Map<String, String> remembered = memory.standInsChosen(indexName);
+        if (!plan.isElasticsearch()
+            || !(events.get(StreamSummaries.VALUES_BY_PATH) instanceof final Map<?, ?> valuesByPath)) {
+            return plan.withStandIns(remembered);
+        }
+        final Map<String, List<String>> byField = new LinkedHashMap<>();
+        for (final PlannedField field : plan.fields()) {
+            if (!JsonValues.truthy(field.source())) {
+                continue;
+            }
+            final List<String> values = new ArrayList<>();
+            valuesByPath.forEach((path, held) -> {
+                if (FieldPlans.sourceMatches(field.source(), String.valueOf(path))) {
+                    values.addAll((List<String>) held);
+                }
+            });
+            if (!values.isEmpty()) {
+                byField.put(field.name(), values);
+            }
+        }
+        final Set<String> decided = new HashSet<>(plan.standIns().keySet());
+        decided.addAll(remembered.keySet());
+        final List<Placeholders.Found> found = Placeholders.find(byField, decided);
+        if (found.isEmpty()) {
+            return plan.withStandIns(remembered);
+        }
+        final Optional<Map<String, String>> answers = consent.chooseEach(call, context, NAME,
+                PlaceholderChoices.EVENTS_INTRO,
+                PlaceholderChoices.questions(found, List.copyOf(PlaceholderChoices.EVENTS_OPTIONS.keySet())));
+        if (answers.isEmpty()) {
+            found.forEach(each -> warnings.add("placeholder " + PlaceholderChoices.question(each) + " looks like a "
+                                               + "stand-in for none: ask the user whether to index it as missing, "
+                                               + "null or as written, and give the plan you save (save_xslt "
+                                               + "index_plan=) stand_ins={'" + each.value() + "': 'leave_out', "
+                                               + "'null' or 'keep'}"));
+            return plan.withStandIns(remembered);
+        }
+        final Map<String, String> chosen = new LinkedHashMap<>();
+        answers.get().forEach((value, label) -> chosen.put(value, PlaceholderChoices.EVENTS_OPTIONS.get(label)));
+        memory.chooseStandIns(indexName, chosen);
+        final Map<String, String> all = new LinkedHashMap<>(remembered);
+        all.putAll(chosen);
+        return plan.withStandIns(all);
     }
 
     // ECS has no place for an action's own elements (Authenticate/User/Id): they go under the source's namespace,
@@ -828,30 +902,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         if (streamIds.isEmpty()) {
             return discovery;
         }
-        final StringBuilder read = new StringBuilder();
-        for (final long streamId : streamIds.subList(0, Math.min(DISCOVERY_STREAMS, streamIds.size()))) {
-            try {
-                read.append(stripTrailingNewlines(streamReader.readHead(streamId, 0, DISCOVERY_CHARS).text()))
-                        .append('\n');
-            } catch (final RuntimeException e) {
-                // A stream that can't be read: the others serve.
-                LOGGER.debug(() -> LogUtil.message("Stream {} not read: {}", streamId, e.getMessage()));
-            }
-        }
-        String text = read.toString();
-        final String rows = recordsRows(text);
-        if (rows != null) {
-            // records:2 (a Records stream): each data element is a field by its name, as the delimited input reads
-            // them (seen: a Records stream profiled as XML offered only 'data@value', and the agent indexed
-            // name/value lists).
-            if (!"delimited".equals(discovery.input())) {
-                throw new ToolRefusal("These streams hold records:2 records (a Data Splitter's output, a Records "
-                                      + "stream): draft with discovery={'input': 'delimited', 'timestamp_field': <a "
-                                      + "data name>}, which indexes each data element as a field by its name, on an "
-                                      + "indexing template with an XMLParser.");
-            }
-            text = rows;
-        }
+        final String text = discoveryText(discovery, streamIds);
         final Optional<String> remembered = memory.timeChosen(indexName);
         if (remembered.isPresent()) {
             return withTimestamp(discovery, remembered.get());
@@ -906,6 +957,109 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         return result;
     }
 
+    // The start of the raw streams, as text; records:2 records (a Records stream) as JSON lines.
+    private String discoveryText(final Discovery discovery, final List<Long> streamIds) {
+        final StringBuilder read = new StringBuilder();
+        for (final long streamId : streamIds.subList(0, Math.min(DISCOVERY_STREAMS, streamIds.size()))) {
+            try {
+                read.append(stripTrailingNewlines(streamReader.readHead(streamId, 0, DISCOVERY_CHARS).text()))
+                        .append('\n');
+            } catch (final RuntimeException e) {
+                // A stream that can't be read: the others serve.
+                LOGGER.debug(() -> LogUtil.message("Stream {} not read: {}", streamId, e.getMessage()));
+            }
+        }
+        final String text = read.toString();
+        final String rows = recordsRows(text);
+        if (rows == null) {
+            return text;
+        }
+        // records:2 (a Records stream): each data element is a field by its name, as the delimited input reads them
+        // (seen: a Records stream profiled as XML offered only 'data@value', and the agent indexed name/value
+        // lists).
+        if (!"delimited".equals(discovery.input())) {
+            throw new ToolRefusal("These streams hold records:2 records (a Data Splitter's output, a Records "
+                                  + "stream): draft with discovery={'input': 'delimited', 'timestamp_field': <a "
+                                  + "data name>}, which indexes each data element as a field by its name, on an "
+                                  + "indexing template with an XMLParser.");
+        }
+        return rows;
+    }
+
+    /// Values the raw records write for none (`-`, `N/A`, ...; [Placeholders]), put to the user in one form: each
+    /// indexed as missing (left out), null, an empty string, or as written. Not in the Stroom MCP server; asked for
+    /// by the user (seen: W3C logs' `-` for a missing address, refused by an Elasticsearch ip field). The answers
+    /// are kept for the session, so the user isn't asked again; without forms the agent is told to ask. Only JSON
+    /// and records:2 records are read for them.
+    ///
+    /// @return The discovery with what the user chose.
+    private Discovery discoveryStandIns(final ToolCall call,
+                                        final ToolCallContext context,
+                                        final String indexName,
+                                        final Discovery discovery,
+                                        final List<Long> streamIds,
+                                        final List<String> warnings) {
+        final Map<String, String> remembered = memory.standInsChosen(indexName);
+        if (streamIds.isEmpty() || "xml".equals(discovery.input())) {
+            return discovery.withStandIns(remembered);
+        }
+        final Set<String> decided = new HashSet<>(discovery.standIns().keySet());
+        decided.addAll(remembered.keySet());
+        final List<Placeholders.Found> found = Placeholders.find(jsonValues(discoveryText(discovery, streamIds)),
+                decided);
+        if (found.isEmpty()) {
+            return discovery.withStandIns(remembered);
+        }
+        final Optional<Map<String, String>> answers = consent.chooseEach(call, context, NAME,
+                PlaceholderChoices.JSON_INTRO,
+                PlaceholderChoices.questions(found, List.copyOf(PlaceholderChoices.JSON_OPTIONS.keySet())));
+        if (answers.isEmpty()) {
+            found.forEach(each -> warnings.add("placeholder " + PlaceholderChoices.question(each) + " looks like a "
+                                               + "stand-in for none: ask the user whether to index it as missing, "
+                                               + "null, an empty string or as written, and draft again with "
+                                               + "discovery.stand_ins={'" + each.value() + "': one of "
+                                               + Discovery.STAND_IN_TREATMENTS + "}"));
+            return discovery.withStandIns(remembered);
+        }
+        final Map<String, String> chosen = new LinkedHashMap<>();
+        answers.get().forEach((value, label) -> chosen.put(value, PlaceholderChoices.JSON_OPTIONS.get(label)));
+        memory.chooseStandIns(indexName, chosen);
+        final Map<String, String> all = new LinkedHashMap<>(remembered);
+        all.putAll(chosen);
+        return discovery.withStandIns(all);
+    }
+
+    // Each field's string values in JSON records (one a line, or an array), nested objects as dotted names.
+    static Map<String, List<String>> jsonValues(final String text) {
+        final List<Object> records = new ArrayList<>();
+        final String stripped = text.strip();
+        try {
+            if (stripped.startsWith("[")) {
+                if (PyJson.loads(stripped) instanceof final List<?> items) {
+                    records.addAll(items);
+                }
+            } else {
+                for (final String line : stripped.split("\n")) {
+                    if (line.strip().startsWith("{")) {
+                        records.add(PyJson.loads(line.strip()));
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            // A line cut off at the end of what was read: the records before it serve.
+            LOGGER.debug(() -> LogUtil.message("Raw records not all read as JSON: {}", e.getMessage()));
+        }
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+        for (final Object record : records) {
+            SampleProfiler.flatten(record).forEach((field, value) -> {
+                if (value instanceof final String string) {
+                    values.computeIfAbsent(field, key -> new ArrayList<>()).add(string);
+                }
+            });
+        }
+        return values;
+    }
+
     /// records:2 records as JSON lines, one object of data name to value per record.
     ///
     /// @param text Streams' text.
@@ -948,7 +1102,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     // only explicit ones.
     private Map<String, Object> draftDiscovery(final String backend,
                                                final String indexName,
-                                               final Discovery discovery) {
+                                               final Discovery discovery,
+                                               final List<String> warnings) {
         if (!FieldPlan.ELASTICSEARCH.equals(backend)) {
             throw new ToolRefusal("A discovery index is Elasticsearch: its fields are mapped dynamically as documents "
                                   + "arrive");
@@ -964,6 +1119,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         result.put("plan", plan.toJson());
         result.put("xslt", xslt);
         result.put("rendered", plan.elasticTemplate(indexName, plans.ecs()));
+        if (!warnings.isEmpty()) {
+            result.put("warnings", warnings);
+        }
         result.put("hint", "Save the XSLT with save_xslt index_plan=plan and no code, create_indexing_pipeline from "
                            + "the discovery template, step_sample on the raw streams (the documents show the source's "
                            + "fields), then propose_index_template with the plan and the user's example template for "
@@ -1074,7 +1232,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     private static Discovery withTimestamp(final Discovery discovery, final String field) {
         return new Discovery(discovery.input(), discovery.record(), field, discovery.timestampChosenByUser(),
                 discovery.timestampFormat(), discovery.meta(), discovery.drop(), discovery.unpackJson(),
-                discovery.ignoreAbove(), discovery.totalFieldsLimit());
+                discovery.ignoreAbove(), discovery.totalFieldsLimit(), discovery.standIns());
     }
 
     private static String stripTrailingNewlines(final String text) {

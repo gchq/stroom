@@ -202,6 +202,9 @@ final class TranslationWorld {
                         if (waitsForUser && waited.add(callId)) {
                             throw new AiChatRunManager.WaitingForUserException("Waiting for " + callId);
                         }
+                        if (isSeveralQuestions(form)) {
+                            return severalAnswered(form);
+                        }
                         return answers.entrySet().stream()
                                 .filter(answer -> intro.startsWith(answer.getKey()))
                                 .findFirst()
@@ -296,6 +299,26 @@ final class TranslationWorld {
         Mockito.when(chatWorkspace.readLines(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyLong(),
                 Mockito.anyInt())).thenAnswer(inv ->
                 List.of(files.get(String.valueOf((Object) inv.getArgument(1))).split("\n", -1)));
+    }
+
+    // Whether a form asks several questions (Consent.chooseEach): fields q1, q2, ...
+    private static boolean isSeveralQuestions(final Map<String, Object> form) {
+        return form.get("properties") instanceof final Map<?, ?> properties && properties.containsKey("q1");
+    }
+
+    // Each question answered from answers, by the start of its title; declined if none is answered.
+    private ElicitResult severalAnswered(final Map<String, Object> form) {
+        final Map<String, Object> content = new LinkedHashMap<>();
+        ((Map<?, ?>) form.get("properties")).forEach((key, field) -> {
+            final String title = String.valueOf(((Map<?, ?>) field).get("title"));
+            answers.entrySet().stream()
+                    .filter(answer -> title.startsWith(answer.getKey()))
+                    .findFirst()
+                    .ifPresent(answer -> content.put(String.valueOf(key), answer.getValue()));
+        });
+        return content.isEmpty()
+                ? new ElicitResult(ElicitResult.Action.DECLINE, null)
+                : new ElicitResult(ElicitResult.Action.ACCEPT, content);
     }
 
     // Whether a form is a confirmation's or an approval's: a yes or no.

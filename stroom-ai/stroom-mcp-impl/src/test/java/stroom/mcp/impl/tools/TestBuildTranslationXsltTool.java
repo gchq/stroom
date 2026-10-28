@@ -353,6 +353,48 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void standInsForNoneArePutToTheUserBeforeSaving() {
+        // Asked for by the user: W3C logs' '-' for a missing address went on into an Elasticsearch ip field.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "N/A"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "N/A"}
+                """;
+        final String warned = "sample: placeholder '-' in host (2 values)";
+
+        // Without forms the warning is the agent's.
+        final Map<String, Object> unasked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "P0", "sample", sample));
+        assertThat(unasked).containsKey("saved");
+        assertThat(list(unasked.get("warnings"))).anyMatch(w -> String.valueOf(w).startsWith(warned));
+
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.LEAVE_OUT);
+        world.answers.put("'N/A' in", PlaceholderChoices.KEEP);
+        final Map<String, Object> asked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "P", "sample", sample));
+        assertThat(world.asked).containsExactly(PlaceholderChoices.INTRO);
+        assertThat(asked).as(String.valueOf(asked)).containsKey("saved");
+        assertThat(list(asked.get("changes_applied")))
+                .containsExactly("'-' left out where a field holds it (nil_values), as the user chose");
+        assertThat(list(asked.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
+        final String uuid = String.valueOf(map(asked.get("saved")).get("uuid"));
+        final Map<String, Object> kept = KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload();
+        assertThat(map(kept.get("mapping")).get("nil_values")).isEqualTo(List.of("-"));
+        assertThat(world.xslt(uuid).getData()).contains("[not(normalize-space(.) = ('-'))]");
+
+        // Asked once: sent again, '-' is left out and 'N/A' kept, as the user chose, without asking.
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample",
+                sample));
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(again.get("changes_applied"))).hasSize(1);
+        assertThat(list(again.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
+    }
+
+    @Test
     void anIdWrittenFromTwoFieldsIsAskedAboutOnce() {
         // Seen: Authenticate/User/Id from By User in some rules and Target User in others, two forms in a row.
         final Map<String, Object> mapping = JsonUtil.readValue("""

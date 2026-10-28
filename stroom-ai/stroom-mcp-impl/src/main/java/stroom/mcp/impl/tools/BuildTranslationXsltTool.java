@@ -52,6 +52,7 @@ import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -383,11 +384,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return b.result;
         }
         checkSample(context, b);
-        if (splitDomains(call, context, b)) {
-            // Split as the user chose: generated and checked again, so what is saved and said is the split mapping.
+        final boolean split = splitDomains(call, context, b);
+        final boolean leftOut = leavePlaceholdersOut(call, context, b);
+        if (split || leftOut) {
+            // Changed as the user chose: generated and checked again, so what is saved and said is the mapping as
+            // changed.
             generate(context, b);
             checkSample(context, b);
         }
+        dropAnswered(b);
         checkAgainstNotes(b);
         checkLookups(b);
         jsonProperties(b);
@@ -610,6 +615,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, Object> check = MappingSampleCheck.check(b.mapping, samples, splitter, b.schema, inferred,
                 clock);
         b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);
+        b.placeholders = (List<Placeholders.Found>) check.remove(MappingSampleCheck.PLACEHOLDERS);
         b.result.put("sample_check", check);
         JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
         final List<String> found = JsonValues.strings(check.get("problems"));
@@ -752,6 +758,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (!b.domainChoices.isEmpty()) {
             saved = new LinkedHashMap<>(saved);
             saved.put("version", builds.rememberAgreed(TranslationBuilds.DOMAIN_CHOSEN, uuid, b.domainChoices));
+        }
+        if (!b.placeholderChoices.isEmpty()) {
+            saved = new LinkedHashMap<>(saved);
+            saved.put("version", builds.rememberAgreed(TranslationBuilds.PLACEHOLDERS_CHOSEN, uuid,
+                    b.placeholderChoices));
         }
         final Map<String, Object> summary = new LinkedHashMap<>();
         for (final String key : List.of("type", "uuid", "name", "version")) {
@@ -911,6 +922,65 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         applied.addAll(done);
         b.applied = applied;
         return true;
+    }
+
+    // Values in the sample that look like stand-ins for none ('-', 'N/A', ...) are put to the user, before saving,
+    // all in one form: leave each out (nil_values) or keep it as written. Not in the Stroom MCP server; asked for by
+    // the user (seen: W3C logs' '-' for a missing address went on into an Elasticsearch ip field, which refused the
+    // documents). The choices are kept with the XSLT, so a value is asked about once; without forms the warning is
+    // left for the agent.
+    private boolean leavePlaceholdersOut(final ToolCall call, final ToolCallContext context, final Build b) {
+        final Request request = b.request;
+        if (b.placeholders == null || b.placeholders.isEmpty() || !ok(b)
+            || (request.build() == null && request.uuid() == null)) {
+            return false;
+        }
+        final Map<String, String> before = builds.agreed(TranslationBuilds.PLACEHOLDERS_CHOSEN, request.uuid(),
+                request.build(), request.name());
+        final List<Placeholders.Found> unasked = b.placeholders.stream()
+                .filter(found -> !before.containsKey(found.value()))
+                .toList();
+        final Map<String, String> answers = unasked.isEmpty()
+                ? Map.of()
+                : consent.chooseEach(call, context, NAME, PlaceholderChoices.INTRO,
+                        PlaceholderChoices.questions(unasked, PlaceholderChoices.OPTIONS)).orElse(Map.of());
+        final List<String> leaveOut = new ArrayList<>();
+        for (final Placeholders.Found found : b.placeholders) {
+            final String chosen = before.containsKey(found.value())
+                    ? before.get(found.value())
+                    : answers.get(found.value());
+            if (chosen == null) {
+                // No form: the warning is the agent's.
+                continue;
+            }
+            b.placeholderChoices.put(found.value(), chosen);
+            if (PlaceholderChoices.LEAVE_OUT.equals(chosen)) {
+                leaveOut.add(found.value());
+            }
+        }
+        if (leaveOut.isEmpty()) {
+            return false;
+        }
+        b.mapping = PlaceholderChoices.leaveOut(b.mapping, leaveOut);
+        final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
+        leaveOut.forEach(value -> applied.add("'" + value + "' left out where a field holds it (nil_values), as "
+                                              + "the user chose"));
+        b.applied = applied;
+        return true;
+    }
+
+    // The warnings to the agent about what the user has answered (a domain kept on Ids, a stand-in for none), which
+    // the sample's second check, after the mapping changed as the user chose, brings back (seen: 'N/A' kept, warned
+    // about again once '-' was left out).
+    private static void dropAnswered(final Build b) {
+        final List<String> warnings = TranslationBuilds.warnings(b.result);
+        b.placeholderChoices.keySet().forEach(value ->
+                warnings.removeIf(warning -> warning.startsWith("sample: placeholder '" + value + "' in ")));
+        NullSafe.list(b.qualified).stream()
+                .filter(found -> DomainSplits.KEEP.equals(b.domainChoices.get(DomainSplits.key(found))))
+                .forEach(found -> found.paths().forEach(path -> warnings.removeIf(warning -> warning.startsWith(
+                        "sample: " + path + " takes field '" + found.field() + "', whose values are "
+                        + "domain-qualified"))));
     }
 
     private static void withChanges(final Build b) {
@@ -1100,6 +1170,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private List<LocalCheck.QualifiedIds> qualified;
         private Map<String, Object> sent;
         private final Map<String, String> domainChoices = new LinkedHashMap<>();
+        private List<Placeholders.Found> placeholders;
+        private final Map<String, String> placeholderChoices = new LinkedHashMap<>();
         private List<String> applied;
         private String basedOn;
         private String version;

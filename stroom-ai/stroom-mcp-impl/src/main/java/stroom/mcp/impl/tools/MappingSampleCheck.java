@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.XmlTree;
@@ -55,6 +56,9 @@ final class MappingSampleCheck {
     /// The key of the fields whose values going into users' Ids carry a domain, for the caller to take out (not
     /// for the result: they are [LocalCheck.QualifiedIds], not JSON).
     static final String DOMAIN_QUALIFIED = "domain_qualified";
+    /// The key the stand-ins for none found are kept under ([Placeholders.Found]), for the tool to ask the user
+    /// about; taken out before the check is returned.
+    static final String PLACEHOLDERS = "placeholders";
 
     private MappingSampleCheck() {
         // Static only.
@@ -71,7 +75,7 @@ final class MappingSampleCheck {
     /// @param inferred True if the spec was inferred from the sample rather than given.
     /// @param clock    The clock the check's time is read against.
     /// @return `records`, `problems`, `warnings`, `fields_seen`, `not_checked`, `kept_unknown` and `note`, as the
-    /// Stroom MCP server gave them, and [#DOMAIN_QUALIFIED].
+    /// Stroom MCP server gave them, [#DOMAIN_QUALIFIED] and [#PLACEHOLDERS].
     static Map<String, Object> check(final TranslationMapping mapping,
                                      final List<String> samples,
                                      final SplitterSpec splitter,
@@ -87,6 +91,9 @@ final class MappingSampleCheck {
         final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(mapping, found.records(),
                 schema);
         warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
+        // Not in the Python server: values that look like stand-ins for none, for the user to decide on.
+        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(mapping, found.records());
+        warnings.addAll(PlaceholderChoices.warnings(placeholders));
         // Not in the Python server: Data a rule's own records never hold.
         warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
         // Not in the Python server: the required elements the sample's records leave out, counted.
@@ -113,6 +120,7 @@ final class MappingSampleCheck {
         check.put("problems", problems);
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
+        check.put(PLACEHOLDERS, placeholders);
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -1088,6 +1089,30 @@ public final class LocalCheck {
         paths.forEach((field, into) -> out.add(new QualifiedIds(field, List.copyOf(into),
                 qualified.get(field).stream().limit(3).toList())));
         return out;
+    }
+
+    /// Values the sample's records hold in the fields the mapping writes, that look like stand-ins for none (`-`,
+    /// `N/A`, ...; see [Placeholders]), for the user to say whether to leave them out. Not in the Stroom MCP server;
+    /// asked for by the user (seen: W3C logs' `-` for a missing address went on into an Elasticsearch ip field).
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The stand-ins found, those the mapping's nil_values already leave out aside.
+    public static List<Placeholders.Found> placeholders(final TranslationMapping mapping,
+                                                        final List<Object> records) {
+        final FieldValues values = new FieldValues(mapping, records);
+        final Map<String, List<String>> byField = new LinkedHashMap<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            // Only fields written as they are: a value map, lookup or dictionary says what each value becomes.
+            if (!hasText(entry.field()) || entry.value() != null || entry.hasMap() || entry.lookup() != null
+                || hasText(entry.dictionary()) || hasText(entry.xpath()) || byField.containsKey(entry.field())) {
+                continue;
+            }
+            byField.put(entry.field(), values.of(entry));
+        }
+        return Placeholders.find(byField, mapping.nilValues() == null
+                ? Set.of()
+                : Set.copyOf(mapping.nilValues()));
     }
 
     // An Id of one of the schema's users, not an email's addressee; without the schema, an Id of an element named
