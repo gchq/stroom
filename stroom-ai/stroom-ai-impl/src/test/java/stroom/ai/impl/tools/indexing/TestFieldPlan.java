@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.sample.PyJson;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -144,7 +145,7 @@ class TestFieldPlan {
     @Test
     void aDiscoveryPlanCopiesRecordsAsTheyAreAndMapsOnlyWhatStroomNeeds() {
         final FieldPlan plan = FieldPlan.forDiscovery("stroom-discovery-acme-v1", new Discovery("json", null, "ts",
-                false, null, Map.of("stroom.feed", "Feed"), List.of("token"), true, 1024, 2000));
+                false, null, Map.of("stroom.feed", "Feed"), List.of("token"), true, 1024, 2000, Map.of()));
         assertThat(plan.required()).isEmpty();
         assertThat(plan.fields()).extracting(PlannedField::name).containsExactly("StreamId", "EventId", "@timestamp");
         final Map<String, Object> body = JsonValues.map(plan.elasticTemplate("stroom-discovery-acme-v1", ECS)
@@ -177,7 +178,7 @@ class TestFieldPlan {
     @Test
     void aDiscoveryTimestampCanBeNestedAndFormattedAndUnpackingTurnedOff() {
         final FieldPlan plan = FieldPlan.forDiscovery("d", new Discovery("json", null, "event.created", false,
-                "dd/MM/yyyy HH:mm:ss", Map.of(), List.of(), false, 1024, 2000));
+                "dd/MM/yyyy HH:mm:ss", Map.of(), List.of(), false, 1024, 2000, Map.of()));
         final String xslt = plan.xslt();
         assertThat(xslt).contains("stroom:format-date(string(*[@key='event']/*[@key='created']), "
                                   + "'dd/MM/yyyy HH:mm:ss')")
@@ -250,7 +251,7 @@ class TestFieldPlan {
     @Test
     void aDelimitedDiscoveryPlanIndexesEachColumnByItsHeader() {
         final FieldPlan plan = FieldPlan.forDiscovery("d", new Discovery("delimited", null, "time", false, null,
-                Map.of(), List.of("secret"), true, 1024, 2000));
+                Map.of(), List.of("secret"), true, 1024, 2000, Map.of()));
         assertThat(TemplateMappings.mappingsOf(JsonValues.map(plan.elasticTemplate("d", ECS).get("body")))
                 .get("numeric_detection")).isEqualTo(true);
         final String raw = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"2026-10-01T09:00:00Z\"/>"
@@ -264,9 +265,115 @@ class TestFieldPlan {
     }
 
     @Test
+    void anEventsIndexLeavesOutOrNullsStandInsForNoneAsTheUserChose() {
+        // Seen in testing: W3C logs' '-' for a missing address kept in the Events' Data, refused by an ip field.
+        final Map<String, String> standIns = new LinkedHashMap<>();
+        standIns.put("-", Discovery.LEAVE_OUT);
+        standIns.put("N/A", Discovery.NULL);
+        standIns.put("none", Discovery.KEEP);
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "x", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("server.ip", "ip", "EventDetail/Network/*/Data[@Name='Server-IP']/@Value"),
+                PlannedField.of("client.ip", "ip", "EventSource/Client/IPAddress"),
+                PlannedField.of("user.id", "keyword", "EventSource/User/Id"),
+                PlannedField.of("host.name", "keyword", "EventSource/Device/HostName"))).withStandIns(standIns);
+        final String events = """
+                <Events xmlns="event-logging:3"><Event>
+                <EventTime><TimeCreated>2026-09-28T10:00:00.000Z</TimeCreated></EventTime>
+                <EventSource><Device><HostName>none</HostName></Device><Client><IPAddress>N/A</IPAddress></Client>
+                <User><Id>-</Id></User></EventSource>
+                <EventDetail><Network><Connect><Data Name="Server-IP" Value="-"/></Connect></Network></EventDetail>
+                </Event><Event>
+                <EventTime><TimeCreated>2026-09-28T10:01:00.000Z</TimeCreated></EventTime>
+                <EventSource><Client><IPAddress>10.0.0.1</IPAddress></Client><User><Id>alice</Id></User></EventSource>
+                <EventDetail><Network><Permit><Data Name="Server-IP" Value="10.0.0.2"/></Permit></Network></EventDetail>
+                </Event></Events>""";
+
+        final String xslt = plan.xslt();
+        final String out = IndexingFixtures.compact(IndexingFixtures.transform(xslt, events));
+
+        assertThat(xslt).contains("<xsl:variable name=\"stand-ins-left-out\" select=\"('-')\"",
+                "<xsl:variable name=\"stand-ins-null\" select=\"('N/A')\"");
+        final String first = out.substring(0, out.indexOf("2026-09-28T10:01"));
+        // '-' left out, in a Data entry and an element alike, and with its object when it is all the object holds.
+        assertThat(first).doesNotContain("server", "\"user\"", "<string key=\"id\">-</string>")
+                .contains("<map key=\"client\"><null key=\"ip\"/></map>")
+                .contains("<map key=\"host\"><string key=\"name\">none</string></map>");
+        // Real values as they are.
+        assertThat(out).contains("<map key=\"server\"><string key=\"ip\">10.0.0.2</string></map>",
+                "<map key=\"client\"><string key=\"ip\">10.0.0.1</string></map>",
+                "<map key=\"user\"><string key=\"id\">alice</string></map>");
+        // Kept with the plan, and written as before without any.
+        assertThat(FieldPlan.fromJson(plan.toJson()).standIns()).isEqualTo(standIns);
+        assertThat(plan.withStandIns(Map.of()).toJson()).containsKey("stand_ins");
+        assertThat(FieldPlan.of("elasticsearch", "x", "@timestamp", FIELDS).xslt()).doesNotContain("stand-ins");
+    }
+
+    @Test
+    void aJsonDiscoveryIndexesStandInsForNoneAsTheUserChose() {
+        // Asked for by the user: W3C logs' '-' for a missing address, refused by an ip field.
+        final Map<String, String> standIns = new LinkedHashMap<>();
+        standIns.put("-", Discovery.LEAVE_OUT);
+        standIns.put("N/A", Discovery.NULL);
+        standIns.put("?", Discovery.EMPTY);
+        standIns.put("none", Discovery.KEEP);
+        final FieldPlan plan = FieldPlan.forDiscovery("d", Discovery.of("json", "ts").withStandIns(standIns));
+        final String raw = """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map><string key="ts">2026-10-01T09:00:00Z</string>
+                <string key="s-ip">-</string><map key="client"><string key="ip">N/A</string></map>
+                <string key="host">?</string><string key="user">none</string><string key="ok">10.0.0.1</string>
+                <array key="tags"><string>-</string></array></map></array>""";
+
+        final String out = IndexingFixtures.compact(runRaw(plan.xslt(), raw));
+
+        assertThat(out).doesNotContain("s-ip")
+                .contains("<map key=\"client\"><null key=\"ip\"/></map>")
+                .contains("<string key=\"host\"/>")
+                .contains("<string key=\"user\">none</string>")
+                .contains("<string key=\"ok\">10.0.0.1</string>")
+                // A value in an array has no key to leave out or write as null: kept.
+                .contains("<array key=\"tags\"><string>-</string></array>");
+        // Without stand-ins, the XSLT is as before.
+        assertThat(FieldPlan.forDiscovery("d", Discovery.of("json", "ts")).xslt())
+                .doesNotContain("Values the source writes for none");
+    }
+
+    @Test
+    void aDelimitedDiscoveryIndexesStandInsForNoneAsTheUserChose() {
+        final FieldPlan plan = FieldPlan.forDiscovery("d", Discovery.of("delimited", "time")
+                .withStandIns(Map.of("-", Discovery.LEAVE_OUT, "N/A", Discovery.NULL, "it's \"<none>\"",
+                        Discovery.EMPTY)));
+        final String raw = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"2026-10-01T09:00:00Z\"/>"
+                           + "<data name=\"s-ip\" value=\"-\"/><data name=\"user\" value=\"N/A\"/>"
+                           + "<data name=\"host\" value=\"it's &quot;&lt;none&gt;&quot;\"/>"
+                           + "<data name=\"ok\" value=\"ws01\"/></record></records>";
+
+        final String out = IndexingFixtures.compact(runRaw(plan.xslt(), raw));
+
+        assertThat(out).doesNotContain("s-ip")
+                .contains("<null key=\"user\"/>")
+                // Quotes and markup in a stand-in are escaped in the XSLT.
+                .contains("<string key=\"host\"/>")
+                .contains("<string key=\"ok\">ws01</string>");
+    }
+
+    @Test
+    void aDiscoveryKeepsItsStandInsAndRefusesAnUnknownTreatment() {
+        final Discovery discovery = Discovery.of("json", "ts").withStandIns(Map.of("-", Discovery.NULL));
+
+        assertThat(discovery.toJson()).containsEntry("stand_ins", Map.of("-", "null"));
+        assertThat(Discovery.fromJson(discovery.toJson())).isEqualTo(discovery);
+        // Without any, written as the Python model writes it.
+        assertThat(Discovery.of("json", "ts").toJson()).doesNotContainKey("stand_ins");
+        final Map<String, Object> bad = new LinkedHashMap<>(discovery.toJson());
+        bad.put("stand_ins", Map.of("-", "zero"));
+        assertThatThrownBy(() -> Discovery.fromJson(bad)).hasMessageContaining("stand_ins");
+    }
+
+    @Test
     void anXmlDiscoveryPlanKeepsTheStructureAndNeedsItsRecordElement() {
         final FieldPlan plan = FieldPlan.forDiscovery("d", new Discovery("xml", "logon", "@at", false, null,
-                Map.of(), List.of(), true, 1024, 2000));
+                Map.of(), List.of(), true, 1024, 2000, Map.of()));
         final String raw = "<logons xmlns=\"urn:x\"><logon id=\"7\" at=\"2026-10-01T09:00:00Z\"><who>alice</who>"
                            + "<roles><role>admin</role><role>ops</role></roles><client ip=\"10.1.1.1\">laptop"
                            + "</client></logon></logons>";
@@ -326,6 +433,28 @@ class TestFieldPlan {
         assertThat(PyJson.dumps(PyJson.loads(json))).isEqualTo(PyJson.dumps(PyJson.loads("""
                 [{"Copy": {"Source": {"Resource": {"Id": "a.txt", "Type": "File"}},
                            "Destination": {"Resource": {"Id": "b.txt"}}, "Outcome": {"Success": true}}},
+                 {"View": {"Resource": {"Id": "secret-1"}}},
+                 {"Move": {"Outcome": {"Success": false}}}]""")));
+    }
+
+    @Test
+    void standInsAreLeftOutOrNulledInsideTheTemplatesOfRepeatedObjects() {
+        // The templates' paths are relative to their element, and an object is tested by its fields' sources: a
+        // stand-in left out takes its object with it when it is all the object holds.
+        final List<PlannedField> fields = new ArrayList<>();
+        under(fields, "Copy", "Source.Resource.Id", "Source.Resource.Type", "Destination.Resource.Id",
+                "Destination.Resource.Type", "Outcome.Success");
+        under(fields, "Move", "Source.Resource.Id", "Source.Resource.Type", "Destination.Resource.Id",
+                "Destination.Resource.Type", "Outcome.Success");
+        under(fields, "View", "Resource.Id", "Resource.Type", "Outcome.Success");
+        under(fields, "Delete", "Resource.Id", "Resource.Type", "Outcome.Success");
+        final String xslt = FieldPlan.of("elasticsearch", "x", "@timestamp", fields)
+                .withStandIns(Map.of("b.txt", Discovery.LEAVE_OUT, "File", Discovery.NULL)).xslt();
+
+        assertThat(xslt).contains("<xsl:template match=\"*\" mode=\"resource\">");
+        final String json = IndexingFixtures.xmlToJson(IndexingFixtures.transform(xslt, ACTIONS));
+        assertThat(PyJson.dumps(PyJson.loads(json))).isEqualTo(PyJson.dumps(PyJson.loads("""
+                [{"Copy": {"Source": {"Resource": {"Id": "a.txt", "Type": null}}, "Outcome": {"Success": true}}},
                  {"View": {"Resource": {"Id": "secret-1"}}},
                  {"Move": {"Outcome": {"Success": false}}}]""")));
     }
@@ -424,7 +553,7 @@ class TestFieldPlan {
                 List.of("EventDetail/TypeId = 'Heartbeat'", "EventSource/User/Id = \"monitor\" and 1 < 2"), null,
                 List.of("Common-Functions"), List.of(new stroom.ai.impl.tools.generation.SharedTemplate("Common-Fields",
                 "device", "device", Map.of("host", "EventSource/Device/HostName"))), true, null, List.of(),
-                XsltStyle.DEFAULT);
+                XsltStyle.DEFAULT, Map.of());
         assertThat(plan.events()).isEqualTo("Event[not((EventDetail/TypeId = 'Heartbeat') or (EventSource/User/Id = "
                                             + "&quot;monitor&quot; and 1 &lt; 2))]");
         assertThat(plan.writtenBy("device.name")).isNotNull();

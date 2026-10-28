@@ -154,6 +154,62 @@ public class Consent {
                 : Optional.empty();
     }
 
+    /// Several questions put to the user in one form, an option picked for each, as [#choose] picks one.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `build_translation_xslt`.
+    /// @param intro     What the questions are about, the form's message.
+    /// @param questions The questions by key, each with its options (the recommended one first), in the order asked.
+    /// @return The option picked for each question, by its key; empty when the session can't show a form now (the
+    /// agent then asks the user).
+    /// @throws ToolRefusal if the user made no choice.
+    public Optional<Map<String, String>> chooseEach(final ToolCall call,
+                                                    final ToolCallContext context,
+                                                    final String action,
+                                                    final String intro,
+                                                    final Map<String, Question> questions) {
+        if (NullSafe.isEmptyMap(questions) || !context.userQuestions().canAsk()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        final Map<String, String> fieldKeys = new LinkedHashMap<>();
+        questions.forEach((key, question) -> {
+            final String fieldKey = "q" + (fieldKeys.size() + 1);
+            fieldKeys.put(fieldKey, key);
+            final Map<String, Object> field = new LinkedHashMap<>();
+            field.put("type", "string");
+            field.put("title", heading(question.text()));
+            field.put("enum", List.copyOf(question.options()));
+            properties.put(fieldKey, field);
+        });
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("required", List.copyOf(fieldKeys.keySet()));
+        schema.put("properties", properties);
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final ElicitResult answer = context.userQuestions().ask(call.name(),
+                UserQuestions.formCallId(call.id(), "choices-" + digest), intro, schema);
+        final Map<String, Object> content = answer.action() == ElicitResult.Action.ACCEPT
+                ? NullSafe.map(answer.content())
+                : Map.of();
+        final Map<String, String> chosen = new LinkedHashMap<>();
+        fieldKeys.forEach((fieldKey, key) -> {
+            final String given = NullSafe.trim(NullSafe.get(content.get(fieldKey), String::valueOf));
+            if (questions.get(key).options().contains(given)) {
+                chosen.put(key, given);
+            }
+        });
+        auditLogProvider.get().processed(context.session(), null, "choice", action + ": " + intro,
+                chosen.isEmpty()
+                        ? "declined"
+                        : "chosen: " + chosen, !chosen.isEmpty());
+        if (chosen.isEmpty()) {
+            throw new ToolRefusal("The user made no choice: " + intro);
+        }
+        return Optional.of(chosen);
+    }
+
     /// @param context  The call's context.
     /// @param key      An editable value's key.
     /// @param proposed What the tool proposed.
@@ -492,6 +548,14 @@ public class Consent {
     /// @param proposed What the tool proposed.
     /// @param theirs   What the user settled on.
     public record Change(String proposed, String theirs) {
+
+    }
+
+    /// A question asked with [#chooseEach].
+    ///
+    /// @param text    The question.
+    /// @param options Its options, the recommended one first.
+    public record Question(String text, List<String> options) {
 
     }
 

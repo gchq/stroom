@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader.RawHead;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -325,6 +326,72 @@ class TestDraftIndexMappingTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void standInsForNoneArePutToTheUserAndKeptInTheDiscovery() {
+        // Asked for by the user: W3C logs' '-' for a missing address, refused by an Elasticsearch ip field.
+        rawHead("""
+                {"ts": "2026-10-11T08:00:00Z", "client": {"ip": "10.0.0.1"}, "user": "a"}
+                {"ts": "2026-10-11T08:01:00Z", "client": {"ip": "-"}, "user": "b"}
+                {"ts": "2026-10-11T08:02:00Z", "client": {"ip": "10.0.0.2"}, "user": "c"}
+                {"ts": "2026-10-11T08:03:00Z", "client": {"ip": "-"}, "user": "d"}
+                """);
+
+        // Without forms, the agent is told to ask.
+        final Map<String, Object> told = call(discovery(Map.of("timestamp_field", "ts")), IndexingWorld.noForms());
+        assertThat((List<String>) told.get("warnings")).singleElement().asString()
+                .startsWith("placeholder '-' in client.ip (2 values; the others are IP addresses)")
+                .contains("discovery.stand_ins={'-': one of [leave_out, null, empty, keep]}");
+
+        final ToolCallContext forms = world.forms(question -> Map.of("q1", PlaceholderChoices.NULL));
+        final Map<String, Object> result = call(discovery(Map.of("timestamp_field", "ts")), forms);
+        assertThat(world.asked).containsExactly(PlaceholderChoices.JSON_INTRO);
+        assertThat(((Map<String, Object>) ((Map<String, Object>) result.get("plan")).get("discovery"))
+                .get("stand_ins")).isEqualTo(Map.of("-", Discovery.NULL));
+        assertThat(String.valueOf(result.get("xslt"))).contains("<null key=\"{d:key(@key)}\" />");
+        assertThat(result).doesNotContainKey("warnings");
+
+        // Kept for the session: drafting again doesn't ask again.
+        final Map<String, Object> again = call(discovery(Map.of("timestamp_field", "ts")), forms);
+        assertThat(world.asked).hasSize(1);
+        assertThat(String.valueOf(again.get("xslt"))).contains("<null key=");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void standInsForNoneInTheEventsArePutToTheUserAndKeptInThePlan() {
+        // Seen in testing: W3C logs' '-' for a missing address kept in the Events, refused by an ip field.
+        world.populated(POPULATED, Map.of(), Map.of("EventDetail/Network/Permit/Source/Device/IPAddress",
+                List.of("10.0.0.1", "-", "10.0.0.2", "-", "10.0.0.3")));
+
+        // Without forms, the agent is told to ask.
+        final Map<String, Object> told = draft(Map.of("example_template", EXAMPLE), IndexingWorld.noForms());
+        assertThat((List<Object>) told.get("warnings")).anyMatch(warning -> String.valueOf(warning).startsWith(
+                "placeholder '-' in Source.IPAddress (2 values; the others are IP addresses)"));
+
+        final Map<String, Object> result = draft(Map.of("example_template", EXAMPLE), world.forms(question ->
+                PlaceholderChoices.EVENTS_INTRO.equals(question)
+                        ? Map.of("q1", PlaceholderChoices.LEAVE_OUT)
+                        : Map.of("value", true)));
+        assertThat(world.asked).contains(PlaceholderChoices.EVENTS_INTRO);
+        assertThat(((Map<String, Object>) result.get("plan")).get("stand_ins"))
+                .isEqualTo(Map.of("-", Discovery.LEAVE_OUT));
+
+        // Kept for the session: drafting again doesn't ask again.
+        final long asked = world.asked.stream().filter(PlaceholderChoices.EVENTS_INTRO::equals).count();
+        draft(Map.of("example_template", EXAMPLE), world.forms(question -> Map.of("value", true)));
+        assertThat(world.asked.stream().filter(PlaceholderChoices.EVENTS_INTRO::equals).count()).isEqualTo(asked);
+    }
+
+    @Test
+    void jsonRecordsValuesAreReadByFieldForStandIns() {
+        assertThat(DraftIndexMappingTool.jsonValues("{\"a\": \"-\", \"b\": {\"c\": \"x\"}, \"n\": 1}\n"
+                                                    + "{\"a\": \"y\"}\n{\"a\": \"cut o"))
+                .isEqualTo(Map.of("a", List.of("-", "y"), "b.c", List.of("x")));
+        assertThat(DraftIndexMappingTool.jsonValues("[{\"a\": \"-\"}, {\"a\": \"-\"}]"))
+                .isEqualTo(Map.of("a", List.of("-", "-")));
+    }
+
+    @Test
     void oneTimeFieldAsProposedIsNotAskedAbout() {
         rawHead("{\"ts\": \"2026-10-11T08:00:00Z\", \"user\": \"a\"}\n{\"ts\": \"2026-10-11T08:01:00Z\", \"user\": "
                 + "\"b\"}\n");
@@ -391,7 +458,7 @@ class TestDraftIndexMappingTool {
         final FieldPlan plan = new FieldPlan("elasticsearch", "ecs-fortigate", "@timestamp", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId"),
                 PlannedField.of("destination.ip", "ip", "EventDetail/Network/*/Destination/Device/IPAddress")),
-                List.of(), null, List.of(), List.of(), true, "ecs", List.of(), null);
+                List.of(), null, List.of(), List.of(), true, "ecs", List.of(), null, Map.of());
         final Map<String, Double> populated = Map.of("EventDetail/Network/Deny/Destination/Device/Location/Country",
                 40.0);
         Map<String, Object> replaced = world.draftTool().replaced("x-old", plan, populated);

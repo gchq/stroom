@@ -166,10 +166,13 @@ Rules for every run:
 - A value an index refuses (Elasticsearch: a document rejected because a field's value doesn't fit its type, e.g.
   '-' in an ip field): find which kinds of event carry it, stepping records of every kind, not only the first ones
   (seen: an agent checked Permit events, whose addresses were real, while Connect events held '-'). A source's
-  placeholder for no value ('-', 'N/A', 'null') is a value: a guard that only tests a field is there keeps it. Leave
-  it out in the mapping (an xpath with a predicate, e.g. data[@name='s-ip']/@value[. != '-']), then read the saved
-  XSLT for that field before reprocessing: the change is made only once the generated code shows it (seen: a
-  mapping's guard that never reached the XSLT, which still wrote the value as it was).
+  placeholder for no value ('-', 'N/A', 'null') is a value: a guard that only tests a field is there keeps it.
+  build_translation_xslt and draft_index_mapping find those that recur in the sample and ask the user what to do with
+  each (without a form, a `placeholder` warning: ask the user, and give their answer as it says). One found only
+  later: nil_values in the mapping leaves it out of every field; an xpath with a predicate (e.g.
+  data[@name='s-ip']/@value[. != '-']) out of one. Then read the saved XSLT for that field before reprocessing: the
+  change is made only once the generated code shows it (seen: a mapping's guard that never reached the XSLT, which
+  still wrote the value as it was).
 - Document what you build (write_documentation; stream_ids default to the streams its current code last stepped
   clean on) and use the user's source notes for field meanings.
 - A processor filter on an events or indexing pipeline (create_processor_filter stream_ids=, or a feed's streams)
