@@ -9,10 +9,10 @@ screenshots and the leak check.
 
 ## Rules
 
-* **Use Stroom's real widgets, presenters and views**, not look-alikes, created as Stroom creates
-  them (see [GIN, not `new`](#gin-not-new)). Where Stroom has no widget for something its views
-  build themselves, build the same widgets the same way in the story, copying the view's code, and
-  name the source view in the class comment.
+* **Use Stroom's real widgets, components and controllers**, not look-alikes, created as Stroom
+  creates them (see [GIN, not `new`](#gin-not-new)). Where Stroom has no widget for something its
+  components build themselves, build the same widgets the same way in the story, copying the
+  component's code, and name the source in the class comment.
 * **Check what Stroom does.** A story is a regression test of Stroom's behaviour. Never write a
   check that can't fail (e.g. `queryByText(x).toBeNull()` for text the screen never shows, or
   selecting by a class and then asserting that class); check what the screen does show instead.
@@ -44,7 +44,7 @@ screenshots and the leak check.
 * Register the class in `WidgetsStories`, `AppStories` or `ScreensStories`, on the line after the
   comment holding its title. For a new title, add a comment with the title next to the related
   ones (each title has its own line, so that parallel work rarely touches the same lines).
-* A screen story's class comment names the Stroom presenter, and lists the REST endpoints the
+* A screen story's class comment names the Stroom controller, and lists the REST endpoints the
   story answers (a small table for more than three, as `JobsScreenStories` has).
 * Pure-Java arg conversions shared by widget stories are in `widgets/StoryArgs` (`toSvgImage`,
   `getBoolean(args, name, default)`, `getLong`), unit tested by `TestStoryArgs`. Widgets shared
@@ -56,8 +56,8 @@ screenshots and the leak check.
 A widget story creates the widget, applies the story's args and returns it. See
 `client/widgets/buttons/ButtonStories.java`.
 
-* Create views with `new XxxViewImpl(GWT.create(XxxViewImpl.Binder.class))`, presenters with `new`
-  and a `SimpleEventBus` (use a `ScreenHarness` only for screens that make REST calls). Widgets with
+* Create components with `new Xxx()`, controllers with `new` and a `SimpleEventBus` (use a
+  `ScreenHarness` only for screens that make REST calls). Widgets with
   a private constructor that Stroom only creates in UiBinder are created with `GWT.create(Xxx.class)`. Implement small interfaces (e.g. `GlobalKeyHandler`) with a private
   no-op nested class.
 * **Args.** Stories that only set args use `fromArgs(context)` with an `ArgType` for each option
@@ -74,7 +74,7 @@ A widget story creates the widget, applies the story's args and returns it. See
 
 ## Screen stories
 
-Screens (presenters and views) run for real against fake REST replies. Copy the story closest to
+Screens (controllers and their components) run for real against fake REST replies. Copy the story closest to
 your screen:
 
 * a dialog opened by an event, with its own fixtures: `client/app/main/RecentItemsDialogStories`;
@@ -101,11 +101,11 @@ etc. record into the same spies.
   Stroom's GIN modules would: `getUiConfigCache()`, `getDateTimeFormatter()`,
   `getUserPreferencesManager()`, `getCurrentPreferences()`, `getClientSecurityContext()`,
   `getLocationManager()` (shortcuts for the common ones are on the harness). Ask for these rather
-  than creating them with `new`, so that a presenter and the harness share them. Each is a
+  than creating them with `new`, so that a controller and the harness share them. Each is a
   singleton of the harness's injector. To add another singleton, add a getter to
   `ScreenGinjector` (GIN creates anything with an `@Inject` constructor; bind fakes in
-  `ScreenGinModule`). Presenters and views are not added there, as each would compile its whole
-  graph into every story;
+  `ScreenGinModule`). Controllers are not added there, as each would compile its whole graph into
+  every story;
 * spies: `REQUEST_SPY` (`"METHOD /path?query body"`), `UNHANDLED_REQUEST_SPY`, `ALERT_SPY`
   (`"ERROR: message"`), `CONFIRM_SPY`, `DOWNLOAD_SPY` and `UPLOAD_SPY` (see [Uploads](#uploads)). A
   story's own spies are made with `harness.fn(name)` **as the story renders** (so a play can check
@@ -122,22 +122,22 @@ final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
 harness.getSecurityContext().setDocumentPermission(DocumentPermission.VIEW);
 ```
 
-Get the screen's presenter from **`AppScreenGinjector`** (`client/app/gin`), or the area's own
-ginjector (see [Support by area](#support-by-area)), so the presenter and its graph of child
-presenters and views are created (and bound) as in Stroom; give it to the harness with
-`.injector(...)`. Small presenters with no graph may still be created with `new`, as `RecentItemsDialogStories`
-does.
+Get the screen's controller from **`AppScreenGinjector`** (`client/app/gin`), or the area's own
+ginjector (see [Support by area](#support-by-area)), so the controller and its graph of child
+controllers and components are created as in Stroom; give it to the harness with
+`.injector(...)`. Small controllers with no graph may still be created with `new`, as
+`RecentItemsDialogStories` does.
 
 ```java
 final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-harness.afterStartUp(() -> harness.show(injector.getJobPresenter()));
+harness.afterStartUp(() -> harness.show(injector.getJobsController()));
 return harness.asWidget();
 ```
 
 **One rule: the story's root owns whatever the story shows**, as an open tab's root does in
 Stroom, and disposes it, with everything it owns, on re-render and when the leak probe closes the
-screen. A tab's content (a component or a presenter) is shown with `harness.show(screen)`, which
+screen. A tab's content (a controller) is shown with `harness.show(screen)`, which
 fills the canvas (the full page height, as Stroom's content pane does); a page shown on its own
 (sign in) with `harness.showPage(page)`. Anything else the story makes and shows itself (in a frame
 of its own, or as a dialog) is given to `harness.own(screen)`. A screen opened by an event is shown
@@ -152,8 +152,8 @@ Also on the harness, for what Stroom's app does around a screen:
   `UiConfigCache` and the user's preferences into `CurrentPreferences`, as Stroom does at login
   before it shows any screen. Create the screen in it, as Stroom opens screens after login, and
   always when the screen (or anything it creates) reads the cached UI config at once or the
-  user's preferences (`EditorPresenter` reads the editor
-  preferences, lists format dates with them). Without it, each `UiConfigCache.get` call made before
+  user's preferences (`CodeEditorController` reads the editor preferences, lists format dates
+  with them). Without it, each `UiConfigCache.get` call made before
   the config arrives is answered, which a screen may not expect (`UserList` then sets up
   its columns twice). Most of the `UsersScreen` stories deliberately open the screen at once:
   they are the regression test for `UiConfigCache.get` calling its consumer with null.
@@ -161,7 +161,7 @@ Also on the harness, for what Stroom's app does around a screen:
   'Actions...' menu, a grid's context menu) show Stroom's real menu on the page's body. Don't
   install another (menus would show twice).
 * **`ownPopup(popup)`** owns a popup as `own` does, and asks it to close on re-render as its
-  Close button would (`HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides
+  Close button would (`ControllerDialog.pressAction` with `DialogAction.CLOSE`), before the harness hides
   the popups still open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
   cancelled in its `onHideRequest` (`UserTaskManagerController`): the harness's own hiding
   (`HidePopupEvent`) skips `onHideRequest`, and the timer would keep polling the disposed
@@ -200,10 +200,10 @@ harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), docR
    `UsersPlugin.open` calls `refresh()`; `NodeMonitoringPlugin` calls `setSelected(node)` for an
    `OpenNodeEvent`; `TaskManagerPlugin` calls `changeNameFilter(...)`; a `DocumentPlugin` loads the
    document, checks `DocumentPermission.EDIT` and calls `read(docRef, doc, !allowUpdate)`. For a
-   popup opened by an event (`ShowXxxEvent`, `OpenUserTaskManagerEvent`), register the presenter as
+   popup opened by an event (`ShowXxxEvent`, `OpenUserTaskManagerEvent`), register the controller as
    the event's handler and fire the event; where Stroom fetches what the event carries first (e.g.
    the explorer's Info item fetches `POST /explorer/v2/info`), the story does that request too.
-2. Read the presenters for `restFactory.create(XXX_RESOURCE).method(r -> r.xxx(...))` (and their
+2. Read the controllers for `restFactory.create(XXX_RESOURCE).method(r -> r.xxx(...))` (and their
    `XxxClient` helpers, e.g. `NodeClient`, `CredentialClient`), then the resource interface in the
    `*-shared` module for the HTTP method and `@Path` (constants such as `BASE_PATH` are at its top).
    Paths are relative to `/api`.
@@ -363,7 +363,7 @@ disposed through `StoryContext.addCleanUp`, before the preview removes what is l
 
 1. the harness's dispatcher cancels the replies still pending and drops (with a `console.warn`)
    any request that still reaches it. Stroom's `RestFactory` sends each request with the
-   dispatcher it was created with, so an old presenter's chained request or polling timer can
+   dispatcher it was created with, so an old controller's chained request or polling timer can
    only reach its own (now disposed) harness's dispatcher, never the new rendering's fixtures or
    spies;
 2. `UiConfigCache.stopRefreshing()` stops its one-minute refresh timer, and
@@ -383,7 +383,7 @@ are reported with `console.error`.
 
 Nothing is left behind per rendering: rerunning a screen story 20 times leaves one live interval
 timer and one window-closing handler per harness (those of the current rendering's
-`UiConfigCache` and `StoryLocationManager`). Anything a story's presenter starts itself (its own
+`UiConfigCache` and `StoryLocationManager`). Anything a story's controller starts itself (its own
 repeating timers or window handlers) must be registered with the harness as above. Check with the
 story's Rerun: no "A request from a previous rendering of the story was dropped" warnings after it.
 
@@ -477,15 +477,13 @@ RestFixtures.builder()
 
 ### GIN, not `new`
 
-* Get the presenter from `AppScreenGinjector` (or the area's ginjector): add a getter under its
-  area's comment. Its modules mirror Stroom's GIN modules (`XxxScreenModule` for
-  `stroom...gin.XxxModule`) with the `bindPresenterWidget`/`bindSharedView`/`bind(X)` lines
-  copied, plugins (`bindPlugin`), eager singletons and app services (`ClientSecurityContext`,
-  `LoginManager`) left out, and each `bindPresenter(P, V, VImpl, Listener)` turned into
-  `bindPresenterWidget(P, V, VImpl)` (the story
-  registers the presenter as its event's handler instead). Shared widgets (pager views, menus, tool
-  tips, editors, expression trees, the explorer drop-downs, date pickers) are bound once, in
-  `ScreenViewsModule`.
+* Get the controller from `AppScreenGinjector` (or the area's ginjector): add a getter under its
+  area's comment (a controller needs no binding: GIN makes it from its `@Inject` constructor). Its
+  modules mirror Stroom's GIN modules (`XxxScreenModule` for `stroom...gin.XxxModule`) with their
+  `bind(X)` lines copied, and plugins (`bindPlugin`), eager singletons and app services
+  (`ClientSecurityContext`, `LoginManager`) left out (the story registers the controller as its
+  event's handler instead). What several areas share (menus, tool tips, editors, expression trees,
+  date pickers) is bound once, in `ScreenViewsModule`.
 * GIN checks the whole graph of **every** binding of the injector's modules, used or not, and the
   compile fails if a key is bound twice. So when GIN reports `No @Inject or default constructor
   found for X`, read its "Path to required node", find the Stroom module that binds `X`
@@ -499,9 +497,9 @@ RestFixtures.builder()
   `stroom.widget.tooltip.Tooltip`; stepping needs `stroom.pipeline.Pipeline` as well as
   `PipelineStepping`), and RestyGWT generates code for every method of a resource interface used,
   so the types of all of them must be available.
-* A presenter registers its handlers when it is made, whether by GIN or with `new`, and keeps them
-  until it is disposed: show one the story makes with `harness.show(presenter)`, or give it to
-  `harness.own(presenter)` (or to whatever owns it).
+* A controller registers its handlers when it is made, whether by GIN or with `new`, and keeps
+  them until it is disposed: show one the story makes with `harness.show(controller)`, or give it to
+  `harness.own(controller)` (or to whatever owns it).
 * Create the injector in `render` (`GWT.create(AppScreenGinjector.class)`), a new one each time:
   the harness refuses an injector another harness has used.
 * **Package-private or private Stroom methods** (e.g. `LoginController.isSameOrigin`) are called
@@ -509,7 +507,7 @@ RestFixtures.builder()
   than by opening the whole parent screen.
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`,
   `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPaneController.setProcessorLimits`)
-  are copied into the story's `render`, naming the source, when they only wire up presenters the
+  are copied into the story's `render`, naming the source, when they only wire up controllers the
   injector can create.
 
 ### Polling and sequences
@@ -645,7 +643,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `AskStroomAiController`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
   with `AskStroomAiChat.register(harness, injector::getAskStroomAiController)`. It creates the
-  presenter on the first event, as `AskStroomAiScreens` does, i.e. after start-up.
+  controller on the first event, as `AskStroomAiScreens` does, i.e. after start-up.
 
 ## Play functions
 
@@ -882,7 +880,7 @@ Also:
   `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while
   `x == null` is true for both. Check with `== null` when a value may come from a builder that left
   it unset.
-* Don't create a presenter that reads the user's preferences before start-up (e.g.
+* Don't create a controller that reads the user's preferences before start-up (e.g.
   `AskStroomAiController`, whose constructor reads the AI config): create it in `afterStartUp`, as
   Stroom does.
 * A leftover workbench server (e.g. after a Gradle daemon is killed for memory) keeps the test port;

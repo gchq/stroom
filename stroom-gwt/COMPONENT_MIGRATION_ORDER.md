@@ -1076,7 +1076,7 @@ Convert the tool screens onto a content-tab component base: Users, Accounts, API
 
 Each unit's plan: [`component-migration/wave-16.md`](component-migration/wave-16.md). Added 28 October 2026, after wave 15.
 
-> **Not started.** Agreed 28 October 2026: the framework goes once a full run passes, and the screens that share a tab type are fixed (see `wave-16.md`).
+> **Done and audited, 28 October 2026**: every unit, in 9 commits and 1 with the audit's fixes (a dialog shown again hid its owner's task monitor once hidden; the wave's own). Nothing is a presenter, and the presenter framework (`MyPresenterWidget`, `View`, `ViewImpl`, `UiHandlers`, `PresenterAdapter`, `AbstractPresenterModule`) is deleted; the popup, content tab and full screen events and the open callback carry a `Controller`. Two full workbench runs with the leak check (before and after the deletion) passed, and both apps GWT compile. See `wave-16.md`.
 
 Waves 3, 6, 8 and 14 left `TooltipPresenter`, `IFramePresenter`, `EditorPresenter`, `UserRefSelectionBoxPresenter`, `DocSelectionBoxPresenter` and `DocumentEditorHost` as presenters over their new controllers, and `LinkTabsPresenter` was deferred for deletion. Re-key the popup events (`ShowPopupEvent` and the rest) and the content-tab and full screen events on `Controller`; move the wrappers' last callers and delete them; make `DocumentEditorHost` a `LayerController` and the open callback a `Consumer<Controller>`; move the workbench's helpers and coverage check off presenters; delete the unused `UiHandlers` and the deferred dead code; then delete `MyPresenterWidget`, `View`, `ViewImpl`, `UiHandlers`, `PresenterAdapter` and `AbstractPresenterModule`.
 

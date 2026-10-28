@@ -396,11 +396,6 @@ run of 22 October 2026 (1,538 stories).
   button stops it instead.
 * `App/Main/JobsScreen` `CrossNavigation` (flaky): failed once in a full run (the node link opened
   nothing) and passed alone.
-* `TestPresenterCoverage` (workbench unit test, flaky; found 23 October 2026): failed with
-  `NoSuchFileException` on a `stroom-core-client` test result file when the two modules' tests ran
-  in one Gradle build. It walks that module's `build/test-results` while that module's tests are
-  still writing and replacing their files. Passes when run alone. Fix: depend on the other
-  module's `test` task, or skip files that vanish while it walks.
 * `App/Main/AppShell` `DeleteAfterFailedLookupStillProceeds` (flaky; found 24 October 2026, on the
   remove_gwtp branch just after merging master): failed once in a full run with the leak check, on
   the probe page, with an uncaught `TypeError` (`Cannot read properties of null`) before the delete
@@ -1643,14 +1638,10 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **A store's first view of its roll-ups makes it dirty.** Showing a statistic store's Custom
   Roll-ups tab adds the "no roll-up" row to a store with none, so undoing an edit leaves the store
   dirty (as before).
-* **Unused now.** `HasDocumentRead` (six controllers implement it; nothing reads through it since
-  `TabContentProvider` went) and `ChangeUiHandlers` (only the unimplemented
-  `ProcessingStatusUiHandlers` names it). `HasCommonTabs` is implemented only by `DocumentEditorHost`.
+* **One implementation.** `HasCommonTabs` is implemented only by `DocumentEditorHost`.
 * **Class names after the deleted view.** `linkTabPanelViewImpl`, `linkTabPanelViewImpl-middle` and
   `toolbarContainer` (`components.css`), used by `LinkTabPanel.ui.xml` and four other templates, and
   the `docTab-readOnly*` classes are to become a `link-tab-panel` BEM block.
-* **One task monitor helper, copied.** About two dozen controllers carry the same lazy `taskMonitor()`
-  (the provided monitor, or one of their own); it could be a `Controller` method.
 * **Three screenshots not yet explained.** In the full run after the audit, `TopBar.Keyboard` (a
   tooltip), `AppShell.ExplorerItemKeys` (a renamed item's text) and `DataGrid.ValueSpinnerColumn`
   differ a little from their baselines; to check whether they differ from run to run.
@@ -1661,11 +1652,6 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported** (28 October 2026, overnight; decisions taken without the user, to check).
 
-* **Two screens share a tab type.** `GlobalPropertyTabController.TAB_TYPE` is "Caches", as
-  `CachesController`'s is (master too), so a saved tab session holding Properties opens Caches (or
-  nothing). `BatchDocumentPermissionsController` and `DocumentUserPermissionsContentTabController`
-  share "DocumentPermissions". Not changed in wave 15: a new type changes what saved sessions hold.
-  To fix in wave 16 (unit 14), agreed 28 October 2026.
 * **Screens left as the plan's "stays" or for later.** `WelcomeTab` keeps its `g:Grid` and sets its
   name cells' `rowheader` role in Java (the plan's `<th scope="row">` table changes the cells'
   look); `Main` still builds its split panes in Java on each layout change, sets the theme's page
@@ -1686,13 +1672,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   classes (stories and CSS use them), and `ContentStoreTab` uses `contentstore-scroll-y` from
   `components.css`; each is to become a BEM block in its own stylesheet.
 * **From the wave's audit, left on purpose** (28 October 2026):
-  * A controller shown with `ControllerDialog.show` is shown through a `DialogHost` it owns, so
-    the dialog's spinner (`PopupSupportImpl.setTaskMonitor` gives it to the shown presenter) never
-    reaches the controller: Ask Stroom AI's requests in dialog mode show on the app's spinner, not
-    the dialog's. The host should provide its task monitor to its content while shown.
-  * Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its model picker is still
-    a `DocSelectionBoxPresenter` in a slot (the plan: a `DropDownBox` with a
-    `DocSelectionController`); its controller works on the component's message panel directly
+  * Ask Stroom AI is a GIN singleton nothing owns (as its presenter was); its controller works on
+    the component's message panel directly
     (HTML, scrolling, a click handler) where the plan wants component methods and callbacks; its
     dialog opened from the toolbar doesn't focus the message box (as before); `AskStroomAiClient`'s
     methods, now public, have no javadoc; and the controller keeps the presenter's `/** */`
@@ -1703,15 +1684,38 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
     `TabbedController<UserRef>` as the plan says.
   * The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
     `QuickFilter.setOnChange` exists (to check they fire alike first).
-  * The open callback (`OpenDocumentEvent`, `OpenContentTabEvent`, the plugins' `open(...)`) is
-    still a `Consumer<MyPresenterWidget<?>>`; `ContentOpenCallback` gives it null for a screen that
-    is a controller. Only `TabSessionManager` (which ignores what it is given) and
-    `DashboardBodyController` (which needs the dashboard's `DocumentEditorHost`) use it; it should
-    take a `Controller` before the presenter framework goes.
   * Unused `view` fields in about a dozen of the new controllers (assigned, only the constructor's
     parameter used), dead code carried over (`UsersController.onEditUserOrGroup`, commented-out code
     in the API keys, retention, source and template screens), and "presenter" names left in the
     plugins' fields and parameters and the stories' variables.
+
+### Left from wave 16
+
+**Reported** (28 October 2026, by the wave's audit).
+
+* **Tab sessions saved before wave 16** still hold "Caches" for a Properties tab and
+  "DocumentPermissions" for a document's permissions tab (a content tab's saved reference is only
+  its type), so they still reopen Caches and Batch Document Permissions; only sessions saved since
+  are right. The client can't tell the old entries apart. (Before, two plugins registered "Caches",
+  and the last to register won, so a saved Caches tab may have opened Properties.)
+* **A tab session stops partway** if a document's load or permission check fails
+  (`DocumentPlugin.showDocument`), or a saved reference has no type: neither callback runs, so the
+  tabs after it never open. As before the wave. Fix: pass `callbackOnFailure` down to
+  `showDocument`'s error handlers.
+* **The pipeline's source fails silently.** If fetching a pipeline's JSON fails, the error text goes
+  into an editor that is never shown, and the dialog's controller stays owned until the pipeline's
+  tab closes (`PipelineStructureController.viewSource`). As before the wave. Fix: show the error
+  (`AlertEvent.fireError`) and release the controller.
+* **A pane's selection info, clicked twice.** `DashboardBodyController.onSelectionInfo` adds a
+  context listener before each showing; a second click hides the popup through the popup manager's
+  toggle, which runs only the first showing's `onHide`, so the second listener stays and keeps
+  refreshing the hidden popup. As before the wave. Fix: add the listener only when not shown.
+* **The test suite's inventories** (`stroom-gwt/stroom-gwt-suite/oracles/gwt-inventory.csv`,
+  `capability-specs.json`, generated) still list `MyPresenterWidget`, `PresenterAdapter`, the deleted
+  cells and `MyTreeLayout`; regenerate them (`tools/build-capability-specs.mjs` and the inventory
+  tool) before a tool reads them as current.
+* **Dialog stories show `StoryContent` with `ShowPopupEvent.builder`** directly, unowned, as they
+  showed `ContentPresenter`, rather than through `ControllerDialog` as the plan said.
 
 ### Some components wire their handlers with `@UiHandler`
 
@@ -2018,8 +2022,8 @@ this extends it to every handler. When counted (wave 13), the converted componen
     other removals.
   * Debug logging and commented-out code carried into the new controllers:
     `MarkdownEditController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
-    `iFramePresenter`), `AnalyticEmailDestinationController` (the old `EditorPresenter` code). To go
-    with the other removals.
+    `iFramePresenter`). To go with the other removals. (`AnalyticEmailDestinationController`'s old
+    `EditorPresenter` code went in wave 16.)
 * `XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
@@ -2044,6 +2048,25 @@ this extends it to every handler. When counted (wave 13), the converted componen
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 16** (2026-10-28), from the leftovers of waves 14 and 15:
+  * A Properties tab saved in a tab session reopened as Caches, and a document's permissions tab as
+    the Batch Document Permissions screen: each shared another screen's tab type. Master has it too;
+    changelog entry. Each has its own type now (`TestContentTabController`, which failed before),
+    and a session's tab that nothing can reopen (a document's permissions) is skipped rather than
+    stopping the tabs after it.
+  * A controller shown with `ControllerDialog.show` didn't get its dialog's spinner, so Ask Stroom
+    AI's requests in dialog mode showed on the app's: the popup events now carry the controller, and
+    the dialog provides its task monitor to it while shown (unless it provides one of its own).
+  * Ask Stroom AI's model picker is a `DropDownBox` in its template with a `DocSelectionController`.
+  * The open callback is given the controller opened (`Consumer<Controller>`), where it was given
+    null for any screen that wasn't a presenter.
+  * `HasDocumentRead`, `ChangeUiHandlers` and the other unused `UiHandlers` interfaces are deleted.
+  * The 103 copies of a controller's `taskMonitor()` helper are one method on `Controller`.
+  * `TestPresenterCoverage`, now `TestDialogCoverage`, was flaky: it walked the whole repository,
+    including other modules' `build/test-results` while their tests wrote them
+    (`NoSuchFileException`). It skips `build`, `node_modules`, `.gradle` and `.git` now, and a file
+    that goes while it walks.
 
 * **Wave 10's audit** (2026-10-27):
   * A controller shown as a tab didn't get the focus when its tab was chosen: the table filter

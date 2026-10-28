@@ -86,7 +86,7 @@ Written 24 October 2026, at the start of wave 1 (`COMPONENT_MIGRATION_ORDER.md`)
 
 ## Controllers and ownership
 
-A controller (`stroom.widget.component.client.Controller`) is the smart half of a screen: it is given its component, wires it to data and behaviour, and holds an ownership node: it owns child controllers, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it. Every presenter is a controller too (`MyPresenterWidget extends Controller`) until the presenters go. A component (`stroom.widget.component.client.Component`, a `Composite`) has none of this: its handlers go with its widgets.
+A controller (`stroom.widget.component.client.Controller`) is the smart half of a screen: it is given its component, wires it to data and behaviour, and holds an ownership node: it owns child controllers, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it. Presenters were controllers too (`MyPresenterWidget extended Controller`) until they went in wave 16. A component (`stroom.widget.component.client.Component`, a `Composite`) has none of this: its handlers go with its widgets.
 
 ### The ownership node
 
@@ -120,7 +120,7 @@ public abstract class Controller implements IsWidget, HasControllerNode, HasHand
 
     // Making and owning
     protected final <C extends HasControllerNode> C make(Provider<C> provider);         // made now, owned until this is disposed
-    protected final <P extends MyPresenterWidget<?>> P makeDialog(Provider<P> provider); // owned until hidden
+    protected final <C extends Controller> C makeDialog(Provider<C> provider);           // owned until hidden
     protected final <C extends HasControllerNode> C own(C child);                        // one injected into the constructor
     protected final void release(HasControllerNode child);                               // one replaced early
 
@@ -873,13 +873,13 @@ Decisions:
 * **Smart parts attach.** A part that needs data (e.g. a feed picker that fetches) is declared dumb in its screen's template (`<s:DocSelectionBox ui:field="feedBox"/>`); the screen's controller makes the part's controller and attaches it: `feedSelector = make(docSelectionControllerProvider); feedSelector.attach(view.getFeedBox());`. Templates stay dumb; the controllers form a tree beside the components'. Not `@UiField(provided = true)`, which would put a smart part in a template.
 * **Context is pushed.** Controllers watch context and call the component's setters (`setReadOnly`); components look nothing up.
 * **Dialogs.** The component is the dialog's content only. Its controller shows it through the popup manager with caption, size and buttons, and handles OK and Cancel (validating, saving, closing); a dialog's controller is owned until hidden (`makeDialog`).
-* **Base classes.** Today's smart `Component` (ownership, `listen`, REST owner, context) is renamed `Controller`, and `MyPresenterWidget` extends `Controller` until it goes. A new thin `Component` (a `Composite`, with no lifecycle) is the base of dumb components, and the home of shared helpers.
+* **Base classes.** Today's smart `Component` (ownership, `listen`, REST owner, context) is renamed `Controller`, and `MyPresenterWidget` extended `Controller` until it went (wave 16). A new thin `Component` (a `Composite`, with no lifecycle) is the base of dumb components, and the home of shared helpers.
 * **Testing.** No view interfaces (as decided in Phase 0): controllers are tested with workbench stories, pure logic with JUnit.
 
 Added by the pilot (Phase 7a, 24 October 2026):
 
-* **A controller's widget is its component.** It calls `initWidget(view)`, so `ControllerDialog`, `ControllerLayer` and a presenter's view setter show it unchanged. A controller attached to a part (e.g. `DocSelectionController`) has no widget; it is made with `make(provider)` and only owned.
-* **A part not yet split goes in a slot.** Until a presenter is split, the component has a setter for it (`setExpressionEditor(IsWidget)`) and the controller owns the presenter and passes its widget in. A presenter used in many places can keep its API as a thin wrapper over its new controller (`DocSelectionBoxPresenter`) until its users move.
+* **A controller's widget is its component.** It calls `initWidget(view)`, so `ControllerDialog`, `ControllerLayer` and a component's slot setter show it unchanged. A controller attached to a part (e.g. `DocSelectionController`) has no widget; it is made with `make(provider)` and only owned.
+* **A part not yet split goes in a slot.** Until a presenter is split, the component has a setter for it (`setExpressionEditor(IsWidget)`) and the controller owns the presenter and passes its widget in. A presenter used in many places can keep its API as a thin wrapper over its new controller (`DocSelectionBoxPresenter` did) until its users move. (Since wave 16 there are no presenters: a part is a controller, attached or in a slot.)
 * **A set of actions is one enum.** A component with several actions has one callback, `setOnAction(Consumer<RuleAction>)`, and one setter for those that apply now, `setAvailableActions(Set<RuleAction>)`; it disables them all while read only. Where the buttons go on another part's toolbar (a list's), the component is given that toolbar and adds them, with their icons, names and toolbar name.
 * **Templates live beside their Java, in every module** (changed 24 October 2026; the pilot first kept the widget module's under `src/main/resources`). The GWT build copies each project's `src/main/java` and `src/main/resources` whole, so a template beside its Java is found by every compile; `DropDownBox.ui.xml` was moved to prove it in the widget module (its stories, and both apps' compiles, pass).
 
@@ -1003,7 +1003,7 @@ As Plan B was converted:
 
 - **Read-only.** A presenter that shows something the user may change calls `watch(Contexts.READ_ONLY, getView()::onReadOnly)` (or its own method) in its constructor, and stops taking `readOnly` as an argument: `read(settings, readOnly)` becomes `read(settings)`, and the presenters between the document and it stop passing it on. The document provides it (`DocPresenter.read`); a document presenter used without being read (embedded in another screen) is told with `setDocumentReadOnly`. A presenter is told once it is owned, and again whenever the document is read with a different value, e.g. when its lock changes.
 - **Task monitor.** Delete `setTaskMonitorFactory(...)` calls that pass on an owner's task monitor; the presenter uses its context's (its tab's or dialog's). Keep those that give a presenter its own (e.g. a list's pager spinner).
-- **Check** with the screen's read-only story, and a lock change story: read the shown document again read only and then not (`ScreenHarness.shownContent()`), and expect its fields to follow.
+- **Check** with the screen's read-only story, and a lock change story: read the shown document again read only and then not (`ScreenHarness.shownComponent()`), and expect its fields to follow.
 
 ### Phase 3: Components and callbacks
 
@@ -1157,6 +1157,8 @@ Done in wave 14 (28 October 2026): every document is a `DocumentEditor` (or, for
 3. The presenter framework is deleted: `MyPresenterWidget`, `View`, `ViewImpl`, `ViewWithUiHandlers`, `UiHandlers`, `HasUiHandlers`, `PresenterAdapter`, `DocumentEditorHost`'s presenter side, and `AbstractPresenterModule`'s presenter bindings (the 717 `bindPresenterWidget` lines in the app and workbench modules).
 
 **Exit:** no presenters; GIN modules bind services and the few singletons, and components are made just in time.
+
+Done in wave 16 (28 October 2026): the last presenters (the tooltip, the IFrame dialog, the code editor and picker wrappers, the document host) are controllers or gone; the popup events, the content tab and full screen events and the open callback carry a `Controller`; and `MyPresenterWidget`, `View`, `ViewImpl`, `ViewWithUiHandlers`, `UiHandlers`, `HasUiHandlers`, `PresenterAdapter`, `ControllerView` and `AbstractPresenterModule` are deleted (the modules extend GIN's `AbstractGinModule`). A controller's `taskMonitor()` (the task monitor its owners provide when a request starts, else an app-wide one) is on `Controller`, and `makeDialog` makes any controller. `Layer`, `LayerContainer`, `Page` and `HandlerRegistrations` keep their package (`stroom.widget.presenter.client`) until wave 17's tidy, which moves the classes left in `presenter` and `view` packages.
 
 Each of Phases 8 to 11 converts area by area, one pull request each, with its workbench stories, the leak check, and the full story run; nothing is converted without stories.
 

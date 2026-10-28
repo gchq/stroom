@@ -9,7 +9,94 @@ callers, converts the presenters that are left, re-keys the popup and content-ta
 `Controller`, and then deletes the presenter framework (`MyPresenterWidget`, `View`, `ViewImpl`,
 `UiHandlers`, `PresenterAdapter` and the GIN helpers), with the dead code the plan deferred.
 
-**Not started.** The user's decisions (28 October 2026):
+## Audited (28 October 2026)
+
+Five reviewers read the wave against this plan, "Done means" and the UI guide (the popup layer;
+the editor and picker wrappers; the document host and tab types; the framework's deletion; the
+workbench and docs). Fixed, with the wave:
+
+- **A dialog shown again hid its owner's task monitor once hidden.** Taking the dialog's spinner
+  back set the controller's task monitor to the default rather than removing it, and a lookup stops
+  at the nearest node that provides one, so a pane's settings dialog, once shown and hidden, sent its
+  requests to the app's spinner rather than its tab's. `ControllerNode.unprovide` takes it away now,
+  through `DialogTaskMonitor` (`TestDialogTaskMonitor`). The wave's own regression, never in master.
+- **The task monitor helper**, also copied under other names (`MenuController`,
+  `KeyStoreSecretFormController`, the asset upload dialog, and the `createTaskMonitor()` of
+  `ContentTabController`, `DocumentEditorHost` and `AskStroomAiController`), is `taskMonitor()`
+  everywhere; its tests check the app-wide task's event and a lookup per task.
+- **Tab types:** Processor Filter Tasks and Execution Schedules return their `TAB_TYPE` rather than
+  a literal, and `TestContentTabController` checks only content tabs, and that none returns a
+  literal; the changelog entry says the fix is for sessions saved from now on.
+- **`DialogCoverage`** ignores comments (javadoc examples were read as calls) and skips build
+  directories, which made `TestPresenterCoverage` flaky.
+- **Smaller fixes:** javadoc on the popup events' and full screen event's renamed members, the
+  popup support's constructor and the `read` methods that lost their interface; `Main.maximise`'s
+  parameter is `content`; dead code naming the link tabs view in `EmbeddedQueryController`; an
+  unused import; an orphan stories comment; and docs (`COMPONENT_MODEL_DESIGN.md`,
+  `COMPONENTS.md`, `UI-GUIDE.md`, this record).
+
+Left (recorded in ISSUES.md, "Left from wave 16"): tab sessions saved before the wave keep the
+old types; a session stops partway when a document fails to load; the pipeline's source fails
+silently; a pane's selection info clicked twice keeps a listener; the test suite's inventories to
+regenerate; the dialog stories still show `StoryContent` with `ShowPopupEvent.builder`. After the fixes, both apps GWT compile, the
+JVM tests pass and the full workbench run passed all 1,722 stories with the leak check.
+
+## Done (28 October 2026)
+
+Every unit, in 9 commits (and 4 for the UI guide). Nothing is a presenter: the popup events (`ShowPopupEvent` and the
+rest), the content tab and full screen events and the open callback carry a `Controller`;
+`ControllerDialog` shows a controller itself (its `DialogHost` and `ControllerView` went), gives it
+the dialog's task monitor while shown, and can rename it; `MyPresenterWidget`, `View`, `ViewImpl`,
+`ViewWithUiHandlers`, `UiHandlers`, `HasUiHandlers`, `PresenterAdapter` and
+`AbstractPresenterModule` are deleted, and the GIN modules extend `AbstractGinModule`. Checked by
+compiling every client module, checkstyle, the client, widget and workbench JVM tests (2,913), both
+apps' GWT compiles, and two full workbench runs with the leak check: before unit 12, all 1,722
+stories passed and of their screenshots 1,614 match, 12 are new (waves 13 and 14's stories with no
+baseline yet) and of the 96 that differ none is the wave's but `LinkTabPanel.Basic` (below); the
+others are those wave 15 listed, the visualisations' and `AppShell.OpensDocument`, which differ from
+run to run. After unit 12 and the audit's fixes, a second full run passed all 1,722 stories with the leak
+check, the same screenshots matching and differing (but for visualisations that differ from run to
+run, and `LinkTabPanel.Basic`, whose new baseline it matched).
+
+What was decided on the way, where it differs from the plan below:
+
+- **`makeDialog` stays**, for any controller (`Controller.makeDialog`, `AppRoot.makeDialog`): it
+  makes one owned until it is hidden, e.g. the pipeline's JSON source dialog, set up before its text
+  is fetched.
+- **A code editor's controller is its widget.** `CodeEditorController.attach` makes the editor its
+  widget, so it can be shown in a slot or as a dialog; the query's editor is declared in
+  `QueryEdit.ui.xml`.
+- **The pickers have `getBox()`.** `DocSelectionController` and `UserRefSelectionController` give
+  the box they are attached to, for the stories that show one they made; they aren't made widgets,
+  as they are attached in 62 places.
+- **New controllers:** `InfoTooltipController` and `IFrameController`, over the components the
+  presenters wrapped; `StoryContent` in the workbench for `ContentPresenter`.
+- **The popup chrome's handlers** are a `DialogActionHandler` interface (three implement it) and a
+  `Consumer<HideRequest>`; `HideRequestUiHandlers` and `DefaultHideRequestUiHandlers` went.
+- **The dialog's task monitor** is provided to the shown controller only when it provides none of
+  its own (e.g. a list's pager), and taken back when it is hidden.
+- **One task monitor helper.** There were 103 copies (the plan said about two dozen): 77 resolved
+  the provided monitor when called and 26 when a task started. `Controller.taskMonitor()` does the
+  latter, the same for a request made at once and right for one made before it is owned.
+- **`ScreenHarness.shownContent()` went**, as `shownComponent()` does the same for any controller.
+- **`DialogCoverage`** finds a screen as a controller (not by a `Presenter` name) and a dialog from
+  `ControllerDialog.show`/`showOnce` as well as `ShowPopupEvent.builder`: 74 screens and 146 dialogs,
+  where the old check found almost none.
+- **Tab sessions** skip a tab whose type no plugin opens (a document's permissions, which needs its
+  document) rather than stopping the tabs after it.
+- **The link tab ring check** (`test-runner/lib/real-input/tabs.mjs`) checks the link tab panel's
+  story now its own went; that story's screenshot then shows the selected tab's focus ring, and its
+  baseline was updated.
+- **Dead code.** The commented-out move and rename code in `DocumentPlugin`, the index volume
+  groups' old popup code and the email destination's old editor code went; `ApiKeysListViewImpl.ui.xml`
+  had no class.
+- **The dialog stories** show `StoryContent` with `ShowPopupEvent.builder`, as they showed
+  `ContentPresenter`, rather than through `ControllerDialog` (unit 9 said); recorded in ISSUES.md.
+- **The UI rules moved** (at the user's request) to `stroom-gwt/UI-GUIDE.md`, which `AGENTS.md`
+  points to with the three rules most costly to miss; it now also says handlers are wired in Java,
+  never with `@UiHandler`, and that raw HTML controls aren't used.
+
+The user's decisions (28 October 2026):
 
 - **The framework goes** (unit 12) once units 1 to 11 are in and a full workbench run with the
   leak check and a screenshot diff passes; no need to stop and ask again.
@@ -216,6 +303,8 @@ framework; effort M.
 - **AGENTS.md** still says "Every presenter is a controller too (`MyPresenterWidget extends
   Controller`)" and describes `makeDialog(provider)` for presenter dialogs. It isn't edited by
   agents: the lines to change are listed for the user instead.
+  (Done otherwise: at the user's request, `AGENTS.md`'s section moved to `stroom-gwt/UI-GUIDE.md`,
+  with a pointer left in `AGENTS.md`; see "Done".)
 
 ## 14. Screens that share a tab type
 
