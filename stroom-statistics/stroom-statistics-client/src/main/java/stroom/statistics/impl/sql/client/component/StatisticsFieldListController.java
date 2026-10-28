@@ -17,8 +17,8 @@
 package stroom.statistics.impl.sql.client.component;
 
 import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.client.presenter.State;
-import stroom.statistics.impl.sql.client.presenter.State.Field;
+import stroom.statistics.impl.sql.client.State;
+import stroom.statistics.impl.sql.client.State.Field;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;

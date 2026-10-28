@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.statistics.impl.sql.client.presenter.State.Field;
+import stroom.statistics.impl.sql.client.State.Field;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

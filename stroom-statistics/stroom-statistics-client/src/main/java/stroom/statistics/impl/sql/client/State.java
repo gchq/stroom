@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.impl.sql.client.presenter;
+package stroom.statistics.impl.sql.client;
 
 import stroom.statistics.impl.sql.shared.CustomRollUpMask.IntegerListComparator;
 

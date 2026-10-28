@@ -18,8 +18,8 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.client.presenter.State;
-import stroom.statistics.impl.sql.client.presenter.State.Mask;
+import stroom.statistics.impl.sql.client.State;
+import stroom.statistics.impl.sql.client.State.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
