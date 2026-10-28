@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.task.client;
 
 public class TaskInfoParser {
 

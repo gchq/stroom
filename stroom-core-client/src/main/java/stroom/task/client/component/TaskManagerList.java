@@ -24,7 +24,7 @@ import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
 import stroom.entity.client.TreeRowHandler;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.task.client.presenter.TaskProgressUtil;
+import stroom.task.client.TaskProgressUtil;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.client.DataGridUtil;

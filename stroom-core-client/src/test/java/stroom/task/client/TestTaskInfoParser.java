@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.task.client;
 
-import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
+import stroom.task.client.TaskInfoParser.TaskInfoKey;
 
 import org.junit.jupiter.api.Test;
 
