@@ -17,7 +17,7 @@
 package stroom.security.identity.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.identity.client.component.CurrentPasswordController;
 import stroom.svg.client.IconColour;

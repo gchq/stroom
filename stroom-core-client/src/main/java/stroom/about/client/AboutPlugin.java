@@ -20,7 +20,7 @@ import stroom.about.client.component.AboutController;
 import stroom.about.client.event.ShowAboutEvent;
 import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.AppRoot;

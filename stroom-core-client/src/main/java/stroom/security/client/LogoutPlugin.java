@@ -18,7 +18,7 @@ package stroom.security.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.svg.shared.SvgImage;

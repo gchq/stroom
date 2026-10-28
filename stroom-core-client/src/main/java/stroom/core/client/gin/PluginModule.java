@@ -16,7 +16,7 @@
 
 package stroom.core.client.gin;
 
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 

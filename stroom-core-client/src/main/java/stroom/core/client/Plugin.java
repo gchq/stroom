@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.client.presenter;
+package stroom.core.client;
 
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 

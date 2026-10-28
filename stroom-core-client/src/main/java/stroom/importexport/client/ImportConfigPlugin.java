@@ -17,7 +17,7 @@
 package stroom.importexport.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.importexport.client.component.ImportConfigConfirmController;
 import stroom.importexport.client.component.ImportConfigController;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;

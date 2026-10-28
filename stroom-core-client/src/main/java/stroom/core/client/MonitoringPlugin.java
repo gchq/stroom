@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.core.client.presenter;
+package stroom.core.client;
 
 import stroom.content.client.ContentPlugin;
-import stroom.core.client.ContentManager;
-import stroom.core.client.MenuKeys;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;

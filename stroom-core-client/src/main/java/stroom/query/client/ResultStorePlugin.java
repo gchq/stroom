@@ -17,7 +17,7 @@
 package stroom.query.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.query.client.component.SearchResultStoresController;

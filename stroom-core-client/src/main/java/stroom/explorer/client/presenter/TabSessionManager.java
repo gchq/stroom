@@ -19,7 +19,7 @@ package stroom.explorer.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.HasSave;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;

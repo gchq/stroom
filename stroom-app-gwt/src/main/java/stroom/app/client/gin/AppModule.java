@@ -18,11 +18,11 @@ package stroom.app.client.gin;
 
 import stroom.content.client.component.ContentTabPaneController;
 import stroom.core.client.ContentManager;
+import stroom.core.client.CoreScreens;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.LocationManager;
 import stroom.core.client.component.CoreController;
 import stroom.core.client.component.FullScreenController;
-import stroom.core.client.presenter.CoreScreens;
 import stroom.event.client.StaticEventBus;
 import stroom.explorer.client.component.NavigationController;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;

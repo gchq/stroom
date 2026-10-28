@@ -17,7 +17,7 @@
 package stroom.preferences.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.preferences.client.component.KeyboardShortcutsController;
 import stroom.preferences.client.component.UserPreferencesDialogController;
