@@ -48,7 +48,7 @@
     <set-property name="stroom.controllerChecks" value="ENABLED"/>
 
     <!--
-      Screens (App/* stories): real presenters and views that call the server, shown with fake
+      Screens (App/* stories): real controllers and components that call the server, shown with fake
       REST replies (see stroom.gwt.workbench.client.app). These are the libraries and Stroom
       modules that the screens' code is in, as inherited by stroom.app.App.
     -->

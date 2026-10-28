@@ -268,7 +268,7 @@ compares them.
 leaks, after its other checks (real input, accessibility, focus), as it loses what the play left
 on the screen. For a story that opens its screen with `ScreenHarness.afterStartUp` (with `probe=1` in its
 address the harness exposes `window.__leakProbe`; see `LeakProbe`), it closes the screen as closing
-a Stroom tab does, disposing the presenters made while opening it (as `DocumentPlugin` does), and
+a Stroom tab does, disposing the controllers made while opening it (as `DocumentPlugin` does), and
 opens it again, 2 times to warm up and then 8 times (`--leak-cycles N`), measuring the DOM nodes
 and event listeners left after each close (once garbage has been collected). The story fails if
 each close keeps more than 20 nodes or 5 listeners on average. A story that seems to leak is
