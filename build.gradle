@@ -200,6 +200,10 @@ subprojects {
             implementation platform(libs.jackson.bom)
             implementation platform(libs.jackson2.bom)
 
+            // This is only here because DW 5.0.2 pulls in jetty 12.1.9 which has
+            // vulns, so force it up to 12.1.4 for the fix
+            implementation platform(libs.jetty.bom)
+
             testImplementation platform(libs.junit.bom)
         }
     }
