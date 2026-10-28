@@ -45,7 +45,6 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
@@ -1162,10 +1161,7 @@ public class AskStroomAiController extends Controller
     /// @return A task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided.createTaskMonitor()
-                : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        return taskMonitor().createTaskMonitor();
     }
 
     public static class DockBehaviour {

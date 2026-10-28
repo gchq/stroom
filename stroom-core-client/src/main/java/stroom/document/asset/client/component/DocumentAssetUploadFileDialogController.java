@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.asset.client.presenter.DocumentAssetAddFileCallback;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.importexport.client.presenter.ImportUtil;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -58,12 +56,7 @@ public class DocumentAssetUploadFileDialogController extends Controller {
         initWidget(view);
         fileChooser.attach(view.getFileChooser());
         // The dialog's task monitor, else Stroom's own busy indicator
-        fileChooser.setTaskMonitorFactory(() -> {
-            final TaskMonitorFactory provided = getProvidedTaskMonitor();
-            return (provided != null
-                    ? provided
-                    : new DefaultTaskMonitorFactory(this)).createTaskMonitor();
-        }, "Uploading file");
+        fileChooser.setTaskMonitorFactory(taskMonitor(), "Uploading file");
     }
 
     /// Asks for a file in a dialog, owned by `opener` until it is closed, and on OK uploads it and

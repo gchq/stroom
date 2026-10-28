@@ -16,9 +16,11 @@
 
 package stroom.widget.component.client;
 
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.task.client.TaskStartEvent;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -121,12 +123,37 @@ class TestController {
 
     @Test
     void theTaskMonitorIsAppWideWhenNothingProvidesOne() {
-        final Requester requester = new Requester(new SimpleEventBus());
+        final EventBus eventBus = new SimpleEventBus();
+        final Requester requester = new Requester(eventBus);
         ControllerNode.root("story").adopt(requester.getControllerNode());
+        final List<Object> sources = new ArrayList<>();
+        eventBus.addHandler(TaskStartEvent.getType(), event -> sources.add(event.getSource()));
+        final Task task = new SimpleTask("Fetching");
 
-        // Stroom's own busy indicator, which fires task events on the bus
-        assertThat(requester.taskMonitor().createTaskMonitor())
-                .hasSameClassAs(new DefaultTaskMonitorFactory(requester).createTaskMonitor());
+        // Stroom's own busy indicator, told of the task by the controller, on the bus
+        requester.taskMonitor().createTaskMonitor().onStart(task);
+
+        assertThat(sources).containsExactly(requester);
+    }
+
+    @Test
+    void theTaskMonitorIsLookedUpForEachTask() {
+        final EventBus eventBus = new SimpleEventBus();
+        final Requester requester = new Requester(eventBus);
+        final ControllerNode root = ControllerNode.root("dialog");
+        root.adopt(requester.getControllerNode());
+        final TaskMonitor provided = Mockito.mock(TaskMonitor.class);
+        final TaskMonitorFactory taskMonitor = requester.taskMonitor();
+
+        root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> provided));
+        assertThat(taskMonitor.createTaskMonitor()).isSameAs(provided);
+
+        // Once the dialog takes it back, the next task is app-wide again
+        root.unprovide(Contexts.TASK_MONITOR);
+        final List<Object> sources = new ArrayList<>();
+        eventBus.addHandler(TaskStartEvent.getType(), event -> sources.add(event.getSource()));
+        taskMonitor.createTaskMonitor().onStart(new SimpleTask("Saving"));
+        assertThat(sources).containsExactly(requester);
     }
 
     @Test

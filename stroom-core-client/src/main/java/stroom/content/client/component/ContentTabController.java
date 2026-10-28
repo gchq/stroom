@@ -18,7 +18,6 @@ package stroom.content.client.component;
 
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
@@ -49,9 +48,6 @@ public abstract class ContentTabController extends LayerController implements Do
 
     @Override
     public TaskMonitor createTaskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided.createTaskMonitor()
-                : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        return taskMonitor().createTaskMonitor();
     }
 }

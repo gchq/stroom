@@ -224,8 +224,6 @@ public final class WidgetsStories {
         CurveTabBarStories.addTo(registry);
         // Widgets/Tabs/LinkTabPanel
         LinkTabPanelStories.addTo(registry);
-        // Widgets/Tabs/LinkTabsWidget
-        // Widgets/Data Grid/DataGrid
         // Widgets/Data Grid/DataGrid
         DataGridStories.addTo(registry);
         // Widgets/Data Grid/Benchmark

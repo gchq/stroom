@@ -26,6 +26,9 @@ import com.google.web.bindery.event.shared.EventBus;
 /// A processor filter's tasks ([ProcessorFilterTasksController]) in a main content tab of their own.
 public class ProcessorFilterTasksTabController extends ContentTabController {
 
+    /// The tab's type.
+    public static final String TAB_TYPE = "Tasks";
+
     private final ProcessorFilterTasksController tasks;
 
     /// Made by GIN.
@@ -64,6 +67,6 @@ public class ProcessorFilterTasksTabController extends ContentTabController {
 
     @Override
     public String getType() {
-        return "Tasks";
+        return TAB_TYPE;
     }
 }

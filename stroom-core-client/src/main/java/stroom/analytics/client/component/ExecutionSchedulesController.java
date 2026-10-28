@@ -749,7 +749,7 @@ public class ExecutionSchedulesController extends ContentTabController {
 
     @Override
     public String getType() {
-        return "ExecutionScheduleManager";
+        return TAB_TYPE;
     }
 
 }

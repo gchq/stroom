@@ -27,7 +27,6 @@ import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ContextValue;
@@ -284,10 +283,7 @@ public class DocumentEditorHost<D>
     /// @return A task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided.createTaskMonitor()
-                : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        return taskMonitor().createTaskMonitor();
     }
 
     private void refreshTabIfLabelChanged() {

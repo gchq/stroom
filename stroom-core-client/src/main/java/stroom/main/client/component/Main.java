@@ -116,9 +116,10 @@ public class Main extends Component {
 
     /// Hides the explorer, or shows a view in place of the whole main area, or puts them back.
     ///
-    /// @param view The view to show in place of the main area, or null to hide or show the explorer.
-    public void maximise(final IsWidget view) {
-        if (view == null) {
+    /// @param content What to show in place of the main area, or null to hide or show the explorer. It
+    ///                is compared by identity, so pass the same object each time.
+    public void maximise(final IsWidget content) {
+        if (content == null) {
             // Toggle explorer visibility.
             if (!state.explorerMaximised) {
                 captureSplitPos();
@@ -128,10 +129,10 @@ public class Main extends Component {
             }
             state.maximisedView = null;
         } else {
-            // Toggle specific view maximise.
-            if (state.maximisedView == null || state.maximisedView != view) {
+            // Toggle specific content maximise.
+            if (state.maximisedView == null || state.maximisedView != content) {
                 captureSplitPos();
-                state.maximisedView = view;
+                state.maximisedView = content;
             } else {
                 state.maximisedView = null;
             }

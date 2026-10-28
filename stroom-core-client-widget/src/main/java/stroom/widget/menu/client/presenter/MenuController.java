@@ -16,11 +16,9 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -373,7 +371,7 @@ public class MenuController extends Controller implements Menu.Handler {
 
     private void execute(final MenuItem menuItem) {
         if (menuItem != null && menuItem.getCommand() != null) {
-            final TaskMonitor taskMonitor = getTaskMonitorFactory().createTaskMonitor();
+            final TaskMonitor taskMonitor = taskMonitor().createTaskMonitor();
             final Task task = new SimpleTask("Executing menu item " + menuItem.getText());
             taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() -> {
@@ -385,14 +383,6 @@ public class MenuController extends Controller implements Menu.Handler {
                 }
             });
         }
-    }
-
-    // The task monitor its owners provide, else an app-wide one (the main screen's spinner)
-    private TaskMonitorFactory getTaskMonitorFactory() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
     }
 
     private void hideSelf(final boolean autoClose, final boolean ok) {

@@ -182,7 +182,7 @@ class TestDialogCoverage {
     }
 
     /// Checks the evidence file: every story it names exists, and every class it names is a screen
-    /// or dialog that no story names (else it isn't needed).
+    /// or dialog.
     @Test
     void testEvidence() {
         final Set<String> storyIds = AllStories.create()

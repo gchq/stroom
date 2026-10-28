@@ -53,6 +53,7 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
         handler.onRename(this);
     }
 
+    /// @return The controller shown as the popup.
     public Controller getController() {
         return controller;
     }

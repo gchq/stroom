@@ -19,10 +19,8 @@ package stroom.widget.popup.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.ContextValue;
-import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.DialogTaskMonitor;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -49,14 +47,20 @@ public class PopupSupportImpl implements PopupSupport {
 
     // What the popup shows, whose context gives the dialog's task monitor to all it owns
     private final Controller controller;
-    // Whether the dialog's task monitor is the one the controller provides, to take back when hidden
-    private boolean providesTaskMonitor;
+    // Takes the dialog's task monitor back from the controller once it is hidden
+    private Runnable takeBackTaskMonitor = () -> {
+    };
     private HidePopupRequestEvent.Handler hideRequestHandler;
     private HidePopupEvent.Handler hideHandler;
     private List<Element> autoHidePartners;
     private DialogButtons dialogButtons;
     private DialogActionHandler dialogActionHandler;
 
+    /// @param controller        What the popup shows: its widget, and the dialog's task monitor while shown.
+    /// @param icon              The popup's icon, or null.
+    /// @param caption           The popup's caption, or null.
+    /// @param modal             Whether it is modal, or null for its type's default.
+    /// @param autoHidePartners  Elements a click on which doesn't hide it.
     public PopupSupportImpl(final Controller controller,
                             final SvgImage icon,
                             final String caption,
@@ -138,7 +142,7 @@ public class PopupSupportImpl implements PopupSupport {
         if (popup != null) {
             popup.forceHide(event.isAutoClose());
             popup = null;
-            clearTaskMonitor();
+            takeBackTaskMonitor.run();
             hideRequestHandler = null;
             if (hideHandler != null) {
                 hideHandler.onHide(event);
@@ -270,26 +274,9 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     // What the dialog shows, and everything it owns (through its context), show their tasks on the
-    // dialog, unless it provides a task monitor of its own (e.g. a list's pager)
+    // dialog while it is shown
     private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
-        final ControllerNode node = controller.getControllerNode();
-        // Null only for a mock (e.g. Mockito's, in a test)
-        if (node != null) {
-            final ContextValue<TaskMonitorFactory> provided = node.provided(Contexts.TASK_MONITOR);
-            if (provided == null || provided.get() == Contexts.TASK_MONITOR.getDefaultValue()) {
-                node.setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
-                providesTaskMonitor = true;
-            }
-        }
-    }
-
-    // A controller shown again is given its next dialog's task monitor, not this one's
-    private void clearTaskMonitor() {
-        if (providesTaskMonitor) {
-            controller.getControllerNode().setProvided(Contexts.TASK_MONITOR,
-                    Contexts.TASK_MONITOR.getDefaultValue());
-            providesTaskMonitor = false;
-        }
+        takeBackTaskMonitor = DialogTaskMonitor.provide(controller, taskMonitorFactory);
     }
 
     @Override

@@ -54,6 +54,7 @@ public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
         handler.onDisable(this);
     }
 
+    /// @return The controller shown as the popup.
     public Controller getController() {
         return controller;
     }

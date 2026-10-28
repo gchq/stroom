@@ -35,7 +35,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // A content tab's type is the type of the reference a tab session saves for it, and the type its
-// plugin registers to open it again, so two screens with one type open each other's screen
+// plugin registers to open it again, so two screens with one type open each other's screen. The
+// types are read from the source (a content tab can't be made on the JVM)
 class TestContentTabController {
 
     // The client modules with content tabs, from the repository's root
@@ -43,21 +44,37 @@ class TestContentTabController {
             "stroom-core-client",
             "stroom-statistics/stroom-statistics-client");
 
+    private static final Pattern CONTENT_TAB = Pattern.compile("\\bextends\\s+ContentTabController\\b");
     private static final Pattern TAB_TYPE = Pattern.compile(
             "static\\s+final\\s+String\\s+TAB_TYPE\\s*=\\s*\"([^\"]+)\"\\s*;");
+    private static final Pattern LITERAL_TYPE = Pattern.compile(
+            "String\\s+getType\\(\\)\\s*\\{\\s*return\\s*\"");
 
     @Test
     void testTabTypesAreUnique() {
         final Map<String, Set<String>> classesByType = new TreeMap<>();
+        final Set<String> literalTypes = new TreeSet<>();
         for (final String module : MODULES) {
             for (final Path file : javaFiles(repositoryRoot().resolve(module).resolve("src/main/java"))) {
-                final Matcher matcher = TAB_TYPE.matcher(read(file));
+                final String source = read(file);
+                if (!CONTENT_TAB.matcher(source).find()) {
+                    continue;
+                }
+                final String name = file.getFileName().toString();
+                if (LITERAL_TYPE.matcher(source).find()) {
+                    literalTypes.add(name);
+                }
+                final Matcher matcher = TAB_TYPE.matcher(source);
                 while (matcher.find()) {
-                    classesByType.computeIfAbsent(matcher.group(1), k -> new TreeSet<>())
-                            .add(file.getFileName().toString());
+                    classesByType.computeIfAbsent(matcher.group(1), k -> new TreeSet<>()).add(name);
                 }
             }
         }
+
+        // A literal type in getType() isn't checked here, so each is a TAB_TYPE (or a document's type)
+        assertThat(literalTypes)
+                .as("content tabs whose getType() returns a literal")
+                .isEmpty();
 
         // Properties once had Caches' type, and a document's permissions the batch screen's
         assertThat(classesByType).containsKeys("Caches", "Properties", "DocumentPermissions",

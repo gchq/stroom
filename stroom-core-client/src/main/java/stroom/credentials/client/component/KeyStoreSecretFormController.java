@@ -21,8 +21,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.Secret;
 import stroom.importexport.client.presenter.ImportUtil;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;
@@ -56,7 +54,7 @@ public final class KeyStoreSecretFormController extends Controller implements Se
         initWidget(view);
         this.fileChooser = own(fileChooser);
         fileChooser.attach(view.getFileChooser());
-        fileChooser.setTaskMonitorFactory(() -> getTaskMonitorFactory().createTaskMonitor(), "Uploading Data");
+        fileChooser.setTaskMonitorFactory(taskMonitor(), "Uploading Data");
     }
 
     /// @param type The key store's type, e.g. that of the secret being replaced.
@@ -100,13 +98,5 @@ public final class KeyStoreSecretFormController extends Controller implements Se
                     onDone.accept(true);
                 },
                 failure -> AlertEvent.fireError(this, failure, () -> onDone.accept(false)));
-    }
-
-    // What shows the upload: what its owners provide, else the app's own spinner
-    private TaskMonitorFactory getTaskMonitorFactory() {
-        final TaskMonitorFactory provided = getProvidedTaskMonitor();
-        return provided != null
-                ? provided
-                : new DefaultTaskMonitorFactory(this);
     }
 }

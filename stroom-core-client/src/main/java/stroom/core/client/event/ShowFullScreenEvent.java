@@ -31,6 +31,10 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
         this.controller = controller;
     }
 
+    /// Asks the app to show a controller full screen, in place of its shell.
+    ///
+    /// @param handlers   What fires it.
+    /// @param controller What to show, e.g. a document's host.
     public static void fire(final HasHandlers handlers,
                             final Controller controller) {
         handlers.fireEvent(new ShowFullScreenEvent(controller));
@@ -53,6 +57,7 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
         handler.onShowFullScreen(this);
     }
 
+    /// @return What to show full screen, e.g. a document's host.
     public Controller getController() {
         return controller;
     }

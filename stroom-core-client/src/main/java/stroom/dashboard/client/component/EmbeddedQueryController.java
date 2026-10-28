@@ -315,31 +315,11 @@ public class EmbeddedQueryController
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
         queryModel.addSearchStateListener(this);
 
-//        view.setResultView(linkTabsLayoutView);
-//
-//        linkTabsLayoutView.getTabBar().addTab(TABLE);
-//        linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
-//        setVisHidden(true);
-
         listen(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             queryModel.reset(DestroyReason.WINDOW_CLOSE);
         });
-//        own(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
-//                selectTab(e.getSelectedItem())));
     }
-
-//    private void setVisHidden(final boolean state) {
-//        final boolean currentState = linkTabsLayoutView.getTabBar().isTabHidden(VISUALISATION);
-//        if (currentState != state) {
-//            linkTabsLayoutView.getTabBar().setTabHidden(VISUALISATION, state);
-//            if (state) {
-//                selectTab(TABLE);
-//            } else {
-//                selectTab(VISUALISATION);
-//            }
-//        }
-//    }
 
     /// @return Whether the pane shows its query's visualisation, rather than its table.
     public boolean isShowingVis() {
@@ -567,16 +547,6 @@ public class EmbeddedQueryController
             }
         }
     }
-
-//    private void selectTab(final TabData tabData) {
-//        if (TABLE.equals(tabData)) {
-//            linkTabsLayoutView.getTabBar().selectTab(tabData);
-//            linkTabsLayoutView.getLayerContainer().show(tablePresenter);
-//        } else if (VISUALISATION.equals(tabData)) {
-//            linkTabsLayoutView.getTabBar().selectTab(tabData);
-//            linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
-//        }
-//    }
 
     @Override
     public void start() {

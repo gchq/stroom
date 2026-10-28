@@ -55,6 +55,7 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
         handler.onHide(this);
     }
 
+    /// @return The controller shown as the popup.
     public Controller getController() {
         return controller;
     }

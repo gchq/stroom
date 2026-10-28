@@ -91,6 +91,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         handler.onShow(this);
     }
 
+    /// @return The controller shown as the popup.
     public Controller getController() {
         return controller;
     }

@@ -236,6 +236,18 @@ public final class ControllerNode {
         return (ContextValue<T>) provided.get(key);
     }
 
+    /// Stops providing a value, so that this node and those below it see the one provided above it
+    /// again, e.g. a dialog's task monitor once the dialog is hidden. Nothing happens if this node
+    /// doesn't provide it.
+    ///
+    /// @param key The key.
+    public void unprovide(final ContextKey<?> key) {
+        Objects.requireNonNull(key, "key");
+        if (provided.remove(key) != null && isConnected() && !disposed && !disposing) {
+            refreshWatches();
+        }
+    }
+
     /// Provides a value, or changes the one this node provides, e.g. a dialog's task monitor each
     /// time the dialog is shown.
     ///

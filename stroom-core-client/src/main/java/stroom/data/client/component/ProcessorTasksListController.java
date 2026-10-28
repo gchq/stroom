@@ -210,6 +210,10 @@ public class ProcessorTasksListController extends Controller {
         }
     }
 
+    /// Shows what belongs to a document, e.g. a feed's or pipeline's.
+    ///
+    /// @param docRef   The document's reference.
+    /// @param document The document, which may be null.
     public void read(final DocRef docRef, final Object document) {
         if (docRef == null) {
             setExpression(null);

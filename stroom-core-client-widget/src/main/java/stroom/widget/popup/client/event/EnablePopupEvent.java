@@ -54,6 +54,7 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
         handler.onEnable(this);
     }
 
+    /// @return The controller shown as the popup.
     public Controller getController() {
         return controller;
     }

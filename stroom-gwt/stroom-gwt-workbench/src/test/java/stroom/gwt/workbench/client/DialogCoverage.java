@@ -21,8 +21,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,7 +39,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /// Reports which of Stroom's screens and dialogs the workbench's stories cover, by a static
 /// reachability analysis of the source (the Gradle task `workbenchDialogCoverage`).
@@ -76,6 +78,7 @@ public final class DialogCoverage {
     static final String EVIDENCE_RESOURCE = "/dialog-coverage-evidence.json";
 
     private static final String EXCLUDED_PACKAGE = "/pathways/";
+    private static final Set<String> SKIPPED_DIRECTORIES = Set.of("build", "node_modules", ".gradle", ".git");
     private static final Pattern IMPORT = Pattern.compile("^import\\s.*$", Pattern.MULTILINE);
     private static final Pattern TYPE_NAME = Pattern.compile("\\b[A-Z]\\w*\\b");
     // The argument: a name, or a call with no nested parentheses, e.g. `provider.get()`
@@ -85,6 +88,7 @@ public final class DialogCoverage {
             Pattern.compile("ControllerDialog\\s*\\.\\s*show\\(\\s*" + ARGUMENT + "\\s*\\)"),
             Pattern.compile("ControllerDialog\\s*\\.\\s*showOnce\\(\\s*[^(),]*(?:\\([^()]*\\))?\\s*,\\s*"
                             + ARGUMENT + "\\s*\\)"));
+    private static final Pattern LINE_COMMENT = Pattern.compile("(?m)^\\s*//.*$");
     private static final Pattern THIS = Pattern.compile("^(?:\\w+\\.)?this$");
     private static final Pattern VARIABLE = Pattern.compile("^(\\w+)(?:\\.get\\(\\))?$");
 
@@ -316,11 +320,13 @@ public final class DialogCoverage {
 
     private void findDialogs() {
         sources.forEach((name, sourceFile) -> {
+            // Javadoc examples and commented-out code aren't calls
+            final String code = LINE_COMMENT.matcher(sourceFile.source()).replaceAll("");
             for (final Pattern pattern : DIALOG_SHOWS) {
-                final Matcher matcher = pattern.matcher(sourceFile.source());
+                final Matcher matcher = pattern.matcher(code);
                 while (matcher.find()) {
                     final String argument = matcher.group(1).trim();
-                    final String type = resolveDialogType(name, sourceFile.source(), argument);
+                    final String type = resolveDialogType(name, code, argument);
                     if (type == null) {
                         unresolvedDialogs.add(name + ": " + argument);
                     } else if (isConcreteClass(type) && !NON_DIALOG_TYPES.contains(type) && !isExcluded(type)) {
@@ -438,16 +444,38 @@ public final class DialogCoverage {
         return trimmed.substring(trimmed.lastIndexOf('.') + 1);
     }
 
+    // The Java files under a directory, leaving out build output and installed packages, which
+    // other builds may be writing to (a file gone by the time it is visited failed the walk)
     private static List<Path> javaFiles(final Path dir) {
-        try (final Stream<Path> stream = Files.walk(dir)) {
-            return stream
-                    .filter(path -> path.toString().endsWith(".java"))
-                    .filter(path -> !toUnixPath(path).contains("/node_modules/"))
-                    .sorted()
-                    .toList();
+        final List<Path> files = new ArrayList<>();
+        try {
+            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path path, final BasicFileAttributes attrs) {
+                    final Path fileName = path.getFileName();
+                    return fileName != null && SKIPPED_DIRECTORIES.contains(fileName.toString())
+                            ? FileVisitResult.SKIP_SUBTREE
+                            : FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs) {
+                    if (path.toString().endsWith(".java")) {
+                        files.add(path);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(final Path path, final IOException e) {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+        Collections.sort(files);
+        return files;
     }
 
     private static String read(final Path file) {
