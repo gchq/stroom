@@ -206,6 +206,10 @@ public final class ReportEditorStories {
         openTab(play, "Execution");
         play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
         play.waitFor(() -> play.expect(play.getByRole("button", "New Execution Schedule")).toBeInTheDocument());
+        // The schedules are sorted by name, as the header says: the list makes its columns afresh
+        // when the document's read only state is first known, and they once lost the sort
+        play.expect(play.querySelector("[role=\"columnheader\"][aria-sort=\"ascending\"]"))
+                .toHaveTextContent(TextMatch.containing("Name"));
         expectReadOnlyNote(play, readOnly);
         DocumentEditors.expectNoProblems(play);
     }

@@ -29,6 +29,7 @@ import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
+import stroom.widget.datagrid.client.model.SortRebuild;
 import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.InputModality;
@@ -119,6 +120,10 @@ public class DataGrid<R> extends Widget
     // The screen's default sort (R-H4b, D10): shown from the start, and restored when a click
     // leaves the sort list empty
     private final List<SortEntry<Column<?, ?>>> defaultSort = new ArrayList<>();
+    // The sort's and default sort's entries of removed columns, taken back by columns added again
+    // with the same sort field (a list that makes its columns afresh, e.g. when read only changes)
+    private final SortRebuild<Column<?, ?>> sortRebuild = new SortRebuild<>(Column::getDataStoreName);
+    private final SortRebuild<Column<?, ?>> defaultSortRebuild = new SortRebuild<>(Column::getDataStoreName);
     private final GridHtml<R> html;
 
     private final PageState<R> pageState;
@@ -412,6 +417,13 @@ public class DataGrid<R> extends Widget
                              final ColumnSizing sizing) {
         columnModel.insert(beforeIndex, column, sizing);
         headers.put(column, header);
+        // A column made afresh takes back the sort of the one it replaces
+        if (sortRebuild.isPending()) {
+            setSortList(sortRebuild.add(currentSort(), column));
+        }
+        if (defaultSortRebuild.isPending()) {
+            setDefaultSortEntries(defaultSortRebuild.add(new ArrayList<>(defaultSort), column));
+        }
         scheduleRender();
     }
 
@@ -422,6 +434,10 @@ public class DataGrid<R> extends Widget
         if (columnModel.remove(column)) {
             headers.remove(column);
             wrappingColumns.remove(column);
+            // The sort never names a column the grid doesn't have; its entry is kept for a column
+            // added again with the same sort field
+            setSortList(sortRebuild.remove(currentSort(), column));
+            setDefaultSortEntries(defaultSortRebuild.remove(new ArrayList<>(defaultSort), column));
             scheduleRender();
         }
     }
@@ -687,8 +703,37 @@ public class DataGrid<R> extends Widget
         for (final ColumnSortInfo info : defaultSort) {
             this.defaultSort.add(new SortEntry<>(info.getColumn(), info.isAscending()));
         }
-        if (sortList.size() == 0) {
+        // Not while columns are being made afresh: the sort they had comes back with them
+        if (sortList.size() == 0 && !sortRebuild.isPending()) {
             setSortList(this.defaultSort);
+        }
+    }
+
+    // Replaces the default sort's entries
+    private void setDefaultSortEntries(final List<SortEntry<Column<?, ?>>> entries) {
+        defaultSort.clear();
+        defaultSort.addAll(entries);
+    }
+
+    // The sort list's entries, primary column first
+    private List<SortEntry<Column<?, ?>>> currentSort() {
+        final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
+        for (int i = 0; i < sortList.size(); i++) {
+            final ColumnSortInfo info = sortList.get(i);
+            current.add(new SortEntry<>(info.getColumn(), info.isAscending()));
+        }
+        return current;
+    }
+
+    // Once columns made afresh are all added: what no column took back is forgotten, and if that
+    // leaves nothing sorted, the default sort applies, so the header shows the order of the data
+    private void finishSortRebuild() {
+        if (sortRebuild.isPending() || defaultSortRebuild.isPending()) {
+            sortRebuild.finish();
+            defaultSortRebuild.finish();
+            if (sortList.size() == 0 && !defaultSort.isEmpty()) {
+                setSortList(defaultSort);
+            }
         }
     }
 
@@ -707,13 +752,8 @@ public class DataGrid<R> extends Widget
     /// @param column The column.
     /// @param ctrl   Whether Ctrl was held, which adds the column to the sort.
     void onHeaderSortClick(final Column<R, ?> column, final boolean ctrl) {
-        final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
-        for (int i = 0; i < sortList.size(); i++) {
-            final ColumnSortInfo info = sortList.get(i);
-            current.add(new SortEntry<>(info.getColumn(), info.isAscending()));
-        }
         final List<SortEntry<Column<?, ?>>> next = SortCycle.orDefault(
-                SortCycle.next(current, column, column.isDefaultSortAscending(), ctrl),
+                SortCycle.next(currentSort(), column, column.isDefaultSortAscending(), ctrl),
                 defaultSort);
         setSortList(next);
         ColumnSortEvent.fire(this, sortList);
@@ -1483,6 +1523,9 @@ public class DataGrid<R> extends Widget
     }
 
     private void render() {
+        // First, while a render is still scheduled, so that a change to the sort it makes is drawn
+        // by this render rather than scheduling another
+        finishSortRebuild();
         renderScheduled = false;
         // Columns added after the grid was laid out (once a fetch returns) haven't been resolved
         // by the resize observer, which saw none

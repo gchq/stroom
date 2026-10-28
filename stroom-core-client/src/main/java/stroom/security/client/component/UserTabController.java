@@ -81,8 +81,10 @@ public class UserTabController extends ContentTabController {
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
         this.label = getLabel(userRef);
-        // A user isn't a document, so has no reference
-        tabs.read(null, userRef);
+        // A user isn't a document, so has no reference; with no user the tabs have nothing to show
+        if (userRef != null) {
+            tabs.read(null, userRef);
+        }
     }
 
     /// @return The user or group shown.

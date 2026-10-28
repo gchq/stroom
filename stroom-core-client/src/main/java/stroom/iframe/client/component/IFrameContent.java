@@ -63,6 +63,7 @@ public class IFrameContent extends Component {
                 if (title != null && !title.trim().isEmpty()) {
                     if (!Objects.equals(lastTitle, title)) {
                         lastTitle = title;
+                        updateFrameName();
                         onTitleChange.run();
                     }
                 }
@@ -82,12 +83,20 @@ public class IFrameContent extends Component {
     /// @param url The page to show.
     public void setUrl(final String url) {
         lastTitle = url;
+        updateFrameName();
         frame.setUrl(url);
     }
 
     /// @param customTitle The tab's name, in place of the page's title, or null for the page's.
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
+        updateFrameName();
+    }
+
+    // Names the frame for assistive technology, which announces a frame by its title (WCAG 4.1.2),
+    // as the tab is named
+    private void updateFrameName() {
+        frame.setTitle(getTitle());
     }
 
     /// @return The tab's name: its custom title, or the page's title, or its URL until the page has a

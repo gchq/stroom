@@ -60,10 +60,15 @@ public final class LinkPageStories {
                     play.waitFor(() -> play.expect(screen.queryByText(TITLE, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
-                // A tab link's page, as its tab shows it
+                // A tab link's page, as its tab shows it: the frame is on the page's body, over the
+                // tab, so that it isn't reloaded each time the tab is shown
                 .story("Tab", LinkPageStories::renderTab)
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.querySelector("iframe")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.screen().querySelector("iframe.iframe-content__frame"))
+                            .toBeInTheDocument());
+                    // Named, as the tab is, for screen readers (it once had no name)
+                    play.expect(play.screen().querySelector("iframe.iframe-content__frame"))
+                            .toHaveAttribute("title", TITLE);
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });
     }
@@ -89,8 +94,10 @@ public final class LinkPageStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As HyperlinkEventHandlerImpl opens a tab link's page
-            final IFrameContentController tab = harness.show(injector.getIFrameContentController());
+            // As HyperlinkEventHandlerImpl opens a tab link's page. Shown as a page: the tab itself
+            // holds nothing to focus (its frame is on the page's body), so the runner's check that a
+            // tab takes the focus doesn't apply
+            final IFrameContentController tab = harness.showPage(injector.getIFrameContentController());
             tab.setUrl("about:blank");
             tab.setCustomTitle(TITLE);
         });

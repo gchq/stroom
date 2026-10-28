@@ -1720,12 +1720,28 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 ### Screenshots that differ in every run
 
 **Reported** (28 October 2026, wave 21). About 90 of the full run's screenshots differ from their
-baselines in every run, so a change to them can't be seen: every visualisation story (their layouts
-are random), the annotation screens and the query editor's annotation stories (they show times
-relative to now), the floor map editor's (its timeline is relative to now) and
-`Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`. To do: give those stories a fixed clock and
-seed, or leave them out of the screenshot diff, and take new baselines for any that differ for
-good.
+baselines in every run, so a change to them can't be seen. Two kinds (the screenshot runs fix the
+stories' clock, so it isn't the time):
+
+* **Stale baselines**, the same difference every run: the annotation screens and the query editor's
+  annotation stories (the title and subject sit differently), the floor map editor's (its fact and
+  time lists are new), `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn` and others: deliberate
+  changes in earlier waves whose baselines weren't taken again. To do: look at each and take new
+  baselines.
+* **Random layouts**: every visualisation story (force, tree and the like lay out differently each
+  run). To do: a fixed seed for their layouts, or leave them out of the screenshot diff.
+
+### A grid whose columns are made afresh loses its sort
+
+**Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and
+report's schedules, `ScheduledProcessList`, does when its document's read only state changes) showed
+no sort: `DataGrid.removeColumn` left the removed column in the sort list, so the new column wasn't
+marked sorted and `setDefaultSort` (which applies only to an empty sort list) did nothing. Found when
+a story owned the editor's host before reading the document, which changes the read only state once
+the list is made; in Stroom, e.g. Save As of a document the user could only view. The grid now takes
+a removed column out of its sort, and a column added with the same sort field takes its place back
+(`SortRebuild`, `TestSortRebuild`); `ReportEditor`'s execution stories check the Name column is
+marked sorted.
 
 ### Some components wire their handlers with `@UiHandler`
 

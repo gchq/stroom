@@ -20,6 +20,11 @@ waves left (ISSUES.md, "Left from wave 13's audit", "Left from wave 14's audit",
   `StoryPopups`, not with `ShowPopupEvent.builder`, unowned.
 - **Closing a Data tab destroys its search:** `IndexEditor`'s `DataTabRun` closes the editor as its
   tab does and expects the result store's destroy.
+- **A grid whose columns are made afresh keeps its sort:** owning the host from the start showed the
+  schedules list losing its Name sort, as it makes its columns afresh when the read only state is
+  known, and `DataGrid.removeColumn` left the old column in the sort. The grid now hands a removed
+  column's sort to a column added with the same sort field (`SortRebuild`, `TestSortRebuild`), and
+  the report editor's execution stories check the sort is shown.
 - **The dictionary's word list sort** is a static method with a test (`TestEffectiveWordsList`).
 - **Screenshots:** of the three not explained, two haven't differed since; the value spinner column
   differs in every run, as do about 90 others (see ISSUES.md).
