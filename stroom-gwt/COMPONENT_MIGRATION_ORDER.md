@@ -1177,6 +1177,15 @@ after wave 23.
 > that can't be kept, which says why and takes the focus; no field drops or replaces what was typed;
 > durations allow 0 or none where that means something. See `wave-24.md`.
 
+## 25. SuggestionBox
+
+Record: [`component-migration/wave-25.md`](component-migration/wave-25.md). Added 28 October 2026,
+after wave 24.
+
+> **Done, 28 October 2026**: an expression term's value fields are Stroom's `SuggestionBox`, an
+> editable combobox with list autocomplete, in place of GWT's `SuggestBox`, which checkstyle now
+> refuses. See `wave-25.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

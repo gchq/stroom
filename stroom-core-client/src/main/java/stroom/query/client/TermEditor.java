@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.docref.DocRef;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
+import stroom.item.client.SuggestionBox;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
@@ -37,15 +38,12 @@ import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -76,11 +74,11 @@ public class TermEditor extends Component {
     @UiField
     Label andLabel;
     @UiField
-    SuggestBox value;
+    SuggestionBox value;
     @UiField
-    SuggestBox valueFrom;
+    SuggestionBox valueFrom;
     @UiField
-    SuggestBox valueTo;
+    SuggestionBox valueTo;
     @UiField
     DateTimeBox date;
     @UiField
@@ -94,7 +92,7 @@ public class TermEditor extends Component {
     @UiField
     Label fieldTypeLabel;
 
-    private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
+    private final TermValueSuggestions suggestions = new TermValueSuggestions();
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
@@ -118,21 +116,13 @@ public class TermEditor extends Component {
         // A term's parts have no labels, so each is named for what it is
         AccessibleName.set(fieldListBox, "Field");
         AccessibleName.set(conditionListBox, "Condition");
-        initTextBox(value, "Value");
-        initTextBox(valueFrom, "From");
-        initTextBox(valueTo, "To");
+        initValueBox(value, "Value");
+        initValueBox(valueFrom, "From");
+        initValueBox(valueTo, "To");
         // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
         AccessibleName.set(date, "Date");
         AccessibleName.set(dateFrom, "From");
         AccessibleName.set(dateTo, "To");
-    }
-
-    @UiFactory
-    /// Makes the value's box, which suggests values as they are typed.
-    ///
-    /// @return The box.
-    SuggestBox createSuggestBox() {
-        return new SuggestBox(suggestOracle);
     }
 
     /// @param pickers The document and user pickers, which its controller attached to the boxes.
@@ -143,12 +133,14 @@ public class TermEditor extends Component {
     /// Cancels a request for suggestions still waiting for what is typed to settle, so nothing is
     /// fetched once the editor's controller has gone.
     public void cancelSuggestions() {
-        suggestOracle.cancel();
+        value.cancel();
+        valueFrom.cancel();
+        valueTo.cancel();
     }
 
-    /// @param fetcher Fetches the values to suggest for what is typed (see [AsyncSuggestOracle]).
+    /// @param fetcher Fetches the values to suggest for what is typed (see [TermValueSuggestions]).
     public void setSuggestionFetcher(final BiConsumer<FetchSuggestionsRequest, Consumer<Suggestions>> fetcher) {
-        suggestOracle.setFetcher(fetcher);
+        suggestions.setFetcher(fetcher);
     }
 
     /// @param helpUrl Where the field filter's help is, which its tooltip links to.
@@ -188,7 +180,7 @@ public class TermEditor extends Component {
     /// @param fieldSelectionListModel The data source's fields.
     public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        suggestOracle.setDataSource(dataSource);
+        suggestions.setDataSource(dataSource);
 
         this.fieldSelectionListModel = fieldSelectionListModel;
         fieldListBox.setModel(fieldSelectionListModel);
@@ -217,16 +209,16 @@ public class TermEditor extends Component {
     /// @return Whether a field's own popup is open: a value's suggestions (whose keys, e.g. Escape
     /// to close it, are the field's). A date's dialog is modal, so takes the keys itself.
     public boolean isPopupShowing() {
-        return value.isSuggestionListShowing()
-               || valueFrom.isSuggestionListShowing()
-               || valueTo.isSuggestionListShowing();
+        return value.isListShowing()
+               || valueFrom.isListShowing()
+               || valueTo.isListShowing();
     }
 
     /// Closes the fields' own popups (see [#isPopupShowing]).
     public void hidePopups() {
-        value.hideSuggestionList();
-        valueFrom.hideSuggestionList();
-        valueTo.hideSuggestionList();
+        value.hideList();
+        valueFrom.hideList();
+        valueTo.hideList();
     }
 
     /// Stops editing, writing what was entered into the term, and hides the editor.
@@ -282,8 +274,8 @@ public class TermEditor extends Component {
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
-                if (widget instanceof SuggestBox) {
-                    sb.append(((SuggestBox) widget).getText());
+                if (widget instanceof SuggestionBox) {
+                    sb.append(((SuggestionBox) widget).getText());
                     sb.append(",");
                 } else if (widget instanceof DateTimeBox) {
                     sb.append(((DateTimeBox) widget).getText());
@@ -318,7 +310,7 @@ public class TermEditor extends Component {
     }
 
     private void changeField(final QueryField field, final Condition condition, final boolean useDefaultCondition) {
-        suggestOracle.setField(field);
+        suggestions.setField(field);
         final List<Condition> conditions = getConditions(field);
 
         Condition selected = condition;
@@ -575,14 +567,10 @@ public class TermEditor extends Component {
         registrations.add(handlerRegistration);
     }
 
-    // A value's box shows its suggestions when it is clicked
-    private static void initTextBox(final SuggestBox textBox, final String name) {
-        AccessibleName.set(textBox, name);
-        textBox.addDomHandler(e -> {
-            if (!textBox.isSuggestionListShowing()) {
-                textBox.showSuggestionList();
-            }
-        }, ClickEvent.getType());
+    // A value's box suggests the field's values (it shows them when clicked, as it does when typed in)
+    private void initValueBox(final SuggestionBox box, final String name) {
+        box.setAccessibleName(name);
+        box.setSource(suggestions);
     }
 
     private void fireDirty() {

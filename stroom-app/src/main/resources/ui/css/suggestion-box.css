@@ -1,0 +1,68 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A text field that suggests what to type (stroom.item.client.SuggestionBox), named BEM style: its
+   field (a text field, text-field.css) fills the box, and its suggestions are a list in a popup below
+   it (the shared popup's box, popup.css), at least as wide as the field (--suggestion-box__width).
+   The option the keys have moved to is drawn as a list's selected row.
+*/
+
+.suggestion-box {
+    display: inline-block;
+}
+
+.suggestion-box__input {
+    width: 100%;
+}
+
+.suggestion-box__popup {
+    z-index: 100;
+    min-width: var(--suggestion-box__width, 200px);
+    max-width: 400px;
+}
+
+.suggestion-box__list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.suggestion-box__option {
+    padding: 2px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.suggestion-box__option:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.suggestion-box__option--active,
+.suggestion-box__option--active:hover {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+@media (forced-colors: active) {
+    .suggestion-box__option--active,
+    .suggestion-box__option--active:hover {
+        background-color: Highlight;
+        color: HighlightText;
+        forced-color-adjust: none;
+    }
+}

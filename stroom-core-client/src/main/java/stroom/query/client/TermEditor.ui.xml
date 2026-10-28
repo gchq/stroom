@@ -13,15 +13,15 @@
         <g:FlowPanel ui:field="inner" styleName="termEditor-inner">
             <i:BaseSelectionBox ui:field="fieldListBox" addStyleNames="termEditor-item dropdown field"/>
             <i:SelectionBox ui:field="conditionListBox" addStyleNames="termEditor-item dropdown condition"/>
-            <g:SuggestBox ui:field="value" addStyleNames="termEditor-item wide textBox" visible="false"/>
-            <g:SuggestBox ui:field="valueFrom" addStyleNames="termEditor-item narrow textBox" visible="false"/>
+            <i:SuggestionBox ui:field="value" addStyleNames="termEditor-item wide" visible="false"/>
+            <i:SuggestionBox ui:field="valueFrom" addStyleNames="termEditor-item narrow" visible="false"/>
             <dt:DateTimeBox ui:field="date" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
                             visible="false"/>
             <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
                             visible="false"/>
             <g:Label ui:field="andLabel" addStyleNames="termEditor-label" wordWrap="false" text=" and "
                      visible="false"/>
-            <g:SuggestBox ui:field="valueTo" addStyleNames="termEditor-item narrow textBox" visible="false"/>
+            <i:SuggestionBox ui:field="valueTo" addStyleNames="termEditor-item narrow" visible="false"/>
             <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
                             visible="false"/>
             <dd:DropDownBox ui:field="docRefBox" addStyleNames="termEditor-item docRef termEditor-item--doc"

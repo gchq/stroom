@@ -1514,7 +1514,9 @@ Left as they are, on purpose:
   model: its value is the field's text (suggestions are hints), typing opens the list filtered by
   what was typed (an editable combobox with list autocomplete), choosing one fills the text, Escape
   closes the list keeping the text; BEM block `suggestion-box`. `AsyncSuggestOracle` becomes an async
-  list model.
+  list model. **Done** (28 October 2026, wave 25): `SuggestionBox`, fed by `TermValueSuggestions`;
+  its list is its own (the selection box's list moves the focus into its rows, which an editable
+  combobox can't).
 * GWT's `PopupPanel` for the editor's indicator popup (`IndicatorPopup`): part of the Ace editor
   work.
 * GWT's `FormPanel` round the asset add and rename dialogs and the step location dialog,

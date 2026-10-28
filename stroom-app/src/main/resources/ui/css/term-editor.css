@@ -101,7 +101,10 @@
 	margin: 0;
 }
 
-.termEditor-item.textBox {
+/* A value's field (a SuggestionBox's, suggestion-box.css), borderless in the term's row, as the
+   GWT SuggestBox it replaced was */
+.termEditor-item .suggestion-box__input {
+	height: 100%;
 	padding-left: 5px;
 	padding-right: 5px;
 	border: none;

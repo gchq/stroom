@@ -58,6 +58,7 @@ class TestStroomWidgetsOnly {
             Map.entry("SimpleCheckBox", "TickBox (stroom.widget.tickbox.client)"),
             Map.entry("RadioButton", "RadioGroup (stroom.widget.form.client)"),
             Map.entry("ListBox", "SelectionBox (stroom.item.client)"),
+            Map.entry("SuggestBox", "SuggestionBox (stroom.item.client)"),
             Map.entry("TextBox", "TextBox (stroom.widget.form.client)"),
             Map.entry("TextArea", "TextArea (stroom.widget.form.client)"),
             Map.entry("PasswordTextBox", "PasswordBox (stroom.widget.form.client)"),

@@ -178,7 +178,7 @@ public final class ExpressionBuilderStories {
                 .story("KeyboardEditing", context -> editor(context, complexExpression(), false))
                 .withPlay(play -> {
                     final Query fieldInput = play.querySelector(FIELD_PICKER + " .selection-box__input");
-                    final Query value = play.querySelector(".termEditor-item[aria-label='Value']");
+                    final Query value = play.querySelector(".termEditor-item [aria-label='Value']");
                     play.run("focus the toolbar's last button",
                             () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
                     play.keyboard("{Tab}{ArrowRight}");
@@ -367,7 +367,7 @@ public final class ExpressionBuilderStories {
                 .story("TermFieldContextMenu", context -> editor(context, complexExpression(), false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query value = play.querySelector(".termEditor-item[aria-label='Value']");
+                    final Query value = play.querySelector(".termEditor-item [aria-label='Value']");
                     play.click(play.getByText(USER_ID, ".expression-item__label"));
                     play.waitFor(() -> play.expect(value).toBeVisible());
                     play.rightClick(value);

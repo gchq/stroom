@@ -84,6 +84,7 @@ import stroom.gwt.workbench.client.widgets.inputs.QuickFilterPanelStories;
 import stroom.gwt.workbench.client.widgets.inputs.QuickFilterStories;
 import stroom.gwt.workbench.client.widgets.inputs.RadioGroupStories;
 import stroom.gwt.workbench.client.widgets.inputs.SingleLineEditorStories;
+import stroom.gwt.workbench.client.widgets.inputs.SuggestionBoxStories;
 import stroom.gwt.workbench.client.widgets.inputs.TextInputStories;
 import stroom.gwt.workbench.client.widgets.inputs.TickBoxStories;
 import stroom.gwt.workbench.client.widgets.inputs.ValueSpinnerStories;
@@ -291,6 +292,8 @@ public final class WidgetsStories {
         RadioGroupStories.addTo(registry);
         // Widgets/Inputs/SingleLineEditor
         SingleLineEditorStories.addTo(registry);
+        // Widgets/Inputs/SuggestionBox
+        SuggestionBoxStories.addTo(registry);
         // Widgets/Inputs/TextInput
         TextInputStories.addTo(registry);
         // Widgets/Inputs/TickBox
