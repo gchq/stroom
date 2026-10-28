@@ -76,6 +76,9 @@ final class InteractiveCellGrids {
     // Enter), as one did now and then under load when it was 250ms: the row drawn again lost the
     // cleared field's text, and the typed value wasn't committed
     private static final int SPINNER_POLL_MILLIS = 10;
+    // Stops the value spinner grid's polling (valueSpinnerGrid sets it)
+    private static Runnable stopPolling = () -> {
+    };
 
     private InteractiveCellGrids() {
         // Static utility
@@ -175,7 +178,9 @@ final class InteractiveCellGrids {
                 DataGridUtil.headingBuilder("Max Tasks").build(),
                 80);
         // Changes on every poll, so each poll really rewrites every row
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> "Poll " + polls[0]).build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> polls[0] < 0
+                        ? "Stopped"
+                        : "Poll " + polls[0]).build(),
                 "Polled", 100);
         grid.setRowData(rows);
 
@@ -194,7 +199,19 @@ final class InteractiveCellGrids {
                 poll.cancel();
             }
         });
+        // For the play's end: the grid stops polling and shows the same thing every run, so that
+        // its screenshot doesn't depend on how many polls the play took
+        stopPolling = () -> {
+            poll.cancel();
+            polls[0] = -1;
+            grid.setRowData(0, rows);
+        };
         return sized(grid);
+    }
+
+    /// Stops the value spinner grid's polling, its Polled column then saying so.
+    static void stopPolling() {
+        stopPolling.run();
     }
 
     // --------------------------------------------------------------------------------

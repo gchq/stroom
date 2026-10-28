@@ -298,6 +298,15 @@ basic use:
 
 ### Workbench stories that fail
 
+**Status** (28 October 2026, wave 22): the last full runs on the remove_gwtp branch (waves 17 to
+21) pass all 1,729 stories with the leak check. None of the flaky stories named below
+(`HyperlinksByKeyboard`, nor the ones under the other entries: `TableFilterDrivesQuery`, `JobsScreen`
+`CrossNavigation`, `DeleteAfterFailedLookupStillProceeds`, `ElasticIndexEditor` `FieldsReadOnly`)
+failed in the last six full runs. What still needs a retry now and then: the heavy editors' leak
+check under load (more than about 8 workers, or with a build running alongside), a few
+visualisations (`Force3D` `ViewKeys`) and `QueryResultVis` `PauseButtonReportsUp` (twice in six
+runs). The sections below are kept as the record of what failed and why.
+
 **Confirmed** (by a full `workbenchTest`, 22 October 2026: 1,195 of 1,197 pass). The three listed
 here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterRejected`,
 `ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded`) now pass, as they do in master's full
@@ -484,6 +493,12 @@ rows) focusable, ideally with the keys of a tree, as the rows expand.
 
 ### Some visualisation stories' screenshots differ from run to run
 
+**Mostly fixed** (28 October 2026, wave 22): screenshot runs seed `Math.random` in every frame, so
+the layouts and the Force2D and Force3D flows are the same each run; two runs of every `Force`,
+`Force2D`, `Force3D` and `Tree` story against new baselines differed only in `Tree` `Keyboard` and
+`Force` `SelectionPayload`, each by the same pixels both times, so each flips between two states
+(a tooltip shown on focus, or not). Those two are still open, as below.
+
 **Confirmed** (two screenshot runs of the same code, 21 October 2026). The stories pass, but their
 screenshots can't be used for a screenshot diff: they change between runs of the same code, so a
 diff around a change always reports them. Seen across dark, light and forced colours:
@@ -527,9 +542,9 @@ each story re-run against both builds with the same runner options):
   doesn't. Like TopBar `Keyboard`, whether a focus put back by code draws the ring depends on
   what the browser last saw. Seen again in wave 7's full run (26 October 2026), and unchanged in
   4 runs of it alone.
-* `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`: the Polled column counts the polls, so its
-  number depends on how long the story ran. A fix: the screenshot is taken with polling stopped,
-  or the column shows something that doesn't count.
+* ~~`Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`: the Polled column counts the polls, so its
+  number depends on how long the story ran.~~ Fixed (wave 22): the play stops the polling before
+  the screenshot, and the column then shows "Stopped".
 * `App/Visualisations/Tree` `Keyboard` and `ShowAndHide`: in wave 2's screenshot diffs (24 October 2026)
   the focused node's tooltip ("nginx.conf", its path and value) was drawn, and in the baseline it
   wasn't, with a line of the root node's focus ring. Like TopBar `Keyboard`, a tooltip shown on
@@ -721,6 +736,13 @@ Fix: look up the pipeline first, and make the chooser only to show it.
   permission left it unowned; it is now made once there is an annotation to show.
 
 ### Closed screens are never released
+
+**Status** (28 October 2026, wave 22): every screen, dialog and tab is now a controller owned by
+what opened it and disposed with it (the GWTP presenters are gone), and the workbench's leak
+check bounds every story's close to 20 DOM nodes and 5 listeners; all 1,729 stories pass it. The
+paths listed below (Ace editors, unbound children, handlers added "as source", timers) were each
+closed by the waves that converted their screens. Not yet measured again: the full-app suite's
+memory over a long session, which is what found this.
 
 **Reproduced.** (gwt-bugs #47) Found by the full-app GWT suite (`stroom-gwt-suite`), whose
 browser reached 5.1 GB and was killed for running out of memory. Almost every document, screen
@@ -938,8 +960,11 @@ last closed dialog for a moment only.
 
 ### The leak check fails 50 stories
 
-**Confirmed** (by `workbenchTest -PworkbenchLeakCheck`, 22 October 2026, with the component model's
-Phase 1: every presenter owned, `PresenterScope` removed; 71 failed before). Not fixed.
+**Fixed** (checked 28 October 2026, wave 22: every full run since wave 13 passes all stories with
+the leak check; `AskStroomAiDialog`'s leak, the `target-size` stories and the screens that didn't
+reopen were fixed as recorded under "Workbench stories that fail"). **Confirmed** (by
+`workbenchTest -PworkbenchLeakCheck`, 22 October 2026, with the component model's
+Phase 1: every presenter owned, `PresenterScope` removed; 71 failed before).
 
 * **Still leaking:** `App/AI/AskStroomAiDialog` keeps 155-160 DOM nodes and 58 listeners per close,
   with no component left unowned, so something else holds it (e.g. a handler on a shared bus or a
@@ -1717,9 +1742,32 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
+### An opened document's focus lands on its tab bar or its first button, by timing
+
+**Reproduced** (28 October 2026, wave 22, by `App/Main/AppShell` `OpensDocument`'s screenshot,
+which differs between runs). Opening a document focuses the new tab's first tab stop
+(`ContentFocus.focus`, deferred by `ContentTabPaneController.onOpen`). The document's tab bar
+(`AbstractTabBar`) only gives its selected tab `tabindex=0` in `onResize`, once the bar has been laid
+out (`getOffsetWidth() > 0`), and keeps its tabs `tab-bar__tab--hidden` until then. So if the
+deferred focus runs before the bar's first layout, the first tab stop is the document's first
+toolbar button; if after, it is the selected tab (e.g. Data). Keyboard users get a different
+starting point from one opening to the next.
+
+A fix: decide where an opened document's focus belongs (the selected tab, so the tab list's keys
+work at once, is the likely choice) and focus it on purpose, rather than the first tab stop, or
+give the selected tab its tab stop when it is added, not only after layout. With a story that
+checks which element has the focus after opening.
+
+* `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/AbstractTabBar.java` (`onResize`)
+* `ContentTabPaneController.onOpen`, `ContentFocus.focus`
+
 ### Screenshots that differ in every run
 
-**Reported** (28 October 2026, wave 21). About 90 of the full run's screenshots differ from their
+**Fixed** (28 October 2026, wave 22): the 52 stale baselines were taken again, the visualisations
+are seeded, the runner waits for fonts (the documentation editor's preview, missing from its
+baseline, is now always drawn) and the value spinner stops before its screenshot; a run of the
+affected groups then left only the two visualisation stories and the focus race (both above)
+(`AppShell` `OpensDocument`). **Reported** (28 October 2026, wave 21). About 90 of the full run's screenshots differ from their
 baselines in every run, so a change to them can't be seen. Two kinds (the screenshot runs fix the
 stories' clock, so it isn't the time):
 

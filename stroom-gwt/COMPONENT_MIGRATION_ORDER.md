@@ -1150,6 +1150,15 @@ after wave 20.
 > document's dirty rule, one way for a story to open a document, and dialog stories owned. See
 > `wave-21.md`.
 
+## 22. Records and trustworthy screenshots
+
+Record: [`component-migration/wave-22.md`](component-migration/wave-22.md). Added 28 October 2026,
+after wave 21.
+
+> **Done, 28 October 2026**: ISSUES.md's workbench sections brought up to date, visualisations
+> seeded, fonts waited for, the value spinner stopped, and stale baselines retaken, so a screenshot
+> diff shows only real changes. See `wave-22.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

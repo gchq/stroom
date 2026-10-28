@@ -88,6 +88,18 @@ const DOCUMENT_COUNTER_SCRIPT = `(() => {
   Object.defineProperty(window, '__workbenchRunnerDocument', { value: number });
 })();`;
 
+// Makes Math.random the same sequence in every run, in every frame (mulberry32, from a fixed seed),
+// for comparing screenshots: e.g. a force-directed visualisation starts from random positions
+const SEEDED_RANDOM_SCRIPT = `(() => {
+  let state = 0x5eed1234;
+  Math.random = () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();`;
+
 // The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
 let cancelledBy = null;
 
@@ -120,8 +132,9 @@ Options:
   --forced-colours         Show the stories as with a high contrast theme (e.g. Windows'), the
                            browser emulating forced colours (CSS's forced-colors: active)
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
-                           so that times they show are the same every run (for comparing
-                           screenshots). Timers still run
+                           and make Math.random the same sequence every run, so that times and
+                           random layouts are the same every run (for comparing screenshots).
+                           Timers still run
   --leak-check             After each story passes, close and open its screen again many times
                            and fail it if each close keeps more DOM nodes or event listeners
                            (only stories that open their screen with ScreenHarness.afterStartUp
@@ -348,6 +361,7 @@ async function runStoryOnce(browser, story, options, attempt) {
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);
+      await context.addInitScript(SEEDED_RANDOM_SCRIPT);
     }
     const page = await context.newPage();
     watchPage(page, seen);
@@ -565,6 +579,10 @@ async function observeStory(page, url, options, start, seen) {
 async function takeScreenshot(page, file, result, seen) {
   const pageErrorCount = seen.pageErrors.length;
   const consoleErrorCount = seen.consoleErrors.length;
+  // Every frame's fonts loaded first (e.g. the Markdown preview's), or its text would be drawn in
+  // a fallback font in some runs and not others
+  await withDeadline(Promise.all(page.frames().map((frame) =>
+      frame.evaluate(() => document.fonts.ready.then(() => true)).catch(() => false))), 2000);
   const saved = await withDeadline(
     // Animations are stopped (at their end) and text carets hidden (Ace's is its own blinking
     // element), as they would make each screenshot of the story differ

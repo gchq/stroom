@@ -557,6 +557,9 @@ public final class DataGridStories {
                     play.expect(input).toHaveAccessibleDescription(
                             "\"0\" isn't allowed. Enter a whole number from 1 to 9999.");
                     play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1);
+                    // The same screenshot every run, however many polls the play took
+                    play.run("stop polling", InteractiveCellGrids::stopPolling);
+                    play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
                 })
                 // ExpanderCell: the expander opens and closes the tree without selecting the row
                 // A right-click on a cell's text field shows the field's edit items (Cut, Copy, Paste
