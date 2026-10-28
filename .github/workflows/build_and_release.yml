@@ -95,7 +95,8 @@ jobs:
           # Manually added secrets in github
           # https://github.com/gchq/stroom/settings/secrets/actions
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          # This is a dockerhub Personal Access Token with read+write privs
+          DOCKER_PAT: ${{ secrets.DOCKER_PAT }}
           #PAT_FOR_PUBLIC_REPOS: ${{ secrets.PAT_FOR_PUBLIC_REPOS }}
           # The special auto created token, used for authenticating
           # downloads prevent rate limiting

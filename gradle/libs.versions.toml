@@ -104,7 +104,7 @@ jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.2.0" }
 
 # This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
 # jackson-annotations is the same for both and is included above
-jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.2" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.8" }
 jackson2-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by jackson-bom
 jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by jackson-bom
 
@@ -127,6 +127,9 @@ jersey-client = { module = "org.glassfish.jersey.core:jersey-client" } # version
 jersey-common = { module = "org.glassfish.jersey.core:jersey-common" } # version controlled by dropwizard-dependencies
 jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version controlled by dropwizard-dependencies
 jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
+# DW 5.0.2 pulls in jetty 12.1.9 which has vulns, so force it up to 12.1.4 for the fix
+# Once we move to DW 5.0.3, we can probably get rid of this and the 'implementation platform(libs.jetty.bom)' in root gradle
+jetty-bom = { module = "org.eclipse.jetty:jetty-bom", version = "12.1.14" }
 jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 # The ee10 part needs to correspond to the version pulled in by dropwizard-jetty
@@ -195,6 +198,8 @@ xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "2026.0" }
 zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
+# Zookeeper is only here to
+zookeeper = { module = "org.apache.zookeeper:zookeeper", version = "3.9.6" }
 
 
 # --------------------------------------------------------------------------------

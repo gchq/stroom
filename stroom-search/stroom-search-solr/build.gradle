@@ -46,5 +46,8 @@ dependencies {
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.solrj
+    // Here to pull in a more recent zookeeper to fix a cve
+    implementation libs.zookeeper
+
     implementation libs.ws.rs.api
 }
