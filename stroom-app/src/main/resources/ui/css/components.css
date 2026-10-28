@@ -1,7 +1,4 @@
-.flatButton {
-    border: none;
-    background: none;
-}
+
 
 .info-layout {
 	width: 100%;
@@ -90,102 +87,6 @@
     color: #fafafa;
 }
 
-.resizableAcceptRejectContent-accept {
-    background-color: #388e3c;
-    border-color: #2e7d32;
-}
-.resizableAcceptRejectContent-accept:active {
-    background-color: #43a047 !important;
-    border-color: #388e3c !important;
-}
-.resizableAcceptRejectContent-accept:hover {
-    background-color: #43a047 !important;
-    border-color: #388e3c !important;
-}
-.resizableAcceptRejectContent-accept[disabled] {
-    border: 1px solid #bdbdbd !important;
-    box-shadow: none !important;
-    background-color: #bdbdbd !important;
-    color: #fafafa !important;
-}
-.resizableAcceptRejectContent-accept[disabled]:hover {
-    border: 1px solid #bdbdbd !important;
-    box-shadow: none !important;
-    background-color: #bdbdbd !important;
-    color: #fafafa !important;
-}
-
-.resizableAcceptRejectContent-reject {
-    background-color: #d50000;
-    border-color: #b71c1c;
-}
-.resizableAcceptRejectContent-reject:active {
-    background-color: #e53935 !important;
-    border-color: #d50000 !important;
-}
-.resizableAcceptRejectContent-reject:hover {
-    background-color: #e53935 !important;
-    border-color: #d50000 !important;
-}
-.resizableAcceptRejectContent-reject[disabled] {
-    border: 1px solid #bdbdbd !important;
-    box-shadow: none !important;
-    background-color: #bdbdbd !important;
-    color: #fafafa !important;
-}
-.resizableAcceptRejectContent-reject[disabled]:hover {
-    border: 1px solid #bdbdbd !important;
-    box-shadow: none !important;
-    background-color: #bdbdbd !important;
-    color: #fafafa !important;
-}
-
-.dataNavigator {
-    position: relative;
-    text-align: right;
-}
-
-.dataNavigator-label {
-    display: inline-block;
-    margin: 0;
-    margin-top: 2px;
-    cursor: pointer;
-    padding-left: 0.75em;
-    padding-right: 0.75em;
-}
-
-.dataNavigator-label:hover {
-    text-decoration: underline;
-}
-
-.dataNavigator-button {
-    padding: 1px;
-    text-align: center;
-}
-
-.subStreamNavigator {
-    position: relative;
-    text-align: right;
-}
-
-.subStreamNavigator-label {
-    display: inline-block;
-    margin: 0;
-    margin-top: 2px;
-    cursor: pointer;
-    padding-left: 0.75em;
-    padding-right: 0.75em;
-}
-
-.subStreamNavigator-label:hover {
-    text-decoration: underline;
-}
-
-.subStreamNavigator-button {
-    padding: 1px;
-    text-align: center;
-}
-
 .acceptRejectContent-button {
     margin: 0;
     padding: 3px 5px;
@@ -218,14 +119,6 @@
     color: white;
 }
 
-.acceptRejectContent-accept {
-    background-color: green;
-}
-
-.acceptRejectContent-reject {
-    background-color: red;
-}
-
 .itemNavigator-button {
     padding: 1px;
     text-align: center;
@@ -252,14 +145,6 @@
     text-align: center;
 }
 
-.dataRetention--defaultRule {
-    color: #484848;
-}
-
-.dataRetention--disabledRule {
-    color: #A9A9A9;
-}
-
 .button-group {
 	display: flex;
 	flex-direction: row;
@@ -279,11 +164,6 @@
 .default-min-sizes {
     min-width: 200px;
     min-height: 200px;
-}
-
-.large-min-sizes {
-    min-width: 400px;
-    min-height: 400px;
 }
 
 .focus-without-border {
@@ -324,67 +204,6 @@
     color: var(--logo-color);
 }
 
-.navigation-arrow-image svg {
-    width: var(--icon-width);
-    height: var(--icon-height);
-    margin-top: .25rem;
-}
-
-.top-right-menu {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 32px;
-    height: 32px;
-    z-index: 1;
-}
-
-.navigation-header {
-    display: flex;
-    padding: .2rem;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.navigation-header:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
-.navigation-header-text {
-    font-weight: 700;
-    white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow-x: hidden;
-	flex-grow: 1;
-	margin: .4rem;
-}
-
-.navigation-body {
-}
-
-.navigation-body * {
-    overflow: initial !important;
-}
-
-.navigation-list {
-}
-
-.navigation-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 2px 3px;
-}
-
-.navigation-item .svgIcon {
-    margin: 0 2px 0 7px;
-    flex-shrink: 0;
-}
-
-.navigation-item:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
 .navigation-toolbar {
     flex-grow: 0;
     flex-shrink: 0;
@@ -417,27 +236,6 @@
   background-color: var(--control__background-color--disabled);
   border-color: var(--control__border-color--disabled);
   color: var(--control__text-color--disabled);
-}
-
-.form-control.hide-background-image {
-  background-image: none;
-}
-
-.form-control.no-icon-padding {
-  padding-left: .75rem;
-  padding-right: .75rem;
-}
-
-.form-control.left-icon-padding {
-  padding-left: 1.6rem;
-}
-
-.form-control.right-icon-padding {
-  padding-right: 1.6rem;
-}
-
-.form-control.length-indicator-padding {
-  padding-right: 4.5rem;
 }
 
 .form-heading {
@@ -649,10 +447,6 @@
 	white-space: nowrap;
 }
 
-.queryHelp-details {
-    overflow: hidden;
-}
-
 .userRefLinkContainer,
 .docRefLinkContainer,
 .commandLinkContainer {
@@ -717,12 +511,6 @@
     outline: none;
     box-shadow: var(--focus-shadow);
     border-radius: .25rem;
-}
-
-.documentPermissionChangeControls {
-    display: flex;
-    gap: 5px;
-    flex-direction: column;
 }
 
 .inherited {
@@ -836,10 +624,6 @@
     gap: var(--control__gap--horizontal);
 }
 
-/* GitRepo stuff */
-.gitrepo-credentials-dialog input {
-    width: 100%;
-}
 /* Settings form */
 .gitrepo-settings-form button.button {
     width: 400px;
@@ -849,9 +633,6 @@
 }
 .gitrepo-settings-form #credentials-group {
     width: 400px;
-}
-.gitrepo-settings-form button.credentials-button {
-    width: 120px;
 }
 
 /* Credentials Manager */

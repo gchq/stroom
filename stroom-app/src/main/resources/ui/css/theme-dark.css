@@ -63,7 +63,6 @@
     --code-color--disabled: rgb(from var(--code-color) r g b / 0.7);
     --border-color: #363a43;
 
-    --header__border-color: transparent;
     /* Stripes are overlays, so a table looks right on whatever it sits on (page, dialog or box) */
     --row__background-color--even: rgba(255, 255, 255, 0.04);
     --row__background-color--odd: transparent;
@@ -75,7 +74,6 @@
     --row__background-color--selected--hovered: #00568f;
     --row__background-color--focussed: rgba(0,120,199,.5);
     --row__background-color--selected--focussed: #00568f;
-    --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
     --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: var(--text-color--selected);
     --row__text-color--red--selected: var(--text-color--red--selected);
@@ -100,7 +98,6 @@
 
     --icon-button__background-color--on: var(--blue-500);
     --icon-button__border-color--on: var(--black);
-    --icon-button__color--on: var(--app__background);
     /* A faint white, so it shows on whatever surface the button is on */
     --icon-button__background-color--hover: rgba(255, 255, 255, .07);
     --icon-button__border-color--hover: transparent;
@@ -142,7 +139,6 @@
     --link__text-color: #3aaaff;
 
     --link-tab__text-color: var(--text-color);
-    --link-tab__text-color--focussed: var(--text-color--selected);
 
     /* The Stroom Dark editor theme (editor-themes.css) */
     --code-editor__background-color: var(--control__background-color);
@@ -220,10 +216,8 @@
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid transparent;
-    --curve-tab__background-color--selected: #3a3e47;
     /* The neutral hover of toolbar buttons, leaving blue to the selected bar and the focus ring */
     --curve-tab__background-color--hover: var(--icon-button__background-color--hover);
-    --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
     --curve-tab__border-radius: .2rem;
 
     /* Controls */
@@ -251,57 +245,17 @@
     --expander-cell__icon-background-color--active: rgba(0, 0, 0, 0.5);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
-    --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
-    --item__text-color--focus--highlighted: var(--text-color);
-    --item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
-    --item__text-color--focus--highlighted--hover: var(--text-color--hover);
-    --item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
-    --item__text-color--focus--selected: var(--text-color--selected);
-    --item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
-    --item__text-color--focus--highlighted--selected: var(--text-color--selected);
-    --item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
-    --item__text-color--hover: var(--text-color--hover);
-    --item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
-    --item__text-color--selected: var(--text-color--selected);
-    --item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
-    --item__text-color--selected--hover: var(--text-color--hover);
 
     /* Pipeline editor */
-    --raised-low__background-color: #adadad;
-    --raised-low__text-color: var(--text-color);
-    --raised-high__background-color: #4d5250;
-    --raised-high__text-color: var(--text-color);
-    --raised-high__selected-background-color: #747c79;
-    --raised-high__selected-focus-background-color: #747c79;
-    --raised-element__border: thin solid #aaa;
 
     /* Menu */
-    --menu-item__text-color: var(--text-color);
     --menu-item__text-color--highlighted: var(--text-color);
-    --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
-    --menu-item__text-color--focus--highlighted: var(--text-color);
-    --menu-item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
-    --menu-item__text-color--focus--highlighted--hover: var(--text-color--hover);
-    --menu-item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
-    --menu-item__text-color--focus--selected: var(--text-color--selected);
-    --menu-item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
-    --menu-item__text-color--focus--highlighted--selected: var(--text-color--selected);
-    --menu-item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
-    --menu-item__text-color--hover: var(--text-color--hover);
-    --menu-item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
-    --menu-item__text-color--selected: var(--text-color--selected);
-    --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
-    --menu-item__text-color--selected--hover: var(--text-color--selected);
 
     /* Navigation pane */
     --navigation__splitter__background-color: var(--border-color);
     --navigation__splitter__line-color: var(--splitter__line-color);
     --navigation__background-color: #16181b;
-    --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: rgb(0, 101, 167);
-    --navigation__background-color--selected-hovered: var(--row__background-color--selected--hovered);
-    --navigation__background-color--focussed: rgba(0,120,199,.5);
-    --navigation__background-color--selected--focussed: var(--row__background-color--selected--focussed);
 
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
@@ -309,10 +263,8 @@
     --logo-color: var(--white);
 
     /* Specific */
-    --header__icon-color: #2185d0;
 
     /* React table */
-    --table__odd-row__background-color: rgba(var(--black-rgb), .2);
 
     /* Dialog */
     /* A step above the page and below the inputs in it, so its fields still stand out */
@@ -364,5 +316,4 @@
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
 
-    --iframe__border-color: var(--control__border-color);
 }

@@ -1,38 +1,3 @@
-.pathway-constraints {
-    padding: 5px;
-    overflow: auto;
-    width: 100%;
-    height: 100%;
-}
-
-.pathway-spans {
-    padding: 5px;
-    overflow: auto;
-    width: 100%;
-    height: 100%;
-}
-
-.pathway-attributes {
-    padding-left: 10px;
-}
-
-.pathway-attributes-optional {
-    opacity: 0.8;
-}
-
-.pathway-attribute {
-    display: flex;
-    gap: 5px;
-}
-
-.pathway-attributeKey {
-    font-weight: 600;
-}
-
-
-
-
-
 
 
 .timeline-container {
@@ -227,13 +192,6 @@
     align-items: center;
     gap: 4px;
 }
-
-
-
-
-
-
-
 
 .service-operations {
     background-color: var(--row__background-color--even);

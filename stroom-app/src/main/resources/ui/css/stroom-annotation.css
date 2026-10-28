@@ -94,11 +94,6 @@
     opacity: 1;
 }
 
-
-
-
-
-
 .annotationSubjectContainer {
     display: flex;
     align-items: center;
@@ -112,10 +107,6 @@
 
 }
 
-
-
-
-
 /* 5px above and below as well as the form's room for focus rings */
 .form.max.annotationSetting {
     padding: calc(var(--focus-ring__room) + 5px) var(--focus-ring__room);
@@ -127,22 +118,6 @@
 
 .annotationSettingHeading.clickable {
     cursor: pointer;
-}
-
-.annotationClickLabel {
-    flex-grow: 0;
-    font-weight: 500;
-    padding-right: 5px;
-    opacity: 0.9;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-}
-
-.annotationClickLabel.clickable:hover {
-    opacity: 1;
-    text-decoration: underline;
 }
 
 .annotationLabel {
@@ -206,19 +181,6 @@
     padding: 6px 0;
     margin-left: 15px;
     border-left: 1px solid var(--border-color);
-}
-
-.annotationHistoryLineMargin {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    width: 15px;
-}
-
-.annotationHistoryLineMarker {
-    border-top: 1px solid var(--border-color);
-    width: 100%;
-    height: 1px;
 }
 
 .annotationHistoryCommentBorder {

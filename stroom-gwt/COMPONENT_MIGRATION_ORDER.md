@@ -1186,6 +1186,14 @@ after wave 24.
 > editable combobox with list autocomplete, in place of GWT's `SuggestBox`, which checkstyle now
 > refuses. See `wave-25.md`.
 
+## 26. CSS step 1: dead weight
+
+Record: [`component-migration/wave-26.md`](component-migration/wave-26.md). Added 28 October 2026,
+after wave 25.
+
+> **Done, 28 October 2026**: Font Awesome loaded only by the visualisation frame; the sheets nothing
+> loads, the unused classes' rules and the unused custom properties deleted. See `wave-26.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

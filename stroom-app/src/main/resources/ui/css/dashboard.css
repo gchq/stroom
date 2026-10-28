@@ -160,55 +160,6 @@
     color: var(--button__image-color);
 }
 
-.tabLayout .tabLayout-button svg {
-	color: var(--vis-icon__color);
-}
-
-.tabLayout .tabLayout-button:hover {
-	color: var(--vis-icon__color--hover);
-}
-
-.fieldGroupList {
-	background-color: white;
-	border: 1px solid #4d5055;
-	box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-	border-radius: 4px;
-	overflow: hidden;
-	z-index: 2000;
-}
-
-.fieldGroupList-heading {
-	font-weight: 500;
-	padding: 2px;
-	padding-left: 4px;
-	padding-right: 4px;
-	color: white;
-	background-color: #4a90e4;
-	background-image: linear-gradient(#60a1f0, #4a90e4);
-	border-bottom: 1px solid #303240;
-}
-
-.fieldGroupList-group {
-	font-weight: 500;
-	padding: 2px;
-	padding-left: 4px;
-	padding-right: 4px;
-}
-
-.fieldGroupList-noGroup {
-	padding: 2px;
-	padding-left: 4px;
-	padding-right: 4px;
-}
-
-.fieldGroupList-selected {
-	background-color: #bbdefb;
-}
-
-.fieldGroupList-highlight {
-	background-color: yellow;
-}
-
 .column-top {
     display: flex;
     width: 100%;

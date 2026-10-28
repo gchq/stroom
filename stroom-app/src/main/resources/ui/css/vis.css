@@ -23,6 +23,8 @@
 /* The colour palette the theme's custom properties refer to, e.g. --focus-border: var(--blue-300) */
 @import url("material-design-colors.css");
 @import url("theme.css");
+/* Font Awesome, which older visualisations use and nothing else does (so the app doesn't load it) */
+@import url("../fonts/FontAwesome/font-awesome.css");
 @import url("font.css");
 @import url("webkit-scrollbar.css");
 

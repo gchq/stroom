@@ -306,124 +306,22 @@ td {
 	overflow: auto;
 }
 
-.loginSeparator {
-	background-color: #93c2f1;
-	width: 3px;
-	height: 100%;
-}
-
-.loginBox {
-	height: 100%;
-	overflow: auto;
-}
-
 .error {
 	margin-top: 10px;
 	color: red;
-}
-
-.newPasswords {
-	font-size: var(--font-size-13);
-	font-family: var(--monospace-font-family);
-	font-weight: 500;
-}
-
-/* COMMON PAGE */
-.commonPage {
-	width: 100%;
-	height: 100%;
-}
-
-.topLinks {
-	width: 100%;
-}
-
-.crumbContainer {
-	width: 100%;
 }
 
 .crumbs {
 	margin-bottom: 5px;
 }
 
-.titleContainer {
-	height: 10px;
-	marginLeft: 20px;
-	marginTop: 5px;
-}
-
-.pageTitle {
-	font-size: var(--font-size-19);
-}
-
-.imageWrapper {
-	width: 50px;
-	height: 30px;
-	margin-left: 20px;
-}
-
 .logout {
 
-}
-
-.pageContentContainer {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
-.pageContent {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	border: 3px solid #639CFF;
-	background-color: #E7F7FF;
-	overflow: auto;
-	text-align: center;
-}
-
-.mainPage {
-	width: 100%;
-	height: 100%;
-	background-color: #E7F7FF;
 }
 
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
-}
-
-/* DATA GRID */
-.dataGrid-Layout {
-	width: 100%;
-	height: 100%;
-	border: solid 1px var(--control__border-color);
-	/*	background-color: white;*/
-}
-
-.dataGrid-Container {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
-.headerWrapper {
-	border-bottom: 1px solid var(--border-color) !important;
-	/*
-	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px
-		!important;
-*/
-	background: #dfeaf8 url(../images/header.png) repeat-x;
-}
-
-.dataWrapper {
-	background: white;
-}
-
-.dataTable .selected {
-	background: #bbdefb !important;
 }
 
 .statusIcon {
@@ -433,121 +331,11 @@ td {
 	cursor: default !important;
 }
 
-.dataTable td {
-	cursor: pointer;
-	overflow: hidden !important;
-	padding-left: 2px !important;
-	padding-right: 2px !important;
-	vertical-align: middle;
-}
-
-.headerTable td {
-	cursor: default;
-	overflow: hidden !important;
-	padding-left: 2px !important;
-	padding-right: 2px !important;
-	vertical-align: middle;
-}
-
 /* PAGING CONTROL */
 .paging {
 	width: 100%;
 	padding: 2px;
 	background: white;
-}
-
-/* ENHANCED TAB */
-.stroom-TabBar {
-	height: 20px;
-}
-
-.stroom-TabBar .gwt-TabBarFirst {
-	width: 0px; /* first tab distance from the left */
-	display: none;
-}
-
-.stroom-TabBar .gwt-TabBarRest {
-
-}
-
-.stroom-TabBar .gwt-TabBarRest-wrapper {
-	border-bottom: 1px solid #2291D0;
-}
-
-.stroom-TabBar .gwt-TabBarItem {
-	margin-left: 0px;
-	padding: 2px 5px 2px 5px;
-	cursor: pointer;
-	cursor: hand;
-	color: black;
-	text-align: center;
-	background: none;
-	border-right: 1px solid #2291D0;
-	border-bottom: 1px solid #2291D0;
-}
-
-.stroom-TabBar .gwt-TabBarItem-selected {
-	cursor: default;
-	/*
-	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px;
-*/
-	background: #dfeaf8 url(../images/header.png) repeat-x;
-	border-right: 1px solid #2291D0;
-	border-bottom: 1px solid var(--border-color);
-}
-
-.stroom-TabBar .gwt-TabBarItem-disabled {
-	cursor: default;
-	color: #999999;
-}
-
-.stroom-TabPanelWrapper {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	border: 1px solid #2291D0;
-}
-
-.stroom-TabPanel {
-	width: 100%;
-	height: 100%;
-	table-layout: fixed;
-}
-
-.stroom-TabPanelBottom {
-	width: 100%;
-	height: 100%;
-	border-color: var(--border-color);
-	border-style: solid;
-	border-width: 2px;
-	overflow: hidden;
-}
-
-.enhancedTab-Text {
-	max-width: 150px;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.tabListButton {
-	position: absolute;
-	width: var(--icon-width);
-	height: 14px;
-	top: 3px;
-	cursor: pointer;
-}
-
-.maximiseContainer {
-	position: absolute;
-	top: 5px;
-	right: 4px;
-	cursor: pointer;
-}
-
-/* EDIT GRID */
-.editGrid-Button {
-	margin-left: 5px;
-	margin-bottom: 5px;
 }
 
 /* SPLIT PANEL */
@@ -560,7 +348,7 @@ td {
 /* INPUT CONTROLS. Text fields (every text box, text area and password box) are styled by
    text-field.css alone: the bare input and textarea rules here are for inputs with no block of their
    own yet, and leave text fields out (:where() keeps their specificity as it was) */
-.gwt-ListBox,.stroom-DropDownTree {
+.gwt-ListBox {
 	width: 200px;
 	margin: 0px;
 	padding: 3px 5px;
@@ -568,7 +356,6 @@ td {
 }
 
 .gwt-ListBox,
-.stroom-DropDownTree,
 .stroom-control,
 select,
 textarea:where(:not(.text-field)),
@@ -605,7 +392,6 @@ input:where(:not(.text-field)):-webkit-autofill:active {
 }
 
 .gwt-ListBox:disabled,
-.stroom-DropDownTree:disabled,
 .stroom-control:disabled,
 .stroom-control.disabled,
 select:disabled,
@@ -647,11 +433,6 @@ select option:disabled {
 	-webkit-user-select: text;
 	-moz-user-select: text;
 	user-select: text;
-}
-
-.gwt-SuggestBoxPopup .suggestPopupContent {
-  background: var(--control__background-color) !important;
-  color: var(--control__text-color);
 }
 
 /*
@@ -697,24 +478,6 @@ textarea:where(:not(.text-field))[readonly],
 	text-align: center;
 }
 
-.homeLinkImgWrapper {
-	height: 55px;
-}
-
-.feedTreeButton {
-	width: 50px;
-	margin: 0;
-	padding: 1px;
-	text-decoration: none;
-	cursor: pointer;
-	background: url("../images/hborder.png") repeat-x 0px -27px;
-	border: 1px outset #ccc;
-}
-
-.spEditor {
-	border: 1px solid black;
-}
-
 .gwt-ValueSpinner .arrows {
 	width: 1px;
 	height: 1px;
@@ -737,11 +500,6 @@ textarea:where(:not(.text-field))[readonly],
 	vertical-align: middle;
 }
 
-.explorerWrapper {
-	width: 100%;
-	height: 100%;
-}
-
 .activityOuter {
     max-height: 200px;
     overflow-y: auto;
@@ -759,27 +517,12 @@ textarea:where(:not(.text-field))[readonly],
     border-radius: 0;
 }
 
-/**
-* BORDERS
-*/
-.stroom-border {
-	border: 1px solid var(--border-color);
-}
-
 .stroom-border-top {
 	border-top: 1px solid var(--border-color);
 }
 
 .stroom-border-bottom {
 	border-bottom: 1px solid var(--border-color);
-}
-
-.stroom-border-left {
-    border-left: 1px solid var(--border-color);
-}
-
-.stroom-border-right {
-    border-right: 1px solid var(--border-color);
 }
 
 /**
@@ -917,10 +660,6 @@ textarea.clipboardCopy {
 
 .lower-case-input {
     text-transform: lowercase;
-}
-
-.upper-case-input {
-    text-transform: uppercase;
 }
 
 /* Keyboard focus on a field that isn't a text field (text-field.css has those) */

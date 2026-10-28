@@ -39,11 +39,6 @@
 /*   padding: 2px; */
 /* } */
 
-
-.stroom .stroom-control-page {
-	padding: 5px;
-}
-
 .stroom .stroom-control-grid {
 	vertical-align: top;
 }
@@ -78,6 +73,3 @@
   	user-select: text;
 }
 
-.stroom .stroom-control-border {
-    border: solid 1px var(--control__border-color);
-}

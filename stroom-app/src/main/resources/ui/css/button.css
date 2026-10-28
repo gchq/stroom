@@ -25,7 +25,6 @@
   --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
   --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --button__base-background-color--hover: #f3f4f6;
-  --button__base-border-color--hover: rgba(27, 31, 35, 0.15);
 }
 
 .stroom-theme-dark {
@@ -35,7 +34,6 @@
   --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
   --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --button__base-background-color--hover: #505050;
-  --button__base-border-color--hover: #666;
 }
 
 .stroom-theme-dark2 {
@@ -45,7 +43,6 @@
   --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
   --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --button__base-background-color--hover: #383d49;
-  --button__base-border-color--hover: #14161b;
 }
 
 /*
@@ -711,7 +708,6 @@ styles: only that content shows, as the button's own text
   /*
   Default buttons
   */
-  --button--default__color: var(--grey-800); /* material grey 800 */
   --button--default__background-color--hover: rgba(var(--grey-500-rgb), 0.3); /* material grey 500 30% */
   --button--default__background-color--selected: rgba(var(--grey-500-rgb), 0.2); /* material grey 500 20% */
 
@@ -728,7 +724,6 @@ styles: only that content shows, as the button's own text
   --button--default-secondary__background-color--hover: rgba(var(--pink-500-rgb), 0.2); /* material pink 500 20% */
   --button--default-secondary__background-color--selected: rgba(var(--pink-500-rgb), 0.1); /* material pink 500 10% */
 
-  --button--default__color--disabled: rgba(var(--black-rgb), 0.26);
 
   /*
   Outline buttons
@@ -769,9 +764,6 @@ styles: only that content shows, as the button's own text
   --button--icon-secondary__background-color--hover: rgba(var(--pink-500-rgb), 0.2); /* material pink 500 20% */
   --button--icon-secondary__background-color--selected: rgba(var(--pink-500-rgb), 0.1); /* material pink 500 10% */
 
-  --button--icon-green__color: var(--green-500); /* material green 500  */
-  --button--icon-green__background-color--hover: rgba(var(--green-500-rgb), 0.2); /* material green 500 20% */
-  --button--icon-green__background-color--selected: rgba(var(--green-500-rgb), 0.1); /* material green 500 10% */
 
   --button--icon__color--disabled: rgba(var(--black-rgb), 0.26);
 
@@ -807,7 +799,6 @@ styles: only that content shows, as the button's own text
   /*
   Ripple effect
    */
-  --button__ripple-background-color: rgba(var(--black-rgb), 0.1);
   
   
   
@@ -818,7 +809,6 @@ styles: only that content shows, as the button's own text
   /*
   Default buttons
    */
-  --button--default__color: var(--grey-300); /* material grey 300  */
   --button--default__background-color--hover: rgba(var(--grey-300-rgb), 0.4); /* material grey 300 40% */
   --button--default__background-color--selected: rgba(var(--grey-300-rgb), 0.3); /* material grey 300 30% */
 
@@ -830,7 +820,6 @@ styles: only that content shows, as the button's own text
   --button--default-secondary__background-color--hover: rgba(var(--pink-300-rgb), 0.4); /* material pink 300 40% */
   --button--default-secondary__background-color--selected: rgba(var(--pink-300-rgb), 0.3); /* material pink 300 30% */
 
-  --button--default__color--disabled: rgba(var(--white-rgb), 0.26);
 
   /*
   Outline buttons
@@ -897,5 +886,4 @@ styles: only that content shows, as the button's own text
   /*
   Ripple effect
    */
-  --button__ripple-background-color: rgba(var(--white-rgb), 0.3);
 }

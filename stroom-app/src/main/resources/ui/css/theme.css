@@ -29,9 +29,3 @@
 	-o-transition: background-color 3s linear;
 }
 
-.stroom-theme-transitions .stroom-border {
-	transition: border-color 3s linear;
-	-webkit-transition: border-color 3s linear;
-	-moz-transition: border-color 3s linear;
-	-o-transition: border-color 3s linear;
-}

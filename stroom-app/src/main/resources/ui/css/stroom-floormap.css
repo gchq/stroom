@@ -447,12 +447,6 @@
     gap: 3px;
 }
 
-.stroom-floormap-background-grid {
-    flex-grow: 1;
-    min-height: 250px;
-    height: 100%;
-}
-
 /* ============================================================
  * Timeline settings popup panel
  * ============================================================ */
