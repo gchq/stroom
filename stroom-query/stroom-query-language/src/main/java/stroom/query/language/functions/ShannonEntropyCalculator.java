@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 
@@ -50,7 +51,7 @@ public final class ShannonEntropyCalculator {
         }
 
         final int codePointCount = value.codePointCount(0, value.length());
-        final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(Math.min(codePointCount, MAX_INITIAL_MAP_SIZE));
+        final Int2IntMap counts = new Int2IntOpenHashMap(Math.min(codePointCount, MAX_INITIAL_MAP_SIZE));
         value.codePoints().forEach(codePoint -> counts.mergeInt(codePoint, 1, Integer::sum));
 
         // One distinct character always scores zero. Returning it here guarantees 0.0 rather than
