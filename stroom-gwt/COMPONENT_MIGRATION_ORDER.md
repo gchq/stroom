@@ -78,6 +78,7 @@ A unit's wave is the table it is in. The prose above each table is the first pla
 | 13. Query and dashboard stack | 69 | 34,711 | S 27, M 24, L 8, XL 10 | 0 |  |
 | 14. Document editors | 34 | 6,715 | S 16, M 14, L 2, XL 2 | 0 |  |
 | 15. Content-tab screens and the shell | 40 | 12,295 | S 20, M 15, L 3, XL 2 | 0 |  |
+| 16. The last presenters and the presenter framework | 13 | 3,863 | S 7, M 4, L 2 | 0 | The user's go-ahead for unit 12 |
 
 ## Before the waves
 
@@ -1070,7 +1071,25 @@ Convert the tool screens onto a content-tab component base: Users, Accounts, API
 | `UserTabPresenter` | screen | presenter | 16 | 3 | M | 256 | 4 |  | `none of its own: the shared stroom.entity.client.presenter.LinkTabPanelView (LinkTabPanelViewImpl.ui.xml), which TabbedController takes` + `stroom.security.client.component.UserTabController (extends stroom.entity.client.component.TabbedController<UserRef>)` |  | 0 / 0 / 0 / 0 |  | Top of the security tree. Becomes a TabbedComponent once its tabs are components. |
 | `DataRetentionPresenter` | screen | presenter | 16 | 3 | M | 289 | 4 |  | `DataRetention` + `DataRetentionController` in `stroom.receive.rules.client.component` |  | 0 / 0 / 0 / 0 |  | Becomes a TabbedComponent screen. |
 
+## 16. The last presenters and the presenter framework
+
+Each unit's plan: [`component-migration/wave-16.md`](component-migration/wave-16.md). Added 28 October 2026, after wave 15.
+
+> **Not started.** Deleting the framework itself (unit 12) waits for the user's go-ahead.
+
+Waves 3, 6, 8 and 14 left `TooltipPresenter`, `IFramePresenter`, `EditorPresenter`, `UserRefSelectionBoxPresenter`, `DocSelectionBoxPresenter` and `DocumentEditorHost` as presenters over their new controllers, and `LinkTabsPresenter` was deferred for deletion. Re-key the popup events (`ShowPopupEvent` and the rest) and the content-tab and full screen events on `Controller`; move the wrappers' last callers and delete them; make `DocumentEditorHost` a `LayerController` and the open callback a `Consumer<Controller>`; move the workbench's helpers and coverage check off presenters; delete the unused `UiHandlers` and the deferred dead code; then delete `MyPresenterWidget`, `View`, `ViewImpl`, `UiHandlers`, `PresenterAdapter` and `AbstractPresenterModule`.
+
+**Why now.** Nothing in the app is a presenter but these, and every screen that shows them is a controller.
+
+**Risks.**
+
+- The popup manager's toggle (showing a popup again hides it) and the dialog's task monitor change with the events' key; the tooltip and Ask Stroom AI stories check them.
+- The tab session restore and Save on close go through the document host and the open callback.
+- The framework's deletion is checked with a full workbench run, the leak check and a screenshot diff before and after.
+
 ## Deferred: delete rather than convert
+
+The deletions still to do are wave 16's units 7 and 11.
 
 - ItemCell: no callers (fan-in 0). Delete it rather than convert it, after the in-flight worktrees land (removals wait for other work).
 - CustomCellList: no callers, and in flight in data_grid2. Delete it after data_grid2 lands.
