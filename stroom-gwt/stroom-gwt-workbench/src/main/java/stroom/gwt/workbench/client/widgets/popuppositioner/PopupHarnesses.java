@@ -22,7 +22,7 @@ import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.client.component.TypeFilter;
 import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
@@ -121,7 +121,7 @@ final class PopupHarnesses {
     static Widget settingBlock(final StoryPopups popups) {
         final SettingBlock settingBlock = new SettingBlock();
         settingBlock.add(new Label("Setting: current"));
-        final ContentPresenter editor = ContentPresenter.html(popups.getEventBus(),
+        final StoryContent editor = StoryContent.html(popups.getEventBus(),
                 "<div class=\"popover-body\">Editor body</div>");
         settingBlock.addClickHandler(event -> {
             final Element element = settingBlock.getElement();
@@ -180,19 +180,19 @@ final class PopupHarnesses {
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget portalCascade(final StoryPopups popups) {
-        final ContentPresenter inner = new ContentPresenter(popups.getEventBus(),
+        final StoryContent inner = new StoryContent(popups.getEventBus(),
                 cascadePanel("cascade-inner-panel", "#444", new Label("inner body")));
         final Button innerTrigger = triggerButton("Inner", "cascade-inner-trigger");
         innerTrigger.addClickHandler(event -> showAt(inner, INNER_LEFT, innerTrigger));
 
-        final ContentPresenter outer = new ContentPresenter(popups.getEventBus(),
+        final StoryContent outer = new StoryContent(popups.getEventBus(),
                 cascadePanel("cascade-outer-panel", "#333", new Label("outer body"), innerTrigger));
         final Button outerTrigger = triggerButton("Outer", "cascade-outer-trigger");
         outerTrigger.addClickHandler(event -> showAt(outer, OUTER_LEFT, outerTrigger));
         return outerTrigger;
     }
 
-    private static void showAt(final ContentPresenter presenter, final int left, final Widget trigger) {
+    private static void showAt(final StoryContent presenter, final int left, final Widget trigger) {
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.POPUP)
                 .popupPosition(new PopupPosition(left, CASCADE_TOP))

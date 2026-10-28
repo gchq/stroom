@@ -19,10 +19,9 @@ package stroom.gwt.workbench.client.widgets.tabs;
 
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.user.client.ui.HTML;
@@ -65,14 +64,13 @@ final class TabWidgets {
         return pane;
     }
 
-    /// A presenter showing a widget, as tab content: Stroom's tab panels show [MyPresenterWidget]s
-    /// (which are layers) in their layer containers.
+    /// A controller showing a widget, as tab content.
     ///
     /// @param eventBus The event bus.
     /// @param content The content.
-    /// @return The presenter.
-    static ContentPresenter content(final EventBus eventBus, final Widget content) {
-        return new ContentPresenter(eventBus, new ContentView(content));
+    /// @return The controller.
+    static StoryContent content(final EventBus eventBus, final Widget content) {
+        return new StoryContent(eventBus, content);
     }
 
 
@@ -145,37 +143,6 @@ final class TabWidgets {
         @Override
         public String toString() {
             return id;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// Tab content: a presenter (and so a layer) showing a widget.
-    static final class ContentPresenter extends MyPresenterWidget<ContentView> {
-
-        private ContentPresenter(final EventBus eventBus, final ContentView view) {
-            super(eventBus, view);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The view of [ContentPresenter].
-    static final class ContentView extends ViewImpl {
-
-        private final Widget widget;
-
-        private ContentView(final Widget widget) {
-            this.widget = widget;
-        }
-
-        @Override
-        public Widget asWidget() {
-            return widget;
         }
     }
 }

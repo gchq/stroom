@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -323,7 +323,7 @@ public final class DialogStories {
         private void show(final StoryPopups popups) {
             // A new presenter each time, as Stroom's presenters are, since PopupManager toggles a
             // presenter that is shown twice
-            final ContentPresenter presenter = ContentPresenter.html(popups.getEventBus(), html);
+            final StoryContent presenter = StoryContent.html(popups.getEventBus(), html);
             ShowPopupEvent.builder(presenter)
                     .popupType(popupType)
                     .popupSize(popupSize)

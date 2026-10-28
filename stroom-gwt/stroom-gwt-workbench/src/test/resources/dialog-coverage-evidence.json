@@ -1,0 +1,5 @@
+{
+  "description": "Screens and dialogs that no story names but whose play opens them, each with the id of a story that does. DialogCoverage counts them as covered by a story; TestDialogCoverage fails if a story is missing.",
+  "covered": {
+  }
+}

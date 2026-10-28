@@ -621,9 +621,8 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 //                            -PworkbenchTestSkipSelfTest (don't run test-runner/selftest/selftest.mjs)
 //                            Reports are written to build/workbench-test. The previous run's are
 //                            deleted before any task runs, so they can't be mistaken for this run's.
-//   workbenchPresenterCoverage
-//                            Prints which of Stroom's screens and dialogs no story covers (a static
-//                            analysis of the source; see PresenterCoverage).
+//   workbenchDialogCoverage  Prints which of Stroom's screens and dialogs no story covers (a static
+//                            analysis of the source; see DialogCoverage).
 //   workbenchScreenshotBaseline
 //                            Runs workbenchTest with a screenshot of every story, and makes them the
 //                            baseline in screenshots/ (git-ignored), replacing the previous one.
@@ -637,7 +636,7 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 // ------------------------------------------------------------------------------------------------
 
 dependencies {
-    // For reading the coverage evidence in PresenterCoverage
+    // For reading the coverage evidence in DialogCoverage
     testImplementation libs.jackson.databind
     testImplementation libs.slf4j.api
 }
@@ -1199,12 +1198,12 @@ tasks.register('workbenchScreenshotDiff') {
     }
 }
 
-tasks.register('workbenchPresenterCoverage', JavaExec) {
+tasks.register('workbenchDialogCoverage', JavaExec) {
     group = "workbench"
     description = "Prints which of Stroom's screens and dialogs the workbench's stories cover"
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'stroom.gwt.workbench.client.PresenterCoverage'
+    mainClass = 'stroom.gwt.workbench.client.DialogCoverage'
     systemProperty 'workbench.repoRoot', rootDir.absolutePath
 }
 

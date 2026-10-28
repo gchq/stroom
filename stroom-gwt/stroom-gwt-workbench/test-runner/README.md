@@ -10,7 +10,7 @@ dialogs the stories cover (see [Coverage](#coverage)). See
 | Run every story and play function      | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest`                    |
 | Run against a running workbench        | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchUrl=http://localhost:6008` |
 | Run a title's stories                  | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter=Widgets/Buttons/Button` |
-| Stroom's screens and dialogs no story covers | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` |
+| Stroom's screens and dialogs no story covers | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDialogCoverage` |
 
 None of these are part of `build`/`check`, so normal builds don't need Node, npm or Playwright.
 The test runner needs Node.js 20+ (with npm). `workbenchTest` fails if npm isn't available, so
@@ -325,11 +325,11 @@ renamed) stops the run before any story runs, as it would otherwise never run.
 
 ## Coverage
 
-`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` reports which of Stroom's
+`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDialogCoverage` reports which of Stroom's
 screens (content tabs, e.g. document editors) and dialogs the stories cover, by a static analysis
-of the source (`PresenterCoverage`): a screen or dialog is **covered** if a story's source names it
-or `src/test/resources/presenter-coverage-evidence.json` names a story whose play opens it,
-**reached** if only a covered presenter or plugin names it, and otherwise **not covered**.
+of the source (`DialogCoverage`): a screen or dialog is **covered** if a story's source names it
+or `src/test/resources/dialog-coverage-evidence.json` names a story whose play opens it,
+**reached** if only a covered controller or plugin names it, and otherwise **not covered**.
 
 ## Files
 

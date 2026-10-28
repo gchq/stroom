@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.dialogs;
 
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -62,7 +62,7 @@ public final class StaticDialogStories {
                     final Style style = body.getElement().getStyle();
                     style.setProperty("padding", "12px");
                     style.setProperty("color", "var(--text-color)");
-                    final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), body);
+                    final StoryContent presenter = new StoryContent(popups.getEventBus(), body);
 
                     // As the IdP presenters show themselves
                     ShowPopupEvent.builder(presenter)

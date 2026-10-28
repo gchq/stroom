@@ -39,45 +39,52 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /// Reports which of Stroom's screens and dialogs the workbench's stories cover, by a static
-/// reachability analysis of the source (the Gradle task `workbenchPresenterCoverage`).
+/// reachability analysis of the source (the Gradle task `workbenchDialogCoverage`).
 ///
-/// * A **screen** is a concrete presenter that is, or extends, one of [#SCREEN_BASE_TYPES] (a
+/// * A **screen** is a concrete controller that is, or extends, one of [#SCREEN_BASE_TYPES] (a
 ///   content tab, e.g. a document editor or the Users screen).
-/// * A **dialog** is a concrete class shown with `ShowPopupEvent.builder(...)`: the class that
-///   calls `builder(this)`, or the declared type of the presenter it passes.
+/// * A **dialog** is a concrete class shown with `ControllerDialog.showOnce(opener, ...)`,
+///   `ControllerDialog.show(...)` or `ShowPopupEvent.builder(...)`: the class that passes `this`,
+///   or the declared type of the controller it passes.
 /// * A screen or dialog is **covered by a story** if a story's source names it, or if
-///   `presenter-coverage-evidence.json` (a test resource) names a story whose play opens it;
-///   **reached** if it is only named by a covered presenter or plugin (perhaps shown on a path no
+///   `dialog-coverage-evidence.json` (a test resource) names a story whose play opens it;
+///   **reached** if it is only named by a covered controller or plugin (perhaps shown on a path no
 ///   story takes); else **not covered**.
 ///
 /// Classes under a `pathways` package are left out (they are being replaced). The analysis is by
 /// simple class name, which is unique among Stroom's client classes but for a few.
-public final class PresenterCoverage {
+public final class DialogCoverage {
 
     /// The types whose concrete subclasses are screens.
     static final Set<String> SCREEN_BASE_TYPES = Set.of(
             "ContentTabController",
-            "DocTabPresenter",
             "DocumentEditor",
             "TabData",
             "DocumentTabData");
 
-    /// Types a `ShowPopupEvent.builder(...)` argument may be declared as that aren't dialogs.
+    /// Types a dialog's argument may be declared as that aren't dialogs.
     static final Set<String> NON_DIALOG_TYPES = Set.of(
-            "MyPresenterWidget",
-            "PresenterWidget",
-            "Presenter",
+            "Controller",
+            "LayerController",
             "Widget",
             "Composite");
 
+    /// The base of every screen and dialog.
+    static final String CONTROLLER = "Controller";
+
     /// The resource naming screens and dialogs that plays open but no story names.
-    static final String EVIDENCE_RESOURCE = "/presenter-coverage-evidence.json";
+    static final String EVIDENCE_RESOURCE = "/dialog-coverage-evidence.json";
 
     private static final String EXCLUDED_PACKAGE = "/pathways/";
     private static final Pattern IMPORT = Pattern.compile("^import\\s.*$", Pattern.MULTILINE);
     private static final Pattern TYPE_NAME = Pattern.compile("\\b[A-Z]\\w*\\b");
-    private static final Pattern POPUP_BUILDER = Pattern.compile(
-            "ShowPopupEvent\\s*\\.\\s*builder\\(\\s*([^()]*(?:\\([^()]*\\))?)\\s*\\)");
+    // The argument: a name, or a call with no nested parentheses, e.g. `provider.get()`
+    private static final String ARGUMENT = "([^(),]*(?:\\([^()]*\\))?)";
+    private static final List<Pattern> DIALOG_SHOWS = List.of(
+            Pattern.compile("ShowPopupEvent\\s*\\.\\s*builder\\(\\s*" + ARGUMENT + "\\s*\\)"),
+            Pattern.compile("ControllerDialog\\s*\\.\\s*show\\(\\s*" + ARGUMENT + "\\s*\\)"),
+            Pattern.compile("ControllerDialog\\s*\\.\\s*showOnce\\(\\s*[^(),]*(?:\\([^()]*\\))?\\s*,\\s*"
+                            + ARGUMENT + "\\s*\\)"));
     private static final Pattern THIS = Pattern.compile("^(?:\\w+\\.)?this$");
     private static final Pattern VARIABLE = Pattern.compile("^(\\w+)(?:\\.get\\(\\))?$");
 
@@ -93,7 +100,7 @@ public final class PresenterCoverage {
     /// @param storyReferences The type names the workbench's story sources use.
     /// @param evidence        Screens and dialogs that plays open but no story names, each with the
     ///                        id of a story that opens it.
-    PresenterCoverage(final Map<String, SourceFile> sources,
+    DialogCoverage(final Map<String, SourceFile> sources,
                       final Set<String> storyReferences,
                       final Map<String, String> evidence) {
         this.sources = Map.copyOf(sources);
@@ -128,7 +135,7 @@ public final class PresenterCoverage {
     ///
     /// @param repoRoot The repository's root directory.
     /// @return The coverage.
-    static PresenterCoverage load(final Path repoRoot) {
+    static DialogCoverage load(final Path repoRoot) {
         final Map<String, SourceFile> sources = new LinkedHashMap<>();
         final Path workbench = repoRoot.resolve("stroom-gwt");
         for (final Path file : javaFiles(repoRoot)) {
@@ -146,13 +153,13 @@ public final class PresenterCoverage {
         for (final Path file : javaFiles(workbench.resolve("stroom-gwt-workbench/src/main/java"))) {
             storyReferences.addAll(referencedTypeNames(read(file), true));
         }
-        return new PresenterCoverage(sources, storyReferences, loadEvidence());
+        return new DialogCoverage(sources, storyReferences, loadEvidence());
     }
 
     /// @return The screens and dialogs that plays open but no story names, each with the id of a
     /// story that opens it, from [#EVIDENCE_RESOURCE].
     static Map<String, String> loadEvidence() {
-        try (final InputStream inputStream = PresenterCoverage.class.getResourceAsStream(EVIDENCE_RESOURCE)) {
+        try (final InputStream inputStream = DialogCoverage.class.getResourceAsStream(EVIDENCE_RESOURCE)) {
             if (inputStream == null) {
                 throw new IllegalStateException("Missing resource " + EVIDENCE_RESOURCE);
             }
@@ -174,7 +181,7 @@ public final class PresenterCoverage {
         appendGroup(sb, "Screens", screens, reached);
         appendGroup(sb, "Dialogs", dialogs, reached);
         if (!unresolvedDialogs.isEmpty()) {
-            sb.append("\nShowPopupEvent.builder(...) arguments whose type wasn't found (")
+            sb.append("\nDialogs shown with an argument whose type wasn't found (")
                     .append(unresolvedDialogs.size())
                     .append("):\n");
             unresolvedDialogs.forEach(unresolved -> sb.append("  ").append(unresolved).append('\n'));
@@ -264,11 +271,12 @@ public final class PresenterCoverage {
         return names;
     }
 
-    /// Finds the type that a `ShowPopupEvent.builder(...)` argument is declared as in a source.
+    /// Finds the type that a dialog's argument (to `ControllerDialog.showOnce(...)`, say) is declared
+    /// as in a source.
     ///
     /// @param className The class whose source it is.
     /// @param source    The source.
-    /// @param argument  The argument, e.g. `this`, `presenter` or `presenterProvider.get()`.
+    /// @param argument  The argument, e.g. `this`, `editor` or `editorProvider.get()`.
     /// @return The type's simple name, or null if it can't be found.
     static String resolveDialogType(final String className, final String source, final String argument) {
         if (THIS.matcher(argument).matches()) {
@@ -293,12 +301,14 @@ public final class PresenterCoverage {
 
     private void findScreens() {
         declarations.forEach((name, declaration) -> {
-            // Only presenters: other classes implement TabData only to describe a tab
-            if (name.endsWith("Presenter") && isConcreteClass(name) && !isExcluded(name)) {
+            // Only controllers: other classes implement TabData only to describe a tab
+            if (isConcreteClass(name) && !isExcluded(name)) {
                 final Set<String> ancestors = ancestors(name);
-                ancestors.retainAll(SCREEN_BASE_TYPES);
-                if (!ancestors.isEmpty()) {
-                    screens.add(name);
+                if (ancestors.contains(CONTROLLER)) {
+                    ancestors.retainAll(SCREEN_BASE_TYPES);
+                    if (!ancestors.isEmpty()) {
+                        screens.add(name);
+                    }
                 }
             }
         });
@@ -306,14 +316,16 @@ public final class PresenterCoverage {
 
     private void findDialogs() {
         sources.forEach((name, sourceFile) -> {
-            final Matcher matcher = POPUP_BUILDER.matcher(sourceFile.source());
-            while (matcher.find()) {
-                final String argument = matcher.group(1).trim();
-                final String type = resolveDialogType(name, sourceFile.source(), argument);
-                if (type == null) {
-                    unresolvedDialogs.add(name + ": " + argument);
-                } else if (isConcreteClass(type) && !NON_DIALOG_TYPES.contains(type) && !isExcluded(type)) {
-                    dialogs.add(type);
+            for (final Pattern pattern : DIALOG_SHOWS) {
+                final Matcher matcher = pattern.matcher(sourceFile.source());
+                while (matcher.find()) {
+                    final String argument = matcher.group(1).trim();
+                    final String type = resolveDialogType(name, sourceFile.source(), argument);
+                    if (type == null) {
+                        unresolvedDialogs.add(name + ": " + argument);
+                    } else if (isConcreteClass(type) && !NON_DIALOG_TYPES.contains(type) && !isExcluded(type)) {
+                        dialogs.add(type);
+                    }
                 }
             }
         });
@@ -340,7 +352,7 @@ public final class PresenterCoverage {
         return ancestors;
     }
 
-    // The presenters, plugins and dialogs that the stories name, and those they name in turn
+    // The controllers, plugins and dialogs that the stories name, and those they name in turn
     private Set<String> reachableNodes() {
         final Set<String> reached = new HashSet<>();
         final Deque<String> toVisit = new ArrayDeque<>();
@@ -366,7 +378,7 @@ public final class PresenterCoverage {
 
     private boolean isNode(final String name) {
         return sources.containsKey(name)
-               && (name.endsWith("Presenter") || name.endsWith("Plugin") || dialogs.contains(name));
+               && (name.endsWith("Plugin") || dialogs.contains(name) || ancestors(name).contains(CONTROLLER));
     }
 
     private boolean isConcreteClass(final String name) {
@@ -397,10 +409,10 @@ public final class PresenterCoverage {
         }
         sb.append(title).append(": ").append(names.size())
                 .append(", covered by a story: ").append(byStory.size())
-                .append(", only reached through another presenter: ").append(onlyReached.size())
+                .append(", only reached through another controller: ").append(onlyReached.size())
                 .append(", not covered: ").append(notCovered.size())
                 .append('\n');
-        appendNames(sb, "Only reached through another presenter", onlyReached);
+        appendNames(sb, "Only reached through another controller", onlyReached);
         appendNames(sb, "Not covered", notCovered);
     }
 
@@ -458,7 +470,7 @@ public final class PresenterCoverage {
     enum Coverage {
         /// A story names it.
         STORY,
-        /// A presenter or plugin that the stories cover names it.
+        /// A controller or plugin that the stories cover names it.
         REACHED,
         /// Neither.
         NONE

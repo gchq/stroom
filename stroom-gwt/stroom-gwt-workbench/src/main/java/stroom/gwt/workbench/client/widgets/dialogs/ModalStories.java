@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -82,7 +82,7 @@ public final class ModalStories {
                     panel.add(DialogWidgets.button("Open editor", DialogWidgets.PRIMARY, event -> {
                         // Stroom's OK_CANCEL_DIALOG has no label option, so the OK button says OK, not the
                         // "Save" the text describes.
-                        final ContentPresenter presenter = show(spies, popups, "Editor", null,
+                        final StoryContent presenter = show(spies, popups, "Editor", null,
                                 "A modal with a \"Save\" OK button and a dynamic title override.",
                                 ok -> {
                                     // Nothing to show
@@ -194,7 +194,7 @@ public final class ModalStories {
                 pending[0] = null;
             }
         }));
-        ShowPopupEvent.builder(new ContentPresenter(popups.getEventBus(), content))
+        ShowPopupEvent.builder(new StoryContent(popups.getEventBus(), content))
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Save")
                 .modal()
@@ -217,7 +217,7 @@ public final class ModalStories {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
         final FlowPanel content = new FlowPanel();
-        final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), content);
+        final StoryContent presenter = new StoryContent(popups.getEventBus(), content);
         content.add(new InlineLabel("OK is allowed only while the form is valid."));
         content.add(DialogWidgets.button(DISABLE_OK, DialogWidgets.SECONDARY, event ->
                 DisablePopupEvent.builder(presenter).action(DialogAction.OK).fire()));
@@ -244,7 +244,7 @@ public final class ModalStories {
                 .fire();
     }
 
-    private static ContentPresenter show(final Spy[] spies,
+    private static StoryContent show(final Spy[] spies,
                                          final StoryPopups popups,
                                          final String caption,
                                          final SvgImage icon,
@@ -252,7 +252,7 @@ public final class ModalStories {
                                          final ResultHandler onResult) {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
-        final ContentPresenter presenter = ContentPresenter.html(popups.getEventBus(), "<p>" + text + "</p>");
+        final StoryContent presenter = StoryContent.html(popups.getEventBus(), "<p>" + text + "</p>");
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .icon(icon)

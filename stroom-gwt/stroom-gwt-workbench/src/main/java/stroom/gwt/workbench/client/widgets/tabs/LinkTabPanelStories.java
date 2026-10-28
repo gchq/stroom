@@ -28,7 +28,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.dom.client.Style;
@@ -124,14 +124,14 @@ public final class LinkTabPanelStories {
                                 final boolean narrow) {
         final ScreenHarness harness = TabWidgets.menuHarness(context);
         final EventBus eventBus = harness.getEventBus();
-        final Map<TabData, Supplier<MyPresenterWidget<?>>> contents = new HashMap<>();
+        final Map<TabData, Supplier<Controller>> contents = new HashMap<>();
         final List<TabData> tabs = new ArrayList<>();
         for (final String label : labels) {
             final TabData tab = new StoryTab(label, label, null, null, false);
             tabs.add(tab);
             final Widget pane = TabWidgets.pane(text(label, extraToolbarTab != null), PANE_PADDING, PANE_FONT_SIZE);
             if (label.equals(extraToolbarTab)) {
-                contents.put(tab, () -> new ToolbarContentPresenter(eventBus, pane));
+                contents.put(tab, () -> new ToolbarContent(eventBus, pane));
             } else {
                 contents.put(tab, () -> TabWidgets.content(eventBus, pane));
             }
@@ -171,7 +171,7 @@ public final class LinkTabPanelStories {
         private StoryTabs(final EventBus eventBus,
                           final LinkTabPanel view,
                           final List<TabData> tabs,
-                          final Map<TabData, Supplier<MyPresenterWidget<?>>> contents,
+                          final Map<TabData, Supplier<Controller>> contents,
                           final List<SvgImage> toolbar) {
             super(eventBus, view);
             if (toolbar != null) {
@@ -196,14 +196,13 @@ public final class LinkTabPanelStories {
 
 
     /// Tab content with its own toolbar.
-    private static final class ToolbarContentPresenter
-            extends MyPresenterWidget<TabWidgets.ContentView>
-            implements HasToolbar {
+    private static final class ToolbarContent extends Controller implements HasToolbar {
 
         private final Toolbar extraToolbar;
 
-        private ToolbarContentPresenter(final EventBus eventBus, final Widget pane) {
-            super(eventBus, TabWidgets.content(eventBus, pane).getView());
+        private ToolbarContent(final EventBus eventBus, final Widget pane) {
+            super(eventBus);
+            initWidget(pane);
             extraToolbar = new Toolbar("Query actions");
             extraToolbar.button(SvgImage.SAVE, "Save query", () -> {
             });

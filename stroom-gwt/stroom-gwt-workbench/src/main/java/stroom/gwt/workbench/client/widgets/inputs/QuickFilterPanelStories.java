@@ -23,17 +23,17 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialog;
 import stroom.widget.dropdowntree.client.view.QuickFilterPage;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPage]) and
 /// the dialog layout ([QuickFilterDialog]): a quick filter above a data panel. These
@@ -64,7 +64,7 @@ public final class QuickFilterPanelStories {
                     final QuickFilterPage page = new QuickFilterPage();
                     final RowsView rows = new RowsView();
                     page.setContent(rows);
-                    page.setOnFilterChange(filterHandler(context, rows)::onFilterChange);
+                    page.setOnFilterChange(filterHandler(context, rows));
                     return frame(page);
                 })
                 .withPlay(play -> {
@@ -87,7 +87,7 @@ public final class QuickFilterPanelStories {
                     final QuickFilterDialog dialog = new QuickFilterDialog();
                     final RowsView rows = new RowsView();
                     dialog.add(rows.asWidget());
-                    dialog.setOnFilterChange(filterHandler(context, rows)::onFilterChange);
+                    dialog.setOnFilterChange(filterHandler(context, rows));
                     return frame(dialog);
                 })
                 .withPlay(play -> {
@@ -103,7 +103,7 @@ public final class QuickFilterPanelStories {
     }
 
     /// The stories' filtering: rows containing the trimmed filter, ignoring case.
-    private static QuickFilterUiHandlers filterHandler(final StoryContext context, final RowsView rows) {
+    private static Consumer<String> filterHandler(final StoryContext context, final RowsView rows) {
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
         return text -> {
             onChange.call(text);
@@ -128,7 +128,7 @@ public final class QuickFilterPanelStories {
 
 
     /// The data view: `hoverable-row` rows, filtered.
-    private static class RowsView extends ViewImpl {
+    private static class RowsView implements IsWidget {
 
         private final FlowPanel panel = new FlowPanel();
 

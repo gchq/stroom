@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -154,7 +154,7 @@ public final class EscapeStories {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
         final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(
-                        new ContentPresenter(popups.getEventBus(), content))
+                        new StoryContent(popups.getEventBus(), content))
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption(CAPTION)
                 .onHideRequest(event -> {
