@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.elastic.client.presenter;
+package stroom.search.elastic.client;
 
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
