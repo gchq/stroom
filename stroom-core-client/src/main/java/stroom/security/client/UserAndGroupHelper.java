@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client;
 
 import stroom.cell.info.client.CellIcon;
-import stroom.security.client.ApiKeysPlugin;
-import stroom.security.client.AppPermissionsPlugin;
-import stroom.security.client.UserTabPlugin;
-import stroom.security.client.UsersAndGroupsPlugin;
-import stroom.security.client.UsersPlugin;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;

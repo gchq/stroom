@@ -34,7 +34,7 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.security.client.presenter.AbstractRestClient;
+import stroom.security.client.AbstractRestClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.HasControllerNode;

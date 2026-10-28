@@ -35,7 +35,7 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.FilterCell.ViewData;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
-import stroom.security.client.presenter.ClassNameBuilder;
+import stroom.security.client.ClassNameBuilder;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.ElementUtil;

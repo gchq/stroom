@@ -20,7 +20,7 @@ import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.security.client.presenter.UserAndGroupHelper;
+import stroom.security.client.UserAndGroupHelper;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;

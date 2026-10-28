@@ -18,7 +18,7 @@ package stroom.security.client.component;
 
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.ColumnSizeConstants;
-import stroom.security.client.presenter.UserAndGroupHelper;
+import stroom.security.client.UserAndGroupHelper;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.UserFields;

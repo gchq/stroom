@@ -20,7 +20,7 @@ import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.security.client.presenter.UserAndGroupHelper;
+import stroom.security.client.UserAndGroupHelper;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.task.client.TaskMonitorFactory;

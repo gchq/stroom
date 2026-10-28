@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client;
 
 import stroom.widget.util.client.SafeHtmlUtil;
 

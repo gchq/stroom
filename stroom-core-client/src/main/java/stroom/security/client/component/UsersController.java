@@ -17,9 +17,9 @@
 package stroom.security.client.component;
 
 import stroom.content.client.component.ContentTabController;
+import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UserScreen;
 import stroom.security.client.component.UserListController.Mode;
-import stroom.security.client.presenter.UserAndGroupHelper;
-import stroom.security.client.presenter.UserScreen;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;

@@ -22,7 +22,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.TextAttributes;
-import stroom.security.client.presenter.ClassNameBuilder;
+import stroom.security.client.ClassNameBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.RowStyles;
