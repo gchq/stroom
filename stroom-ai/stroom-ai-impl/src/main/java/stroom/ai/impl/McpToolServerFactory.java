@@ -234,6 +234,8 @@ public class McpToolServerFactory {
         final Map<String, String> configuredHeaders = configuredHeaders(httpClientConfig);
 
         final HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(endpoint)
+                // Reads and answers servers' forms as Stroom's MCP endpoint writes its own (see McpJson).
+                .jsonMapper(McpJson.mapper())
                 .connectTimeout(timeout)
                 .customizeClient(clientBuilder -> {
                     // The JDK HTTP client defaults to HTTP/2, which for a cleartext http:// URL means an
