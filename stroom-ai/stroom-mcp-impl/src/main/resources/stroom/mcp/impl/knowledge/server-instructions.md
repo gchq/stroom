@@ -163,6 +163,13 @@ Rules for every run:
   with their reason and not raised again. Events written as Unknown are not such an error: they are agreed per rule
   in build_translation_xslt (allow_unknown). A generated XSLT is saved by build_translation_xslt (build, name) and
   stepped as saved; code written by hand is tried with draft_code before it is saved.
+- A value an index refuses (Elasticsearch: a document rejected because a field's value doesn't fit its type, e.g.
+  '-' in an ip field): find which kinds of event carry it, stepping records of every kind, not only the first ones
+  (seen: an agent checked Permit events, whose addresses were real, while Connect events held '-'). A source's
+  placeholder for no value ('-', 'N/A', 'null') is a value: a guard that only tests a field is there keeps it. Leave
+  it out in the mapping (an xpath with a predicate, e.g. data[@name='s-ip']/@value[. != '-']), then read the saved
+  XSLT for that field before reprocessing: the change is made only once the generated code shows it (seen: a
+  mapping's guard that never reached the XSLT, which still wrote the value as it was).
 - Document what you build (write_documentation; stream_ids default to the streams its current code last stepped
   clean on) and use the user's source notes for field meanings.
 - A processor filter on an events or indexing pipeline (create_processor_filter stream_ids=, or a feed's streams)

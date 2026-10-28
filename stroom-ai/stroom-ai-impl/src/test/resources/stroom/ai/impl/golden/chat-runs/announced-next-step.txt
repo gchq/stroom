@@ -1,0 +1,80 @@
+# announced-next-step
+
+A reply that only says what the model will do next, with no tool call, isn't taken as the answer: it is shown as the model's interim words, and the model is told to make the call, which it does, then answers.
+
+== What happened ==
+The user asks: Which pipelines fork to more than one translation?
+Run 1: answered: Three pipelines fork to more than one translation.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Which pipelines fork to more than one translation?
+#2 INTERIM_RESPONSE (turn 1)
+    There are 779 pipelines. Let me use the pipeline tool to look at their structures.
+#3 INTERIM_RESPONSE (turn 1)
+    Reading the pipelines.
+#4 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "read_turn",
+      "arguments" : "{}",
+      "rationale" : "Reading the pipelines."
+    }
+#5 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "read_turn",
+      "error" : false,
+      "text" : "Turn 1:\n\nQuestion:\nWhich pipelines fork to more than one translation?\n\nCalled tool read_turn with {}",
+      "chars" : 100,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+(none)
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Which pipelines fork to more than one translation?
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Which pipelines fork to more than one translation?
+[2] AI
+    There are 779 pipelines. Let me use the pipeline tool to look at their structures.
+[3] USER
+    [You said what you would do next but didn't call a tool, so nothing was done, and your turn would have ended there. Do it now: make the call. If you have in fact finished, give your answer, without saying you'll do anything more.]
+--- Request 3 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Which pipelines fork to more than one translation?
+[2] AI
+    There are 779 pipelines. Let me use the pipeline tool to look at their structures.
+[3] USER
+    [You said what you would do next but didn't call a tool, so nothing was done, and your turn would have ended there. Do it now: make the call. If you have in fact finished, give your answer, without saying you'll do anything more.]
+[4] AI
+    Reading the pipelines.
+    Calls read_turn as call-1 with {}
+[5] TOOL RESULT for call-1 (read_turn)
+    Turn 1:
+    
+    Question:
+    Which pipelines fork to more than one translation?
+    
+    Called tool read_turn with {}
