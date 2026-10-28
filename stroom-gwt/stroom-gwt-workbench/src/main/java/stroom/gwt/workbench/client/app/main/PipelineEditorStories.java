@@ -823,10 +823,9 @@ public final class PipelineEditorStories {
                     play.click(property.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Property", StroomDom.DIALOG_TITLE))
                             .toBeNull());
-                    // Another element, as a default value on the property grid's selected row fails
-                    // contrast (see ISSUES.md)
-                    play.click(play.getByText("Source"));
-                    play.waitFor(() -> play.expect(play.queryByText("fixInvalidChars")).toBeNull());
+                    // The default value stays on the property grid's selected row, which the
+                    // accessibility check reads: it failed contrast there, until the row's default
+                    // took the row's text colour
                     expectNoProblems(play);
                 })
                 // Setting a document property's Source to Embedded creates an embedded document

@@ -645,6 +645,11 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    // The document's selected tab has it, so its tabs' keys work at once. Before, the
+                    // first tab stop did, which was the first toolbar button if the tabs hadn't been
+                    // laid out yet
+                    play.expect(play.querySelector(CONTENT_WITH_FOCUS + " [role='tab'][aria-selected='true']"))
+                            .toHaveFocus();
                     expectNoProblems(play);
                 })
                 // The 'Ask Stroom AI' chat docked to the right of the content (its config's dock

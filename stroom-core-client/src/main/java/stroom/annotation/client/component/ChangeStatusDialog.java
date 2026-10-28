@@ -19,6 +19,7 @@ package stroom.annotation.client.component;
 import stroom.annotation.client.SettingBlock;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -43,6 +44,8 @@ public class ChangeStatusDialog extends Component {
     Label status;
     @UiField
     SettingBlock statusBlock;
+    @UiField
+    FormGroup statusGroup;
 
     private Consumer<Element> onChooseStatus = element -> {
     };
@@ -61,7 +64,16 @@ public class ChangeStatusDialog extends Component {
         } else {
             this.status.setText(status.getName());
             this.status.removeStyleName(EMPTY_VALUE);
+            statusGroup.clearFeedback();
         }
+    }
+
+    /// Says, under the status, that one must be chosen, and focuses its button.
+    ///
+    /// @param message What is missing, e.g. `Choose a status to set`.
+    public void setStatusMissing(final String message) {
+        statusGroup.setFeedback(message);
+        statusBlock.focus();
     }
 
     /// @param onChooseStatus Given the status's element, to show the chooser at, when it is pressed.

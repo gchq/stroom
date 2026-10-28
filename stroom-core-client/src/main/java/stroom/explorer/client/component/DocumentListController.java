@@ -56,6 +56,8 @@ public class DocumentListController extends Controller {
     };
     private Consumer<ResultPage<FindResult>> onResultPage = resultPage -> {
     };
+    private Consumer<FindResult> onSelectionChange = selected -> {
+    };
 
     /// Made by GIN, with its content.
     ///
@@ -71,6 +73,7 @@ public class DocumentListController extends Controller {
         initWidget(view);
 
         final MultiSelectionModel<FindResult> selectionModel = view.getSelectionModel();
+        own(selectionModel.addSelectionHandler(event -> onSelectionChange.accept(getSelected())));
         dataProvider = new RestDataProvider<FindResult, ResultPage<FindResult>>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -177,6 +180,12 @@ public class DocumentListController extends Controller {
     ///                      wasn't.
     public void setOnFilterError(final Consumer<String> onFilterError) {
         this.onFilterError = onFilterError;
+    }
+
+    /// @param onSelectionChange Given the chosen document, or null for none, whenever the choice
+    ///                          changes, e.g. to enable what acts on it.
+    public void setOnSelectionChange(final Consumer<FindResult> onSelectionChange) {
+        this.onSelectionChange = onSelectionChange;
     }
 
     /// @param onResultPage Given each page found, e.g. to say how many documents there are.

@@ -83,7 +83,11 @@ public class ChangeStatusDialogController extends Controller {
                 .popupSize(PopupSize.resizableX(500))
                 .caption("Change Status")
                 .onHideRequest(e -> {
-                    if (e.isOk()) {
+                    if (e.isOk() && currentStatus == null) {
+                        // The server can't set no status, so say what is missing and keep the dialog
+                        view.setStatusMissing("Choose a status to set");
+                        e.reset();
+                    } else if (e.isOk()) {
                         final MultiAnnotationChangeRequest request = new MultiAnnotationChangeRequest(
                                 annotationIdList,
                                 new SetTag(currentStatus));

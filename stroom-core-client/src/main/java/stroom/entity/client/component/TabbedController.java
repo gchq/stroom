@@ -147,6 +147,13 @@ public abstract class TabbedController<D> extends Controller {
         return docRef;
     }
 
+    /// Focuses the selected tab, e.g. when what is shown is opened.
+    ///
+    /// @return Whether it was focused: not if the tabs aren't shown.
+    public final boolean focusTabs() {
+        return view.focusTabs();
+    }
+
     /// Shows one of the tabs a link can open directly, if this has it.
     ///
     /// @param commonDocLinkTab The tab, or null for none.

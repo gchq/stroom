@@ -35,6 +35,8 @@ import java.util.Objects;
 public class ThemePreferences extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    // The layout densities, the first being how the app looks with none saved (no density class)
+    private static final List<String> DENSITIES = List.of("Comfortable", "Compact");
 
     @UiField
     SelectionBox<String> theme;
@@ -58,8 +60,7 @@ public class ThemePreferences extends Component {
     public ThemePreferences() {
         initWidget(BINDER.createAndBindUi(this));
 
-        density.addItem("Comfortable");
-        density.addItem("Compact");
+        density.addItems(DENSITIES);
 
         fontSize.addItem("Small");
         fontSize.addItem("Medium");
@@ -89,9 +90,7 @@ public class ThemePreferences extends Component {
         theme.clear();
         theme.addItems(themes);
         theme.setValue(userPreferences.getTheme());
-        density.setValue(userPreferences.getDensity() == null
-                ? "Default"
-                : userPreferences.getDensity());
+        density.setValue(shownDensity(userPreferences.getDensity()));
         font.clear();
         font.addItems(fonts);
         font.setValue(userPreferences.getFont());
@@ -102,6 +101,18 @@ public class ThemePreferences extends Component {
                 Objects.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
         visualisationPalette.setValue(
                 VisPalette.fromDisplayValue(userPreferences.getVisualisationPalette()).getDisplayValue());
+    }
+
+    /// The density to show for a saved one: the saved one if it is an option, otherwise (none saved,
+    /// or "Default", which this tab once saved for none) the first, which is how the app looks
+    /// without one.
+    ///
+    /// @param saved The saved density, or null for none.
+    /// @return One of the options.
+    static String shownDensity(final String saved) {
+        return saved != null && DENSITIES.contains(saved)
+                ? saved
+                : DENSITIES.get(0);
     }
 
     /// Writes the preferences shown into the user's preferences' builder.

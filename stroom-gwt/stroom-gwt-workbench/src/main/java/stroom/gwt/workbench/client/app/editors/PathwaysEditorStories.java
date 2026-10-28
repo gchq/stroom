@@ -112,6 +112,20 @@ public final class PathwaysEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
+                // New Pathway opens its dialog. Before, it threw (a new pathway has no root node to
+                // draw) and the dialog never opened
+                .story("NewPathway", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
+                    play.click(play.getByTitle("New Pathway"));
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("New Pathway", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Pathway", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
                 // Selecting a pathway shows its graph; a node can be selected
                 .story("Graph", context -> render(context, "pathways-1", PATHWAYS, false))
                 .withPlay(play -> {
@@ -274,10 +288,13 @@ public final class PathwaysEditorStories {
                     final Query save = play.findByRole("button", "Save (read only)");
                     play.click(DocEditors.tab(play, "Settings"));
                     final Query processingNode = play.findByDisplayValue("node1");
-                    // The Processing Node text box stays enabled (a Stroom bug, see ISSUES.md:
-                    // PathwaysSettings.onReadOnlyChange only disables the ordering tolerance), but
-                    // an edit can't make the read only document dirty, so Save stays disabled
-                    play.expect(processingNode).not().toBeDisabled();
+                    // Every setting is read only. Before, only the ordering tolerance was, and edits
+                    // to the rest were lost, as they couldn't make the document dirty
+                    play.expect(processingNode).toHaveAttribute("readonly", "");
+                    for (final String tick : new String[]{"Allow Pathway Creation", "Allow Pathway Mutation",
+                            "Allow Constraint Creation", "Allow Constraint Mutation"}) {
+                        play.expect(play.getByRole("checkbox", tick)).toHaveAttribute("aria-readonly", "true");
+                    }
                     // The trace store's and info feed's pickers can't be opened (they could be
                     // before wave 8's audit)
                     for (final String label : new String[]{"Trace Store", "Info Feed"}) {
@@ -285,9 +302,6 @@ public final class PathwaysEditorStories {
                                         .querySelector("[aria-haspopup]:not(.form-group__help)"))
                                 .toHaveAttribute("aria-disabled", "true");
                     }
-                    play.type(processingNode, "-x");
-                    play.tab();
-                    play.sleep(300);
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });

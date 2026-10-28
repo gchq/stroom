@@ -359,8 +359,19 @@ public final class CredentialsScreenStories {
                     final Play screen = play.screen();
                     final Play dialog = screen.within(screen.findByText("Replace Username / Password Secret")
                             .closest(StroomDom.DIALOG));
-                    play.expect(dialog.getByText(TextMatch.startingWith(
-                            "The current secret of 'My Creds' will be discarded"))).toBeInTheDocument();
+                    final Query warning = dialog.getByText(TextMatch.startingWith(
+                            "The current secret of 'My Creds' will be discarded"));
+                    play.expect(warning).toBeInTheDocument();
+                    // The warning wraps within the dialog; it ran on one line past the dialog's edge,
+                    // so its end, which says what happens, was cut off
+                    final Query dialogElement = screen.findByText("Replace Username / Password Secret")
+                            .closest(StroomDom.DIALOG);
+                    play.expect("the warning's right edge within the dialog's", () ->
+                            warning.element().get().getAbsoluteRight()
+                            <= dialogElement.element().get().getAbsoluteRight()).toBe(true);
+                    play.expect("the warning's text within its box", () ->
+                            warning.element().get().getScrollWidth()
+                            <= warning.element().get().getClientWidth()).toBe(true);
                     // The secret's first field has the focus
                     play.waitFor(() -> play.expect(dialog.getByLabelText("User Name")).toHaveFocus());
                     play.type(dialog.getByLabelText("User Name"), "alice");

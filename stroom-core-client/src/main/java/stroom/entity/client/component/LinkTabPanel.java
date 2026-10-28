@@ -70,6 +70,13 @@ public class LinkTabPanel extends Component {
         return tabBar;
     }
 
+    /// Focuses the tabs' tab stop, the selected tab, even before the tabs have been laid out.
+    ///
+    /// @return Whether it was focused: not if the tabs aren't shown.
+    public boolean focusTabs() {
+        return tabBar.focusTabStop();
+    }
+
     /// @return Where the tab showing is shown.
     public LayerContainer getLayerContainer() {
         return layerContainer;

@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.TabbedController;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.component.ProcessorsController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -38,8 +37,8 @@ import com.google.web.bindery.event.shared.EventBus;
 /// tasks, and its permissions, as far as the user may see them. Nothing in it can be changed, so
 /// every tab is read only.
 ///
-/// Which tabs it has depends on what it shows (the System root always has Permissions; a folder
-/// only for a user who may manage processors), so they are added when it is first read.
+/// Which tabs it has depends on the user's permissions (Processors and Active Tasks only for a user
+/// who may manage processors); they are added when it is first read.
 public class FolderTabs extends TabbedController<DocRef> {
 
     private static final TabData DATA = new TabDataImpl("Data");
@@ -81,11 +80,11 @@ public class FolderTabs extends TabbedController<DocRef> {
     protected void onRead(final DocRef docRef, final DocRef folder) {
         if (!tabsAdded) {
             tabsAdded = true;
-            addTabs(ExplorerConstants.SYSTEM_DOC_REF.equals(docRef));
+            addTabs();
         }
     }
 
-    private void addTabs(final boolean root) {
+    private void addTabs() {
         TabData selectedTab = null;
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA,
@@ -114,12 +113,12 @@ public class FolderTabs extends TabbedController<DocRef> {
             }
         }
 
-        if (root || manageProcessors) {
-            addTab(PERMISSIONS,
-                    permissionsProvider::get,
-                    (permissions, docRef, folder) -> permissions.setDocRef(docRef));
-            setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
-        }
+        // Every folder has Permissions, as the System root does: the tab shows only what the user
+        // may see and change
+        addTab(PERMISSIONS,
+                permissionsProvider::get,
+                (permissions, docRef, folder) -> permissions.setDocRef(docRef));
+        setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
 
         if (selectedTab != null) {
             selectTab(selectedTab);

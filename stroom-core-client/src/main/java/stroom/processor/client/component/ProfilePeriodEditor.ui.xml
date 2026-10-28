@@ -36,8 +36,7 @@
                         screenReaderText="Per node, 0 to 1,000,000.">
             <valuespinner:ValueSpinner ui:field="maxNodeThreads"
                                        addStyleNames="dock-max"
-                                       minValue="0" maxValue="1000000"
-                                       wrapValues="true"/>
+                                       minValue="0" maxValue="1000000"/>
         </form:FormGroup>
         <form:FormGroup identity="limitClusterThreads"
                         helpText="Tick to limit the total number of threads the cluster can use for processing during this period. When unticked, there is no cluster limit."
@@ -50,8 +49,7 @@
                         screenReaderText="Total for the cluster, 0 to 1,000,000.">
             <valuespinner:ValueSpinner ui:field="maxClusterThreads"
                                        addStyleNames="dock-max"
-                                       minValue="0" maxValue="1000000"
-                                       wrapValues="true"/>
+                                       minValue="0" maxValue="1000000"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

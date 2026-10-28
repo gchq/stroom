@@ -106,6 +106,13 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         }
     }
 
+    /// Focuses the setting's ⋮ button, if it has a title (see [#setTitle(String)]).
+    public void focus() {
+        if (isButton()) {
+            icon.getElement().focus();
+        }
+    }
+
     private boolean isButton() {
         return "button".equals(icon.getElement().getAttribute("role"));
     }

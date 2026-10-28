@@ -118,14 +118,15 @@ public final class FolderEditorStories {
                                     .toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
-                // A user who may only view data sees a folder's Data tab alone, and the System
-                // root's Data and Permissions, as before the folder tabs were a component
+                // A user who may only view data sees a folder's Data and Permissions tabs, as they do
+                // the System root's. Before, a folder had Permissions only for a user who may manage
+                // processors, so one who could change a folder's permissions couldn't from its tab
                 .story("ViewDataOnly", context -> render(context, false, AppPermission.VIEW_DATA_PERMISSION))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
                     play.expect(play.queryByText("Processors", StroomDom.LINK_TAB_LABEL)).toBeNull();
                     play.expect(play.queryByText("Active Tasks", StroomDom.LINK_TAB_LABEL)).toBeNull();
-                    play.expect(play.queryByText("Permissions", StroomDom.LINK_TAB_LABEL)).toBeNull();
+                    play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("SystemRootViewDataOnly", context -> render(context, true, AppPermission.VIEW_DATA_PERMISSION))

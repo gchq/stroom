@@ -174,6 +174,25 @@ public final class ProcessorProfilesScreenStories {
                     play.expect(profile.queryByText("Mon-Mon")).toBeNull();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // A thread limit stops at 0 rather than wrapping round to 1,000,000
+                .story("ThreadLimitsStopAtZero", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Nightly"));
+                    final Play profile = screen.within(screen.findByText(
+                            TextMatch.containing("Edit Processor Profile")).closest(StroomDom.DIALOG));
+                    play.click(profile.getByTitle("New Profile Period"));
+                    final Play period = screen.within(screen.findByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(period.getByRole("checkbox", "Limit Single Node Threads"));
+                    final Query threads = period.getByRole("spinbutton", "Max Node Threads");
+                    play.clear(threads);
+                    play.type(threads, "0");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(threads).toHaveValue("0");
+                    play.click(period.getByRole("button", StroomDom.button("Cancel")));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // The Processing Schedule sub-grid opens a period on double click, not on Enter
                 .story("PeriodOpensOnDoubleClickOnly", ProcessorProfilesScreenStories::render)
                 .withPlay(play -> {

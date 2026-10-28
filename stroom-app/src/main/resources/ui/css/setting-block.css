@@ -78,3 +78,10 @@
 .setting-block:has(> .setting-block__icon:focus-visible) {
     background-color: var(--border-color);
 }
+
+/* A missing value (None, Nobody) is muted, too faint on a highlighted setting's background, so it
+   takes the text colour there */
+.setting-block:hover .annotationLabel--empty,
+.setting-block:has(> .setting-block__icon:focus-visible) .annotationLabel--empty {
+    color: var(--text-color);
+}

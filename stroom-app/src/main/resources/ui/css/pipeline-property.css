@@ -28,3 +28,11 @@
 .pipeline-property--default {
     color: var(--text-color--muted);
 }
+
+/* On a selected row the muted colour is too faint against the selection, so a default takes the
+   row's text colour and is told apart by its style instead */
+.data-grid__row--selected .pipeline-property--default,
+.data-grid__row--selected .pipeline-property--default * {
+    color: inherit;
+    font-style: italic;
+}

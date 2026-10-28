@@ -1159,6 +1159,15 @@ after wave 21.
 > seeded, fonts waited for, the value spinner stopped, and stale baselines retaken, so a screenshot
 > diff shows only real changes. See `wave-22.md`.
 
+## 23. Client-side bugs
+
+Record: [`component-migration/wave-23.md`](component-migration/wave-23.md). Added 28 October 2026,
+after wave 22.
+
+> **Done, 28 October 2026**: fourteen user-visible bugs fixed, each with a regression test and a
+> changelog entry, and four checked and kept. Invalid input in number, date and duration fields is
+> left for a design decision. See `wave-23.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

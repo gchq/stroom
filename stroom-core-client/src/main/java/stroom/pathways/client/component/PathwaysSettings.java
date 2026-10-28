@@ -116,9 +116,14 @@ public class PathwaysSettings extends Component {
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
-        // Only the tolerance (see ISSUES.md: the rest stay editable, though the document can't be
-        // saved)
+        // Every setting: before, only the tolerance, and edits to the rest of a document that can't
+        // be saved were lost (the pickers are the controller's)
         temporalOrderingTolerance.setEnabled(!readOnly);
+        allowPathwayCreation.setReadOnly(readOnly);
+        allowPathwayMutation.setReadOnly(readOnly);
+        allowConstraintCreation.setReadOnly(readOnly);
+        allowConstraintMutation.setReadOnly(readOnly);
+        processingNode.setReadOnly(readOnly);
     }
 
 

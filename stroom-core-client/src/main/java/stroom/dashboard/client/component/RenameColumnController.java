@@ -79,21 +79,39 @@ public class RenameColumnController extends Controller {
                                final BiConsumer<String, String> renameInFormatting,
                                final Predicate<String> isNameInUse,
                                final BiConsumer<Column, Column> onRenamed) {
-        final String newName = view.getName();
-        if (e.isOk()
-            && newName != null
-            && !newName.trim().isEmpty()
-            && !Objects.equals(newName, column.getName())) {
-            // Any conditional formatting rules that use this field name are renamed too
-            renameInFormatting.accept(column.getName(), newName);
-            if (isNameInUse.test(newName)) {
-                AlertEvent.fireError(this, "Field name \"" + newName + "\" is already in use", e::reset);
-            } else {
-                onRenamed.accept(column, column.copy().name(newName).build());
-                e.hide();
-            }
-        } else {
+        if (!e.isOk() || applyRename(column, view.getName(), renameInFormatting, isNameInUse, onRenamed, e::reset)) {
             e.hide();
         }
+    }
+
+    /// Renames a column, and the conditional formatting rules that use its name, unless another
+    /// column has the new name: then nothing is renamed, the user is told and `onRefused` runs once
+    /// they have read it. A blank or unchanged name renames nothing.
+    ///
+    /// @param column             The column.
+    /// @param newName            Its new name, as entered.
+    /// @param renameInFormatting Told the old and new names, to rename the column in the table's
+    ///                           conditional formatting.
+    /// @param isNameInUse        Whether another column has a name.
+    /// @param onRenamed          Given the column and the column renamed.
+    /// @param onRefused          Run once the user has read why the name was refused.
+    /// @return Whether the dialog may close: false if the name was refused.
+    boolean applyRename(final Column column,
+                        final String newName,
+                        final BiConsumer<String, String> renameInFormatting,
+                        final Predicate<String> isNameInUse,
+                        final BiConsumer<Column, Column> onRenamed,
+                        final Runnable onRefused) {
+        if (newName == null || newName.trim().isEmpty() || Objects.equals(newName, column.getName())) {
+            return true;
+        }
+        // Checked before anything is renamed, so a refused name changes nothing
+        if (isNameInUse.test(newName)) {
+            AlertEvent.fireError(this, "Field name \"" + newName + "\" is already in use", onRefused::run);
+            return false;
+        }
+        renameInFormatting.accept(column.getName(), newName);
+        onRenamed.accept(column, column.copy().name(newName).build());
+        return true;
     }
 }

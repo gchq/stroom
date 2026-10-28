@@ -126,7 +126,8 @@ public class PathwayTree extends Component {
 
         final HtmlBuilder hb = new HtmlBuilder();
         hb.div(div -> {
-            if (pathway != null) {
+            // A new pathway has no nodes yet
+            if (pathway != null && pathway.getRoot() != null) {
                 addNode(pathway.getRoot());
 
                 // Draw bezier curves.

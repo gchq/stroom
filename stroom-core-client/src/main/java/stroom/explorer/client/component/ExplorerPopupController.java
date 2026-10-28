@@ -257,6 +257,17 @@ public class ExplorerPopupController extends Controller {
         }
     }
 
+    /// Chooses a document already looked up in the explorer.
+    ///
+    /// @param explorerNode The document's explorer node, or null for none.
+    public void setSelectedNode(final ExplorerNode explorerNode) {
+        if (explorerNode != null) {
+            setSelectedEntityData(explorerNode);
+        } else {
+            clearSelected();
+        }
+    }
+
     /// @param allowFolderSelection Whether a folder may be chosen.
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
         this.allowFolderSelection = allowFolderSelection;

@@ -131,12 +131,22 @@ public class SelectionHandlersController extends SettingsTabController implement
         }
     }
 
+    /// A copy of a selection handler with an id of its own, as a new one gets; a copy that kept its
+    /// original's id could be taken for it by anything that finds a handler by id.
+    ///
+    /// @param handler The handler to copy.
+    /// @return The copy.
+    static ComponentSelectionHandler duplicate(final ComponentSelectionHandler handler) {
+        return handler
+                .copy()
+                .id(RandomId.createId(5))
+                .build();
+    }
+
     private void onCopy() {
         final ComponentSelectionHandler selected = selectionHandlerList.getSelectionModel().getSelected();
         if (selected != null) {
-            final ComponentSelectionHandler listener = selected
-                    .copy()
-                    .build();
+            final ComponentSelectionHandler listener = duplicate(selected);
 
             final int index = selectionHandlers.indexOf(selected);
 

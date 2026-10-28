@@ -592,6 +592,21 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
         }
     }
 
+    /// Focuses the bar's tab stop (the selected tab, or the list of tabs that don't fit), laying the
+    /// bar out first if it hasn't been yet, as the tab stop is chosen only then.
+    ///
+    /// @return Whether it was focused: not if the bar isn't shown.
+    public boolean focusTabStop() {
+        if (currentTabIndexElement == null) {
+            onResize();
+        }
+        if (currentTabIndexElement == null) {
+            return false;
+        }
+        focusTabIndexElement();
+        return true;
+    }
+
     private void focusTabIndexElement() {
 //        GWT.log("Focus: " + currentTabIndexElement);
 

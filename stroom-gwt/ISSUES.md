@@ -48,6 +48,8 @@ checks the details saved.
 
 ### A node group can't be renamed
 
+**Checked: kept, not a bug** (28 October 2026, wave 23). Processor profiles refer to a node group by its name (`ProcessorProfile.nodeGroupName`), so renaming a group would leave every profile that uses it pointing at nothing; the name box says it can't be changed here. Renaming would need the profiles to follow (server side), or to refer to groups by id.
+
 **Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the
 presenter.
 
@@ -74,6 +76,8 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### Elastic number fields can fail when blank
 
+**Open, with "Values quietly replaced or dropped"** (28 October 2026, wave 23): the rerank score is part of the invalid input design asked about there.
+
 **Reported.**
 
 * Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
@@ -89,6 +93,8 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### A rejected column rename may still change conditional formatting
 
+**Fixed** (28 October 2026, wave 23). The name is checked before anything is renamed (`RenameColumnController.applyRename`, `TestRenameColumnController`). On master too.
+
 **Reported.** `RenameColumnController` renames the column's references in conditional formatting
 rules before checking whether the new name is already used, so a rename that is then rejected may
 already have changed those rules.
@@ -96,6 +102,8 @@ already have changed those rules.
 * `stroom-core-client/src/main/java/stroom/dashboard/client/component/RenameColumnController.java`
 
 ### Layout Density can be set to an option that doesn't exist
+
+**Fixed** (28 October 2026, wave 23). No saved density, or the "Default" this tab once saved, shows Comfortable, which is how the app looks without one (`ThemePreferences.shownDensity`, `TestThemePreferences`). On master too.
 
 **Reported.** `ThemePreferences.read` sets the density to "Default" when none is saved, which
 isn't one of the options (Comfortable, Compact).
@@ -126,6 +134,8 @@ isn't clear whether a typed 0 is clamped when saved.
 
 ### Thread count spinners wrap round
 
+**Fixed** (28 October 2026, wave 23). They stop at 0 and 1,000,000 (`App/Main/ProcessorProfilesScreen` `ThreadLimitsStopAtZero`). On master too.
+
 **Reported.** The processor profile's Max Node Threads and Max Cluster Threads spinners go from
 their maximum back to 0.
 
@@ -148,6 +158,8 @@ the credentials are saved, including edits that don't change it.
 
 ### Annotation status and assignee dialogs act on what they start with
 
+**Fixed in part** (28 October 2026, wave 23). Change Status with no status chosen says one is needed, under the status, and keeps the dialog (`App/Editors/QueryEditor` `ChangeStatusNeedsAStatus`); the faded "None" takes the text colour on a highlighted setting, where it failed contrast. **Kept:** Change Assigned To starting at Nobody, whose OK unassigns: its help says so, and it is the only way to unassign (`ChangeAssignedTo` checks it).
+
 **Reported.**
 
 * Change Status starts at None, and OK while it shows None sends an empty status, which
@@ -163,6 +175,8 @@ day, so the part after midnight never matches.
 
 ### Index "No partition" is saved as Month
 
+**Server side** (28 October 2026, wave 23): the client no longer offers No partition, and it is the shared model's constructor (`LuceneIndexDoc`, default Month) that turns none into Month; keeping none changes what stored documents mean, so it is left for the server-side list.
+
 **Reported.** Choosing No partition for a Lucene index saves nothing, and `LuceneIndexDoc` turns
 that into Month, so the choice can never be kept (`IndexSettings`).
 
@@ -173,6 +187,8 @@ be blank: an analytic notification's Resume Notifications After (blank meant "ne
 table builder's Time To Keep Data In The Table (blank meant "keep all data").
 
 ### Other values that disagree
+
+**Checked** (28 October 2026, wave 23): Send Empty Reports isn't a bug (`ReportDoc` always fills in settings, with the model's default, true, so the tab's `false` fallback never applies); Process Data's Max Create Time set to now when Reprocess changes is deliberate (its help says so). **Fixed:** every folder has Permissions (`FolderTabs`; `App/Editors/FolderEditor` `ViewDataOnly`), on master too.
 
 **Reported.**
 
@@ -236,6 +252,8 @@ data request is also owned now, so a reply after the tab has closed is dropped. 
 
 ### UI config failures and annotation changes go nowhere
 
+**Fixed** (28 October 2026, wave 23). `UiConfigCache` fires on the application's event bus: a failure to fetch the UI config is shown (`App/Main/AboutDialog` `ConfigFetchFails`), and an annotation change elsewhere (the server's last change time moving, after the first fetch) reaches the tables. Callers aren't called with null on a failure, as most can't do without the config. On master too.
+
 **Confirmed.** `UiConfigCache` fires its events on a private event bus of its own, which has no
 alert or annotation listeners:
 
@@ -265,6 +283,8 @@ that fails without it.
   expression's Add Term button, in the dialog.
 
 ### The Pathways editor can't create a pathway or add a constraint
+
+**Fixed in part** (28 October 2026, wave 23). New Pathway opens its dialog (`App/Editors/PathwaysEditor` `NewPathway`), and a read-only document's settings are all read only (`ReadOnly`); both on master too. **Still open, needing model work:** a node with no constraints has no map to add one to (`PathNode.constraints` is null), so enabling New there would fail; and the path buttons have no commands. Their buttons are left as they were.
 
 **Confirmed.** Found by the workbench's Pathways stories. Pathways is experimental (see
 [Checked and not bugs](#checked-and-not-bugs) for the gaps that are expected), but these stop its
@@ -442,6 +462,8 @@ tie on that column, e.g. words of one type stay in whatever order they came in. 
 
 ### A duplicated selection handler has the same id as its original
 
+**Fixed** (28 October 2026, wave 23). The copy gets an id of its own (`SelectionHandlersController.duplicate`, `TestSelectionHandlersController`). On master too.
+
 **Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersController.onCopy`) copies the
 handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
 (`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
@@ -453,6 +475,8 @@ the new data grid, which copes (rows with one key are told apart by position). F
   (`onCopy`)
 
 ### The Replace Secret dialog cuts its warning off
+
+**Fixed** (28 October 2026, wave 23). GWT's theme makes every `gwt-Label` `nowrap`; the warning has `credentials-details-dialog__warning`, which wraps (`App/Main/CredentialsScreen` `ReplaceSecret` checks it fits). On master too.
 
 **Reproduced** (screenshots of `App/Main/CredentialsScreen` `ReplaceSecret`, October 2026). The
 warning at the top of "Replace … Secret" ("The current secret of 'My Creds' will be discarded and
@@ -649,6 +673,8 @@ now makes the dialog when first pressed. `AppShell.GoToSearchResults` presses G 
 
 ### Document Permissions' Edit button stays disabled until a document is opened (on master too)
 
+**Fixed** (28 October 2026, wave 23). Edit is enabled while a document is chosen (`DocumentListController.setOnSelectionChange`; `App/Main/DocumentPermissionsScreen` `EditEnabledForChosenDocument`).
+
 **Open; found 26 October 2026 in wave 10.** On the Document Permissions tab
 (`BatchDocumentPermissionsPresenter`), 'Edit Permissions For Selected Document' is enabled only when
 a document is opened (Enter or a double click on it), which opens its permissions anyway. Choosing a
@@ -698,6 +724,8 @@ list, and the list's one choice handler is kept in a field. Story `TableAddColum
 
 ### Replies helpers give to lists that have gone
 
+**Deferred** (28 October 2026, wave 23): several callers aren't controllers (the search and query models, `ResultStorePlugin`, `DocumentPluginEventManager`, the node group and credential list models), so giving the helpers an owner is an ownership pass of its own, not a bug fix.
+
 **Found in wave 10's audit** (27 October 2026). A controller's own REST calls have `.owner(this)`,
 so a reply that comes after it is disposed is dropped. The shared helpers some lists call take no
 owner, so their replies still run: `NodeClient` (the job and node lists' `listEnabledNodes`, the
@@ -711,6 +739,8 @@ owner, as `AnnotationResourceClient`'s finds now have.
 * `stroom-core-client/src/main/java/stroom/node/client/component/NodeStatusListController.java`
 
 ### The stepping chooser can be left unowned
+
+**Fixed** (28 October 2026, wave 23). The pipeline is looked up, in the explorer too, before the chooser is made (`PipelinePlugin.findPipeline`, `ExplorerPopupController.setSelectedNode`, `TestPipelinePlugin`).
 
 **Found in wave 8's audit** (26 October 2026). `PipelinePlugin.onBeginStepping` makes the "Choose
 Pipeline To Step With" chooser before it looks up the pipeline to choose first (a REST call, then the
@@ -986,6 +1016,8 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 ## Accessibility
 
 ### A pipeline property's default value is too faint on its selected row
+
+**Fixed** (28 October 2026, wave 23). On a selected row a default takes the row's text colour, in italics (`pipeline-property.css`); `PipelineEditor` `PropertySourceAfterChange` leaves it selected for the accessibility check. On master too.
 
 **Reported** (found in wave 9's audit, 26 October 2026). The pipeline's property grid greys a
 property's default (and inherited) value (`pipeline-property--default`, and a
@@ -1743,6 +1775,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
 ### An opened document's focus lands on its tab bar or its first button, by timing
+
+**Fixed** (28 October 2026, wave 23). An opened document focuses its selected tab, laying its tabs out first if needed (`DocumentEditorHost.focus`, `AbstractTabBar.focusTabStop`); a document with no tabs shown falls back to the first tab stop (`App/Main/AppShell` `OpenedDocumentTakesFocus`). On master too.
 
 **Reproduced** (28 October 2026, wave 22, by `App/Main/AppShell` `OpensDocument`'s screenshot,
 which differs between runs). Opening a document focuses the new tab's first tab stop

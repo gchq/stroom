@@ -870,6 +870,25 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(screen.getByText("Open")).toBeInTheDocument());
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Change Status with no status chosen says one is needed and keeps the dialog, rather
+                // than sending an empty status, which the server fails on
+                .story("ChangeStatusNeedsAStatus", context -> render(context, ANNOTATION_FIXTURES, null,
+                        false, QueryEditorStories::annotationSpies))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.click(play.findByText("beta"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Change Status");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(dialog.getByText("Choose a status to set")).toBeInTheDocument());
+                    play.expect(dialog.getByRole("button", "Change Status")).toHaveFocus();
+                    play.expect(screen.getByText("Change Status", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(BATCH_CHANGE_PATH).toSpyMatcher());
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Assigning the selected row's annotation to the user changes it in a batch
                 .story("AnnotationBatch", context -> render(context, ANNOTATION_FIXTURES, null, false,
                         QueryEditorStories::annotationSpies))

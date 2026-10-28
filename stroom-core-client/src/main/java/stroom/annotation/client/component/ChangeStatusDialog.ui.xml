@@ -5,8 +5,8 @@
              xmlns:annotation="urn:import:stroom.annotation.client">
     <g:FlowPanel addStyleNames="annotationSetting">
         <annotation:SettingBlock ui:field="statusBlock" title="Change Status">
-            <form:FormGroup identity="annotationStatus" label="Status"
-                            helpText="The status to set on all the selected annotations when you select OK. Select it to choose a status. Currently, selecting OK while it shows None fails.">
+            <form:FormGroup ui:field="statusGroup" identity="annotationStatus" label="Status"
+                            helpText="The status to set on all the selected annotations when you select OK. Select it to choose a status; OK asks for one while it shows None.">
                 <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                     <g:Label ui:field="status" styleName="annotationLabel"/>
                 </g:FlowPanel>

@@ -34,8 +34,10 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.component.client.LayerController;
 import stroom.widget.component.client.Listeners;
+import stroom.widget.util.client.ContentFocus;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -63,7 +65,7 @@ import java.util.function.Consumer;
 /// @param <D> The document's type.
 public class DocumentEditorHost<D>
         extends LayerController
-        implements DocumentTabData, HasSave, HasCommonTabs, TaskMonitorFactory {
+        implements DocumentTabData, HasSave, HasCommonTabs, TaskMonitorFactory, Focus {
 
     private final TabbedController<D> editor;
     private final String type;
@@ -202,6 +204,17 @@ public class DocumentEditorHost<D>
     @Override
     public boolean handleKeyAction(final Action action) {
         return editor.handleKeyAction(action);
+    }
+
+    /// Focuses the document's selected tab when it is opened, so its tabs' keys work at once.
+    /// Before, the first tab stop took the focus, which was the selected tab or, if the tabs hadn't
+    /// been laid out yet, the first toolbar button.
+    @Override
+    public void focus() {
+        if (!editor.focusTabs()) {
+            // No tabs shown: the first tab stop, as for any screen
+            ContentFocus.focus(asWidget());
+        }
     }
 
     /// @return What to run once the document is saved, before it is read again (see

@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -96,6 +97,18 @@ public final class DocumentPermissionsScreenStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("INFO: Successfully changed permissions."));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Edit acts on the chosen document, so is enabled once one is chosen; before, it was
+                // enabled only once a document was opened, which opened its permissions anyway
+                .story("EditEnabledForChosenDocument", DocumentPermissionsScreenStories::render)
+                .withPlay(play -> {
+                    final Query edit = play.getByTitle("Edit Permissions For Selected Document");
+                    // The list chooses its first document when it is filtered
+                    play.findByText("Alpha Dictionary");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(play.getByText("Beta Feed"));
+                    play.expect(edit).not().toHaveAttribute("aria-disabled", "true");
+                    SecurityPlays.expectNoProblems(play);
                 })
                 // The Filter button opens the expression builder over the document permission fields
                 .story("FilterDialog", DocumentPermissionsScreenStories::render)

@@ -89,11 +89,9 @@ public class BatchDocumentPermissionsController extends ContentTabController {
         documentList.setOnFilter(this::onFilter);
         documentList.setOnEdit(this::onEdit);
         documentList.setOnBatchEdit(this::onBatchEdit);
-        // Edit is enabled only once a document is opened (see ISSUES.md)
-        documentList.setOnOpen(match -> {
-            documentList.setEditEnabled(documentList.getSelected() != null);
-            onEdit();
-        });
+        // Edit acts on the chosen document, so is enabled while one is chosen
+        documentList.setOnSelectionChange(selected -> documentList.setEditEnabled(selected != null));
+        documentList.setOnOpen(match -> onEdit());
 
         documentList.setOnResultPage(resultPage -> {
             docs = resultPage;

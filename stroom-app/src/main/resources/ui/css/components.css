@@ -862,6 +862,11 @@
     gap: var(--control__gap--vertical);
 }
 
+/* Replace Secret's warning wraps within the dialog (a GWT Label doesn't wrap by default) */
+.credentials-details-dialog__warning {
+    white-space: normal;
+}
+
 /* Width of the expiry time's box (the secret's fields are secret-form.css's) */
 .credentials-details-dialog .wide-control {
     width: 650px;

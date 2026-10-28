@@ -19,6 +19,8 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.about.client.component.About;
 import stroom.about.client.component.AboutController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -72,6 +74,17 @@ public final class AboutDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // A failure to fetch the UI config is shown; before, it was dropped, so the user
+                // was told nothing and the dialog's About text never came
+                .story("ConfigFetchFails", context -> render(context, RestFixtures.builder()
+                        .get(StartupFixtures.EXTENDED_UI_CONFIG_PATH, RestReply.error(500, "Config unavailable"))
+                        .build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("v7.5-test");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            ValueMatcher.stringContaining("Config unavailable")));
+                })
                 // Close closes it, and it is disposed (the leak check counts it if not)
                 .story("Close", AboutDialogStories::render)
                 .withPlay(play -> {
@@ -85,8 +98,12 @@ public final class AboutDialogStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, RestFixtures.none());
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         // Only the start-up fixtures are needed, with this session info and uiConfig
-        final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .startup(startup -> startup.buildVersion("v7.5-test").nodeName("node1a"))
                 .uiConfig(UI_CONFIG)
                 .build();

@@ -26,6 +26,8 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -66,6 +68,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final AppRoot appRoot;
@@ -192,20 +195,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         return DocRefUtil.create(document);
     }
 
-    public void onBeginStepping(final BeginPipelineSteppingEvent event) {
-        final ExplorerPopupController chooser = pipelineSelection.get();
-        chooser.setIncludeNullSelection(false);
-        chooser.setCaption("Choose Pipeline To Step With");
-        chooser.setIncludedTypes(PipelineDoc.TYPE);
-        chooser.setRequiredPermissions(DocumentPermission.VIEW);
-
-        final Runnable showChooser = () -> choosePipeline(chooser,
-                event.getStepType(),
-                event.getStepLocation(),
-                event.getChildStreamType());
-
+    void onBeginStepping(final BeginPipelineSteppingEvent event) {
         if (event.getPipelineRef() != null) {
-            chooser.setSelectedEntityReference(event.getPipelineRef(), showChooser);
+            findPipeline(event, event.getPipelineRef());
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
@@ -214,20 +206,40 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                     .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
-                    .onSuccess(docRef ->
-                            chooser.setSelectedEntityReference(docRef, showChooser))
+                    .onSuccess(docRef -> findPipeline(event, docRef))
                     .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         }
     }
 
-    private void choosePipeline(final ExplorerPopupController docRefChooserPopup,
-                                final StepType stepType,
-                                final StepLocation stepLocation,
-                                final String childStreamType) {
+    // Looks the pipeline to choose first up in the explorer, then makes the chooser to show it, so a
+    // failed lookup leaves no chooser behind (the app owns it only once it is shown)
+    private void findPipeline(final BeginPipelineSteppingEvent event, final DocRef pipelineRef) {
+        if (pipelineRef == null) {
+            choosePipeline(event, null);
+        } else {
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.getFromDocRef(pipelineRef))
+                    .onSuccess(explorerNode -> choosePipeline(event, explorerNode))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
+                    .exec();
+        }
+    }
 
+    private void choosePipeline(final BeginPipelineSteppingEvent event, final ExplorerNode pipelineNode) {
+        final ExplorerPopupController chooser = pipelineSelection.get();
+        chooser.setIncludeNullSelection(false);
+        chooser.setCaption("Choose Pipeline To Step With");
+        chooser.setIncludedTypes(PipelineDoc.TYPE);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
+        chooser.setSelectedNode(pipelineNode);
+
+        final StepType stepType = event.getStepType();
+        final StepLocation stepLocation = event.getStepLocation();
+        final String childStreamType = event.getChildStreamType();
         // The app owns the chooser while it is shown, as a plugin owns nothing
-        docRefChooserPopup.showOnce(appRoot, pipeDocRef -> {
+        chooser.showOnce(appRoot, pipeDocRef -> {
             if (pipeDocRef != null) {
                 step(stepType, stepLocation, childStreamType, pipeDocRef);
             }
