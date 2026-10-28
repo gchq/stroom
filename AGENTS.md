@@ -164,7 +164,7 @@ Before changing GWT client code (`stroom-core-client`, `stroom-core-client-widge
 The rules most costly to miss:
 
 * A screen, dialog or tab is a dumb **component** (a UiBinder template and its Java) and a **controller** that wires it; there are no presenters.
-* Use Stroom's widgets, never GWT's versions of them (`Button`, `CheckBox`, `ListBox`, `TextBox`, ...); no inline styles, BEM classes in the component's own stylesheet.
+* Use Stroom's widgets, never GWT's versions of them (`Button`, `CheckBox`, `ListBox`, `TextBox`, ...); wire handlers in Java, never with `@UiHandler`; no inline styles, BEM classes in the component's own stylesheet.
 * Every screen has workbench stories (default, read-only, dialog OK and Cancel), run with the leak check; see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`.
 
 

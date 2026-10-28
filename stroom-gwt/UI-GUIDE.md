@@ -20,6 +20,7 @@ says.
   The only markup left in Java: a single-element widget's root (a `ButtonBase`, or a `FlowPanel` or `Widget` subclass such as `ToolbarButton`) sets its root block class and role in its constructor, a `PopupPanel`'s root keeps its class and role, and grid cells use `SafeHtmlTemplates`.
   Data comes in through setters named for what they do (`setRules(rules)`, `setName(name)`), events go out through one callback each (`setOnChange(Runnable)`), and a set of actions is one enum with one callback (`setOnAction(Consumer<RuleAction>)`) and `setAvailableActions(...)`.
   Repetition and conditions are in its Java (`setRules` adds a row per rule; `setVisible`).
+  Its handlers are wired in Java, in its constructor (`button.setOnClick(...)`, `box.addKeyDownHandler(...)`), never with `@UiHandler`; ISSUES.md ("Some components wire their handlers with `@UiHandler`") lists the components still to change.
   It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
 
 * **A controller wires it.** `FooController.java`, beside it in the area's `client.component` package, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.
