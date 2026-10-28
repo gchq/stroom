@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter.assets;
+package stroom.document.asset.client.component;
 
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.svg.shared.SvgImage;

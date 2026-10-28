@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:a="urn:import:stroom.document.asset.client.presenter.assets"
+             xmlns:a="urn:import:stroom.document.asset.client.component"
              xmlns:ed="urn:import:stroom.editor.client.component">
     <!-- A document's Assets tab (document-assets-tab.css) -->
     <g:FlowPanel styleName="max form-padding form document-assets-tab">

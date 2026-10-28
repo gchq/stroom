@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter;
+package stroom.document.asset.client;
 
-import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
-import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
+import stroom.document.asset.client.component.DocumentAssetTree;
+import stroom.document.asset.client.component.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAsset;
 
 import java.util.ArrayList;

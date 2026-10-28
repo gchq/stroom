@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter.assets;
+package stroom.document.asset.client.component;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeUri;

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.document.asset.client.presenter;
+package stroom.document.asset.client;
 
-import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
+import stroom.document.asset.client.component.DocumentAssetTreeItem;
 
 import java.util.Objects;
 

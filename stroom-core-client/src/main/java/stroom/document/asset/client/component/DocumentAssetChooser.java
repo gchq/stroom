@@ -16,9 +16,7 @@
 
 package stroom.document.asset.client.component;
 
-import stroom.document.asset.client.presenter.DocumentAssetPresenterUtils;
-import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
-import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
+import stroom.document.asset.client.DocumentAssetPresenterUtils;
 import stroom.document.asset.shared.DocumentAsset;
 import stroom.widget.component.client.Component;
 

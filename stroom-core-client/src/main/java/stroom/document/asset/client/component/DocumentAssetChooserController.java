@@ -18,8 +18,7 @@ package stroom.document.asset.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.presenter.DocumentAssetPresenterUtils;
-import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
+import stroom.document.asset.client.DocumentAssetPresenterUtils;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

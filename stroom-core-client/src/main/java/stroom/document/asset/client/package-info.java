@@ -93,4 +93,4 @@
  * }
  * </pre>
  */
-package stroom.document.asset.client.presenter;
+package stroom.document.asset.client;

@@ -16,7 +16,6 @@
 
 package stroom.document.asset.client.component;
 
-import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.editor.client.component.CodeEditor;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
