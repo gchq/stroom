@@ -22,7 +22,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.security.identity.client.component.SignInPageController;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.help.client.HelpManager;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;

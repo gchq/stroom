@@ -26,7 +26,7 @@ import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.Controller;
 import stroom.widget.contextmenu.client.ContextMenuManager;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.help.client.HelpManager;
 import stroom.widget.menu.client.Menu;
 import stroom.widget.menu.client.MenuController;
 import stroom.widget.menu.client.MenuManager;

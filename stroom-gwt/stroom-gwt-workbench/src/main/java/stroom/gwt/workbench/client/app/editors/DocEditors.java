@@ -38,7 +38,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.help.client.HelpManager;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;

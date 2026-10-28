@@ -39,7 +39,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRenderer;
 import stroom.security.shared.DocumentPermission;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.help.client.HelpManager;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;

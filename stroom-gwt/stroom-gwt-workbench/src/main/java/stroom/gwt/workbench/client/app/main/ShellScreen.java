@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.main.client.component.Main;
 import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.help.client.HelpManager;
 import stroom.widget.menu.client.MenuItems;
 import stroom.widget.util.client.GlobalKeyHandler;
 

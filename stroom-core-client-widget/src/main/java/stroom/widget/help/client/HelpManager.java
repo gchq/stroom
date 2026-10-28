@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.widget.help.client.presenter;
+package stroom.widget.help.client;
 
-import stroom.widget.help.client.HelpPopup;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 
 import com.google.gwt.dom.client.Element;
