@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client;
 
 import stroom.widget.htree.client.treelayout.Point;
 import stroom.widget.util.client.HtmlBuilder;

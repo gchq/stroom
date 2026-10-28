@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client.component;
 
 import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.data.client.CopyTextUtil;

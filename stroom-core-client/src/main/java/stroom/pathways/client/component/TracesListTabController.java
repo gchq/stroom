@@ -19,7 +19,6 @@ package stroom.pathways.client.component;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.HasToolbar;
-import stroom.pathways.client.presenter.TraceOverviewWidget;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;

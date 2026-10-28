@@ -3,7 +3,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.quickfilter.client"
-             xmlns:p="urn:import:stroom.pathways.client.presenter"
+             xmlns:p="urn:import:stroom.pathways.client.component"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <v:QuickFilterPage ui:field="page" accessibleName="Filter traces">
         <g:FlowPanel styleName="dock-container-vertical max">

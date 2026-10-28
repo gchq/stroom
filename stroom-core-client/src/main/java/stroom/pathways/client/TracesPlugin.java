@@ -22,7 +22,6 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.pathways.client.component.TracesEditor;
-import stroom.pathways.client.presenter.ShowTracesEvent;
 import stroom.pathways.shared.TracesDoc;
 import stroom.security.client.api.ClientSecurityContext;
 

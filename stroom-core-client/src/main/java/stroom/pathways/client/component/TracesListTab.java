@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.component;
 
-import stroom.pathways.client.presenter.TraceOverviewWidget;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;

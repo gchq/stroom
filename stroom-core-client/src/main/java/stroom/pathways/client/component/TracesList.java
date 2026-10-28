@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.component;
 
-import stroom.pathways.client.presenter.TraceHistogramChart;
 import stroom.pathways.shared.TraceHistogram;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;

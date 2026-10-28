@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client;
 
 import stroom.docref.DocRef;
 import stroom.pathways.shared.pathway.Pathway;
