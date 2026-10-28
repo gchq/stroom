@@ -51,6 +51,9 @@ import java.util.Objects;
 ///                              object; the string is kept (true by default).
 /// @param ignoreAbove           `ignore_above`: strings are keywords; longer ones are not indexed (1024 by default).
 /// @param totalFieldsLimit      `total_fields_limit`: Elasticsearch's limit on mapped fields (2000 by default).
+/// @param standIns              `stand_ins`: values the source writes for none (e.g. `-`), each with what the user
+///                              chose to index it as ([#STAND_IN_TREATMENTS]): left out, null, an empty string, or
+///                              kept as written. Not in the Stroom MCP server; asked for by the user.
 public record Discovery(String input,
                         String record,
                         String timestampField,
@@ -60,8 +63,19 @@ public record Discovery(String input,
                         List<String> drop,
                         boolean unpackJson,
                         long ignoreAbove,
-                        long totalFieldsLimit) {
+                        long totalFieldsLimit,
+                        Map<String, String> standIns) {
 
+    /// A stand-in for none left out of the document.
+    public static final String LEAVE_OUT = "leave_out";
+    /// A stand-in for none written as null.
+    public static final String NULL = "null";
+    /// A stand-in for none written as an empty string.
+    public static final String EMPTY = "empty";
+    /// A stand-in for none kept as written.
+    public static final String KEEP = "keep";
+    /// What a stand-in for none can be indexed as.
+    public static final List<String> STAND_IN_TREATMENTS = List.of(LEAVE_OUT, NULL, EMPTY, KEEP);
     /// The kinds of raw data.
     public static final List<String> INPUTS = List.of("json", "delimited", "xml");
 
@@ -70,13 +84,24 @@ public record Discovery(String input,
         input = Objects.requireNonNullElse(input, "json");
         meta = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(meta, Map.of())));
         drop = List.copyOf(Objects.requireNonNullElse(drop, List.of()));
+        standIns = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(standIns, Map.of())));
     }
 
     /// @param input          What the raw data is: `json`, `delimited` or `xml`.
     /// @param timestampField The source field holding the event time.
     /// @return A discovery with the other settings at their defaults.
     public static Discovery of(final String input, final String timestampField) {
-        return new Discovery(input, null, timestampField, false, null, Map.of(), List.of(), true, 1024, 2000);
+        return new Discovery(input, null, timestampField, false, null, Map.of(), List.of(), true, 1024, 2000,
+                Map.of());
+    }
+
+    /// @param chosen What the user chose for stand-ins for none, by value; added to (and replacing) those it has.
+    /// @return It with them.
+    public Discovery withStandIns(final Map<String, String> chosen) {
+        final Map<String, String> all = new LinkedHashMap<>(standIns);
+        all.putAll(chosen);
+        return new Discovery(input, record, timestampField, timestampChosenByUser, timestampFormat, meta, drop,
+                unpackJson, ignoreAbove, totalFieldsLimit, all);
     }
 
     /// @param json A discovery as JSON-like values.
@@ -109,10 +134,25 @@ public record Discovery(String input,
                 fields.strings("drop"),
                 fields.bool("unpack_json", true),
                 fields.integer("ignore_above", 1024, 1),
-                fields.integer("total_fields_limit", 2000, 100));
+                fields.integer("total_fields_limit", 2000, 100),
+                standIns(reader, fields.stringMap("stand_ins"), loc));
         return fields.ok()
                 ? discovery
                 : null;
+    }
+
+    // Each stand-in's treatment, checked to be one of STAND_IN_TREATMENTS; a plan's too.
+    static Map<String, String> standIns(final ModelReader reader,
+                                                final Map<String, String> given,
+                                                final List<Object> loc) {
+        final List<Object> at = new ArrayList<>(loc);
+        at.add("stand_ins");
+        given.forEach((value, treatment) -> {
+            final List<Object> where = new ArrayList<>(at);
+            where.add(value);
+            reader.literal(treatment, where, STAND_IN_TREATMENTS);
+        });
+        return given;
     }
 
     /// @return It as JSON, as the Python model's `model_dump` writes it (and as Jackson writes it).
@@ -129,6 +169,10 @@ public record Discovery(String input,
         json.put("unpack_json", unpackJson);
         json.put("ignore_above", ignoreAbove);
         json.put("total_fields_limit", totalFieldsLimit);
+        // Only when there are any, so a discovery without them is written as the Python model writes it.
+        if (!standIns.isEmpty()) {
+            json.put("stand_ins", new LinkedHashMap<>(standIns));
+        }
         return json;
     }
 }

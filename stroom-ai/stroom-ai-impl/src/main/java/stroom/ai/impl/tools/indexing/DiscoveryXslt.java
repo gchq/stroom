@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.generation.XPathText;
+import stroom.ai.impl.tools.generation.XmlSerialiser;
 import stroom.ai.impl.tools.sample.PyJson;
 
 import java.io.IOException;
@@ -79,6 +81,7 @@ final class DiscoveryXslt {
         values.put("UNPACK", discovery.unpackJson()
                 ? JSON_UNPACK
                 : "");
+        values.put("STAND_INS", jsonStandIns(discovery));
         return substitute(JSON_XSLT, values);
     }
 
@@ -135,6 +138,8 @@ final class DiscoveryXslt {
         out = out.replace("@@UNPACK@@", discovery.unpackJson()
                 ? TEXT_UNPACK
                 : "");
+        out = out.replace("@@STAND_INS_OPEN@@", textStandInsOpen(discovery));
+        out = out.replace("@@STAND_INS_CLOSE@@", textStandInsClose(discovery));
         out = out.replace("@@OURS@@", quoted(ours));
         return out;
     }
@@ -163,6 +168,68 @@ final class DiscoveryXslt {
     }
 
     // A name as a JSON string in single quotes, as the server writes it.
+    // A JSON record's string values that stand for none, as the user chose to index them: a template for each
+    // treatment, ahead of the one that copies (but behind the one renaming a top-level key that clashes).
+    private static String jsonStandIns(final Discovery discovery) {
+        final StringBuilder sb = new StringBuilder();
+        for (final String treatment : List.of(Discovery.LEAVE_OUT, Discovery.NULL, Discovery.EMPTY)) {
+            final String test = standInTest(discovery, treatment, ".");
+            if (test == null) {
+                continue;
+            }
+            final String match = "string[@key][" + test + "]";
+            sb.append(Discovery.LEAVE_OUT.equals(treatment)
+                    ? "  <xsl:template match=\"" + match + "\" mode=\"copy\" priority=\"2\" />\n"
+                    : "  <xsl:template match=\"" + match + "\" mode=\"copy\" priority=\"2\">"
+                      + standInElement(treatment, "d:key(@key)") + "</xsl:template>\n");
+        }
+        return sb.isEmpty()
+                ? ""
+                : "  <!-- Values the source writes for none, indexed as the user chose. -->\n" + sb;
+    }
+
+    // The start of a choice, in a delimited or XML record's leaf, of what to write for a value that stands for none
+    // (see jsonStandIns); its other values go on to be written as they are.
+    private static String textStandInsOpen(final Discovery discovery) {
+        final StringBuilder sb = new StringBuilder();
+        for (final String treatment : List.of(Discovery.LEAVE_OUT, Discovery.NULL, Discovery.EMPTY)) {
+            final String test = standInTest(discovery, treatment, "$value");
+            if (test != null) {
+                sb.append("      <xsl:when test=\"").append(test).append(Discovery.LEAVE_OUT.equals(treatment)
+                        ? "\" />\n"
+                        : "\">" + standInElement(treatment, "$key") + "</xsl:when>\n");
+            }
+        }
+        return sb.isEmpty()
+                ? ""
+                : "    <!-- Values the source writes for none, indexed as the user chose. -->\n    <xsl:choose>\n" + sb
+                  + "      <xsl:otherwise>\n";
+    }
+
+    private static String textStandInsClose(final Discovery discovery) {
+        return textStandInsOpen(discovery).isEmpty()
+                ? ""
+                : "      </xsl:otherwise>\n    </xsl:choose>\n";
+    }
+
+    // The test that a value is one of the stand-ins given that treatment, escaped for an attribute; null if none is.
+    private static String standInTest(final Discovery discovery, final String treatment, final String value) {
+        final List<String> given = discovery.standIns().entrySet().stream()
+                .filter(entry -> treatment.equals(entry.getValue()))
+                .map(entry -> XPathText.literal(entry.getKey()))
+                .toList();
+        return given.isEmpty()
+                ? null
+                : XmlSerialiser.escapeAttribute("normalize-space(" + value + ") = (" + String.join(", ", given) + ")");
+    }
+
+    // What a stand-in is written as: null, or an empty string.
+    private static String standInElement(final String treatment, final String key) {
+        return Discovery.NULL.equals(treatment)
+                ? "<null key=\"{" + key + "}\" />"
+                : "<string key=\"{" + key + "}\" />";
+    }
+
     private static String single(final String name) {
         return PyJson.dumps(name).replace('"', '\'');
     }

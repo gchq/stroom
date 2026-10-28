@@ -294,7 +294,7 @@ class TestCreateIndexingPipelineTool {
         template("elasticsearch", List.of(slot("xsltFilter", "XSLTFilter", "xslt"),
                 slot("elasticIndexingFilter", "ElasticIndexingFilter", "indexName")), List.of());
         final FieldPlan discovery = FieldPlan.forDiscovery("d", new Discovery("xml", "logon", "when", false, null,
-                Map.of(), List.of(), true, 1024, 2000));
+                Map.of(), List.of(), true, 1024, 2000, Map.of()));
         final FieldPlan events = FieldPlan.of("elasticsearch", "x", "@timestamp", FIELDS);
 
         xslt(KeptMapping.withMapping("", "index", discovery.toJson()));
@@ -605,7 +605,7 @@ class TestCreateIndexingPipelineTool {
     private void discoveryXslt(final String input) {
         xslt(KeptMapping.withMapping("", "index", FieldPlan.forDiscovery("d", new Discovery(input, "xml".equals(input)
                 ? "logon"
-                : null, "when", false, null, Map.of(), List.of(), true, 1024, 2000)).toJson()));
+                : null, "when", false, null, Map.of(), List.of(), true, 1024, 2000, Map.of())).toJson()));
     }
 
     private static Map<String, Object> json(final ToolResult result) {

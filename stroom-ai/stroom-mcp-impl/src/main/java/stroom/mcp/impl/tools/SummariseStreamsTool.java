@@ -149,6 +149,7 @@ class SummariseStreamsTool extends AbstractBuiltInTool {
         final Map<String, Object> shown = new LinkedHashMap<>(result);
         shown.remove(StreamSummaries.POPULATION_BY_ACTION);
         shown.remove(StreamSummaries.TYPE_IDS_BY_ACTION);
+        shown.remove(StreamSummaries.VALUES_BY_PATH);
         return JsonResults.of(shown);
     }
 

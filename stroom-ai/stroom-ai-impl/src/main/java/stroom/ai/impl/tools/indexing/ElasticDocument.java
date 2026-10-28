@@ -49,6 +49,8 @@ final class ElasticDocument {
 
     private final FieldPlan plan;
     private final Set<String> taken;
+    // Whether the user chose to write a stand-in for none as null (IndexingXslt#AS_NULL).
+    private final boolean asNull;
     private final Map<List<Object>, Integer> counts = new HashMap<>();
     private final Map<List<Object>, String> modes = new HashMap<>();
     private final List<String> templates = new ArrayList<>();
@@ -61,6 +63,7 @@ final class ElasticDocument {
     ElasticDocument(final FieldPlan plan, final Set<String> taken) {
         this.plan = plan;
         this.taken = taken;
+        this.asNull = !plan.standIns(Discovery.NULL).isEmpty();
         final Map<String, Object> tree = tree();
         count(tree, null);
         for (final Map.Entry<String, Object> entry : tree.entrySet()) {
@@ -269,7 +272,7 @@ final class ElasticDocument {
                 final String at = relativeToBase && entry.getValue() instanceof final PlannedField field
                         ? relative(field.source(), base)
                         : null;
-                out.add(leaf(entry.getValue(), key, indent, at));
+                out.add(leaf(entry.getValue(), key, indent, at, asNull));
                 continue;
             }
             final Map<String, Object> value = (Map<String, Object>) entry.getValue();
@@ -315,8 +318,13 @@ final class ElasticDocument {
         return out;
     }
 
-    // A field: a shared template's call, or the value written when the event has it.
-    private static String leaf(final Object item, final String key, final String indent, final String source) {
+    // A field: a shared template's call, or the value written when the event has it; with asNull, a stand-in for
+    // none the user chose to write as null is written so.
+    private static String leaf(final Object item,
+                               final String key,
+                               final String indent,
+                               final String source,
+                               final boolean asNull) {
         if (item instanceof final SharedTemplate use) {
             return IndexingXslt.call(use, indent);
         }
@@ -327,6 +335,11 @@ final class ElasticDocument {
                 : field.source();
         final String single = "<" + element + " key=\"" + key + "\"><xsl:value-of select=\""
                               + FieldPlans.quoted(field.value(at)) + "\" /></" + element + ">";
+        if (!field.multiple() && asNull) {
+            return indent + "<xsl:choose><xsl:when test=\"" + FieldPlans.quoted(at) + "[normalize-space(.) = $"
+                   + IndexingXslt.AS_NULL + "]\"><null key=\"" + key + "\" /></xsl:when><xsl:when test=\""
+                   + FieldPlans.quoted(at) + "\">" + single + "</xsl:when></xsl:choose>";
+        }
         if (!field.multiple()) {
             return indent + "<xsl:if test=\"" + FieldPlans.quoted(at) + "\">" + single + "</xsl:if>";
         }

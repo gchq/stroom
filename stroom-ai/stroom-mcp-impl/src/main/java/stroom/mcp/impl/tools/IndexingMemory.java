@@ -60,6 +60,7 @@ class IndexingMemory {
     private final LongSupplier clock;
     private final Map<String, Timed<Map<String, Object>>> naming = bounded();
     private final Map<String, Timed<String>> times = bounded();
+    private final Map<String, Timed<Map<String, String>>> standIns = bounded();
     private final Map<String, Timed<Map<String, Object>>> components = bounded();
     private final Map<String, Timed<String>> shown = bounded();
     private final Map<String, Map<String, Object>> plans = bounded();
@@ -106,6 +107,26 @@ class IndexingMemory {
     /// @param field     The field.
     void chooseTime(final String indexName, final String field) {
         times.put(user() + "\n" + indexName, new Timed<>(field, now()));
+    }
+
+    /// Remembers what the user chose in the form to index a discovery index's stand-ins for none as, with what they
+    /// chose before (not in the Stroom MCP server).
+    ///
+    /// @param indexName The discovery index.
+    /// @param chosen    What each stand-in is indexed as, by value (see Discovery#STAND_IN_TREATMENTS).
+    void chooseStandIns(final String indexName, final Map<String, String> chosen) {
+        final Map<String, String> all = new LinkedHashMap<>(standInsChosen(indexName));
+        all.putAll(chosen);
+        standIns.put(user() + "\n" + indexName, new Timed<>(all, now()));
+    }
+
+    /// @param indexName A discovery index.
+    /// @return What the user chose to index its stand-ins for none as, by value, within [#CHOICE_TTL].
+    Map<String, String> standInsChosen(final String indexName) {
+        final Timed<Map<String, String>> chosen = standIns.get(user() + "\n" + indexName);
+        return chosen != null && fresh(chosen, CHOICE_TTL)
+                ? chosen.value()
+                : Map.of();
     }
 
     /// @param indexName A discovery index.

@@ -20,7 +20,9 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.StyledXslt;
+import stroom.ai.impl.tools.generation.XPathText;
 import stroom.ai.impl.tools.generation.XmlElement;
+import stroom.ai.impl.tools.generation.XmlSerialiser;
 import stroom.ai.impl.tools.generation.XsltComments;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
@@ -57,10 +59,18 @@ final class IndexingXslt {
         return PLAIN.matcher(path).lookingAt();
     }
 
-    /// @param plan    An Events plan (not a discovery one).
+    /// The variable holding the stand-ins for none the user chose to leave out.
+    static final String LEFT_OUT = "stand-ins-left-out";
+    /// The variable holding the stand-ins for none the user chose to write as null.
+    static final String AS_NULL = "stand-ins-null";
+
+    /// @param given   An Events plan (not a discovery one).
     /// @param version The XSLT version.
     /// @return The indexing XSLT.
-    static String xslt(final FieldPlan plan, final String version) {
+    static String xslt(final FieldPlan given, final String version) {
+        // Stand-ins for none the user chose to leave out are skipped wherever a field is read (its guard, its value,
+        // its object's guard): each field's source passes over them.
+        final FieldPlan plan = leavingOut(given);
         final Set<String> taken = new HashSet<>();
         final List<Part> parts;
         final List<String> shapes;
@@ -118,7 +128,8 @@ final class IndexingXslt {
         final String text = "<xsl:stylesheet xpath-default-namespace=\"event-logging:3\" " + head + "\n"
                             + "    xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
                             + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"" + version + "\">\n"
-                            + plan.importLines() + "  <xsl:template match=\"/Events\">\n"
+                            + plan.importLines() + standInVariables(plan)
+                            + "  <xsl:template match=\"/Events\">\n"
                             + "    " + record + "\n"
                             + "      <xsl:apply-templates select=\"" + plan.events() + "\" />\n"
                             + "    " + close + "\n"
@@ -142,6 +153,44 @@ final class IndexingXslt {
             StyledXslt.variables(template, reads(template, names), plan.style(), new HashSet<>());
         }
         return StyledXslt.serialise(sheet);
+    }
+
+    // The plan with each field's source passing over the stand-ins left out. The values are in a variable, not the
+    // path, as a value can hold a / (N/A), which would be taken for a step.
+    private static FieldPlan leavingOut(final FieldPlan plan) {
+        if (plan.standIns(Discovery.LEAVE_OUT).isEmpty()) {
+            return plan;
+        }
+        return plan.withFields(plan.fields().stream()
+                .map(field -> JsonValues.truthy(field.source())
+                        ? new PlannedField(field.name(), field.type(), field.source() + "[not(normalize-space(.) = $"
+                                                                      + LEFT_OUT + ")]", field.description(),
+                        field.transform(), field.multiple())
+                        : field)
+                .toList());
+    }
+
+    // The variables holding the stand-ins, before the templates; none without any.
+    private static String standInVariables(final FieldPlan plan) {
+        final StringBuilder sb = new StringBuilder();
+        variable(sb, LEFT_OUT, plan.standIns(Discovery.LEAVE_OUT));
+        if (plan.isElasticsearch()) {
+            variable(sb, AS_NULL, plan.standIns(Discovery.NULL));
+        }
+        return sb.isEmpty()
+                ? ""
+                : "  <!--" + XsltComments.comment("Values the Events hold for none, indexed as the user chose")
+                  + "-->\n" + sb;
+    }
+
+    private static void variable(final StringBuilder sb, final String name, final List<String> values) {
+        if (!values.isEmpty()) {
+            sb.append("  <xsl:variable name=\"").append(name).append("\" select=\"")
+                    .append(XmlSerialiser.escapeAttribute("(" + String.join(", ", values.stream()
+                            .map(XPathText::literal)
+                            .toList()) + ")"))
+                    .append("\" />\n");
+        }
     }
 
     // Grouped as the Events are: what each part of the Event (EventTime, EventSource, EventDetail) gives.

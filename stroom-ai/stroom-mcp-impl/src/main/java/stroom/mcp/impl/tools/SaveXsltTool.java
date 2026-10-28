@@ -286,6 +286,6 @@ class SaveXsltTool extends AbstractBuiltInTool {
     private static FieldPlan withImports(final FieldPlan plan, final List<String> imports) {
         return new FieldPlan(plan.backend(), plan.indexName(), plan.timeField(), plan.fields(), plan.dropWhen(),
                 plan.discovery(), List.copyOf(imports), plan.shared(), plan.subobjects(), plan.convention(),
-                plan.customNamespaces(), plan.style());
+                plan.customNamespaces(), plan.style(), plan.standIns());
     }
 }

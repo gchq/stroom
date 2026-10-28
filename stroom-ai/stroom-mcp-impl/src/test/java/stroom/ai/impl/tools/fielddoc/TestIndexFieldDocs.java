@@ -56,7 +56,7 @@ class TestIndexFieldDocs {
         final FieldPlan plan = new FieldPlan(planned.backend(), planned.indexName(), planned.timeField(),
                 planned.fields(), List.of("EventDetail/TypeId = 'hb'"), planned.discovery(), planned.imports(),
                 planned.shared(), planned.subobjects(), planned.convention(), planned.customNamespaces(),
-                planned.style());
+                planned.style(), planned.standIns());
         final Map<String, Double> population = new LinkedHashMap<>();
         population.put("EventTime/TimeCreated", 100.0);
         population.put("EventSource/User/Id", 66.7);
@@ -518,7 +518,7 @@ class TestIndexFieldDocs {
                 PlannedField.of("user.id", "keyword", "EventSource/User/Id"),
                 PlannedField.of("guid", "keyword", "shared:guid")), List.of(), null, List.of(),
                 List.of(new SharedTemplate("Common-Elastic-V1", "guid", "guid", Map.of())), true, null, List.of(),
-                XsltStyle.DEFAULT);
+                XsltStyle.DEFAULT, Map.of());
         assertThat(plan.writtenBy("guid").template()).isEqualTo("guid");
         assertThat(section(plan, Map.of("EventSource/User/Id", 100.0), null, null)).contains(
                 // Common, so without the In sample column: every event has it.
