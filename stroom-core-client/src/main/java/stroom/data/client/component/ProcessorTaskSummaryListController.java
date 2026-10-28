@@ -22,7 +22,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -50,7 +49,7 @@ import java.util.function.Consumer;
 /// Processor tasks counted by pipeline, feed, priority and status ([ProcessorTaskSummaryList]),
 /// of a pipeline, feed or folder, or matching an expression; the row selected kept selected as
 /// its count changes.
-public class ProcessorTaskSummaryListController extends Controller implements HasDocumentRead<Object> {
+public class ProcessorTaskSummaryListController extends Controller {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
@@ -127,7 +126,6 @@ public class ProcessorTaskSummaryListController extends Controller implements Ha
         criteria.setExpression(null);
     }
 
-    @Override
     public void read(final DocRef docRef, final Object document) {
         if (document instanceof PipelineDoc) {
             setPipeline(docRef);

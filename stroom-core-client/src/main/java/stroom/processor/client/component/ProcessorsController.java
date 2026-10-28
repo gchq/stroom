@@ -24,7 +24,6 @@ import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -64,9 +63,7 @@ import java.util.stream.Collectors;
 /// A pipeline's, analytic rule's or folder's Processors tab ([Processors]): lists the processors
 /// and their filters, shows the selected one's details and filter expression, and adds, edits,
 /// duplicates, deletes, filters and batch edits them.
-public class ProcessorsController
-        extends Controller
-        implements HasDocumentRead<Object> {
+public class ProcessorsController extends Controller {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
@@ -149,7 +146,6 @@ public class ProcessorsController
     /// @param docRef   The pipeline, analytic rule or folder.
     /// @param document The pipeline or analytic rule, which says whether processors can be added, or
     ///                 `null` for a folder.
-    @Override
     public void read(final DocRef docRef, final Object document) {
         processorType = ProcessorType.PIPELINE;
         this.docRef = docRef;

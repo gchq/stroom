@@ -23,7 +23,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -52,7 +51,7 @@ import java.util.List;
 /// ```
 ///
 /// A presenter's view as well as a component, until the list presenters become controllers.
-public class PagerPanel extends Component implements View, TaskMonitorFactory, HasWidgets {
+public class PagerPanel extends Component implements TaskMonitorFactory, HasWidgets {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 

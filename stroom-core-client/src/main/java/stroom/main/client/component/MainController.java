@@ -156,7 +156,7 @@ public class MainController extends Controller {
                 clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
-        listen(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
+        listen(MaximiseEvent.getType(), event -> view.maximise(event.getContent()));
         listen(DockEvent.getType(), event -> {
             final DockEvent.DockAction action = event.getAction();
             if (action == DockEvent.DockAction.DOCK) {

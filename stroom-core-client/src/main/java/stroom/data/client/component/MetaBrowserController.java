@@ -21,7 +21,6 @@ import stroom.data.client.presenter.BeginSteppingHandler;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
@@ -65,8 +64,7 @@ import java.util.function.Consumer;
 /// begins stepping through one.
 public class MetaBrowserController
         extends Controller
-        implements HasDocumentRead<Object>,
-        BeginSteppingHandler {
+        implements BeginSteppingHandler {
 
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -315,7 +313,6 @@ public class MetaBrowserController
         return metaList.getCriteria();
     }
 
-    @Override
     public void read(final DocRef docRef, final Object document) {
         if (document instanceof FeedDoc) {
             setFeedCriteria(docRef);

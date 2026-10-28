@@ -27,7 +27,6 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
@@ -55,7 +54,7 @@ import java.util.function.Consumer;
 /// The processors and their filters ([ProcessorList]) of a pipeline, an analytic rule or a folder
 /// (or every one): fetched as a tree, their enabled states and priorities saved as they are
 /// changed, their info shown in a tooltip. Its owner acts on its buttons.
-public class ProcessorListController extends Controller implements Refreshable, HasDocumentRead<Object> {
+public class ProcessorListController extends Controller implements Refreshable {
 
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -225,7 +224,6 @@ public class ProcessorListController extends Controller implements Refreshable, 
         }
     }
 
-    @Override
     public void read(final DocRef docRef, final Object document) {
         if (docRef == null) {
             expression = ProcessorFilterExpressionUtil.createBasicExpression();

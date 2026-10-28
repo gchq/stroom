@@ -17,7 +17,6 @@
 package stroom.data.client.component;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.ExpressionOperator;
@@ -28,8 +27,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Shows a summary of a document's processor tasks, and the tasks of the selected row.
-public class ProcessorTasksTabController extends Controller
-        implements HasDocumentRead<Object> {
+public class ProcessorTasksTabController extends Controller {
 
     private final ProcessorTasksTab view;
 
@@ -76,7 +74,6 @@ public class ProcessorTasksTabController extends Controller
         }));
     }
 
-    @Override
     public void read(final DocRef docRef, final Object document) {
         processorTaskSummary.read(docRef, document);
 //        processorTaskList.read(docRef, entity);

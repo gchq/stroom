@@ -258,8 +258,4 @@ public class ApiKeysController extends ContentTabController
         this.owner = owner;
         apiKeysList.setOwner(owner);
     }
-
-    // --------------------------------------------------------------------------------
-
-    //    public interface ApiKeysView extends View, HasUiHandlers<ApiKeyUiHandlers> {
 }

@@ -24,7 +24,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
@@ -60,7 +59,7 @@ import java.util.function.Consumer;
 
 /// Processor tasks ([ProcessorTasksList]) of a pipeline, feed or folder, or matching an
 /// expression, a page at a time; a task's info (with its stream's) shown in a tooltip.
-public class ProcessorTasksListController extends Controller implements HasDocumentRead<Object> {
+public class ProcessorTasksListController extends Controller {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -211,7 +210,6 @@ public class ProcessorTasksListController extends Controller implements HasDocum
         }
     }
 
-    @Override
     public void read(final DocRef docRef, final Object document) {
         if (docRef == null) {
             setExpression(null);
