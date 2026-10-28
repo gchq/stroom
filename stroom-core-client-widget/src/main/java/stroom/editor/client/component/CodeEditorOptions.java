@@ -16,8 +16,8 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.presenter.Option;
-import stroom.editor.client.view.Editor;
+import stroom.editor.client.Option;
+import stroom.editor.client.ace.Editor;
 
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 

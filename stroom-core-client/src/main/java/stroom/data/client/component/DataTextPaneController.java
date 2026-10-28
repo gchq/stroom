@@ -16,9 +16,9 @@
 
 package stroom.data.client.component;
 
+import stroom.editor.client.Action;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.component.CodeEditorOptions;
-import stroom.editor.client.presenter.Action;
 import stroom.util.shared.TextRange;
 import stroom.widget.component.client.Controller;
 

@@ -20,7 +20,7 @@ import stroom.core.client.gin.PluginModule;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.editor.client.presenter.DelegatingAceCompleter;
+import stroom.editor.client.DelegatingAceCompleter;
 
 public class StreamStoreModule extends PluginModule {
 

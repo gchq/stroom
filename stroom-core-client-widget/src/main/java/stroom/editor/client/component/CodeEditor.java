@@ -16,11 +16,11 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.view.Editor;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.editor.client.view.IndicatorPopup;
-import stroom.editor.client.view.Marker;
-import stroom.editor.client.view.RightBar;
+import stroom.editor.client.ace.Editor;
+import stroom.editor.client.ace.IndicatorLines;
+import stroom.editor.client.ace.IndicatorPopup;
+import stroom.editor.client.ace.Marker;
+import stroom.editor.client.ace.RightBar;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;

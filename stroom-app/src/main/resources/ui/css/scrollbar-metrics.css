@@ -15,7 +15,7 @@
  */
 
 /*
-   The box that measures the browser's scroll bars (stroom.editor.client.view.ScrollbarMetrics),
+   The box that measures the browser's scroll bars (stroom.editor.client.ace.ScrollbarMetrics),
    named BEM style: a box with scroll bars, out of sight, whose content (scrollbar-metrics__content)
    is bigger than it. The width of a scroll bar is 100px less the width inside them.
 */

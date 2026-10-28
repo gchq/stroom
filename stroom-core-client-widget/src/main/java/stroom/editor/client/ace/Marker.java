@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.editor.client.view;
+package stroom.editor.client.ace;
 
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;

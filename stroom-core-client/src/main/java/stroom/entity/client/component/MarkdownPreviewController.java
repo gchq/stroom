@@ -16,8 +16,8 @@
 
 package stroom.entity.client.component;
 
+import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.iframe.client.component.IFrame;
 import stroom.iframe.client.component.IFrame.SandboxOption;

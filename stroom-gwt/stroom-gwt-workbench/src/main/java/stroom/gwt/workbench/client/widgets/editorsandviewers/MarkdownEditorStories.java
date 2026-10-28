@@ -17,8 +17,8 @@
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.editor.client.ChangeCurrentPreferencesEvent;
+import stroom.editor.client.CurrentPreferences;
 import stroom.entity.client.component.MarkdownEdit;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.MarkdownPreviewController;

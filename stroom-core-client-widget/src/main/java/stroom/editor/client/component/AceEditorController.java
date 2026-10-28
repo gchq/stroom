@@ -16,10 +16,10 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.editor.client.view.Editor;
+import stroom.editor.client.ChangeCurrentPreferencesEvent;
+import stroom.editor.client.CurrentPreferences;
+import stroom.editor.client.DelegatingAceCompleter;
+import stroom.editor.client.ace.Editor;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.GlobalKeyHandler;

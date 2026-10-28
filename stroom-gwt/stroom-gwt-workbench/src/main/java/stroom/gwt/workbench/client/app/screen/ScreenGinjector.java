@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.screen;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.editor.client.CurrentPreferences;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;

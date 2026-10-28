@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:e="urn:import:stroom.editor.client.view">
+             xmlns:e="urn:import:stroom.editor.client.ace">
     <!-- A single line code editor (code-editor.css): one line of text, in Ace -->
     <g:FlowPanel styleName="code-editor max dock-container">
         <g:SimplePanel ui:field="content" styleName="code-editor__text dock-max">

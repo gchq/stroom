@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:e="urn:import:stroom.editor.client.view">
+             xmlns:e="urn:import:stroom.editor.client.ace">
     <!--
       A code editor (code-editor.css): the text, in Ace, with the overview bar of its errors and warnings
       beside it. An error loading the text is shown in place of the text, which is hidden

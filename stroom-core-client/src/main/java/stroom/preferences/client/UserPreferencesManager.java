@@ -19,7 +19,7 @@ package stroom.preferences.client;
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.editor.client.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.task.client.TaskMonitorFactory;

@@ -16,9 +16,9 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.editor.client.ace.IndicatorLines;
+import stroom.editor.client.ace.Marker;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.editor.client.view.Marker;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;

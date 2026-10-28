@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.editor.client.presenter;
+package stroom.editor.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Singleton;

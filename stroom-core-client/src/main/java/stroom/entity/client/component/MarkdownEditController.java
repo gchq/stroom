@@ -17,7 +17,7 @@
 package stroom.entity.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
+import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.iframe.client.component.IFrame;

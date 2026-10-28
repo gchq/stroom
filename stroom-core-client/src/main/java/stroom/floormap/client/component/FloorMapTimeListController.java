@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.component;
 
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
+import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.TemporalEntry;

@@ -16,7 +16,7 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.view.Editor;
+import stroom.editor.client.ace.Editor;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.tab.client.GlobalResizeObserver;

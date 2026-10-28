@@ -16,11 +16,11 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.editor.client.CurrentPreferences;
+import stroom.editor.client.DelegatingAceCompleter;
 import stroom.editor.client.component.AceEditorController;
 import stroom.editor.client.component.SingleLineCodeEditor;
 import stroom.editor.client.component.SingleLineCodeEditorController;
-import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;

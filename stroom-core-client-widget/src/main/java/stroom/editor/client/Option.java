@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.editor.client.presenter;
+package stroom.editor.client;
 
 public class Option {
 

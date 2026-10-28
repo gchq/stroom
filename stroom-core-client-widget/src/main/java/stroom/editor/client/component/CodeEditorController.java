@@ -16,15 +16,15 @@
 
 package stroom.editor.client.component;
 
+import stroom.editor.client.Action;
+import stroom.editor.client.Option;
+import stroom.editor.client.ace.Annotation;
+import stroom.editor.client.ace.Editor;
+import stroom.editor.client.ace.Indicator;
+import stroom.editor.client.ace.IndicatorLines;
+import stroom.editor.client.ace.Marker;
 import stroom.editor.client.event.FormatEvent;
 import stroom.editor.client.model.XmlFormatter;
-import stroom.editor.client.presenter.Action;
-import stroom.editor.client.presenter.Option;
-import stroom.editor.client.view.Annotation;
-import stroom.editor.client.view.Editor;
-import stroom.editor.client.view.Indicator;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.editor.client.view.Marker;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.Location;

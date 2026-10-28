@@ -21,7 +21,7 @@ import stroom.core.client.component.CoreController;
 import stroom.core.client.component.FullScreenController;
 import stroom.core.client.presenter.CoreScreens;
 import stroom.data.client.presenter.DataDisplaySupport;
-import stroom.editor.client.presenter.DelegatingAceCompleter;
+import stroom.editor.client.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.util.client.GlobalKeyHandler;

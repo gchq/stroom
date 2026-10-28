@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.editor.client.view;
+package stroom.editor.client.ace;
 
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
