@@ -5,7 +5,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:datepicker="urn:import:stroom.widget.datepicker.client"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
-             xmlns:days="urn:import:stroom.processor.client.view">
+             xmlns:days="urn:import:stroom.processor.client.component">
     <g:FlowPanel styleName="credentials-details-dialog">
         <form:FormGroup identity="days"
                         label="Active Days"

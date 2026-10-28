@@ -16,7 +16,6 @@
 
 package stroom.processor.client.component;
 
-import stroom.processor.client.view.DaysOfWeek;
 import stroom.util.shared.time.Days;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.TimeBox;

@@ -19,7 +19,7 @@ package stroom.processor.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
 import stroom.data.table.client.Refreshable;
-import stroom.processor.client.presenter.ProcessorProfileClient;
+import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;

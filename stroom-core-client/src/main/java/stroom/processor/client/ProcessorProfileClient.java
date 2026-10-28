@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client;
 
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

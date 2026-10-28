@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.view;
+package stroom.processor.client.component;
 
 import stroom.util.shared.time.Day;
 import stroom.util.shared.time.Days;

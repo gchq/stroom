@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.client.NodeGroupListModel;
 import stroom.node.shared.NodeGroup;
-import stroom.processor.client.presenter.ProcessorProfileClient;
+import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PathSafeNames;

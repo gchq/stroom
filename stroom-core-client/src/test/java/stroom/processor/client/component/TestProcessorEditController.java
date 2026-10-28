@@ -21,7 +21,7 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.presenter.ProcessorProfileClient;
+import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;

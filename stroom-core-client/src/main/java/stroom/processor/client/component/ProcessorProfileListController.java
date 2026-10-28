@@ -19,7 +19,7 @@ package stroom.processor.client.component;
 import stroom.data.client.CriteriaUtil;
 import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.processor.client.presenter.ProcessorProfileClient;
+import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.util.shared.PageRequest;

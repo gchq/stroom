@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.item.client.SelectionBox;
-import stroom.processor.client.view.DaysOfWeek;
+import stroom.processor.client.component.DaysOfWeek;
 import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.query.client.view.TimeZoneBox;

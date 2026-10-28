@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client;
 
 import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
