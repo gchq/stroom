@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.client.ShowDataEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;

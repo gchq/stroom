@@ -17,7 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.DataTypeUiManager;
+import stroom.data.client.DataTypeUiManager;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

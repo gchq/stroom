@@ -18,8 +18,8 @@ package stroom.data.client.component;
 
 import stroom.content.client.component.ContentTabController;
 import stroom.data.client.DataPreviewKey;
-import stroom.data.client.presenter.DataViewType;
-import stroom.data.client.presenter.DisplayMode;
+import stroom.data.client.DataViewType;
+import stroom.data.client.DisplayMode;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
 

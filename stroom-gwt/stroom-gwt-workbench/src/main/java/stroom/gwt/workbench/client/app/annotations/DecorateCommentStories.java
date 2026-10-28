@@ -18,7 +18,7 @@
 package stroom.gwt.workbench.client.app.annotations;
 
 import stroom.annotation.client.EditAnnotationEvent;
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.client.ShowDataEvent;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.main.AnnotationFixtures;
 import stroom.gwt.workbench.client.app.main.ContentStorySupport;

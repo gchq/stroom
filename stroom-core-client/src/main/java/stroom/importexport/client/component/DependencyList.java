@@ -19,7 +19,7 @@ package stroom.importexport.client.component;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;

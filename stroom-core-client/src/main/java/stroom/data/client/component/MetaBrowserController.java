@@ -17,8 +17,8 @@
 package stroom.data.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.BeginSteppingHandler;
-import stroom.data.client.presenter.ExpressionValidator;
+import stroom.data.client.BeginSteppingHandler;
+import stroom.data.client.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;

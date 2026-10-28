@@ -20,7 +20,7 @@ import stroom.dashboard.client.component.TableController;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnValueSelection;

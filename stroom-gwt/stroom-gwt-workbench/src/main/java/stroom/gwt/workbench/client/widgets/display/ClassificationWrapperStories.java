@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ClassificationWrapper] (the component that docks a
-/// [stroom.data.client.view.ClassificationLabel] banner below some content, e.g. the data viewer).
+/// [stroom.data.client.component.ClassificationLabel] banner below some content, e.g. the data viewer).
 ///
 /// As for `ClassificationLabelStories`, the label colours are served in the UI config fixture of
 /// a [ScreenHarness], and the view is created once the config has been fetched.

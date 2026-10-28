@@ -17,7 +17,7 @@
 package stroom.receive.rules.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;

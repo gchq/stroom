@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.security.shared.SessionDetails;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;

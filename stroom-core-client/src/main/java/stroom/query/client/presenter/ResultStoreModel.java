@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.CriteriaUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;

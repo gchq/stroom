@@ -20,7 +20,7 @@ import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.ShowFindAnnotationEvent;
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.client.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;

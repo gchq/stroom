@@ -16,8 +16,8 @@
 
 package stroom.pipeline.stepping.client.component;
 
+import stroom.data.client.component.ClassificationLabel;
 import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.view.ClassificationLabel;
 import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;

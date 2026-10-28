@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;

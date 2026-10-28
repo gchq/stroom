@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;

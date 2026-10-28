@@ -17,7 +17,7 @@
 package stroom.analytics.client.component;
 
 import stroom.analytics.shared.AnalyticDataShard;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Component;

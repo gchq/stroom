@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.client.component.DataViewer;
 import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.ItemNavigator;
@@ -24,7 +25,6 @@ import stroom.data.client.component.ItemSelection;
 import stroom.data.client.component.ItemSelectionController;
 import stroom.data.client.component.MarkerList;
 import stroom.data.client.component.MarkerListController;
-import stroom.data.client.view.ClassificationLabelController;
 import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;

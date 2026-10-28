@@ -22,7 +22,7 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;

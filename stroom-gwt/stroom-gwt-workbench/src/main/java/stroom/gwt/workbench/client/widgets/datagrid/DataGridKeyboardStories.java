@@ -20,7 +20,7 @@ import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;

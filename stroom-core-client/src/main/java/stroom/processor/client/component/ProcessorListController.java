@@ -18,11 +18,11 @@ package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.data.client.OpenLinkUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.OpenLinkUtil;
-import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

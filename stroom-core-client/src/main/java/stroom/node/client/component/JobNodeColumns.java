@@ -20,7 +20,7 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode.JobType;

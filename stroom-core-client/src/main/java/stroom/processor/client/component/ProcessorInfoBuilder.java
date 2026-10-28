@@ -16,8 +16,8 @@
 
 package stroom.processor.client.component;
 
-import stroom.data.client.presenter.OpenLinkUtil;
-import stroom.data.client.presenter.OpenLinkUtil.LinkType;
+import stroom.data.client.OpenLinkUtil;
+import stroom.data.client.OpenLinkUtil.LinkType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.FeedDependencies;

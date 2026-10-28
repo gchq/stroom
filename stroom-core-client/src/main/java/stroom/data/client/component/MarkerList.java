@@ -18,7 +18,7 @@ package stroom.data.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;

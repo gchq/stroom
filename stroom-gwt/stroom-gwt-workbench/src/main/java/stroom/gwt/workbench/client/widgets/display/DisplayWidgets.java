@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.data.client.view.ClassificationLabel;
-import stroom.data.client.view.ClassificationLabelController;
+import stroom.data.client.component.ClassificationLabel;
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;

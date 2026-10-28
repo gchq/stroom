@@ -16,7 +16,7 @@
 
 package stroom.query.client.component;
 
-import stroom.data.client.view.ClassificationLabel;
+import stroom.data.client.component.ClassificationLabel;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.HtmlPane;
 import stroom.task.client.TaskMonitor;

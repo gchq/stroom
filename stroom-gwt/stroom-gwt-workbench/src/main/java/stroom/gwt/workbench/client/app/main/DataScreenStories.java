@@ -16,9 +16,9 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.data.client.DataViewType;
 import stroom.data.client.component.DataPreviewTabController;
 import stroom.data.client.component.SourceTabController;
-import stroom.data.client.presenter.DataViewType;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;

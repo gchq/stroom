@@ -18,7 +18,7 @@ package stroom.job.client.component;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeAndInfo;

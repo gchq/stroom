@@ -17,9 +17,9 @@
 package stroom.data.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.data.client.DataDisplaySupport;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
-import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.editor.client.DelegatingAceCompleter;
 
 public class StreamStoreModule extends PluginModule {

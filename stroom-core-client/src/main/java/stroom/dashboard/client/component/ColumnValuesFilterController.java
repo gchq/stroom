@@ -21,7 +21,7 @@ import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ColumnValueSelection;

@@ -17,7 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.DataTypeUiManager;
+import stroom.data.client.DataTypeUiManager;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;

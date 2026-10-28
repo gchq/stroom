@@ -17,7 +17,7 @@
 package stroom.pathways.client.presenter;
 
 import stroom.dashboard.client.table.GroupLevelButtons;
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.data.pager.client.Pager;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;

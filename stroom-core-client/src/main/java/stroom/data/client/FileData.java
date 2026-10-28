@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client;
 
 public class FileData {
 

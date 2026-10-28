@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;

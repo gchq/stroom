@@ -20,7 +20,7 @@ import stroom.core.client.CoreScreens;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.component.CoreController;
 import stroom.core.client.component.FullScreenController;
-import stroom.data.client.presenter.DataDisplaySupport;
+import stroom.data.client.DataDisplaySupport;
 import stroom.editor.client.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;

@@ -16,7 +16,7 @@
 
 package stroom.pathways.client.component;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.task.client.TaskMonitorFactory;

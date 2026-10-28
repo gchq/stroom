@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaResource;

@@ -18,9 +18,9 @@ package stroom.query.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;

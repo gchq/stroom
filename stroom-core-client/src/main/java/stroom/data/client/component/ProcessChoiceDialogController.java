@@ -16,7 +16,7 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.presenter.ProcessChoice;
+import stroom.data.client.ProcessChoice;
 import stroom.util.shared.Selection;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

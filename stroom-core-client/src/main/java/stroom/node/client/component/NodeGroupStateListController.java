@@ -16,8 +16,8 @@
 
 package stroom.node.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.shared.FetchNodeStatusResponse;

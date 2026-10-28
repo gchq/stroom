@@ -18,7 +18,7 @@ package stroom.job.client.component;
 
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.job.shared.Job;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;

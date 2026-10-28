@@ -18,10 +18,10 @@ package stroom.pipeline.stepping.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.ExpressionValidator;
 import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.component.SteppingMetaListController;
-import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;

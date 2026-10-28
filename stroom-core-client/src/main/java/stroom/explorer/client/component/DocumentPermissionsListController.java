@@ -16,9 +16,9 @@
 
 package stroom.explorer.client.component;
 
+import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
-import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;

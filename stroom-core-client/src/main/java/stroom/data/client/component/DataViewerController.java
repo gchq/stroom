@@ -16,15 +16,14 @@
 
 package stroom.data.client.component;
 
+import stroom.data.client.BeginSteppingHandler;
+import stroom.data.client.CopyTextUtil;
+import stroom.data.client.DataViewType;
+import stroom.data.client.DisplayMode;
+import stroom.data.client.OpenLinkUtil;
+import stroom.data.client.OpenLinkUtil.LinkType;
+import stroom.data.client.ShowDataEvent;
 import stroom.data.client.SourceTabPlugin;
-import stroom.data.client.presenter.BeginSteppingHandler;
-import stroom.data.client.presenter.CopyTextUtil;
-import stroom.data.client.presenter.DataViewType;
-import stroom.data.client.presenter.DisplayMode;
-import stroom.data.client.presenter.OpenLinkUtil;
-import stroom.data.client.presenter.OpenLinkUtil.LinkType;
-import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;

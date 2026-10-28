@@ -16,8 +16,8 @@
 
 package stroom.query.client.component;
 
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.task.client.TaskMonitorFactory;

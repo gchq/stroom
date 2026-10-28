@@ -16,10 +16,10 @@
 
 package stroom.security.client.component;
 
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;

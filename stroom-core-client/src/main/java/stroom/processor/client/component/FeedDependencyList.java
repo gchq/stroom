@@ -16,8 +16,8 @@
 
 package stroom.processor.client.component;
 
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.FeedRefCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.processor.shared.FeedDependency;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;

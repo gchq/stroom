@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.client.component;
 
 import stroom.aws.s3.shared.S3ClientConfig;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeType;

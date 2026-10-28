@@ -17,7 +17,7 @@
 package stroom.pipeline.stepping.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.view.ClassificationLabelController;
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;

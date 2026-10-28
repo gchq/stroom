@@ -20,7 +20,7 @@ import stroom.ai.client.component.AskStroomAiController;
 import stroom.analytics.client.component.AnalyticRuleEditor;
 import stroom.analytics.client.component.ReportEditor;
 import stroom.annotation.client.component.FindAnnotationController;
-import stroom.data.client.presenter.DataDisplaySupport;
+import stroom.data.client.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;

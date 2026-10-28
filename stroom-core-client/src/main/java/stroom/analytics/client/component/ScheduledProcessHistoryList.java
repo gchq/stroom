@@ -18,7 +18,7 @@ package stroom.analytics.client.component;
 
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryFields;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;

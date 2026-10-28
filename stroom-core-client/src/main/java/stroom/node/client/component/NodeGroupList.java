@@ -17,7 +17,7 @@
 package stroom.node.client.component;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
 import stroom.task.client.TaskMonitorFactory;

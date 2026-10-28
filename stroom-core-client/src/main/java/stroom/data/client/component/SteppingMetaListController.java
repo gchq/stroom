@@ -17,8 +17,8 @@
 package stroom.data.client.component;
 
 import stroom.core.client.LocationManager;
+import stroom.data.client.ExpressionValidator;
 import stroom.data.client.component.MetaList.Columns;
-import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.preferences.client.DateTimeFormatter;

@@ -49,7 +49,7 @@ import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.StringEntryValue;
 import stroom.annotation.shared.UserRefEntryValue;
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.client.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;

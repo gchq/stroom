@@ -17,7 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.core.client.UrlParameters;
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;

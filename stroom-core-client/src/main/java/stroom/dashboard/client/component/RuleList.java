@@ -18,7 +18,7 @@ package stroom.dashboard.client.component;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

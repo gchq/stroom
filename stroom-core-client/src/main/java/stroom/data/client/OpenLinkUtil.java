@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
 import stroom.feed.client.OpenFeedEvent;
 import stroom.pipeline.shared.SourceLocation;

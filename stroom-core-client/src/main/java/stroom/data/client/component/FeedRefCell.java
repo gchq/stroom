@@ -16,7 +16,7 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.docstore.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
 import stroom.svg.shared.SvgImage;

@@ -19,7 +19,7 @@ package stroom.credentials.client.component;
 import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

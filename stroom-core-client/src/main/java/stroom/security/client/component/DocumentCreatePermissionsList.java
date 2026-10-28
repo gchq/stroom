@@ -19,7 +19,7 @@ package stroom.security.client.component;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.docstore.shared.DocumentType;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Component;

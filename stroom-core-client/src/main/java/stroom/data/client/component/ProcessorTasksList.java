@@ -17,7 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;

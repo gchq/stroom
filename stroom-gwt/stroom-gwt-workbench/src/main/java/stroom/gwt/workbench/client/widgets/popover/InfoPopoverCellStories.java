@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.widgets.popover;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;

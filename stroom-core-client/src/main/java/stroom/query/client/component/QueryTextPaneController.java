@@ -16,7 +16,7 @@
 
 package stroom.query.client.component;
 
-import stroom.data.client.view.ClassificationLabelController;
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditorController;

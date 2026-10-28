@@ -18,7 +18,6 @@ package stroom.data.client;
 
 import stroom.core.client.ContentManager;
 import stroom.data.client.component.DataPreviewTabController;
-import stroom.data.client.presenter.DataViewType;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;

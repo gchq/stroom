@@ -17,13 +17,13 @@
 package stroom.task.client.component;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.DataViewType;
+import stroom.data.client.DisplayMode;
+import stroom.data.client.RestDataProvider;
+import stroom.data.client.ShowDataEvent;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.DataViewType;
-import stroom.data.client.presenter.DisplayMode;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.client.presenter.ShowDataEvent;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

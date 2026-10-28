@@ -17,7 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.cell.info.client.CellIcon;
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.security.client.UserTabPlugin;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;

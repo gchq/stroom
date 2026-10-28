@@ -22,7 +22,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
-import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.CriteriaUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.util.client.DelayedUpdate;

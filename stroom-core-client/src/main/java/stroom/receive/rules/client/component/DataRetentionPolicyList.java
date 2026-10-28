@@ -19,7 +19,7 @@ package stroom.receive.rules.client.component;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;

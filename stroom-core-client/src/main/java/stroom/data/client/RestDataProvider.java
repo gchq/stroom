@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;

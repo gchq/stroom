@@ -18,7 +18,7 @@ package stroom.analytics.client.component;
 
 import stroom.analytics.shared.NotificationConfig;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.docref.HasDisplayValue;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

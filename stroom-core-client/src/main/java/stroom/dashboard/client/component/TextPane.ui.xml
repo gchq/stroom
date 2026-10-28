@@ -3,7 +3,7 @@
      step it and its classification -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:l="urn:import:stroom.data.client.view"
+             xmlns:l="urn:import:stroom.data.client.component"
              xmlns:button="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="max dock-container-vertical stroom-dashboard-text">

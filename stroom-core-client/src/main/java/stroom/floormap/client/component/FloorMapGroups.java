@@ -18,7 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.IconCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;

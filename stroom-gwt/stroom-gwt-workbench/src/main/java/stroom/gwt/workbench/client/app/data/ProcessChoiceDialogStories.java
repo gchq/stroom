@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.app.data;
 
+import stroom.data.client.ProcessChoice;
 import stroom.data.client.component.ProcessChoiceDialogController;
-import stroom.data.client.presenter.ProcessChoice;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;

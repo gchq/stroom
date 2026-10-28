@@ -21,7 +21,7 @@ import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.shared.PageRequest;

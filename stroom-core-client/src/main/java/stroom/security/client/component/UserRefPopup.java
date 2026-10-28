@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.security.client.presenter.UserAndGroupHelper;
 import stroom.security.shared.UserFields;
 import stroom.task.client.TaskMonitorFactory;

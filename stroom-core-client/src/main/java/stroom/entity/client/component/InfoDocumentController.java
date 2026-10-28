@@ -16,7 +16,7 @@
 
 package stroom.entity.client.component;
 
-import stroom.data.client.presenter.CopyTextUtil;
+import stroom.data.client.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocAuditEntry;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;

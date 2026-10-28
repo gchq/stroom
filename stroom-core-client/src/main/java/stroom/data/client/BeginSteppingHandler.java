@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;

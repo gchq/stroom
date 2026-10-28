@@ -16,10 +16,10 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.OpenLinkUtil;
-import stroom.data.client.presenter.OpenLinkUtil.LinkType;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.OpenLinkUtil;
+import stroom.data.client.OpenLinkUtil.LinkType;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;

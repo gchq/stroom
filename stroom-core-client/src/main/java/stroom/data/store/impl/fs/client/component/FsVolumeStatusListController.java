@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;

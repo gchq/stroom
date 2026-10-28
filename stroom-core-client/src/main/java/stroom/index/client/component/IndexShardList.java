@@ -19,7 +19,7 @@ package stroom.index.client.component;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.task.client.TaskMonitorFactory;

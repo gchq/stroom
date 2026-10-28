@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.client.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;

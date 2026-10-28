@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client;
 
-import stroom.data.client.DataPreviewTabPlugin;
-import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.SourceViewerController;
 import stroom.pipeline.shared.SourceLocation;

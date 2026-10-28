@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.widgets.inputs;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableLong;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;

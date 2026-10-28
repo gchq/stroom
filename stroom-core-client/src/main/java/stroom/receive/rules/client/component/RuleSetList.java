@@ -16,7 +16,7 @@
 
 package stroom.receive.rules.client.component;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;

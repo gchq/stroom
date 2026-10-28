@@ -16,7 +16,7 @@
 
 package stroom.feed.client.component;
 
-import stroom.data.client.presenter.DataTypeUiManager;
+import stroom.data.client.DataTypeUiManager;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestFactory;

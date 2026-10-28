@@ -17,8 +17,8 @@
 package stroom.index.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

@@ -18,8 +18,8 @@ package stroom.receive.content.client.component;
 
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.DocRefCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

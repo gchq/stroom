@@ -23,7 +23,7 @@ import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;

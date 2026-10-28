@@ -19,7 +19,7 @@ package stroom.annotation.client.component;
 import stroom.annotation.client.component.ChooserController.DataSupplier;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

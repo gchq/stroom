@@ -17,8 +17,8 @@
 package stroom.job.client.component;
 
 import stroom.cell.info.client.CommandLink;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;

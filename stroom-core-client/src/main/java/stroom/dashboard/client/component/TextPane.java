@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.data.client.view.ClassificationLabel;
+import stroom.data.client.component.ClassificationLabel;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.component.client.Component;

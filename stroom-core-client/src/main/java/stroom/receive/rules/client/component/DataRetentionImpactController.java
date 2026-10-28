@@ -18,7 +18,7 @@ package stroom.receive.rules.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.client.ListDataProvider;
-import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.CriteriaUtil;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionRules;

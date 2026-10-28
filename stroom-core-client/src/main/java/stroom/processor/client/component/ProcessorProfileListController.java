@@ -16,8 +16,8 @@
 
 package stroom.processor.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.CriteriaUtil;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.processor.client.presenter.ProcessorProfileClient;
 import stroom.processor.shared.FindProcessorProfileRequest;

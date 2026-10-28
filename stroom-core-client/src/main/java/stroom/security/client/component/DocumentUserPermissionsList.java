@@ -16,8 +16,8 @@
 
 package stroom.security.client.component;
 
+import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.security.client.presenter.UserAndGroupHelper;

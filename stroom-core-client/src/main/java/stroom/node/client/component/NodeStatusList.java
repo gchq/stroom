@@ -19,7 +19,7 @@ package stroom.node.client.component;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;

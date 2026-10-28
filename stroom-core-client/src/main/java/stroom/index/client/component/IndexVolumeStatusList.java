@@ -16,7 +16,7 @@
 
 package stroom.index.client.component;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;

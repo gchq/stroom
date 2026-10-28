@@ -25,7 +25,7 @@ import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
-import stroom.data.client.view.ClassificationLabelController;
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditor;

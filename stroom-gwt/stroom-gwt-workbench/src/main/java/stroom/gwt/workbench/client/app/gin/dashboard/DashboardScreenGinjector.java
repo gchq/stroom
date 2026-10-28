@@ -28,7 +28,7 @@ import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.vis.VisPlugin;
-import stroom.data.client.presenter.DataDisplaySupport;
+import stroom.data.client.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;

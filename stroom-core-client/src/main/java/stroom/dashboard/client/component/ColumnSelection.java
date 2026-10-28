@@ -18,7 +18,7 @@ package stroom.dashboard.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.ColumnSizeConstants;
 import stroom.query.api.ColumnRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;

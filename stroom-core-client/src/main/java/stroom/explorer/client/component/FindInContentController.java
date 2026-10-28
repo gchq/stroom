@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.component;
 
-import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;

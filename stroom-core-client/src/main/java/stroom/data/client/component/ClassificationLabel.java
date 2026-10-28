@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.util.client.CssProperties;

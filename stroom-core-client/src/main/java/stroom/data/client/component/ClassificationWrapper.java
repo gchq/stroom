@@ -16,7 +16,6 @@
 
 package stroom.data.client.component;
 
-import stroom.data.client.view.ClassificationLabel;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -28,7 +27,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Some content (e.g. the data viewer's) with its data's classification in a banner below it. Its
-/// owner attaches a [stroom.data.client.view.ClassificationLabelController] to the banner
+/// owner attaches a [stroom.data.client.component.ClassificationLabelController] to the banner
 /// ([#getClassificationLabel()]) for its colours. Its markup is `ClassificationWrapper.ui.xml`.
 public class ClassificationWrapper extends Component {
 
