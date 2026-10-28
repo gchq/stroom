@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client;
 
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.FloorMapTransformationMatrix;

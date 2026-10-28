@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client;
 
 /// What the user right-clicked on the floor map canvas, which the canvas gives its owner
 /// (`FloorMapCanvasController.setOnContextMenu`).

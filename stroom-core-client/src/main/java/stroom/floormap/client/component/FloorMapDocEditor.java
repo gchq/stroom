@@ -20,7 +20,7 @@ import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.floormap.client.presenter.FloorMapEventQuery;
+import stroom.floormap.client.FloorMapEventQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;

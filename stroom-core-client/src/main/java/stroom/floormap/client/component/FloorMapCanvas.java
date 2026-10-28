@@ -17,6 +17,7 @@
 package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapAria;
+import stroom.floormap.client.FloorMapGrid;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
 import stroom.floormap.client.cluster.FloorMapClusterOverlay;
@@ -31,7 +32,6 @@ import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.overlay.FloorMapAreaOverlay;
 import stroom.floormap.client.overlay.FloorMapHighlight;
-import stroom.floormap.client.view.FloorMapGrid;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;

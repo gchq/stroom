@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client;
 
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapLocationResolver;

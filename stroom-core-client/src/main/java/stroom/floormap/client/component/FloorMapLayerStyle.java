@@ -18,7 +18,6 @@ package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapSwatchHtml;
-import stroom.floormap.client.view.FloorMapIconPicker;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;

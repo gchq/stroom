@@ -6,7 +6,7 @@
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client"
-             xmlns:fv="urn:import:stroom.floormap.client.view">
+             xmlns:fv="urn:import:stroom.floormap.client.component">
     <!--
       The layer appearance dialog's content (stroom-floormap.css): the graphic a layer draws (a
       shape, an icon or an image), its colour and a preview. The table only lays the labels beside
