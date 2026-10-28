@@ -23,7 +23,7 @@ import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

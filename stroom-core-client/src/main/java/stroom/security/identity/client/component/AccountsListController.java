@@ -36,7 +36,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.component.client.Controller;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

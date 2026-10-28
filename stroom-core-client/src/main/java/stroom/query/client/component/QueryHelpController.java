@@ -32,7 +32,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.MultiSelectionModel;
 

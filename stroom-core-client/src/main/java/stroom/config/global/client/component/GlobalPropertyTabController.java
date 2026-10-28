@@ -25,7 +25,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;

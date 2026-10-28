@@ -19,8 +19,8 @@ package stroom.security.client.component;
 import stroom.item.client.SelectionBox;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.widget.component.client.Component;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.dropdowntree.client.view.QuickFilterPage;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
+import stroom.widget.quickfilter.client.QuickFilterPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

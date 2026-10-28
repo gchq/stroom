@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- The user picker: a quick filter above a page of the users and groups -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <v:QuickFilterDialog ui:field="dialog" accessibleName="Filter users and groups">
         <dg:PagerPanel ui:field="pager">

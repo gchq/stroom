@@ -25,7 +25,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:layout="urn:import:stroom.widget.layout.client"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">

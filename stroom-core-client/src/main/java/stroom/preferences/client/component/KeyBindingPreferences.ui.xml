@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:view="urn:import:stroom.widget.quickfilter.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="max dock-container-vertical form">

@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
              xmlns:ex="urn:import:stroom.explorer.client.component">
     <!--
       The explorer's chooser: a quick filter above the explorer's tree, which its controller fills,

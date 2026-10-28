@@ -21,8 +21,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialog;
-import stroom.widget.dropdowntree.client.view.QuickFilterPage;
+import stroom.widget.quickfilter.client.QuickFilterDialog;
+import stroom.widget.quickfilter.client.QuickFilterPage;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;

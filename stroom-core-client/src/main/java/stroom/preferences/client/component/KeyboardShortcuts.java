@@ -20,7 +20,7 @@ import stroom.preferences.client.component.KeyboardShortcutsController.ShortcutR
 import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

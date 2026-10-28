@@ -54,7 +54,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.TimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
@@ -62,6 +61,7 @@ import stroom.widget.form.client.RadioGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
+import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

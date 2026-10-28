@@ -31,9 +31,9 @@ import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.menu.client.Item;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
+import stroom.widget.quickfilter.client.QuickFilterPage;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;

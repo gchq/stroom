@@ -20,10 +20,10 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.item.client.SelectionBox;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.util.client.FieldEnd;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

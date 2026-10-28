@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">

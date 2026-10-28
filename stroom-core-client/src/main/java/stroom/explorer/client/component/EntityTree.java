@@ -17,8 +17,8 @@
 package stroom.explorer.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;

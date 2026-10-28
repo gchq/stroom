@@ -33,8 +33,8 @@ import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;

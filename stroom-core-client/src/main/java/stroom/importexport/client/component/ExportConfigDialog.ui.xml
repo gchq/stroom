@@ -3,7 +3,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:layout="urn:import:stroom.widget.layout.client"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:ex="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max form overflow-hidden">

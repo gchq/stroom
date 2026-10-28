@@ -28,7 +28,6 @@ import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.ControllerNode;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
@@ -40,6 +39,7 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;

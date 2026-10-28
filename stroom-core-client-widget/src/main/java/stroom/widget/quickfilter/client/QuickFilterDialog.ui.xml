@@ -2,7 +2,7 @@
 <!-- A quick filter above what it filters, bordered, as a dialog's content -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:view="urn:import:stroom.widget.quickfilter.client"
              xmlns:c="urn:import:stroom.widget.component.client">
     <g:FlowPanel styleName="max dock-container-vertical quick-filter-layout">
         <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>

@@ -15,7 +15,7 @@
  */
 
 /*
-   The quick filter (stroom.widget.dropdowntree.client.view.QuickFilter), named BEM style (block,
+   The quick filter (stroom.widget.quickfilter.client.QuickFilter), named BEM style (block,
    block__element, block--modifier): a search field (quick-filter__input, type="search", so a
    searchbox to assistive technology) with its buttons over the end of it (quick-filter__toolbar):
    Clear, the recent filters (quick-filter__recent, with the block's --recent modifier leaving room

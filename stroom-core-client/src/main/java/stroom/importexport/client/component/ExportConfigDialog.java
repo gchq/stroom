@@ -19,8 +19,8 @@ package stroom.importexport.client.component;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;

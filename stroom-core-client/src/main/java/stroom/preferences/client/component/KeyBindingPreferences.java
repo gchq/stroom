@@ -21,7 +21,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.MultiSelectionModelImpl;

@@ -25,8 +25,8 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.SingleSelectionEventManager;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.cell.client.SafeHtmlCell;

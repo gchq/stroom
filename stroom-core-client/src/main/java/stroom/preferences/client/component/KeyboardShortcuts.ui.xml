@@ -2,7 +2,7 @@
 <!-- The keyboard shortcuts dialog's content: a filter above the list of shortcuts -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:view="urn:import:stroom.widget.quickfilter.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel styleName="dock-min">

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.dropdowntree.client.view;
+package stroom.widget.quickfilter.client;
 
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
