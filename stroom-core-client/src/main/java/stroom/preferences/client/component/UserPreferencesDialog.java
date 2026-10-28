@@ -18,7 +18,7 @@ package stroom.preferences.client.component;
 
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;

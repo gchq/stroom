@@ -22,11 +22,11 @@ import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisInput;
 import stroom.widget.component.client.Component;
+import stroom.widget.component.client.Layer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

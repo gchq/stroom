@@ -21,7 +21,7 @@ import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.docref.HasDisplayValue;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.user.client.ui.IsWidget;

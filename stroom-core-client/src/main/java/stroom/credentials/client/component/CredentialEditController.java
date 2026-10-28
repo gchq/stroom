@@ -27,9 +27,9 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Layer;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 

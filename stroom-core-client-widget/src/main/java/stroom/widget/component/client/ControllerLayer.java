@@ -16,8 +16,6 @@
 
 package stroom.widget.component.client;
 
-import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.user.client.ui.Focus;

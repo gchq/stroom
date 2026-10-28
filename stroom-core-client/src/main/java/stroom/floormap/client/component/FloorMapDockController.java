@@ -18,8 +18,8 @@ package stroom.floormap.client.component;
 
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
-import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.Layer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.TabBar;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;

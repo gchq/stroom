@@ -17,7 +17,7 @@
 package stroom.receive.rules.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
 

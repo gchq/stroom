@@ -19,7 +19,7 @@ package stroom.app.client;
 import stroom.app.client.gin.AppGinjectorUser;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.widget.presenter.client.Page;
+import stroom.widget.component.client.Page;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;

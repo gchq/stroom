@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.widget.presenter.client;
+package stroom.widget.component.client;
 
-import stroom.widget.component.client.Controller;
 
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;

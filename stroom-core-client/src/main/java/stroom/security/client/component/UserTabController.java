@@ -28,7 +28,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.component.client.ControllerLayer;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.util.client.LazyValue;

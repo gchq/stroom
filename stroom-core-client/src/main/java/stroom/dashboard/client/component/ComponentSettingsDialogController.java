@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.ComponentDataModifier;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.component.client.Controller;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 

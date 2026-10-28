@@ -17,7 +17,7 @@
 package stroom.security.identity.client.component;
 
 import stroom.widget.component.client.Controller;
-import stroom.widget.presenter.client.Page;
+import stroom.widget.component.client.Page;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;

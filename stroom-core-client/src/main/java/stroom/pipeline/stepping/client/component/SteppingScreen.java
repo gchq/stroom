@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.component;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.LayerContainerImpl;
 
 import com.google.gwt.core.client.GWT;

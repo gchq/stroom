@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.presenter.client;
+package stroom.widget.component.client;
 
 import com.google.web.bindery.event.shared.HandlerRegistration;
 

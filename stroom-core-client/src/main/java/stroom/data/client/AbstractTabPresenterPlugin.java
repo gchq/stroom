@@ -25,7 +25,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.presenter.client.Layer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
 
 import com.google.inject.Provider;

@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabBar;

@@ -19,7 +19,7 @@ package stroom.widget.tab.client.component;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.CurveTabBar;
 import stroom.widget.tab.client.CurveTabLayoutPanel;
 import stroom.widget.tab.client.LayerContainerImpl;

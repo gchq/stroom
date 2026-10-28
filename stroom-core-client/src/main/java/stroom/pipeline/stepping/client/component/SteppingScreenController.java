@@ -62,12 +62,12 @@ import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
+import stroom.widget.component.client.Layer;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupSize;
-import stroom.widget.presenter.client.Layer;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;

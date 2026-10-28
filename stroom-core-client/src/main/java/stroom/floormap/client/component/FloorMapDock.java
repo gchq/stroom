@@ -17,7 +17,7 @@
 package stroom.floormap.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.TabBar;
 
 import com.google.gwt.core.client.GWT;

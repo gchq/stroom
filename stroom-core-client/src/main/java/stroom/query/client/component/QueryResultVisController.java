@@ -50,9 +50,9 @@ import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Layer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.component.client.LayerController;
-import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;

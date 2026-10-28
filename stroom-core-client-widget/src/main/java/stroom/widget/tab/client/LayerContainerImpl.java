@@ -16,8 +16,8 @@
 
 package stroom.widget.tab.client;
 
-import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.component.client.Layer;
+import stroom.widget.component.client.LayerContainer;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

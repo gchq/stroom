@@ -31,8 +31,8 @@ import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.component.client.Layer;
 import stroom.widget.datepicker.client.DateTimeBoxController;
-import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
