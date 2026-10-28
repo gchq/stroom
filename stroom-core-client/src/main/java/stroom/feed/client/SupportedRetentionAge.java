@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.feed.client.presenter;
+package stroom.feed.client;
 
 import stroom.docref.HasDisplayValue;
 

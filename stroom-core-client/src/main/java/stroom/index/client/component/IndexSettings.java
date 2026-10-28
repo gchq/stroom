@@ -16,7 +16,7 @@
 
 package stroom.index.client.component;
 
-import stroom.feed.client.presenter.SupportedRetentionAge;
+import stroom.feed.client.SupportedRetentionAge;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
