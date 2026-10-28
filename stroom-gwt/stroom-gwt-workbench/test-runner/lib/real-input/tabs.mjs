@@ -67,7 +67,7 @@ export const CHECKS = {
     await expectTabStopReturnsToSelected(page);
   },
   // A link tab's ring is drawn around its label (by ::after)
-  'widgets-tabs-linktabswidget--basic': async (page) => {
+  'widgets-tabs-linktabpanel--basic': async (page) => {
     await expectRingOnKeyboardOnly(page, { click: 0, next: 1 }, (element) => {
       const after = getComputedStyle(element, '::after');
       return after.content === 'none' ? 'none' : after.borderTopColor;
