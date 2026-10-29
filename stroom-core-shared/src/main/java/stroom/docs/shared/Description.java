@@ -21,13 +21,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Used for generating documentation in stroom-docs.
- * Provides a description of the associated field/type which can
- * be in markdown and include short-codes.
- * Should be one sentence per line, so it meets the style guide of
- * stroom-docs.
- */
+/// Used for generating documentation in stroom-docs.
+/// Provides a description of the associated field/type.
+///
+/// The description is assumed to be Markdown, but cannot contain Hugo shortcodes.
+///
+/// Should be one sentence per line, so it meets the style guide of
+/// stroom-docs. Use two line breaks to separate paragraphs.
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.FIELD})
 public @interface Description {

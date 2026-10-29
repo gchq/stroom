@@ -676,13 +676,24 @@ public final class FileUtil {
         }
     }
 
+    /// Same as {@link Files#readString(Path)} but wraps {@link IOException}
+    /// in {@link UncheckedIOException}.
+    public static String readString(final Path path) {
+        try {
+            return Files.readString(path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /**
      * Performs a safe write from byte[] to file, so if the system crashes half-way through writing
      * we don't have a corrupted version of the file.
-     * @param filePath The path to the file we want to create. Must not be null.
+     *
+     * @param filePath  The path to the file we want to create. Must not be null.
      * @param tmpPrefix The prefix for a temporary file; for example "tmp-". Must not be null.
      * @param tmpSuffix The suffix for a temporary file; for example ".tmp". Must not be null.
-     * @param data The data to write to the file. Might be null.
+     * @param data      The data to write to the file. Might be null.
      * @throws IOException If something goes wrong.
      */
     public static void saveDataSafely(final Path filePath,
@@ -721,12 +732,13 @@ public final class FileUtil {
     /**
      * Performs a safe write from inputStream to file, so if the system crashes half-way through writing
      * we don't have a corrupted version of the file.
+     *
      * @param tempFilePrefix The prefix for the temporary file we'll create.
      *                       Needed so temporary files can be cleaned up if necessary.
      * @param tempFileSuffix The suffix for the temporary file we'll create.
      *                       Needed so temporary files can be cleaned up if necessary.
-     * @param filePath The path to the file we want to create.
-     * @param dataStream The data to write to the file. Might be null.
+     * @param filePath       The path to the file we want to create.
+     * @param dataStream     The data to write to the file. Might be null.
      * @throws IOException If something goes wrong.
      */
     public static void saveDataSafely(final Path filePath,

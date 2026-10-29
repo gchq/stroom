@@ -31,13 +31,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@Description(
-        "A Query Document defines a {{< glossary \"StroomQL\" >}} query and is used to execute that query " +
-        "and view its results.\n" +
-        "A Query can query main types of data source including " +
-        "[Views]({{< relref \"#view\" >}}), [Lucene Indexes]({{< relref \"#lucene-index\" >}}), and " +
-        "{{< glossary \"searchable\" \"Searchables\" >}}."
-)
+@Description("""
+        A Query Document defines a {{< glossary "StroomQL" >}} query and is used to execute that query \
+        and view its results.
+        A Query can query main types of data source including Views, Lucene Indexes and Searchables.""")
 @JsonPropertyOrder({
         "type",
         "uuid",

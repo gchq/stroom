@@ -33,4 +33,5 @@ import stroom.svg.shared.SvgImage;
         },
         icon = SvgImage.PIPELINE_STREAM)
 public class SourceElement extends AbstractInputElement implements Element {
+
 }

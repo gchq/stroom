@@ -39,13 +39,13 @@ public @interface XsltFunctionDef {
     /// You must provide a commonDescription even if each signature provides its own description.
     /// This is because stroom-docs needs a common description for some of its content.
     ///
-    /// The description is assumed to be Markdown.
+    /// The description is assumed to be Markdown, but cannot contain Hugo shortcodes.
     String commonDescription() default "";
 
     /// Optional extended description that is common to all signatures. It is in addition to the
     /// commonDescription. It can be used when the description is more than a few sentences.
     ///
-    /// The description is assumed to be Markdown.
+    /// The description is assumed to be Markdown, but cannot contain Hugo shortcodes.
     String extendedCommonDescription() default "";
 
     /// A single return type that is common to all signatures unless overridden at the signature level.
@@ -56,7 +56,7 @@ public @interface XsltFunctionDef {
     /// A return description that is common to all signatures unless overridden at the signature level
     /// You must specify either this or [XsltFunctionSignature#returnDescription()]
     ///
-    /// The description is assumed to be Markdown
+    /// The description is assumed to be Markdown, but cannot contain Hugo shortcodes.
     String commonReturnDescription() default "";
 
     /// All the overloaded function signatures for the method,

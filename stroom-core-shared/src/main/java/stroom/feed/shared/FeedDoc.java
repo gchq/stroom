@@ -36,15 +36,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@Description(
-        "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
-        "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
-        "Ingested data must specify the Feed that it is destined for.\n\n" +
-        "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
-        "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
-        "data storage.\n" +
-        "The Feed Document can also control the ingest of data using its `Feed Status` property and " +
-        "be used for viewing data that belonging to that feed.")
+@Description("""
+        The Feed is Stroom's way of compartmentalising data that has been ingested or
+        created by a Pipeline.
+        Ingested data must specify the Feed that it is destined for.
+
+        The Feed Document defines the character encoding for the data in the Feed, the type of data that \
+        will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for \
+        data storage.
+        The Feed Document can also control the ingest of data using its `Feed Status` property and
+        be used for viewing data that belonging to that feed.""")
 @JsonPropertyOrder({
         "type",
         "uuid",

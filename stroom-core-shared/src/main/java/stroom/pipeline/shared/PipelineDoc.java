@@ -39,20 +39,18 @@ import java.util.stream.Collectors;
 /**
  * This entity is used to persist pipeline configuration.
  */
-@Description("A Pipeline defines a chain of Pipeline elements that consumes from a source of data (a Stream of " +
-             "raw data or cooked events) then processes it according to the elements used in the chain.\n" +
-             "Pipelines can be linear or branching and support inheritance of other pipelines to allow re-use of " +
-             "common structural parts.\n\n" +
-             "The Pipeline Document defines the structure of the pipeline and the configuration of each of the " +
-             "elements in that pipeline.\n" +
-             "It also defines the filter(s) that will be used to control what data is passed through the pipeline " +
-             "and the priority of processing.\n" +
-             "The Pipeline Document can be used to view the data produced by the pipeline and to monitor its " +
-             "processing state and progress." +
-             "\n" +
-             "{{% see-also %}}" +
-             "[Pipelines]({{< relref \"docs/user-guide/pipelines\" >}})" +
-             "{{% /see-also %}}")
+@Description("""
+        A Pipeline defines a chain of Pipeline elements that consumes from a source of data (a Stream of \
+        raw data or cooked events) then processes it according to the elements used in the chain.
+        Pipelines can be linear or branching and support inheritance of other pipelines to allow re-use of \
+        common structural parts.
+
+        The Pipeline Document defines the structure of the pipeline and the configuration of each of the \
+        elements in that pipeline.
+        It also defines the filter(s) that will be used to control what data is passed through the pipeline \
+        and the priority of processing.
+        The Pipeline Document can be used to view the data produced by the pipeline and to monitor its \
+        processing state and progress.""")
 @JsonPropertyOrder({
         "type",
         "uuid",
