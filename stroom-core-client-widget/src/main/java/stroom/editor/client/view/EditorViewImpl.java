@@ -22,6 +22,7 @@ import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
+import stroom.editor.client.presenter.TextFormatter;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -53,8 +54,10 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -86,6 +89,7 @@ public class EditorViewImpl
     private IndicatorLines indicators;
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
+    private TextFormatter textFormatter;
 
     @Inject
     public EditorViewImpl(final Binder binder) {
@@ -183,6 +187,7 @@ public class EditorViewImpl
 
                         final Severity severity = error.getSeverity();
                         final AceAnnotationType annotationType;
+                        //noinspection EnhancedSwitchMigration
                         switch (severity) {
                             case INFO:
                                 annotationType = AceAnnotationType.INFO;
@@ -228,8 +233,14 @@ public class EditorViewImpl
     }
 
     @Override
+    public void setTextFormatter(final TextFormatter textFormatter) {
+        this.textFormatter = textFormatter;
+    }
+
+    @Override
     public void setHighlights(final List<TextRange> highlights) {
         Scheduler.get().scheduleDeferred(() -> {
+            //noinspection SizeReplaceableByIsEmpty
             if (highlights != null && highlights.size() > 0) {
                 // Find our first from location
                 final Location minLocation = highlights.stream()
@@ -304,32 +315,63 @@ public class EditorViewImpl
      * Formats the currently displayed text.
      */
     private void format() {
-        Scheduler.get().scheduleDeferred(() -> {
-            final int scrollTop = editor.getScrollTop();
-            final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
+        if (textFormatter != null) {
+            final String text = getText();
+            textFormatter.format(text, formattedText ->
+                    Scheduler.get().scheduleDeferred(() -> {
+                        // Don't overwrite any edits made while the text was being formatted.
+                        if (formattedText != null && Objects.equals(text, getText())) {
+                            replaceWithFormattedText(() -> {
+                                setText(formattedText);
+                                return formattedText;
+                            });
+                        }
+                    }));
+        } else {
+            Scheduler.get().scheduleDeferred(() ->
+                    replaceWithFormattedText(this::formatForMode));
+        }
+    }
 
-            final String formattedText;
-            if (isModeXml(mode)) {
-                formattedText = formatAsIfXml(getText());
-                setText(formattedText);
-            } else {
-                editor.beautify();
-                formattedText = editor.getText();
-            }
+    /**
+     * Formats the currently displayed text using the built-in formatting for the current mode.
+     *
+     * @return The formatted text.
+     */
+    private String formatForMode() {
+        if (isModeXml(mode)) {
+            final String formattedText = formatAsIfXml(getText());
+            setText(formattedText);
+            return formattedText;
+        } else {
+            editor.beautify();
+            return editor.getText();
+        }
+    }
 
-            if (cursorPosition != null) {
-                editor.moveTo(cursorPosition.getRow(), cursorPosition.getColumn());
-            }
-            if (scrollTop > 0) {
-                editor.setScrollTop(scrollTop);
-            }
+    /**
+     * Replaces the displayed text with formatted text, keeping the cursor and scroll position.
+     *
+     * @param formatFunc Replaces the displayed text with formatted text and returns the formatted text.
+     */
+    private void replaceWithFormattedText(final Supplier<String> formatFunc) {
+        final int scrollTop = editor.getScrollTop();
+        final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
 
-            editor.focus();
+        final String formattedText = formatFunc.get();
 
-            FormatEvent.fire(this);
+        if (cursorPosition != null) {
+            editor.moveTo(cursorPosition.getRow(), cursorPosition.getColumn());
+        }
+        if (scrollTop > 0) {
+            editor.setScrollTop(scrollTop);
+        }
 
-            applyFormattedHighlights(formattedText);
-        });
+        editor.focus();
+
+        FormatEvent.fire(this);
+
+        applyFormattedHighlights(formattedText);
     }
 
     private boolean isModeXml(final AceEditorMode mode) {

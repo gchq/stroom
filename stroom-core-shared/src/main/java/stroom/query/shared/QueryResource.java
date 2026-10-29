@@ -78,6 +78,18 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     ValidateExpressionResult validateQuery(
             @Parameter(description = "query", required = true) String query);
 
+    /// Formats a StroomQL query, changing only the whitespace between its tokens.
+    ///
+    /// @param query The StroomQL query text to format.
+    /// @return The formatted query text.
+    @POST
+    @Path("/formatQuery")
+    @Operation(
+            summary = "Format a StroomQL query",
+            operationId = "formatQuery")
+    FormatQueryResponse formatQuery(
+            @Parameter(description = "query", required = true) String query);
+
     @POST
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(

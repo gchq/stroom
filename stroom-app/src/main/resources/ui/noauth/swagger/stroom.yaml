@@ -2803,6 +2803,19 @@ paths:
       summary: Find the duplicate check data for the current analytic
       tags:
       - DuplicateCheck
+  /elasticCluster/v1/getDefaultHttpClientConfig:
+    post:
+      operationId: getElasticClusterDefaultHttpClientConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpClientConfig"
+          description: default response
+      summary: Get default HTTP client configuration
+      tags:
+      - Elastic Clusters
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -7039,6 +7052,26 @@ paths:
                   type: string
           description: default response
       summary: Fetch time zone data from the server
+      tags:
+      - Queries
+  /query/v1/formatQuery:
+    post:
+      operationId: formatQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: query
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormatQueryResponse"
+          description: default response
+      summary: Format a StroomQL query
       tags:
       - Queries
   /query/v1/helpItems:
@@ -13797,24 +13830,14 @@ components:
     ElasticConnectionConfig:
       type: object
       properties:
-        apiKeyId:
+        apiKeyName:
           type: string
-        apiKeySecret:
-          type: string
-        caCertificate:
-          type: string
-        connectionTimeoutMillis:
-          type: integer
-          format: int32
         connectionUrls:
           type: array
           items:
             type: string
-        responseTimeoutMillis:
-          type: integer
-          format: int32
-        useAuthentication:
-          type: boolean
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
     ElasticIndexDoc:
       type: object
       properties:
@@ -15583,6 +15606,11 @@ components:
           type: boolean
       required:
       - type
+    FormatQueryResponse:
+      type: object
+      properties:
+        query:
+          type: string
     FormatSettings:
       type: object
       discriminator:
