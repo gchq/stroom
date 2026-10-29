@@ -216,7 +216,7 @@ public class DocumentUserPermissionsTabController extends Controller {
                                                     .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
                                             Attribute.title(docType.getDisplayType()),
                                             Attribute.className(
-                                                    "svg-icon icon-cell " + icon.getClassName()))
+                                                    "icon-cell " + icon.getClassName()))
                                     .italic(docType.getDisplayType())
                                     .append(" from: ")
                                     .append(pathStr);
@@ -252,7 +252,7 @@ public class DocumentUserPermissionsTabController extends Controller {
                                             .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
                                     Attribute.title(docType.getDisplayType()),
                                     Attribute.className(
-                                            "svg-icon icon-cell " + icon.getClassName()))
+                                            "icon-cell " + icon.getClassName()))
                             .italic(docType.getDisplayType());
                 }
                 return htmlBuilder.toSafeHtml();

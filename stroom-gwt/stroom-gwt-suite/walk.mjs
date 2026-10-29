@@ -1749,7 +1749,7 @@ if (DIRECTED.includes('cf')) {
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId', 'Edit Conditional Formatting for Table', 'New Formatting Rule', 'after Formatting Type = Custom'],
       route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Edit Conditional Formatting for Table', opens: 'dialog' },
-        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
+        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditional-formatting-rule-editor__type', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],
       route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-header__value-filter-icon', opens: 'dialog' }] },

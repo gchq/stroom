@@ -1253,6 +1253,16 @@ after wave 31.
 > styles are classes or custom properties; duplicates of `sr-only` and `.feedback`, empty rules and
 > dead rules gone. No screenshot changed. See `wave-32.md`.
 
+## 33. CSS step 7: enforced in the build
+
+Record: [`component-migration/wave-33.md`](component-migration/wave-33.md). Added 29 October 2026,
+after wave 32.
+
+> **Done, 29 October 2026**: `TestStylesheets` checks every sheet is loaded and well formed, every
+> class is BEM, every class the code sets is styled (or a listed hook) and every styled block is set;
+> the last camel-case names, classes nothing styled, an unloaded sheet and an unused rule went. The
+> CSS plan is done. See `wave-33.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

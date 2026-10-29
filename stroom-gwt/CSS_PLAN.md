@@ -145,7 +145,11 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
 6. **Rationalise** (done in wave 32, 29 October 2026): duplicates merged into the shared patterns or removed; the common combinations
    given a named class each, or folded into the components' blocks; the remaining inline styles moved
    to classes and custom properties.
-7. **Enforce**: the check above, in the build.
+7. **Enforce**: the check above, in the build (done in wave 33, 29 October 2026: `TestStylesheets`, with
+   the class census for rules nothing sets; identical declarations in unrelated components are
+   allowed, as step 6 decided, and a sheet may name another block for context).
+
+**The plan is done** (29 October 2026, waves 22 and 26 to 33).
 
 ## Decisions (taken 28 October 2026)
 

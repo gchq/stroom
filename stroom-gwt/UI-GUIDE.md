@@ -37,6 +37,8 @@ says.
 
 * **Its own stylesheet, BEM.** A component's styles are in its own stylesheet, `stroom-app/src/main/resources/ui/css/<block>.css` (lower-case kebab case, imported from `app.css`), with BEM classes (`block__element`, `block--modifier`, lower case); only shared classes stay in the shared stylesheets: the element defaults (`base.css`, no classes), the layout helpers (`layout-helpers.css`: `max`, the dock containers, `w-100`, `sr-only` and the rest), the shared patterns (`control-box`, `form-control-border`, `allow-focus` …) and the theme's variables.
 
+* **Checked in the build** (`TestStylesheets`, in `stroom-core-client`'s tests): every sheet is loaded and well formed, every class in Stroom's sheets and every class the code sets is named BEM style (Ace's and GWT's `popupContent` aside), every class the code sets is styled or belongs to a styled block (or is listed in the test's `HOOKS`, a class code or stories find an element by), and every block a sheet styles is named in the code. A rule for an element or modifier that nothing sets any more is found by the workbench's class census (`-PworkbenchTestArgs='--class-census <file>'`, `test-runner/README.md`).
+
 * **No inline styles.** A fixed style is a Stroom CSS class (an existing one first), and a value known only at runtime is a CSS custom property (`--block__property`), set with `CssProperties.set(element, name, value)`, that a class uses. `setVisible` is fine (it is state, not styling).
 
 ## Making, owning and releasing

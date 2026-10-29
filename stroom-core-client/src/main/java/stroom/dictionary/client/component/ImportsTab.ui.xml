@@ -10,7 +10,7 @@
             <form:FormGroup identity="dictionarySettingsImports"
                             label="Imports"
                             helpText="Other dictionaries whose words, and the words of their own imports, are added to this dictionary. Imported words come before this dictionary's own words."
-                            addStyleNames="default-min-sizes flex-grow-2">
+                            addStyleNames="default-min-sizes">
                 <g:SimplePanel ui:field="importsPanel" addStyleNames="dock-max stroom-control"/>
             </form:FormGroup>
             <form:FormGroup identity="dictionarySettingsWords"

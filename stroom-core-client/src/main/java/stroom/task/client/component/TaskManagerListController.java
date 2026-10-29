@@ -268,7 +268,7 @@ public class TaskManagerListController extends Controller implements Refreshable
                                 .build()));
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tableBuilder::write, Attribute.className("taskManager info-table"));
+        htmlBuilder.div(tableBuilder::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 

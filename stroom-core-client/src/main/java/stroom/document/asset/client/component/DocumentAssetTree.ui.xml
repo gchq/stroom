@@ -8,7 +8,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="max explorer-tree">
-        <dg:DataGrid ui:field="grid" addStyleNames="explorer-tree__grid documentAssetTree" profile="TREE"
+        <dg:DataGrid ui:field="grid" addStyleNames="explorer-tree__grid" profile="TREE"
                      cellPadding="false" fitWidth="true" hasContextMenu="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

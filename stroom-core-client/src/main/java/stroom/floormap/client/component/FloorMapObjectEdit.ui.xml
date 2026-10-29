@@ -25,7 +25,7 @@
              xmlns:a="urn:import:stroom.widget.component.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
 
-    <g:FlowPanel addStyleNames="floor-map-object-edit max dock-container-vertical form overflow-y-auto">
+    <g:FlowPanel addStyleNames="floor-map-object-edit max dock-container-vertical form">
 
                 <form:FormGroup label="Name" identity="floorMapObjectName">
                     <form:HelpHTML>

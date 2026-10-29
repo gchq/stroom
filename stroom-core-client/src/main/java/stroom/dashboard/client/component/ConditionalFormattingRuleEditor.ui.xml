@@ -34,7 +34,7 @@
                         label="Formatting Type"
                         helpText="How the style is applied to matching rows: Background colours the row background, Text colours the text only, and Custom uses your own colours."
                         screenReaderText="Background, Text or Custom.">
-            <l:SelectionBox ui:field="formattingType" addStyleNames="conditionalFormatTypeSelection"/>
+            <l:SelectionBox ui:field="formattingType" addStyleNames="conditional-formatting-rule-editor__type"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="styleGroup"

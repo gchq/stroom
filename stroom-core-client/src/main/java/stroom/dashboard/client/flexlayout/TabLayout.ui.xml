@@ -15,7 +15,7 @@
                     <!-- Shown when the pane is hovered over or has the focus (tabLayout-buttons) -->
                     <b:Toolbar name="Pane actions" addStyleNames="dock-min tab-layout__buttons icon-colour__grey">
                         <b:ToolbarButton ui:field="settings" svg="ELLIPSES_VERTICAL" title="Tab Actions"
-                                         opensMenu="true" addStyleNames="tabLayout-settingsButton"/>
+                                         opensMenu="true" addStyleNames="tab-layout__settings-button"/>
                     </b:Toolbar>
                 </g:FlowPanel>
                 <tab:LayerContainerImpl ui:field="layerContainer" styleName="tab-layout__content" fade="true"/>

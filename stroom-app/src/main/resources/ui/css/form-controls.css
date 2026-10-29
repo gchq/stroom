@@ -15,8 +15,8 @@
  */
 
 /* The shared patterns of a form: a box holding a control (a list, tree, grid or editor) framed and
-   filled as one (control-box), or only framed (form-control-border) or only filled
-   (form-control-background), and a form's heading (form-heading). */
+   filled as one (control-box), or only framed (form-control-border), and a form's heading
+   (form-heading). */
 
 /* A box holding a control, or a read-only field's text, framed and filled as an input is, in either
    theme, so it stands apart from the dialog around it */
@@ -31,12 +31,6 @@
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
     overflow: hidden;
-}
-
-/* A box holding a control in a form (a list, tree, grid or editor), or a read-only field's text:
-   filled as an input is, in either theme, so it stands apart from the dialog around it */
-.form-control-background {
-  background-color: var(--control__background-color);
 }
 
 .form-heading {

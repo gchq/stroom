@@ -36,7 +36,7 @@
             <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
         </b:ToolbarRow>
         <!-- The tree, shown once the explorer is first shown -->
-        <layout:ScrollPane addStyleNames="dock-max explorerTree-container">
+        <layout:ScrollPane addStyleNames="dock-max">
             <e:ExplorerTree ui:field="explorerTree" multiSelect="true" visible="false"/>
         </layout:ScrollPane>
         <!-- The current activity, when activities are used: pressing it chooses another -->
