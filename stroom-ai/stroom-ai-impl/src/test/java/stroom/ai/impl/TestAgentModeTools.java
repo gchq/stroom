@@ -245,7 +245,8 @@ class TestAgentModeTools {
                 runManager, Mockito.mock(WorkspaceStore.class),
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class),
-                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
+                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), new TurnSummaries(),
+                AiConfig::new, aiDao,
                 new UserActions(Mockito.mock(UserActionLookup.class)),
                 new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
         final List<ChatRequest> requests = new ArrayList<>();

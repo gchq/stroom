@@ -243,6 +243,7 @@ class McpAgentChat {
     private final AiAuditLog auditLog;
     private final ModelStreamer modelStreamer;
     private final ToolGroups.Activations toolGroupActivations;
+    private final TurnSummaries turnSummaries;
     private final Provider<AiConfig> aiConfigProvider;
     private final UserActions userActions;
     private final WorkspaceArguments workspaceArguments;
@@ -260,6 +261,7 @@ class McpAgentChat {
                  final AiAuditLog auditLog,
                  final ModelStreamer modelStreamer,
                  final ToolGroups.Activations toolGroupActivations,
+                 final TurnSummaries turnSummaries,
                  final Provider<AiConfig> aiConfigProvider,
                  final AiDao aiDao,
                  final UserActions userActions,
@@ -271,6 +273,7 @@ class McpAgentChat {
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.toolGroupActivations = toolGroupActivations;
+        this.turnSummaries = turnSummaries;
         this.aiConfigProvider = aiConfigProvider;
         this.modelStreamer = modelStreamer;
         this.builtInTools = builtInTools;
@@ -357,6 +360,9 @@ class McpAgentChat {
         // only some questions need, and a large set of MCP tools.
         ToolGroups toolGroups = ToolGroups.of(builtIns, mcpTools, toolset, toolGroupThreshold());
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
+        // A run carrying on with the question (e.g. once the user has filled in a form) has its steps from the
+        // store: the summary an earlier run wrote of them goes back in, rather than being written again.
+        turnSummaries.putBack(chatId, conversation);
         // On are the groups the chat used in its latest questions, and those the question's guidance needs.
         final ToolGroups groupsAtStart = toolGroups;
         toolGroupActivations.startRun(chatId, groupsAtStart::groupOf,
@@ -1042,7 +1048,9 @@ class McpAgentChat {
             if (NullSafe.isBlankString(summary)) {
                 throw new IllegalStateException("the model gave an empty summary");
             }
-            final int summarised = withTurnSummary(conversation, keptFrom, summary.strip());
+            final String note = turnSummaryNote(conversation, keptFrom, summary.strip());
+            turnSummaries.remember(chatId, conversation, keptFrom, note);
+            final int summarised = withNote(conversation, keptFrom, note);
             LOGGER.info(() -> LogUtil.message("Summarised {} earlier step(s) of chatId={} to keep within the "
                                               + "context window", summarised, chatId));
             return true;
@@ -1115,8 +1123,26 @@ class McpAgentChat {
     /// @param summary      The summary.
     /// @return How many steps were put in the summary.
     static int withTurnSummary(final List<ChatMessage> conversation, final int keptFrom, final String summary) {
-        final String note = TURN_SUMMARY_NOTE + "\n" + summary
-                            + ReferenceResults.toKeep(ReferenceResults.before(conversation, keptFrom));
+        return withNote(conversation, keptFrom, turnSummaryNote(conversation, keptFrom, summary));
+    }
+
+    /// @param conversation The conversation.
+    /// @param keptFrom     The index of the first step left as it is.
+    /// @param summary      The summary.
+    /// @return The note that holds the summary in place of the steps before `keptFrom`, with the results they read
+    /// for reference.
+    static String turnSummaryNote(final List<ChatMessage> conversation, final int keptFrom, final String summary) {
+        return TURN_SUMMARY_NOTE + "\n" + summary
+               + ReferenceResults.toKeep(ReferenceResults.before(conversation, keptFrom));
+    }
+
+    /// Puts the steps before `keptFrom` in a note, as [#withTurnSummary] does.
+    ///
+    /// @param conversation The conversation, changed in place.
+    /// @param keptFrom     The index of the first step left as it is.
+    /// @param note         The note, as [#turnSummaryNote] gives it.
+    /// @return How many steps were put in the note.
+    static int withNote(final List<ChatMessage> conversation, final int keptFrom, final String note) {
         final List<ChatMessage> result = new ArrayList<>();
         boolean noted = false;
         int summarised = 0;

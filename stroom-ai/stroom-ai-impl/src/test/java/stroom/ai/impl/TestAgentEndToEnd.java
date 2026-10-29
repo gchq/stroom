@@ -138,6 +138,7 @@ class TestAgentEndToEnd {
                 Mockito.mock(WorkspaceStore.class), usageTracker,
                 ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class), new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao),
+                new TurnSummaries(),
                 AiConfig::new, aiDao, new UserActions(lookup),
                 new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
     }

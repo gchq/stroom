@@ -438,7 +438,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
         return new McpAgentChat(aiService, builtInTools, runManager, Mockito.mock(WorkspaceStore.class),
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), AiConfig::new, aiDao,
                 new UserActions(Mockito.mock(UserActionLookup.class)),
                 new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
     }
