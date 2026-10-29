@@ -119,13 +119,10 @@ import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -791,60 +788,49 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private SafeHtml buildDeleteConfirmationDetail(final DeleteConfirmation info) {
-        final HtmlBuilder builder = HtmlBuilder.builder();
+        final DeleteConfirmationDetail detail = new DeleteConfirmationDetail();
 
         // Items contained within the folder(s) being deleted.
         if (info.hasChildItems()) {
             final int count = info.getTotalChildCount();
             if (count > 0) {
-                final String header = count == 1
+                // Summary: a header followed by one line per doc type count, then one icon + name row
+                // per item.
+                detail.addHeader(count == 1
                         ? "The following contained item will also be deleted:"
-                        : "The following " + count + " contained items will also be deleted:";
-                // Summary: a header div followed by one div per doc type count.
-                builder.div(header, Attribute.className("delete-confirm__summary-header"));
-                buildTypeCountLines(info.getChildTypeCounts()).forEach(line ->
-                        builder.div(line, Attribute.className("delete-confirm__type-count")));
-
-                // Extra gap between the summary and the detailed item list.
-                builder.div(hb -> {
-                }, Attribute.className("delete-confirm__gap"));
-
-                // Detail: one icon + name row per item.
-                appendDocRefRows(builder, info.getChildItems());
+                        : "The following " + count + " contained items will also be deleted:");
+                detail.addTypeCounts(buildTypeCountLines(info.getChildTypeCounts()));
+                detail.addDocuments(info.getChildItems());
                 if (info.isChildItemsTruncated()) {
-                    builder.div("…and more", Attribute.className("doc-ref-link"));
+                    detail.addMore();
                 }
             }
             if (info.isHasHiddenChildItems()) {
                 // Contained items the user cannot view they also cannot delete (permissions are
                 // hierarchical), and the server will not delete a folder that still contains such items.
-                final String msg = count > 0
+                detail.addNote(count > 0
                         ? "The folder also contains items you do not have permission to delete, so the "
                           + "folder itself will not be removed."
                         : "This folder contains items you do not have permission to delete, so it cannot "
-                          + "be removed.";
-                builder.br();
-                builder.append(msg);
+                          + "be removed.");
             }
         }
 
         // Items outside the selection that depend on what is being deleted.
         if (info.hasDependants()) {
             if (info.hasChildItems()) {
-                builder.br();
+                detail.addLineBreak();
             }
             if (NullSafe.hasItems(info.getVisibleDependants())) {
-                builder.div("The following items depend on this:",
-                        Attribute.className("delete-confirm__summary-header"));
-                appendDocRefRows(builder, info.getVisibleDependants());
+                detail.addHeader("The following items depend on this:");
+                detail.addDocuments(info.getVisibleDependants());
             }
             if (info.isHasHiddenDependants()) {
-                builder.br();
-                builder.append("There are also dependants that you do not have permission to view.");
+                detail.addNote("There are also dependants that you do not have permission to view.");
             }
         }
 
-        return builder.toSafeHtml();
+        return detail.toSafeHtml();
     }
 
     /**
@@ -870,29 +856,6 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     /**
-     * Render each DocRef as an icon + name row, reusing the same classes as the explorer/grid DocRef
-     * cells so it picks up the existing inline styling.
-     */
-    private void appendDocRefRows(final HtmlBuilder builder, final List<DocRef> docRefs) {
-        for (final DocRef docRef : docRefs) {
-            builder.div(hb -> {
-                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                if (documentType != null && documentType.getIcon() != null) {
-                    hb.append(SvgImageUtil.toSafeHtml(
-                            documentType.getDisplayType(),
-                            documentType.getIcon(),
-                            "icon-wrap",
-                            "docRefLinkIcon"));
-                }
-                final String name = NullSafe.isBlankString(docRef.getName())
-                        ? docRef.getUuid()
-                        : docRef.getName();
-                hb.append(name);
-            }, Attribute.className("doc-ref-link"));
-        }
-    }
-
-    /**
      * The delete-confirmation lookup failed, so we cannot say what would be affected. Warn the user
      * (surfacing the error) but still let them proceed with the delete rather than blocking it.
      */
@@ -906,11 +869,10 @@ public class DocumentPluginEventManager extends Plugin {
                   + "sure you want to delete them anyway?"
                 : "Unable to check what would be affected by deleting this item. Are you sure you want "
                   + "to delete it anyway?";
-        final HtmlBuilder detail = HtmlBuilder.builder();
-        detail.append("The check failed:");
+        final DeleteConfirmationDetail detail = new DeleteConfirmationDetail();
+        detail.addText("The check failed:");
         if (!NullSafe.isBlankString(errorMessage)) {
-            detail.br();
-            detail.append(errorMessage);
+            detail.addNote(errorMessage);
         }
         ConfirmEvent.fireWarn(
                 DocumentPluginEventManager.this,

@@ -4,6 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:annotation="urn:import:stroom.annotation.client"
+             xmlns:c="urn:import:stroom.annotation.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- An annotation's Annotation tab (annotation-edit.css) -->
     <g:FlowPanel styleName="annotation-edit">
@@ -31,7 +32,7 @@
                     <g:FlowPanel ui:field="historyContainer"
                                  styleName="max dock-container-vertical"
                                  visible="false">
-                        <tx:Html ui:field="historyHtml" styleName="dock-max annotation-edit__history-outer"/>
+                        <c:AnnotationHistory ui:field="history" styleName="dock-max annotation-edit__history-outer"/>
                         <b:Button ui:field="copyHistory" icon="COPY" text="Copy History"
                                   addStyleNames="dock-min allow-focus annotation-edit__copy-history"/>
                     </g:FlowPanel>
@@ -66,7 +67,9 @@
                                         helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself.">
                             <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
                                 <tx:Label ui:field="assignedTo" styleName="annotation-setting__value"/>
-                                <annotation:AssignYourselfLink ui:field="assignYourself"/>
+                                <b:LinkButton ui:field="assignYourself" text="Assign Yourself"
+                                  title="Assign this annotation to yourself"
+                                  addStyleNames="annotation-setting__assign-yourself"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>

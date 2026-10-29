@@ -16,12 +16,14 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AssignYourselfLink;
+import stroom.annotation.client.AssignYourself;
 import stroom.annotation.client.Lozenge;
 import stroom.annotation.client.SettingBlock;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
@@ -37,8 +39,6 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -46,7 +46,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /// An annotation's Annotation tab: its title and subject, its history with a box to add a comment
 /// to it, and its settings (status, who it is assigned to, labels, collections and retention
@@ -72,7 +71,7 @@ public class AnnotationEdit extends Component {
     @UiField
     Label assignedTo;
     @UiField
-    AssignYourselfLink assignYourself;
+    LinkButton assignYourself;
     @UiField
     Html labels;
     @UiField
@@ -88,7 +87,7 @@ public class AnnotationEdit extends Component {
     @UiField
     FlowPanel historyContainer;
     @UiField
-    Html historyHtml;
+    AnnotationHistory history;
     @UiField
     Button copyHistory;
     @UiField
@@ -115,10 +114,6 @@ public class AnnotationEdit extends Component {
     };
     private Runnable onSubjectChange = () -> {
     };
-    private Consumer<KeyDownEvent> onHistoryKeyDown = e -> {
-    };
-    private Consumer<MouseDownEvent> onHistoryMouseDown = e -> {
-    };
 
     /// Makes the tab, with no annotation.
     public AnnotationEdit() {
@@ -137,10 +132,11 @@ public class AnnotationEdit extends Component {
         create.setOnClick(this::onCreate);
         commentButton.setOnClick(this::onCommentButton);
         delete.setOnClick(this::onDelete);
-        assignYourself.setOnAssign(() -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF,
+        // The setting around it opens its chooser on a click: this click (or Enter or Space) is the
+        // button's own
+        assignYourself.addClickHandler(ClickEvent::stopPropagation);
+        assignYourself.setOnClick(() -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF,
                 assignYourself.getElement()));
-        historyHtml.addDomHandler(e -> onHistoryKeyDown.accept(e), KeyDownEvent.getType());
-        historyHtml.addMouseDownHandler(e -> onHistoryMouseDown.accept(e));
         copyHistory.setOnClick(() -> onAction.accept(AnnotationEditAction.COPY_HISTORY, copyHistory.getElement()));
 
         setAnnotationTitle(null);
@@ -214,7 +210,7 @@ public class AnnotationEdit extends Component {
     /// @param enabled Whether it is enabled.
     public void setAssignYourselfEnabled(final boolean enabled) {
         this.assignYourselfEnabled = enabled;
-        assignYourself.setState(!enabled, isReadOnly());
+        updateAssignYourself();
     }
 
     /// @param labels The labels, as lozenges, or none.
@@ -254,13 +250,20 @@ public class AnnotationEdit extends Component {
 
     /// Shows the history, scrolled to its end.
     ///
-    /// @param history The history.
-    public void setHistory(final SafeHtml history) {
-        historyHtml.setHTML(history);
+    /// @param entries  The history's entries, oldest first.
+    /// @param nowMs    The time now, that the entries' times are shown relative to.
+    /// @param readOnly Whether the entries can't be changed, so have no actions buttons.
+    public void setHistory(final List<AnnotationEntry> entries, final long nowMs, final boolean readOnly) {
+        history.setEntries(entries, nowMs, readOnly);
         historyContainer.setVisible(true);
         // Scroll the history to the bottom after update.
         Scheduler.get().scheduleDeferred(() ->
-                historyHtml.getElement().setScrollTop(historyHtml.getElement().getScrollHeight()));
+                history.getElement().setScrollTop(history.getElement().getScrollHeight()));
+    }
+
+    /// @return The history, for its controller to follow its links and show its entries' menus.
+    public AnnotationHistory getHistory() {
+        return history;
     }
 
     /// @return The comment, as entered.
@@ -302,17 +305,6 @@ public class AnnotationEdit extends Component {
         this.onSubjectChange = onSubjectChange;
     }
 
-    /// @param onHistoryKeyDown Given a key pressed in the history, e.g. on a link or an entry's
-    ///                         actions button.
-    public void setOnHistoryKeyDown(final Consumer<KeyDownEvent> onHistoryKeyDown) {
-        this.onHistoryKeyDown = onHistoryKeyDown;
-    }
-
-    /// @param onHistoryMouseDown Given a press in the history, e.g. on a link or an entry.
-    public void setOnHistoryMouseDown(final Consumer<MouseDownEvent> onHistoryMouseDown) {
-        this.onHistoryMouseDown = onHistoryMouseDown;
-    }
-
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
         titleTextBox.setReadOnly(readOnly);
@@ -326,7 +318,11 @@ public class AnnotationEdit extends Component {
         annotationLabelBlock.setReadOnly(readOnly);
         annotationCollectionBlock.setReadOnly(readOnly);
         annotationRetentionPeriodBlock.setReadOnly(readOnly);
-        assignYourself.setState(!assignYourselfEnabled, readOnly);
+        updateAssignYourself();
+    }
+
+    private void updateAssignYourself() {
+        AssignYourself.setState(assignYourself, !assignYourselfEnabled, isReadOnly());
     }
 
     private void finishTitleEdit() {

@@ -67,6 +67,11 @@
     height: 100%;
 }
 
+/* The small spinner's picture (an svg:Icon), holding its drawing with no line box around it */
+.busy-spinner__icon {
+    display: flex;
+}
+
 .busy-spinner__inner svg {
     width: 18px;
     height: 18px;

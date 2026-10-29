@@ -116,11 +116,8 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -837,22 +834,11 @@ public class TableController extends DashboardComponentController
                         ? row.getValues().get(i)
                         : "";
 
-                final SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-
-                // Wrap
-                if (column.getFormat() != null &&
-                    column.getFormat().getWrap() != null &&
-                    column.getFormat().getWrap()) {
-                    stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
-                }
-                // Grouped
-                if (column.getGroup() != null && column.getGroup() >= row.getDepth()) {
-                    stylesBuilder.fontWeight(Style.FontWeight.BOLD);
-                }
-
-                final SafeStyles style = stylesBuilder.toSafeStyles();
-
-                final TableRow.Cell cell = new TableRow.Cell(value, style);
+                final boolean wrap = column.getFormat() != null &&
+                                     column.getFormat().getWrap() != null &&
+                                     column.getFormat().getWrap();
+                final boolean grouped = column.getGroup() != null && column.getGroup() >= row.getDepth();
+                final TableRow.Cell cell = new TableRow.Cell(value, wrap, grouped);
                 cellsMap.put(column.getName(), cell);
                 cellsMap.put(column.getId(), cell);
             }

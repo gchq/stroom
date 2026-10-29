@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client;
 
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -156,12 +157,16 @@ public class PopupUtil {
                 newHeight = Math.min(newHeight, Window.getClientHeight() - (2 * WINDOW_MARGIN));
             }
             if (popupType == PopupType.POPUP) {
-                // A popup's content is its own (a menu, a list), so it is sized as GWT sizes it
+                // A popup's content is its own (a menu, a list), so it is its content that is sized,
+                // by popup.css from the popup's custom properties
+                final Element popupElement = popupPanel.getElement();
                 if (newWidth != w) {
-                    popupPanel.setWidth(newWidth + "px");
+                    CssProperties.set(popupElement, "--popup__width", newWidth + "px");
+                    popupElement.addClassName("popup--sized-width");
                 }
                 if (newHeight != h) {
-                    popupPanel.setHeight(newHeight + "px");
+                    CssProperties.set(popupElement, "--popup__height", newHeight + "px");
+                    popupElement.addClassName("popup--sized-height");
                 }
             } else {
                 // A dialog's container, sized by dialog.css from its custom properties

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-/* A results table's filter row (FilterCell): a filter box per column with its button, shown
-   while the table shows its value filters. */
+/* A results table's filter row (FilterCell): a filter box per column (a text field) with its
+   disable button over its right end, shown while the table shows its value filters. A filter that is
+   off (--disabled) has a box that looks disabled, but can still be changed. */
 
 .data-grid .dashboard-table-filter-cell {
     display: none;
@@ -27,17 +28,18 @@
     display: block;
 }
 
-.data-grid .dashboard-table-filter-cell-text {
+/* Room for the button */
+.data-grid .dashboard-table-filter-cell .text-field {
     padding-right: 25px;
 }
 
-.data-grid .dashboard-table-filter-cell-text-disabled {
+.data-grid .dashboard-table-filter-cell--disabled .text-field {
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
 
-.data-grid .dashboard-table-filter-cell-buttons {
+.data-grid .dashboard-table-filter-cell__buttons {
     position: absolute;
     display: flex;
     height: 100%;
@@ -47,7 +49,7 @@
     padding: 5px;
 }
 
-.data-grid .dashboard-table-filter-cell-disable-button {
+.data-grid .dashboard-table-filter-cell__disable-button {
     display: flex;
     position: relative;
     width: 22px;

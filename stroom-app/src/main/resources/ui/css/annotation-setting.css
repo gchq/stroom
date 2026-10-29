@@ -46,3 +46,19 @@
 .setting-block:has(> .setting-block__icon:focus-visible) .annotation-setting__value--empty {
     color: var(--text-color);
 }
+
+/* 'Assign Yourself' beside who it is assigned to (a LinkButton, AssignYourself) */
+.annotation-setting__assign-yourself {
+    display: inline-block;
+    color: var(--link__text-color);
+    padding-top: 5px;
+    text-decoration: underline;
+}
+
+/* Already assigned to you, or read only: shown, but greyed and not underlined, even on a hover */
+.annotation-setting__assign-yourself[aria-disabled="true"],
+.annotation-setting__assign-yourself[aria-disabled="true"]:hover {
+    color: var(--text-color--disabled);
+    cursor: default;
+    text-decoration: none;
+}

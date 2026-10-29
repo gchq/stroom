@@ -1,9 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A small spinner (busy-spinner.css); its picture is put in the inner element -->
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
-    <div class="busy-spinner busy-spinner--small">
+<!-- A small spinner (busy-spinner.css): its picture, turning while SpinnerSmall says so -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:svg="urn:import:stroom.svg.client">
+    <g:HTMLPanel styleName="busy-spinner busy-spinner--small">
         <div class="busy-spinner__outer">
-            <div ui:field="inner" class="busy-spinner__inner" title="Loading..."></div>
+            <div class="busy-spinner__inner" title="Loading...">
+                <svg:Icon image="SPINNER_SPINNING" addStyleNames="busy-spinner__icon"/>
+            </div>
         </div>
-    </div>
+    </g:HTMLPanel>
 </ui:UiBinder>

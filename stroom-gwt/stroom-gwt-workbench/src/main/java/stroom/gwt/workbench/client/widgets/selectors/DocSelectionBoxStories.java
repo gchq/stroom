@@ -182,7 +182,8 @@ public final class DocSelectionBoxStories {
                     play.expect(play.querySelector(".form-group__feedback")).toHaveTextContent(TextMatch.containing(
                             "'Deleted Feed' can't be found, or you don't have permission to see it."));
                     play.expect(picker).toHaveAccessibleDescription(TextMatch.containing("doesn't exist"));
-                    play.expect(play.querySelectorAll(".drop-down__feedback")).toHaveLength(0);
+                    // The picker's own feedback line stays hidden
+                    play.expect(play.querySelector(".drop-down__feedback")).not().toBeVisible();
                 })
                 // The node flags filter (e.g. data sources) is sent with the popup's tree fetch
                 .story("NodeFlagsForwarded", context -> {

@@ -37,7 +37,9 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -50,6 +52,7 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -82,6 +85,7 @@ import java.util.Set;
 public class PipelinePathBar extends AbstractPipelineTree {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final Template TEMPLATE = GWT.create(Template.class);
 
     private static final String BASE_CLASS = "pipeline-path-bar";
     private static final String SEGMENT_CLASS = BASE_CLASS + "__segment";
@@ -89,18 +93,14 @@ public class PipelinePathBar extends AbstractPipelineTree {
     private static final String LAST_CLASS = SEGMENT_CLASS + "--last";
     private static final String COLLAPSED_CLASS = SEGMENT_CLASS + "--collapsed";
     private static final String ELLIPSIS_CLASS = SEGMENT_CLASS + "--ellipsis";
-    private static final String SHAPE_CLASS = BASE_CLASS + "__shape";
     private static final String PULSE_CLASS = SEGMENT_CLASS + "--pulse";
     private static final String SEVERITY_CLASS = BASE_CLASS + "__severity";
     private static final String BRANCH_SEVERITY_CLASS = BASE_CLASS + "__branch-severity";
     private static final String BRANCH_SEVERITY_PULSE_CLASS = BRANCH_SEVERITY_CLASS + "--pulse";
     private static final String BUTTON_CLASS = BASE_CLASS + "__button";
-    private static final String CONTENT_CLASS = BASE_CLASS + "__content";
     private static final String CARET_CLASS = BASE_CLASS + "__caret";
     private static final String ICON_CLASS = BASE_CLASS + "__icon";
     private static final String LABEL_CLASS = BASE_CLASS + "__label";
-    private static final String LABEL_TEXT_CLASS = BASE_CLASS + "__label-text";
-    private static final String DATA_TEXT_ATTRIBUTE = "data-text";
     private static final String FILTER_CLASS = BASE_CLASS + "__filter";
     private static final String BRANCH_FILTER_CLASS = BASE_CLASS + "__branch-filter";
     private static final String MENU_FILTER_CLASS = BASE_CLASS + "__menu-filter";
@@ -108,14 +108,10 @@ public class PipelinePathBar extends AbstractPipelineTree {
 
     private static final String INDEX_ATTRIBUTE = "data-index";
     private static final String ELEMENT_ID_ATTRIBUTE = "data-element-id";
-    private static final String ROLE = "role";
     private static final String TABINDEX = "tabindex";
-    private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_CURRENT = "aria-current";
     private static final String ARIA_DISABLED = "aria-disabled";
-    private static final String ARIA_HAS_POPUP = "aria-haspopup";
     private static final String ARIA_EXPANDED = "aria-expanded";
-    private static final String ARIA_HIDDEN = "aria-hidden";
     // The bar's controls: each chevron's button, and the drop down chevron of each after a fork
     private static final String BUTTON_SELECTOR = "[role=button]";
     // How the control that had the focus is found again after the bar is redrawn
@@ -382,108 +378,85 @@ public class PipelinePathBar extends AbstractPipelineTree {
         final boolean disabled = isDisabled(element);
         final boolean filters = hasActiveFilters(element);
 
-        final Element segment = Document.get().createDivElement();
-        segment.setClassName(SEGMENT_CLASS);
+        final double pulseElapsed = getPulseElapsed(element);
+
+        final StringBuilder className = new StringBuilder(SEGMENT_CLASS);
         if (index == 0) {
-            segment.addClassName(FIRST_CLASS);
+            className.append(' ').append(FIRST_CLASS);
         }
         if (index == steps.size() - 1) {
-            segment.addClassName(LAST_CLASS);
+            className.append(' ').append(LAST_CLASS);
         }
-        segment.setAttribute(INDEX_ATTRIBUTE, String.valueOf(index));
-        segment.setAttribute(ELEMENT_ID_ATTRIBUTE, element.getId());
-        segment.appendChild(createShape());
-        setSeverity(segment, severity, getPulseElapsed(element));
+        appendSeverityClasses(className, severity, pulseElapsed);
 
-        final String description = describe(element, severity, filters, disabled);
-        final Element button = createButton(description);
-        final Element content = createContent(description);
+        final SafeHtmlBuilder content = new SafeHtmlBuilder();
+        final SvgImage icon = NullSafe.get(getElementType(element), PipelineElementType::getIcon);
+        if (icon != null) {
+            content.append(icon(icon, ICON_CLASS));
+        }
+        content.append(TEMPLATE.label(element.getDisplayName()));
+        appendMarks(content, severity, filters);
+
+        final SafeHtmlBuilder parts = new SafeHtmlBuilder();
+        parts.append(TEMPLATE.button(describe(element, severity, filters, disabled), content.toSafeHtml()));
+        if (step.isAfterFork()) {
+            // Whether the branches not shown have filters is for sight only here: the drop down
+            // chevron's name says so
+            if (step.hiddenFilters()) {
+                parts.append(icon(SvgImage.FILTER, BRANCH_FILTER_CLASS));
+            }
+            parts.append(createCaret(step));
+        }
+
+        final Element segment = toElement(TEMPLATE.segment(
+                className.toString(), String.valueOf(index), element.getId(), parts.toSafeHtml()));
+        // The button's states: its element is selected, or can't be stepped
+        final Element button = segment.getFirstChildElement().getNextSiblingElement();
         if (element.equals(selected)) {
             button.setAttribute(ARIA_CURRENT, "true");
         }
         if (disabled) {
             button.setAttribute(ARIA_DISABLED, "true");
         }
-        final SvgImage icon = NullSafe.get(getElementType(element), PipelineElementType::getIcon);
-        if (icon != null) {
-            content.appendChild(createIcon(icon, ICON_CLASS));
-        }
-        content.appendChild(createLabel(element.getDisplayName()));
-        final SvgImage severityIcon = getSeverityIcon(severity);
-        if (severityIcon != null) {
-            content.appendChild(createIcon(severityIcon, SEVERITY_CLASS));
-        }
-        if (filters) {
-            content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
-        }
-        button.appendChild(content);
-        segment.appendChild(button);
-
-        if (step.isAfterFork()) {
-            // Whether the branches not shown have filters is for sight only here: the drop down
-            // chevron's name says so
-            if (step.hiddenFilters()) {
-                segment.appendChild(createIcon(SvgImage.FILTER, BRANCH_FILTER_CLASS));
-            }
-            segment.appendChild(createCaret(step));
+        setPulseDelay(segment, pulseElapsed);
+        final Element badge = ElementUtil.findChild(segment, BRANCH_SEVERITY_PULSE_CLASS);
+        if (badge != null) {
+            CssProperties.set(badge, PULSE_DELAY, -Math.round(getHiddenPulseElapsed(step)) + "ms");
         }
         return segment;
     }
 
-    // A control of the bar, named by its description
-    private static Element createButton(final String description) {
-        final Element button = Document.get().createSpanElement();
-        button.setClassName(BUTTON_CLASS);
-        button.setAttribute(ROLE, "button");
-        button.setAttribute(TABINDEX, "-1");
-        button.setAttribute(ARIA_LABEL, description);
-        return button;
+    // The marks after a chevron's name, for sight only (its name says so): the icon of its
+    // severity, and whether it has stepping filters
+    private static void appendMarks(final SafeHtmlBuilder content, final Severity severity, final boolean filters) {
+        final SvgImage severityIcon = getSeverityIcon(severity);
+        if (severityIcon != null) {
+            content.append(icon(severityIcon, SEVERITY_CLASS));
+        }
+        if (filters) {
+            content.append(icon(SvgImage.FILTER, FILTER_CLASS));
+        }
     }
 
-    // What a control shows, with its description as a hover tip. It is hidden from screen readers,
-    // as a title on the control itself would be read again after its name, as its description.
-    private static Element createContent(final String description) {
-        final Element content = Document.get().createSpanElement();
-        content.setClassName(CONTENT_CLASS);
-        content.setAttribute(ARIA_HIDDEN, "true");
-        content.setTitle(description);
-        return content;
-    }
-
-    // A chevron's name. It holds its text in data-text too, so that it can keep room for its text
-    // in bold (see pipeline-path-bar.css)
-    private static Element createLabel(final String text) {
-        final Element label = Document.get().createSpanElement();
-        label.setClassName(LABEL_CLASS);
-        label.setAttribute(DATA_TEXT_ATTRIBUTE, text);
-        final Element labelText = Document.get().createSpanElement();
-        labelText.setClassName(LABEL_TEXT_CLASS);
-        labelText.setInnerText(text);
-        label.appendChild(labelText);
-        return label;
-    }
-
-    // The chevron's shape, under its content: its border, and its fill (its ::before, see
-    // pipeline-path-bar.css)
-    private static Element createShape() {
-        final Element shape = Document.get().createSpanElement();
-        shape.setClassName(SHAPE_CLASS);
-        shape.setAttribute(ARIA_HIDDEN, "true");
-        return shape;
-    }
-
-    // Gives a chevron a thicker border in the colour of a severity of warnings or worse, pulsing if
-    // it began pulsing the given number of milliseconds ago (or not if negative). The pulse is
-    // carried on from where it had got to, as the chevron may have been redrawn while it pulsed.
-    private static void setSeverity(final Element segment, final Severity severity, final double pulseElapsed) {
+    // A chevron's thicker border in the colour of a severity of warnings or worse, pulsing if it
+    // began pulsing the given number of milliseconds ago (or not if negative)
+    private static void appendSeverityClasses(final StringBuilder className,
+                                              final Severity severity,
+                                              final double pulseElapsed) {
         final String severityClass = getSeverityClass(SEGMENT_CLASS, severity);
         if (severityClass != null) {
-            segment.addClassName(severityClass);
+            className.append(' ').append(severityClass);
             if (pulseElapsed >= 0) {
-                segment.addClassName(PULSE_CLASS);
-                final Element shape = segment.getFirstChildElement();
-                CssProperties.set(shape, PULSE_DELAY, -Math.round(pulseElapsed) + "ms");
+                className.append(' ').append(PULSE_CLASS);
             }
+        }
+    }
+
+    // A pulsing chevron's pulse is carried on from where it had got to, as the chevron may have been
+    // redrawn while it pulsed: its shape's delay (pipeline-path-bar.css)
+    private static void setPulseDelay(final Element segment, final double pulseElapsed) {
+        if (segment.hasClassName(PULSE_CLASS)) {
+            CssProperties.set(segment.getFirstChildElement(), PULSE_DELAY, -Math.round(pulseElapsed) + "ms");
         }
     }
 
@@ -491,26 +464,25 @@ public class PipelinePathBar extends AbstractPipelineTree {
     // path could follow there. The icon of the worst severity in the branches not shown is a badge
     // on it, so that it isn't taken for its element's own; it is for sight only, as its name says
     // so.
-    private Element createCaret(final Step step) {
-        final Element caret = createButton(describeCaret(step));
-        caret.setClassName(CARET_CLASS);
-        caret.setAttribute(ARIA_HAS_POPUP, "menu");
-        caret.setAttribute(ARIA_EXPANDED, "false");
-        final Element arrow = createContent(describeCaret(step));
-        arrow.setClassName(CARET_CLASS + "-target");
-        arrow.appendChild(createIcon(SvgImage.ARROW_DOWN, CARET_CLASS + "-arrow"));
+    private SafeHtml createCaret(final Step step) {
+        final SafeHtmlBuilder arrow = new SafeHtmlBuilder();
+        arrow.append(icon(SvgImage.ARROW_DOWN, CARET_CLASS + "-arrow"));
         final SvgImage hiddenSeverityIcon = getSeverityIcon(step.hiddenSeverity());
         if (hiddenSeverityIcon != null) {
-            final Element badge = createIcon(hiddenSeverityIcon, BRANCH_SEVERITY_CLASS);
-            final double pulseElapsed = getHiddenPulseElapsed(step);
-            if (pulseElapsed >= 0) {
-                badge.addClassName(BRANCH_SEVERITY_PULSE_CLASS);
-                CssProperties.set(badge, PULSE_DELAY, -Math.round(pulseElapsed) + "ms");
-            }
-            arrow.appendChild(badge);
+            arrow.append(icon(hiddenSeverityIcon, getHiddenPulseElapsed(step) >= 0
+                    ? BRANCH_SEVERITY_CLASS + " " + BRANCH_SEVERITY_PULSE_CLASS
+                    : BRANCH_SEVERITY_CLASS));
         }
-        caret.appendChild(arrow);
-        return caret;
+        return TEMPLATE.caret(describeCaret(step), arrow.toSafeHtml());
+    }
+
+    // The element the HTML makes, a chevron
+    private static Element toElement(final SafeHtml html) {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerSafeHtml(html);
+        final Element element = holder.getFirstChildElement();
+        element.removeFromParent();
+        return element;
     }
 
     // How long ago the latest pulse in the branches not shown at a fork began, or -1 for none
@@ -553,13 +525,11 @@ public class PipelinePathBar extends AbstractPipelineTree {
         };
     }
 
-    // An icon for sight only: the chevron's name describes what it shows
-    private static Element createIcon(final SvgImage icon, final String className) {
-        final Element holder = Document.get().createSpanElement();
-        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(icon, "icon-wrap", className));
-        final Element iconElement = holder.getFirstChildElement();
-        iconElement.setAttribute(ARIA_HIDDEN, "true");
-        return iconElement;
+    // An icon for sight only: the chevron's name describes what it shows. The markup is
+    // SvgImageUtil's, hidden from screen readers
+    private static SafeHtml icon(final SvgImage icon, final String className) {
+        return TEMPLATE.icon(SvgImage.BASE_CLASS_NAME + " " + icon.getClassName() + " icon-wrap " + className,
+                SafeHtmlUtil.getSafeHtmlFromSafeConstant(icon.getSvg()));
     }
 
     // e.g. "xmlWriter, XML Writer, has errors"
@@ -692,24 +662,14 @@ public class PipelinePathBar extends AbstractPipelineTree {
 
         // It has the border of the worst severity it collapses, and pulses if any of it pulses.
         // Its button is a menu button, listing the elements it collapses.
-        final Element ellipsis = Document.get().createDivElement();
-        ellipsis.setClassName(SEGMENT_CLASS + " " + ELLIPSIS_CLASS);
-        ellipsis.appendChild(createShape());
-        setSeverity(ellipsis, worst, pulseElapsed);
-        final Element button = createButton(description.toString());
-        button.setAttribute(ARIA_HAS_POPUP, "menu");
-        button.setAttribute(ARIA_EXPANDED, "false");
-        final Element content = createContent(description.toString());
-        content.appendChild(createLabel(ELLIPSIS_TEXT));
-        final SvgImage severityIcon = getSeverityIcon(worst);
-        if (severityIcon != null) {
-            content.appendChild(createIcon(severityIcon, SEVERITY_CLASS));
-        }
-        if (filters) {
-            content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
-        }
-        button.appendChild(content);
-        ellipsis.appendChild(button);
+        final StringBuilder className = new StringBuilder(SEGMENT_CLASS + " " + ELLIPSIS_CLASS);
+        appendSeverityClasses(className, worst, pulseElapsed);
+        final SafeHtmlBuilder content = new SafeHtmlBuilder();
+        content.append(TEMPLATE.label(ELLIPSIS_TEXT));
+        appendMarks(content, worst, filters);
+        final Element ellipsis = toElement(TEMPLATE.ellipsis(
+                className.toString(), TEMPLATE.menuButton(description.toString(), content.toSafeHtml())));
+        setPulseDelay(ellipsis, pulseElapsed);
         return ellipsis;
     }
 
@@ -1248,5 +1208,43 @@ public class PipelinePathBar extends AbstractPipelineTree {
 
     interface Binder extends UiBinder<Widget, PipelinePathBar> {
 
+    }
+
+
+    // The bar's chevrons. A chevron's shape is under its content: its border, and its fill (its
+    // ::before, see pipeline-path-bar.css). Each control is named by its description, and what it
+    // shows has the description as a hover tip, hidden from screen readers, as a title on the
+    // control itself would be read again after its name, as its description. A chevron's name holds
+    // its text in data-text too, so that it can keep room for its text in bold.
+    interface Template extends SafeHtmlTemplates {
+
+        @Template("<div class=\"{0}\" data-index=\"{1}\" data-element-id=\"{2}\">"
+                  + "<span class=\"pipeline-path-bar__shape\" aria-hidden=\"true\"></span>{3}</div>")
+        SafeHtml segment(String className, String index, String elementId, SafeHtml parts);
+
+        @Template("<div class=\"{0}\"><span class=\"pipeline-path-bar__shape\" aria-hidden=\"true\"></span>{1}</div>")
+        SafeHtml ellipsis(String className, SafeHtml button);
+
+        @Template("<span class=\"pipeline-path-bar__button\" role=\"button\" tabindex=\"-1\" aria-label=\"{0}\">"
+                  + "<span class=\"pipeline-path-bar__content\" aria-hidden=\"true\" title=\"{0}\">{1}</span></span>")
+        SafeHtml button(String description, SafeHtml content);
+
+        @Template("<span class=\"pipeline-path-bar__button\" role=\"button\" tabindex=\"-1\" aria-label=\"{0}\" "
+                  + "aria-haspopup=\"menu\" aria-expanded=\"false\">"
+                  + "<span class=\"pipeline-path-bar__content\" aria-hidden=\"true\" title=\"{0}\">{1}</span></span>")
+        SafeHtml menuButton(String description, SafeHtml content);
+
+        @Template("<span class=\"pipeline-path-bar__caret\" role=\"button\" tabindex=\"-1\" aria-label=\"{0}\" "
+                  + "aria-haspopup=\"menu\" aria-expanded=\"false\">"
+                  + "<span class=\"pipeline-path-bar__caret-target\" aria-hidden=\"true\" title=\"{0}\">{1}</span>"
+                  + "</span>")
+        SafeHtml caret(String description, SafeHtml arrow);
+
+        @Template("<span class=\"pipeline-path-bar__label\" data-text=\"{0}\">"
+                  + "<span class=\"pipeline-path-bar__label-text\">{0}</span></span>")
+        SafeHtml label(String text);
+
+        @Template("<div class=\"{0}\" aria-hidden=\"true\">{1}</div>")
+        SafeHtml icon(String className, SafeHtml svg);
     }
 }

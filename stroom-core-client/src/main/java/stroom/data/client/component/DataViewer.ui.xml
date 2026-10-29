@@ -6,7 +6,8 @@
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:pb="urn:import:stroom.widget.progress.client.component"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:btn="urn:import:stroom.widget.button.client">
     <d:ClassificationWrapper ui:field="classificationWrapper">
         <d:content>
             <g:FlowPanel styleName="max dock-container-vertical">
@@ -15,14 +16,13 @@
                         <tab:LinkTabBar ui:field="tabBar"
                                         addStyleNames="max data-viewer__tab-bar-inner"/>
                     </g:FlowPanel>
-                    <g:HTMLPanel ui:field="rightPanel" styleName="dock-min data-viewer__right-panel">
+                    <g:HTMLPanel styleName="dock-min data-viewer__right-panel">
                         <div class="data-viewer__button-panel"></div>
                         <g:SimplePanel styleName="data-viewer__navigator-container">
                             <d:ItemNavigator ui:field="navigator"/>
                         </g:SimplePanel>
-                        <!-- A link drawn as text: a button that the keyboard can reach and press -->
-                        <div ui:field="sourceLink" class="data-viewer__source-link-label"
-                             role="button" tabindex="0">View Source</div>
+                        <btn:LinkButton ui:field="sourceLink" addStyleNames="data-viewer__source-link-label"
+                                        text="View Source"/>
                     </g:HTMLPanel>
                 </g:FlowPanel>
                 <g:SimplePanel styleName="dock-min data-viewer__progress-bar-panel">

@@ -17,6 +17,7 @@
 package stroom.security.identity.client.component;
 
 import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.PasswordBox;
@@ -32,7 +33,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -63,9 +63,10 @@ public class ChangePassword extends Component {
     DivElement strengthMeterBar;
     @UiField
     Label confirmPasswordFeedback;
-
     // The new password's length, in its box, coloured by whether it meets the policy
-    private final SimplePanel passwordLengthBadge = new SimplePanel();
+    @UiField
+    AriaPanel passwordLengthBadge;
+
     private InternalIdpPasswordPolicyConfig passwordPolicyConfig;
     private Runnable onEnter = () -> {
     };
@@ -77,11 +78,6 @@ public class ChangePassword extends Component {
         confirmPassword.addKeyDownHandler(this::onConfirmPasswordKeyDown);
         password.addValueChangeHandler(this::onPassword);
         password.addKeyUpHandler(this::onPasswordKeyUp);
-
-        // The length is shown as a picture only: the strength meter says how good the password is
-        passwordLengthBadge.setStyleName(LENGTH_BLOCK + " " + LENGTH_BLOCK + "--short");
-        passwordLengthBadge.getElement().setAttribute("aria-hidden", "true");
-        password.setBadge(passwordLengthBadge);
 
         // The policy describes the password field, so that it is read with it
         final Element policy = passwordPolicyMessage.getElement();

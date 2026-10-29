@@ -402,7 +402,7 @@ public final class ViewStateStories {
     }
 
     private static Widget sized(final Widget widget) {
-        widget.getElement().getStyle().setProperty("width", "240px");
+        widget.setWidth("240px");
         widget.getElement().getStyle().setProperty("boxSizing", "border-box");
         return widget;
     }
@@ -523,6 +523,12 @@ public final class ViewStateStories {
         private PickerField() {
             box.setText("My Pipeline");
             initWidget(box);
+        }
+
+        // The picker's button takes the width (its root is a wrapper with no box of its own)
+        @Override
+        public void setWidth(final String width) {
+            box.setWidth(width);
         }
     }
 

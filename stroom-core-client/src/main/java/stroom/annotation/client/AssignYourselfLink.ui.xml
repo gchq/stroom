@@ -1,6 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- An annotation's 'Assign Yourself' link: a button the keyboard reaches and presses -->
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
-    <div class="assign-yourself-link" role="button" tabindex="0"
-         title="Assign this annotation to yourself">Assign Yourself</div>
-</ui:UiBinder>

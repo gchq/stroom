@@ -16,20 +16,18 @@
 
 package stroom.alert.client.component;
 
+import stroom.svg.client.Icon;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.popup.client.PopupUtil;
 import stroom.widget.text.client.Html;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -46,13 +44,15 @@ public class CommonAlert extends Component {
     private static final RegExp STACK_TRACE_PATTERN = RegExp.compile("<br>(\\sat |Caused by: )");
 
     @UiField
-    DivElement icon;
+    Icon icon;
     @UiField
     Html message;
     @UiField
     LinkButton showHideDetail;
     @UiField
     AriaPanel detail;
+    @UiField
+    Html detailText;
 
     private boolean detailVisible;
 
@@ -62,7 +62,7 @@ public class CommonAlert extends Component {
         // The button shows and hides the detail
         final String detailId = DOM.createUniqueId();
         detail.getElement().setId(detailId);
-        showHideDetail.getElement().setAttribute("aria-controls", detailId);
+        showHideDetail.setAriaControls(detailId);
         // A button, so this is a click, Enter or Space
         showHideDetail.setOnClick(() -> showDetail(!detailVisible));
 
@@ -101,11 +101,7 @@ public class CommonAlert extends Component {
     /// @param html The detail, or null or empty for none.
     public void setDetail(final SafeHtml html) {
         if (html != null && !html.asString().isEmpty()) {
-            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-            builder.appendHtmlConstant("<div class=\"common-alert__detail-text\">");
-            builder.append(html);
-            builder.appendHtmlConstant("</div>");
-            detail.getElement().setInnerHTML(builder.toSafeHtml().asString());
+            detailText.setHTML(html);
             showDetail(!STACK_TRACE_PATTERN.test(html.asString()));
         } else {
             showHideDetail.setVisible(false);
@@ -114,7 +110,7 @@ public class CommonAlert extends Component {
     }
 
     private void setMessage(final SvgImage svgImage, final SafeHtml html) {
-        icon.setInnerSafeHtml(SvgImageUtil.toSafeHtml(svgImage));
+        icon.setImage(svgImage);
         if (html.asString().length() > MAX_MESSAGE_LENGTH) {
             message.setText("");
             setDetail(html);
@@ -128,7 +124,7 @@ public class CommonAlert extends Component {
         if (!message.getText().trim().isEmpty()) {
             return message.getElement();
         }
-        return detail.getElement().hasChildNodes()
+        return !detailText.getHTML().isEmpty()
                 ? detail.getElement()
                 : null;
     }
@@ -136,7 +132,7 @@ public class CommonAlert extends Component {
     private void showDetail(final boolean show) {
         this.detailVisible = show;
         showHideDetail.setVisible(true);
-        showHideDetail.getElement().setAttribute("aria-expanded", String.valueOf(show));
+        showHideDetail.setAriaExpanded(show);
         detail.setVisible(show);
     }
 

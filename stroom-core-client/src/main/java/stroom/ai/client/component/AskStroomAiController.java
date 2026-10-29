@@ -52,10 +52,7 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.Size;
-import stroom.widget.util.client.SvgMarkup;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -64,6 +61,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -74,18 +73,11 @@ public class AskStroomAiController extends Controller
 
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
     private static final int DEFAULT_DOCK_HEIGHT = 250;
-    private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
-    private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
-    private static final String PENDING_USER_MESSAGE_ID = "ai-pending-user-message";
 
     private final AskStroomAi view;
 
     private static final int DEFAULT_DOCK_WIDTH = 350;
     private static final int MAX_TITLE_LENGTH = 60;
-    private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
-    private static final String WORKING_MESSAGE_ID = "ai-working-message";
-    // The user's message as rendered when sent, until the poll brings back the stored message
-    private static final String WORKING_TEXT_ID = "ai-working-text";
 
     private final DocSelectionController modelSelection;
     private final MarkdownConverter markdownConverter;
@@ -377,15 +369,11 @@ public class AskStroomAiController extends Controller
         view.setEmptyState(false);
         view.clearContextIndicator();
 
+        // Shown at once, scrolled to, until the poll brings back the stored message
         final long nowMs = System.currentTimeMillis();
-        final HtmlBuilder hb = new HtmlBuilder();
-        appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
-                nowMs, nowMs, false, 0, false);
-        appendToContainer(hb);
-        markPendingUserMessage();
-
-        // Scrolled to the bottom, so the user's message is displayed
-        view.scrollToLatest();
+        view.addPendingMessage(new AskStroomAi.Message(AiMessageType.USER_MESSAGE, 0, message,
+                markdownConverter.convertMarkdownToHtml("> " + message), null,
+                dateTimeFormatter.formatRelative(nowMs, nowMs), dateTimeFormatter.format(nowMs)));
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
             final AskStroomAiRequest request = new AskStroomAiRequest(
@@ -463,19 +451,19 @@ public class AskStroomAiController extends Controller
                                            && !response.getNewMessages().isEmpty();
             if (hasNewMessages) {
                 final long nowMs = System.currentTimeMillis();
-                final HtmlBuilder hb = new HtmlBuilder();
+                final List<AskStroomAi.Message> messages = new ArrayList<>();
                 for (final AiChatMessage msg : response.getNewMessages()) {
-                    // A USER_MESSAGE was rendered inline when it was sent, but without its id, so it
-                    // is replaced by the stored one (which can then be deleted)
+                    // A USER_MESSAGE was shown when it was sent, but without its id, so it is
+                    // replaced by the stored one (which can then be deleted)
                     if (msg.getMessageType() != AiMessageType.USER_MESSAGE
-                        || !replacePendingUserMessage(msg, nowMs)) {
-                        renderMessage(hb, msg, nowMs);
+                        || !view.replacePendingMessage(toMessage(msg, nowMs))) {
+                        messages.add(toMessage(msg, nowMs));
                     }
                     // Track the highest seen message ID.
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
                 // Scroll to show new content.
-                appendToContainer(hb);
+                view.addMessages(messages);
             }
 
             // Update attachment status elements in-place.
@@ -508,218 +496,45 @@ public class AskStroomAiController extends Controller
         }, view);
     }
 
-    /// Marks the last message in the container, the user's message just sent, as pending.
-    private void markPendingUserMessage() {
-        // Only the latest message sent is pending
-        view.markLastMessage(PENDING_USER_MESSAGE_ID);
-    }
-
-    /// Replaces the pending user message with the stored one.
-    ///
-    /// @return False if there is no pending message to replace.
-    private boolean replacePendingUserMessage(final AiChatMessage msg, final long nowMs) {
-        if (!view.hasPart(PENDING_USER_MESSAGE_ID)) {
-            return false;
-        }
-        final HtmlBuilder hb = new HtmlBuilder();
-        renderMessage(hb, msg, nowMs);
-        return view.replaceMessage(PENDING_USER_MESSAGE_ID, hb.toSafeHtml());
-    }
-
-    void appendToContainer(final HtmlBuilder hb) {
-        view.appendMessages(hb.toSafeHtml());
-    }
-
-    /// Render a single message with type-aware HTML structure.
-    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg, final long nowMs) {
-        final long timeMs = msg.getCreateTimeMs();
-        final int messageId = msg.getId();
-        final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE
-                                  || msg.getMessageType() == AiMessageType.ATTACHMENT;
-        switch (msg.getMessageType()) {
-            case USER_MESSAGE:
-                appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
-                        timeMs, nowMs, false, messageId, deletable);
-                break;
-            case AI_RESPONSE:
-                appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
-                        timeMs, nowMs, true, messageId, false);
-                break;
-            case ERROR:
-                appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
-                        timeMs, nowMs, false, messageId, false);
-                break;
-            case WORKING:
-                appendWorkingMessage(hb, msg, timeMs, nowMs);
-                break;
-            case THINKING:
-                appendDetailsElement(hb, "ai-message ai-message--thinking",
-                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs, nowMs);
-                break;
-            case DASHBOARD_DATA:
-            case QUERY_DATA:
-            case TABLE_DATA:
-                appendDetailsElement(hb, "ai-message ai-message--data",
-                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs, nowMs);
-                break;
-            case DEBUG_DETAIL:
-                appendDetailsElement(hb, "ai-message ai-message--debug-detail",
-                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs, nowMs);
-                break;
-            case ATTACHMENT:
-                appendAttachmentMessage(hb, msg, timeMs, nowMs, messageId, deletable);
-                break;
-            default:
-                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, nowMs, false, 0, false);
-                break;
-        }
-    }
-
-    /// Append a message div with the given CSS class, markdown content, and timestamp.
-    /// If `showCopy` is true, a copy button is added for AI responses.
-    private void appendMessageHtml(final HtmlBuilder hb,
-                                   final String cssClass,
-                                   final String markdownText,
-                                   final long timeMs,
-                                   final long nowMs,
-                                   final boolean showCopy,
-                                   final int messageId,
-                                   final boolean deletable) {
-        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
-
-        hb.div(wrapper -> {
-            wrapper.append(markdownHtml);
-            // Add message footer (timestamp + optional copy/delete buttons).
-            wrapper.div(footer -> {
-
-                // Add delete button.
-                if (deletable && messageId > 0) {
-                    button(footer,
-                            SvgImage.DELETE,
-                            iconButtonClassName("ai-message-delete"),
-                            Attribute.title("Delete message"),
-                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
-                }
-
-                // Add copy button.
-                if (showCopy) {
-                    footer.elem(button ->
-                                    setCopyButtonContent(button, SvgImage.COPY, "Copy"),
-                            BUTTON,
-                            Attribute.className("ai-message-copy"),
-                            new Attribute("data", markdownText));
-                }
-
-                // Add timestamp.
-                timestamp(footer, timeMs, nowMs);
-
-            }, Attribute.className("ai-message-footer"));
-        }, Attribute.className(cssClass));
-    }
-
-    /// Append a collapsible details/summary element for thinking and data messages.
-    /// Uses native HTML `<details>/<summary>` so content is collapsed by default.
-    private void appendDetailsElement(final HtmlBuilder hb,
-                                      final String cssClass,
-                                      final SvgImage icon,
-                                      final String summaryText,
-                                      final String markdownText,
-                                      final long timeMs,
-                                      final long nowMs) {
-        hb.elem(details -> {
-            details.elem(summary -> {
-                icon(summary, icon, "ai-message-summary-icon");
-                summary.append(summaryText);
-            }, SUMMARY, Attribute.className("ai-message-header"));
-
-            // Add markdown message.
-            details.div(contentDiv ->
-                            contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText)),
-                    Attribute.className("ai-details-content"));
-
-            // Add timestamp footer.
-            details.div(footer ->
-                    timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
-        }, DETAILS, Attribute.className(cssClass));
-    }
-
-    /// Render an ATTACHMENT message with a status line that can be updated in-place
-    /// via a unique DOM ID.
-    private void appendAttachmentMessage(final HtmlBuilder hb,
-                                         final AiChatMessage msg,
-                                         final long timeMs,
-                                         final long nowMs,
-                                         final int messageId,
-                                         final boolean deletable) {
-        final Integer attachmentId = msg.getAttachmentId();
-        hb.div(container -> {
-            // Header with icon and description.
-            container.div(header -> {
-                final String description = NullSafe.getOrElse(
-                        msg, AiChatMessage::getMessage, "Table attachment");
-                button(header, SvgImage.TABLE,
-                        iconButtonClassName("ai-attachment-icon"),
-                        Attribute.title("View data"),
-                        new Attribute("data-attachment-id", String.valueOf(attachmentId)),
-                        new Attribute("data-attachment-desc", description));
-                header.append(description);
-            }, Attribute.className("ai-message-header"));
-
-            // Status line — will be updated in-place by polling.
-            if (attachmentId != null) {
-                container.div(statusDiv ->
-                                appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading..."),
-                        Attribute.className("ai-attachment-status"), new Attribute("id",
-                                "ai-attachment-status-" +
-                                attachmentId));
+    /// A message as the chat shows it: rendered from its markdown, with when it was sent.
+    private AskStroomAi.Message toMessage(final AiChatMessage msg, final long nowMs) {
+        final AiMessageType type = msg.getMessageType();
+        final String text;
+        final SafeHtml content;
+        switch (type) {
+            case USER_MESSAGE -> {
+                text = msg.getMessage();
+                content = markdownConverter.convertMarkdownToHtml("> " + msg.getMessage());
             }
-
-            // Footer with timestamp and optional delete button.
-            container.div(footer -> {
-                // Add delete button.
-                if (deletable && messageId > 0) {
-                    button(footer,
-                            SvgImage.DELETE,
-                            iconButtonClassName("ai-message-delete"),
-                            Attribute.title("Delete attachment"),
-                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
-                }
-                timestamp(footer, timeMs, nowMs);
-            }, Attribute.className("ai-message-footer"));
-        }, Attribute.className("ai-message ai-message--data"));
-    }
-
-    /// Renders the WORKING message with stable DOM ids, so that polling can update the progress text
-    /// where it stands rather than appending a new line every time it changes. The text is in the
-    /// summary because that is the part that is visible without expanding it.
-    private void appendWorkingMessage(final HtmlBuilder hb,
-                                      final AiChatMessage msg,
-                                      final long timeMs,
-                                      final long nowMs) {
-        hb.elem(details -> {
-            details.elem(summary -> {
-                icon(summary, SvgImage.INFO, "ai-message-summary-icon");
-                summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
-            }, SUMMARY, Attribute.className("ai-message-header"));
-
-            details.div(footer ->
-                timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
-        }, DETAILS, Attribute.className("ai-message ai-message--working"),
-            new Attribute("id", WORKING_MESSAGE_ID));
+            case WORKING -> {
+                text = workingText(msg);
+                content = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            }
+            case ATTACHMENT -> {
+                text = NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment");
+                content = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            }
+            default -> {
+                text = msg.getMessage();
+                content = markdownConverter.convertMarkdownToHtml(msg.getMessage());
+            }
+        }
+        final long timeMs = msg.getCreateTimeMs();
+        return new AskStroomAi.Message(type, msg.getId(), text, content, msg.getAttachmentId(),
+                dateTimeFormatter.formatRelative(timeMs, nowMs), dateTimeFormatter.format(timeMs));
     }
 
     /// Adds, updates or removes the progress line to match what the server says it is doing.
     private void updateWorkingMessage(final AiChatMessage workingMessage) {
         if (workingMessage == null) {
             // Nothing is being worked on, so the progress line has served its purpose.
-            view.removePart(WORKING_MESSAGE_ID);
-        } else if (!view.hasPart(WORKING_MESSAGE_ID)) {
-            final HtmlBuilder hb = new HtmlBuilder();
-            appendWorkingMessage(hb, workingMessage,
-                    workingMessage.getCreateTimeMs(), System.currentTimeMillis());
-            appendToContainer(hb);
+            view.setWorkingMessage(null);
         } else {
-            view.setPartText(WORKING_TEXT_ID, workingText(workingMessage));
+            final long timeMs = workingMessage.getCreateTimeMs();
+            final long nowMs = System.currentTimeMillis();
+            view.setWorkingMessage(new AskStroomAi.Message(AiMessageType.WORKING, workingMessage.getId(),
+                    workingText(workingMessage), SafeHtmlUtils.EMPTY_SAFE_HTML, null,
+                    dateTimeFormatter.formatRelative(timeMs, nowMs), dateTimeFormatter.format(timeMs)));
         }
     }
 
@@ -727,13 +542,8 @@ public class AskStroomAiController extends Controller
         return NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Working...");
     }
 
-    private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
-        icon(hb, icon, "ai-attachment-status-icon");
-        hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
-    }
-
     /// @return True if any attachment is still being fetched, so there is more to come.
-    private boolean isDownloading(final java.util.List<AiChatAttachment> attachments) {
+    private boolean isDownloading(final List<AiChatAttachment> attachments) {
         if (attachments != null) {
             for (final AiChatAttachment attachment : attachments) {
                 if (attachment.getStatus() == AiAttachmentStatus.PENDING
@@ -745,24 +555,21 @@ public class AskStroomAiController extends Controller
         return false;
     }
 
-    /// Update existing attachment status elements in the DOM with current status.
-    private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
+    /// Shows each attachment's status where the attachment is shown.
+    private void updateAttachmentStatuses(final List<AiChatAttachment> attachments) {
         if (attachments == null) {
             return;
         }
         for (final AiChatAttachment attachment : attachments) {
-            view.setPartHtml("ai-attachment-status-" + attachment.getId(),
-                    SafeHtmlUtils.fromTrustedString(formatAttachmentStatus(attachment)));
+            view.setAttachmentStatus(attachment.getId(), attachment.getStatus(), statusText(attachment));
         }
     }
 
-    /// Format a human-readable status string with an appropriate icon for the
-    /// given attachment status.
-    private String formatAttachmentStatus(final AiChatAttachment attachment) {
-        final HtmlBuilder hb = new HtmlBuilder();
-        switch (attachment.getStatus()) {
-            case PENDING -> appendStatus(hb, SvgImage.DOWNLOAD, "Pending...");
-            case DOWNLOADING -> appendStatus(hb, SvgImage.DOWNLOAD, "Downloading...");
+    /// What an attachment's status says, e.g. "Ready --- 42 rows".
+    private static String statusText(final AiChatAttachment attachment) {
+        return switch (attachment.getStatus()) {
+            case PENDING -> "Pending...";
+            case DOWNLOADING -> "Downloading...";
             case READY -> {
                 final StringBuilder sb = new StringBuilder();
                 sb.append(" Ready");
@@ -772,55 +579,12 @@ public class AskStroomAiController extends Controller
                 if (attachment.isTruncated()) {
                     sb.append(" (truncated to limit)");
                 }
-                appendStatus(hb, SvgImage.OK, sb.toString());
+                yield sb.toString();
             }
-            case ERROR -> appendStatus(hb, SvgImage.ERROR, "Error: " +
-                                                           NullSafe.getOrElse(attachment,
-                                                                   AiChatAttachment::getErrorMessage,
-                                                                   "Unknown error"));
-        }
-        return hb.toSafeHtml().asString();
-    }
-
-    private static void icon(final HtmlBuilder hb, final SvgImage icon) {
-        hb.div(div -> div.appendTrustedString(icon.getSvg()),
-                Attribute.className("icon-wrap " + icon.getClassName()));
-    }
-
-    private static Attribute iconButtonClassName(final String className) {
-        return Attribute.className(className + " toolbar-button");
-    }
-
-    // An icon that is decoration beside text that says the same, e.g. at the start of a message's
-    // summary (which itself opens and closes the message) or beside an attachment's status. It
-    // isn't a button, which was a nameless control (inside a summary, itself a control), but looks
-    // as it did
-    private static void icon(final HtmlBuilder hb, final SvgImage icon, final String className) {
-        hb.span(span -> span.appendTrustedString(SvgMarkup.decorative(icon.getSvg(), "toolbar-button__icon")),
-                iconButtonClassName(className));
-    }
-
-    private static void button(final HtmlBuilder hb,
-                               final SvgImage icon,
-                               final Attribute... attributes) {
-        hb.elem(button -> button.appendTrustedString(
-                        SvgMarkup.decorative(icon.getSvg(), "toolbar-button__icon")),
-                BUTTON,
-                attributes);
-    }
-
-    private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
-        html.div(timestamp -> timestamp.append(dateTimeFormatter.formatRelative(timeMs, nowMs)),
-                Attribute.className("ai-message-timestamp"),
-                Attribute.title(dateTimeFormatter.format(timeMs)));
-    }
-
-    /// Set the content of a copy button to an SVG icon + label.
-    private static void setCopyButtonContent(final HtmlBuilder button,
-                                             final SvgImage icon,
-                                             final String label) {
-        icon(button, icon);
-        button.div(text -> text.append(label), Attribute.className("ai-message-copy-label"));
+            case ERROR -> "Error: " + NullSafe.getOrElse(attachment,
+                    AiChatAttachment::getErrorMessage,
+                    "Unknown error");
+        };
     }
 
     private void onNewChat() {
@@ -917,18 +681,18 @@ public class AskStroomAiController extends Controller
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
             final long nowMs = System.currentTimeMillis();
-            final HtmlBuilder hb = new HtmlBuilder();
+            final List<AskStroomAi.Message> shown = new ArrayList<>();
             if (messages != null && !messages.isEmpty()) {
                 view.setEmptyState(false);
                 for (final AiChatMessage msg : messages) {
-                    renderMessage(hb, msg, nowMs);
+                    shown.add(toMessage(msg, nowMs));
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
             } else {
                 view.setEmptyState(true);
             }
             // Scroll to bottom after loading all messages.
-            appendToContainer(hb);
+            view.addMessages(shown);
             view.focus();
 
             // Fetch attachment statuses to update status elements rendered above.

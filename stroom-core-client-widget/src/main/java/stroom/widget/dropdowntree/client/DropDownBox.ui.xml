@@ -2,15 +2,27 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       A picker (drop-down.css). To assistive technology it is a button that opens a dialog to choose
-      the value it shows; a FormGroup names it with its label, followed by the value. Its "…" icon is
-      set in Java. A problem with its value is shown under it (DropDownBox)
+      the value it shows; a FormGroup names it with its label, followed by the value. A problem with
+      its value is shown in the feedback line under it, while there is one and the picker isn't in a
+      form group (DropDownBox): briefly, with the full message for screen readers. The wrapper takes
+      no box of its own (drop-down-box), so the button and its feedback are laid out as if they were
+      their parent's children.
     -->
-    <c:AriaPanel styleName="drop-down stroom-control allow-focus" tabIndex="0" role="button"
-                 ariaHasPopup="dialog">
-        <tx:Label ui:field="label" styleName="drop-down__value"/>
-        <g:SimplePanel ui:field="ellipsesBtnPanel" styleName="drop-down__icon"/>
-    </c:AriaPanel>
+    <g:HTMLPanel styleName="drop-down-box">
+        <c:AriaPanel ui:field="button" styleName="drop-down stroom-control allow-focus" tabIndex="0" role="button"
+                     ariaHasPopup="dialog">
+            <tx:Label ui:field="label" styleName="drop-down__value"/>
+            <g:SimplePanel styleName="drop-down__icon">
+                <svg:Icon image="ELLIPSES_HORIZONTAL"/>
+            </g:SimplePanel>
+        </c:AriaPanel>
+        <div ui:field="feedback" class="drop-down__feedback">
+            <span ui:field="shownProblem" aria-hidden="true"></span>
+            <span ui:field="fullProblem" class="sr-only"></span>
+        </div>
+    </g:HTMLPanel>
 </ui:UiBinder>

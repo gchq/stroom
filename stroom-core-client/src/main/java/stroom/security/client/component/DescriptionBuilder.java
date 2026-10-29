@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.security.client;
+package stroom.security.client.component;
 
+import stroom.security.client.ClassNameBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+/// Builds the lines of a permission's details (permission-details.css), as the details panels of
+/// the permissions screens and the permission lists' cells show them: each line a span, bold,
+/// inherited or a delimiter as its modifiers say, with line breaks between.
 public class DescriptionBuilder {
 
     private final SafeHtmlBuilder sb = new SafeHtmlBuilder();

@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A message in an Ask Stroom AI conversation (ai-message.css): the message itself, or for an
+  attachment its View data button, description and download status; then its footer, with Delete
+  (shown on hover or focus), Copy (for a reply) and when it was sent.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:svg="urn:import:stroom.svg.client">
+    <g:HTMLPanel ui:field="root" styleName="ai-message">
+        <div ui:field="header" class="ai-message__header">
+            <b:Toolbar name="Attachment" addStyleNames="ai-message__toolbar">
+                <!-- Named when the message is an attachment, so hidden ones are never found by name -->
+                <b:ToolbarButton ui:field="viewData" svg="TABLE"/>
+            </b:Toolbar>
+            <span ui:field="description"></span>
+        </div>
+        <div ui:field="status" class="ai-message__status">
+            <svg:Icon ui:field="statusIcon" image="DOWNLOAD" addStyleNames="ai-message__status-icon"/>
+            <div ui:field="statusText">Downloading...</div>
+        </div>
+        <div ui:field="content"></div>
+        <div class="ai-message__footer">
+            <b:Toolbar ui:field="actions" name="Message" addStyleNames="ai-message__toolbar">
+                <!-- Named when the message can be deleted, for what it deletes -->
+                <b:ToolbarButton ui:field="delete" svg="DELETE" addStyleNames="ai-message__delete"/>
+            </b:Toolbar>
+            <b:Button ui:field="copy" styleName="ai-message__copy"/>
+            <div ui:field="timestamp" class="ai-message__timestamp"></div>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

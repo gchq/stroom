@@ -28,20 +28,21 @@
     display: flex;
 }
 
-.result-table__grid input {
-    width: 100%;
-    display: none;
-}
-
 .result-table__grid .data-grid__header-cell {
     min-height: 16px;
     vertical-align: top;
 }
 
-.result-table__grid.result-table__grid--value-filters input {
-    display: inline-block;
-}
-
 .result-table__grid.result-table__grid--value-filters .data-grid__header-cell {
     padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
+}
+
+/* A value whose column's format wraps it (TableRow): onto more lines, rather than cut short */
+.result-table .result-table__cell--wrap {
+    white-space: normal;
+}
+
+/* A value in a column that groups the rows at or above its row's level (TableRow) */
+.result-table .result-table__cell--grouped {
+    font-weight: bold;
 }

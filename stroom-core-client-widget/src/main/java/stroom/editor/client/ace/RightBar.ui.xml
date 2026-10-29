@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The code editor's overview bar (code-editor.css): the summary at its top, coloured for the most
+  severe indicator and shown only while there are indicators, then a marker for each line with an
+  indicator, placed by RightBar.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel>
+        <div ui:field="summaryContainer" class="code-editor__summary-container">
+            <div ui:field="summary" class="code-editor__summary"></div>
+        </div>
+        <div ui:field="markers"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

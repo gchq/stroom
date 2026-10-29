@@ -18,25 +18,53 @@ package stroom.editor.client.ace;
 
 import stroom.util.shared.Severity;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
+/// The code editor's overview bar: a summary at its top, coloured for the most severe indicator,
+/// then a marker by each line with an indicator, which goes to the line when clicked and is
+/// described in a popup ([IndicatorPopup]) as the mouse moves over it. Its markup is
+/// `RightBar.ui.xml`; the markers are drawn with [Template].
 public class RightBar extends Composite {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final Template TEMPLATE = GWT.create(Template.class);
+    private static final String SUMMARY = "code-editor__summary";
+    private static final String MARKER = "code-editor__marker";
 
     private static final int SUMMARY_CONTAINER_HEIGHT = 13;
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
+
+    @UiField
+    DivElement summaryContainer;
+    @UiField
+    DivElement summary;
+    @UiField
+    DivElement markers;
+
     private IndicatorLines indicators;
     private Editor editor;
 
+    /// Makes an empty overview bar, until [#render(IndicatorLines, boolean)] draws its indicators.
     public RightBar() {
         sinkEvents(Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONMOUSEDOWN);
 
-        final SimplePanel simplePanel = new SimplePanel();
-        initWidget(simplePanel);
+        initWidget(BINDER.createAndBindUi(this));
+        UIObject.setVisible(summaryContainer, false);
     }
 
     @Override
@@ -50,7 +78,7 @@ public class RightBar extends Composite {
         if (indicators != null) {
             final String className = target.getClassName();
             if (className != null) {
-                if (className.toUpperCase().contains("code-editor__marker".toUpperCase())) {
+                if (className.toUpperCase().contains(MARKER.toUpperCase())) {
                     // This is a marker box.
                     final String lineNo = target.getAttribute("lineno");
                     if (lineNo != null) {
@@ -68,7 +96,7 @@ public class RightBar extends Composite {
                             indicatorPopup.hide();
                         }
                     }
-                } else if (className.toUpperCase().contains("code-editor__summary".toUpperCase())) {
+                } else if (className.toUpperCase().contains(SUMMARY.toUpperCase())) {
                     if (eventType == Event.ONMOUSEOVER) {
                         // This is a summary box.
                         final Element parent = target.getParentElement().cast();
@@ -91,38 +119,16 @@ public class RightBar extends Composite {
      */
     public void render(final IndicatorLines indicators, final boolean visible) {
         this.indicators = indicators;
-        final StringBuilder sb = new StringBuilder();
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        boolean showSummary = false;
 
         if (visible) {
             if (indicators != null) {
                 final Severity maxSeverity = indicators.getMaxSeverity();
                 if (maxSeverity != null) {
-                    // Add the top summary marker.
-                    sb.append("<div class=\"");
-                    sb.append("code-editor__summary-container");
-                    sb.append("\">");
-
-                    sb.append("<div class=\"");
-                    sb.append("code-editor__summary");
-                    sb.append(" ");
-                    switch (maxSeverity) {
-                        case FATAL_ERROR:
-                            sb.append("code-editor__summary--fatal");
-                            break;
-                        case ERROR:
-                            sb.append("code-editor__summary--error");
-                            break;
-                        case WARNING:
-                            sb.append("code-editor__summary--warning");
-                            break;
-                        default:
-                            sb.append("code-editor__summary--info");
-                            break;
-                    }
-                    sb.append("\">");
-                    sb.append("</div>");
-
-                    sb.append("</div>");
+                    // The top summary, coloured for the most severe indicator
+                    summary.setClassName(SUMMARY + " " + summaryModifier(maxSeverity));
+                    showSummary = true;
                 }
 
                 final int minMarkerBarTop = getMinMarkerBarTop();
@@ -160,30 +166,10 @@ public class RightBar extends Composite {
                                 // position unless we are adding an error on top
                                 // of a warning.
                                 if (lastTop != top || (lastSeverity != null && severity.greaterThan(lastSeverity))) {
-                                    sb.append("<div lineno=\"");
-                                    sb.append(lineNo);
-                                    sb.append("\" class=\"");
-                                    sb.append("code-editor__marker");
-                                    sb.append(" ");
-                                    switch (severity) {
-                                        case FATAL_ERROR:
-                                            sb.append("code-editor__marker--fatal");
-                                            break;
-                                        case ERROR:
-                                            sb.append("code-editor__marker--error");
-                                            break;
-                                        case WARNING:
-                                            sb.append("code-editor__marker--warning");
-                                            break;
-                                        default:
-                                            sb.append("code-editor__marker--info");
-                                            break;
-                                    }
                                     // Placed by the line it marks (code-editor.css's code-editor__marker)
-                                    sb.append("\" style=\"--code-editor__marker-top:");
-                                    sb.append(top);
-                                    sb.append("px;\">");
-                                    sb.append("</div>");
+                                    final SafeStyles position = SafeStylesUtils.fromTrustedString(
+                                            "--code-editor__marker-top:" + top + "px;");
+                                    sb.append(TEMPLATE.marker(lineNo, markerModifier(severity), position));
 
                                     lastTop = top;
                                     lastSeverity = severity;
@@ -195,7 +181,36 @@ public class RightBar extends Composite {
             }
         }
 
-        getElement().setInnerHTML(sb.toString());
+        UIObject.setVisible(summaryContainer, showSummary);
+        markers.setInnerSafeHtml(sb.toSafeHtml());
+    }
+
+    // The summary's modifier, for the most severe indicator
+    private static String summaryModifier(final Severity severity) {
+        switch (severity) {
+            case FATAL_ERROR:
+                return "code-editor__summary--fatal";
+            case ERROR:
+                return "code-editor__summary--error";
+            case WARNING:
+                return "code-editor__summary--warning";
+            default:
+                return "code-editor__summary--info";
+        }
+    }
+
+    // A marker's modifier, for the most severe indicator on its line
+    private static String markerModifier(final Severity severity) {
+        switch (severity) {
+            case FATAL_ERROR:
+                return "code-editor__marker--fatal";
+            case ERROR:
+                return "code-editor__marker--error";
+            case WARNING:
+                return "code-editor__marker--warning";
+            default:
+                return "code-editor__marker--info";
+        }
     }
 
     private int getMinMarkerBarTop() {
@@ -275,5 +290,26 @@ public class RightBar extends Composite {
 
     public void setEditor(final Editor editor) {
         this.editor = editor;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, RightBar> {
+
+    }
+
+    /// The markers' markup.
+    interface Template extends SafeHtmlTemplates {
+
+        /// A marker by a line with an indicator.
+        ///
+        /// @param lineNo   The line it marks, which a click goes to.
+        /// @param modifier Its severity's modifier, e.g. `code-editor__marker--error`.
+        /// @param position Its top (`--code-editor__marker-top`).
+        /// @return The marker.
+        @Template("<div lineno=\"{0}\" class=\"code-editor__marker {1}\" style=\"{2}\"></div>")
+        SafeHtml marker(int lineNo, String modifier, SafeStyles position);
     }
 }

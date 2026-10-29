@@ -23,21 +23,18 @@ import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /// A document's Info dialog ([InfoDocument]), made for one use. It isn't modal, so Info on another
 /// document while it is shown shows that document in it ([#read]).
@@ -84,49 +81,15 @@ public class InfoDocumentController extends Controller {
         final DocRef docRef = explorerNodeInfo.getExplorerNode().getDocRef();
         final ExplorerNode explorerNode = event.getExplorerNode();
 
-        final HtmlBuilder hb = new HtmlBuilder();
-        appendLine("UUID", docRef.getUuid(), hb);
-        appendLine("Type", docRef.getType(), hb);
-        appendLine("Name", docRef.getName(), hb);
-
-        if (NullSafe.hasItems(explorerNode.getTags())) {
-            appendLine("Tags", "", hb);
-            final Set<String> tags = explorerNode.getTags();
-            tags.stream()
-                    .sorted()
-                    .forEach(tag -> appendLine("\t", tag, hb));
-        }
-
-        // Add audit information
-        if (auditEntryResultPage != null && !NullSafe.isEmptyCollection(auditEntryResultPage.getValues())) {
-            hb.div(d -> appendKey("Audit Info", d), Attribute.className("info-line"));
-            final TableBuilder tableBuilder = new TableBuilder();
-            tableBuilder.row("Time", "User", "Action");
+        final List<InfoDocument.AuditEntry> auditEntries = new ArrayList<>();
+        if (auditEntryResultPage != null && auditEntryResultPage.getValues() != null) {
             for (final DocAuditEntry entry : auditEntryResultPage.getValues()) {
-                final String time = dateTimeFormatter.format(entry.getTime());
-                tableBuilder.row(
-                        CopyTextUtil.render(time, false),
-                        CopyTextUtil.render(entry.getUser().getDisplayName(), false),
-                        CopyTextUtil.render(entry.getAction().getDisplayValue(), false)
-                );
+                auditEntries.add(new InfoDocument.AuditEntry(
+                        dateTimeFormatter.format(entry.getTime()),
+                        entry.getUser().getDisplayName(),
+                        entry.getAction().getDisplayValue()));
             }
-            tableBuilder.write(hb);
         }
-
-        view.setInfo(hb.toSafeHtml());
-    }
-
-    private void appendLine(final String key, final String value, final HtmlBuilder hb) {
-        hb.div(d -> {
-            appendKey(key, d);
-            d.append(CopyTextUtil.render(value, false));
-        }, Attribute.className("info-line"));
-    }
-
-    private void appendKey(final String key, final HtmlBuilder hb) {
-        hb.bold(key);
-        if (!NullSafe.isBlankString(key)) {
-            hb.append(": ");
-        }
+        view.setInfo(docRef, explorerNode.getTags(), auditEntries);
     }
 }

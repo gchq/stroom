@@ -18,25 +18,30 @@ package stroom.editor.client.ace;
 
 import stroom.widget.text.client.Html;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-/**
- * A popup that displays a warning/error message for a given indicator.
- */
+/// A popup that displays a warning/error message for a given indicator. Its content's markup is
+/// `IndicatorPopup.ui.xml`.
 public class IndicatorPopup extends PopupPanel {
 
-    private final Html content;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
+    @UiField
+    Html content;
+
+    /// Makes the popup, empty until [#setHTML(String)] or [#setText(String)] fills it.
     public IndicatorPopup() {
-        content = new Html();
-
         setModal(false);
         setAutoHideEnabled(true);
         setStyleName("code-editor-indicator");
         // It describes the overview bar's marker or summary under the mouse
         getElement().setAttribute("role", "tooltip");
 
-        setWidget(content);
+        setWidget(BINDER.createAndBindUi(this));
     }
 
     /**
@@ -51,5 +56,13 @@ public class IndicatorPopup extends PopupPanel {
      */
     public void setText(final String text) {
         content.setText(text);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, IndicatorPopup> {
+
     }
 }

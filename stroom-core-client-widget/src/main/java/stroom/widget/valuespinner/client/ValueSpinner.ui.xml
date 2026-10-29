@@ -2,19 +2,24 @@
 <!--
   A value spinner (value-spinner.css): the field, a WAI-ARIA spin button, with the arrows inside the
   end of its border that step its value while pressed (no tab stops and hidden from screen readers,
-  as the keys in the field do what they do; their icons are set in Java), then why a typed value was
+  as the keys in the field do what they do), then why a typed value was
   rejected, shown under the field when it isn't in a form group, and said as it happens.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:f="urn:import:stroom.widget.form.client"
+             xmlns:svg="urn:import:stroom.svg.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:HTMLPanel styleName="value-spinner">
         <div class="value-spinner__field">
             <f:TextBox ui:field="valueBox" addStyleNames="allow-focus value-spinner__input" role="spinbutton"/>
             <div class="value-spinner__steps">
-                <div ui:field="decrease" class="value-spinner__step" title="Decrease value" aria-hidden="true"></div>
-                <div ui:field="increase" class="value-spinner__step" title="Increase value" aria-hidden="true"></div>
+                <div ui:field="decrease" class="value-spinner__step" title="Decrease value" aria-hidden="true">
+                    <svg:Icon image="ARROW_DOWN" addStyleNames="value-spinner__icon"/>
+                </div>
+                <div ui:field="increase" class="value-spinner__step" title="Increase value" aria-hidden="true">
+                    <svg:Icon image="ARROW_UP" addStyleNames="value-spinner__icon"/>
+                </div>
             </div>
         </div>
         <tx:Label ui:field="feedback" styleName="value-spinner__feedback"/>

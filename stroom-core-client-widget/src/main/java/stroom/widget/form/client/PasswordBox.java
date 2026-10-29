@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -106,6 +107,18 @@ public class PasswordBox extends Composite
         input.getElement().setAttribute("placeholder", placeholder);
     }
 
+    /// Says what the box holds, so that browsers and password managers can fill it in.
+    ///
+    /// @param autocomplete What it holds, e.g. `current-password` or `new-password`, or null or
+    ///                     empty to leave it to the browser.
+    public void setAutocomplete(final String autocomplete) {
+        if (autocomplete == null || autocomplete.isEmpty()) {
+            input.getElement().removeAttribute("autocomplete");
+        } else {
+            input.getElement().setAttribute("autocomplete", autocomplete);
+        }
+    }
+
     /// @param secretName What the box holds, for its button's name and announcements, e.g. "pass
     ///                   phrase" ("Show pass phrase"). It is "password" unless set.
     public void setSecretName(final String secretName) {
@@ -113,9 +126,12 @@ public class PasswordBox extends Composite
         update();
     }
 
-    /// Shows something beside the button, e.g. a length badge, and leaves room for it in the box.
+    /// Shows something beside the button, e.g. a length badge, and leaves room for it in the box. In
+    /// a template it is the box's `badge` child:
+    /// `<form:PasswordBox><form:badge><c:AriaPanel .../></form:badge></form:PasswordBox>`.
     ///
     /// @param badge The widget to show.
+    @UiChild(tagname = "badge", limit = 1)
     public void setBadge(final Widget badge) {
         // In a holder of its own, as the badge's own classes may be replaced (e.g. its colour)
         final SimplePanel holder = new SimplePanel(badge);

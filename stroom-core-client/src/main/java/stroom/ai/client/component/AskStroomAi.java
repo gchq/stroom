@@ -16,35 +16,32 @@
 
 package stroom.ai.client.component;
 
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiMessageType;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.text.client.Label;
-import stroom.widget.util.client.Clipboard;
-import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -83,8 +80,9 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     @UiField
     ToolbarButton configure;
 
+    // The conversation's messages
     @UiField
-    SimplePanel markdownPreview;
+    FlowPanel conversation;
     @UiField
     TextArea message;
     @UiField
@@ -95,6 +93,13 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     DropDownBox modelRef;
     @UiField
     SpinnerSmall spinner;
+
+    // The user's message as shown when it was sent, until the stored one replaces it
+    private Widget pendingMessage;
+    // The progress lines shown, the first the one that changes as the work goes on
+    private final List<AiDetailsMessage> workingMessages = new ArrayList<>();
+    // The attachments' messages, by attachment id, whose download status changes
+    private final Map<Integer, AiMessage> attachmentMessages = new HashMap<>();
 
     /// Makes the screen, with no content until it is given it.
     public AskStroomAi() {
@@ -119,48 +124,6 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
         chatHistory.setOnClick(() -> onAction.accept(AskStroomAiAction.SHOW_HISTORY));
         download.setOnClick(() -> onAction.accept(AskStroomAiAction.DOWNLOAD));
         deleteAll.setOnClick(() -> onAction.accept(AskStroomAiAction.DELETE_ALL));
-        markdownPreview.addDomHandler(this::onConversationClick, ClickEvent.getType());
-    }
-
-    // The buttons in the conversation's messages: View data, Delete and Copy
-    private void onConversationClick(final ClickEvent event) {
-        if (!MouseUtil.isPrimary(event)) {
-            return;
-        }
-        final Element target = event.getNativeEvent().getEventTarget().cast();
-        final Element button = ElementUtil.findParent(target, element ->
-                element.getTagName().equalsIgnoreCase("button"), 5);
-        if (button == null) {
-            return;
-        }
-        final String attachmentId = button.getAttribute("data-attachment-id");
-        final String messageId = button.getAttribute("data-delete-message-id");
-        final String data = button.getAttribute("data");
-        if (NullSafe.isNonBlankString(attachmentId)) {
-            onViewAttachment.accept(Integer.parseInt(attachmentId), button.getAttribute("data-attachment-desc"));
-        } else if (NullSafe.isNonBlankString(messageId)) {
-            onDeleteMessage.accept(Integer.parseInt(messageId));
-        } else if (NullSafe.isNonBlankString(data)) {
-            Clipboard.writeText(data, () -> showCopied(button), () -> {
-            });
-        }
-    }
-
-    // The Copy button says Copied for a moment
-    private void showCopied(final Element button) {
-        final Element copyIcon = ElementUtil.findChild(button, "icon-wrap");
-        final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
-        if (copyIcon != null && copyLabel != null) {
-            copyIcon.setInnerHTML(SvgImage.OK.getSvg());
-            copyLabel.setInnerText("Copied");
-            new Timer() {
-                @Override
-                public void run() {
-                    copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
-                    copyLabel.setInnerText("Copy");
-                }
-            }.schedule(2000);
-        }
     }
 
     /// @param onViewAttachment Given an attachment's id and description when the user asks to see
@@ -176,100 +139,129 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
 
     /// Adds messages to the end of the conversation, and scrolls to them.
     ///
-    /// @param html The messages.
-    public void appendMessages(final SafeHtml html) {
-        final Element conversation = markdownPreview.getElement();
-        conversation.setInnerHTML(NullSafe.toString(conversation.getInnerHTML()) + html.asString());
+    /// @param messages The messages.
+    public void addMessages(final List<Message> messages) {
+        messages.forEach(message -> conversation.add(render(message)));
         scrollToLatest();
+    }
+
+    /// Adds the message the user has just sent to the end of the conversation, and scrolls to it. It
+    /// is pending until the stored message replaces it ([#replacePendingMessage(Message)]); only
+    /// the latest message sent is.
+    ///
+    /// @param message The message.
+    public void addPendingMessage(final Message message) {
+        pendingMessage = render(message);
+        conversation.add(pendingMessage);
+        scrollToLatest();
+    }
+
+    /// Replaces the pending message, the one the user sent, with the stored one.
+    ///
+    /// @param message The stored message.
+    /// @return False if there is no pending message to replace.
+    public boolean replacePendingMessage(final Message message) {
+        if (pendingMessage == null) {
+            return false;
+        }
+        final int index = conversation.getWidgetIndex(pendingMessage);
+        conversation.remove(pendingMessage);
+        pendingMessage = null;
+        conversation.insert(render(message), index);
+        return true;
+    }
+
+    /// Shows what the AI is working on, in a progress line added to the end of the conversation if
+    /// there isn't one, or takes the line away.
+    ///
+    /// @param message What it is working on, or null when it has finished.
+    public void setWorkingMessage(final Message message) {
+        if (message == null) {
+            // Nothing is being worked on, so the progress line has served its purpose
+            if (!workingMessages.isEmpty()) {
+                conversation.remove(workingMessages.remove(0));
+            }
+        } else if (workingMessages.isEmpty()) {
+            addMessages(List.of(message));
+        } else {
+            workingMessages.get(0).setSummary(message.text());
+        }
+    }
+
+    /// Shows how an attachment's download is going, if the conversation has the attachment.
+    ///
+    /// @param attachmentId     The attachment's id.
+    /// @param attachmentStatus Where it has got to.
+    /// @param text             What it says, e.g. "Ready --- 42 rows".
+    public void setAttachmentStatus(final int attachmentId,
+                                    final AiAttachmentStatus attachmentStatus,
+                                    final String text) {
+        final AiMessage message = attachmentMessages.get(attachmentId);
+        if (message != null) {
+            message.setAttachmentStatus(attachmentStatus, text);
+        }
     }
 
     /// Scrolls the conversation to its latest message.
     public void scrollToLatest() {
-        final Element conversation = markdownPreview.getElement();
-        conversation.setScrollTop(conversation.getScrollHeight());
+        final Element element = conversation.getElement();
+        element.setScrollTop(element.getScrollHeight());
     }
 
-    /// Gives the conversation's last message an id, taking it from any other message that had it.
-    ///
-    /// @param id The id.
-    public void markLastMessage(final String id) {
-        final Element previous = findPart(id);
-        if (previous != null) {
-            previous.removeAttribute("id");
-        }
-        final Element last = markdownPreview.getElement().getLastChild().cast();
-        if (last != null) {
-            last.setId(id);
-        }
-    }
-
-    /// Replaces a message.
-    ///
-    /// @param id   The message's id.
-    /// @param html The message to show in its place.
-    /// @return False if there is no message with the id.
-    public boolean replaceMessage(final String id, final SafeHtml html) {
-        final Element existing = findPart(id);
-        if (existing == null) {
-            return false;
-        }
-        final Element temp = Document.get().createDivElement();
-        temp.setInnerHTML(html.asString());
-        final Element replacement = temp.getFirstChildElement();
-        if (replacement == null) {
-            return false;
-        }
-        existing.getParentElement().replaceChild(replacement, existing);
-        return true;
-    }
-
-    /// @param id The id of a part of a message.
-    /// @return Whether the conversation has it.
-    public boolean hasPart(final String id) {
-        return findPart(id) != null;
-    }
-
-    /// Removes a part of a message, if the conversation has it.
-    ///
-    /// @param id The part's id.
-    public void removePart(final String id) {
-        final Element part = findPart(id);
-        if (part != null) {
-            part.removeFromParent();
-        }
-    }
-
-    /// Sets the text of a part of a message, if the conversation has it.
-    ///
-    /// @param id   The part's id.
-    /// @param text Its text.
-    public void setPartText(final String id, final String text) {
-        final Element part = findPart(id);
-        if (part != null) {
-            part.setInnerText(text);
-        }
-    }
-
-    /// Sets the content of a part of a message, if the conversation has it.
-    ///
-    /// @param id   The part's id.
-    /// @param html Its content.
-    public void setPartHtml(final String id, final SafeHtml html) {
-        final Element part = findPart(id);
-        if (part != null) {
-            part.setInnerSafeHtml(html);
-        }
-    }
-
-    // A part of the conversation, by id, looked for only within it
-    private Element findPart(final String id) {
-        final NodeList<Element> elements = markdownPreview.getElement().getElementsByTagName("*");
-        for (int i = 0; i < elements.getLength(); i++) {
-            if (id.equals(elements.getItem(i).getId())) {
-                return elements.getItem(i);
+    // A message as shown, as its type says
+    private Widget render(final Message message) {
+        return switch (message.type()) {
+            case USER_MESSAGE -> renderMessage(AiMessage.Kind.USER, message, "Delete message");
+            case AI_RESPONSE -> {
+                final AiMessage reply = renderMessage(AiMessage.Kind.ASSISTANT, message, null);
+                reply.setCopyText(message.text());
+                yield reply;
             }
+            case ERROR -> renderMessage(AiMessage.Kind.ERROR, message, null);
+            case WORKING -> {
+                final AiDetailsMessage working = renderDetails(AiDetailsMessage.Kind.WORKING, message);
+                working.setSummary(message.text());
+                workingMessages.add(working);
+                yield working;
+            }
+            case THINKING -> renderDetails(AiDetailsMessage.Kind.THINKING, message);
+            case DASHBOARD_DATA, QUERY_DATA, TABLE_DATA -> renderDetails(AiDetailsMessage.Kind.DATA, message);
+            case DEBUG_DETAIL -> renderDetails(AiDetailsMessage.Kind.DEBUG_DETAIL, message);
+            case ATTACHMENT -> renderAttachment(message);
+        };
+    }
+
+    // A message, which can be deleted if it has an id and a name for its Delete button
+    private AiMessage renderMessage(final AiMessage.Kind kind, final Message message, final String deleteName) {
+        final AiMessage aiMessage = new AiMessage();
+        aiMessage.setKind(kind);
+        aiMessage.setContent(message.content());
+        aiMessage.setTime(message.time(), message.fullTime());
+        if (deleteName != null && message.id() > 0) {
+            aiMessage.setDeletable(deleteName);
+            aiMessage.setOnDelete(() -> onDeleteMessage.accept(message.id()));
         }
-        return null;
+        return aiMessage;
+    }
+
+    private AiDetailsMessage renderDetails(final AiDetailsMessage.Kind kind, final Message message) {
+        final AiDetailsMessage details = new AiDetailsMessage();
+        details.setKind(kind);
+        details.setContent(message.content());
+        details.setTime(message.time(), message.fullTime());
+        return details;
+    }
+
+    // An attachment: its View data button, its description and its download status
+    private AiMessage renderAttachment(final Message message) {
+        final AiMessage attachment = renderMessage(AiMessage.Kind.ATTACHMENT, message, "Delete attachment");
+        final Integer attachmentId = message.attachmentId();
+        attachment.setAttachment(message.text(), attachmentId != null);
+        attachment.setOnViewData(() -> onViewAttachment.accept(attachmentId, message.text()));
+        if (attachmentId != null) {
+            attachmentMessages.putIfAbsent(attachmentId, attachment);
+        }
+        return attachment;
     }
 
     /// @param onSend Given the message the user sends.
@@ -330,7 +322,10 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
 
     /// Removes every message shown.
     public void clearMessages() {
-        markdownPreview.getElement().setInnerHTML("");
+        conversation.clear();
+        pendingMessage = null;
+        workingMessages.clear();
+        attachmentMessages.clear();
     }
 
     /// @param empty Whether the conversation has no messages, so the empty prompt shows.
@@ -384,6 +379,30 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     }
 
     // --------------------------------------------------------------------------------
+
+    /// A message in the conversation, as the chat shows it.
+    ///
+    /// @param type         What it is, which gives its look.
+    /// @param id           Its id, or 0 if it hasn't been stored yet (so can't be deleted).
+    /// @param text         For a reply, what Copy copies (its markdown); for progress, what the AI is
+    ///                     working on; for an attachment, its description.
+    /// @param content      The message, rendered (e.g. from markdown), or null for none.
+    /// @param attachmentId For an attachment, the id of the data attached, or null.
+    /// @param time         When it was sent, e.g. "5 minutes ago".
+    /// @param fullTime     When it was sent, in full.
+    public record Message(AiMessageType type,
+                          int id,
+                          String text,
+                          SafeHtml content,
+                          Integer attachmentId,
+                          String time,
+                          String fullTime) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /// What the user can ask the chat for from its toolbars, other than sending a message.
     public enum AskStroomAiAction {

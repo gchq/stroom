@@ -19,23 +19,41 @@ package stroom.widget.xsdbrowser.client;
 import stroom.widget.text.client.Label;
 import stroom.widget.xsdbrowser.client.XSDNode.XSDType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
+/// The restriction of the selected node's type: its enumeration, or failing that its pattern, under
+/// a heading naming which. Its markup is `XSDConstraintDisplay.ui.xml`; only the values are added in
+/// Java.
 public class XSDConstraintDisplay extends Composite {
 
-    private final SimplePanel layout;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
+    @UiField
+    FlowPanel restriction;
+    @UiField
+    Label restrictionType;
+    @UiField
+    FlowPanel values;
+
+    /// Makes it showing nothing, until [#setNode(XSDNode)] gives it a node.
     public XSDConstraintDisplay() {
-        layout = new SimplePanel();
-        initWidget(layout);
+        initWidget(BINDER.createAndBindUi(this));
     }
 
+    /// Shows the restriction of a node's type (an element's or attribute's own type), or nothing if
+    /// it has none.
+    ///
+    /// @param node The node, or null for none.
     public void setNode(final XSDNode node) {
-        layout.clear();
+        values.clear();
+        restriction.setVisible(false);
 
         if (node != null) {
             XSDNode typeNode = node;
@@ -44,44 +62,33 @@ public class XSDConstraintDisplay extends Composite {
             }
 
             final XSDConstraint constraints = new XSDConstraint(typeNode);
-            SimplePanel list = getList(constraints.getEnumerationList(), "Enumeration");
-            if (list == null) {
-                list = getList(constraints.getPatternList(), "Pattern");
-            }
-            if (list != null) {
-                layout.setWidget(list);
+            if (!showList(constraints.getEnumerationList(), "Enumeration")) {
+                showList(constraints.getPatternList(), "Pattern");
             }
         }
     }
 
-    // The restriction's values under a heading naming its kind, or null if it has none
-    private SimplePanel getList(final List<String> list, final String restrictionType) {
-        if (list != null && !list.isEmpty()) {
-            final Label lblRestrictionType = oneLineLabel(restrictionType);
-            lblRestrictionType.addStyleName("xsd-browser__restriction-type");
-
-            // The restriction's type, then its values, one above another
-            final FlowPanel layout = new FlowPanel();
-            layout.add(lblRestrictionType);
-
-            for (final String value : list) {
-                layout.add(oneLineLabel(value));
-            }
-
-            final SimplePanel simplePanel = new SimplePanel();
-            simplePanel.addStyleName("xsd-browser__padded");
-            simplePanel.add(layout);
-
-            return simplePanel;
+    // Shows the restriction's values under a heading naming its kind, if it has any
+    private boolean showList(final List<String> list, final String type) {
+        if (list == null || list.isEmpty()) {
+            return false;
         }
-
-        return null;
+        restrictionType.setText(type);
+        for (final String value : list) {
+            // Kept on one line (xsd-browser.css)
+            final Label label = new Label(value);
+            label.addStyleName("xsd-browser__one-line");
+            values.add(label);
+        }
+        restriction.setVisible(true);
+        return true;
     }
 
-    // A label kept on one line (xsd-browser.css)
-    private static Label oneLineLabel(final String text) {
-        final Label label = new Label(text);
-        label.addStyleName("xsd-browser__one-line");
-        return label;
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, XSDConstraintDisplay> {
+
     }
 }

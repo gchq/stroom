@@ -68,6 +68,20 @@ public class TextFieldCell extends TextInputCell {
 
     @Override
     public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
+        final String name = nameForRow == null
+                ? ""
+                : nameForRow.apply(context.getIndex());
+        render(context, value, name, sb);
+    }
+
+    /// Renders the field with a name of its own, for a field its row doesn't name, e.g. a column's
+    /// filter box in a grid's header, named for its column.
+    ///
+    /// @param context The cell's context.
+    /// @param value   The field's value, or null for none.
+    /// @param name    The field's name, e.g. "Filter Name".
+    /// @param sb      What the field's HTML is added to.
+    public void render(final Context context, final String value, final String name, final SafeHtmlBuilder sb) {
         // As TextInputCell.render, so an edit not yet given to the field updater survives a redraw
         final Object key = context.getKey();
         ViewData viewData = getViewData(key);
@@ -81,12 +95,9 @@ public class TextFieldCell extends TextInputCell {
         final String text = current == null
                 ? ""
                 : current;
-        final String name = nameForRow == null
-                ? ""
-                : nullToEmpty(nameForRow.apply(context.getIndex()));
         sb.append(readOnly
-                ? TEMPLATE.readOnlyInput(text, name)
-                : TEMPLATE.input(text, name));
+                ? TEMPLATE.readOnlyInput(text, nullToEmpty(name))
+                : TEMPLATE.input(text, nullToEmpty(name)));
     }
 
     private static String nullToEmpty(final String value) {

@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
+
 /*
-   An annotation's 'Assign Yourself' link (stroom.annotation.client.AssignYourselfLink), named BEM
-   style; it is disabled with the shared disabled class (DisabledState).
+   Text in a colour of its own (stroom.widget.util.client.SafeHtmlUtil's getColouredText and
+   getMutedText, e.g. a task manager row that doesn't match the filter), named BEM style (block,
+   block--modifier): coloured-text in the colour its --coloured-text__colour custom property gives,
+   and coloured-text--muted in the theme's muted text colour.
 */
-.assign-yourself-link {
-    display: inline-block;
-    color: var(--link__text-color);
-    cursor: pointer;
-    padding-top: 5px;
-    text-decoration: underline;
+
+.coloured-text {
+    color: var(--coloured-text__colour);
 }
 
-/* Already assigned to you, or read only: shown, but greyed and not underlined */
-.assign-yourself-link.disabled {
-    color: var(--text-color--disabled);
-    cursor: default;
-    text-decoration: none;
+.coloured-text--muted {
+    color: var(--text-color--muted);
 }

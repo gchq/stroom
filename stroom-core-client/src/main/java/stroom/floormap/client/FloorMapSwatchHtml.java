@@ -172,8 +172,9 @@ public final class FloorMapSwatchHtml {
     /// is scaled into it as an ordinary replaced element, viewBox or not. So sizing
     /// the element is sufficient here, and the two surfaces agree.
     ///
-    /// The size is set as both attributes and inline style so a stylesheet rule on
-    /// `img` cannot collapse the box and, with it, `object-fit`.
+    /// The size is set as both attributes and the `floor-map-swatch__image` class (from
+    /// the `--floor-map-swatch__size` custom property, floor-map-swatch.css) so a
+    /// stylesheet rule on `img` cannot collapse the box and, with it, `object-fit`.
     ///
     /// The URL is document-controlled data going into `innerHTML`, so it
     /// is escaped; an unescaped value (a stray quote) would allow attribute
@@ -182,8 +183,8 @@ public final class FloorMapSwatchHtml {
         return SafeHtmlUtils.fromTrustedString(
                 "<img src=\"" + SafeHtmlUtils.htmlEscape(url) + "\""
                 + " width=\"" + sizePx + "\" height=\"" + sizePx + "\""
-                + " style=\"width:" + sizePx + "px;height:" + sizePx + "px;"
-                + "object-fit:contain;\" alt=\"\"/>");
+                + " class=\"floor-map-swatch__image\""
+                + " style=\"--floor-map-swatch__size:" + sizePx + "px;\" alt=\"\"/>");
     }
 
     /// An inline-SVG preview of `shape` filled with `colour`.

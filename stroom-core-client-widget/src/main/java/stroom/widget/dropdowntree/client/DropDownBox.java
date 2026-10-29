@@ -16,51 +16,63 @@
 
 package stroom.widget.dropdowntree.client;
 
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A picker: a button (BEM block `drop-down`, `drop-down.css`) showing the chosen value, with a "…"
 /// icon at its end, that asks to open a dialog to choose another. A problem with the value (e.g. the
 /// document can't be found) is shown as a form shows what is wrong with a field: in its form group's
-/// feedback, or, outside a form group, a line of its own under it (`drop-down__feedback`), added only
+/// feedback, or, outside a form group, a line of its own under it (`drop-down__feedback`), shown only
 /// while there is a problem.
+///
+/// Its root is a wrapper (`drop-down-box`) that takes no box of its own, holding the button and its
+/// feedback line. The classes a template gives it (`addStyleNames`, `styleName`) are the button's, as
+/// its look and size are the button's; hiding it hides both.
 ///
 /// It is dumb: a controller (e.g. `DocSelectionController`) attaches to it, sets what it shows and
 /// opens the dialog when it is asked to ([#setOnOpen(Runnable)]). Templates can declare it.
 public class DropDownBox extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String BLOCK = "drop-down";
 
     @UiField
-    Label label;
+    AriaPanel button;
     @UiField
-    SimplePanel ellipsesBtnPanel;
+    Label label;
+    // The problem shown under the picker when it isn't in a form group: briefly, and in full for
+    // screen readers (the brief form if there is no full one)
+    @UiField
+    DivElement feedback;
+    @UiField
+    SpanElement shownProblem;
+    @UiField
+    SpanElement fullProblem;
     // The problem with the value, briefly and in full, or null for none
     private String problem;
-    private String fullProblem;
+    private String fullProblemText;
     // Where the problem is shown: the form group it is in, or its own feedback line
     private FormGroup problemFormGroup;
-    private Element problemFeedback;
+    private boolean showingFeedback;
 
     private boolean enabled = true;
     private Runnable onOpen = () -> {
@@ -68,20 +80,20 @@ public class DropDownBox extends Component {
 
     public DropDownBox() {
         initWidget(BINDER.createAndBindUi(this));
-        addDomHandler(event -> {
+        feedback.setId(DOM.createUniqueId());
+        UIObject.setVisible(feedback, false);
+        button.addDomHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 open(event.getNativeEvent());
             }
         }, MouseDownEvent.getType());
-        addDomHandler(event -> {
+        button.addDomHandler(event -> {
             // As a button: Enter or Space opens the dialog
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER || event.getNativeKeyCode() == KeyCodes.KEY_SPACE) {
                 event.preventDefault();
                 open(event.getNativeEvent());
             }
         }, KeyDownEvent.getType());
-
-        SvgImageUtil.setSvgAsInnerHtml(ellipsesBtnPanel, SvgImage.ELLIPSES_HORIZONTAL);
 
         // A problem is shown once the picker is in the page (in its form group, if it is in one)
         addAttachHandler(event -> {
@@ -100,7 +112,7 @@ public class DropDownBox extends Component {
 
     /// Puts the focus on it.
     public void focus() {
-        getElement().focus();
+        button.getElement().focus();
     }
 
     /// @param text The chosen value, as shown.
@@ -122,7 +134,7 @@ public class DropDownBox extends Component {
         problem = NullSafe.isBlankString(message)
                 ? null
                 : message;
-        fullProblem = problem == null || NullSafe.isBlankString(fullMessage)
+        fullProblemText = problem == null || NullSafe.isBlankString(fullMessage)
                 ? null
                 : fullMessage;
         if (isAttached()) {
@@ -146,37 +158,54 @@ public class DropDownBox extends Component {
         updateState();
     }
 
-    // Shows the problem in the picker's form group, or in a feedback line of its own after it
+    // The button, which the classes a template or its owner gives the picker style, as its look and
+    // size are the button's (the root is a wrapper with no box of its own)
+    @Override
+    protected com.google.gwt.user.client.Element getStyleElement() {
+        return button.getElement();
+    }
+
+    /// Sizes the button, as the wrapper has no box of its own to size.
+    ///
+    /// @param width The width, as CSS gives it, e.g. `240px`.
+    @Override
+    public void setWidth(final String width) {
+        button.setWidth(width);
+    }
+
+    /// Sizes the button, as the wrapper has no box of its own to size.
+    ///
+    /// @param height The height, as CSS gives it.
+    @Override
+    public void setHeight(final String height) {
+        button.setHeight(height);
+    }
+
+    // Shows the problem in the picker's form group, or in its feedback line under it
     private void showProblem() {
         if (problem == null) {
             return;
         }
         problemFormGroup = findFormGroup();
         if (problemFormGroup != null) {
-            problemFormGroup.setFeedback(problem, fullProblem);
+            problemFormGroup.setFeedback(problem, fullProblemText);
         } else {
-            final Element pickerElement = getElement();
-            final Element parent = pickerElement.getParentElement();
-            if (parent != null) {
-                problemFeedback = DOM.createDiv();
-                problemFeedback.setClassName(BLOCK + "__feedback");
-                problemFeedback.setId(DOM.createUniqueId());
-                final Element shown = DOM.createSpan();
-                shown.setInnerText(problem);
-                problemFeedback.appendChild(shown);
-                if (fullProblem != null) {
-                    // The full message is the tooltip, and what screen readers read
-                    shown.setAttribute("aria-hidden", "true");
-                    final Element full = DOM.createSpan();
-                    full.setClassName("sr-only");
-                    full.setInnerText(fullProblem);
-                    problemFeedback.appendChild(full);
-                    problemFeedback.setTitle(fullProblem);
-                }
-                parent.insertAfter(problemFeedback, pickerElement);
-                FieldValidity.setInvalid(pickerElement, true);
-                FieldValidity.addDescribedBy(pickerElement, problemFeedback.getId(), true);
+            // Shown briefly; the full message (or the brief one if there is none) is what screen
+            // readers read, and the full one is the tooltip
+            shownProblem.setInnerText(problem);
+            fullProblem.setInnerText(fullProblemText != null
+                    ? fullProblemText
+                    : problem);
+            if (fullProblemText != null) {
+                feedback.setTitle(fullProblemText);
+            } else {
+                feedback.removeAttribute("title");
             }
+            UIObject.setVisible(feedback, true);
+            showingFeedback = true;
+            final Element pickerElement = button.getElement();
+            FieldValidity.setInvalid(pickerElement, true);
+            FieldValidity.addDescribedBy(pickerElement, feedback.getId(), true);
         }
     }
 
@@ -186,11 +215,12 @@ public class DropDownBox extends Component {
             problemFormGroup.clearFeedback();
             problemFormGroup = null;
         }
-        if (problemFeedback != null) {
-            FieldValidity.setInvalid(getElement(), false);
-            FieldValidity.removeDescribedBy(getElement(), problemFeedback.getId());
-            problemFeedback.removeFromParent();
-            problemFeedback = null;
+        if (showingFeedback) {
+            final Element pickerElement = button.getElement();
+            FieldValidity.setInvalid(pickerElement, false);
+            FieldValidity.removeDescribedBy(pickerElement, feedback.getId());
+            UIObject.setVisible(feedback, false);
+            showingFeedback = false;
         }
     }
 
@@ -203,11 +233,11 @@ public class DropDownBox extends Component {
     }
 
     private void updateState() {
-        DisabledState.set(getElement(), !enabled);
+        DisabledState.set(button.getElement(), !enabled);
         setStyleName("readonly", isReadOnly() && enabled);
         // A button can't be read only, so a read-only picker is a button that does nothing
         if (isReadOnly()) {
-            getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
+            button.getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
         }
     }
 

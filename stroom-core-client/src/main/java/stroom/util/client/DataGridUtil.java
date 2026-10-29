@@ -71,8 +71,6 @@ public class DataGridUtil {
     public static final int DEFAULT_PCT_DANGER_THRESHOLD = 90;
 
     private static final String DISABLED_CELL_CLASS = "data-grid__cell--disabled";
-    // The theme's muted text colour, which is 4.5:1 on rows in both themes (#666666 wasn't on dark ones)
-    private static final String LOW_LIGHT_COLOUR = "var(--text-color--muted)";
 
     private DataGridUtil() {
     }
@@ -97,10 +95,9 @@ public class DataGridUtil {
             final Predicate<T_ROW> isHighlightedPredicate) {
 
         return row ->
-                SafeHtmlUtil.getColouredText(
+                SafeHtmlUtil.getSafeHtml(
                         extractor.apply(row),
-                        LOW_LIGHT_COLOUR,
-                        !isHighlightedPredicate.test(row));
+                        isHighlightedPredicate.test(row));
     }
 
     public static <T_ROW> Function<T_ROW, SafeHtml> highlightedCellExtractor(

@@ -23,7 +23,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -97,9 +96,8 @@ public class TableRow {
         // Title is the plain text equivalent of the inner
         final String title = convertRawCellValue(rawValue);
         return SafeHtmlUtil.getTemplate()
-                .divWithClassStyleAndTitle(
-                        "cell",
-                        cell.getStyles(),
+                .divWithClassAndTitle(
+                        cell.getClassName(),
                         title,
                         innerBuilder.toSafeHtml());
     }
@@ -272,23 +270,43 @@ public class TableRow {
     // --------------------------------------------------------------------------------
 
 
+    /// A value in a row, with how its column shows it.
     public static class Cell {
 
         private final String rawValue;
-        private final SafeStyles styles;
+        private final boolean wrap;
+        private final boolean grouped;
 
+        /// @param rawValue The value, which may hold links.
+        /// @param wrap     Whether the value wraps onto more lines (its column's format says so),
+        ///                 rather than being cut short.
+        /// @param grouped  Whether the value is bold, as its column groups the rows at or above
+        ///                 its row's level.
         public Cell(final String rawValue,
-                    final SafeStyles styles) {
+                    final boolean wrap,
+                    final boolean grouped) {
             this.rawValue = rawValue;
-            this.styles = styles;
+            this.wrap = wrap;
+            this.grouped = grouped;
         }
 
         String getRawValue() {
             return rawValue;
         }
 
-        SafeStyles getStyles() {
-            return styles;
+        // The cell's classes: result-table.css's modifiers for a wrapped or grouped value
+        String getClassName() {
+            if (!wrap && !grouped) {
+                return "cell";
+            }
+            final StringBuilder sb = new StringBuilder("cell result-table__cell");
+            if (wrap) {
+                sb.append(" result-table__cell--wrap");
+            }
+            if (grouped) {
+                sb.append(" result-table__cell--grouped");
+            }
+            return sb.toString();
         }
 
         @Override

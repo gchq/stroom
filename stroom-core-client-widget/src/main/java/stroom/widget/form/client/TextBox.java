@@ -77,6 +77,14 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Ha
         setAttribute(getElement(), "placeholder", placeholder);
     }
 
+    /// Says what the box holds, so that browsers and password managers can fill it in.
+    ///
+    /// @param autocomplete What it holds, e.g. `username`, or null or empty to leave it to the
+    ///                     browser.
+    public void setAutocomplete(final String autocomplete) {
+        setAttribute(getElement(), "autocomplete", autocomplete);
+    }
+
     /// @param role The box's WAI-ARIA role, e.g. `spinbutton` or `combobox`.
     public void setRole(final String role) {
         setAttribute(getElement(), "role", role);

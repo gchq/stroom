@@ -18,7 +18,6 @@ package stroom.security.client.component;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.client.DescriptionBuilder;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AbstractAppPermissionChange;
 import stroom.security.shared.AbstractAppPermissionChange.AddAppPermission;

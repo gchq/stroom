@@ -75,10 +75,10 @@ class TestStylesheets {
     // Classes the code sets that nothing styles, kept as hooks: for stories, scripts and code to find
     // an element by (ElementUtil, querySelector), or a part a layout helper styles
     private static final Set<String> HOOKS = Set.of(
-            "ai-attachment-status-text", "ai-message-copy-label", "code-editor__load-error-container",
+            "code-editor__load-error-container",
             "colour-swatch-cell__text", "conditional-formatting-rule-editor__type", "contentstore-details-name",
             "create-document-types-icon",
-            "dashboard-table-filter-cell-disable-button-disabled", "date-time-box__input", "date-time-view__column",
+            "date-time-box__input", "date-time-view__column",
             "delete-confirm__summary-header", "delete-confirm__type-count", "dialog--resizable", "dock-min",
             "draggable-tree__status", "expression-tree", "expression-tree__canvas", "expression-tree__items",
             "file-chooser__button", "form-group__help-text", "form-page", "line-col-input", "line-col-input__field",

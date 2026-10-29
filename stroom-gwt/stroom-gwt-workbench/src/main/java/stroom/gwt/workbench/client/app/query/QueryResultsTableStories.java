@@ -74,20 +74,19 @@ public final class QueryResultsTableStories {
                     // The table is the query's, so the query is run first
                     play.click(play.findByRole("button", "Execute Query"));
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    final Query inputs = play.querySelectorAll(".dashboard-table-filter-cell-text");
+                    final Query inputs = play.querySelectorAll(".dashboard-table-filter-cell .text-field");
                     play.expect(inputs).toHaveLength(2);
                     play.expect(inputs.nth(1)).toHaveValue("x");
-                    play.expect(play.querySelectorAll(".dashboard-table-filter-cell-disable-button")).toHaveLength(2);
+                    play.expect(play.querySelectorAll(".dashboard-table-filter-cell__disable-button")).toHaveLength(2);
                     final Query nameCell = play.getByText("alpha");
                     play.expect(nameCell).toHaveAttribute("title", "alpha");
-                    // The cells' inline styles (el.style) are checked
-                    play.expect(nameCell.attribute("style")).toMatch("white-space:normal");
-                    play.expect(nameCell.attribute("style")).toMatch("font-weight:bold");
-                    play.expect(play.getByText("5").attribute("style")).not().toMatch("font-weight:bold");
+                    play.expect(nameCell).toHaveClass("result-table__cell--wrap");
+                    play.expect(nameCell).toHaveClass("result-table__cell--grouped");
+                    play.expect(play.getByText("5")).not().toHaveClass("result-table__cell--grouped");
                     // A filter's button turns it off: the next search asks for it off (the header
                     // shows the columns the server sends back, which here always have it on), and
                     // no column menu opens
-                    final Query buttons = play.querySelectorAll(".dashboard-table-filter-cell-disable-button");
+                    final Query buttons = play.querySelectorAll(".dashboard-table-filter-cell__disable-button");
                     play.expect(buttons.nth(1)).toHaveAttribute("title", "Disable Filter");
                     play.click(buttons.nth(1));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

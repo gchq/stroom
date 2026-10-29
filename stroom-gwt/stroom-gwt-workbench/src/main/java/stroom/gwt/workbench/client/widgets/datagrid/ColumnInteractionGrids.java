@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.ai.shared.GeneralTableContext;
+import stroom.cell.textfield.client.TextFieldCell;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
@@ -43,14 +44,12 @@ import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
@@ -223,16 +222,16 @@ final class ColumnInteractionGrids {
     // --------------------------------------------------------------------------------
     // Interactive header cells
 
-    /// A header with a live text box, as the dashboard's `FilterCell`: what is typed reaches the
-    /// header's cell, a change fires its updater, and the grid neither takes the focus nor treats
-    /// the keys as its own.
+    /// A header with a live text box (a `TextFieldCell`, as the dashboard's `FilterCell` holds):
+    /// what is typed reaches the header's cell, a change fires its updater, and the grid neither
+    /// takes the focus nor treats the keys as its own.
     static Widget headerInput(final StoryContext context) {
         final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
         final Spy onFilterChange = context.fn(ON_FILTER_CHANGE);
-        final Header<String> filterHeader = new Header<String>(new LabelledTextInputCell("Filter names")) {
+        final Header<String> filterHeader = new Header<String>(new TextFieldCell(index -> "Filter names")) {
             @Override
             public String getValue() {
                 return "";
@@ -515,31 +514,6 @@ final class ColumnInteractionGrids {
         final Button button = new Button(text);
         button.addClickHandler(event -> action.run());
         return button;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// A [TextInputCell] whose input has an accessible name, as a header filter box needs.
-    private static final class LabelledTextInputCell extends TextInputCell {
-
-        private final String label;
-
-        private LabelledTextInputCell(final String label) {
-            this.label = label;
-        }
-
-        @Override
-        public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-            sb.appendHtmlConstant("<input type=\"text\" tabindex=\"-1\" aria-label=\"")
-                    .appendEscaped(label)
-                    .appendHtmlConstant("\" value=\"")
-                    .appendEscaped(value != null
-                            ? value
-                            : "")
-                    .appendHtmlConstant("\">");
-        }
     }
 
 

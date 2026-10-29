@@ -628,9 +628,11 @@ public class PipelineStructureController extends Controller {
                     "You must save changes to this pipeline before you can view the source",
                     null);
         } else {
-            final CodeEditorController jsonEditor = makeDialog(jsonEditorProvider).attach(new CodeEditor());
+            // The dialog's content is the editor alone, bordered, at the shared minimum size
+            final CodeEditor source = new CodeEditor();
+            source.addStyleName("form-control-border default-min-sizes");
+            final CodeEditorController jsonEditor = makeDialog(jsonEditorProvider).attach(source);
             jsonEditor.setMode(AceEditorMode.JSON);
-            jsonEditor.asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory

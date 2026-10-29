@@ -16,13 +16,12 @@
 
 package stroom.annotation.client;
 
-import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -35,7 +34,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
@@ -53,18 +51,19 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     @UiField
     FlowPanel formGroupPanel;
     @UiField
-    SimplePanel icon;
+    AriaPanel icon;
 
     private Widget childWidget = null;
+    // Whether the ⋮ is a button, as the setting has a title
+    private boolean button;
 
     public SettingBlock() {
         initWidget(BINDER.createAndBindUi(this));
-        icon.getElement().setInnerHTML(SvgImage.ELLIPSES_VERTICAL.getSvg());
-        // A hint only, until the setting has a title (see setTitle)
-        icon.getElement().setAttribute("aria-hidden", "true");
+        // A hint only (its template hides it from screen readers), until the setting has a title (see
+        // setTitle)
         icon.addDomHandler(event -> {
             final int keyCode = event.getNativeKeyCode();
-            if (isButton() && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE)) {
+            if (button && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE)) {
                 event.preventDefault();
                 event.stopPropagation();
                 icon.getElement().dispatchEvent(Document.get().createClickEvent(
@@ -90,31 +89,28 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     @Override
     public void setTitle(final String title) {
         super.setTitle(title);
-        final Element element = icon.getElement();
-        if (title == null || title.isEmpty()) {
-            element.removeAttribute("role");
-            element.removeAttribute("tabindex");
-            element.removeAttribute("aria-label");
-            element.removeAttribute("aria-haspopup");
-            element.setAttribute("aria-hidden", "true");
+        button = title != null && !title.isEmpty();
+        if (button) {
+            icon.setRole("button");
+            icon.setTabIndex(0);
+            icon.setAriaLabel(title);
+            icon.setAriaHasPopup("dialog");
+            icon.setAriaHidden(false);
         } else {
-            element.setAttribute("role", "button");
-            element.setTabIndex(0);
-            element.setAttribute("aria-label", title);
-            element.setAttribute("aria-haspopup", "dialog");
-            element.removeAttribute("aria-hidden");
+            icon.setRole(null);
+            // Out of the tab order (it can still be focused from code, but nothing does)
+            icon.setTabIndex(-1);
+            icon.setAriaLabel(null);
+            icon.setAriaHasPopup(null);
+            icon.setAriaHidden(true);
         }
     }
 
     /// Focuses the setting's ⋮ button, if it has a title (see [#setTitle(String)]).
     public void focus() {
-        if (isButton()) {
+        if (button) {
             icon.getElement().focus();
         }
-    }
-
-    private boolean isButton() {
-        return "button".equals(icon.getElement().getAttribute("role"));
     }
 
     /// Makes the setting read only: its value is greyed and its chooser doesn't open (the controller

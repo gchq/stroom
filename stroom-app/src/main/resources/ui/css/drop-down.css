@@ -22,7 +22,13 @@
    its form group's feedback, or a line of its own under it (drop-down__feedback).
    It draws the field with the shared stroom-control classes, whose readonly and disabled classes
    give it the read-only and disabled looks every field has.
+   The button and its feedback line are held by a wrapper (drop-down-box) with no box of its own,
+   so they are laid out as their parent's children.
 */
+
+.drop-down-box {
+    display: contents;
+}
 
 .drop-down {
     position: relative;

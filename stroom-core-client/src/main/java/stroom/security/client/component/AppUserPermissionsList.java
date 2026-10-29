@@ -19,7 +19,6 @@ package stroom.security.client.component;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.security.client.DescriptionBuilder;
 import stroom.security.client.UserAndGroupHelper;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;

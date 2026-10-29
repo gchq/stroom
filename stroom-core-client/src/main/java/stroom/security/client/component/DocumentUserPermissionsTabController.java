@@ -19,7 +19,6 @@ package stroom.security.client.component;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.security.client.DescriptionBuilder;
 import stroom.security.client.DocPermissionRestClient;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;

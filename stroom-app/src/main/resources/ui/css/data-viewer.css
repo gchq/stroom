@@ -63,17 +63,11 @@
     height: 0px;
 }
 
-/* The source link: a pointer and an underline on a hover while it can be followed, greyed
-   while it can't (was stroom.css's clickableLabel) */
-.data-viewer__source-link-label.data-viewer__source-link-label--enabled {
-    cursor: pointer;
-}
-
-.data-viewer__source-link-label.data-viewer__source-link-label--enabled:hover {
-    text-decoration: underline;
-}
-
-.data-viewer__source-link-label.disabled {
+/* The source link (a LinkButton, which has a pointer and an underline on a hover): greyed while
+   it can't be followed (DisabledState's class), with no pointer or underline */
+.data-viewer__source-link-label.disabled,
+.data-viewer__source-link-label.disabled:hover {
     color: var(--text-color--disabled);
     cursor: default;
+    text-decoration: none;
 }

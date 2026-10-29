@@ -16,16 +16,14 @@
 
 package stroom.widget.spinner.client;
 
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A small spinner shown while tasks run, e.g. on a tab or the explorer's bar. It fades in and out
@@ -33,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// (`busy-spinner--spinning`): once it has faded
 /// out it is hidden (from screen readers too) and its animation is stopped, as the explorer's bar and
 /// every tab have one, which would otherwise spin unseen all the time (#5299).
-public class SpinnerSmall extends Widget implements TaskMonitorFactory {
+public class SpinnerSmall extends Composite implements TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -43,15 +41,11 @@ public class SpinnerSmall extends Widget implements TaskMonitorFactory {
     private static final String REFRESHING = BLOCK + "--active";
     private static final String SPINNING = BLOCK + "--spinning";
 
-    @UiField
-    DivElement inner;
-
     private int taskCount;
     private Timer stopSpinning;
 
     public SpinnerSmall() {
-        setElement(BINDER.createAndBindUi(this));
-        inner.setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     /// Shows the spinner, fading it in, or fades it out and then stops it spinning.
@@ -104,7 +98,7 @@ public class SpinnerSmall extends Widget implements TaskMonitorFactory {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<DivElement, SpinnerSmall> {
+    interface Binder extends UiBinder<Widget, SpinnerSmall> {
 
     }
 }

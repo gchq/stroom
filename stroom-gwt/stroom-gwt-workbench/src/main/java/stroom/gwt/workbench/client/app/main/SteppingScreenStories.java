@@ -239,7 +239,8 @@ public final class SteppingScreenStories {
                             .toHaveTextContent("1"));
                     play.expect(play.querySelector(".code-editor__marker--warning"))
                             .toHaveAttribute("lineno", "1");
-                    play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--error");
+                    // (every editor has a summary, hidden until it has indicators)
+                    play.expect(play.querySelector(".code-editor__summary--error")).toBeVisible();
                     // The location is a button, named for what it does and where it is, that opens
                     // the Set Location dialog
                     play.click(play.getByRole("button",

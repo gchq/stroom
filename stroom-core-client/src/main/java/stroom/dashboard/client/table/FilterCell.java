@@ -14,151 +14,76 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2010 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.FilterCell.ViewData;
+import stroom.cell.textfield.client.TextFieldCell;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
-import stroom.security.client.ClassNameBuilder;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.SvgMarkup;
+import stroom.widget.button.client.ToolbarButtonCell;
 
-import com.google.gwt.cell.client.AbstractInputCell;
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.CompositeCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.HasCell;
+import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
-public class FilterCell
-        extends AbstractInputCell<Column, ViewData> {
+/// A column's filter box in a results table's header (`dashboard-table-filter-cell`,
+/// table-filter-cell.css): Stroom's text field ([TextFieldCell]) for the filter, named for its
+/// column, with a toolbar button ([ToolbarButtonCell]) over its right end that turns the filter off
+/// and on. An off filter's box looks disabled but can still be changed.
+///
+/// What is typed sets the column's filter when the box loses the focus or Enter is pressed (the
+/// field's change). The box keeps the focus after Enter, so the header drawn again keeps it in the
+/// box (with its caret). Enter and Space on the button press it, and it keeps the focus.
+public class FilterCell extends CompositeCell<Column> {
 
-    /**
-     * The {@code ViewData} for this cell.
-     */
-    public static class ViewData {
+    private static final Template TEMPLATE = GWT.create(Template.class);
+    // A column's header finds the button by it, to know that a press was the button's (and opens
+    // no menu)
+    private static final String DISABLE_BUTTON_CLASS = "dashboard-table-filter-cell__disable-button";
 
-        /**
-         * The last value that was updated.
-         */
-        private String lastValue;
-
-        /**
-         * The current value.
-         */
-        private String curValue;
-
-        /**
-         * Construct a ViewData instance containing a given value.
-         *
-         * @param value a String value
-         */
-        public ViewData(final String value) {
-            this.lastValue = value;
-            this.curValue = value;
-        }
-
-        /**
-         * Return true if the last and current values of this ViewData object
-         * are equal to those of the other object.
-         */
-        @Override
-        public boolean equals(final Object other) {
-            if (!(other instanceof ViewData)) {
-                return false;
-            }
-            final ViewData vd = (ViewData) other;
-            return equalsOrNull(lastValue, vd.lastValue) &&
-                   equalsOrNull(curValue, vd.curValue);
-        }
-
-        /**
-         * Return the current value of the input element.
-         *
-         * @return the current value String
-         * @see #setCurrentValue(String)
-         */
-        public String getCurrentValue() {
-            return curValue;
-        }
-
-        /**
-         * Return the last value sent to the {@link ValueUpdater}.
-         *
-         * @return the last value String
-         * @see #setLastValue(String)
-         */
-        public String getLastValue() {
-            return lastValue;
-        }
-
-        /**
-         * Return a hash code based on the last and current values.
-         */
-        @Override
-        public int hashCode() {
-            return (lastValue + "_*!@HASH_SEPARATOR@!*_" + curValue).hashCode();
-        }
-
-        /**
-         * Set the current value.
-         *
-         * @param curValue the current value
-         * @see #getCurrentValue()
-         */
-        protected void setCurrentValue(final String curValue) {
-            this.curValue = curValue;
-        }
-
-        /**
-         * Set the last value.
-         *
-         * @param lastValue the last value
-         * @see #getLastValue()
-         */
-        protected void setLastValue(final String lastValue) {
-            this.lastValue = lastValue;
-        }
-
-        private boolean equalsOrNull(final Object a, final Object b) {
-            return (a != null)
-                    ? a.equals(b)
-                    : ((b == null)
-                            ? true
-                            : false);
-        }
-    }
-
+    private final TextFieldCell field;
+    private final HasCell<Column, ?> fieldPart;
     private final FilterCellManager filterCellManager;
 
-    /**
-     * Constructs a TextInputCell that renders its text without HTML markup.
-     */
+    /// @param filterCellManager Sets a column's filter, when it is typed or turned off or on.
     public FilterCell(final FilterCellManager filterCellManager) {
-        super(BrowserEvents.CHANGE, BrowserEvents.KEYUP, BrowserEvents.CLICK);
+        this(new TextFieldCell(null), filterCellManager);
+    }
+
+    private FilterCell(final TextFieldCell field, final FilterCellManager filterCellManager) {
+        this(field, part(field, FilterCell::getFilter), filterCellManager);
+    }
+
+    private FilterCell(final TextFieldCell field,
+                       final HasCell<Column, String> fieldPart,
+                       final FilterCellManager filterCellManager) {
+        super(List.of(fieldPart, part(new ToolbarButtonCell<Column>(
+                SvgImage.DISABLE,
+                DISABLE_BUTTON_CLASS,
+                column -> isEnabled(column)
+                        ? "Disable Filter"
+                        : "Enable Filter",
+                column -> toggle(filterCellManager, column)), Function.identity())));
+        this.field = field;
+        this.fieldPart = fieldPart;
         this.filterCellManager = filterCellManager;
     }
 
@@ -168,155 +93,136 @@ public class FilterCell
                                final Column column,
                                final NativeEvent event,
                                final ValueUpdater<Column> valueUpdater) {
-        super.onBrowserEvent(context, parent, column, event, valueUpdater);
-
-        final String eventType = event.getType();
-        final Element target = event.getEventTarget().cast();
-
-        // The disable button turns the filter off or on, when clicked or pressed with Enter or Space
-        if (BrowserEvents.CLICK.equals(eventType)) {
-            if (isInButton(parent, target) && filterCellManager != null) {
-                final ColumnFilter columnFilter = ColumnFilter.fromColumn(column).build();
-                filterCellManager.setColumnFilter(column, ColumnFilter.fromColumn(column)
-                        .enabled(!columnFilter.isEnabled())
-                        .build());
-            }
-            return;
-        }
-
-        // Ignore events that don't target the input.
+        // The field's change (or Enter) sets the filter here rather than in the text field, which
+        // would take the focus from the box: the header drawn again keeps the focus in it
         final InputElement input = getInputElement(parent);
-        if (!input.isOrHasChild(target)) {
+        final EventTarget target = event.getEventTarget();
+        if (input != null && Element.is(target) && input.isOrHasChild(Element.as(target))
+            && isCommit(event)) {
+            setFilter(context, column, input.getValue());
             return;
         }
-
-        final Object key = context.getKey();
-        if (BrowserEvents.CHANGE.equals(eventType)) {
-            finishEditing(parent, column, key, valueUpdater);
-        } else if (BrowserEvents.KEYUP.equals(eventType)) {
-            // Record keys as they are typed.
-            ViewData vd = getViewData(key);
-            if (vd == null) {
-                vd = new ViewData(getValue(column));
-                setViewData(key, vd);
-            }
-            vd.setCurrentValue(input.getValue());
-        }
-    }
-
-    @Override
-    protected void onEnterKeyDown(final Context context,
-                                  final Element parent,
-                                  final Column column,
-                                  final NativeEvent event,
-                                  final ValueUpdater<Column> valueUpdater) {
-        // Enter on the disable button is the button's (a click), so it keeps the focus rather
-        // than the text box taking it
-        if (isInButton(parent, event.getEventTarget().cast())) {
-            return;
-        }
-        super.onEnterKeyDown(context, parent, column, event, valueUpdater);
+        super.onBrowserEvent(context, parent, column, event, valueUpdater);
     }
 
     @Override
     public void render(final Context context, final Column column, final SafeHtmlBuilder sb) {
-        // Get the view data.
+        final SafeHtmlBuilder parts = new SafeHtmlBuilder();
+        super.render(context, column, parts);
+        sb.append(isEnabled(column)
+                ? TEMPLATE.filter(parts.toSafeHtml())
+                : TEMPLATE.disabledFilter(parts.toSafeHtml()));
+    }
+
+    @Override
+    protected <X> void render(final Context context,
+                              final Column column,
+                              final SafeHtmlBuilder sb,
+                              final HasCell<Column, X> hasCell) {
+        if (hasCell == fieldPart) {
+            final SafeHtmlBuilder fieldHtml = new SafeHtmlBuilder();
+            field.render(context, getFilter(column), "Filter " + NullSafe.string(column.getName()), fieldHtml);
+            sb.append(TEMPLATE.field(fieldHtml.toSafeHtml()));
+        } else {
+            final SafeHtmlBuilder buttonHtml = new SafeHtmlBuilder();
+            hasCell.getCell().render(context, hasCell.getValue(column), buttonHtml);
+            sb.append(TEMPLATE.buttons(buttonHtml.toSafeHtml()));
+        }
+    }
+
+    // The parts are in the filter's own element, the cell's first
+    @Override
+    protected Element getContainerElement(final Element parent) {
+        return parent.getFirstChildElement();
+    }
+
+    // The field's element, the first part's first child
+    private InputElement getInputElement(final Element parent) {
+        final Element container = getContainerElement(parent);
+        final Element fieldElement = container == null
+                ? null
+                : container.getFirstChildElement();
+        final Element input = fieldElement == null
+                ? null
+                : fieldElement.getFirstChildElement();
+        return input == null
+                ? null
+                : input.cast();
+    }
+
+    // Sets the column's filter to what was typed, if it isn't the filter already set from the box
+    private void setFilter(final Context context, final Column column, final String text) {
         final Object key = context.getKey();
-        ViewData viewData = getViewData(key);
-        final String value = getValue(column);
-        if (viewData != null && viewData.getCurrentValue().equals(value)) {
-            clearViewData(key);
-            viewData = null;
-        }
-
-        final String s = (viewData != null)
-                ? viewData.getCurrentValue()
-                : value;
-
-        final ColumnFilter columnFilter = ColumnFilter.fromColumn(column).build();
-
-        final boolean enabled = columnFilter.isEnabled();
-        final String title = enabled
-                ? "Disable Filter"
-                : "Enable Filter";
-        final ClassNameBuilder textClassName = new ClassNameBuilder();
-        textClassName.addClassName("dashboard-table-filter-cell-text");
-        if (!enabled) {
-            textClassName.addClassName("dashboard-table-filter-cell-text-disabled");
-        }
-
-        final ClassNameBuilder buttonClassName = new ClassNameBuilder();
-        buttonClassName.addClassName("toolbar-button");
-        buttonClassName.addClassName("dashboard-table-filter-cell-disable-button");
-        if (!enabled) {
-            buttonClassName.addClassName("dashboard-table-filter-cell-disable-button-disabled");
-        }
-
-        final HtmlBuilder html = new HtmlBuilder(sb);
-        html.div(outer -> {
-
-            outer.elem(
-                    SafeHtmlUtils.fromSafeConstant("input"),
-                    new Attribute("type", "text"),
-                    new Attribute("aria-label", "Filter " + NullSafe.string(column.getName())),
-                    Attribute.className(textClassName.build()),
-                    new Attribute("value", s));
-
-            outer.div(buttons -> {
-                buttons.elem(button -> {
-                    button.appendTrustedString(
-                            SvgMarkup.decorative(SvgImage.DISABLE.getSvg(), "toolbar-button__icon"));
-                }, SafeHtmlUtils.fromSafeConstant("button"),
-                    new Attribute("type", "button"),
-                    Attribute.className(buttonClassName.build()),
-                    Attribute.title(title));
-            }, Attribute.className("dashboard-table-filter-cell-buttons"));
-
-        }, Attribute.className("dashboard-table-filter-cell"));
-    }
-
-    @Override
-    protected void finishEditing(final Element parent,
-                                 final Column column,
-                                 final Object key,
-                                 final ValueUpdater<Column> valueUpdater) {
-        final String value = getValue(column);
-        final String newValue = getInputElement(parent).getValue();
-
-        // Get the view data.
-        ViewData vd = getViewData(key);
-        if (vd == null) {
-            vd = new ViewData(value);
-            setViewData(key, vd);
-        }
-        vd.setCurrentValue(newValue);
-
-        // Fire the value updater if the value has changed.
-        if (!vd.getCurrentValue().equals(vd.getLastValue())) {
-            vd.setLastValue(newValue);
-
-            if (filterCellManager != null) {
-                final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
-                filterCellManager.setColumnFilter(column, builder.filter(newValue).build());
-            }
-            if (valueUpdater != null) {
-                valueUpdater.update(column);
-            }
+        final TextInputCell.ViewData viewData = field.getViewData(key);
+        final String lastValue = viewData == null
+                ? getFilter(column)
+                : viewData.getLastValue();
+        // What was typed is the box's value now, so its change (as it loses the focus) sets nothing
+        field.setViewData(key, new TextInputCell.ViewData(text));
+        if (!Objects.equals(text, lastValue) && filterCellManager != null) {
+            filterCellManager.setColumnFilter(column, ColumnFilter.fromColumn(column).filter(text).build());
         }
     }
 
-    @Override
-    protected InputElement getInputElement(final Element parent) {
-        final Element element = ElementUtil.findChild(parent, e -> e.getTagName().equalsIgnoreCase("input"));
-        return element.cast();
+    // The field's change, or Enter pressed in it
+    private static boolean isCommit(final NativeEvent event) {
+        final String type = event.getType();
+        return BrowserEvents.CHANGE.equals(type)
+               || (BrowserEvents.KEYDOWN.equals(type) && event.getKeyCode() == KeyCodes.KEY_ENTER);
     }
 
-    private static boolean isInButton(final Element parent, final Element target) {
-        final Element button = ElementUtil.findChild(parent, "dashboard-table-filter-cell-disable-button");
-        return button != null && button.isOrHasChild(target);
+    private static void toggle(final FilterCellManager filterCellManager, final Column column) {
+        if (filterCellManager != null) {
+            filterCellManager.setColumnFilter(column, ColumnFilter.fromColumn(column)
+                    .enabled(!isEnabled(column))
+                    .build());
+        }
     }
 
-    private String getValue(final Column column) {
+    private static boolean isEnabled(final Column column) {
+        return ColumnFilter.fromColumn(column).build().isEnabled();
+    }
+
+    private static String getFilter(final Column column) {
         return NullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
+    }
+
+    // A part of the filter: a cell showing a value got from the column
+    private static <X> HasCell<Column, X> part(final Cell<X> cell, final Function<Column, X> getter) {
+        return new HasCell<>() {
+            @Override
+            public Cell<X> getCell() {
+                return cell;
+            }
+
+            @Override
+            public FieldUpdater<Column, X> getFieldUpdater() {
+                return null;
+            }
+
+            @Override
+            public X getValue(final Column column) {
+                return getter.apply(column);
+            }
+        };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Template extends SafeHtmlTemplates {
+
+        @Template("<div class=\"dashboard-table-filter-cell\">{0}</div>")
+        SafeHtml filter(SafeHtml parts);
+
+        @Template("<div class=\"dashboard-table-filter-cell dashboard-table-filter-cell--disabled\">{0}</div>")
+        SafeHtml disabledFilter(SafeHtml parts);
+
+        @Template("<div>{0}</div>")
+        SafeHtml field(SafeHtml field);
+
+        @Template("<div class=\"dashboard-table-filter-cell__buttons\">{0}</div>")
+        SafeHtml buttons(SafeHtml button);
     }
 }

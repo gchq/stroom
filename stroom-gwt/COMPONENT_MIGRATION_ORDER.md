@@ -1310,6 +1310,15 @@ after wave 38.
 > analytics, the Main shell, the widgets' internals and the query; what is left (the tab bars'
 > selector, Time Preferences, two index editors) is listed with its reason. See `wave-39.md`.
 
+## 40. UI audit wave 6: markup out of controllers and Java
+
+Record: [`component-migration/wave-40.md`](component-migration/wave-40.md). Added 29 October 2026,
+after wave 39.
+
+> **Done, 29 October 2026**: controllers pass data only; the AI chat, sign-in, alerts, Info,
+> annotations, the result table's filter, the pipeline path bar and the widgets' internals declare
+> their markup, icons and ARIA, and fixed inline styles are classes. See `wave-40.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

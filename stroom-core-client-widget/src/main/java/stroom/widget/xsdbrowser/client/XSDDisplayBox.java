@@ -23,7 +23,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,13 +34,13 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    FlowPanel box;
-    @UiField
     ClickPanel title;
     @UiField
     SimplePanel image;
     @UiField
     Label titleText;
+    @UiField
+    ScrollPanel content;
 
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private boolean selected;
@@ -74,10 +73,8 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
 
         // Any content below the title takes the rest of the height
         if (content != null) {
-            final ScrollPanel scrollPanel = new ScrollPanel();
-            scrollPanel.addStyleName("xsd-browser__box-content");
-            scrollPanel.add(content);
-            box.add(scrollPanel);
+            this.content.setWidget(content);
+            this.content.setVisible(true);
         }
 
         setSelected(false);

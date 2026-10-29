@@ -1,0 +1,179 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A message in an Ask Stroom AI conversation (stroom.ai.client.component.AiMessage, and
+   AiDetailsMessage for one shown as details), named BEM style: the message, its modifiers for what
+   it is, its header (an attachment's, or a details message's summary), an attachment's download
+   status, a details message's content, and its footer (Delete, Copy and when it was sent).
+*/
+
+.ai-message {
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.ai-message--user {
+    background: var(--page__background-color);
+}
+
+.ai-message--user blockquote {
+    border-left: 3px solid var(--control__border-color--focused);
+    margin: 0;
+    padding-left: 8px;
+    word-wrap: break-word;
+}
+
+.ai-message--assistant {
+    /* default background — inherits from container */
+}
+
+.ai-message--error {
+    background: rgba(211, 47, 47, 0.1);
+    border-left: 3px solid #d32f2f;
+    color: #d32f2f;
+}
+
+.ai-message--working summary,
+.ai-message--data summary,
+.ai-message--thinking summary,
+.ai-message--debug-detail summary {
+    cursor: pointer;
+    color: var(--control__text-color--disabled);
+    font-style: italic;
+    user-select: none;
+}
+
+.ai-message--working[open],
+.ai-message--data[open],
+.ai-message--thinking[open],
+.ai-message--debug-detail[open] {
+    background: var(--page__background-color);
+}
+
+.ai-message--working summary::marker,
+.ai-message--data summary::marker,
+.ai-message--thinking summary::marker,
+.ai-message--debug-detail summary::marker {
+    font-size: 0.8em;
+}
+
+.ai-message--debug-detail .ai-message__details {
+    line-height: 1.4;
+    opacity: 0.9;
+    overflow: auto;
+}
+
+.ai-message__header,
+.ai-message__footer {
+    display: flex;
+    gap: 5px;
+}
+
+.ai-message__footer {
+    align-items: center;
+}
+
+/* The toolbars of an attachment's View data and a message's Delete, in line with the text */
+.ai-message__toolbar {
+    margin: 0;
+}
+
+/* A details message's summary icon, the size of a toolbar button's, as it was drawn */
+.ai-message__summary-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.ai-message__summary-icon svg {
+    width: 18px;
+    height: 18px;
+    color: var(--icon-button__color);
+}
+
+.ai-message__status {
+    font-size: 0.85em;
+    opacity: 0.8;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ai-message__status-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    cursor: default;
+}
+
+.ai-message__status-icon svg {
+    width: 14px;
+    height: 14px;
+    color: var(--icon-colour__green);
+}
+
+.ai-message__timestamp {
+    font-size: 0.7em;
+    color: var(--control__text-color--disabled);
+    margin-left: auto;
+    cursor: default;
+}
+
+.ai-message__copy {
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: 1px solid var(--control__border-color);
+    padding: 2px 6px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border-radius: .25rem;
+}
+
+.ai-message__copy:hover {
+    color: var(--control__text-color);
+    border-color: var(--control__text-color);
+}
+
+/* Delete shows while the pointer is on its message, or (as keyboard users can tab to it) while it
+   or its message has the focus */
+.ai-message__delete {
+    opacity: 0;
+}
+
+.ai-message:hover > .ai-message__footer .ai-message__delete,
+.ai-message:focus-within > .ai-message__footer .ai-message__delete {
+    opacity: 1;
+}
+
+.ai-message__delete .toolbar-button__icon {
+    color: var(--control__text-color--disabled);
+}
+
+.ai-message__delete:hover .toolbar-button__icon {
+    color: var(--icon-colour__red);
+}

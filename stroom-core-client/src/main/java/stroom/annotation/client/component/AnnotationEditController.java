@@ -41,7 +41,6 @@ import stroom.annotation.shared.ChangeSubject;
 import stroom.annotation.shared.ChangeTitle;
 import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EntryValue;
-import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.RemoveTag;
@@ -53,8 +52,6 @@ import stroom.data.client.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -70,22 +67,11 @@ import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
-import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.Clipboard;
-import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.Rect;
-import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -93,10 +79,8 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /// An annotation's Annotation tab ([AnnotationEdit]): shows the annotation, makes each change to it
@@ -105,46 +89,6 @@ import java.util.function.Consumer;
 /// followed, edited and deleted. Read only as its document is: everything can be read, nothing
 /// changed.
 public class AnnotationEditController extends Controller implements Focus {
-
-    private static final String EMPTY_VALUE = "'  '";
-    private static final String ENTRY_ID_ATTRIBUTE = "entryId";
-    private static final String ENTRY_TYPE_ATTRIBUTE = "entryType";
-    private static final String GROUP_ID_ATTRIBUTE = "groupId";
-    // The class of an entry's actions button, which opens the entry's menu
-    private static final String ENTRY_ACTIONS_CLASS = "annotation-history__actions";
-    private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
-
-    private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"setting-block__icon icon-colour__grey icon-wrap\">" +
-            SvgImage.ELLIPSES_VERTICAL.getSvg() +
-            "</div>");
-    private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotation-history__line\"></div>");
-    private static final SafeHtml EXPAND = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotation-history__expander icon-colour__grey icon-wrap\">" +
-            SvgImage.ARROW_DOWN.getSvg() +
-            "</div>");
-    private static final SafeHtml COLLAPSE = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotation-history__expander icon-colour__grey icon-wrap\">" +
-            SvgImage.ARROW_UP.getSvg() +
-            "</div>");
-
-    private static final Attribute HISTORY_INNER = Attribute.className("annotation-history");
-    private static final Attribute HISTORY_COMMENT_BORDER = Attribute.className("annotation-history__comment");
-    private static final Attribute HISTORY_COMMENT_HEADER = Attribute.className("annotation-history__comment-header");
-    private static final Attribute HISTORY_COMMENT_BODY = Attribute.className("annotation-history__comment-body");
-    private static final Attribute HISTORY_GROUP_HEADER = Attribute
-            .className("annotation-history__comment-header annotation-history__group-header");
-    private static final Attribute HISTORY_GROUP_BODY = Attribute.className("annotation-history__group-body");
-    private static final Attribute HISTORY_LABEL = Attribute.className("annotation-history__label");
-    private static final Attribute HISTORY_ITEM = Attribute.className("annotation-history__item");
-    private static final Attribute ANNOTATION_TABLE = Attribute.className("annotation-history__table");
-    private static final Attribute ANNOTATION_LINK = Attribute.className("annotation-history__link");
-    // An event or annotation reference is a link the keyboard can reach and follow (with Enter)
-    private static final Attribute LINK_ROLE = new Attribute("role", "link");
-    private static final Attribute LINK_TAB_INDEX = new Attribute("tabindex", "0");
-    // Put between references written with nothing between them: an em space
-    private static final String LINK_GAP = "\u2003";
 
     private final AnnotationEdit view;
     private final AnnotationResourceClient annotationResourceClient;
@@ -155,7 +99,6 @@ public class AnnotationEditController extends Controller implements Focus {
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private final Provider<RetentionPeriodController> retentionPeriodProvider;
-    private final DurationLabel durationLabel;
     private final Provider<CommentEditController> commentEditProvider;
 
     private Annotation annotation;
@@ -180,7 +123,6 @@ public class AnnotationEditController extends Controller implements Focus {
     // persisted data, so refreshing again here would be a redundant fetch of momentarily-stale data.
     private boolean suppressHistoryUpdate;
 
-    private final Set<Long> expandedItems = new HashSet<>();
     // The history as text, for Copy History
     private String historyText = "";
 
@@ -195,7 +137,7 @@ public class AnnotationEditController extends Controller implements Focus {
     /// @param clientSecurityContext    Says who the user is, to assign themselves.
     /// @param dateTimeFormatter        Formats the history's times.
     /// @param retentionPeriodProvider  Makes the retention period dialog.
-    /// @param durationLabel            Describes the retention period.
+    /// @param durationLabel            Writes when each history entry was made.
     /// @param commentEditProvider      Makes the dialog that edits a comment.
     @Inject
     public AnnotationEditController(final EventBus eventBus,
@@ -220,14 +162,18 @@ public class AnnotationEditController extends Controller implements Focus {
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
         this.retentionPeriodProvider = retentionPeriodProvider;
-        this.durationLabel = durationLabel;
         this.commentEditProvider = commentEditProvider;
 
         view.setOnAction(this::onAction);
         view.setOnTitleChange(this::onTitleChange);
         view.setOnSubjectChange(this::onSubjectChange);
-        view.setOnHistoryKeyDown(this::onHistoryKeyDown);
-        view.setOnHistoryMouseDown(this::onHistoryMouseDown);
+        final AnnotationHistory history = view.getHistory();
+        history.setDurationLabel(durationLabel);
+        history.setOnOpenEvent(eventId -> ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId)));
+        history.setOnOpenAnnotation(annotationId -> EditAnnotationEvent.fire(this, annotationId));
+        // A group expanded or collapsed is shown so once the history is fetched again
+        history.setOnExpandedChange(this::updateHistory);
+        history.setOnEntryMenu(this::showEntryEditMenu);
         assignedToPicker.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
         watch(Contexts.READ_ONLY, view::setReadOnly);
     }
@@ -482,117 +428,12 @@ public class AnnotationEditController extends Controller implements Focus {
 
     private void updateHistory(final List<AnnotationEntry> entries) {
         if (entries != null) {
-            final long nowMs = System.currentTimeMillis();
-
-            final HtmlBuilder html = new HtmlBuilder();
             final StringBuilder text = new StringBuilder();
-
-            // Group annotation entries.
-            final List<AnnotationEntryGroup> groups = new ArrayList<>();
-            List<AnnotationEntry> groupEntries = new ArrayList<>();
-            AnnotationEntryType lastType = null;
-
             for (final AnnotationEntry entry : entries) {
-                final Set<AnnotationEntryType> types = AnnotationEntryType.GROUPED_TYPES.get(entry.getEntryType());
-                if (lastType != null && types != null && types.contains(lastType)) {
-                    groupEntries.add(entry);
-                } else {
-                    groupEntries = new ArrayList<>();
-                    groupEntries.add(entry);
-                    groups.add(new AnnotationEntryGroup(entry.getId(), entry.getEntryType(), groupEntries));
-                }
-                lastType = entry.getEntryType();
+                addEntryText(text, entry);
             }
-
-            html.div(history -> {
-                SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                boolean first = true;
-
-                // Append to text.
-                for (final AnnotationEntry entry : entries) {
-                    addEntryText(text, entry);
-                }
-
-                for (final AnnotationEntryGroup annotationEntryGroup : groups) {
-                    if (!annotationEntryGroup.getEntries().isEmpty()) {
-                        if (annotationEntryGroup.getEntries().size() == 1) {
-                            for (final AnnotationEntry entry : annotationEntryGroup.getEntries()) {
-                                final boolean added = addEntryHtml(history, entry, nowMs, line);
-                                if (added && first) {
-                                    // If we actually added some content then make sure we add a line marker before any
-                                    // subsequent content.
-                                    first = false;
-                                    line = HISTORY_LINE;
-                                }
-                            }
-                        } else {
-                            final boolean added = addGroupHtml(history, annotationEntryGroup, nowMs, line);
-                            if (added && first) {
-                                // If we actually added some content then make sure we add a line marker before any
-                                // subsequent content.
-                                first = false;
-                                line = HISTORY_LINE;
-                            }
-                        }
-                    }
-                }
-            }, HISTORY_INNER);
-
             historyText = text.toString();
-            view.setHistory(html.toSafeHtml());
-        }
-    }
-
-    // Enter on an event or annotation reference follows it, as a mouse press does. Enter, Space,
-    // Shift+F10 or the context menu key on an entry's actions button opens the entry's menu, as
-    // pressing the entry does
-    private void onHistoryKeyDown(final KeyDownEvent e) {
-        final Element target = e.getNativeEvent().getEventTarget().cast();
-        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
-            e.preventDefault();
-            followLink(target);
-        } else if (ElementUtil.hasClassName(target, ENTRY_ACTIONS_CLASS) && isMenuKey(e)) {
-            e.preventDefault();
-            showEntryEditMenu(target, new PopupPosition(
-                    new Rect(target).grow(3), PopupLocation.BELOW));
-        }
-    }
-
-    // A press on a link follows it; on a group, expands or collapses it; on an entry, opens its menu
-    private void onHistoryMouseDown(final MouseDownEvent e) {
-        // If the user has clicked on a link then consume the event.
-        final Element target = e.getNativeEvent().getEventTarget().cast();
-        if (target.hasTagName("u")) {
-            followLink(target);
-        } else {
-            Element parent = target;
-            String id = null;
-            String type = null;
-            String groupId = null;
-
-            Element entryElement = null;
-            while (parent != null && NullSafe.isBlankString(type)) {
-                entryElement = parent;
-                type = entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE);
-                parent = parent.getParentElement();
-            }
-
-            if (entryElement != null) {
-                id = entryElement.getAttribute(ENTRY_ID_ATTRIBUTE);
-                groupId = entryElement.getAttribute(GROUP_ID_ATTRIBUTE);
-            }
-
-            if (NullSafe.isNonBlankString(groupId)) {
-                final long gid = Long.parseLong(groupId);
-                if (expandedItems.contains(gid)) {
-                    expandedItems.remove(gid);
-                } else {
-                    expandedItems.add(gid);
-                }
-                updateHistory();
-            } else if (NullSafe.isNonBlankString(id) && NullSafe.isNonBlankString(type)) {
-                showEntryEditMenu(target, new PopupPosition(e.getClientX(), e.getClientY()));
-            }
+            view.setHistory(entries, System.currentTimeMillis(), isReadOnly());
         }
     }
 
@@ -602,36 +443,6 @@ public class AnnotationEditController extends Controller implements Focus {
                 this,
                 "Unable to copy",
                 null));
-    }
-
-    // Whether a key opens an entry's menu from its actions button: Enter or Space, as for any
-    // button, or Shift+F10 or the context menu key, as for any context menu
-    private static boolean isMenuKey(final KeyDownEvent event) {
-        final int keyCode = event.getNativeKeyCode();
-        return keyCode == KeyCodes.KEY_ENTER
-               || keyCode == KeyCodes.KEY_SPACE
-               || keyCode == KeyCodes.KEY_CONTEXT_MENU
-               || (keyCode == KeyCodes.KEY_F10 && event.isShiftKeyDown());
-    }
-
-    // Shows the menu of the history entry that an element (the entry, or something in it) is in
-    private void showEntryEditMenu(final Element element, final PopupPosition popupPosition) {
-        Element entryElement = element;
-        while (entryElement != null && NullSafe.isBlankString(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE))) {
-            entryElement = entryElement.getParentElement();
-        }
-        if (entryElement == null || NullSafe.isBlankString(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE))) {
-            return;
-        }
-        final long id = Long.parseLong(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE));
-        final AnnotationEntryType entryType = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER
-                .fromPrimitiveValue(Byte.parseByte(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE)));
-        // The entry's actions button names the menu, and is what the menu was opened from
-        final Element actionsButton = ElementUtil.findChild(entryElement, ENTRY_ACTIONS_CLASS);
-        final String name = actionsButton != null
-                ? actionsButton.getAttribute(ARIA_LABEL_ATTRIBUTE)
-                : "Actions for history entry '" + entryType.getDisplayValue() + "'";
-        showEntryEditMenu(id, entryType, name, actionsButton, popupPosition);
     }
 
     private void showEntryEditMenu(final long id,
@@ -830,546 +641,12 @@ public class AnnotationEditController extends Controller implements Focus {
         return userRef.toDisplayString();
     }
 
-    // An entry's actions icon. While the entry's menu can be used (the annotation isn't read only)
-    // it is a button that opens the menu, named for the entry, so that the menu can be reached
-    // from the keyboard as well as by pressing the entry
-    private SafeHtml getEntryActions(final AnnotationEntry entry) {
-        if (isReadOnly()) {
-            return ELLIPSES;
-        }
-        final String name = "Actions for history entry '" + entry.getEntryType().getDisplayValue()
-                            + "' by " + getUserName(entry.getEntryUser());
-        final String startTag = "<div class=\"setting-block__icon icon-colour__grey icon-wrap "
-                                + ENTRY_ACTIONS_CLASS + "\" role=\"button\" tabindex=\"0\" "
-                                + "aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"";
-        return new SafeHtmlBuilder()
-                .append(SafeHtmlUtils.fromTrustedString(startTag))
-                .appendEscaped(name)
-                .append(SafeHtmlUtils.fromTrustedString("\">" + SvgImage.ELLIPSES_VERTICAL.getSvg() + "</div>"))
-                .toSafeHtml();
-    }
-
-    private Attribute[] getEntryIdAttributes(final Attribute className,
-                                             final AnnotationEntry entry) {
-        return new Attribute[]{
-                className,
-                new Attribute(SafeHtmlUtil.from(ENTRY_ID_ATTRIBUTE),
-                        SafeHtmlUtil.from(entry.getId())),
-                new Attribute(SafeHtmlUtil.from(ENTRY_TYPE_ATTRIBUTE),
-                        SafeHtmlUtil.from(entry.getEntryType().getPrimitiveValue()))
-        };
-    }
-
-    private Attribute[] getGroupIdAttributes(final Attribute className,
-                                             final AnnotationEntry entry) {
-        return new Attribute[]{
-                className,
-                new Attribute(SafeHtmlUtil.from(GROUP_ID_ATTRIBUTE),
-                        SafeHtmlUtil.from(entry.getId())),
-                new Attribute(SafeHtmlUtil.from(ENTRY_TYPE_ATTRIBUTE),
-                        SafeHtmlUtil.from(entry.getEntryType().getPrimitiveValue()))
-        };
-    }
-
-    private boolean addGroupHtml(final HtmlBuilder html,
-                                 final AnnotationEntryGroup group,
-                                 final long nowMs,
-                                 final SafeHtml line) {
-        @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
-        final AnnotationEntry first = group.getEntries().get(0);
-        final boolean expanded = expandedItems.contains(first.getId());
-        final AnnotationEntryType entryType = first.getEntryType();
-        UserRef user = first.getEntryUser();
-        for (final AnnotationEntry entry : group.getEntries()) {
-            if (!Objects.equals(entry.getEntryUser(), user)) {
-                user = null;
-                break;
-            }
-        }
-        final UserRef userRef = user;
-        final String actionText = getActionText(group, entryType);
-
-        html.append(line);
-        html.div(border -> {
-            border.div(header -> {
-                // Add row icon.
-                addIcon(header, first.getEntryType());
-
-                // Add row label.
-                header.div(label -> {
-                    if (userRef != null) {
-                        label.bold(getUserName(userRef));
-                        label.nbsp();
-                    }
-                    label.append(actionText);
-                    label.nbsp();
-                    durationLabel.append(label, first.getEntryTime(), nowMs);
-                }, HISTORY_LABEL);
-
-                // Add expander icon.
-                if (expanded) {
-                    header.append(COLLAPSE);
-                } else {
-                    header.append(EXPAND);
-                }
-            }, getGroupIdAttributes(HISTORY_GROUP_HEADER, first));
-
-            // Add content if expanded.
-            if (expanded) {
-                border.div(body -> {
-                    for (final AnnotationEntry entry : group.getEntries()) {
-                        addEntryHtml(body, entry, nowMs, line);
-                    }
-                }, HISTORY_GROUP_BODY);
-            }
-        }, HISTORY_COMMENT_BORDER);
-
-        return true;
-    }
-
-    private static String getActionText(final AnnotationEntryGroup group, final AnnotationEntryType entryType) {
-        final int count = group.getEntries().size();
-        return switch (entryType) {
-            case TITLE,
-                 SUBJECT,
-                 STATUS,
-                 ASSIGNED,
-                 COMMENT,
-                 RETENTION_PERIOD,
-                 DESCRIPTION,
-                 DELETE -> entryType.getActionText();
-            case ADD_TABLE_DATA -> "added table data";
-            case LINK_EVENT, UNLINK_EVENT -> "changed " + count + " linked events";
-            case ADD_TO_COLLECTION, REMOVE_FROM_COLLECTION -> "changed " + count + " collections";
-            case ADD_LABEL, REMOVE_LABEL -> "changed " + count + " labels";
-            case LINK_ANNOTATION, UNLINK_ANNOTATION -> "changed " + count + " linked annotations";
-        };
-    }
-
-    private boolean addEntryHtml(final HtmlBuilder html,
-                                 final AnnotationEntry entry,
-                                 final long nowMs,
-                                 final SafeHtml line) {
-        boolean added = false;
-        final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
-
-        switch (entry.getEntryType()) {
-            case COMMENT -> {
-                html.append(line);
-                html.div(border -> {
-                    border.div(header -> {
-                        // Add row label.
-                        header.div(label -> {
-                            label.bold(getUserName(entry.getEntryUser()));
-                            label.append(HtmlBuilder.NB_SPACE);
-                            label.appendTrustedString("commented");
-                            label.append(HtmlBuilder.NB_SPACE);
-                            durationLabel.append(label, entry.getEntryTime(), nowMs);
-
-                            if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
-                                !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
-                                label.append(HtmlBuilder.NB_SPACE);
-                                label.appendTrustedString(" - ");
-                                label.append(HtmlBuilder.NB_SPACE);
-                                label.bold(getUserName(entry.getUpdateUser()));
-                                label.append(HtmlBuilder.NB_SPACE);
-                                label.appendTrustedString("edited");
-                                label.append(HtmlBuilder.NB_SPACE);
-                                durationLabel.append(label, entry.getUpdateTime(), nowMs);
-                            }
-                        }, HISTORY_LABEL);
-
-                        // Add change icon.
-                        header.append(getEntryActions(entry));
-
-                    }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
-                    border.div(body -> decorateComment(body, entryUiValue), HISTORY_COMMENT_BODY);
-                }, HISTORY_COMMENT_BORDER);
-                added = true;
-            }
-            case LINK_EVENT,
-                 UNLINK_EVENT,
-                 LINK_ANNOTATION,
-                 UNLINK_ANNOTATION,
-                 ADD_TO_COLLECTION,
-                 REMOVE_FROM_COLLECTION,
-                 ADD_LABEL,
-                 REMOVE_LABEL,
-                 DELETE -> {
-                html.append(line);
-                html.div(item -> {
-                    // Add row icon.
-                    addIcon(item, entry.getEntryType());
-
-                    // Add row label.
-                    item.div(label -> {
-                        label.bold(getUserName(entry.getEntryUser()));
-                        label.nbsp();
-                        label.append(entry.getEntryType().getActionText());
-                        label.nbsp();
-                        link(html, entry.getEntryType(), entryUiValue);
-                        label.nbsp();
-                        durationLabel.append(label, entry.getEntryTime(), nowMs);
-                    }, HISTORY_LABEL);
-
-                    // Add change icon.
-                    item.append(getEntryActions(entry));
-                }, getEntryIdAttributes(HISTORY_ITEM, entry));
-
-                added = true;
-            }
-            case ADD_TABLE_DATA -> {
-                if (entry.getEntryValue() instanceof final AnnotationTable table) {
-                    final List<List<String>> values = NullSafe.list(table.getValues());
-
-                    html.append(line);
-                    html.div(border -> {
-                        border.div(header -> {
-                            // Add row icon.
-                            addIcon(header, entry.getEntryType());
-
-                            // Add row label.
-                            header.div(label -> {
-                                label.bold(getUserName(entry.getEntryUser()));
-                                label.nbsp();
-                                label.append(values.size() == 1
-                                        ? "added " + values.size() + " row"
-                                        : "added " + values.size() + " rows");
-                                label.nbsp();
-                                durationLabel.append(label, entry.getEntryTime(), nowMs);
-                            }, HISTORY_LABEL);
-
-                            // Add change icon.
-                            header.append(getEntryActions(entry));
-
-                        }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
-
-                        border.div(body -> {
-                            body.table(tb -> {
-                                // Add table header
-                                tb.tr(tr -> {
-                                    for (final String col : NullSafe.list(table.getColumns())) {
-                                        tr.th(col);
-                                    }
-                                });
-
-                                // Add table body
-                                for (final List<String> row : values) {
-                                    tb.tr(tr -> {
-                                        for (final String val : NullSafe.list(row)) {
-                                            tr.td(val);
-                                        }
-                                    });
-                                }
-                            }, ANNOTATION_TABLE);
-                        }, HISTORY_COMMENT_BODY);
-                    }, HISTORY_COMMENT_BORDER);
-
-                    added = true;
-                }
-            }
-            case ASSIGNED -> {
-                if (entry.getPreviousValue() != null) {
-                    html.append(line);
-                    html.div(item -> {
-                        // Add row icon.
-                        addIcon(item, entry.getEntryType());
-
-                        // Add row label.
-                        item.div(label -> {
-                            label.bold(getUserName(entry.getEntryUser()));
-                            if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
-                                label.nbsp();
-                                label.appendTrustedString("removed their assignment");
-                            } else {
-                                label.nbsp();
-                                label.appendTrustedString("unassigned");
-                                label.nbsp();
-                                label.bold(getValueString(entry.getPreviousValue().asUiValue()));
-                            }
-                            label.nbsp();
-                            durationLabel.append(label, entry.getEntryTime(), nowMs);
-                        }, HISTORY_LABEL);
-
-                        // Add change icon.
-                        item.append(getEntryActions(entry));
-                    }, getEntryIdAttributes(HISTORY_ITEM, entry));
-                    added = true;
-                }
-
-                if (entryUiValue != null && !entryUiValue.trim().isEmpty()) {
-                    html.append(line);
-                    html.div(item -> {
-                        // Add row icon.
-                        addIcon(html, entry.getEntryType());
-
-                        // Add row label.
-                        item.div(label -> {
-                            label.bold(getUserName(entry.getEntryUser()));
-                            if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
-                                label.nbsp();
-                                label.appendTrustedString("self-assigned this");
-                            } else {
-                                label.nbsp();
-                                label.appendTrustedString("assigned");
-                                label.nbsp();
-                                label.bold(getValueString(entryUiValue));
-                            }
-                            label.nbsp();
-                            durationLabel.append(label, entry.getEntryTime(), nowMs);
-                        }, HISTORY_LABEL);
-
-                        // Add change icon.
-                        item.append(getEntryActions(entry));
-                    }, getEntryIdAttributes(HISTORY_ITEM, entry));
-                    added = true;
-                }
-            }
-            default -> {
-                html.append(line);
-                html.div(item -> {
-                    // Add row icon.
-                    addIcon(html, entry.getEntryType());
-
-                    // Add row label.
-                    item.div(label -> {
-                        label.bold(getUserName(entry.getEntryUser()));
-                        if (entry.getPreviousValue() != null) {
-                            label.nbsp();
-                            label.appendTrustedString("changed the");
-                            label.nbsp();
-                        } else {
-                            label.nbsp();
-                            label.appendTrustedString("set the");
-                            label.nbsp();
-                        }
-                        label.append(entry.getEntryType().getDisplayValue().toLowerCase());
-                        label.nbsp();
-
-                        if (entry.getPreviousValue() != null) {
-                            label.del(getValueString(entry.getPreviousValue().asUiValue()));
-                            label.nbsp();
-                            label.appendTrustedString("to");
-                            label.nbsp();
-                            label.ins(getValueString(entryUiValue));
-
-                        } else {
-                            label.append(getValueString(entryUiValue));
-                        }
-
-                        label.nbsp();
-                        durationLabel.append(label, entry.getEntryTime(), nowMs);
-                    }, HISTORY_LABEL);
-
-                    // Add change icon.
-                    item.append(getEntryActions(entry));
-                }, getEntryIdAttributes(HISTORY_ITEM, entry));
-                added = true;
-            }
-        }
-        return added;
-    }
-
-    /// Adds a comment to the history, its links made clickable (package-private for its tests).
-    ///
-    /// @param html    The history being built.
-    /// @param comment The comment.
-    static void decorateComment(final HtmlBuilder html, final String comment) {
-        final StringBuilder sb = new StringBuilder();
-        final char[] chars = comment.toCharArray();
-
-        boolean start = true;
-        // Whether a link has been added (so one added next with no text before it needs a space)
-        boolean afterLink = false;
-        for (int i = 0; i < chars.length; i++) {
-            final char c = chars[i];
-            if (start && c == '#') {
-                // We may have an annotation ref.
-
-                // Get the string.
-                final String idString = getNumberString(chars, i + 1);
-                if (idString != null) {
-                    // Append current buffer.
-                    if (sb.length() > 0) {
-                        html.append(sb.toString());
-                        sb.setLength(0);
-                    } else if (afterLink) {
-                        // Links written with nothing between them (#5#6) are spaced apart (an
-                        // em space, wide enough that each is a target of its own, WCAG 2.5.8)
-                        html.append(LINK_GAP);
-                    }
-
-                    // Append the link.
-                    link(html, AnnotationEntryType.LINK_ANNOTATION, idString);
-                    afterLink = true;
-
-                    // Jump to next index.
-                    i += idString.length();
-                } else {
-                    sb.append(c);
-                }
-
-            } else if (start && Character.isDigit(c)) {
-                // We may have an event id.
-                boolean isEventId = false;
-
-                int pos = i;
-                final String streamIdString = getNumberString(chars, pos);
-                if (streamIdString != null) {
-                    pos += streamIdString.length();
-                    if (chars.length > pos && chars[pos] == ':') {
-                        pos++;
-                        final String eventIdString = getNumberString(chars, pos);
-                        if (eventIdString != null) {
-                            pos += eventIdString.length();
-
-                            // Append current buffer.
-                            if (sb.length() > 0) {
-                                html.append(sb.toString());
-                                sb.setLength(0);
-                            } else if (afterLink) {
-                                html.append(LINK_GAP);
-                            }
-
-                            // Append the link.
-                            link(html, AnnotationEntryType.LINK_EVENT, streamIdString + ":" + eventIdString);
-                            afterLink = true;
-
-                            // Jump to next index.
-                            i = pos - 1;
-                            isEventId = true;
-                        }
-                    }
-                }
-
-                if (!isEventId) {
-                    sb.append(c);
-                }
-
-            } else {
-                start = Character.isWhitespace(c);
-                sb.append(c);
-            }
-        }
-        // Add remaining content.
-        html.append(sb.toString());
-    }
-
-    private static String getNumberString(final char[] chars, final int start) {
-        // Try to get a number.
-        int len = 0;
-        for (int i = start; i < chars.length; i++) {
-            final char c = chars[i];
-            if (Character.isDigit(c)) {
-                len++;
-            } else {
-                break;
-            }
-        }
-        if (len > 0) {
-            try {
-                // Get the string.
-                final String idString = new String(chars, start, len);
-                // Make sure it is a valid number.
-                Long.parseLong(idString);
-                return idString;
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        }
-        return null;
-    }
-
-    private void addIcon(final HtmlBuilder html,
-                         final AnnotationEntryType annotationEntryType) {
-        final SvgImage image = switch (annotationEntryType) {
-            case TITLE -> SvgImage.EDIT;
-            case SUBJECT -> SvgImage.EDIT;
-            case STATUS -> SvgImage.EXCLAMATION;
-            case ASSIGNED -> SvgImage.USER;
-            case COMMENT -> SvgImage.EDIT;
-            case LINK_EVENT -> SvgImage.LINK;
-            case UNLINK_EVENT -> SvgImage.UNLINK;
-            case RETENTION_PERIOD -> SvgImage.CALENDAR;
-            case DESCRIPTION -> SvgImage.EDIT;
-            case ADD_TO_COLLECTION -> SvgImage.TABLE_NESTED;
-            case REMOVE_FROM_COLLECTION -> SvgImage.TABLE_NESTED;
-            case ADD_LABEL -> SvgImage.TAGS;
-            case REMOVE_LABEL -> SvgImage.TAGS;
-            case ADD_TABLE_DATA -> SvgImage.TABLE;
-            case LINK_ANNOTATION -> SvgImage.LINK;
-            case UNLINK_ANNOTATION -> SvgImage.UNLINK;
-            case DELETE -> SvgImage.CLEAR;
-        };
-        html.appendTrustedString(image.getSvg());
-    }
-
     private boolean areSameUser(final UserRef entryUser, final EntryValue entryValue) {
         if (entryValue instanceof final UserRefEntryValue userRefEntryValue) {
             return Objects.equals(entryUser, userRefEntryValue.getUserRef());
         } else {
             return entryUser == null && entryValue == null;
         }
-    }
-
-    // Follows a link in the history: a hyperlink, or an event or annotation reference
-    private void followLink(final Element target) {
-        final String link = target.getAttribute("link");
-        if (NullSafe.isNonBlankString(link)) {
-            final Hyperlink hyperlink = Hyperlink.create(link);
-            if (hyperlink != null) {
-                HyperlinkEvent.fire(this, hyperlink, taskMonitor());
-            }
-        } else {
-            final String eventIdString = target.getAttribute("eventId");
-            if (NullSafe.isNonBlankString(eventIdString)) {
-                final EventId eventId = EventId.parse(eventIdString);
-                ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
-            } else {
-                final String annotationIdString = target.getAttribute("annotationId");
-                if (NullSafe.isNonBlankString(annotationIdString)) {
-                    EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
-                }
-            }
-        }
-    }
-
-    private static void link(final HtmlBuilder builder,
-                             final AnnotationEntryType entryType,
-                             final String value) {
-        if (AnnotationEntryType.LINK_EVENT.equals(entryType) ||
-            AnnotationEntryType.UNLINK_EVENT.equals(entryType)) {
-            final EventId eventId = EventId.parse(value);
-            if (eventId != null) {
-                builder.underline(u -> u.append(eventId.toString()),
-                        ANNOTATION_LINK,
-                        new Attribute("eventId", eventId.toString()),
-                        LINK_ROLE,
-                        LINK_TAB_INDEX,
-                        new Attribute("aria-label", "Event " + eventId));
-            } else {
-                builder.bold(value);
-            }
-        } else if (AnnotationEntryType.LINK_ANNOTATION.equals(entryType) ||
-                   AnnotationEntryType.UNLINK_ANNOTATION.equals(entryType)) {
-            builder.underline(u -> {
-                u.append("#");
-                u.append(value);
-            }, ANNOTATION_LINK,
-                    new Attribute("annotationId", value),
-                    LINK_ROLE,
-                    LINK_TAB_INDEX,
-                    new Attribute("aria-label", "Annotation " + value));
-        } else {
-            builder.bold(value);
-        }
-    }
-
-    private String getValueString(final String string) {
-        if (string != null && !string.trim().isEmpty()) {
-            return string;
-        }
-        return EMPTY_VALUE;
     }
 
     private void quote(final StringBuilder text, final String value) {
@@ -1569,64 +846,5 @@ public class AnnotationEditController extends Controller implements Focus {
     /// @param onDelete Run when the annotation is deleted, e.g. to close its tab.
     public void setOnDelete(final Runnable onDelete) {
         this.onDelete = onDelete;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @SuppressWarnings("ClassCanBeRecord") // GWT moans if this is a record
-    private static final class AnnotationEntryGroup {
-
-        private final long id;
-        private final AnnotationEntryType annotationEntryType;
-        private final List<AnnotationEntry> entries;
-
-        private AnnotationEntryGroup(final long id,
-                                     final AnnotationEntryType annotationEntryType,
-                                     final List<AnnotationEntry> entries) {
-            this.id = id;
-            this.annotationEntryType = annotationEntryType;
-            this.entries = entries;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public AnnotationEntryType getAnnotationEntryType() {
-            return annotationEntryType;
-        }
-
-        public List<AnnotationEntry> getEntries() {
-            return entries;
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (obj == null || obj.getClass() != this.getClass()) {
-                return false;
-            }
-            final AnnotationEntryGroup that = (AnnotationEntryGroup) obj;
-            return this.id == that.id &&
-                   Objects.equals(this.annotationEntryType, that.annotationEntryType) &&
-                   Objects.equals(this.entries, that.entries);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, annotationEntryType, entries);
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationEntryGroup[" +
-                   "id=" + id + ", " +
-                   "annotationEntryType=" + annotationEntryType + ", " +
-                   "entries=" + entries + ']';
-        }
     }
 }

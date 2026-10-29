@@ -453,12 +453,12 @@ public final class DashboardComponentStories {
                             .toSpyMatcher()));
                     play.waitFor(() -> play.expect(filterButton(play)).toHaveAttribute("title", "Enable Filter"));
                     play.expect(filterButton(play)).toHaveFocus();
-                    play.expect(filterBox(play)).toHaveClass("dashboard-table-filter-cell-text-disabled");
+                    play.expect(filter(play)).toHaveClass("dashboard-table-filter-cell--disabled");
 
                     // A click turns it on again, without opening the column's menu
                     StroomDom.clickHeader(play, filterButton(play));
                     play.waitFor(() -> play.expect(filterButton(play)).toHaveAttribute("title", "Disable Filter"));
-                    play.expect(filterBox(play)).not().toHaveClass("dashboard-table-filter-cell-text-disabled");
+                    play.expect(filter(play)).not().toHaveClass("dashboard-table-filter-cell--disabled");
                     play.expect(play.screen().querySelector(StroomDom.MENU_ITEM_TEXT)).not().toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -873,13 +873,19 @@ public final class DashboardComponentStories {
 
     // The Name column's filter box
     private static Query filterBox(final Play play) {
-        return play.within(DashboardPlays.headerCell(play, "Name")).querySelector(".dashboard-table-filter-cell-text");
+        return play.within(DashboardPlays.headerCell(play, "Name"))
+                .querySelector(".dashboard-table-filter-cell .text-field");
+    }
+
+    // The Name column's filter (its box and button), which says when it is off
+    private static Query filter(final Play play) {
+        return play.within(DashboardPlays.headerCell(play, "Name")).querySelector(".dashboard-table-filter-cell");
     }
 
     // The Name column's filter disable button
     private static Query filterButton(final Play play) {
         return play.within(DashboardPlays.headerCell(play, "Name"))
-                .querySelector(".dashboard-table-filter-cell-disable-button");
+                .querySelector(".dashboard-table-filter-cell__disable-button");
     }
 
     // A property of the Name column's filter in a dashboard search's request for t1

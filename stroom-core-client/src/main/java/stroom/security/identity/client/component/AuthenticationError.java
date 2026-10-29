@@ -16,7 +16,6 @@
 
 package stroom.security.identity.client.component;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Html;
 import stroom.widget.text.client.Label;
@@ -25,7 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The page shown when signing in fails: the error, and a message from the UI config.
@@ -34,8 +32,6 @@ public class AuthenticationError extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel image;
-    @UiField
     Label errorText;
     @UiField
     Html genericMessage;
@@ -43,9 +39,6 @@ public class AuthenticationError extends Component {
     /// Makes an empty page.
     public AuthenticationError() {
         initWidget(BINDER.createAndBindUi(this));
-
-        image.getElement().setInnerHTML(SvgImage.ERROR.getSvg());
-        image.addStyleName(SvgImage.ERROR.getClassName());
     }
 
     /// @param errorText What went wrong.

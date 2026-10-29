@@ -16,7 +16,6 @@
 
 package stroom.security.identity.client.component;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
@@ -31,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -43,8 +41,6 @@ public class Login extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String PASSWORD_HELP = "Enter your Stroom account password.";
 
-    @UiField
-    SimplePanel userImage;
     @UiField
     TextBox userName;
     @UiField
@@ -72,13 +68,6 @@ public class Login extends Component {
         password.addKeyDownHandler(this::onPasswordKeyDown);
         signInButton.setOnClick(this::onSignInButton);
         forgotPasswordLink.setOnClick(this::onForgotPasswordLink);
-
-        userImage.getElement().setInnerHTML(SvgImage.INFINITY_LOGO.getSvg());
-        userImage.addStyleName(SvgImage.INFINITY_LOGO.getClassName());
-
-        // The fields say what they hold, so that browsers and password managers can fill them in
-        userName.getElement().setAttribute("autocomplete", "username");
-        password.getInput().getElement().setAttribute("autocomplete", "current-password");
 
         setAllowPasswordResets(false);
     }

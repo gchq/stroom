@@ -19,7 +19,7 @@
                 <p:ToolbarButton ui:field="configure" svg="SETTINGS" title="Configure"/>
             </p:Toolbar>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
+        <g:FlowPanel ui:field="conversation" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
         <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom">
             <tx:Label styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom-inner">

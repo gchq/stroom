@@ -17,6 +17,7 @@
 package stroom.data.client.component;
 
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.menu.client.ShowMenuEvent;
@@ -25,18 +26,10 @@ import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
-import stroom.widget.util.client.DisabledState;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -53,11 +46,9 @@ public class DataViewer extends Component {
     @UiField
     LinkTabBar tabBar;
     @UiField
-    HTMLPanel rightPanel;
-    @UiField
     ItemNavigator navigator;
     @UiField
-    DivElement sourceLink;
+    LinkButton sourceLink;
     @UiField
     SourceProgressBar progressBar;
     @UiField
@@ -65,7 +56,6 @@ public class DataViewer extends Component {
     @UiField
     SpinnerLarge spinner;
 
-    private boolean sourceLinkEnabled = true;
     private Runnable onSourceLink = () -> {
     };
     private Consumer<TabData> onSelectTab = tab -> {
@@ -79,29 +69,8 @@ public class DataViewer extends Component {
         tabBar.setTabPanel(layerContainer.getElement());
         tabBar.setOnSelect(tab -> onSelectTab.accept(tab));
         tabBar.addShowMenuHandler(event -> onShowMenu.accept(event));
-        rightPanel.addDomHandler(event -> {
-            if (isSourceLink(event.getNativeEvent().getEventTarget().cast())) {
-                activateSourceLink();
-            }
-        }, ClickEvent.getType());
-        rightPanel.addDomHandler(event -> {
-            final int keyCode = event.getNativeKeyCode();
-            if ((keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE)
-                && isSourceLink(event.getNativeEvent().getEventTarget().cast())) {
-                event.preventDefault();
-                activateSourceLink();
-            }
-        }, KeyDownEvent.getType());
-    }
-
-    private boolean isSourceLink(final Element target) {
-        return target != null && sourceLink.isOrHasChild(target);
-    }
-
-    private void activateSourceLink() {
-        if (sourceLinkEnabled) {
-            onSourceLink.run();
-        }
+        // Disabled, the link does nothing when pressed (LinkButton)
+        sourceLink.setOnClick(() -> onSourceLink.run());
     }
 
     /// Puts the focus on the tabs.
@@ -143,14 +112,8 @@ public class DataViewer extends Component {
     /// @param visible Whether the View Source link shows.
     /// @param enabled Whether it can be pressed.
     public void setSourceLinkVisible(final boolean visible, final boolean enabled) {
-        UIObject.setVisible(sourceLink, visible);
-        sourceLinkEnabled = enabled;
-        if (enabled) {
-            sourceLink.addClassName("data-viewer__source-link-label--enabled");
-        } else {
-            sourceLink.removeClassName("data-viewer__source-link-label--enabled");
-        }
-        DisabledState.set(sourceLink, !enabled);
+        sourceLink.setVisible(visible);
+        sourceLink.setAriaDisabled(!enabled);
     }
 
     /// @return The navigator of the data's parts and records, which its controller attaches the

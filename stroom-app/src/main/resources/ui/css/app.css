@@ -48,7 +48,6 @@
 @import url("annotation-setting.css");
 @import url("annotation-history.css");
 @import url("duration-label.css");
-@import url("assign-yourself-link.css");
 @import url("find-annotation-cell.css");
 @import url("setting-block.css");
 @import url("stroom-floormap.css");
@@ -64,6 +63,7 @@
 @import url("create-multiple-users.css");
 @import url("user-task-manager.css");
 @import url("floormap-icon-picker.css");
+@import url("floor-map-swatch.css");
 @import url("histogram.css");
 @import url("stroom-dashboard.css");
 @import url("query-buttons.css");
@@ -103,6 +103,7 @@
 @import url("icon-box.css");
 @import url("layered-canvas.css");
 @import url("drop-down.css");
+@import url("coloured-text.css");
 @import url("quick-filter.css");
 @import url("password-box.css");
 @import url("expression-tree.css");
@@ -226,6 +227,7 @@
 @import url("pathway-tree.css");
 @import url("trace-histogram-chart.css");
 @import url("ask-stroom-ai.css");
+@import url("ai-message.css");
 @import url("ai-chat-cell.css");
 @import url("advanced-quick-filter.css");
 @import url("credentials-manager-dialog.css");

@@ -22,6 +22,9 @@
 
    --floating (a modifier with no ARIA attribute): a SimplePopup, a panel of its own, hidden until
    PopupUtil has placed it (--placed).
+
+   --sized-width and --sized-height: a popup that PopupUtil has given a size (its popup size), which
+   its content takes from --popup__width and --popup__height.
 */
 
 .popup {
@@ -46,6 +49,14 @@
 
 .popup--floating.popup--placed {
     opacity: 1;
+}
+
+.popup--sized-width > .popupContent > * {
+    width: var(--popup__width);
+}
+
+.popup--sized-height > .popupContent > * {
+    height: var(--popup__height);
 }
 
 /* The glass behind a modal popup (PopupUtil), and the glass over the page while a popup is

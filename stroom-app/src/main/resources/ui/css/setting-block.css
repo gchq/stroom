@@ -47,6 +47,11 @@
     flex-direction: row-reverse;
 }
 
+/* The ⋮ itself, laid out as its drawing alone, so it is no taller than the drawing */
+.setting-block__icon-image {
+    display: flex;
+}
+
 .setting-block .form-group:not(:first-child) {
     margin-top: 0;
 }

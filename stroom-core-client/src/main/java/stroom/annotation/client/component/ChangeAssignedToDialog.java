@@ -16,9 +16,10 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AssignYourselfLink;
+import stroom.annotation.client.AssignYourself;
 import stroom.annotation.client.SettingBlock;
 import stroom.util.shared.UserRef;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Label;
 
@@ -41,7 +42,7 @@ public class ChangeAssignedToDialog extends Component {
     @UiField
     Label assignedTo;
     @UiField
-    AssignYourselfLink assignYourself;
+    LinkButton assignYourself;
     @UiField
     SettingBlock assignedToBlock;
 
@@ -54,7 +55,10 @@ public class ChangeAssignedToDialog extends Component {
     public ChangeAssignedToDialog() {
         initWidget(BINDER.createAndBindUi(this));
         assignedToBlock.addClickHandler(this::onAssignedToBlock);
-        assignYourself.setOnAssign(() -> onAssignYourself.run());
+        // The setting around it opens its chooser on a click: this click (or Enter or Space) is the
+        // button's own
+        assignYourself.addClickHandler(ClickEvent::stopPropagation);
+        assignYourself.setOnClick(() -> onAssignYourself.run());
     }
 
     /// @param assignedTo Who to assign the annotations to, or null for nobody.
@@ -73,7 +77,7 @@ public class ChangeAssignedToDialog extends Component {
     ///
     /// @param enabled Whether it is enabled.
     public void setAssignYourselfEnabled(final boolean enabled) {
-        assignYourself.setState(!enabled, false);
+        AssignYourself.setState(assignYourself, !enabled, false);
     }
 
     /// @param onChooseAssignedTo Run when who to assign the annotations to is pressed.

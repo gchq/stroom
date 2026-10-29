@@ -4,6 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The page is its main content, a landmark screen readers can go to -->
     <c:AriaPanel styleName="sign-in-page" role="main">
@@ -14,7 +15,7 @@
             <g:FlowPanel styleName="max form-padding form sign-in-page__form">
 
                 <g:SimplePanel styleName="sign-in-page__user-image-container">
-                    <g:SimplePanel ui:field="userImage" styleName="sign-in-page__user-image"/>
+                    <svg:Icon image="INFINITY_LOGO" addStyleNames="sign-in-page__user-image"/>
                 </g:SimplePanel>
 
                 <!-- User Name -->
@@ -22,8 +23,10 @@
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
                         <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
+                            <!-- The fields say what they hold, so that browsers and password managers
+                                 can fill them in -->
                             <form:TextBox ui:field="userName" addStyleNames="sign-in-page__user-name"
-                                          placeholder="Enter User Name"/>
+                                          placeholder="Enter User Name" autocomplete="username"/>
                         </g:FlowPanel>
 
                         <tx:Label ui:field="userNameFeedback" styleName="feedback"/>
@@ -33,7 +36,8 @@
                 <!-- Password -->
                 <form:FormGroup ui:field="passwordGroup" identity="password" label="Password" required="true">
                     <g:FlowPanel>
-                        <form:PasswordBox ui:field="password" placeholder="Enter Password"/>
+                        <form:PasswordBox ui:field="password" placeholder="Enter Password"
+                                          autocomplete="current-password"/>
 
                         <tx:Label ui:field="passwordFeedback" styleName="feedback"/>
                     </g:FlowPanel>

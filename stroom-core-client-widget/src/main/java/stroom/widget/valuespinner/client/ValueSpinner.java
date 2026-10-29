@@ -16,7 +16,6 @@
 
 package stroom.widget.valuespinner.client;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
@@ -57,7 +56,6 @@ public class ValueSpinner
         implements Focus, HasValue<Long> {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String BLOCK = "value-spinner";
     // The steps Page Up and Page Down take
     private static final int PAGE_STEPS = 10;
 
@@ -119,8 +117,8 @@ public class ValueSpinner
         updateBounds();
 
         // The arrows, inside the end of the field's border, as a drop-down's arrow is
-        stepArrow(decrease, SvgImage.ARROW_DOWN, false);
-        stepArrow(increase, SvgImage.ARROW_UP, true);
+        listenForPresses(decrease, false);
+        listenForPresses(increase, true);
     }
 
     /// @param onChange Told the new value when the user changes it (or `setValue(value, true)`
@@ -137,17 +135,10 @@ public class ValueSpinner
         valueBox.setAriaLabel(ariaLabel);
     }
 
-    // An arrow that steps the value while it is pressed (with the mouse, a finger or a pen): it steps
+    // Makes an arrow step the value while it is pressed (with the mouse, a finger or a pen): it steps
     // at once, then keeps stepping, faster and faster, while it is held. It isn't a button: the keys
     // in the field do what it does, so (as the WAI-ARIA spin button pattern allows) it is no tab stop
-    // and is hidden from screen readers (ValueSpinner.ui.xml), its title naming it for the mouse
-    private void stepArrow(final Element arrow, final SvgImage icon, final boolean increment) {
-        arrow.setInnerHTML(icon.getSvg());
-        // An SVG element's className isn't a string, so set the class attribute itself
-        arrow.getFirstChildElement().setAttribute("class", BLOCK + "__icon");
-        listenForPresses(arrow, increment);
-    }
-
+    // and is hidden from screen readers (ValueSpinner.ui.xml), its title naming it for the mouse.
     // Pointer events, so that a press with a finger or a pen steps and repeats as the mouse's does
     private native void listenForPresses(Element arrow, boolean increment) /*-{
         var self = this;

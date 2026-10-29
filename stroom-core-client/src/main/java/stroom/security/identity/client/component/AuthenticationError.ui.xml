@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:svg="urn:import:stroom.svg.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="authentication-error">
 
@@ -9,7 +10,7 @@
             <g:FlowPanel styleName="max form-padding form authentication-error__form">
 
                 <g:SimplePanel styleName="authentication-error__image-container">
-                    <g:SimplePanel ui:field="image" styleName="authentication-error__image"/>
+                    <svg:Icon image="ERROR" addStyleNames="authentication-error__image"/>
                 </g:SimplePanel>
 
                 <form:FormGroup identity="error" label="Authentication Error">
