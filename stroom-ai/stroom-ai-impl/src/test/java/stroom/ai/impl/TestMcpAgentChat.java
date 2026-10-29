@@ -48,6 +48,7 @@ import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -78,6 +79,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -589,7 +591,7 @@ class TestMcpAgentChat {
     }
 
     @Test
-    void aToolInAGroupThatIsOffSaysHowToTurnItOn() {
+    void callingAToolInAGroupThatIsOffTurnsTheGroupOnToCallItAgain() {
         final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), namedTool("pipeline_create"),
                 namedTool("pipeline_step"), namedTool("index_create"), namedTool("index_status"));
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
@@ -605,14 +607,18 @@ class TestMcpAgentChat {
                         .name("pipeline_create")
                         .arguments("{}")
                         .build())),
-                AiMessage.from("I'll turn the group on."));
+                AiMessage.from("The pipeline is made."));
 
         groupingChat.chat(model, null, 7, messages, toolset, 99,
                 new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         assertThat(lastToolResult(model.requests.get(1)))
-                .isEqualTo("Error: 'pipeline_create' is one of the 'pipeline' tools, which aren't on. Call "
-                           + "activate_pipeline first.");
+                .isEqualTo("Not run: 'pipeline_create' is one of the 'pipeline' tools, which weren't on. They are on "
+                           + "now, from your next step: call it again, with the arguments its definition gives.");
+        // Seen its definition, the model can call it from the next step.
+        assertThat(model.requests.get(1).toolSpecifications().stream().map(ToolSpecification::name))
+                .contains("pipeline_create", "pipeline_step", "activate_index")
+                .doesNotContain("activate_pipeline");
     }
 
     @Test
@@ -1598,7 +1604,7 @@ class TestMcpAgentChat {
                 ToolExecutionResultMessage.from("3", "t", "y".repeat(1_000)),
                 ToolExecutionResultMessage.from("4", "t", "z".repeat(1_000))));
 
-        assertThat(McpAgentChat.shortenToolResults(conversation, 2)).isEqualTo(1);
+        assertThat(McpAgentChat.shortenToolResults(conversation, 2, true)).isEqualTo(1);
         assertThat(((ToolExecutionResultMessage) conversation.get(1)).text())
                 .isEqualTo(McpAgentChat.SHORTENED_RESULT);
         assertThat(((ToolExecutionResultMessage) conversation.get(1)).id())
@@ -1608,8 +1614,67 @@ class TestMcpAgentChat {
         assertThat(((ToolExecutionResultMessage) conversation.get(3)).text())
                 .startsWith("y");
 
-        assertThat(McpAgentChat.shortenToolResults(conversation, 0)).isEqualTo(2);
-        assertThat(McpAgentChat.shortenToolResults(conversation, 0)).isZero();
+        assertThat(McpAgentChat.shortenToolResults(conversation, 0, true)).isEqualTo(2);
+        assertThat(McpAgentChat.shortenToolResults(conversation, 0, true)).isZero();
+    }
+
+    @Test
+    void whatIsGivenToBeSummarisedIsLimitedToTheLatestStepsThatFit() {
+        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
+        for (int n = 1; n <= 100; n++) {
+            conversation.add(AiMessage.from("Step " + n, List.of(request(String.valueOf(n), "{}", "search"))));
+            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "search", "r".repeat(2_000)));
+        }
+
+        final String input = McpAgentChat.turnSummaryInput(conversation, conversation.size());
+
+        assertThat(input.length()).isLessThanOrEqualTo(McpAgentChat.SUMMARY_INPUT_MAX_CHARS + 200);
+        assertThat(input)
+                .contains("earliest part(s) are left out")
+                .contains("You said: Step 100")
+                .doesNotContain("You said: Step 1\n");
+    }
+
+    @Test
+    void afterASummaryTheStepsSinceAreShortenedRatherThanSummarisedAgain() {
+        // Each summary loses detail and costs a call: the steps since are made smaller first.
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = summarisingModel(requests, 30, () -> "Summary.");
+        // 100 tokens for each result not shortened, 20 for each step: over the threshold (1,100 of 1,375) at 10
+        // steps, and well within it once the earlier results are shortened.
+        Mockito.when(usageTracker.estimateCautiously(Mockito.anyInt(), Mockito.anyList(), Mockito.any()))
+                .thenAnswer(invocation -> ((List<?>) invocation.getArgument(1)).stream()
+                        .mapToLong(m -> m instanceof final ToolExecutionResultMessage r
+                                        && !McpAgentChat.SHORTENED_RESULT.equals(r.text())
+                                ? 100
+                                : m instanceof final AiMessage ai && ai.hasToolExecutionRequests()
+                                        ? 20
+                                        : 0)
+                        .sum());
+
+        agentChat.chat(model, null, 7, messages, searchToolset(), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, new ContextBudget(1_375, 80));
+
+        // Another summary only once there have been enough steps since the last.
+        final List<Integer> summaries = new ArrayList<>();
+        for (int i = 0; i < requests.size(); i++) {
+            if (isSummaryRequest(requests.get(i))) {
+                summaries.add(i);
+            }
+        }
+        assertThat(summaries).isNotEmpty();
+        for (int i = 1; i < summaries.size(); i++) {
+            assertThat(summaries.get(i) - summaries.get(i - 1) - 1)
+                    .isGreaterThanOrEqualTo(McpAgentChat.SUMMARY_MIN_STEPS_AGAIN);
+        }
+        final List<ChatMessage> last = requests.getLast().messages();
+        assertThat(last).filteredOn(ToolExecutionResultMessage.class::isInstance)
+                .extracting(m -> ((ToolExecutionResultMessage) m).text())
+                .contains(McpAgentChat.SHORTENED_RESULT);
+        // The steps are still there, not put as a line or two each.
+        assertThat(last).filteredOn(UserMessage.class::isInstance)
+                .extracting(m -> ((UserMessage) m).singleText())
+                .noneMatch(text -> text.startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
     }
 
     @Test
@@ -1770,6 +1835,32 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void stopWhileTheEarlierStepsAreSummarisedEndsTheRunWithoutWaitingForTheSummary() {
+        // Seen: Stop pressed while the steps were being summarised didn't stop the run until the model answered.
+        final List<ChatRequest> requests = new ArrayList<>();
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        final ChatModel model = summarisingModel(requests, 16, () -> {
+            cancelled.set(true);
+            try {
+                Thread.sleep(Duration.ofMinutes(5));
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return "too late";
+        });
+        estimateByStep(100);
+
+        final long startMs = System.currentTimeMillis();
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, searchToolset(), 99, cancelled,
+                taskContext, 1, new StringBuilder(), 0, new ContextBudget(1_375, 80)))
+                .isInstanceOf(TaskTerminatedException.class);
+
+        assertThat(System.currentTimeMillis() - startMs).isLessThan(Duration.ofSeconds(30).toMillis());
+        // The model isn't asked again once the summary was stopped.
+        assertThat(requests.getLast()).matches(TestMcpAgentChat::isSummaryRequest);
+    }
+
+    @Test
     void withinBudgetNothingIsSummarised() {
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = summarisingModel(requests, 12, () -> "unused");
@@ -1813,6 +1904,36 @@ class TestMcpAgentChat {
         // What the user sent while the run went on stays, as it was.
         assertThat(((UserMessage) conversation.get(2)).singleText()).isEqualTo(McpAgentChat.STEER_PREFIX + "also fw2");
         assertThat(((AiMessage) conversation.get(3)).text()).isEqualTo("Step 5");
+    }
+
+    @Test
+    void aSummaryLeavesWhatToDoNextToTheStepsKeptAfterIt() {
+        // Seen: a summary of the steps before the latest few said the next step was to reprocess a stream, which a
+        // step kept after it had done, and the model did it again.
+        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
+        for (int n = 1; n <= 6; n++) {
+            conversation.add(AiMessage.from("Step " + n, List.of(request(String.valueOf(n), "{\"n\":" + n + "}"))));
+            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "t", "result " + n));
+        }
+        final int keptFrom = conversation.indexOf(conversation.stream()
+                .filter(m -> m instanceof final AiMessage ai && "Step 3".equals(ai.text()))
+                .findFirst()
+                .orElseThrow());
+
+        McpAgentChat.withTurnSummary(conversation, keptFrom, "Next: reprocess the stream.");
+
+        // The note says the kept steps came later and win over the summary, and they follow it.
+        assertThat(((UserMessage) conversation.get(1)).singleText())
+                .startsWith(McpAgentChat.TURN_SUMMARY_NOTE)
+                .contains("The steps after this note came later")
+                .contains("what they did is done even if the summary says it is still to do")
+                .contains("Carry on from the latest of them");
+        assertThat(((AiMessage) conversation.get(2)).text()).isEqualTo("Step 3");
+        // The summary is asked for what was left when its steps ended, not for the next step.
+        assertThat(McpAgentChat.TURN_SUMMARY_PROMPT)
+                .contains("what was left to do when these steps ended")
+                .contains("don't say what to do next")
+                .doesNotContain("and the next step");
     }
 
     // A model that takes the given number of steps, each a search, then says "done"; a request to summarise is
@@ -1925,6 +2046,10 @@ class TestMcpAgentChat {
 
     private static ToolExecutionRequest request(final String id, final String arguments) {
         return ToolExecutionRequest.builder().id(id).name("t").arguments(arguments).build();
+    }
+
+    private static ToolExecutionRequest request(final String id, final String arguments, final String name) {
+        return ToolExecutionRequest.builder().id(id).name(name).arguments(arguments).build();
     }
 
     @Test

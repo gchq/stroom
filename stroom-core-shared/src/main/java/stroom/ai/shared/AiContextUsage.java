@@ -34,6 +34,12 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class AiContextUsage {
 
+    /// The part the tool definitions offered to the model take.
+    public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    /// The share of the context window, in percent, the tool definitions alone may take before the context meter
+    /// says so.
+    public static final int TOOL_DEFINITIONS_NOTE_PERCENT = 25;
+
     @JsonProperty
     private final int contextWindowTokens;
     @JsonProperty
@@ -46,6 +52,10 @@ public class AiContextUsage {
     private final int compactAtPercent;
     @JsonProperty
     private final int shortenedParts;
+    @JsonProperty
+    private final long storedToolResultTokens;
+    @JsonProperty
+    private final Map<String, Long> largestTools;
 
     /**
      * @param contextWindowTokens The model's context window, or 0 if it is not known.
@@ -58,6 +68,10 @@ public class AiContextUsage {
      * @param shortenedParts      How many parts (tool results, tool call arguments or earlier steps) the run
      *                            answering the latest question shortened to fit the context window, so it sends
      *                            less than the chat holds, or 0.
+     * @param storedToolResultTokens How many tokens the latest question's tool calls and results take as stored,
+     *                               when the run sent fewer of them than that (it shortened them), or 0.
+     * @param largestTools        The tools whose definitions took the most tokens in the chat's last model call,
+     *                            largest first, with their tokens.
      */
     @JsonCreator
     public AiContextUsage(@JsonProperty("contextWindowTokens") final Integer contextWindowTokens,
@@ -65,7 +79,9 @@ public class AiContextUsage {
                           @JsonProperty("estimated") final Boolean estimated,
                           @JsonProperty("parts") final Map<String, Long> parts,
                           @JsonProperty("compactAtPercent") final Integer compactAtPercent,
-                          @JsonProperty("shortenedParts") final Integer shortenedParts) {
+                          @JsonProperty("shortenedParts") final Integer shortenedParts,
+                          @JsonProperty("storedToolResultTokens") final Long storedToolResultTokens,
+                          @JsonProperty("largestTools") final Map<String, Long> largestTools) {
         this.contextWindowTokens = Objects.requireNonNullElse(contextWindowTokens, 0);
         this.usedTokens = Objects.requireNonNullElse(usedTokens, 0L);
         this.estimated = Objects.requireNonNullElse(estimated, true);
@@ -74,6 +90,10 @@ public class AiContextUsage {
                 : new LinkedHashMap<>(parts);
         this.compactAtPercent = Objects.requireNonNullElse(compactAtPercent, 0);
         this.shortenedParts = Objects.requireNonNullElse(shortenedParts, 0);
+        this.storedToolResultTokens = Objects.requireNonNullElse(storedToolResultTokens, 0L);
+        this.largestTools = largestTools == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(largestTools);
     }
 
     /**
@@ -117,6 +137,22 @@ public class AiContextUsage {
     }
 
     /**
+     * @return How many tokens the latest question's tool calls and results take as stored, when the run sent
+     * fewer of them than that, or 0.
+     */
+    public long getStoredToolResultTokens() {
+        return storedToolResultTokens;
+    }
+
+    /**
+     * @return The tools whose definitions took the most tokens in the chat's last model call, largest first,
+     * with their tokens.
+     */
+    public Map<String, Long> getLargestTools() {
+        return largestTools;
+    }
+
+    /**
      * @return The percentage of the context window used, or -1 if the window is not known.
      */
     @JsonIgnore
@@ -137,12 +173,15 @@ public class AiContextUsage {
                && estimated == that.estimated
                && Objects.equals(parts, that.parts)
                && compactAtPercent == that.compactAtPercent
-               && shortenedParts == that.shortenedParts;
+               && shortenedParts == that.shortenedParts
+               && storedToolResultTokens == that.storedToolResultTokens
+               && Objects.equals(largestTools, that.largestTools);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts, compactAtPercent, shortenedParts);
+        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts, compactAtPercent, shortenedParts,
+                storedToolResultTokens, largestTools);
     }
 
     @Override
@@ -154,6 +193,8 @@ public class AiContextUsage {
                ", parts=" + parts +
                ", compactAtPercent=" + compactAtPercent +
                ", shortenedParts=" + shortenedParts +
+               ", storedToolResultTokens=" + storedToolResultTokens +
+               ", largestTools=" + largestTools +
                '}';
     }
 }
