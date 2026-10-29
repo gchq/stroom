@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.4] - 2026-10-28
+
+* Dependency : Uplift AWS libs from 2.46.7 to 2.57.3.
+
+* Dependency : Uplift jackson from 3.1.2 to 3.2.4.
+
+* Dependency : Uplift com.fasterxml.jackson:jackson-bom from 2.21.2 to 2.21.8.
+
+* Dependency : Uplift org.apache.zookeeper:zookeeper from 3.9.4 to 3.9.6.
+
+* Dependency : Uplift jetty from 12.1.9 to 12.1.14.
+
+* Bug **#5929** : Revert base docker images back to alpine 3.23 as 3.24 is breaking LMDB use.
+
+
 ## [v7.13.3] - 2026-10-26
 
 * Dependency : Change docker images to force `brotli-libs>=1.2.1-r0`.
@@ -2608,7 +2623,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.4...HEAD
+[v7.13.4]: https://github.com/gchq/stroom/compare/v7.13.3...v7.13.4
 [v7.13.3]: https://github.com/gchq/stroom/compare/v7.13.2...v7.13.3
 [v7.13.2]: https://github.com/gchq/stroom/compare/v7.13.1...v7.13.2
 [v7.13.1]: https://github.com/gchq/stroom/compare/v7.13.0...v7.13.1
