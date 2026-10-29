@@ -44,11 +44,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,6 +64,8 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     public static final String DOCUMENT_TYPE_FIELD_NAME = "DOCUMENT_TYPE";
 
     private static final Path DATA_SUB_PATH = Paths.get("assets/data/doc-reference");
+    private static final Path DOC_FILE = Paths.get(
+            "content/en/docs/reference-section/documents.md");
 
     private final JsonMapper objectMapper;
 
@@ -116,8 +123,55 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     void generateDocumentsReference(final ScanResult scanResult) {
 
         final List<DocInfo> docInfoList = fetchDocInfo(scanResult);
-
         writeDataFiles(docInfoList);
+        validateDocPage(docInfoList);
+    }
+
+    private void validateDocPage(final List<DocInfo> docInfoList) {
+
+        final Path docFile = StroomDocsUtil.resolveStroomDocsFile(DOC_FILE, true);
+
+        // TreeMap is used to ensure the groups are in a consistent order
+        final Map<DocumentTypeGroup, List<DocInfo>> docInfoByGroup = docInfoList.stream()
+                .collect(Collectors.groupingBy(
+                        docInfo -> docInfo.group,
+                        TreeMap::new,
+                        Collectors.toList()));
+
+        final String pageContents = FileUtil.readString(docFile);
+        final String shortCodeTemplate = "{{< doc-detail \"{}\" >}}";
+
+        final AtomicInteger totalMissing = new AtomicInteger(0);
+
+        docInfoByGroup.forEach((group, docInfos) -> {
+            final List<DocInfo> missingItems = new ArrayList<>(docInfos.size());
+            docInfos.forEach(docInfo -> {
+                final String shortCode = LogUtil.message(shortCodeTemplate, docInfo.type);
+                if (!pageContents.contains(shortCode)) {
+                    missingItems.add(docInfo);
+                    totalMissing.incrementAndGet();
+                }
+            });
+
+            if (!missingItems.isEmpty()) {
+                final StringBuilder sb = new StringBuilder()
+                        .append("## ")
+                        .append(group.getDisplayName());
+                missingItems.forEach(docInfo ->
+                        sb.append("\n\n")
+                                .append("### ")
+                                .append(docInfo.typeDisplayName)
+                                .append("\n\n")
+                                .append(LogUtil.message(shortCodeTemplate, docInfo.type)));
+
+                LOGGER.error("Document {} is missing the following content:\n{}", docFile, sb);
+            }
+        });
+
+        if (totalMissing.get() > 0) {
+            throw new RuntimeException(LogUtil.message("Document {} is missing {} doc-detail shortcodes",
+                    docFile, totalMissing.get()));
+        }
     }
 
     private @NonNull List<DocInfo> fetchDocInfo(final ScanResult scanResult) {

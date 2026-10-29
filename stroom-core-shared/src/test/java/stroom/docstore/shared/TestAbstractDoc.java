@@ -25,50 +25,74 @@ import stroom.util.logging.LogUtil;
 
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAbstractDoc {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAbstractDoc.class);
     private static final Class<Description> DOCUMENTATION_CLASS = Description.class;
+    private static final Pattern MARKDOWN_LINK = Pattern.compile("\\[[^\\[]+]([^(]+)");
 
     @Disabled // Enable this once all the docs have documentation
     @Test
-    void ensureDocDocumentation() {
-        StroomDocsUtil.doWithClassScanResult(scanResult -> {
-            final AtomicInteger count = new AtomicInteger();
-
-            streamAbstractDocSubClasses(scanResult)
-                    .filter(classInfo -> !classInfo.hasAnnotation(DOCUMENTATION_CLASS))
-                    .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class))
-                    .forEach(classInfo -> {
-                        final Class<?> clazz = classInfo.loadClass();
-                        LOGGER.error("Document class {} is missing annotation {}. " +
-                                     "It's time to write some documentation.",
-                                clazz.getName(),
-                                DOCUMENTATION_CLASS.getName());
-                        count.incrementAndGet();
-                    });
-
-            assertThat(count)
-                    .withFailMessage(
-                            LogUtil.message(
-                                    "Found subclasses of {} that are missing annotation {}, see logs for details.",
-                                    AbstractDoc.class.getName(), DOCUMENTATION_CLASS.getName()))
-                    .hasValue(0);
+    void checkDocDocumentation() {
+        SoftAssertions.assertSoftly(softly -> {
+            StroomDocsUtil.doWithClassScanResult(scanResult -> {
+                streamAbstractDocSubClasses(scanResult)
+                        .forEach(classInfo -> {
+                            final Class<?> clazz = classInfo.loadClass();
+                            checkDoc(softly, classInfo, clazz);
+                        });
+            });
         });
+    }
+
+    private void checkDoc(final SoftAssertions softly, final ClassInfo classInfo, final Class<?> clazz) {
+        LOGGER.debug("Checking document {}", clazz.getSimpleName());
+        final Description descriptionAnno = clazz.getAnnotation(DOCUMENTATION_CLASS);
+        softly.assertThat(descriptionAnno)
+                .withFailMessage(LogUtil.message(
+                        "Document class {} is missing annotation {}. It's time to write some documentation.",
+                        clazz.getName(),
+                        DOCUMENTATION_CLASS.getName()))
+                .isNotNull();
+        if (descriptionAnno != null) {
+            final String description = descriptionAnno.value();
+
+            softly.assertThat(description)
+                    .withFailMessage(LogUtil.message(
+                            "Document class {} has annotation {} but no description.",
+                            clazz.getName(),
+                            DOCUMENTATION_CLASS.getName()))
+                    .isNotBlank();
+
+            softly.assertThat(description)
+                    .withFailMessage(LogUtil.message(
+                            "Documentation for class {} contains Hugo shortcodes. " +
+                            "Shortcodes are not supported in the description.",
+                            clazz.getName(),
+                            DOCUMENTATION_CLASS.getName()))
+                    .doesNotContain("{{<", "{{%", ">}}", "%}}");
+
+            softly.assertThat(description)
+                    .withFailMessage("Documentation for class {} contains markdown links. " +
+                                     "Markdown links are not supported in the description.",
+                            clazz.getName(),
+                            DOCUMENTATION_CLASS.getName())
+                    .doesNotMatch(MARKDOWN_LINK);
+        }
     }
 
     private Stream<ClassInfo> streamAbstractDocSubClasses(final ScanResult scanResult) {
         return scanResult.getSubclasses(AbstractDoc.class)
                 .stream()
                 .filter(classInfo -> !classInfo.isInterface())
-                .filter(classInfo -> !classInfo.isAbstract());
+                .filter(classInfo -> !classInfo.isAbstract())
+                .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class));
     }
 }

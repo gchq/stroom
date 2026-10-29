@@ -17,13 +17,13 @@
 package stroom.app.docs;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.NotDocumented;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.XsltFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.source.SourceElement;
 import stroom.test.common.docs.StroomDocsUtil;
 import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
 import stroom.util.logging.AsciiTable;
@@ -181,11 +181,12 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     void generatePipeElmShortcodeNames(final ScanResult scanResult) {
         final String dictContent = scanResult.getClassesImplementing(Element.class.getName())
                 .parallelStream()
+                .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class))
                 .map(GeneratePipelineElementsDoc::mapClassInfo)
                 .filter(Objects::nonNull)
                 .filter(elementInfo ->
                         !Category.INTERNAL.equals(elementInfo.category)
-                        || SourceElement.class.equals(elementInfo.clazz))
+                        || Objects.equals(elementInfo.type, "Source"))
                 .sequential()
                 .sorted(Comparator.comparing(ElementInfo::type))
                 .map(elementInfo -> {
@@ -329,7 +330,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
             final Set<String> roles = new HashSet<>(Arrays.asList(elementAnno.roles()));
             final List<PropertyInfo> propertyInfoList = getPropertyInfoList(clazz);
 
-            return new ElementInfo(clazz, type, iconFileName, category, description, roles, propertyInfoList);
+            return new ElementInfo(type, iconFileName, category, description, roles, propertyInfoList);
         } else {
             return null;
         }
@@ -384,7 +385,6 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
 
     private record ElementInfo(
-            Class<? extends Element> clazz,
             String type,
             String iconFilename,
             Category category,
