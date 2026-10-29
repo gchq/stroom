@@ -112,6 +112,7 @@ class ReportStoreImpl
     protected DependencyRemapFunction<ReportDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final ReportDoc.Builder builder = doc.copy();
+            AnalyticFeedDependencies.remap(doc, builder, dependencyRemapper);
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
