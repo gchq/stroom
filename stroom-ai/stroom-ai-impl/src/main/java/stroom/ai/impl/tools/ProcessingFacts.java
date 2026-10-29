@@ -62,7 +62,8 @@ interface ProcessingFacts {
     /// @param enabledOnly Only enabled filters whose processor is enabled (as task creation takes them), or every
     ///                    filter that isn't deleted.
     /// @param limit       The most to return.
-    /// @return The processor filters the user can see, highest priority first. Needs Manage Processors.
+    /// @return The processor filters the user can see, in the order they get work ([ProcessingExplainer#WORK_ORDER]).
+    /// Needs Manage Processors.
     List<ProcessorFilter> filters(boolean enabledOnly, int limit);
 
     /// @param minPriority The lowest filter priority to count.

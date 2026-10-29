@@ -186,8 +186,7 @@ class StroomProcessingFacts implements ProcessingFacts {
                     return pipeline != null && pipeline.getUuid() != null
                            && viewable.computeIfAbsent(pipeline, documentAccess::canView);
                 })
-                .sorted(Comparator.comparingInt(ProcessorFilter::getPriority).reversed()
-                        .thenComparing(ProcessorFilter::getId))
+                .sorted(ProcessingExplainer.WORK_ORDER)
                 .limit(limit)
                 .toList();
     }
