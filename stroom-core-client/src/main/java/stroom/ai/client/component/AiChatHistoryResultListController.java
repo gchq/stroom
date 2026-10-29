@@ -45,8 +45,9 @@ public class AiChatHistoryResultListController extends Controller {
 
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
 
-    private final AiChatHistoryResultList view;
+    private AiChatHistoryResultList view;
     private final RestDataProvider<AiChat, ResultPage<AiChat>> dataProvider;
+    private final DateTimeFormatter dateTimeFormatter;
     private String filter;
     private String lastFilter;
     private boolean initialised;
@@ -56,29 +57,24 @@ public class AiChatHistoryResultListController extends Controller {
     private Runnable onFocusFilter = () -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(AiChatHistoryResultList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the chats.
     /// @param dateTimeFormatter Formats when each chat was last changed.
     @Inject
     public AiChatHistoryResultListController(final EventBus eventBus,
-                                             final AiChatHistoryResultList view,
                                              final RestFactory restFactory,
                                              final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
-        view.addColumn(new AiChatCell(dateTimeFormatter));
-        view.setOnUpFromFirst(() -> onFocusFilter.run());
+        this.dateTimeFormatter = dateTimeFormatter;
 
-        final MultiSelectionModel<AiChat> selectionModel = view.getSelectionModel();
         dataProvider = new RestDataProvider<AiChat, ResultPage<AiChat>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<AiChat>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                final MultiSelectionModel<AiChat> selectionModel = view.getSelectionModel();
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 final boolean filterChange = !Objects.equals(lastFilter, filter);
                 lastFilter = filter;
@@ -113,6 +109,19 @@ public class AiChatHistoryResultListController extends Controller {
                         .exec();
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public AiChatHistoryResultListController attach(final AiChatHistoryResultList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.addColumn(new AiChatCell(dateTimeFormatter));
+        view.setOnUpFromFirst(() -> onFocusFilter.run());
+        return this;
     }
 
     private void resetFocus() {

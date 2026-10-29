@@ -119,22 +119,15 @@ public class MetaBrowserController
                                  final ExpressionValidator expressionValidator) {
         super(eventBus);
         initWidget(view);
-        own(metaList);
-        own(metaRelationList);
-        own(dataController);
-        this.metaList = metaList;
-        this.metaRelationList = metaRelationList;
+        this.metaList = own(metaList).attach(view.getStreamList());
+        this.metaRelationList = own(metaRelationList).attach(view.getStreamRelationList());
         this.filterDialogProvider = filterDialogProvider;
         this.dataUploadProvider = dataUploadProvider;
-        this.dataController = dataController;
+        this.dataController = own(dataController).attach(view.getData());
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.expressionValidator = expressionValidator;
         this.securityContext = securityContext;
-
-        view.setStreamList(metaList);
-        view.setStreamRelationList(metaRelationList);
-        view.setData(dataController);
 
         dataController.setBeginSteppingHandler(this);
 

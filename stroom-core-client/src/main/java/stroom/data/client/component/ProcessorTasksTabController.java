@@ -45,13 +45,8 @@ public class ProcessorTasksTabController extends Controller {
                                        final ProcessorTasksListController processorTaskList) {
         super(eventBus);
         initWidget(view);
-        own(processorTaskSummary);
-        own(processorTaskList);
-        this.processorTaskSummary = processorTaskSummary;
-        this.processorTaskList = processorTaskList;
-
-        view.setTaskSummaryView(processorTaskSummary);
-        view.setTaskListView(processorTaskList);
+        this.processorTaskSummary = own(processorTaskSummary).attach(view.getTaskSummary());
+        this.processorTaskList = own(processorTaskList).attach(view.getTaskList());
 
         own(processorTaskSummary.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.

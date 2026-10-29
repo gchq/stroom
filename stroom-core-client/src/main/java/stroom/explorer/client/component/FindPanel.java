@@ -24,9 +24,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -34,8 +34,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/// A filter above a list of what it finds, its owner's: the content of Find, Recent Items and the
-/// annotation finders.
+/// A filter above a list of what it finds: the content of Find, Recent Items, Chat History and the
+/// annotation finders. A template declares it around its list (`<ex:content>`, see
+/// [#addContent(Widget)]).
 public class FindPanel extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -84,9 +85,12 @@ public class FindPanel extends Component {
         nameFilter.setContextHandler(contextHandler);
     }
 
-    /// @param view The list of what is found.
-    public void setResultView(final IsWidget view) {
-        bottomPanel.setWidget(view.asWidget());
+    /// Gives the panel its list of what is found, once, from a template's `<ex:content>` child.
+    ///
+    /// @param content The list of what is found.
+    @UiChild(tagname = "content", limit = 1)
+    public void addContent(final Widget content) {
+        bottomPanel.setWidget(content);
     }
 
     /// Puts the focus on the filter.

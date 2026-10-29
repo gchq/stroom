@@ -41,7 +41,7 @@ class TestStepControlController {
     void setUp() {
         GWTMockUtilities.disarm();
         view = Mockito.mock(StepControl.class);
-        controller = new StepControlController(new SimpleEventBus(), view);
+        controller = new StepControlController(new SimpleEventBus()).attach(view);
     }
 
     @AfterEach

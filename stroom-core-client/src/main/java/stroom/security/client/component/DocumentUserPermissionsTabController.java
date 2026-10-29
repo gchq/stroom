@@ -74,10 +74,9 @@ public class DocumentUserPermissionsTabController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.documentUserPermissionsList = own(documentUserPermissionsList);
+        this.documentUserPermissionsList = own(documentUserPermissionsList).attach(view.getList());
         this.documentUserPermissionsEditProvider = documentUserPermissionsEditProvider;
         this.docPermissionClient = docPermissionClient;
-        view.setList(documentUserPermissionsList);
 
         documentUserPermissionsList.getToolbar().setName("Permission actions");
         docEdit = documentUserPermissionsList.getToolbar().button(

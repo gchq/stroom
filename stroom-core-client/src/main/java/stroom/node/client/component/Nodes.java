@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Nodes screen: the nodes, and the selected node's jobs.
@@ -31,27 +29,23 @@ public class Nodes extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel nodeList;
+    NodeStatusList nodeList;
     @UiField
-    SimplePanel nodeJobList;
+    NodeJobList nodeJobList;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with its lists empty until their controllers fill them.
     public Nodes() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// Shows the list of nodes.
-    ///
-    /// @param view Its view.
-    public void setNodeListView(final IsWidget view) {
-        nodeList.setWidget(view.asWidget());
+    /// @return The nodes, which its controller attaches the list's controller to.
+    public NodeStatusList getNodeList() {
+        return nodeList;
     }
 
-    /// Shows the selected node's jobs.
-    ///
-    /// @param view Its view.
-    public void setNodeJobListView(final IsWidget view) {
-        nodeJobList.setWidget(view.asWidget());
+    /// @return The selected node's jobs, which its controller attaches the list's controller to.
+    public NodeJobList getNodeJobList() {
+        return nodeJobList;
     }
 
     // --------------------------------------------------------------------------------

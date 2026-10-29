@@ -12,7 +12,8 @@ changed by the audit itself; the waves below were approved on 29 October 2026 (D
 **Progress.** Wave 1 done 29 October 2026 (order wave 35, `component-migration/wave-35.md`); wave 2
 done 29 October 2026 (order wave 36, `component-migration/wave-36.md`); wave 3 done 29 October 2026
 (order wave 37, `component-migration/wave-37.md`); wave 4 done 29 October 2026 (order wave 38,
-`component-migration/wave-38.md`).
+`component-migration/wave-38.md`); wave 5 done 29 October 2026 (order wave 39,
+`component-migration/wave-39.md`, with what it left and why).
 
 ## Summary
 

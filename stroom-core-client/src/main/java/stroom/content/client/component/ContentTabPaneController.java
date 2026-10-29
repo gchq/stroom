@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// The document tabs (a [CurveTabLayout]): opens, selects, moves, refreshes and closes the tabs the
 /// content events ask for, keeps the browser's history of the tabs selected (Back and Forward go
@@ -68,35 +69,24 @@ public class ContentTabPaneController
         RefreshContentTabHandler,
         MoveContentTabHandler {
 
-    private final CurveTabLayout view;
     private final Map<TabData, Layer> tabContentMap = new HashMap<>();
     private final List<TabData> historyList = new ArrayList<>();
     private final RecentItems recentItems;
+    private CurveTabLayout view;
     private int currentHistoryId;
     private int currentIndex;
     private boolean ignoreHistory;
 
-    /// Made by GIN, once: the main screen's document tabs.
+    /// Made by GIN, once: the main screen's document tabs. [#attach(CurveTabLayout)] gives it
+    /// its tabs' layout.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        Its component.
     /// @param recentItems The recent items.
     @Inject
     public ContentTabPaneController(final EventBus eventBus,
-                                    final CurveTabLayout view,
                                     final RecentItems recentItems) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         this.recentItems = recentItems;
-
-        own(view.getTabBar().addSelectionHandler(event ->
-                selectTab(event.getSelectedItem())));
-        own(view.getTabBar().addRequestCloseTabHandler(event ->
-                RequestCloseTabEvent.fire(this, event.getTabData(), event.isForce())));
-        own(view.getTabBar().addShowMenuHandler(event ->
-                getEventBus().fireEvent(event)));
-        view.setOnToggleSidebar(() -> MaximiseEvent.fire(this, null));
 
         listen(RefreshCurrentContentTabEvent.getType(),
                 event -> {
@@ -154,8 +144,25 @@ public class ContentTabPaneController
                 ignoreHistory = false;
             }
         }));
+    }
 
+    /// Attaches this to a layout of tabs, e.g. one a template declares. The layout is then this
+    /// controller's widget, e.g. to show it on its own.
+    ///
+    /// @param view The layout.
+    /// @return This, for its owner to keep.
+    public ContentTabPaneController attach(final CurveTabLayout view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        own(view.getTabBar().addSelectionHandler(event ->
+                selectTab(event.getSelectedItem())));
+        own(view.getTabBar().addRequestCloseTabHandler(event ->
+                RequestCloseTabEvent.fire(this, event.getTabData(), event.isForce())));
+        own(view.getTabBar().addShowMenuHandler(event ->
+                getEventBus().fireEvent(event)));
+        view.setOnToggleSidebar(() -> MaximiseEvent.fire(this, null));
         own(view.addShowTabMenuHandler(event -> getEventBus().fireEvent(event)));
+        return this;
     }
 
     @Override

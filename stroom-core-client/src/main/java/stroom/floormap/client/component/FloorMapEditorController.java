@@ -237,10 +237,10 @@ public class FloorMapEditorController
 
         // Each child is obtained via Provider so GIN creates a fresh instance
         // for this controller rather than sharing singletons used elsewhere.
-        this.canvas = make(canvasProvider);
-        this.floorMapTimeline = make(timelineProvider);
-        this.floorMapFactList = make(factListProvider);
-        this.floorMapTimeList = make(timeListProvider);
+        this.canvas = make(canvasProvider).attach(view.getCanvas());
+        this.floorMapTimeline = make(timelineProvider).attach(view.getTimeline());
+        this.floorMapFactList = make(factListProvider).attach(view.getFactList());
+        this.floorMapTimeList = make(timeListProvider).attach(view.getTimeList());
         this.floorMapObjectEdit = make(propertiesProvider);
         // Let the properties dialog state an image's real-world size: the canvas
         // has already measured any image it has drawn, so this needs no second
@@ -300,11 +300,6 @@ public class FloorMapEditorController
         layersPanel.setOnEditStyle(layerStyle::show);
         // Full facts-store type-discovery scan behind the panel's Discover action.
         layersPanel.setOnDiscover(this::onDiscoverTypes);
-
-        view.setCanvas(canvas);
-        view.setTimeline(floorMapTimeline);
-        view.setFactList(floorMapFactList);
-        view.setTimeList(floorMapTimeList);
 
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List

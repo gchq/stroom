@@ -43,6 +43,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A Pathways document's pathways ([PathwayList]), a page at a time, found by the quick filter. New,
@@ -52,8 +53,9 @@ public class PathwayListController extends Controller {
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);
 
-    private final PathwayList view;
+    private PathwayList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
     private final PathwayEditController pathwayEdit;
     private RestDataProvider<Pathway, ResultPage<Pathway>> dataProvider;
 
@@ -63,23 +65,30 @@ public class PathwayListController extends Controller {
     private Consumer<Pathway> onSelectionChange = pathway -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(PathwayList)] gives it its list.
     ///
     /// @param eventBus             The application's event bus.
-    /// @param view                 The content.
     /// @param restFactory          Finds and changes the pathways.
     /// @param dateTimeFormatter    Formats the times shown.
     /// @param pathwayEdit          Edits a pathway.
     @Inject
     public PathwayListController(final EventBus eventBus,
-                                 final PathwayList view,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final PathwayEditController pathwayEdit) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
         this.pathwayEdit = own(pathwayEdit);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public PathwayListController attach(final PathwayList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::format);
         view.setOnFilterChange(this::onFilterChange);
@@ -90,6 +99,7 @@ public class PathwayListController extends Controller {
         watch(Contexts.READ_ONLY, view::setReadOnly);
         own(view.getSelectionModel().addSelectionHandler(event ->
                 onSelectionChange.accept(view.getSelectionModel().getSelected())));
+        return this;
     }
 
     /// @param onSelectionChange Given the pathway chosen, or `null` for none, each time the choice

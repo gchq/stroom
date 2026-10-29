@@ -45,7 +45,7 @@ public class NodeGroupEdit extends Component {
     @UiField
     SelectionBox<NodeInclusionBehaviour> nodeInclusionBehaviour;
     @UiField
-    SimplePanel list;
+    NodeGroupStateList list;
 
     private Runnable onInvertSelectionChange = () -> {
     };
@@ -91,9 +91,9 @@ public class NodeGroupEdit extends Component {
                 : NodeInclusionBehaviour.INCLUDE_SELECTED);
     }
 
-    /// @param list The nodes to tick.
-    public void setList(final IsWidget list) {
-        this.list.setWidget(list.asWidget());
+    /// @return The nodes to tick, which its controller attaches the list's controller to.
+    public NodeGroupStateList getList() {
+        return list;
     }
 
     /// @param onInvertSelectionChange Called when the inclusion behaviour changes.

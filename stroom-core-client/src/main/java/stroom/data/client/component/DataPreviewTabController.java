@@ -42,8 +42,8 @@ public class DataPreviewTabController extends ContentTabController {
     public DataPreviewTabController(final EventBus eventBus,
                                     final DataViewerController dataController) {
         super(eventBus);
-        own(dataController);
-        this.dataController = dataController;
+        // The tab is the viewer and nothing else, so shows the viewer's widget as its own
+        this.dataController = own(dataController).attach(new DataViewer());
         this.dataController.setDisplayMode(DisplayMode.STROOM_TAB);
         initWidget(dataController.asWidget());
     }

@@ -58,10 +58,8 @@ public class ServerTasksController extends ContentTabController
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(taskManagerList);
-        this.taskManagerList = taskManagerList;
+        this.taskManagerList = own(taskManagerList).attach(view.getList());
         view.setOnFilterChange(this::changeNameFilter);
-        view.setList(taskManagerList.asWidget());
         // A rejected filter comes back as an empty list like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         taskManagerList.setFilterErrorConsumer(view::setFilterError);

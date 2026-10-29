@@ -1300,6 +1300,16 @@ after wave 37.
 > four copies of `LinkTabPanel`'s markup went; Create User declares its group form. See
 > `wave-38.md`.
 
+## 39. UI audit wave 5: composed all the way up
+
+Record: [`component-migration/wave-39.md`](component-migration/wave-39.md). Added 29 October 2026,
+after wave 38.
+
+> **Done, 29 October 2026**: fixed children are declared in their parents' templates and their
+> controllers attached, in security, data and pipeline, the floor map and stores, the explorer and
+> analytics, the Main shell, the widgets' internals and the query; what is left (the tab bars'
+> selector, Time Preferences, two index editors) is listed with its reason. See `wave-39.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

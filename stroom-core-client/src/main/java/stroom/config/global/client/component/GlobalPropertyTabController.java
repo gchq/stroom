@@ -64,11 +64,9 @@ public class GlobalPropertyTabController extends ContentTabController {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(manageGlobalPropertyList);
-        this.manageGlobalPropertyList = manageGlobalPropertyList;
+        this.manageGlobalPropertyList = own(manageGlobalPropertyList).attach(view.getList());
         this.editProvider = editProvider;
         view.setOnFilterChange(this::changeNameFilter);
-        view.setListView(manageGlobalPropertyList);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         manageGlobalPropertyList.setFilterErrorConsumer(view::setFilterError);

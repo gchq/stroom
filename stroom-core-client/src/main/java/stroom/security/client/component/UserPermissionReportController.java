@@ -76,13 +76,11 @@ public class UserPermissionReportController extends Controller {
                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
         initWidget(view);
-        own(documentPermissionsList);
-        this.documentPermissionsList = documentPermissionsList;
+        this.documentPermissionsList = own(documentPermissionsList).attach(view.getDocumentsList());
         this.documentUserPermissionsEditProvider = documentUserPermissionsEditProvider;
         this.batchDocumentPermissionsEditProvider = batchDocumentPermissionsEditProvider;
         this.filterDialogProvider = filterDialogProvider;
 
-        view.setDocumentsList(documentPermissionsList);
         view.setOnFilterChange(this::onFilterChange);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.

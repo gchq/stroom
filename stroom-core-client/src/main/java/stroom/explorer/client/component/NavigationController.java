@@ -78,6 +78,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Shows the explorer: fills its tree and toolbar, filters it as the user asks, opens the main menu
 /// and the documents chosen, and shows the current activity.
@@ -86,14 +87,15 @@ public class NavigationController extends Controller
         HighlightExplorerNodeEvent.Handler,
         ShowMainEvent.Handler {
 
-    private final Navigation view;
-
+    private final Provider<ExplorerTreeController> explorerTreeControllerProvider;
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterController typeFilter;
     private final CurrentActivity currentActivity;
+    private final UiConfigCache uiConfigCache;
     private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
-    private final ExplorerTree explorerTree;
-    private final ExplorerTreeController treeController;
+    private Navigation view;
+    private ExplorerTree explorerTree;
+    private ExplorerTreeController treeController;
 
     private final MenuItems menuItems;
 
@@ -104,10 +106,9 @@ public class NavigationController extends Controller
     private final DocumentPluginRegistry documentPluginRegistry;
     private DocRef selectedDoc;
 
-    /// Made by GIN, with its screen and its parts.
+    /// Made by GIN; [#attach(Navigation)] gives it its explorer.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             Its component.
     /// @param menuItems                        The menu items.
     /// @param restFactory                      Makes REST requests.
     /// @param explorerTreeControllerProvider   Makes the explorer tree controller.
@@ -119,7 +120,6 @@ public class NavigationController extends Controller
     /// @param quickFilterContextHandlerFactory Adds the quick filter's history and Advanced Query.
     @Inject
     public NavigationController(final EventBus eventBus,
-                               final Navigation view,
                                final MenuItems menuItems,
                                final RestFactory restFactory,
                                final Provider<ExplorerTreeController> explorerTreeControllerProvider,
@@ -130,16 +130,55 @@ public class NavigationController extends Controller
                                final UiConfigCache uiConfigCache,
                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         own(typeFilter);
         this.menuItems = menuItems;
+        this.explorerTreeControllerProvider = explorerTreeControllerProvider;
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;
         this.typeFilter = typeFilter;
         this.currentActivity = currentActivity;
+        this.uiConfigCache = uiConfigCache;
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
+        // Binds for creating a document of a given type
+        KeyBinding.addCommand(Action.CREATE_ANNOTATION, () ->
+                CreateAnnotationEvent.fire(this));
+        KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
+                CreateNewDocumentEvent.fire(this, DashboardDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_FEED, () ->
+                CreateNewDocumentEvent.fire(this, FeedDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
+        KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
+                CreateNewDocumentEvent.fire(this, DictionaryDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
+                CreateNewDocumentEvent.fire(this, DocumentationDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
+                CreateNewDocumentEvent.fire(this, PipelineDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_QUERY, () ->
+                CreateNewDocumentEvent.fire(this, QueryDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
+                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
+                CreateNewDocumentEvent.fire(this, TextConverterDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_VIEW, () ->
+                CreateNewDocumentEvent.fire(this, ViewDoc.TYPE));
+        KeyBinding.addCommand(Action.CREATE_XSLT, () ->
+                CreateNewDocumentEvent.fire(this, XsltDoc.TYPE));
+    }
+
+    /// Attaches this to an explorer, e.g. one a template declares, and the explorer's tree's
+    /// controller to its tree. The explorer is then this controller's widget.
+    ///
+    /// @param view The explorer.
+    /// @return This, for its owner to keep.
+    public NavigationController attach(final Navigation view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
         view.setOnAction(this::onAction);
         view.setActionPressed(ExplorerAction.FILTER, hasActiveFilter);
         view.setOnFilterChange(this::changeQuickFilter);
@@ -173,36 +212,6 @@ public class NavigationController extends Controller
 
         KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, view::focusQuickFilter);
         KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () -> explorerTree.focus());
-        // Binds for creating a document of a given type
-        KeyBinding.addCommand(Action.CREATE_ANNOTATION, () ->
-                CreateAnnotationEvent.fire(this));
-        KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
-                CreateNewDocumentEvent.fire(this, DashboardDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_FEED, () ->
-                CreateNewDocumentEvent.fire(this, FeedDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
-                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
-        KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
-                CreateNewDocumentEvent.fire(this, DictionaryDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
-                CreateNewDocumentEvent.fire(this, DocumentationDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
-                CreateNewDocumentEvent.fire(this, PipelineDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_QUERY, () ->
-                CreateNewDocumentEvent.fire(this, QueryDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
-                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
-                CreateNewDocumentEvent.fire(this, TextConverterDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_VIEW, () ->
-                CreateNewDocumentEvent.fire(this, ViewDoc.TYPE));
-        KeyBinding.addCommand(Action.CREATE_XSLT, () ->
-                CreateNewDocumentEvent.fire(this, XsltDoc.TYPE));
-
         // track the currently selected doc.
         listen(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
@@ -245,7 +254,7 @@ public class NavigationController extends Controller
         }));
         own(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
         own(explorerTree.addItemKeyHandler(event -> getEventBus().fireEvent(event)));
-
+        return this;
     }
 
     private void updateActivitySummary() {

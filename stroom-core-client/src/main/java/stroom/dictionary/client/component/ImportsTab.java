@@ -21,34 +21,33 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A dictionary's Imports tab: the dictionaries it imports above the effective words of the one
-/// selected, each a list its controller shows here.
+/// selected, each a list its controller attaches to.
 public class ImportsTab extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel importsPanel;
+    DocRefList imports;
     @UiField
-    SimplePanel wordsPanel;
+    EffectiveWordsList words;
 
     /// Makes the tab, with no lists.
     public ImportsTab() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param imports The dictionaries imported.
-    public void setImports(final IsWidget imports) {
-        importsPanel.setWidget(imports);
+    /// @return The dictionaries imported, which its controller attaches the list's controller to.
+    public DocRefList getImports() {
+        return imports;
     }
 
-    /// @param words The effective words of the import selected.
-    public void setWords(final IsWidget words) {
-        wordsPanel.setWidget(words);
+    /// @return The effective words of the import selected, which its controller attaches the
+    ///         list's controller to.
+    public EffectiveWordsList getWords() {
+        return words;
     }
 
 

@@ -41,24 +41,20 @@ public class ActivityListController extends Controller {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
-    private final ActivityList view;
     private final RestDataProvider<Activity, ResultPage<Activity>> dataProvider;
+    private ActivityList view;
     private Consumer<String> onFilterError = error -> {
     };
     private String name;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ActivityList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Finds the activities.
     @Inject
     public ActivityListController(final EventBus eventBus,
-                                  final ActivityList view,
                                   final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
 
         dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
             @Override
@@ -80,7 +76,18 @@ public class ActivityListController extends Controller {
                         .exec();
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ActivityListController attach(final ActivityList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
         view.setDataProvider(dataProvider);
+        return this;
     }
 
     /// The toolbar beside the list's pager, for the screen's own buttons.

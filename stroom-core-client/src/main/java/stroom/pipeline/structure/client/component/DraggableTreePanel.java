@@ -32,6 +32,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -59,8 +60,9 @@ import java.util.function.Consumer;
 ///
 /// Pressing on the background (not an item) and dragging pans the tree, if it scrolls.
 ///
-/// A template can declare it; its owner gives it its trees ([#setTreePanels]) and says, through
-/// callbacks, which item may take which, and what selecting, dragging and dropping do.
+/// A template declares it with its tree inside (`<pv:tree>`, see [#addTree]); its owner gives it
+/// the panel that draws a copy of what is dragged ([#setDraggedCopy]) and says, through callbacks,
+/// which item may take which, and what selecting, dragging and dropping do.
 ///
 /// @param <E> The type of the tree's items.
 public class DraggableTreePanel<E> extends Composite implements HasContextMenuHandlers {
@@ -130,27 +132,37 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
     private int panScrollLeft;
     private int panScrollTop;
 
-    /// Makes a panel with no tree yet, e.g. one a template declares; see [#setTreePanels].
+    /// Makes a panel with no tree yet, e.g. one a template declares; see [#addTree].
     public DraggableTreePanel() {
         initWidget(BINDER.createAndBindUi(this));
         sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCONTEXTMENU);
     }
 
-    /// Gives the panel its tree, once, and the second panel that draws a copy of what is dragged.
+    /// Gives the panel its tree, once, from a template's `<pv:tree>` child.
     ///
-    /// @param treePanel    The tree.
-    /// @param subTreePanel The copy of what is dragged, shown only while dragging.
-    public void setTreePanels(final TreePanel<E> treePanel, final TreePanel<E> subTreePanel) {
+    /// @param treePanel The tree.
+    @UiChild(tagname = "tree", limit = 1)
+    public void addTree(final TreePanel<E> treePanel) {
         if (this.treePanel != null) {
-            throw new IllegalStateException("Already has its trees");
+            throw new IllegalStateException("Already has its tree");
         }
         this.treePanel = Objects.requireNonNull(treePanel, "treePanel");
+        layoutPanel.addAndReplaceElement(treePanel, treeSlot);
+    }
+
+    /// Gives the panel, once, the second tree panel that draws a copy of what is dragged. It is made
+    /// in Java, not declared, as it is on the page only while dragging.
+    ///
+    /// @param subTreePanel The copy of what is dragged, shown only while dragging.
+    public void setDraggedCopy(final TreePanel<E> subTreePanel) {
+        if (this.subTreePanel != null) {
+            throw new IllegalStateException("Already has its dragged copy");
+        }
         this.subTreePanel = Objects.requireNonNull(subTreePanel, "subTreePanel");
         // The copy of what is dragged, which follows the pointer, is for sight only: not a second
         // tree for assistive technology, nor focusable
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");
-        layoutPanel.addAndReplaceElement(treePanel, treeSlot);
     }
 
     /// @return The live region in which the keyboard's moves are told (see [TreeKeyboard]).

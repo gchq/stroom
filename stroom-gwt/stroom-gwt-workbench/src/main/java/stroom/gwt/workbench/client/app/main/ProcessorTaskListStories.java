@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.data.client.component.ProcessorTasksList;
 import stroom.data.client.component.ProcessorTasksListController;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
@@ -164,7 +165,8 @@ public final class ProcessorTaskListStories {
         final Spy openFeed = context.fn(OPEN_FEED_SPY);
         harness.getEventBus().addHandler(OpenFeedEvent.getType(), event -> openFeed.call(event.getName()));
         harness.afterStartUp(() -> {
-            final ProcessorTasksListController tasksList = injector.getProcessorTasksListController();
+            final ProcessorTasksListController tasksList = injector.getProcessorTasksListController()
+                    .attach(new ProcessorTasksList());
             // As a folder's 'Active Tasks' tab reads it
             tasksList.read(FOLDER, null);
             harness.show(tasksList);

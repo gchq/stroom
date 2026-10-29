@@ -4,10 +4,13 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tx="urn:import:stroom.widget.text.client">
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:ct="urn:import:stroom.receive.content.client.component">
     <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                      names="Templates, Template" addStyleNames="max">
-        <g:SimplePanel ui:field="table" styleName="max"/>
+        <g:SimplePanel styleName="max">
+            <ct:ContentTemplateList ui:field="list"/>
+        </g:SimplePanel>
         <g:FlowPanel styleName="max form form-padding">
             <form:FormGroup
                     ui:field="descriptionFormGroup"

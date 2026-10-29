@@ -77,15 +77,11 @@ public class AnalyticDataShardsController
         super(eventBus);
         initWidget(view);
         own(queryToolbar);
-        own(analyticDataShardList);
-        own(tableController);
         this.queryToolbar = queryToolbar;
-        this.analyticDataShardList = analyticDataShardList;
-        this.tableController = tableController;
+        this.analyticDataShardList = own(analyticDataShardList).attach(view.getShardList());
+        this.tableController = own(tableController).attach(view.getTable());
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
-        view.setShardList(analyticDataShardList);
-        view.setTable(tableController);
         tableController.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
         tableController.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
 

@@ -5,6 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:pb="urn:import:stroom.widget.progress.client.component"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
 
@@ -30,15 +31,22 @@
                     <tx:Label ui:field="lblType" styleName="source-viewer__title-text"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-min">
-                    <g:SimplePanel ui:field="navigatorContainer" styleName="source-viewer__character-navigator"/>
+                    <g:SimplePanel styleName="source-viewer__character-navigator">
+                        <d:CharacterNavigator ui:field="navigator"/>
+                    </g:SimplePanel>
                 </g:FlowPanel>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-max dock-container-vertical">
-                <g:SimplePanel ui:field="progressBarPanel"
-                               styleName="dock-min source-viewer__progress-bar-panel"/>
+                <g:SimplePanel styleName="dock-min source-viewer__progress-bar-panel">
+                    <pb:SourceProgressBar ui:field="progressBar" visible="false"/>
+                </g:SimplePanel>
                 <g:FlowPanel styleName="dock-max default-min-sizes source-viewer__content">
                     <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
-                    <d:ClassificationWrapper ui:field="classification"/>
+                    <d:ClassificationWrapper ui:field="classification">
+                        <d:content>
+                            <d:DataTextPane ui:field="text"/>
+                        </d:content>
+                    </d:ClassificationWrapper>
                 </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>

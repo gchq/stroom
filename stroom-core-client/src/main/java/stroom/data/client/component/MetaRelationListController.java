@@ -50,10 +50,9 @@ public class MetaRelationListController extends MetaListController {
     private final Set<Long> hasChildren = new HashSet<>();
     private int maxDepth = -1;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(MetaList)] gives it its list.
     ///
     /// @param eventBus                           The application's event bus.
-    /// @param view                               The content.
     /// @param restFactory                        Finds and changes the streams.
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
@@ -64,7 +63,6 @@ public class MetaRelationListController extends MetaListController {
     /// @param refCells                           Lets the feed and pipeline cells open them.
     @Inject
     public MetaRelationListController(final EventBus eventBus,
-                                      final MetaList view,
                                       final RestFactory restFactory,
                                       final LocationManager locationManager,
                                       final DateTimeFormatter dateTimeFormatter,
@@ -74,7 +72,6 @@ public class MetaRelationListController extends MetaListController {
                                       final ExpressionValidator expressionValidator,
                                       final RefCellsController refCells) {
         super(eventBus,
-                view,
                 restFactory,
                 locationManager,
                 dateTimeFormatter,
@@ -84,7 +81,17 @@ public class MetaRelationListController extends MetaListController {
                 expressionValidator,
                 refCells,
                 Columns.LINEAGE);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, named for the related streams.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    @Override
+    public MetaRelationListController attach(final MetaList view) {
+        super.attach(view);
         setTableName("Related Streams");
+        return this;
     }
 
     /// Shows the streams related to one.

@@ -59,7 +59,6 @@ import java.util.stream.Collectors;
 /// auto refresh is on.
 public class NodeStatusListController extends Controller implements Refreshable {
 
-    private final NodeStatusList view;
     private final NodeClient nodeClient;
     private final InfoTooltipController infoTooltip;
     private final DateTimeFormatter dateTimeFormatter;
@@ -68,57 +67,29 @@ public class NodeStatusListController extends Controller implements Refreshable 
     private final Map<String, NodePing> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
 
+    private NodeStatusList view;
     private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
     private String selectedNodeName = null;
     private boolean autoRefresh = true;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(NodeStatusList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param nodeClient        Fetches, pings and changes the nodes.
     /// @param infoTooltip       Shows a node's info.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     /// @param uiConfigCache     Gives the ping thresholds.
     @Inject
     public NodeStatusListController(final EventBus eventBus,
-                                    final NodeStatusList view,
                                     final NodeClient nodeClient,
                                     final InfoTooltipController infoTooltip,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final UiConfigCache uiConfigCache) {
         super(eventBus);
-        this.view = view;
         own(infoTooltip);
         this.nodeClient = nodeClient;
         this.infoTooltip = infoTooltip;
         this.dateTimeFormatter = dateTimeFormatter;
-        initWidget(view);
-
-        view.setPingLookup(latestPing::get);
-        view.setDateFormat(dateTimeFormatter::formatWithDuration);
-        view.setOnAutoRefreshToggle(pressed -> onAutoRefreshToggled());
-        view.setOnShowInfo((row, popupPosition, anchor) -> nodeClient.info(
-                row.getNode().getName(),
-                result -> showNodeInfoResult(row.getNode(), result, popupPosition, anchor),
-                error -> showNodeInfoError(error.getException(), popupPosition, anchor),
-                view.getTaskMonitor()));
-        view.setOnPriorityChange((row, priority) -> nodeClient.setPriority(
-                row.getNode().getName(),
-                priority,
-                result -> internalRefresh(),
-                view.getTaskMonitor()));
-        view.setOnEnabledChange((row, enabled) -> {
-            final String nodeName = row.getNode().getName();
-            nodeClient.setEnabled(
-                    nodeName,
-                    enabled,
-                    result -> {
-                        internalRefresh();
-                        NodeChangeEvent.fire(NodeStatusListController.this, nodeName);
-                    },
-                    view.getTaskMonitor());
-        });
 
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
@@ -170,9 +141,46 @@ public class NodeStatusListController extends Controller implements Refreshable 
                 super.changeData(data);
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The
+    /// list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public NodeStatusListController attach(final NodeStatusList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.setPingLookup(latestPing::get);
+        view.setDateFormat(dateTimeFormatter::formatWithDuration);
+        view.setOnAutoRefreshToggle(pressed -> onAutoRefreshToggled());
+        view.setOnShowInfo((row, popupPosition, anchor) -> nodeClient.info(
+                row.getNode().getName(),
+                result -> showNodeInfoResult(row.getNode(), result, popupPosition, anchor),
+                error -> showNodeInfoError(error.getException(), popupPosition, anchor),
+                view.getTaskMonitor()));
+        view.setOnPriorityChange((row, priority) -> nodeClient.setPriority(
+                row.getNode().getName(),
+                priority,
+                result -> internalRefresh(),
+                view.getTaskMonitor()));
+        view.setOnEnabledChange((row, enabled) -> {
+            final String nodeName = row.getNode().getName();
+            nodeClient.setEnabled(
+                    nodeName,
+                    enabled,
+                    result -> {
+                        internalRefresh();
+                        NodeChangeEvent.fire(NodeStatusListController.this, nodeName);
+                    },
+                    view.getTaskMonitor());
+        });
+
         view.setDataProvider(dataProvider);
         view.setOnSortChange(this::internalRefresh);
         onDispose(view::cancelRedraw);
+        return this;
     }
 
     private void onAutoRefreshToggled() {

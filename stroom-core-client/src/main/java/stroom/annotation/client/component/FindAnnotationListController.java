@@ -28,7 +28,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -45,8 +44,9 @@ import java.util.function.Consumer;
 /// if given one, a page at a time; the first chosen when the filter changes.
 public class FindAnnotationListController extends Controller {
 
-    private final FindAnnotationList view;
+    private FindAnnotationList view;
     private final RestDataProvider<Annotation, ResultPage<Annotation>> dataProvider;
+    private final DurationLabel durationLabel;
 
     private DocumentPermission permission = DocumentPermission.EDIT;
     private Long sourceId;
@@ -60,30 +60,24 @@ public class FindAnnotationListController extends Controller {
     private boolean initialised;
     private boolean focusText;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FindAnnotationList)] gives it its list.
     ///
     /// @param eventBus       The application's event bus.
-    /// @param view           The content.
     /// @param resourceClient Finds the annotations.
     /// @param durationLabel  Says how long ago an annotation changed.
     @Inject
     public FindAnnotationListController(final EventBus eventBus,
-                                        final FindAnnotationList view,
                                         final AnnotationResourceClient resourceClient,
                                         final DurationLabel durationLabel) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
-        view.setCell(new FindAnnotationCell(durationLabel));
-        view.setOnUpFromFirst(() -> onFocusFilter.run());
-
-        final MultiSelectionModel<Annotation> selectionModel = view.getSelectionModel();
+        this.durationLabel = durationLabel;
 
         dataProvider = new RestDataProvider<Annotation, ResultPage<Annotation>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Annotation>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                final MultiSelectionModel<Annotation> selectionModel = view.getSelectionModel();
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 final boolean filterChange = !Objects.equals(lastFilter, filter);
                 lastFilter = filter;
@@ -116,6 +110,19 @@ public class FindAnnotationListController extends Controller {
                 }, errorHandler, view.getTaskMonitor());
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public FindAnnotationListController attach(final FindAnnotationList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.setCell(new FindAnnotationCell(durationLabel));
+        view.setOnUpFromFirst(() -> onFocusFilter.run());
+        return this;
     }
 
     private void resetFocus() {
@@ -151,9 +158,23 @@ public class FindAnnotationListController extends Controller {
         return view.getSelectionModel().getSelected();
     }
 
-    /// @return The toolbar beside the pager, for the screen's own buttons.
-    public Toolbar getToolbar() {
-        return view.getToolbar();
+    /// Shows the toolbar of link actions, Add and Remove, for an annotation's links.
+    public void showLinkActions() {
+        view.showLinkActions();
+    }
+
+    /// Brings the link actions up to date.
+    ///
+    /// @param visible   Whether Add and Remove show.
+    /// @param canAdd    Whether Add is enabled.
+    /// @param canRemove Whether Remove is enabled.
+    public void updateLinkActions(final boolean visible, final boolean canAdd, final boolean canRemove) {
+        view.updateLinkActions(visible, canAdd, canRemove);
+    }
+
+    /// @param onAction Given the link action pressed.
+    public void setOnAction(final Consumer<FindAnnotationList.LinkAction> onAction) {
+        view.setOnAction(onAction);
     }
 
     /// Moves the focus to a row.

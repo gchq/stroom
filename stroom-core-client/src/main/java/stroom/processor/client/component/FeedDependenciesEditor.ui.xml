@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:p="urn:import:stroom.processor.client.component"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
@@ -10,7 +11,9 @@
                         label="Feed Dependencies"
                         addStyleNames="dock-max"
                         helpText="The feeds and stream types whose data must arrive before this filter processes a stream. A dependency is met once that feed has unlocked data of that type with an effective time at or after the stream's create time.">
-            <g:SimplePanel ui:field="feedDependencies" addStyleNames="max"/>
+            <g:SimplePanel addStyleNames="max">
+                <p:FeedDependencyList ui:field="feedDependencies"/>
+            </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup identity="minProcessingDelayEnabled"
                         helpText="Tick to make data wait a minimum time after it is created before it is processed, even when its feed dependencies are already met."

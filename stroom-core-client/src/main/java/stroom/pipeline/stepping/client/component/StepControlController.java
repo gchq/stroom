@@ -23,28 +23,37 @@ import stroom.widget.component.client.Controller;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The stepping screen's step buttons ([StepControl]): which steps can be taken, given where
 /// stepping has got to.
 public class StepControlController extends Controller {
 
-    private final StepControl view;
+    private StepControl view;
     private StepLocation endLocation = null;
 
     private Consumer<StepType> onStep = stepType -> {
     };
 
-    /// Made by GIN, with its buttons.
+    /// Made by GIN; [#attach(StepControl)] gives it its buttons.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The buttons.
     @Inject
-    public StepControlController(final EventBus eventBus, final StepControl view) {
+    public StepControlController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to the buttons, e.g. ones a template declares. They are then this
+    /// controller's widget.
+    ///
+    /// @param view The buttons.
+    /// @return This, for its owner to keep.
+    public StepControlController attach(final StepControl view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnStep(stepType -> onStep.accept(stepType));
+        return this;
     }
 
     /// Takes a step as if its button were pressed, e.g. from a keyboard shortcut.

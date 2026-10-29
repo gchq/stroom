@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-/// The Choose Annotation dialog ([FindPanel]): finds annotations by their fields, and gives the
+/// The Choose Annotation dialog ([FindAnnotations]): finds annotations by their fields, and gives the
 /// one chosen. Made once by the app and shown again, it keeps the last filter.
 public class FindAnnotationController extends Controller {
 
@@ -45,21 +45,20 @@ public class FindAnnotationController extends Controller {
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
+    /// @param content                          The content.
     /// @param findAnnotationList               Finds the annotations, and lists them.
     /// @param quickFilterContextHandlerFactory Makes the filter's recent filters.
     @Inject
     public FindAnnotationController(final EventBus eventBus,
-                                    final FindPanel view,
+                                    final FindAnnotations content,
                                     final FindAnnotationListController findAnnotationList,
                                     final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
-        this.findAnnotationList = own(findAnnotationList);
-        initWidget(view);
+        initWidget(content);
+        this.view = content.getFindPanel();
+        this.findAnnotationList = own(findAnnotationList).attach(content.getResultList());
 
         findAnnotationList.setBordered(true);
-        view.setResultView(findAnnotationList);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnFilterKeyDown(this::onFilterKeyDown);
         findAnnotationList.setOnOpen(annotation -> choose());

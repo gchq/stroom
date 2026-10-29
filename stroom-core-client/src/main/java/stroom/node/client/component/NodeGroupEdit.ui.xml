@@ -2,6 +2,7 @@
 <!-- A node group: whether it is enabled, and which nodes it includes or excludes -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:n="urn:import:stroom.node.client.component"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:l="urn:import:stroom.item.client">
@@ -24,7 +25,9 @@
         </form:FormGroup>
         <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max"
                         helpText="Tick the nodes to include in or exclude from this group, depending on Node Inclusion Behaviour.">
-            <g:SimplePanel ui:field="list" styleName="dock-max control-box"/>
+            <g:SimplePanel styleName="dock-max control-box">
+                <n:NodeGroupStateList ui:field="list"/>
+            </g:SimplePanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

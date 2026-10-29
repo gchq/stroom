@@ -23,8 +23,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -38,14 +36,14 @@ public class AppPermissions extends Component {
     @UiField
     SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
-    SimplePanel appUserPermissionsList;
+    AppUserPermissionsList appUserPermissionsList;
     @UiField
-    SimplePanel appPermissionsEdit;
+    AppPermissionsEdit appPermissionsEdit;
 
     private Consumer<PermissionShowLevel> onShowLevelChange = showLevel -> {
     };
 
-    /// Makes the screen, showing explicit permissions, with no content until it is given it.
+    /// Makes the screen, showing explicit permissions, with its list and permissions empty.
     public AppPermissions() {
         initWidget(BINDER.createAndBindUi(this));
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
@@ -64,18 +62,14 @@ public class AppPermissions extends Component {
         this.onShowLevelChange = Objects.requireNonNull(onShowLevelChange, "onShowLevelChange");
     }
 
-    /// Shows the list of users and groups.
-    ///
-    /// @param view Its view.
-    public void setAppUserPermissionListView(final IsWidget view) {
-        appUserPermissionsList.setWidget(view.asWidget());
+    /// @return The list of users and groups.
+    public AppUserPermissionsList getAppUserPermissionsList() {
+        return appUserPermissionsList;
     }
 
-    /// Shows the selected user's or group's permissions.
-    ///
-    /// @param view Its view.
-    public void setAppPermissionsEditView(final IsWidget view) {
-        appPermissionsEdit.setWidget(view.asWidget());
+    /// @return The selected user's or group's permissions.
+    public AppPermissionsEdit getAppPermissionsEdit() {
+        return appPermissionsEdit;
     }
 
     // --------------------------------------------------------------------------------

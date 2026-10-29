@@ -49,14 +49,10 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.PopupSize;
-import stroom.widget.text.client.Html;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -74,7 +70,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/// Shows the execution schedules of analytic rules and reports, and edits, runs and deletes them.
+/// Shows the execution schedules of analytic rules and reports ([ExecutionSchedules]), and edits,
+/// runs and deletes them.
 public class ExecutionSchedulesController extends ContentTabController {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
@@ -82,11 +79,9 @@ public class ExecutionSchedulesController extends ContentTabController {
 
     public static final String TAB_TYPE = "ExecutionScheduleManager";
 
-    private final PagerPanel view;
+    private final ExecutionSchedules view;
 
     private final DataGrid<ExecutionSchedule> dataGrid;
-    // How many schedules are selected, after the toolbar
-    private final Html selectionCountLabel = new Html();
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -96,13 +91,6 @@ public class ExecutionSchedulesController extends ContentTabController {
     private final Provider<ExecutionScheduleRunNowController> runNowProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
-
-    private ButtonView singleEditButton;
-    private ButtonView batchEditButton;
-    private ButtonView filterButton;
-    private ButtonView clearFilterButton;
-    private ButtonView runJobNowButton;
-    private ButtonView deleteButton;
 
     private final RefCellsController refCells;
 
@@ -120,7 +108,7 @@ public class ExecutionSchedulesController extends ContentTabController {
     /// @param refCells                   The ref cells.
     @Inject
     public ExecutionSchedulesController(final EventBus eventBus,
-                                        final PagerPanel view,
+                                        final ExecutionSchedules view,
                                         final DateTimeFormatter dateTimeFormatter,
                                         final RestFactory restFactory,
                                         final ScheduledProcessEditController scheduledProcessEdit,
@@ -143,24 +131,13 @@ public class ExecutionSchedulesController extends ContentTabController {
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Execution Schedules");
-        selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
-            = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                true);
-
-        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
-        view.setDataWidget(dataGrid);
+        dataGrid = view.getDataGrid();
+        selectionModel = view.getSelectionModel();
 
         request = ExecutionScheduleRequest.builder().build();
 
-        createButtons();
-
-        selectionCountLabel.addStyleName("paging-bar paging-bar__label");
-        view.addToolbarWidget(selectionCountLabel);
+        view.setOnAction(this::onAction);
+        setButtonState();
         updateSelectionCountLabel();
 
         createIconColumn();
@@ -197,30 +174,16 @@ public class ExecutionSchedulesController extends ContentTabController {
                 }));
     }
 
-    private void createButtons() {
-        view.getToolbar().setName("Execution schedule actions");
-        singleEditButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Schedule",
-                this::onSingleEdit);
-        singleEditButton.setEnabled(false);
-
-        batchEditButton = view.getToolbar().button(SvgImage.GENERATE, "Batch Edit Schedules",
-                batchExecutionScheduleEdit::show);
-
-        filterButton = view.getToolbar().button(SvgImage.FILTER, "Filter Schedules", this::onFilter);
-
-        clearFilterButton = view.getToolbar().button(SvgImage.CLEAR, "Clear Schedule Filter",
-                this::onClearFilter);
-        clearFilterButton.setEnabled(false);
-
-        runJobNowButton = view.getToolbar().button(SvgImage.STEP_FORWARD, "Run Schedules Now",
-                () -> runNowProvider.get().show(this, action ->
-                        onRunNow(action == RunNowAction.APPLY_TO_FILTERED)));
-
-        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Schedules",
-                this::onDelete);
-        deleteButton.setEnabled(false);
-
-        setButtonState();
+    private void onAction(final ExecutionSchedules.ScheduleAction action) {
+        switch (action) {
+            case EDIT -> onSingleEdit();
+            case BATCH_EDIT -> batchExecutionScheduleEdit.show();
+            case FILTER -> onFilter();
+            case CLEAR_FILTER -> onClearFilter();
+            case RUN_NOW -> runNowProvider.get().show(this, runNowAction ->
+                    onRunNow(runNowAction == RunNowAction.APPLY_TO_FILTERED));
+            case DELETE -> onDelete();
+        }
     }
 
     private void createIconColumn() {
@@ -391,7 +354,7 @@ public class ExecutionSchedulesController extends ContentTabController {
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
                                 .owner(ExecutionSchedulesController.this)
-                                .taskMonitorFactory(view)
+                                .taskMonitorFactory(view.getTaskMonitor())
                                 .exec();
                     }
                 }
@@ -412,14 +375,9 @@ public class ExecutionSchedulesController extends ContentTabController {
     }
 
     private void setButtonState() {
-        singleEditButton.setEnabled(selectionModel.getSelectedCount() == 1);
-        deleteButton.setEnabled(selectionModel.getSelectedCount() > 0);
-
-        if (request != null && request.getExpression() != null && request.getExpression().hasChildren()) {
-            clearFilterButton.setEnabled(true);
-        } else {
-            clearFilterButton.setEnabled(false);
-        }
+        view.updateActions(
+                selectionModel.getSelectedCount(),
+                request != null && request.getExpression() != null && request.getExpression().hasChildren());
     }
 
     private void flushNonexistentSelections() {
@@ -442,17 +400,12 @@ public class ExecutionSchedulesController extends ContentTabController {
             })
             .onFailure(error -> AlertEvent.fireError(this, error.getMessage(), null))
             .owner(ExecutionSchedulesController.this)
-            .taskMonitorFactory(view)
+            .taskMonitorFactory(view.getTaskMonitor())
             .exec();
     }
 
     private void updateSelectionCountLabel() {
-        selectionCountLabel.setText(
-                selectionModel.getSelectedCount()
-                + " schedule"
-                + (selectionModel.getSelectedCount() == 1 ? "" : "s")
-                + " selected"
-        );
+        view.setSelectionCount(selectionModel.getSelectedCount());
     }
 
     private void onSingleEdit() {
@@ -489,7 +442,7 @@ public class ExecutionSchedulesController extends ContentTabController {
                     .onSuccess(result -> checkBatchEdit(result.getValues(), true))
                     .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), null))
                     .owner(ExecutionSchedulesController.this)
-                    .taskMonitorFactory(view)
+                    .taskMonitorFactory(view.getTaskMonitor())
                     .exec();
         } else {
             checkBatchEdit(selectionModel.getSelectedItems(), false);

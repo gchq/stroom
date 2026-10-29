@@ -23,8 +23,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of the credentials picker: the credentials, under an optional note on where to get
@@ -37,16 +35,16 @@ public class CredentialsManagerDialog extends Component {
     @UiField
     Html lblHtml;
     @UiField
-    SimplePanel pnlCredentialsList;
+    CredentialsList credentialsList;
 
-    /// Makes empty content, with no note.
+    /// Makes the content, with no credentials and no note.
     public CredentialsManagerDialog() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param list The credentials.
-    public void setCredentialsList(final IsWidget list) {
-        pnlCredentialsList.setWidget(list.asWidget());
+    /// @return The credentials.
+    public CredentialsList getCredentialsList() {
+        return credentialsList;
     }
 
     /// @param html The note on where to get credentials, or `null` for none, which hides it.

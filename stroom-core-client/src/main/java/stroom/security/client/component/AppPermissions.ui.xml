@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:sec="urn:import:stroom.security.client.component">
     <!-- The permissions below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 600px" names="Users and groups, Permissions"
@@ -34,12 +35,14 @@
                     <p>Shows users/groups, optionally filtered based on the value of the
                         <em>Permission Visibility</em> dropdown.</p>
                 </form:HelpHTML>
-                <g:SimplePanel ui:field="appUserPermissionsList"
-                               styleName="max"/>
+                <g:SimplePanel styleName="max">
+                    <sec:AppUserPermissionsList ui:field="appUserPermissionsList"/>
+                </g:SimplePanel>
             </form:FormGroup>
         </g:FlowPanel>
         <!-- The pane that lists all the app perms with check boxes to set them -->
-        <g:SimplePanel ui:field="appPermissionsEdit"
-                       styleName="max"/>
+        <g:SimplePanel styleName="max">
+            <sec:AppPermissionsEdit ui:field="appPermissionsEdit"/>
+        </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

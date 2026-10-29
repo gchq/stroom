@@ -58,6 +58,7 @@ import stroom.query.client.ResultStoreModel;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
 import stroom.query.client.component.QueryDocEditor;
+import stroom.query.client.component.QueryResultTable;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.component.QueryResultVisController;
 import stroom.query.shared.QueryDoc;
@@ -445,7 +446,7 @@ public class EmbeddedQueryController
 
     private void createNewTable() {
         if (currentTableController == null) {
-            currentTableController = make(tableControllerProvider);
+            currentTableController = make(tableControllerProvider).attach(new QueryResultTable());
             currentTableController.setDashboardContext(getDashboardContext());
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes

@@ -38,9 +38,8 @@ public class ScriptSettingsController extends Controller {
                                     final ScriptSettings view,
                                     final ScriptDependencyListController scriptDependencyList) {
         super(eventBus);
-        this.scriptDependencyList = own(scriptDependencyList);
         initWidget(view);
-        view.setDependencyList(scriptDependencyList);
+        this.scriptDependencyList = own(scriptDependencyList).attach(view.getDependencyList());
         scriptDependencyList.setOnChange(this::markChanged);
     }
 

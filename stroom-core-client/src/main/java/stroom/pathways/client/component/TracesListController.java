@@ -43,6 +43,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -54,8 +55,10 @@ public class TracesListController extends Controller {
 
     private static final int HISTOGRAM_BUCKETS = 80;
 
-    private final TracesList view;
+    private TracesList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
+    private final UiConfigCache uiConfigCache;
     private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
 
@@ -64,25 +67,33 @@ public class TracesListController extends Controller {
     private Pathway pathway;
     private TimeRange timeRange;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(TracesList)] gives it its list.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
     /// @param restFactory                      Finds the traces.
     /// @param dateTimeFormatter                Formats the times shown.
     /// @param uiConfigCache                    Gives the quick filter's help link.
     /// @param quickFilterContextHandlerFactory Makes the quick filter's recent filters.
     @Inject
     public TracesListController(final EventBus eventBus,
-                                final TracesList view,
                                 final RestFactory restFactory,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final UiConfigCache uiConfigCache,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
+        this.uiConfigCache = uiConfigCache;
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public TracesListController attach(final TracesList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setHistogramDateTimeFormatter(dateTimeFormatter);
         view.addColumns(dateTimeFormatter::format);
@@ -97,6 +108,7 @@ public class TracesListController extends Controller {
                         uiConfig.getHelpUrlQuickFilter()));
             }
         }, view.getTaskMonitor());
+        return this;
     }
 
     /// @param zoomHandler Given the start and end, in milliseconds since the epoch, of a part of

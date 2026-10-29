@@ -53,10 +53,9 @@ public class CredentialsManagerDialogController extends Controller {
         super(eventBus);
         this.view = view;
         this.markdownConverter = markdownConverter;
-        this.credentialsList = own(credentialsList);
         initWidget(view);
+        this.credentialsList = own(credentialsList).attach(view.getCredentialsList());
         credentialsList.setDefaultSelection(false);
-        view.setCredentialsList(credentialsList);
     }
 
     /// Shows the dialog, owned by `opener` until it is closed. OK with no credentials chosen says

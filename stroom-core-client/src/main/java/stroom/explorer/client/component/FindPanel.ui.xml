@@ -6,7 +6,7 @@
         <g:FlowPanel styleName="find-panel__top dock-min">
             <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
         </g:FlowPanel>
-        <!-- The list of what is found, its owner's -->
+        <!-- The list of what is found, which the template declaring the panel gives it -->
         <g:SimplePanel ui:field="bottomPanel" styleName="find-panel__bottom dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

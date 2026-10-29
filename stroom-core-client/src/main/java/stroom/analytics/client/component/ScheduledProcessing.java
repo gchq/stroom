@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A document's scheduled executions: its schedules above the history of the one selected, each a
@@ -32,23 +30,24 @@ public class ScheduledProcessing extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel scheduleList;
+    ScheduledProcessList scheduleList;
     @UiField
-    SimplePanel historyList;
+    ScheduledProcessHistoryList historyList;
 
     /// Makes the panes, with no lists.
     public ScheduledProcessing() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param view The schedules.
-    public void setScheduleList(final IsWidget view) {
-        scheduleList.setWidget(view);
+    /// @return The schedules, which its controller attaches the list's controller to.
+    public ScheduledProcessList getScheduleList() {
+        return scheduleList;
     }
 
-    /// @param view The history of the schedule selected.
-    public void setHistoryList(final IsWidget view) {
-        historyList.setWidget(view);
+    /// @return The history of the schedule selected, which its controller attaches the list's
+    ///         controller to.
+    public ScheduledProcessHistoryList getHistoryList() {
+        return historyList;
     }
 
 

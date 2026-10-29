@@ -20,6 +20,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.progress.client.component.SourceProgressBar;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
@@ -35,8 +36,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -56,11 +55,11 @@ public class DataViewer extends Component {
     @UiField
     HTMLPanel rightPanel;
     @UiField
-    SimplePanel navigatorContainer;
+    ItemNavigator navigator;
     @UiField
     DivElement sourceLink;
     @UiField
-    SimplePanel progressBarPanel;
+    SourceProgressBar progressBar;
     @UiField
     LayerContainerImpl layerContainer;
     @UiField
@@ -154,22 +153,25 @@ public class DataViewer extends Component {
         DisabledState.set(sourceLink, !enabled);
     }
 
-    /// @param navigator The navigator of the data's parts and records, or null for none.
-    public void setNavigator(final IsWidget navigator) {
-        if (navigator != null) {
-            navigatorContainer.setWidget(navigator);
-        } else {
-            navigatorContainer.clear();
-        }
+    /// @return The navigator of the data's parts and records, which its controller attaches the
+    /// navigator's controller to.
+    public ItemNavigator getNavigator() {
+        return navigator;
     }
 
-    /// @param progress How far through the data the content shown is, or null for none.
-    public void setProgress(final IsWidget progress) {
-        if (progress != null) {
-            progressBarPanel.setWidget(progress);
-        } else {
-            progressBarPanel.clear();
-        }
+    /// @param visible Whether the navigator shows.
+    public void setNavigatorVisible(final boolean visible) {
+        navigator.setVisible(visible);
+    }
+
+    /// @return The bar showing how far through the data the content shown is.
+    public SourceProgressBar getProgressBar() {
+        return progressBar;
+    }
+
+    /// @param visible Whether the progress bar shows; its place is kept when it doesn't.
+    public void setProgressVisible(final boolean visible) {
+        progressBar.setVisible(visible);
     }
 
     /// @param classification The data's classification, or blank for none.

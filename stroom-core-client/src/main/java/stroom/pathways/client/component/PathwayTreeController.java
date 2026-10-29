@@ -33,29 +33,37 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /// Shows a pathway's graph ([PathwayTree]), read only as its document is, and shows the traces
 /// that match the path to the chosen node.
 public class PathwayTreeController extends Controller {
 
-    private final PathwayTree view;
+    private PathwayTree view;
 
     private PathwaysDoc pathwaysDoc;
     private Pathway pathway;
 
-    /// Made by GIN, with its graph.
+    /// Made by GIN; [#attach(PathwayTree)] gives it its graph.
     ///
     /// @param eventBus The application's event bus, which the traces are asked for on.
-    /// @param view     The graph.
     @Inject
-    public PathwayTreeController(final EventBus eventBus,
-                                 final PathwayTree view) {
+    public PathwayTreeController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a graph, e.g. one a template declares. The graph is then this controller's
+    /// widget.
+    ///
+    /// @param view The graph.
+    /// @return This, for its owner to keep.
+    public PathwayTreeController attach(final PathwayTree view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         watch(Contexts.READ_ONLY, view::setReadOnly);
         view.setOnViewTraces(this::onViewTraces);
+        return this;
     }
 
     /// Shows a pathway of a document.

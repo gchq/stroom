@@ -44,13 +44,8 @@ public class CachesController extends ContentTabController {
                             final CacheNodeListController cacheNodeList) {
         super(eventBus);
         initWidget(view);
-        own(cacheList);
-        own(cacheNodeList);
-        this.cacheList = cacheList;
-        this.cacheNodeList = cacheNodeList;
-
-        view.setCacheListView(cacheList);
-        view.setCacheNodeListView(cacheNodeList);
+        this.cacheList = own(cacheList).attach(view.getCacheList());
+        this.cacheNodeList = own(cacheNodeList).attach(view.getCacheNodeList());
 
         own(
                 cacheList.getSelectionModel().addSelectionHandler(event -> {

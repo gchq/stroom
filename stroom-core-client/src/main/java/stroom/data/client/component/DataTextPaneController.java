@@ -28,28 +28,36 @@ import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
+import java.util.Objects;
 
 /// The text of a stream in the data viewer ([DataTextPane]): sets its code editor up to show data,
 /// read only, wrapped and without line numbers or indicators, which are meaningless for data
 /// previewed in formatted form, and with no Format.
 public class DataTextPaneController extends Controller {
 
-    private final DataTextPane view;
     private final CodeEditorController editor;
+    private DataTextPane view;
 
-    /// Made by GIN, with its pane.
+    /// Made by GIN; [#attach(DataTextPane)] gives it its pane.
     ///
     /// @param eventBus                     The application's event bus.
-    /// @param view                         The pane.
     /// @param codeEditorControllerProvider Makes the code editor's controller.
     @Inject
     public DataTextPaneController(final EventBus eventBus,
-                                  final DataTextPane view,
                                   final Provider<CodeEditorController> codeEditorControllerProvider) {
         super(eventBus);
-        this.view = view;
+        editor = make(codeEditorControllerProvider);
+    }
+
+    /// Attaches this to a pane, e.g. one a template declares, and its code editor to the pane's
+    /// editor, set up to show data. The pane is then this controller's widget.
+    ///
+    /// @param view The pane.
+    /// @return This, for its owner to keep.
+    public DataTextPaneController attach(final DataTextPane view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
-        editor = make(codeEditorControllerProvider).attach(view.getEditor());
+        editor.attach(view.getEditor());
 
         final CodeEditorOptions options = editor.getOptions();
         options.getIndicatorsOption().setAvailable(false);
@@ -68,6 +76,7 @@ public class DataTextPaneController extends Controller {
 
         // Should not be formatting read-only content
         editor.getFormatAction().setAvailable(false);
+        return this;
     }
 
     /// @return The editor's options, e.g. View As Hex, which its menu turns on and off.

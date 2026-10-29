@@ -30,10 +30,9 @@ import com.google.web.bindery.event.shared.EventBus;
 /// The stepping screen's streams ([MetaList], with no tick boxes), one of which is stepped through.
 public class SteppingMetaListController extends MetaListController {
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(MetaList)] gives it its list.
     ///
     /// @param eventBus                           The application's event bus.
-    /// @param view                               The content.
     /// @param restFactory                        Finds the streams.
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
@@ -44,7 +43,6 @@ public class SteppingMetaListController extends MetaListController {
     /// @param refCells                           Lets the feed and pipeline cells open them.
     @Inject
     public SteppingMetaListController(final EventBus eventBus,
-                                      final MetaList view,
                                       final RestFactory restFactory,
                                       final LocationManager locationManager,
                                       final DateTimeFormatter dateTimeFormatter,
@@ -54,7 +52,6 @@ public class SteppingMetaListController extends MetaListController {
                                       final ExpressionValidator expressionValidator,
                                       final RefCellsController refCells) {
         super(eventBus,
-                view,
                 restFactory,
                 locationManager,
                 dateTimeFormatter,
@@ -64,5 +61,15 @@ public class SteppingMetaListController extends MetaListController {
                 expressionValidator,
                 refCells,
                 Columns.PLAIN);
+    }
+
+    /// Attaches this to a list, e.g. one its owner makes.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    @Override
+    public SteppingMetaListController attach(final MetaList view) {
+        super.attach(view);
+        return this;
     }
 }

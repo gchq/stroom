@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.component;
 
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -26,22 +25,30 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// A rule set's data receipt rules ([RuleSetList]), as its owner gives them.
 public class RuleSetListController extends Controller implements Focus {
 
-    private final RuleSetList view;
+    private RuleSetList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(RuleSetList)] gives it its list.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     @Inject
-    public RuleSetListController(final EventBus eventBus,
-                                 final RuleSetList view) {
+    public RuleSetListController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public RuleSetListController attach(final RuleSetList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
+        return this;
     }
 
     @Override
@@ -57,12 +64,5 @@ public class RuleSetListController extends Controller implements Focus {
     /// @return The selection.
     public MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
         return view.getSelectionModel();
-    }
-
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return view.getToolbar();
     }
 }

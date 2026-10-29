@@ -397,8 +397,8 @@ public class FloorMapMapController
         onDispose(this::onClose);
 
         this.clusterDialogProvider = clusterDialogProvider;
-        this.canvas = make(canvasProvider);
-        this.floorMapTimeline = make(floorMapTimelineProvider);
+        this.canvas = make(canvasProvider).attach(view.getMap());
+        this.floorMapTimeline = make(floorMapTimelineProvider).attach(view.getTimeline());
         this.floorMapTracking = make(floorMapTrackingProvider);
         this.layersPanel = layersPanel;
         this.floorMapGroups = make(floorMapGroupsProvider);
@@ -431,8 +431,6 @@ public class FloorMapMapController
                 floorMapGroups::addMember,
                 floorMapGroups::createGroupWith);
 
-        view.setMap(canvas);
-        view.setTimeline(floorMapTimeline);
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.

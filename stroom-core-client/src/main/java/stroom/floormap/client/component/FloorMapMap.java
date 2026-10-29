@@ -23,8 +23,6 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A floor map's Map tab: the map beside the right-hand dock, above the timeline (all shown here by
@@ -36,20 +34,20 @@ public class FloorMapMap extends Component {
     @UiField
     SplitPane topSplitPane;
     @UiField
-    SimplePanel mapPanel;
+    FloorMapCanvas map;
     @UiField
     LinkTabPanel dockPanel;
     @UiField
-    SimplePanel timelinePanel;
+    FloorMapTimeline timeline;
 
     /// Makes the tab, with nothing in it.
     public FloorMapMap() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param map The map.
-    public void setMap(final IsWidget map) {
-        mapPanel.setWidget(map);
+    /// @return The map, which its controller attaches the canvas's controller to.
+    public FloorMapCanvas getMap() {
+        return map;
     }
 
     /// @return The right-hand dock, for its controller to attach to.
@@ -57,9 +55,9 @@ public class FloorMapMap extends Component {
         return dockPanel;
     }
 
-    /// @param timeline The timeline.
-    public void setTimeline(final IsWidget timeline) {
-        timelinePanel.setWidget(timeline);
+    /// @return The timeline, which its controller attaches the timeline's controller to.
+    public FloorMapTimeline getTimeline() {
+        return timeline;
     }
 
     /// Shows or hides the dock and its splitter, keeping the width it was dragged to.

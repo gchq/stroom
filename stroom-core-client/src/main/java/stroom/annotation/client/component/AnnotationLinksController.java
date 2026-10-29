@@ -27,8 +27,6 @@ import stroom.annotation.shared.UnlinkAnnotations;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.FindPanel;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
@@ -39,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 
-/// An annotation's Link To or Link From tab ([FindPanel]): the annotations it links to, which can
+/// An annotation's Link To or Link From tab ([FindAnnotations]): the annotations it links to, which can
 /// be added and removed unless the annotation is read only, or those that link to it
 /// ([#setFrom(boolean)]), filtered by a quick filter. Choosing one opens it.
 public class AnnotationLinksController extends Controller {
@@ -53,42 +51,39 @@ public class AnnotationLinksController extends Controller {
     private Runnable onChange = () -> {
     };
 
-    private final ButtonView add;
-    private final ButtonView remove;
-
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                  The application's event bus.
-    /// @param view                      The content.
+    /// @param content                   The content.
     /// @param annotationResourceClient  Links and unlinks annotations.
     /// @param findAnnotationList        Finds the linked annotations, and lists them.
     @Inject
     public AnnotationLinksController(final EventBus eventBus,
-                                     final FindPanel view,
+                                     final FindAnnotations content,
                                      final AnnotationResourceClient annotationResourceClient,
                                      final FindAnnotationListController findAnnotationList) {
         super(eventBus);
         this.annotationResourceClient = annotationResourceClient;
-        this.findAnnotationList = own(findAnnotationList);
-        initWidget(view);
+        initWidget(content);
+        final FindPanel view = content.getFindPanel();
+        this.findAnnotationList = own(findAnnotationList).attach(content.getResultList());
 
         // To browse, users only need view permission.
         findAnnotationList.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(findAnnotationList);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnFilterKeyDown(this::onFilterKeyDown);
         findAnnotationList.setOnOpen(this::openDocument);
         findAnnotationList.setOnFocusFilter(view::focus);
 
-        findAnnotationList.getToolbar().setName("Link actions");
-        add = findAnnotationList.getToolbar().button(SvgImage.ADD, "Add Annotation Link",
-                () -> ShowFindAnnotationEvent.fire(this, this::link));
-        add.setEnabled(false);
-        add.setVisible(false);
-        remove = findAnnotationList.getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
-        remove.setEnabled(false);
-        remove.setVisible(false);
+        findAnnotationList.showLinkActions();
+        findAnnotationList.setOnAction(action -> {
+            if (action == FindAnnotationList.LinkAction.ADD) {
+                ShowFindAnnotationEvent.fire(this, this::link);
+            } else {
+                onRemove();
+            }
+        });
 
         own(findAnnotationList.addSelectionHandler(e -> enableButtons()));
         watch(Contexts.READ_ONLY, readOnly -> {
@@ -163,10 +158,10 @@ public class AnnotationLinksController extends Controller {
     }
 
     private void enableButtons() {
-        add.setEnabled(!readOnly);
-        remove.setEnabled(!readOnly && findAnnotationList.getSelected() != null);
-        add.setVisible(!from);
-        remove.setVisible(!from);
+        findAnnotationList.updateLinkActions(
+                !from,
+                !readOnly,
+                !readOnly && findAnnotationList.getSelected() != null);
     }
 
     /// @param from Whether it lists the annotations that link to the annotation, which can't be

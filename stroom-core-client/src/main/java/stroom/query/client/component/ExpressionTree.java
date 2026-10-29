@@ -66,9 +66,11 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
 
     @UiField
     DraggableTreePanel<Item> layoutPanel;
+    // The tree, which the template declares in the draggable panel
+    @UiField
+    ExpressionTreePanel treePanel;
 
-    // DraggableTreePanel takes its two panels through setTreePanels, not as template children
-    private final ExpressionTreePanel treePanel = new ExpressionTreePanel();
+    // The copy of what is dragged, on the page only while dragging, so not declared
     private final ExpressionTreePanel subTreePanel = new ExpressionTreePanel();
     private final TreeKeyboard<Item> keyboard;
     private MySingleSelectionModel<Item> selectionModel;
@@ -79,7 +81,7 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
     /// Makes the tree, with no expression yet.
     public ExpressionTree() {
         initWidget(BINDER.createAndBindUi(this));
-        layoutPanel.setTreePanels(treePanel, subTreePanel);
+        layoutPanel.setDraggedCopy(subTreePanel);
 
         keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "item", "items");
         keyboard.setNameOf(item -> ExpressionItemRenderer.getName(treePanel.getTree(), item));

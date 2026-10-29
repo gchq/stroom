@@ -61,10 +61,11 @@ public class UserListController extends Controller {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final UserList view;
     private final RestFactory restFactory;
     private final FindUserCriteria.Builder criteriaBuilder = new FindUserCriteria.Builder();
     private final UiConfigCache uiConfigCache;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
+    private UserList view;
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private ExpressionTerm additionalTerm;
     private ExpressionTerm isGroupTerm;
@@ -81,10 +82,9 @@ public class UserListController extends Controller {
 
     private final RefCellsController refCells;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(UserList)] gives it its list.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
     /// @param restFactory                      Finds and updates the users.
     /// @param uiConfigCache                    Gives the quick filter's help link and whether the
     ///                                         identity provider is external.
@@ -92,16 +92,24 @@ public class UserListController extends Controller {
     /// @param refCells                         Lets the user cells open their users.
     @Inject
     public UserListController(final EventBus eventBus,
-                              final UserList view,
                               final RestFactory restFactory,
                               final UiConfigCache uiConfigCache,
                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
                               final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.refCells = own(refCells);
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget, e.g. to show it as a screen of its own.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public UserListController attach(final UserList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         // Not easy to determine if we are dealing in users or groups at this point so just
@@ -122,6 +130,7 @@ public class UserListController extends Controller {
                 UserFields.QUICK_FILTER_CONTEXT, this, view.getTaskMonitor()));
         view.setOnSortChange(this::refresh);
         view.setOnEnabledChange(this::onEnabledChange);
+        return this;
     }
 
     private void onEnabledChange(final User user, final boolean enabled) {

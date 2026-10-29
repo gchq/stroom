@@ -40,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /// The source of a query result's row, beside the results ([QueryTextPane]): fetches the stream's
@@ -49,10 +50,12 @@ public class QueryTextPaneController extends Controller {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-    private final QueryTextPane view;
-    private final CodeEditorController editor;
+    private final Provider<CodeEditorController> codeEditorControllerProvider;
+    private final ClassificationLabelController classificationLabelController;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
+    private QueryTextPane view;
+    private CodeEditorController editor;
     private List<FetchDataRequest> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Set<String> currentHighlightStrings;
@@ -62,27 +65,35 @@ public class QueryTextPaneController extends Controller {
     private Runnable showFunction;
     private Runnable hideFunction;
 
-    /// Made by GIN, with its pane.
+    /// Made by GIN; [#attach(QueryTextPane)] gives it its pane.
     ///
     /// @param eventBus                      The application's event bus.
-    /// @param view                          The pane.
     /// @param codeEditorControllerProvider  Makes the code editor's controller.
     /// @param restFactory                   Fetches the source.
     /// @param securityContext               The user's permissions.
     /// @param classificationLabelController Colours the classification.
     @Inject
     public QueryTextPaneController(final EventBus eventBus,
-                                   final QueryTextPane view,
                                    final Provider<CodeEditorController> codeEditorControllerProvider,
                                    final RestFactory restFactory,
                                    final ClientSecurityContext securityContext,
                                    final ClassificationLabelController classificationLabelController) {
         super(eventBus);
-        this.view = view;
+        this.codeEditorControllerProvider = codeEditorControllerProvider;
+        this.classificationLabelController = own(classificationLabelController);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
+    }
+
+    /// Attaches this to a pane, e.g. one a template declares, attaching its read-only editor and its
+    /// classification. The pane is then this controller's widget.
+    ///
+    /// @param view The pane.
+    /// @return This, for its owner to keep.
+    public QueryTextPaneController attach(final QueryTextPane view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
-        own(classificationLabelController).attach(view.getClassificationLabel());
+        classificationLabelController.attach(view.getClassificationLabel());
 
         editor = make(codeEditorControllerProvider).attach(view.getEditor());
         editor.setReadOnly(true);
@@ -97,6 +108,7 @@ public class QueryTextPaneController extends Controller {
         });
 
         view.setOnClose(this::close);
+        return this;
     }
 
     private void showData(final String data,

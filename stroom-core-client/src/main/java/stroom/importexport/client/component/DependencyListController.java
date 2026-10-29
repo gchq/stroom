@@ -48,6 +48,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -61,21 +62,29 @@ public class DependencyListController extends Controller {
 
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
-    private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private Consumer<String> filterErrorConsumer;
-    private final DependencyList view;
+    private DependencyList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DependencyList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Finds the dependencies and the document types.
     @Inject
     public DependencyListController(final EventBus eventBus,
-                                    final DependencyList view,
                                     final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
+        this.restFactory = restFactory;
+        criteria = new DependencyCriteria();
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, and starts it. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DependencyListController attach(final DependencyList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnOpen(this::onOpenDoc);
         view.setOnShowActionMenu((docRef, popupPosition, opener) -> ShowMenuEvent.builder()
@@ -85,12 +94,9 @@ public class DependencyListController extends Controller {
                 .opener(opener)
                 .fire(this));
 
-        this.restFactory = restFactory;
-        criteria = new DependencyCriteria();
-
         refreshDocTypeIcons();
 
-        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(getEventBus()) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
@@ -118,6 +124,7 @@ public class DependencyListController extends Controller {
         };
         view.setDataProvider(dataProvider);
         view.setOnSortChange(dataProvider::refresh);
+        return this;
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {

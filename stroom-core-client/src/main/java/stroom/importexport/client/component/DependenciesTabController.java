@@ -54,10 +54,8 @@ public class DependenciesTabController extends ContentTabController {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(dependencyList);
-        this.dependencyList = dependencyList;
+        this.dependencyList = own(dependencyList).attach(view.getList());
         view.setOnFilterChange(this::changeQuickFilter);
-        view.setListView(dependencyList);
         // A rejected filter comes back as an empty grid like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         dependencyList.setFilterErrorConsumer(view::setFilterError);

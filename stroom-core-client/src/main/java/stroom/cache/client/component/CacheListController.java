@@ -36,6 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -46,8 +47,9 @@ public class CacheListController extends Controller {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private final CacheList view;
+    private CacheList view;
     private final RestFactory restFactory;
+    private final NodeClient nodeClient;
     private final Set<CacheIdentity> allCacheIdentities = new HashSet<>();
     private final DelayedUpdate delayedUpdate;
 
@@ -56,25 +58,32 @@ public class CacheListController extends Controller {
     private Consumer<String> onCacheCleared = cacheName -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(CacheList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Fetches and clears the caches.
     /// @param nodeClient  Lists the nodes.
     @Inject
     public CacheListController(final EventBus eventBus,
-                               final CacheList view,
                                final RestFactory restFactory,
                                final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.nodeClient = nodeClient;
         this.delayedUpdate = new DelayedUpdate(this::update);
         onDispose(delayedUpdate::reset);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public CacheListController attach(final CacheList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnClear(this::clear);
-        view.setDataProvider(new RestDataProvider<CacheIdentity, CacheNamesResponse>(eventBus) {
+        view.setDataProvider(new RestDataProvider<CacheIdentity, CacheNamesResponse>(getEventBus()) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<CacheNamesResponse> dataConsumer,
@@ -85,6 +94,7 @@ public class CacheListController extends Controller {
                         view.getTaskMonitor());
             }
         });
+        return this;
     }
 
     /// @return The selection, one cache at most.

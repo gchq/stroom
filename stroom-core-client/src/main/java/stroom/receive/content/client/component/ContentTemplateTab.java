@@ -27,8 +27,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Content Templates screen: the templates, and the selected one's description and expression.
@@ -37,7 +35,7 @@ public class ContentTemplateTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel table;
+    ContentTemplateList list;
     @UiField
     FormGroup descriptionFormGroup;
     @UiField
@@ -47,18 +45,16 @@ public class ContentTemplateTab extends Component {
     @UiField
     ExpressionTree expressionTree;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with no templates.
     public ContentTemplateTab() {
         initWidget(BINDER.createAndBindUi(this));
         descriptionFormGroup.setVisible(false);
         expressionFormGroup.setVisible(false);
     }
 
-    /// Shows the list of templates.
-    ///
-    /// @param view Its view.
-    public void setTableView(final IsWidget view) {
-        this.table.setWidget(view.asWidget());
+    /// @return The list of templates.
+    public ContentTemplateList getList() {
+        return list;
     }
 
     /// Shows the selected template's description, or hides it.

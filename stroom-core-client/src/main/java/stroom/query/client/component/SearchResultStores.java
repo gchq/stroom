@@ -22,7 +22,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -32,7 +31,7 @@ public class SearchResultStores extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel tableContainer;
+    ResultStoreList list;
     @UiField
     SimplePanel infoPanel;
 
@@ -41,9 +40,9 @@ public class SearchResultStores extends Component {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param list The list of stores.
-    public void setList(final IsWidget list) {
-        tableContainer.setWidget(list.asWidget());
+    /// @return The list of stores, which its controller attaches the list's controller to.
+    public ResultStoreList getList() {
+        return list;
     }
 
     /// @param details The chosen store's details, a table.

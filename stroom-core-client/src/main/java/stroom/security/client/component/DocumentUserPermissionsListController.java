@@ -57,17 +57,19 @@ public class DocumentUserPermissionsListController extends Controller {
     private final RestFactory restFactory;
     private final FetchDocumentUserPermissionsRequest.Builder criteriaBuilder =
             new FetchDocumentUserPermissionsRequest.Builder();
-    private final DocumentUserPermissionsList view;
+    private final UiConfigCache uiConfigCache;
+    private final DocumentTypeCache documentTypeCache;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
+    private DocumentUserPermissionsList view;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
     private final RefCellsController refCells;
     private DocRef docRef;
     private DocumentTypes documentTypes;
     private boolean columnsAdded;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DocumentUserPermissionsList)] gives it its list.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
     /// @param restFactory                      Fetches the permissions.
     /// @param uiConfigCache                    Gives the quick filter's help link.
     /// @param documentTypeCache                Gives the document types.
@@ -75,7 +77,6 @@ public class DocumentUserPermissionsListController extends Controller {
     /// @param refCells                         Lets the user cells open their users.
     @Inject
     public DocumentUserPermissionsListController(final EventBus eventBus,
-                                                 final DocumentUserPermissionsList view,
                                                  final RestFactory restFactory,
                                                  final UiConfigCache uiConfigCache,
                                                  final DocumentTypeCache documentTypeCache,
@@ -83,9 +84,20 @@ public class DocumentUserPermissionsListController extends Controller {
                                                          quickFilterContextHandlerFactory,
                                                  final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.refCells = own(refCells);
         this.restFactory = restFactory;
+        this.uiConfigCache = uiConfigCache;
+        this.documentTypeCache = documentTypeCache;
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DocumentUserPermissionsListController attach(final DocumentUserPermissionsList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         documentTypeCache.fetch(documentTypes -> {
             this.documentTypes = documentTypes;
@@ -108,6 +120,7 @@ public class DocumentUserPermissionsListController extends Controller {
                 UserFields.QUICK_FILTER_CONTEXT, this, view.getTaskMonitor()));
 
         view.setOnSortChange(this::refresh);
+        return this;
     }
 
     private void onFilterChange(String text) {

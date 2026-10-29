@@ -68,11 +68,10 @@ public class NodeGroupEditController extends Controller {
                                    final NodeGroupClient nodeGroupClient) {
         super(eventBus);
         this.view = view;
-        this.nodeGroupStateList = own(nodeGroupStateList);
         this.nodeClient = nodeClient;
         this.nodeGroupClient = nodeGroupClient;
         initWidget(view);
-        view.setList(nodeGroupStateList);
+        this.nodeGroupStateList = own(nodeGroupStateList).attach(view.getList());
         view.setOnInvertSelectionChange(this::onInvertSelectionChange);
     }
 

@@ -18,7 +18,7 @@ package stroom.annotation.client.component;
 
 import stroom.annotation.shared.Annotation;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
@@ -44,6 +44,10 @@ public class FindAnnotationList extends Component {
     @UiField
     PagerPanel pager;
     @UiField
+    ToolbarButton addButton;
+    @UiField
+    ToolbarButton removeButton;
+    @UiField
     DataGrid<Annotation> resultList;
 
     private final MultiSelectionModelImpl<Annotation> selectionModel = new MultiSelectionModelImpl<>();
@@ -51,10 +55,16 @@ public class FindAnnotationList extends Component {
     };
     private Runnable onUpFromFirst = () -> {
     };
+    private Consumer<LinkAction> onAction = action -> {
+    };
 
     /// Makes an empty list, with no column until [#setCell(Cell)].
     public FindAnnotationList() {
         initWidget(BINDER.createAndBindUi(this));
+        // The link buttons are only for an annotation's links (see showLinkActions)
+        pager.setToolbarVisible(false);
+        addButton.setOnClick(() -> onAction.accept(LinkAction.ADD));
+        removeButton.setOnClick(() -> onAction.accept(LinkAction.REMOVE));
     }
 
     /// Adds the list's one column.
@@ -79,9 +89,27 @@ public class FindAnnotationList extends Component {
         return pager;
     }
 
-    /// @return The toolbar beside the pager, for the screen's own buttons.
-    public Toolbar getToolbar() {
-        return pager.getToolbar();
+    /// Shows the toolbar of link actions, Add and Remove, for an annotation's links; they show as
+    /// [#updateLinkActions(boolean, boolean, boolean)] says.
+    public void showLinkActions() {
+        pager.setToolbarVisible(true);
+    }
+
+    /// Brings the link actions up to date.
+    ///
+    /// @param visible   Whether Add and Remove show.
+    /// @param canAdd    Whether Add is enabled.
+    /// @param canRemove Whether Remove is enabled.
+    public void updateLinkActions(final boolean visible, final boolean canAdd, final boolean canRemove) {
+        addButton.setVisible(visible);
+        removeButton.setVisible(visible);
+        addButton.setEnabled(canAdd);
+        removeButton.setEnabled(canRemove);
+    }
+
+    /// @param onAction Given the link action pressed.
+    public void setOnAction(final Consumer<LinkAction> onAction) {
+        this.onAction = onAction;
     }
 
     /// @return The selection: the annotation with the focus.
@@ -128,5 +156,15 @@ public class FindAnnotationList extends Component {
 
     interface Binder extends UiBinder<Widget, FindAnnotationList> {
 
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// What can be done to an annotation's links from the toolbar.
+    public enum LinkAction {
+        /// Links another annotation, chosen in a dialog.
+        ADD,
+        /// Removes the link to the selected annotation.
+        REMOVE
     }
 }

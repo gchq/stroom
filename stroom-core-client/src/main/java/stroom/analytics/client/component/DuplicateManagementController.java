@@ -42,9 +42,8 @@ public class DuplicateManagementController extends Controller {
                                          final DuplicateManagementListController duplicateManagementList) {
         super(eventBus);
         this.view = view;
-        this.duplicateManagementList = own(duplicateManagementList);
         initWidget(view);
-        view.setList(duplicateManagementList);
+        this.duplicateManagementList = own(duplicateManagementList).attach(view.getList());
         view.setOnChange(this::markChanged);
         watch(Contexts.READ_ONLY, view::setReadOnly);
     }

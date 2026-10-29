@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client">
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:sec="urn:import:stroom.security.client.component">
     <!-- Master/detail: users above, the selected user's individual sessions below, so a single session can be
          ended without a separate screen. Split rather than fixed heights because how much of each an
          administrator wants to see depends entirely on the situation - triaging one user's devices wants the
@@ -10,7 +11,11 @@
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 250px" names="Users, Sessions"
                      addStyleNames="max default-min-sizes">
-        <g:SimplePanel ui:field="listContainer" styleName="max"/>
-        <g:SimplePanel ui:field="sessionsContainer" styleName="max"/>
+        <g:SimplePanel styleName="max">
+            <sec:UserAccessList ui:field="list"/>
+        </g:SimplePanel>
+        <g:SimplePanel styleName="max">
+            <sec:UserSessionsList ui:field="sessions"/>
+        </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

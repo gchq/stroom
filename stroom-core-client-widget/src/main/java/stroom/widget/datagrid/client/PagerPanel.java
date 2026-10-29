@@ -26,6 +26,7 @@ import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -153,9 +154,11 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
         return true;
     }
 
-    /// Adds a widget after the toolbar, e.g. a label saying how many rows are selected.
+    /// Adds a widget after the toolbar, e.g. a label saying how many rows are selected; a template
+    /// declares one as a `<dg:toolbarWidget>` child.
     ///
     /// @param widget The widget.
+    @UiChild(tagname = "toolbarWidget")
     public void addToolbarWidget(final Widget widget) {
         toolbarWidgets.add(widget);
     }

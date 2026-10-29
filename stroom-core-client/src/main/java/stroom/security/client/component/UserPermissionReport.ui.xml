@@ -6,6 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component"
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">
@@ -44,6 +45,7 @@
                         dropdown.
                     </p>
                 </form:HelpHTML>
+                <ex:DocumentPermissionsList ui:field="documentsList"/>
             </v:QuickFilterPage>
         </g:SimplePanel>
     </g:FlowPanel>

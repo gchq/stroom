@@ -37,8 +37,8 @@ public class CredentialsController extends ContentTabController {
     public CredentialsController(final EventBus eventBus,
                                  final CredentialsListController credentialsList) {
         super(eventBus);
-        own(credentialsList);
-        initWidget(credentialsList.asWidget());
+        // A screen that is the list and nothing else, so shows the list as its own
+        initWidget(own(credentialsList).attach(new CredentialsList()).asWidget());
     }
 
     @Override

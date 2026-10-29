@@ -38,10 +38,12 @@
             </g:FlowPanel>
             <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                              names="Properties, Pipeline references" addStyleNames="max">
-                <g:SimplePanel ui:field="properties"
-                               styleName="dashboard-panel"/>
-                <g:SimplePanel ui:field="pipelineReferences"
-                               styleName="dashboard-panel"/>
+                <g:SimplePanel styleName="dashboard-panel">
+                    <ps:PropertyList ui:field="properties"/>
+                </g:SimplePanel>
+                <g:SimplePanel styleName="dashboard-panel">
+                    <ps:PipelineReferenceList ui:field="pipelineReferences"/>
+                </g:SimplePanel>
             </split:SplitPane>
         </split:SplitPane>
     </g:SimplePanel>

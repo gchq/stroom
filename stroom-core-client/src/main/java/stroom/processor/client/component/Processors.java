@@ -24,8 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A pipeline's or analytic rule's Processors tab: the processors and their filters (a list its
@@ -36,7 +34,7 @@ public class Processors extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel processorList;
+    ProcessorList processorList;
     @UiField
     Html info;
     @UiField
@@ -47,9 +45,10 @@ public class Processors extends Component {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param processorList The processors and their filters.
-    public void setProcessorList(final IsWidget processorList) {
-        this.processorList.setWidget(processorList);
+    /// @return The processors and their filters, which its controller attaches the list's controller
+    /// to.
+    public ProcessorList getProcessorList() {
+        return processorList;
     }
 
     /// @param info The selected processor's or filter's details.

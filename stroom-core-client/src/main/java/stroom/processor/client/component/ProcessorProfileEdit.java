@@ -42,7 +42,7 @@ public class ProcessorProfileEdit extends Component {
     @UiField
     SelectionBox<NodeGroup> nodeGroup;
     @UiField
-    SimplePanel list;
+    ProfilePeriodList list;
     @UiField
     TimeZoneBox timeZone;
 
@@ -81,9 +81,9 @@ public class ProcessorProfileEdit extends Component {
         this.nodeGroup.setValue(nodeGroup);
     }
 
-    /// @param list The processing schedules.
-    public void setList(final IsWidget list) {
-        this.list.setWidget(list.asWidget());
+    /// @return The processing schedules, which its controller attaches the list's controller to.
+    public ProfilePeriodList getList() {
+        return list;
     }
 
     /// @return The time zone the schedules are in.

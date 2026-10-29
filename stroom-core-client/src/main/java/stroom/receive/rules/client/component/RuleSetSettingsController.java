@@ -75,12 +75,11 @@ public class RuleSetSettingsController extends Controller {
                                      final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
         this.view = view;
-        this.ruleSetList = own(ruleSetList);
+        this.ruleSetList = own(ruleSetList).attach(view.getRuleList());
         this.expressionTree = own(expressionTree).attach(view.getExpressionTree());
         this.ruleEditorProvider = ruleEditorProvider;
 
         initWidget(view);
-        view.setRuleList(ruleSetList.asWidget(), ruleSetList.getToolbar());
         view.setOnAction(this::onAction);
 
         // Stop users from selecting expression items.

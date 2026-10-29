@@ -22,7 +22,6 @@ import stroom.util.shared.TokenError;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilter;
@@ -76,13 +75,16 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     QuickFilter quickFilter;
     @UiField
     AriaPanel links;
+    // The options' pager, around the options
     @UiField
-    PagerPanel pagerView;
+    PagerPanel pager;
+    // The options: a list (listbox) on the data grid, which has no context menu, as its options
+    // are to choose, not a table to copy or export
+    @UiField
+    DataGrid<I> grid;
     private final SelectionEventManager<T, I> selectionEventManager;
     // What has been typed to jump to an option (in a list with no quick filter)
     private final TypeAhead typeAhead = new TypeAhead();
-    // The options: a list (listbox) on the data grid
-    private final DataGrid<I> cellTable;
     private SelectionListModel<T, I> model;
     private Runnable onClose;
     private final MultiSelectionModelImpl<I> selectionModel;
@@ -102,19 +104,15 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 refresh(true, false);
             }
         });
-        cellTable = new DataGrid<>(100);
-        cellTable.setProfile(DataGridProfile.LISTBOX);
-        // Options to choose, not a table to copy or export: the grid's own menu would offer that
-        cellTable.hasContextMenu(false);
         // An option with no text (e.g. the blank one that clears a value) is named None
-        cellTable.setRowName(item -> NullSafe.isBlankString(item.getLabel())
+        grid.setRowName(item -> NullSafe.isBlankString(item.getLabel())
                 ? "None"
                 : null);
         selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new SelectionEventManager<>(cellTable,
+        selectionEventManager = new SelectionEventManager<>(grid,
                 selectionModel,
                 this);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
+        grid.setSelectionModel(selectionModel, selectionEventManager);
         // A character typed on an option goes to the quick filter, or to the next option starting
         // with it
         selectionEventManager.setTypedHandler(this::typeAhead);
@@ -124,7 +122,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 refresh(false, false);
             }
         };
-        dataProvider.addDataDisplay(cellTable);
+        dataProvider.addDataDisplay(grid);
 
         final Column<I, I> expanderColumn =
                 new Column<I, I>(new SelectionItemCell<>()) {
@@ -133,16 +131,14 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                         return object;
                     }
                 };
-        cellTable.addColumn(expanderColumn, "", 100);
-
-        pagerView.setDataWidget(cellTable);
+        grid.addColumn(expanderColumn, "", 100);
 
         // After the filter's own keys (Escape clears a filter with text in it): Down goes into the
         // options, and Escape closes the list (a selection popup closes on Escape itself, before
         // this sees it)
         quickFilter.addKeyDownHandler(event -> {
             if (event.isDownArrow()) {
-                cellTable.setKeyboardSelectedRow(0, true);
+                grid.setKeyboardSelectedRow(0, true);
             } else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
                 close();
             }
@@ -161,7 +157,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     ///
     /// @param name The list's accessible name, or null or blank for none.
     public void setAccessibleName(final String name) {
-        cellTable.setAccessibleName(name);
+        grid.setAccessibleName(name);
         if (NullSafe.isBlankString(name)) {
             // Still named, by what it filters, as a placeholder is only a hint
             quickFilter.setAccessibleName("Filter options");
@@ -177,13 +173,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     ///
     /// @param fitContent Whether the options are as big as they need.
     public void setFitContent(final boolean fitContent) {
-        cellTable.setFitContent(fitContent);
-        cellTable.setFitWidth(fitContent);
+        grid.setFitContent(fitContent);
+        grid.setFitWidth(fitContent);
     }
 
     /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).
     public String getListBoxId() {
-        return cellTable.getAccessibleElementId();
+        return grid.getAccessibleElementId();
     }
 
     /// Lets more than one option be chosen, as in WAI-ARIA's list box with multiple selection, for a
@@ -200,7 +196,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     /// @param multiSelect Whether more than one option can be chosen.
     public void setMultiSelect(final boolean multiSelect) {
         this.multiSelect = multiSelect;
-        cellTable.setMultiSelectable(multiSelect);
+        grid.setMultiSelectable(multiSelect);
     }
 
     /// Sets what Up on the first option does in a list with no quick filter, e.g. moves the focus
@@ -221,13 +217,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             quickFilter.type(text);
             return;
         }
-        final List<I> items = cellTable.getVisibleItems();
+        final List<I> items = grid.getVisibleItems();
         final int row = typeAhead.next(text,
-                cellTable.getKeyboardSelectedRow(),
+                grid.getKeyboardSelectedRow(),
                 items.size(),
                 i -> NullSafe.string(items.get(i).getLabel()));
         if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row, true);
+            grid.setKeyboardSelectedRow(row, true);
         }
     }
 
@@ -236,11 +232,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     ///
     /// @param last Whether to go to the last option rather than the first.
     public void focusFirstOrLast(final boolean last) {
-        final int count = cellTable.getVisibleItemCount();
+        final int count = grid.getVisibleItemCount();
         if (count == 0) {
             focus();
         } else {
-            cellTable.setKeyboardSelectedRow(last
+            grid.setKeyboardSelectedRow(last
                     ? count - 1
                     : 0, true);
         }
@@ -249,8 +245,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // Whether the text is one character, perhaps typed more than once (e.g. "d" or "ddd")
     // Chooses the option with the focus, as Enter does, which closes the list
     private void chooseKeyboardSelected() {
-        final int row = cellTable.getKeyboardSelectedRow();
-        final List<I> items = cellTable.getVisibleItems();
+        final int row = grid.getKeyboardSelectedRow();
+        final List<I> items = grid.getVisibleItems();
         if (row >= 0 && row < items.size()) {
             selectionEventManager.doSelect(items.get(row),
                     new SelectionType(true, false, false, false, false),
@@ -262,7 +258,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
-        cellTable.setKeyboardSelectionPolicy(policy);
+        grid.setKeyboardSelectionPolicy(policy);
     }
 
     public void focus() {
@@ -271,20 +267,20 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         } else {
             final int selectionIndex = getSelectionIndex();
             if (selectionIndex >= 0) {
-                cellTable.setKeyboardSelectedRow(selectionIndex, true);
-            } else if (cellTable.getKeyboardSelectedRow() >= 0) {
-                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+                grid.setKeyboardSelectedRow(selectionIndex, true);
+            } else if (grid.getKeyboardSelectedRow() >= 0) {
+                grid.setKeyboardSelectedRow(grid.getKeyboardSelectedRow(), true);
             } else {
-                cellTable.setKeyboardSelectedRow(0, true);
+                grid.setKeyboardSelectedRow(0, true);
             }
         }
     }
 
     private int getSelectionIndex() {
-        final List<I> items = cellTable.getVisibleItems();
+        final List<I> items = grid.getVisibleItems();
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
-                if (cellTable.getSelectionModel().isSelected(items.get(i))) {
+                if (grid.getSelectionModel().isSelected(items.get(i))) {
                     return i;
                 }
             }
@@ -308,7 +304,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void refresh(final boolean filterChange, final boolean stealFocus) {
-        refresh(getCurrentParent(), null, filterChange, cellTable.getVisibleRange(), stealFocus);
+        refresh(getCurrentParent(), null, filterChange, grid.getVisibleRange(), stealFocus);
     }
 
     public void refresh(final I parent,
@@ -330,11 +326,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                     selectionModel.clear(false);
                 }
 
-                cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
-                cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
+                grid.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
+                grid.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
                 quickFilter.setVisible(model.displayFilter());
                 links.setVisible(model.displayPath());
-                pagerView.setPagerVisible(model.displayPager());
+                pager.setPagerVisible(model.displayPager());
                 // Only update the path when we get data
                 updatePath();
 
@@ -374,7 +370,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         this.model = model;
         quickFilter.setVisible(model.displayFilter());
         links.setVisible(model.displayPath());
-        pagerView.setPagerVisible(model.displayPager());
+        pager.setPagerVisible(model.displayPager());
 
         refresh(false, false);
     }
@@ -411,11 +407,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     private void setKeyboardSelection(final I value, final boolean stealFocus) {
-        final int row = cellTable.getVisibleItems().indexOf(value);
+        final int row = grid.getVisibleItems().indexOf(value);
         if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row, stealFocus);
+            grid.setKeyboardSelectedRow(row, stealFocus);
         } else {
-            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), stealFocus);
+            grid.setKeyboardSelectedRow(grid.getKeyboardSelectedRow(), stealFocus);
         }
     }
 
@@ -469,9 +465,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                           final boolean stealFocus) {
         final NavigationState<I> navigationState = new NavigationState<>(
                 selectionItem,
-                cellTable.getVisibleRange());
+                grid.getVisibleRange());
         navigationStates.add(navigationState);
-        refresh(selectionItem, null, filterChange, new Range(0, cellTable.getPageSize()), stealFocus);
+        refresh(selectionItem, null, filterChange, new Range(0, grid.getPageSize()), stealFocus);
     }
 
     private void navigateBack(final boolean filterChange, final boolean stealFocus) {
@@ -505,7 +501,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             range = navigationState.getRange();
         } else {
             selection = null;
-            range = new Range(0, cellTable.getPageSize());
+            range = new Range(0, grid.getPageSize());
         }
         refresh(getCurrentParent(), selection, filterChange, range, stealFocus);
     }
@@ -523,18 +519,18 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private static class SelectionEventManager<T, I extends SelectionItem>
             extends DataGridSelectionEventManager<I> {
 
-        private final DataGrid<I> cellTable;
+        private final DataGrid<I> grid;
         private final MultiSelectionModelImpl<I> selectionModel;
         private final SelectionList<T, I> selectionList;
         private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
         // In a list of several choices, the option chosen last, where Shift chooses a run from
         private I multiSelectStart;
 
-        public SelectionEventManager(final DataGrid<I> cellTable,
+        public SelectionEventManager(final DataGrid<I> grid,
                                      final MultiSelectionModelImpl<I> selectionModel,
                                      final SelectionList<T, I> selectionList) {
-            super(cellTable, selectionModel, false);
-            this.cellTable = cellTable;
+            super(grid, selectionModel, false);
+            this.grid = grid;
             this.selectionModel = selectionModel;
             this.selectionList = selectionList;
         }
@@ -578,7 +574,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         public void onSelectAll() {
             if (selectionList.multiSelect) {
                 final Selection<I> selection = selectionModel.getSelection();
-                cellTable.getVisibleItems().forEach(item -> selection.setSelected(item, true));
+                grid.getVisibleItems().forEach(item -> selection.setSelected(item, true));
                 selectionModel.setSelection(selection, new SelectionType(false, false, true, true, false));
             }
         }
@@ -613,9 +609,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
 
         private I keyboardItem() {
-            final int row = cellTable.getKeyboardSelectedRow();
-            return row >= 0 && row < cellTable.getVisibleItemCount()
-                    ? cellTable.getVisibleItem(row)
+            final int row = grid.getKeyboardSelectedRow();
+            return row >= 0 && row < grid.getVisibleItemCount()
+                    ? grid.getVisibleItem(row)
                     : null;
         }
 
@@ -625,9 +621,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             final String type = nativeEvent.getType();
             if (BrowserEvents.MOUSEDOWN.equals(type)) {
                 if (MouseUtil.isPrimary(nativeEvent)) {
-                    final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+                    final int row = grid.getVisibleItems().indexOf(e.getValue());
                     if (row >= 0) {
-                        cellTable.setKeyboardSelectedRow(row, true);
+                        grid.setKeyboardSelectedRow(row, true);
                     }
                     select(e, true);
                 }
@@ -680,7 +676,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 return;
             }
             final Selection<I> selection = selectionModel.getSelection();
-            final List<I> rows = cellTable.getVisibleItems();
+            final List<I> rows = grid.getVisibleItems();
             final int start = rows.indexOf(multiSelectStart);
             final int end = rows.indexOf(row);
             if (shift && start != -1 && end != -1) {

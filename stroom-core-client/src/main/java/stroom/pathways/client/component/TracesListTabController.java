@@ -75,16 +75,13 @@ public class TracesListTabController extends Controller implements HasToolbar {
                                    final TimeRangeSelectorController timeRangeSelectorController) {
         super(eventBus);
         initWidget(view);
-        own(tracesList);
         own(timeRangeSelectorController).attach(timeRangeSelector);
-        this.tracesList = tracesList;
+        this.tracesList = own(tracesList).attach(view.getTracesList());
         this.restFactory = restFactory;
         traceOverviewChart = view.getTraceOverview();
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);
-
-        view.setTracesList(tracesList);
 
         own(timeRangeSelector.addValueChangeHandler(e -> {
             tracesList.setTimeRange(e.getValue());

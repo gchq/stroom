@@ -96,7 +96,7 @@ public class UserAndGroupsController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.userList = make(userListControllerProvider);
+        this.userList = make(userListControllerProvider).attach(view.getUserList());
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
         this.userList.setHelpText(HtmlBuilder.builder()
@@ -113,12 +113,12 @@ public class UserAndGroupsController extends Controller {
                 onSelection());
         this.userList.setOnCopyPermissions(this::copyPermissionsTo);
 
-        this.parentsList = make(userListControllerProvider);
+        this.parentsList = make(userListControllerProvider).attach(view.getParents());
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
         this.parentsList.setValidUserScreensForActionMenu(UserScreen.all());
 
-        this.childrenList = make(userListControllerProvider);
+        this.childrenList = make(userListControllerProvider).attach(view.getChildren());
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 
@@ -126,10 +126,6 @@ public class UserAndGroupsController extends Controller {
         this.actions = own(actions);
         this.userRefPopupProvider = userRefPopupProvider;
         this.restFactory = restFactory;
-
-        view.setUserList(userList);
-        view.setParentsView(parentsList);
-        view.setChildrenView(childrenList);
 
         final Toolbar userActions = userList.getToolbar();
         userActions.setName("User and group actions");

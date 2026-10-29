@@ -18,7 +18,6 @@ package stroom.dictionary.client.component;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -26,31 +25,31 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
-/// Documents ([DocRefList]), a row each; a name's link opens its document.
+/// A dictionary's imports ([DocRefList]), a row each; a name's link opens its document.
 public class DocRefListController extends Controller {
 
-    private final DocRefList view;
+    private DocRefList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DocRefList)] gives it its list.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     @Inject
-    public DocRefListController(final EventBus eventBus,
-                                final DocRefList view) {
+    public DocRefListController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
-        view.setOnOpen(docRef -> OpenDocumentEvent.fire(this, docRef, true));
     }
 
-    /// Adds the list's one column, of the documents' names.
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
     ///
-    /// @param columnName  The column's heading.
-    /// @param hasOpenLink Whether a name is a link that opens its document.
-    public void initTableColumns(final String columnName, final boolean hasOpenLink) {
-        view.addColumn(columnName, hasOpenLink);
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DocRefListController attach(final DocRefList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.setOnOpen(docRef -> OpenDocumentEvent.fire(this, docRef, true));
+        return this;
     }
 
     /// Shows documents, the first selected.
@@ -70,8 +69,20 @@ public class DocRefListController extends Controller {
         view.setTableName(tableName);
     }
 
-    /// @return The toolbar beside the pager, for the owner's buttons.
-    public Toolbar getToolbar() {
-        return view.getToolbar();
+    /// Brings Add and Remove up to date with the selection.
+    ///
+    /// @param readOnly Whether the dictionary is read only.
+    public void updateActions(final boolean readOnly) {
+        view.updateActions(readOnly);
+    }
+
+    /// @param onAdd Run when Add is pressed.
+    public void setOnAdd(final Runnable onAdd) {
+        view.setOnAdd(onAdd);
+    }
+
+    /// @param onRemove Run when Remove is pressed.
+    public void setOnRemove(final Runnable onRemove) {
+        view.setOnRemove(onRemove);
     }
 }

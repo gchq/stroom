@@ -24,7 +24,7 @@ import stroom.widget.popup.client.PopupSize;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// The Recent Items dialog ([FindPanel]): the documents the user opened last, filtered by name,
+/// The Recent Items dialog ([FindDocuments]): the documents the user opened last, filtered by name,
 /// and opens the one chosen. Made once by the app and shown again, it keeps the last filter.
 public class RecentItemsController extends FindController {
 
@@ -33,19 +33,19 @@ public class RecentItemsController extends FindController {
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
+    /// @param content                          The content.
     /// @param findResultList                   Finds the documents, and lists them.
     /// @param recentItems                      The documents the user opened last.
     /// @param quickFilterContextHandlerFactory Makes the filter's recent filters.
     @Inject
     public RecentItemsController(final EventBus eventBus,
-                                 final FindPanel view,
+                                 final FindDocuments content,
                                  final FindDocResultListController findResultList,
                                  final RecentItems recentItems,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, findResultList, quickFilterContextHandlerFactory);
+        super(eventBus, content, findResultList, quickFilterContextHandlerFactory);
         this.recentItems = recentItems;
-        view.setFilterGuidance("Filter recent items by name", null);
+        content.getFindPanel().setFilterGuidance("Filter recent items by name", null);
     }
 
     @Override

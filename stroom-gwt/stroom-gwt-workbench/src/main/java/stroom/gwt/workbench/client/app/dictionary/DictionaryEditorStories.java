@@ -245,8 +245,8 @@ public final class DictionaryEditorStories {
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
                 })
-                // The Imports tab is a grid (DocRefList.addColumn("Document Name",
-                // true)): the name opens the imported document, and Remove takes the selection
+                // The Imports tab is a grid (DocRefList, a "Document Name" link column): the name
+                // opens the imported document, and Remove takes the selection
                 // after a confirmation
                 .story("ImportsGrid", context -> render.apply(context, false))
                 .withPlay(play -> {

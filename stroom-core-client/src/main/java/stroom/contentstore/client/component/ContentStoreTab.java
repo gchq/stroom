@@ -16,14 +16,11 @@
 
 package stroom.contentstore.client.component;
 
-import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Content Store screen: the content packs, and the selected pack's details.
@@ -32,28 +29,24 @@ public class ContentStoreTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel contentPackList;
+    ContentStoreContentPackList contentPackList;
     @UiField
-    AriaPanel contentPackDetails;
+    ContentStoreContentPackDetails contentPackDetails;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with no packs.
     public ContentStoreTab() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// Shows the list of content packs.
-    ///
-    /// @param view Its view.
-    public void setContentPackListView(final IsWidget view) {
-        contentPackList.setWidget(view.asWidget());
+    /// @return The list of content packs, which its controller attaches the list's controller to.
+    public ContentStoreContentPackList getContentPackList() {
+        return contentPackList;
     }
 
-    /// Shows the selected pack's details.
-    ///
-    /// @param view Their view.
-    public void setContentPackDetailsView(final IsWidget view) {
-        contentPackDetails.clear();
-        contentPackDetails.add(view);
+    /// @return The selected pack's details, which its controller attaches the details' controller
+    ///         to.
+    public ContentStoreContentPackDetails getContentPackDetails() {
+        return contentPackDetails;
     }
 
     // --------------------------------------------------------------------------------

@@ -103,22 +103,22 @@ public class TaskManagerListController extends Controller implements Refreshable
     private final Map<String, List<String>> errorMap = new HashMap<>();
     private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
-    private final TaskManagerList view;
 
     private String currentWarnings;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
     private final DelayedUpdate delayedUpdate;
+    private final RefCellsController refCells;
 
+    private TaskManagerList view;
     private Range range;
     private Consumer<TaskProgressResponse> dataConsumer;
     private Consumer<String> filterErrorConsumer;
     private boolean autoRefresh = true;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(TaskManagerList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param infoTooltip       Shows a task's info.
     /// @param restFactory       Fetches and terminates the tasks.
     /// @param nodeClient        Lists the nodes.
@@ -127,7 +127,6 @@ public class TaskManagerListController extends Controller implements Refreshable
     /// @param refCells          Lets the user cells open their users.
     @Inject
     public TaskManagerListController(final EventBus eventBus,
-                                     final TaskManagerList view,
                                      final InfoTooltipController infoTooltip,
                                      final RestFactory restFactory,
                                      final NodeClient nodeClient,
@@ -135,14 +134,39 @@ public class TaskManagerListController extends Controller implements Refreshable
                                      final DateTimeFormatter dateTimeFormatter,
                                      final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         own(infoTooltip);
         this.infoTooltip = infoTooltip;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
         this.dateTimeFormatter = dateTimeFormatter;
+
+        delayedUpdate = new DelayedUpdate(this::update);
+        dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
+            @Override
+            protected void exec(final Range range,
+                                final Consumer<TaskProgressResponse> dataConsumer,
+                                final RestErrorHandler errorHandler) {
+                CriteriaUtil.setSortList(criteria, view.getSortList());
+                TaskManagerListController.this.range = range;
+                TaskManagerListController.this.dataConsumer = dataConsumer;
+                delayedUpdate.reset();
+                fetchNodes(range, dataConsumer, errorHandler);
+            }
+        };
+        // Timers stop with the list
+        onDispose(delayedUpdate::reset);
+        onDispose(timer::cancel);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public TaskManagerListController attach(final TaskManagerList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         view.setOnAutoRefreshToggle(pressed -> onAutoRefreshToggled());
@@ -167,19 +191,6 @@ public class TaskManagerListController extends Controller implements Refreshable
 
         updateButtonStates();
 
-        delayedUpdate = new DelayedUpdate(this::update);
-        dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<TaskProgressResponse> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setSortList(criteria, view.getSortList());
-                TaskManagerListController.this.range = range;
-                TaskManagerListController.this.dataConsumer = dataConsumer;
-                delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, errorHandler);
-            }
-        };
         view.setDataProvider(dataProvider);
 
         // Handle use of the expander column.
@@ -191,9 +202,7 @@ public class TaskManagerListController extends Controller implements Refreshable
             treeAction.resetExpandAllRequestState();
             dataProvider.refresh();
         });
-        // Timers stop with the list
-        onDispose(delayedUpdate::reset);
-        onDispose(timer::cancel);
+        return this;
     }
 
     private void onAutoRefreshToggled() {

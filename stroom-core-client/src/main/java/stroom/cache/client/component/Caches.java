@@ -22,8 +22,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Caches screen: the caches, and the selected cache on each node.
@@ -32,28 +30,25 @@ public class Caches extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel cacheList;
+    CacheList cacheList;
     @UiField
-    SimplePanel cacheNodeList;
+    CacheNodeList cacheNodeList;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with empty lists.
     public Caches() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
 
-    /// Shows the list of caches.
-    ///
-    /// @param view Its view.
-    public void setCacheListView(final IsWidget view) {
-        cacheList.setWidget(view.asWidget());
+    /// @return The list of caches, which its controller attaches the list's controller to.
+    public CacheList getCacheList() {
+        return cacheList;
     }
 
-    /// Shows the selected cache on each node.
-    ///
-    /// @param view Its view.
-    public void setCacheNodeListView(final IsWidget view) {
-        cacheNodeList.setWidget(view.asWidget());
+    /// @return The selected cache on each node, which its controller attaches the list's
+    ///         controller to.
+    public CacheNodeList getCacheNodeList() {
+        return cacheNodeList;
     }
 
     interface Binder extends UiBinder<Widget, Caches> {

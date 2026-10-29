@@ -100,7 +100,8 @@ public final class StepControlsStories {
                                                       final StepControl view,
                                                       final boolean busy,
                                                      final Consumer<String> report) {
-        final StepControlController controller = harness.own(new StepControlController(harness.getEventBus(), view));
+        final StepControlController controller = harness.own(new StepControlController(harness.getEventBus())
+                .attach(view));
         final Spy onStep = harness.fn(ON_STEP);
         final Spy onFilter = harness.fn(ON_FILTER);
         controller.setOnStep(stepType -> {

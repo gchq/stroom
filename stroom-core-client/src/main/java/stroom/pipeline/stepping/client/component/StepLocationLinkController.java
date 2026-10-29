@@ -22,28 +22,35 @@ import stroom.widget.component.client.Controller;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// Shows the stepping screen's location in its [StepLocationLink], and opens the "Set Location"
 /// dialog when it is pressed, once a stream has been chosen to step through.
 public class StepLocationLinkController extends Controller {
 
-    private final StepLocationLink view;
     private final Provider<StepLocationPickerController> stepLocationPickerProvider;
+    private StepLocationLink view;
     private StepLocation stepLocation;
     private boolean enabled = true;
     private Consumer<StepLocation> onStepLocation = stepLocation -> {
     };
 
-    /// Made by GIN, with its link and what makes its dialog.
+    /// Made by GIN, with what makes its dialog; [#attach(StepLocationLink)] gives it its link.
     ///
-    /// @param view                       Its component.
     /// @param stepLocationPickerProvider Makes the step location picker.
     @Inject
-    public StepLocationLinkController(final StepLocationLink view,
-                                      final Provider<StepLocationPickerController> stepLocationPickerProvider) {
-        this.view = view;
+    public StepLocationLinkController(final Provider<StepLocationPickerController> stepLocationPickerProvider) {
         this.stepLocationPickerProvider = stepLocationPickerProvider;
+    }
+
+    /// Attaches this to a link, e.g. one a template declares, showing the start of the first
+    /// stream. The link is then this controller's widget.
+    ///
+    /// @param view The link.
+    /// @return This, for its owner to keep.
+    public StepLocationLinkController attach(final StepLocationLink view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         setStepLocation(new StepLocation(0L, 0L, 0L));
         view.setOnClick(() -> {
@@ -51,6 +58,7 @@ public class StepLocationLinkController extends Controller {
                 stepLocationPickerProvider.get().edit(this, stepLocation, location -> onStepLocation.accept(location));
             }
         });
+        return this;
     }
 
     /// Sets whether the location can be clicked to set a new one. It is enabled once a stream has

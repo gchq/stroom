@@ -24,7 +24,6 @@ import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.component.ContentTabController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -42,10 +41,6 @@ public class AnnotationTagsController extends ContentTabController {
     private final Provider<AnnotationTagCreateController> createProvider;
     private final Provider<AnnotationTagEditController> editProvider;
     private final AnnotationResourceClient annotationResourceClient;
-
-    private final ButtonView newButton;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
 
     private String tabLabel;
     private AnnotationTagType annotationTagType;
@@ -72,16 +67,13 @@ public class AnnotationTagsController extends ContentTabController {
         this.editProvider = editProvider;
         this.annotationResourceClient = annotationResourceClient;
 
-        annotationTagList.getToolbar().setName("Tag actions");
-        newButton = annotationTagList.getToolbar().button(SvgImage.ADD, "New Annotation Tag",
-                this::add);
-        openButton = annotationTagList.getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Annotation Tag", this::edit);
-        openButton.setEnabled(false);
-        deleteButton = annotationTagList.getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Annotation Tag",
-                this::delete);
-        deleteButton.setEnabled(false);
+        annotationTagList.setOnAction(action -> {
+            switch (action) {
+                case NEW -> add();
+                case EDIT -> edit();
+                case DELETE -> delete();
+            }
+        });
 
         initWidget(annotationTagList.asWidget());
 
@@ -141,9 +133,8 @@ public class AnnotationTagsController extends ContentTabController {
     }
 
     private void enableButtons() {
-        final boolean enabled = annotationTagList.getSelectionModel().getSelected() != null;
-        openButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+        annotationTagList.setSelectionActionsEnabled(
+                annotationTagList.getSelectionModel().getSelected() != null);
     }
 
     /// Fetches the tags again.
@@ -184,8 +175,6 @@ public class AnnotationTagsController extends ContentTabController {
         annotationTagList.setAnnotationTagType(annotationTagType);
         // Name the buttons after the kind of tag this screen lists, e.g. "New Annotation Status"
         final String tagName = "Annotation " + annotationTagType.getDisplayValue();
-        newButton.setTitle("New " + tagName);
-        openButton.setTitle("Edit Selected " + tagName);
-        deleteButton.setTitle("Delete Selected " + tagName);
+        annotationTagList.setTagName(tagName);
     }
 }

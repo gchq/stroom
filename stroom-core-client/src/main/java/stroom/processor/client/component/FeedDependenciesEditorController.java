@@ -47,9 +47,8 @@ public class FeedDependenciesEditorController extends Controller {
                                             final FeedDependencyListController feedDependencyList) {
         super(eventBus);
         this.view = view;
-        this.feedDependencyList = own(feedDependencyList);
         initWidget(view);
-        view.setFeedDependencyList(feedDependencyList);
+        this.feedDependencyList = own(feedDependencyList).attach(view.getFeedDependencyList());
     }
 
     /// Edits feed dependencies in a dialog, owned by `opener` until it is closed.

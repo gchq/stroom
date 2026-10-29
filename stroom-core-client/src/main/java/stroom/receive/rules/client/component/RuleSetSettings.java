@@ -25,8 +25,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.EnumMap;
@@ -51,21 +49,14 @@ public class RuleSetSettings extends Component {
     };
 
     @UiField
-    SimplePanel table;
+    RuleSetList ruleList;
     @UiField
     ExpressionTree expressionTree;
 
-    /// Makes the screen, with no list or expression yet.
+    /// Makes the screen, with no rules or expression yet, and the actions on the list's toolbar.
     public RuleSetSettings() {
         initWidget(BINDER.createAndBindUi(this));
-    }
-
-    /// Shows the list of rules, and puts the actions on its toolbar.
-    ///
-    /// @param ruleList The list, a controller owned by this component's controller.
-    /// @param toolbar  The list's toolbar.
-    public void setRuleList(final IsWidget ruleList, final Toolbar toolbar) {
-        table.setWidget(ruleList);
+        final Toolbar toolbar = ruleList.getToolbar();
         toolbar.setName("Receipt rule actions");
         addButton(toolbar, RuleAction.ADD, SvgImage.ADD, "New Rule");
         addButton(toolbar, RuleAction.EDIT, SvgImage.EDIT, "Edit Selected Rule");
@@ -74,6 +65,11 @@ public class RuleSetSettings extends Component {
         addButton(toolbar, RuleAction.DELETE, SvgImage.DELETE, "Delete Selected Rules");
         addButton(toolbar, RuleAction.MOVE_UP, SvgImage.UP, "Move Rule Up");
         addButton(toolbar, RuleAction.MOVE_DOWN, SvgImage.DOWN, "Move Rule Down");
+    }
+
+    /// @return The list of rules, which its controller attaches the list's controller to.
+    public RuleSetList getRuleList() {
+        return ruleList;
     }
 
     /// @return The expression's tree, which its controller attaches the tree's controller to.

@@ -37,7 +37,7 @@ public class FeedDependenciesEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel feedDependencies;
+    FeedDependencyList feedDependencies;
     @UiField
     TickBox minProcessingDelayEnabled;
     @UiField
@@ -54,9 +54,9 @@ public class FeedDependenciesEditor extends Component {
         maxProcessingDelayEnabled.addValueChangeHandler(e -> updateEnabled());
     }
 
-    /// @param view The feed dependencies.
-    public void setFeedDependencyList(final IsWidget view) {
-        feedDependencies.setWidget(view);
+    /// @return The feed dependencies, which its controller attaches the list's controller to.
+    public FeedDependencyList getFeedDependencyList() {
+        return feedDependencies;
     }
 
     /// @param minProcessingDelay The minimum processing delay, or `null` for none (then the box is

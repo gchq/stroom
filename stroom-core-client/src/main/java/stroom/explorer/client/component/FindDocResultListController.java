@@ -46,7 +46,7 @@ public class FindDocResultListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final FindDocResultList view;
+    private FindDocResultList view;
     private final RestDataProvider<FindResult, ResultPage<FindResult>> dataProvider;
     private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();
     private DocumentFindRequest currentQuery = new DocumentFindRequest(
@@ -61,28 +61,22 @@ public class FindDocResultListController extends Controller {
     private Runnable onFocusFilter = () -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FindDocResultList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Finds the documents.
     @Inject
     public FindDocResultListController(final EventBus eventBus,
-                                       final FindDocResultList view,
                                        final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
-        view.setOnUpFromFirst(() -> onFocusFilter.run());
-
         explorerTreeFilterBuilder.requiredPermissions(DocumentPermission.VIEW);
 
-        final MultiSelectionModel<FindResult> selectionModel = view.getSelectionModel();
         dataProvider = new RestDataProvider<FindResult, ResultPage<FindResult>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindResult>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                final MultiSelectionModel<FindResult> selectionModel = view.getSelectionModel();
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 final ExplorerTreeFilter filter = explorerTreeFilterBuilder.build();
                 final boolean filterChange = !Objects.equals(lastFilter, filter);
@@ -134,6 +128,18 @@ public class FindDocResultListController extends Controller {
                 }
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public FindDocResultListController attach(final FindDocResultList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.setOnUpFromFirst(() -> onFocusFilter.run());
+        return this;
     }
 
     private void resetFocus() {

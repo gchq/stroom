@@ -120,6 +120,17 @@ public class Navigation extends Component {
         buttons.forEach((action, button) -> button.setOnClick(() -> onAction.accept(action)));
     }
 
+    /// @param role The explorer's WAI-ARIA role, e.g. `navigation`, a landmark screen readers can
+    ///             go to.
+    public void setRole(final String role) {
+        getElement().setAttribute("role", role);
+    }
+
+    /// @param ariaLabel The explorer's name for screen readers, e.g. as a landmark.
+    public void setAriaLabel(final String ariaLabel) {
+        getElement().setAttribute("aria-label", ariaLabel);
+    }
+
     /// @param onAction Told which of the explorer's buttons the user pressed.
     public void setOnAction(final Consumer<ExplorerAction> onAction) {
         this.onAction = Objects.requireNonNull(onAction, "onAction");

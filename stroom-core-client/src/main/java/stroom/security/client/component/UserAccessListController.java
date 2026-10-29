@@ -36,6 +36,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// Who currently holds access ([UserAccessList]), found by a quick filter, a page at a time; the
@@ -44,30 +45,37 @@ public class UserAccessListController extends Controller {
 
     private static final UserAccessResource USER_ACCESS_RESOURCE = GWT.create(UserAccessResource.class);
 
-    private final UserAccessList view;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
 
+    private UserAccessList view;
     private RestDataProvider<UserAccessRow, ResultPage<UserAccessRow>> dataProvider = null;
     private String filter;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(UserAccessList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds who holds access.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     @Inject
     public UserAccessListController(final EventBus eventBus,
-                                    final UserAccessList view,
                                     final RestFactory restFactory,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public UserAccessListController attach(final UserAccessList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnFilterChange(this::onFilterChange);
+        return this;
     }
 
     /// @return The selection.

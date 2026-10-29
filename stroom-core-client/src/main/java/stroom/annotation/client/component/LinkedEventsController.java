@@ -81,13 +81,12 @@ public class LinkedEventsController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(dataController);
 
         dataGrid = view.getDataGrid();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.annotationResourceClient = annotationResourceClient;
-        this.dataController = dataController;
+        this.dataController = own(dataController).attach(view.getData());
         dataController.setNavigationControlsVisible(false);
         // It is not in its own dialog but is part of this one and this will determine how the
         // source view is opened if the user clicks that
@@ -101,7 +100,6 @@ public class LinkedEventsController extends Controller {
                 case REMOVE -> onRemoveEvent();
             }
         });
-        view.setData(dataController);
 
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.copyTextColumnBuilder(EventId::toString)

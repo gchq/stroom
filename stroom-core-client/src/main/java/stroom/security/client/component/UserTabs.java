@@ -87,7 +87,7 @@ public class UserTabs extends TabbedController<UserRef> {
         // It was decided that a user should not see their own app perms.
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             addTab(APP_PERMS_TAB,
-                    appPermissionsEditProvider::get,
+                    () -> appPermissionsEditProvider.get().attach(new AppPermissionsEdit()),
                     (appPermissionsEdit, docRef, userRef) -> appPermissionsEdit.setUserRef(userRef));
         }
         addTab(DOC_PERMS_TAB,

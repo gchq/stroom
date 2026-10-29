@@ -2,15 +2,22 @@
 <!-- A data browser: streams, above the streams related to the one selected, above its data -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:d="urn:import:stroom.data.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client">
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Streams, Details" addStyleNames="max">
-            <g:SimplePanel ui:field="streamList" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <d:MetaList ui:field="streamList"/>
+            </g:SimplePanel>
             <split:SplitPane vertical="true" thin="true" sizes="150px, *"
                              names="Related streams, Data" addStyleNames="max">
-                <g:SimplePanel ui:field="streamRelationList" styleName="max dashboard-panel overflow-hidden"/>
-                <g:SimplePanel ui:field="data" styleName="max dashboard-panel overflow-hidden"/>
+                <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                    <d:MetaList ui:field="streamRelationList"/>
+                </g:SimplePanel>
+                <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                    <d:DataViewer ui:field="data"/>
+                </g:SimplePanel>
             </split:SplitPane>
         </split:SplitPane>
     </g:SimplePanel>

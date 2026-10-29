@@ -108,14 +108,11 @@ public class ContentTemplateTabController extends ContentTabController
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(contentTemplateList);
+        this.contentTemplateList = own(contentTemplateList).attach(view.getList());
         own(expressionTree).attach(view.getExpressionTree());
-        this.contentTemplateList = contentTemplateList;
         this.expressionTree = expressionTree;
         this.templateEditorProvider = templateEditorProvider;
         this.restFactory = restFactory;
-
-        view.setTableView(contentTemplateList);
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);

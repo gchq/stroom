@@ -5,6 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:pb="urn:import:stroom.widget.progress.client.component"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <d:ClassificationWrapper ui:field="classificationWrapper">
         <d:content>
@@ -16,14 +17,17 @@
                     </g:FlowPanel>
                     <g:HTMLPanel ui:field="rightPanel" styleName="dock-min data-viewer__right-panel">
                         <div class="data-viewer__button-panel"></div>
-                        <g:SimplePanel ui:field="navigatorContainer"
-                                       styleName="data-viewer__navigator-container"/>
+                        <g:SimplePanel styleName="data-viewer__navigator-container">
+                            <d:ItemNavigator ui:field="navigator"/>
+                        </g:SimplePanel>
                         <!-- A link drawn as text: a button that the keyboard can reach and press -->
                         <div ui:field="sourceLink" class="data-viewer__source-link-label"
                              role="button" tabindex="0">View Source</div>
                     </g:HTMLPanel>
                 </g:FlowPanel>
-                <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min data-viewer__progress-bar-panel"/>
+                <g:SimplePanel styleName="dock-min data-viewer__progress-bar-panel">
+                    <pb:SourceProgressBar ui:field="progressBar" visible="false"/>
+                </g:SimplePanel>
                 <tab:LayerContainerImpl ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"/>
                 <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
             </g:FlowPanel>

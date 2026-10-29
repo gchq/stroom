@@ -36,6 +36,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The volumes of the data volume group its owner gives ([FsVolumeStatusList]), a page at a time.
@@ -43,27 +44,36 @@ public class FsVolumeStatusListController extends Controller {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
-    private final FsVolumeStatusList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
+    private FsVolumeStatusList view;
     private FindFsVolumeCriteria criteria;
     private RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FsVolumeStatusList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the volumes.
     /// @param dateTimeFormatter Formats when each volume was last written to.
     @Inject
     public FsVolumeStatusListController(final EventBus eventBus,
-                                        final FsVolumeStatusList view,
                                         final RestFactory restFactory,
                                         final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public FsVolumeStatusListController attach(final FsVolumeStatusList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::formatWithDuration);
+        return this;
     }
 
     /// Shows a group's volumes; the first time, starts the list.

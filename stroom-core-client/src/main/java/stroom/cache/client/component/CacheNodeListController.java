@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class CacheNodeListController extends Controller {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private final CacheNodeList view;
+    private CacheNodeList view;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
     private final Map<String, List<CacheInfo>> responseMap = new HashMap<>();
@@ -61,25 +62,32 @@ public class CacheNodeListController extends Controller {
     private Range range;
     private Consumer<CacheInfoResponse> dataConsumer;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(CacheNodeList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Fetches and clears the cache on each node.
     /// @param nodeClient  Lists the nodes.
     @Inject
     public CacheNodeListController(final EventBus eventBus,
-                                   final CacheNodeList view,
                                    final RestFactory restFactory,
                                    final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.delayedUpdate = new DelayedUpdate(this::update);
         onDispose(delayedUpdate::reset);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public CacheNodeListController attach(final CacheNodeList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnClear(this::clear);
+        return this;
     }
 
     /// Shows a cache on each node.

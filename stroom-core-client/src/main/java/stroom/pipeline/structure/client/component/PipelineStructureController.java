@@ -127,8 +127,8 @@ public class PipelineStructureController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(propertyList);
-        own(pipelineReferenceList);
+        own(propertyList).attach(view.getProperties());
+        own(pipelineReferenceList).attach(view.getPipelineReferences());
         this.pipelineTree = view.getTree();
         this.inheritSelection = make(docSelectionProvider);
         inheritSelection.attach(view.getInheritBox());
@@ -139,8 +139,6 @@ public class PipelineStructureController extends Controller {
         this.jsonEditorProvider = jsonEditorProvider;
 
         view.setOnAction(this::onAction);
-        view.setProperties(propertyList);
-        view.setPipelineReferences(pipelineReferenceList);
 
         inheritSelection.setIncludedTypes(PipelineDoc.TYPE);
         inheritSelection.setRequiredPermissions(DocumentPermission.USE);

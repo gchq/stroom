@@ -57,10 +57,9 @@ public class SearchResultStoresController extends Controller {
                                         final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
         this.view = view;
-        this.resultStoreList = own(resultStoreList);
+        this.resultStoreList = own(resultStoreList).attach(view.getList());
         this.dateTimeFormatter = dateTimeFormatter;
         initWidget(view);
-        view.setList(resultStoreList);
         own(resultStoreList.getSelectionModel().addSelectionHandler(event ->
                 showDetails(resultStoreList.getSelectionModel().getSelected())));
     }

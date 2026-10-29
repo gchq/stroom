@@ -50,9 +50,10 @@ public class AppPermissionsEditController extends Controller {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
-    private final AppPermissionsEdit view;
     private final RestFactory restFactory;
+    private final ClientSecurityContext securityContext;
 
+    private AppPermissionsEdit view;
     private AppUserPermissionsReport currentPermissions;
     private List<AppPermission> allPermissions;
 
@@ -60,20 +61,27 @@ public class AppPermissionsEditController extends Controller {
     private Consumer<ValueChange> onChange = change -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(AppPermissionsEdit)] gives it its content.
     ///
     /// @param eventBus        The application's event bus.
-    /// @param view            The content.
     /// @param restFactory     Fetches and changes the permissions.
     /// @param securityContext Says whether the user may manage users, so change permissions.
     @Inject
     public AppPermissionsEditController(final EventBus eventBus,
-                                        final AppPermissionsEdit view,
                                         final RestFactory restFactory,
                                         final ClientSecurityContext securityContext) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.securityContext = securityContext;
+    }
+
+    /// Attaches this to its content, e.g. one a template declares. The content is then this
+    /// controller's widget, e.g. to show it as a tab.
+    ///
+    /// @param view The content.
+    /// @return This, for its owner to keep.
+    public AppPermissionsEditController attach(final AppPermissionsEdit view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         view.setPermissionState(permission -> tickBoxState(currentPermissions, permission));
@@ -82,6 +90,7 @@ public class AppPermissionsEditController extends Controller {
         view.setUserRef(null);
         view.setOnSelectionChange(this::updateDetails);
         view.setOnRefresh(this::refresh);
+        return this;
     }
 
     /// Shows a user's or group's permissions.

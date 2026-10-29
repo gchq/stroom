@@ -50,13 +50,8 @@ public class NodesController extends ContentTabController
                            final NodeJobListController nodeJobList) {
         super(eventBus);
         initWidget(view);
-        own(nodeStatusList);
-        own(nodeJobList);
-        this.nodeStatusList = nodeStatusList;
-        this.nodeJobList = nodeJobList;
-
-        view.setNodeListView(nodeStatusList);
-        view.setNodeJobListView(nodeJobList);
+        this.nodeStatusList = own(nodeStatusList).attach(view.getNodeList());
+        this.nodeJobList = own(nodeJobList).attach(view.getNodeJobList());
 
         own(nodeStatusList.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeStatusList.getSelectionModel().getSelected();

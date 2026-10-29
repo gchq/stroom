@@ -35,43 +35,38 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The search result stores ([ResultStoreList]): fetched from every node; a store can be
 /// terminated, deleted or its settings changed.
 public class ResultStoreListController extends Controller {
 
-    private final ResultStoreList view;
     private final RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>> dataProvider;
     private final ResultStoreModel resultStoreModel;
     private final Provider<ResultStoreSettingsEditorController> resultStoreSettingsProvider;
+    private final DateTimeFormatter dateTimeFormatter;
+    private final RefCellsController refCells;
+    private ResultStoreList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ResultStoreList)] gives it its content.
     ///
     /// @param eventBus                     The application's event bus.
-    /// @param view                         The content.
     /// @param resultStoreModel             Fetches, terminates and deletes the stores.
     /// @param dateTimeFormatter            Formats times in the user's preferences.
     /// @param resultStoreSettingsProvider  Makes the dialog that changes a store's settings.
     /// @param refCells                     Lets the owner cells open their users.
     @Inject
     public ResultStoreListController(final EventBus eventBus,
-                                     final ResultStoreList view,
                                      final ResultStoreModel resultStoreModel,
                                      final DateTimeFormatter dateTimeFormatter,
                                      final Provider<ResultStoreSettingsEditorController> resultStoreSettingsProvider,
                                      final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsProvider = resultStoreSettingsProvider;
-        initWidget(view);
-
-        view.addColumns(dateTimeFormatter::format, refCells.configure(new UserRefCell.Builder<ResultStoreInfo>()));
-        view.setOnTerminate(this::onTerminate);
-        view.setOnDelete(this::onDelete);
-        view.setOnSettings(this::edit);
+        this.dateTimeFormatter = dateTimeFormatter;
 
         dataProvider =
                 new RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>>(getEventBus()) {
@@ -82,7 +77,23 @@ public class ResultStoreListController extends Controller {
                         resultStoreModel.fetch(range, dataConsumer, errorHandler, view.getTaskMonitor());
                     }
                 };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, adding its columns and fetching the
+    /// stores into it. The list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ResultStoreListController attach(final ResultStoreList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.addColumns(dateTimeFormatter::format, refCells.configure(new UserRefCell.Builder<ResultStoreInfo>()));
+        view.setOnTerminate(this::onTerminate);
+        view.setOnDelete(this::onDelete);
+        view.setOnSettings(this::edit);
         view.setDataProvider(dataProvider);
+        return this;
     }
 
     private void onTerminate() {

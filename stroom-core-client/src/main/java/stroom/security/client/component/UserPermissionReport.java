@@ -16,6 +16,7 @@
 
 package stroom.security.client.component;
 
+import stroom.explorer.client.component.DocumentPermissionsList;
 import stroom.item.client.SelectionBox;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.widget.component.client.Component;
@@ -25,14 +26,13 @@ import stroom.widget.quickfilter.client.QuickFilterPage;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
 /// A user's or group's Document Permissions tab: which documents are listed (those the user has
 /// explicit permissions on, effective permissions on, or all), then the documents (a list its
-/// controller shows here) with a quick filter above them.
+/// controller attaches a list's controller to) with a quick filter above them.
 public class UserPermissionReport extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -41,6 +41,8 @@ public class UserPermissionReport extends Component {
     SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
     QuickFilterPage documents;
+    @UiField
+    DocumentPermissionsList documentsList;
 
     private Consumer<PermissionShowLevel> onPermissionShowLevelChange = showLevel -> {
     };
@@ -59,9 +61,9 @@ public class UserPermissionReport extends Component {
         return permissionVisibility.getValue();
     }
 
-    /// @param documentsList The documents and the user's permissions on each.
-    public void setDocumentsList(final IsWidget documentsList) {
-        documents.setContent(documentsList);
+    /// @return The documents and the user's permissions on each.
+    public DocumentPermissionsList getDocumentsList() {
+        return documentsList;
     }
 
     /// Shows why the server rejected the quick filter. See `ResultPage.filterError`.

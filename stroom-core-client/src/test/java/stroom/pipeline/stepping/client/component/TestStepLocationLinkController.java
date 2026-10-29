@@ -52,9 +52,10 @@ class TestStepLocationLinkController {
         view = Mockito.mock(StepLocationLink.class);
         pickerView = Mockito.mock(StepLocationPicker.class);
         // The real dialog controller, as the popup is fired from it onto the event bus
-        controller = new StepLocationLinkController(view, () -> new StepLocationPickerController(
+        controller = new StepLocationLinkController(() -> new StepLocationPickerController(
                 eventBus,
-                pickerView));
+                pickerView))
+                .attach(view);
 
         final ArgumentCaptor<Runnable> onClickCaptor = ArgumentCaptor.forClass(Runnable.class);
         Mockito.verify(view).setOnClick(onClickCaptor.capture());

@@ -71,14 +71,9 @@ public class UserAccessController extends ContentTabController
                                 final UiConfigCache uiConfigCache) {
         super(eventBus);
         initWidget(view);
-        own(userAccessList);
-        own(userSessionsList);
-        this.userAccessList = userAccessList;
-        this.userSessionsList = userSessionsList;
+        this.userAccessList = own(userAccessList).attach(view.getList());
+        this.userSessionsList = own(userSessionsList).attach(view.getSessions());
         this.restFactory = restFactory;
-
-        view.setList(userAccessList);
-        view.setSessionList(userSessionsList);
 
         // Named for exactly what it does. "Revoke this user's access" was the earlier wording and claimed
         // more than the action delivers: nothing about the user's access is withdrawn, and they can sign

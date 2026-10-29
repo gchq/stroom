@@ -22,26 +22,36 @@ import stroom.widget.component.client.Controller;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.Objects;
+
 /// Moves the source viewer through what it shows ([HasCharacterData]) with its
 /// [CharacterNavigator], and opens the "Set Source Range" dialog when the user asks to set the range.
 public class CharacterNavigatorController extends Controller {
 
-    private final CharacterNavigator view;
     private final Provider<CharacterRangeSelectionController> characterRangeSelectionProvider;
+    private CharacterNavigator view;
     private HasCharacterData display;
 
-    /// Made by GIN, with its navigator and what makes its range dialog.
+    /// Made by GIN, with what makes its range dialog; [#attach(CharacterNavigator)] gives it its
+    /// navigator.
     ///
-    /// @param view                            Its component.
     /// @param characterRangeSelectionProvider Makes the character range selection.
     @Inject
     public CharacterNavigatorController(
-            final CharacterNavigator view,
             final Provider<CharacterRangeSelectionController> characterRangeSelectionProvider) {
-        this.view = view;
         this.characterRangeSelectionProvider = characterRangeSelectionProvider;
+    }
+
+    /// Attaches this to a navigator, e.g. one a template declares. The navigator is then this
+    /// controller's widget.
+    ///
+    /// @param view The navigator.
+    /// @return This, for its owner to keep.
+    public CharacterNavigatorController attach(final CharacterNavigator view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnAction(this::onAction);
+        return this;
     }
 
     /// @param display What the navigator moves through, or null for nothing; shown once

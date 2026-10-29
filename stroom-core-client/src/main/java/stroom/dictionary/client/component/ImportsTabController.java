@@ -21,10 +21,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -40,14 +37,9 @@ import java.util.List;
 /// removed unless the dictionary is read only, and the effective words of the one selected.
 public class ImportsTabController extends Controller {
 
-    private static final String ADD_TITLE = "Add Imported Dictionary";
-    private static final String REMOVE_TITLE = "Remove Imported Dictionary";
-
     private final DocRefListController importList;
     private final EffectiveWordsListController effectiveWords;
     private final Provider<ExplorerPopupController> docSelectionPopupProvider;
-    private final ToolbarButton addButton;
-    private final ToolbarButton removeButton;
     // Made when first used, and kept for the next time
     private ExplorerPopupController docSelectionPopup;
     private List<DocRef> imports = new ArrayList<>();
@@ -71,14 +63,12 @@ public class ImportsTabController extends Controller {
                                 final Provider<ExplorerPopupController> docSelectionPopupProvider) {
         super(eventBus);
         this.docSelectionPopupProvider = docSelectionPopupProvider;
-        this.effectiveWords = own(effectiveWords);
-        importList = make(docRefListProvider);
+        initWidget(view);
+        this.effectiveWords = own(effectiveWords).attach(view.getWords());
+        importList = make(docRefListProvider).attach(view.getImports());
 
-        importList.initTableColumns("Document Name", true);
-        final Toolbar toolbar = importList.getToolbar();
-        toolbar.setName("Dictionary actions");
-        addButton = toolbar.button(SvgImage.ADD, ADD_TITLE, this::addImport);
-        removeButton = toolbar.button(SvgImage.DELETE, REMOVE_TITLE, this::removeSelected);
+        importList.setOnAdd(this::addImport);
+        importList.setOnRemove(this::removeSelected);
         own(getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (!event.getSelectionType().isDoubleSelect()
@@ -87,10 +77,6 @@ public class ImportsTabController extends Controller {
                 effectiveWords.setDocRef(getSelectionModel().getSelected());
             }
         }));
-
-        initWidget(view);
-        view.setImports(importList);
-        view.setWords(effectiveWords);
 
         watch(Contexts.READ_ONLY, readOnly -> {
             this.readOnly = readOnly;
@@ -171,14 +157,7 @@ public class ImportsTabController extends Controller {
     }
 
     private void enableButtons() {
-        addButton.setEnabled(!readOnly);
-        removeButton.setEnabled(!readOnly && NullSafe.hasItems(getSelectionModel().getSelectedItems()));
-        // The name stays, with why the buttons are disabled for a read-only dictionary
-        final String suffix = readOnly
-                ? " (dictionary is read only)"
-                : "";
-        addButton.setTitle(ADD_TITLE + suffix);
-        removeButton.setTitle(REMOVE_TITLE + suffix);
+        importList.updateActions(readOnly);
     }
 
     private MultiSelectionModel<DocRef> getSelectionModel() {

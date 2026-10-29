@@ -29,6 +29,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -36,22 +37,18 @@ import java.util.function.Consumer;
 /// node group being edited.
 public class NodeGroupStateListController extends Controller {
 
-    private final NodeGroupStateList view;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+    private NodeGroupStateList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(NodeGroupStateList)] gives it its list.
     ///
     /// @param eventBus   The application's event bus.
-    /// @param view       The content.
     /// @param nodeClient Fetches the nodes.
     @Inject
     public NodeGroupStateListController(final EventBus eventBus,
-                                        final NodeGroupStateList view,
                                         final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -62,8 +59,19 @@ public class NodeGroupStateListController extends Controller {
                         view.getTaskMonitor());
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public NodeGroupStateListController attach(final NodeGroupStateList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
         view.setDataProvider(dataProvider);
         view.setOnSortChange(this::refresh);
+        return this;
     }
 
     /// @param allNodes The ids of every node, for the header's tick box.

@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A document's Processor Tasks tab: a summary of its tasks, and the tasks of the selected row.
@@ -31,27 +29,23 @@ public class ProcessorTasksTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel taskSummary;
+    ProcessorTaskSummaryList taskSummary;
     @UiField
-    SimplePanel taskList;
+    ProcessorTasksList taskList;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with its lists empty until their controllers fill them.
     public ProcessorTasksTab() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// Shows the summary of tasks.
-    ///
-    /// @param view Its view.
-    public void setTaskSummaryView(final IsWidget view) {
-        taskSummary.setWidget(view.asWidget());
+    /// @return The summary of tasks, which its controller attaches the list's controller to.
+    public ProcessorTaskSummaryList getTaskSummary() {
+        return taskSummary;
     }
 
-    /// Shows the tasks.
-    ///
-    /// @param view Its view.
-    public void setTaskListView(final IsWidget view) {
-        taskList.setWidget(view.asWidget());
+    /// @return The tasks, which its controller attaches the list's controller to.
+    public ProcessorTasksList getTaskList() {
+        return taskList;
     }
 
     interface Binder extends UiBinder<Widget, ProcessorTasksTab> {

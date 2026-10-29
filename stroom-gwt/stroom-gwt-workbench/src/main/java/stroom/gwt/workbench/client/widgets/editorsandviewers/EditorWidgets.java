@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.data.client.component.DataTextPane;
 import stroom.data.client.component.DataTextPaneController;
 import stroom.editor.client.CurrentPreferences;
 import stroom.editor.client.DelegatingAceCompleter;
@@ -70,14 +69,14 @@ public final class EditorWidgets {
                         new NoOpGlobalKeyHandler()));
     }
 
-    /// Creates Stroom's data text pane (the editor used to show stream data), as GIN would.
+    /// Creates the controller of Stroom's data text pane (the editor used to show stream data), as
+    /// GIN would, for its owner to attach to a pane.
     ///
     /// @param eventBus The event bus.
     /// @return The pane's controller.
     static DataTextPaneController dataTextPane(final EventBus eventBus) {
         return new DataTextPaneController(
                 eventBus,
-                new DataTextPane(),
                 () -> codeEditorController(eventBus));
     }
 

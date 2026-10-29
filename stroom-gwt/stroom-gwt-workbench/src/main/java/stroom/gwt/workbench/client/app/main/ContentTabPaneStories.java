@@ -39,6 +39,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerNode;
+import stroom.widget.tab.client.component.CurveTabLayout;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
@@ -125,7 +126,9 @@ public final class ContentTabPaneStories {
                 .build();
         final EventBus eventBus = harness.getEventBus();
         // The tab pane, registered for the content events as MainScreens registers it
-        final ContentTabPaneController pane = injector.getContentTabPaneController();
+        // Shown on its own, so attached to a layout of its own, as Stroom's main view declares one
+        final ContentTabPaneController pane = injector.getContentTabPaneController()
+                .attach(new CurveTabLayout());
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), pane));

@@ -34,6 +34,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The past executions of the execution schedule its owner gives ([ScheduledProcessHistoryList]), a
@@ -44,29 +45,38 @@ public class ScheduledProcessHistoryListController extends Controller {
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
-    private final ScheduledProcessHistoryList view;
+    private ScheduledProcessHistoryList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
     private RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
     private ExecutionHistoryRequest request = ExecutionHistoryRequest.builder().build();
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ScheduledProcessHistoryList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the executions.
     /// @param dateTimeFormatter Formats the times shown.
     @Inject
     public ScheduledProcessHistoryListController(final EventBus eventBus,
-                                                 final ScheduledProcessHistoryList view,
                                                  final RestFactory restFactory,
                                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ScheduledProcessHistoryListController attach(final ScheduledProcessHistoryList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::format);
         view.setOnSortChange(this::refresh);
         watch(Contexts.READ_ONLY, view::setReadOnly);
+        return this;
     }
 
     /// Shows an execution schedule's past executions, with none selected.

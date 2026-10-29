@@ -24,8 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -39,12 +37,12 @@ public class DependenciesTab extends Component {
     @UiField
     QuickFilter quickFilter;
     @UiField
-    SimplePanel dataGrid;
+    DependencyList list;
 
     private Consumer<String> onFilterChange = text -> {
     };
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with no dependencies.
     public DependenciesTab() {
         initWidget(BINDER.createAndBindUi(this));
         quickFilter.setOnChange(text -> onFilterChange.accept(text));
@@ -55,11 +53,9 @@ public class DependenciesTab extends Component {
         this.onFilterChange = Objects.requireNonNull(onFilterChange, "onFilterChange");
     }
 
-    /// Shows the list of dependencies.
-    ///
-    /// @param view Its view.
-    public void setListView(final IsWidget view) {
-        dataGrid.setWidget(view.asWidget());
+    /// @return The dependencies, which its controller attaches the list's controller to.
+    public DependencyList getList() {
+        return list;
     }
 
     /// @param helpTooltipText The help shown by the filter's syntax help button.

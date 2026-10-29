@@ -40,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The floor map's timeline ([FloorMapTimeline]): plays and steps through the time range, which it
@@ -60,7 +61,7 @@ public class FloorMapTimelineController extends Controller {
     /// so the server is not overwhelmed at high playback speeds.
     private static final double PLAYBACK_QUERY_INTERVAL_MS = 300.0;
 
-    private final FloorMapTimeline view;
+    private FloorMapTimeline view;
     private final FloorMapTimelineSettingsController settings;
 
     private long startTime;
@@ -136,22 +137,28 @@ public class FloorMapTimelineController extends Controller {
         this.onTimeChange = onTimeChange;
     }
 
-    /// Made by GIN, with its timeline.
+    /// Made by GIN; [#attach(FloorMapTimeline)] gives it its timeline.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The timeline.
     /// @param settings          The playback settings' popup.
     /// @param dateTimeFormatter Formats the times shown.
     @Inject
     public FloorMapTimelineController(final EventBus eventBus,
-                                      final FloorMapTimeline view,
                                       final FloorMapTimelineSettingsController settings,
                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         this.settings = own(settings);
         this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a timeline, e.g. one a template declares. The timeline is then this
+    /// controller's widget.
+    ///
+    /// @param view The timeline.
+    /// @return This, for its owner to keep.
+    public FloorMapTimelineController attach(final FloorMapTimeline view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
 
         view.setOnScrub(percentage -> {
             // Visual-only update during drag — no data query fired.
@@ -280,6 +287,7 @@ public class FloorMapTimelineController extends Controller {
         });
 
         setPlaybackSpeed(1.0);
+        return this;
     }
 
     /// Shows the playback-speed menu anchored above the speed badge. The currently

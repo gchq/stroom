@@ -22,7 +22,7 @@ import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
@@ -38,10 +38,11 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AbstractDataProvider;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /// Annotation tags of one type, a row each (its name, its text where the type has it, and its style
-/// for labels); several can be selected.
+/// for labels); several can be selected. New, Edit and Delete are on its toolbar.
 public class AnnotationTagList extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -49,14 +50,25 @@ public class AnnotationTagList extends Component {
     @UiField
     PagerPanel pager;
     @UiField
+    ToolbarButton newButton;
+    @UiField
+    ToolbarButton editButton;
+    @UiField
+    ToolbarButton deleteButton;
+    @UiField
     DataGrid<AnnotationTag> dataGrid;
 
     private final MultiSelectionModelImpl<AnnotationTag> selectionModel;
+    private Consumer<TagAction> onAction = action -> {
+    };
 
     /// Makes an empty list, with no columns until [#addColumns(AnnotationTagType)].
     public AnnotationTagList() {
         initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        newButton.setOnClick(() -> onAction.accept(TagAction.NEW));
+        editButton.setOnClick(() -> onAction.accept(TagAction.EDIT));
+        deleteButton.setOnClick(() -> onAction.accept(TagAction.DELETE));
     }
 
     /// Adds the columns for a type of tag, once.
@@ -115,9 +127,24 @@ public class AnnotationTagList extends Component {
         return selectionModel;
     }
 
-    /// @return The toolbar beside the pager, for the screen's own buttons.
-    public Toolbar getToolbar() {
-        return pager.getToolbar();
+    /// @param enabled Whether Edit and Delete are enabled, for a selected tag.
+    public void setSelectionActionsEnabled(final boolean enabled) {
+        editButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
+    }
+
+    /// Names the buttons after the kind of tag listed, e.g. "New Annotation Status".
+    ///
+    /// @param tagName The kind of tag, e.g. `Annotation Status`.
+    public void setTagName(final String tagName) {
+        newButton.setTitle("New " + tagName);
+        editButton.setTitle("Edit Selected " + tagName);
+        deleteButton.setTitle("Delete Selected " + tagName);
+    }
+
+    /// @param onAction Given the action pressed.
+    public void setOnAction(final Consumer<TagAction> onAction) {
+        this.onAction = onAction;
     }
 
 
@@ -126,5 +153,19 @@ public class AnnotationTagList extends Component {
 
     interface Binder extends UiBinder<Widget, AnnotationTagList> {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An action on the tags.
+    public enum TagAction {
+        /// Makes a tag.
+        NEW,
+        /// Edits the tag selected.
+        EDIT,
+        /// Deletes the tags selected.
+        DELETE
     }
 }

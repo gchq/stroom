@@ -16,13 +16,13 @@
 
 package stroom.processor.task.client.component;
 
+import stroom.data.client.component.ProcessorTaskSummaryList;
+import stroom.data.client.component.ProcessorTasksList;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A processor filter's tasks: their summary above the tasks of the summary row selected, each a
@@ -32,23 +32,23 @@ public class ProcessorFilterTasks extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel summary;
+    ProcessorTaskSummaryList summary;
     @UiField
-    SimplePanel tasks;
+    ProcessorTasksList tasks;
 
-    /// Makes the panes, with nothing in them.
+    /// Makes the panes, with their lists empty until their controllers fill them.
     public ProcessorFilterTasks() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param summary The summary of the tasks.
-    public void setSummary(final IsWidget summary) {
-        this.summary.setWidget(summary);
+    /// @return The summary of the tasks, which its controller attaches the list's controller to.
+    public ProcessorTaskSummaryList getSummary() {
+        return summary;
     }
 
-    /// @param tasks The tasks.
-    public void setTasks(final IsWidget tasks) {
-        this.tasks.setWidget(tasks);
+    /// @return The tasks, which its controller attaches the list's controller to.
+    public ProcessorTasksList getTasks() {
+        return tasks;
     }
 
 

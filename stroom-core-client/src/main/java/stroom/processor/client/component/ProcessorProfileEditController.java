@@ -65,9 +65,8 @@ public class ProcessorProfileEditController extends Controller {
         this.view = view;
         this.processorProfileClient = processorProfileClient;
         this.nodeGroupClient = nodeGroupClient;
-        this.profilePeriodList = own(profilePeriodList);
         initWidget(view);
-        view.setList(profilePeriodList);
+        this.profilePeriodList = own(profilePeriodList).attach(view.getList());
 
         final NodeGroupListModel nodeGroupListModel = new NodeGroupListModel(eventBus, nodeGroupClient);
         nodeGroupListModel.setTaskMonitorFactory(() -> taskMonitor().createTaskMonitor());

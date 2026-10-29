@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -60,22 +61,22 @@ public class PipelineReferenceListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final PipelineReferenceList view;
     private final Map<PipelineReference, ReferenceState> referenceStateMap = new HashMap<>();
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferenceController> newPipelineReferenceProvider;
     private final RestFactory restFactory;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
+    private final RefCellsController refCells;
 
+    private PipelineReferenceList view;
     private PipelineDoc pipeline;
     private PipelineModel pipelineModel;
     private PipelineElement currentElement;
     private PipelinePropertyType propertyType;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(PipelineReferenceList)] gives it its list.
     ///
     /// @param eventBus                     The application's event bus.
-    /// @param view                         The content.
     /// @param newPipelineReferenceProvider Makes a reference's editor.
     /// @param restFactory                  Fetches the documents' names.
     /// @param pipelineElementTypesFactory  Gives the elements' property types.
@@ -83,17 +84,24 @@ public class PipelineReferenceListController extends Controller {
     @Inject
     public PipelineReferenceListController(
             final EventBus eventBus,
-            final PipelineReferenceList view,
             final Provider<NewPipelineReferenceController> newPipelineReferenceProvider,
             final RestFactory restFactory,
             final PipelineElementTypesFactory pipelineElementTypesFactory,
             final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         this.newPipelineReferenceProvider = newPipelineReferenceProvider;
         this.restFactory = restFactory;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public PipelineReferenceListController attach(final PipelineReferenceList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         view.addColumns(
@@ -105,6 +113,7 @@ public class PipelineReferenceListController extends Controller {
         view.setOnEdit(this::onEdit);
         view.setOnRemove(this::onRemove);
         watch(Contexts.READ_ONLY, view::setReadOnly);
+        return this;
     }
 
     /// @param tableName The list's name, for assistive technology.

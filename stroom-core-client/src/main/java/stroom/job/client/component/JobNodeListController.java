@@ -57,54 +57,39 @@ public class JobNodeListController extends Controller {
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
     private static final int REDRAW_TIMER_DELAY_MS = 50;
 
-    private final JobNodeList view;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
+    private final DateTimeFormatter dateTimeFormatter;
     private final JobNodeActionsController actions;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final DelayedUpdate redrawDelayedUpdate;
 
+    private JobNodeList view;
     private boolean autoRefresh;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(JobNodeList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the job nodes and their info, and sets their task limits.
     /// @param actionsProvider   Makes what does the job nodes' actions.
     /// @param dateTimeFormatter Formats the times shown.
     /// @param nodeClient        Lists the enabled nodes.
     @Inject
     public JobNodeListController(final EventBus eventBus,
-                                 final JobNodeList view,
                                  final RestFactory restFactory,
                                  final Provider<JobNodeActionsController> actionsProvider,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
-        initWidget(view);
+        this.dateTimeFormatter = dateTimeFormatter;
 
-        redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, view::redraw);
+        redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, () -> view.redraw());
         onDispose(redrawDelayedUpdate::reset);
         dataProvider = buildDataProvider(eventBus);
-
-        view.addColumns(dateTimeFormatter::formatWithDuration, this::buildOpenJobNodeCommandLink,
-                this::setTaskLimit);
         actions = make(actionsProvider);
-        actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
-                this::internalRefresh);
-        view.setOnEnabledChange(actions::setEnabled);
-        view.setOnEditSchedule(actions::showSchedule);
-        view.setOnShowActionMenu(actions::showActionMenu);
-        view.setOnShowEnabledChange(this::internalRefresh);
-        view.setOnAutoRefreshChange(this::onAutoRefreshToggled);
-        view.setOnSortChange(this::internalRefresh);
-
-        refreshNodeStates();
 
         // NodeStatusListController may change a node
         listen(
@@ -137,6 +122,30 @@ public class JobNodeListController extends Controller {
                         }
                     }
                 });
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, and asks which nodes are enabled.
+    /// The list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public JobNodeListController attach(final JobNodeList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.addColumns(dateTimeFormatter::formatWithDuration, this::buildOpenJobNodeCommandLink,
+                this::setTaskLimit);
+        actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
+                this::internalRefresh);
+        view.setOnEnabledChange(actions::setEnabled);
+        view.setOnEditSchedule(actions::showSchedule);
+        view.setOnShowActionMenu(actions::showActionMenu);
+        view.setOnShowEnabledChange(this::internalRefresh);
+        view.setOnAutoRefreshChange(this::onAutoRefreshToggled);
+        view.setOnSortChange(this::internalRefresh);
+
+        refreshNodeStates();
+        return this;
     }
 
     private void refreshNodeStates() {

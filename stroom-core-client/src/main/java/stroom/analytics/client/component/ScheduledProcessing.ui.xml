@@ -1,11 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client">
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:an="urn:import:stroom.analytics.client.component">
     <!-- A document's scheduled executions (scheduled-processing.css): its schedules above the
          history of the one selected -->
     <split:SplitPane vertical="true" thin="true" sizes="400px, *"
                      names="Schedules, History" addStyleNames="scheduled-processing max">
-        <g:SimplePanel ui:field="scheduleList" styleName="max dashboard-panel overflow-hidden"/>
-        <g:SimplePanel ui:field="historyList" styleName="max dashboard-panel overflow-hidden"/>
+        <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <an:ScheduledProcessList ui:field="scheduleList"/>
+        </g:SimplePanel>
+        <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <an:ScheduledProcessHistoryList ui:field="historyList"/>
+        </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A data browser: streams, above the streams related to the one selected, above its data (all
@@ -32,30 +30,32 @@ public class MetaBrowser extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel streamList;
+    MetaList streamList;
     @UiField
-    SimplePanel streamRelationList;
+    MetaList streamRelationList;
     @UiField
-    SimplePanel data;
+    DataViewer data;
 
     /// Makes the browser, with nothing in it.
     public MetaBrowser() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param streamList The streams.
-    public void setStreamList(final IsWidget streamList) {
-        this.streamList.setWidget(streamList);
+    /// @return The streams, which its controller attaches the list's controller to.
+    public MetaList getStreamList() {
+        return streamList;
     }
 
-    /// @param streamRelationList The streams related to the one selected.
-    public void setStreamRelationList(final IsWidget streamRelationList) {
-        this.streamRelationList.setWidget(streamRelationList);
+    /// @return The streams related to the one selected, which its controller attaches the list's
+    /// controller to.
+    public MetaList getStreamRelationList() {
+        return streamRelationList;
     }
 
-    /// @param data The data of the stream selected.
-    public void setData(final IsWidget data) {
-        this.data.setWidget(data);
+    /// @return The data of the stream selected, which its controller attaches the viewer's
+    /// controller to.
+    public DataViewer getData() {
+        return data;
     }
 
 

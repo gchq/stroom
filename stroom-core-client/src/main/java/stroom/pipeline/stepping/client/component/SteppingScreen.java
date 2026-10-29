@@ -21,24 +21,22 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
 /// The stepping screen: the pipeline's bar, the log pane toggle, the step's progress (announced to
-/// screen readers), where the step is and the step controls (shown here by its controller), and
-/// Terminate, above the selected element's panes.
+/// screen readers), where the step is and the step controls, and Terminate, above the selected
+/// element's panes.
 public class SteppingScreen extends Component implements RequiresResize, ProvidesResize {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -46,13 +44,15 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
     @UiField
     PipelinePathBar pipelinePathBar;
     @UiField
-    FlowPanel right;
-    @UiField
     ToolbarToggleButton toggleLogPane;
     @UiField
-    SimplePanel stepMessage;
+    Label stepMessage;
     @UiField
     DivElement stepAnnouncement;
+    @UiField
+    StepLocationLink stepLocationLink;
+    @UiField
+    StepControl stepControl;
     @UiField
     ToolbarButton terminate;
     @UiField
@@ -81,13 +81,14 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
         return pipelinePathBar;
     }
 
-    /// Puts where the step is and the step controls between the step's progress and Terminate.
-    ///
-    /// @param stepLocationLink Where the step is.
-    /// @param stepControl      The step controls.
-    public void setStepControls(final IsWidget stepLocationLink, final IsWidget stepControl) {
-        right.insert(stepLocationLink, 1);
-        right.insert(stepControl, 2);
+    /// @return Where the step is, which its controller attaches the link's controller to.
+    public StepLocationLink getStepLocationLink() {
+        return stepLocationLink;
+    }
+
+    /// @return The step controls, which its controller attaches their controller to.
+    public StepControl getStepControl() {
+        return stepControl;
     }
 
     /// @param content The selected element's panes.
@@ -99,7 +100,7 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
     ///
     /// @param message The progress, or blank for none.
     public void setStepMessage(final String message) {
-        stepMessage.getElement().setInnerText(message);
+        stepMessage.setText(message);
         stepMessage.setTitle(message);
     }
 

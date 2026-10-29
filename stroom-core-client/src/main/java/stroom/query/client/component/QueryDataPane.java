@@ -26,16 +26,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
 /// A store's or index's Data tab: a StroomQL query of its rows (Enter runs it) with Reset, Run, Stop
-/// and Create Dashboard, any error in the query, and the results table (shown here by its
-/// controller).
+/// and Create Dashboard, any error in the query, and the results table.
 public class QueryDataPane extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -55,7 +52,7 @@ public class QueryDataPane extends Component {
     @UiField
     Label errorLabel;
     @UiField
-    SimplePanel tableContainer;
+    QueryResultTable table;
 
     private Consumer<QueryDataAction> onAction = action -> {
     };
@@ -84,9 +81,9 @@ public class QueryDataPane extends Component {
         return query.getText();
     }
 
-    /// @param table The results table.
-    public void setTable(final IsWidget table) {
-        tableContainer.setWidget(table);
+    /// @return The results table, which its controller attaches the table's controller to.
+    public QueryResultTable getTable() {
+        return table;
     }
 
     /// Shows an error in the query, and tells screen readers the query is invalid.

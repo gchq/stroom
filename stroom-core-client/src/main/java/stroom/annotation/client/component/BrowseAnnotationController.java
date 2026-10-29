@@ -39,20 +39,19 @@ public class BrowseAnnotationController extends LayerController implements TabDa
     /// Made by GIN, with its screen and its list.
     ///
     /// @param eventBus           The application's event bus.
-    /// @param view               Its component.
+    /// @param content            Its component.
     /// @param findAnnotationList The find annotation list.
     @Inject
     public BrowseAnnotationController(final EventBus eventBus,
-                                      final FindPanel view,
+                                      final FindAnnotations content,
                                       final FindAnnotationListController findAnnotationList) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
-        this.findAnnotationList = own(findAnnotationList);
+        initWidget(content);
+        this.view = content.getFindPanel();
+        this.findAnnotationList = own(findAnnotationList).attach(content.getResultList());
         // To browse, users only need view permission.
         findAnnotationList.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(findAnnotationList);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnFilterKeyDown(this::onFilterKeyDown);
         findAnnotationList.setOnOpen(this::openDocument);

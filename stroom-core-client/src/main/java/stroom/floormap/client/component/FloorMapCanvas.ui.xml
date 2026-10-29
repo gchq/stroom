@@ -42,7 +42,10 @@
                  single glyph would read as unstable, and a fixed anchor lets the
                  contents be rebuilt only when the hovered glyph changes. -->
             <g:FlowPanel ui:field="hoverTooltip"
-                         addStyleNames="stroom-floormap-hover-tooltip"/>
+                         addStyleNames="stroom-floormap-hover-tooltip">
+                <tx:Label ui:field="hoverCaption" addStyleNames="stroom-floormap-hover-tooltip__caption"/>
+                <g:FlowPanel ui:field="hoverLines"/>
+            </g:FlowPanel>
             <!-- Always-on scale bar: the origin indicator only helps while (0,0)
                  is on screen, which is not the normal state of a map being read. -->
             <g:FlowPanel ui:field="scaleBar" addStyleNames="stroom-floormap-scale-bar">

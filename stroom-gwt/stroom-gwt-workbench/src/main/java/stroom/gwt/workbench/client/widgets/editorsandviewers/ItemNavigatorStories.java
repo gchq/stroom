@@ -132,8 +132,8 @@ public final class ItemNavigatorStories {
     private static Widget render(final StoryContext context, final long count) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
         final ItemNavigatorController navigator = harness.own(new ItemNavigatorController(
-                new ItemNavigator(),
-                () -> new ItemSelectionController(harness.getEventBus(), new ItemSelection())));
+                () -> new ItemSelectionController(harness.getEventBus(), new ItemSelection()))
+                .attach(new ItemNavigator()));
         navigator.setDisplay(new Records(navigator, count, context.fn(ON_SET_ITEM_NO), context.fn(ON_REFRESH)));
         harness.add(navigator.asWidget());
         return harness.asWidget();

@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
+import java.util.Objects;
 
 /// The individual sessions held by the user selected above ([UserSessionsList]): the drill-down that
 /// makes ending one session possible without disturbing that user's other logins.
@@ -40,28 +41,37 @@ public class UserSessionsListController extends Controller {
     private static final SessionResource SESSION_RESOURCE = GWT.create(SessionResource.class);
 
     private final RestFactory restFactory;
-    private final UserSessionsList view;
+    private final DateTimeFormatter dateTimeFormatter;
+    private UserSessionsList view;
 
     private String subjectId;
     private String displayName;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(UserSessionsList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Lists and ends sessions.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     @Inject
     public UserSessionsListController(final EventBus eventBus,
-                                      final UserSessionsList view,
                                       final RestFactory restFactory,
                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public UserSessionsListController attach(final UserSessionsList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::formatWithDuration);
         view.setOnEndSession(this::endSelectedSession);
+        return this;
     }
 
     /// Shows the sessions for one user, or clears the list when nothing is selected above.

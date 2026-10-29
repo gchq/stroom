@@ -35,7 +35,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// The Find dialog ([FindPanel]): finds documents by name, and opens the one chosen. Made once by
+/// The Find dialog ([FindDocuments]): finds documents by name, and opens the one chosen. Made once by
 /// the app and shown again, it keeps the last filter.
 public class FindController extends Controller {
 
@@ -52,22 +52,22 @@ public class FindController extends Controller {
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
+    /// @param content                          The content.
     /// @param findResultList                   Finds the documents, and lists them.
     /// @param quickFilterContextHandlerFactory Makes the filter's recent filters.
     /// @param uiConfigCache                    Gives the filter's help link.
     @Inject
     public FindController(final EventBus eventBus,
-                          final FindPanel view,
+                          final FindDocuments content,
                           final FindDocResultListController findResultList,
                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
                           final UiConfigCache uiConfigCache) {
-        this(eventBus, view, findResultList, quickFilterContextHandlerFactory);
-        view.setFilterGuidance("Find by name", FILTER_DESCRIPTION);
+        this(eventBus, content, findResultList, quickFilterContextHandlerFactory);
+        content.getFindPanel().setFilterGuidance("Find by name", FILTER_DESCRIPTION);
         // The same fields as the explorer tree's filter
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null && !isDisposed()) {
-                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                content.getFindPanel().registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                         "Find Quick Filter",
                         ExplorerTreeFilter.FIELD_DEFINITIONS,
                         uiConfig.getHelpUrlQuickFilter()));
@@ -78,22 +78,21 @@ public class FindController extends Controller {
     /// Made by a dialog that finds documents differently, e.g. Recent Items.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
+    /// @param content                          The content.
     /// @param findResultList                   Finds the documents, and lists them.
     /// @param quickFilterContextHandlerFactory Makes the filter's recent filters.
     protected FindController(final EventBus eventBus,
-                             final FindPanel view,
+                             final FindDocuments content,
                              final FindDocResultListController findResultList,
                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
-        this.findResultList = own(findResultList);
-        initWidget(view);
+        initWidget(content);
+        this.view = content.getFindPanel();
+        this.findResultList = own(findResultList).attach(content.getResultList());
         // The find dialog's text is parsed by NodeInclusionChecker against the explorer tree's
         // fields, so it shares the tree's history.
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, () -> taskMonitor().createTaskMonitor()));
-        view.setResultView(findResultList);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnFilterKeyDown(this::onFilterKeyDown);
         findResultList.setOnOpen(this::openDocument);

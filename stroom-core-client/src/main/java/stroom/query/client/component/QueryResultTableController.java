@@ -120,10 +120,11 @@ public class QueryResultTableController
 
     private final RestFactory restFactory;
     private final LocationManager locationManager;
-    private final QueryResultTable view;
-    private final PagerPanel pagerView;
-    private final DataGrid<TableRow> dataGrid;
-    private final MultiSelectionModelImpl<TableRow> selectionModel;
+    private final ClientSecurityContext securityContext;
+    private QueryResultTable view;
+    private PagerPanel pagerView;
+    private DataGrid<TableRow> dataGrid;
+    private MultiSelectionModelImpl<TableRow> selectionModel;
 
     private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
@@ -132,16 +133,16 @@ public class QueryResultTableController
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private GroupSelection groupSelection = new GroupSelection();
 
-    private final GroupLevelButtons groupLevelButtons;
+    private GroupLevelButtons groupLevelButtons;
 
-    private final ButtonView downloadButton;
+    private ButtonView downloadButton;
     private final DownloadSearchResultsController downloadOptions;
     private final AnnotationMenuController annotationManager;
-    private final ToolbarToggleButton valueFilterButton;
-    private final ButtonView resetButton;
-    private final ToolbarButton annotateButton;
+    private ToolbarToggleButton valueFilterButton;
+    private ButtonView resetButton;
+    private ToolbarButton annotateButton;
     private final EventBus eventBus;
-    private final ButtonView askAiButton;
+    private ButtonView askAiButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -169,12 +170,11 @@ public class QueryResultTableController
     private Runnable onRefreshRequest = () -> {
     };
 
-    /// Made by GIN, with its content and its dialogs.
+    /// Made by GIN, with its dialogs; [#attach(QueryResultTable)] gives it its content.
     ///
     /// @param eventBus                   The application's event bus.
     /// @param restFactory                Fetches the data source and the results' columns.
     /// @param locationManager            Opens a download.
-    /// @param view                       The content.
     /// @param downloadOptions            The Download Results dialog.
     /// @param annotationManager          Annotates the rows selected.
     /// @param securityContext            Says whether the user may download.
@@ -187,7 +187,6 @@ public class QueryResultTableController
     public QueryResultTableController(final EventBus eventBus,
                                       final RestFactory restFactory,
                                       final LocationManager locationManager,
-                                      final QueryResultTable view,
                                       final DownloadSearchResultsController downloadOptions,
                                       final AnnotationMenuController annotationManager,
                                       final ClientSecurityContext securityContext,
@@ -197,8 +196,6 @@ public class QueryResultTableController
                                       final ColumnValuesFilterController columnValuesFilter,
                                       final UserPreferencesManager userPreferencesManager) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         own(downloadOptions);
         own(columnValuesFilter);
         this.eventBus = eventBus;
@@ -207,13 +204,8 @@ public class QueryResultTableController
         this.downloadOptions = downloadOptions;
         own(annotationManager);
         this.annotationManager = annotationManager;
+        this.securityContext = securityContext;
         rowStyles = new TableRowStyles(userPreferencesManager);
-
-        this.pagerView = view.getPager();
-        // Pages of up to 10,000 rows: only the rows in view are drawn (virtual), unless a column wraps
-        this.dataGrid = view.getDataGrid();
-        dataGrid.setRowStyles(rowStyles);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
 
         // Its dialogs are this one's, each made for one use
         columnsManager = new QueryTableColumnsManager(eventBus,
@@ -222,7 +214,6 @@ public class QueryResultTableController
                 rulesProvider,
                 columnFilterEditorProvider,
                 columnValuesFilter);
-        dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 
         // Expander column.
@@ -239,6 +230,32 @@ public class QueryResultTableController
             toggle(row);
             refresh();
         });
+
+        annotationManager.setColumnSupplier(() -> currentColumns);
+
+        listen(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange());
+        listen(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange());
+    }
+
+    /// Attaches this to a table, e.g. one a template declares, adding its actions to the table's
+    /// toolbar and listening to its rows. The table is then this controller's widget.
+    ///
+    /// @param view The table.
+    /// @return This, for its owner to keep.
+    public QueryResultTableController attach(final QueryResultTable view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        this.pagerView = view.getPager();
+        // Pages of up to 10,000 rows: only the rows in view are drawn (virtual), unless a column wraps
+        this.dataGrid = view.getDataGrid();
+        dataGrid.setRowStyles(rowStyles);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        dataGrid.setHeadingListener(columnsManager);
 
         pagerView.getRefreshButton().setAllowPause(true);
 
@@ -267,8 +284,6 @@ public class QueryResultTableController
         // Ask AI
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
 
-        annotationManager.setColumnSupplier(() -> currentColumns);
-
         own(dataGrid.addRangeChangeHandler(event -> {
             final com.google.gwt.view.client.Range range = event.getNewRange();
             requestedRange = new OffsetRange(range.getStart(), range.getLength());
@@ -290,13 +305,7 @@ public class QueryResultTableController
                 }
             }
         }));
-
-        listen(
-                AnnotationChangeEvent.getType(),
-                ignored -> onAnnotationChange());
-        listen(
-                AnnotationTagNameChangeEvent.getType(),
-                ignored -> onAnnotationChange());
+        return this;
     }
 
     public DashboardContext getDashboardContext() {

@@ -22,8 +22,6 @@ import stroom.widget.form.client.TextBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A pathway's name, then its paths beside the constraints of the path chosen.
@@ -34,9 +32,9 @@ public class PathwayEdit extends Component {
     @UiField
     TextBox name;
     @UiField
-    SimplePanel tree;
+    PathwayTree tree;
     @UiField
-    SimplePanel constraints;
+    ConstraintList constraints;
 
     /// Makes the form, empty.
     public PathwayEdit() {
@@ -58,14 +56,15 @@ public class PathwayEdit extends Component {
         this.name.setText(name);
     }
 
-    /// @param tree The pathway's paths, a controller of their own.
-    public void setTree(final IsWidget tree) {
-        this.tree.setWidget(tree.asWidget());
+    /// @return The pathway's paths, which its controller attaches the graph's controller to.
+    public PathwayTree getTree() {
+        return tree;
     }
 
-    /// @param constraints The chosen path's constraints, a controller of their own.
-    public void setConstraints(final IsWidget constraints) {
-        this.constraints.setWidget(constraints.asWidget());
+    /// @return The chosen path's constraints, which its controller attaches the list's controller
+    ///         to.
+    public ConstraintList getConstraints() {
+        return constraints;
     }
 
 

@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -46,29 +47,36 @@ public class JobListController extends Controller {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
-    private final JobList view;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
+    private JobList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(JobList)] gives it its list.
     ///
     /// @param eventBus      The application's event bus.
-    /// @param view          The content.
     /// @param restFactory   Lists the jobs and saves whether they are enabled.
     /// @param uiConfigCache Gives the jobs' help link.
     @Inject
     public JobListController(final EventBus eventBus,
-                             final JobList view,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The
+    /// list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public JobListController attach(final JobList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnEnabledChange(this::onEnabledChange);
         view.setOnHelp(this::showHelp);
-        view.setDataProvider(createDataProvider(eventBus));
+        view.setDataProvider(createDataProvider(getEventBus()));
+        return this;
     }
 
     /// @return The selection, one job at most.

@@ -77,10 +77,10 @@ public class FsVolumeGroupEditController extends Controller {
                                        final RestFactory restFactory) {
         super(eventBus);
         this.view = view;
-        this.fsVolumeStatusList = own(fsVolumeStatusList);
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         initWidget(view);
+        this.fsVolumeStatusList = own(fsVolumeStatusList).attach(view.getList());
 
         fsVolumeStatusList.getToolbar().setName("Volume actions");
         fsVolumeStatusList.getToolbar().button(SvgImage.ADD, "New Data Volume", this::create);
@@ -91,8 +91,6 @@ public class FsVolumeGroupEditController extends Controller {
                 "Delete Selected Data Volumes", this::delete);
         deleteButton.setEnabled(false);
         fsVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes", this::onRescan);
-
-        view.setList(fsVolumeStatusList);
         delayedUpdate = new DelayedUpdate(fsVolumeStatusList::refresh);
         onDispose(delayedUpdate::reset);
 

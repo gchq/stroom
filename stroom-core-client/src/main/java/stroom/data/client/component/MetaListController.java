@@ -73,6 +73,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -97,7 +98,10 @@ public class MetaListController extends Controller {
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
-    private final MetaList view;
+    private final RefCellsController refCells;
+    private final Columns columns;
+
+    private MetaList view;
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
 
@@ -106,10 +110,9 @@ public class MetaListController extends Controller {
 
     private final Listeners<Selection<Long>> selectionListeners = new Listeners<>();
 
-    /// Made by GIN, with its content, for the data browser's list of streams.
+    /// Made by GIN, for the data browser's list of streams; [#attach(MetaList)] gives it its list.
     ///
     /// @param eventBus                           The application's event bus.
-    /// @param view                               The content.
     /// @param restFactory                        Finds and changes the streams.
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
@@ -120,7 +123,6 @@ public class MetaListController extends Controller {
     /// @param refCells                           Lets the feed and pipeline cells open them.
     @Inject
     public MetaListController(final EventBus eventBus,
-                              final MetaList view,
                               final RestFactory restFactory,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
@@ -130,7 +132,6 @@ public class MetaListController extends Controller {
                               final ExpressionValidator expressionValidator,
                               final RefCellsController refCells) {
         this(eventBus,
-                view,
                 restFactory,
                 locationManager,
                 dateTimeFormatter,
@@ -145,7 +146,6 @@ public class MetaListController extends Controller {
     /// Made by a list that extends this, with the columns it shows.
     ///
     /// @param eventBus                           The application's event bus.
-    /// @param view                               The content.
     /// @param restFactory                        Finds and changes the streams.
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
@@ -156,7 +156,6 @@ public class MetaListController extends Controller {
     /// @param refCells                           Lets the feed and pipeline cells open them.
     /// @param columns                            Which of the optional columns to show.
     protected MetaListController(final EventBus eventBus,
-                                 final MetaList view,
                                  final RestFactory restFactory,
                                  final LocationManager locationManager,
                                  final DateTimeFormatter dateTimeFormatter,
@@ -167,8 +166,8 @@ public class MetaListController extends Controller {
                                  final RefCellsController refCells,
                                  final Columns columns) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
+        this.columns = columns;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -177,19 +176,7 @@ public class MetaListController extends Controller {
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        initWidget(view);
-
         selection.setMatchAll(false);
-        view.setSelection(selection);
-        view.addColumns(columns,
-                dateTimeFormatter::format,
-                refCells.configure(new FeedRefCell.Builder<>()),
-                refCells.configure(new DocRefCell.Builder<>()),
-                this::buildExpander);
-        view.setOnSelectAll(this::setMatchAll);
-        view.setOnSelectionChange(() -> selectionListeners.fire(selection));
-        view.setOnSortChange(this::refresh);
-
         criteria = new FindMetaCriteria();
         dataProvider = new RestDataProvider<>(eventBus) {
             @Override
@@ -235,6 +222,27 @@ public class MetaListController extends Controller {
                 super.changeData(onProcessData(data));
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The
+    /// list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public MetaListController attach(final MetaList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.setSelection(selection);
+        view.addColumns(columns,
+                dateTimeFormatter::format,
+                refCells.configure(new FeedRefCell.Builder<>()),
+                refCells.configure(new DocRefCell.Builder<>()),
+                this::buildExpander);
+        view.setOnSelectAll(this::setMatchAll);
+        view.setOnSelectionChange(() -> selectionListeners.fire(selection));
+        view.setOnSortChange(this::refresh);
+        return this;
     }
 
     /// @param tableName The list's name, for assistive technology.

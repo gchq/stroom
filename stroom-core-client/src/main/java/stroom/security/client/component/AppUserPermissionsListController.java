@@ -55,17 +55,18 @@ public class AppUserPermissionsListController extends Controller {
 
     private final RestFactory restFactory;
     private final FetchAppUserPermissionsRequest.Builder requestBuilder = new FetchAppUserPermissionsRequest.Builder();
-    private final AppUserPermissionsList view;
     private final UiConfigCache uiConfigCache;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
+    private final RefCellsController refCells;
+    private AppUserPermissionsList view;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private boolean isExternalIdp = false;
     private boolean resetSelection = false;
     private String lastQuickFilter;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(AppUserPermissionsList)] gives it its list.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
     /// @param restFactory                      Fetches the permissions.
     /// @param uiConfigCache                    Gives the quick filter's help link and whether the
     ///                                         identity provider is external.
@@ -73,16 +74,24 @@ public class AppUserPermissionsListController extends Controller {
     /// @param refCells                         Lets the user cells open their users.
     @Inject
     public AppUserPermissionsListController(final EventBus eventBus,
-                                            final AppUserPermissionsList view,
                                             final RestFactory restFactory,
                                             final UiConfigCache uiConfigCache,
                                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
                                             final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public AppUserPermissionsListController attach(final AppUserPermissionsList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         // Not easy to determine if we are dealing in users or groups at this point so just
@@ -108,6 +117,7 @@ public class AppUserPermissionsListController extends Controller {
                         this,
                         null));
         view.setOnSortChange(this::refresh);
+        return this;
     }
 
     private void onFilterChange(String text) {

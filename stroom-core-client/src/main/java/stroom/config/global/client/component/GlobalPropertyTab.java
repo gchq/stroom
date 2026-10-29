@@ -24,8 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -40,12 +38,12 @@ public class GlobalPropertyTab extends Component {
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel dataGrid;
+    ManageGlobalPropertyList list;
 
     private Consumer<String> onFilterChange = text -> {
     };
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with its list empty.
     public GlobalPropertyTab() {
         initWidget(BINDER.createAndBindUi(this));
         nameFilter.setOnChange(text -> onFilterChange.accept(text));
@@ -56,11 +54,9 @@ public class GlobalPropertyTab extends Component {
         this.onFilterChange = Objects.requireNonNull(onFilterChange, "onFilterChange");
     }
 
-    /// Shows the list of properties.
-    ///
-    /// @param view Its view.
-    public void setListView(final IsWidget view) {
-        dataGrid.setWidget(view.asWidget());
+    /// @return The list of properties.
+    public ManageGlobalPropertyList getList() {
+        return list;
     }
 
     /// Puts the focus on the filter.

@@ -30,6 +30,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -37,21 +38,28 @@ import java.util.function.Function;
 /// has the items its owner gives.
 public class ContentTemplateListController extends Controller implements Focus {
 
-    private final ContentTemplateList view;
+    private final RefCellsController refCells;
+    private ContentTemplateList view;
     private Function<ContentTemplate, List<Item>> actionMenuItemProvider = template -> List.of();
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ContentTemplateList)] gives it its list.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     /// @param refCells Lets the pipeline cells open their pipelines.
     @Inject
     public ContentTemplateListController(final EventBus eventBus,
-                                         final ContentTemplateList view,
                                          final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ContentTemplateListController attach(final ContentTemplateList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(refCells.configure(new DocRefCell.Builder<ContentTemplate>()));
         view.setOnShowActionMenu((row, popupPosition) -> ShowMenuEvent
@@ -60,6 +68,7 @@ public class ContentTemplateListController extends Controller implements Focus {
                 .items(actionMenuItemProvider.apply(row))
                 .popupPosition(popupPosition)
                 .fire(this));
+        return this;
     }
 
     @Override

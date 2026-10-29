@@ -22,12 +22,12 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The User Groups screen: the users and groups above; below, the groups the selected one is a
-/// member of beside the members of the selected group. Each is a list its controller shows here.
+/// member of beside the members of the selected group. Each is a list its controller
+/// attaches a list's controller to.
 public class UserAndGroups extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -35,16 +35,22 @@ public class UserAndGroups extends Component {
     @UiField
     SplitPane outerSplitPane;
     @UiField
-    SimplePanel userList;
+    SimplePanel userListPane;
+    @UiField
+    UserList userList;
 
     @UiField
     SplitPane innerSplitPane;
     @UiField
-    SimplePanel parents;
+    SimplePanel parentsPane;
     @UiField
-    SimplePanel children;
+    UserList parents;
+    @UiField
+    SimplePanel childrenPane;
+    @UiField
+    UserList children;
 
-    /// Makes the screen, with no lists.
+    /// Makes the screen, with its lists empty.
     public UserAndGroups() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -52,38 +58,38 @@ public class UserAndGroups extends Component {
     /// @param visible Whether the users and groups are shown; the panes below take the space when
     ///                they are not.
     public void setUserListVisible(final boolean visible) {
-        userList.setVisible(visible);
+        userListPane.setVisible(visible);
         // The pane below takes the space
-        outerSplitPane.setPaneHidden(userList, !visible);
+        outerSplitPane.setPaneHidden(userListPane, !visible);
     }
 
-    /// @param view The users and groups.
-    public void setUserList(final IsWidget view) {
-        this.userList.setWidget(view);
+    /// @return The users and groups.
+    public UserList getUserList() {
+        return userList;
     }
 
-    /// @param view The groups the selected user or group is a member of.
-    public void setParentsView(final IsWidget view) {
-        parents.setWidget(view);
+    /// @return The groups the selected user or group is a member of.
+    public UserList getParents() {
+        return parents;
     }
 
     /// Enables the Member Of pane, or dims it and makes it inert while nothing is selected.
     ///
     /// @param enabled Whether the pane is enabled.
     public void setParentsEnabled(final boolean enabled) {
-        setPaneEnabled(parents, enabled);
+        setPaneEnabled(parentsPane, enabled);
     }
 
-    /// @param view The members of the selected group.
-    public void setChildrenView(final IsWidget view) {
-        children.setWidget(view);
+    /// @return The members of the selected group.
+    public UserList getChildren() {
+        return children;
     }
 
     /// Enables the members pane, or dims it and makes it inert while nothing is selected.
     ///
     /// @param enabled Whether the pane is enabled.
     public void setChildrenEnabled(final boolean enabled) {
-        setPaneEnabled(children, enabled);
+        setPaneEnabled(childrenPane, enabled);
     }
 
     // A pane that waits for a selection is shown dimmed (user-and-groups.css), saying 'No
@@ -101,9 +107,9 @@ public class UserAndGroups extends Component {
     /// @param visible Whether the members pane is shown; the Member Of pane takes the space when
     ///                it is not.
     public void setChildrenVisible(final boolean visible) {
-        children.setVisible(visible);
+        childrenPane.setVisible(visible);
         // The Member Of pane takes the space
-        innerSplitPane.setPaneHidden(children, !visible);
+        innerSplitPane.setPaneHidden(childrenPane, !visible);
     }
 
 

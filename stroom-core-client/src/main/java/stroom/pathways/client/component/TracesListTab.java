@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A Traces store's Traces tab: its traces (a list its controller shows here) above the selected
@@ -32,7 +30,7 @@ public class TracesListTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel tracesList;
+    TracesList tracesList;
     @UiField
     TraceOverviewChart traceOverview;
 
@@ -41,9 +39,9 @@ public class TracesListTab extends Component {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param view The traces.
-    public void setTracesList(final IsWidget view) {
-        tracesList.setWidget(view);
+    /// @return The traces, which its controller attaches the list's controller to.
+    public TracesList getTracesList() {
+        return tracesList;
     }
 
     /// @return The selected trace's spans, which its controller fills.

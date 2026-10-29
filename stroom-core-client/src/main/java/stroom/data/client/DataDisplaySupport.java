@@ -16,6 +16,7 @@
 
 package stroom.data.client;
 
+import stroom.data.client.component.DataViewer;
 import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.SourceViewerController;
 import stroom.pipeline.shared.SourceLocation;
@@ -85,7 +86,7 @@ public class DataDisplaySupport {
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
                 DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
             // One per use, the app's until it is hidden
-            final DataViewerController dataViewer = dataControllerProvider.get();
+            final DataViewerController dataViewer = dataControllerProvider.get().attach(new DataViewer());
             dataViewer.setDisplayMode(showDataEvent.getDisplayMode());
             dataViewer.setInitDataViewType(showDataEvent.getDataViewType());
             dataViewer.fetchData(sourceLocation);

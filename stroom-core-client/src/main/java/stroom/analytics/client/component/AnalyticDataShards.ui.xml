@@ -2,12 +2,18 @@
 <!-- An analytic rule's Shards tab: its data shards above the rows of the shard selected -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client">
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:an="urn:import:stroom.analytics.client.component"
+             xmlns:q="urn:import:stroom.query.client.component">
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Shards, Data" addStyleNames="max">
-            <g:SimplePanel ui:field="shardList" styleName="max dashboard-panel overflow-hidden"/>
-            <g:SimplePanel ui:field="table" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <an:AnalyticDataShardList ui:field="shardList"/>
+            </g:SimplePanel>
+            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <q:QueryResultTable ui:field="table"/>
+            </g:SimplePanel>
         </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>

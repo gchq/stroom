@@ -91,10 +91,8 @@ public class MainController extends Controller {
         this.view = view;
         initWidget(view);
         this.menuItems = menuItems;
-        this.navigation = navigation;
-        // The content first: the view lays the explorer out beside it
-        view.setContentView(own(contentTabPane));
-        view.setExplorerView(own(navigation));
+        own(contentTabPane).attach(view.getContent());
+        this.navigation = own(navigation).attach(view.getExplorer());
         view.setOnDockResize(size -> DockResizeEvent.fire(getEventBus()::fireEvent, size));
         view.getMainToolBar().setOnShowMenu(this::showMenu);
         view.getMainToolBar().setOnShowAi(() -> ShowAskStroomAiEvent.fire(this, !showingAi));

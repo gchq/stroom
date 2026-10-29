@@ -18,7 +18,8 @@
    A dashboard's body (stroom.dashboard.client.component.DashboardBody), named BEM style. Its rules were in `dashboard.css`.
 */
 
-.maximised .dashboard-body {
+/* Beside nothing, while the main screen's explorer is hidden */
+.main-screen--explorer-hidden .dashboard-body {
     padding-left: var(--control__padding--horizontal);
 }
 

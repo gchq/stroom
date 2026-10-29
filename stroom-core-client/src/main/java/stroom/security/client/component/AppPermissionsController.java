@@ -51,12 +51,8 @@ public class AppPermissionsController extends ContentTabController {
         super(eventBus);
 
         initWidget(view);
-        own(appUserPermissionsList);
-        own(appPermissionsEdit);
-        this.appUserPermissionsList = appUserPermissionsList;
-        this.appPermissionsEdit = appPermissionsEdit;
-        view.setAppUserPermissionListView(appUserPermissionsList);
-        view.setAppPermissionsEditView(appPermissionsEdit);
+        this.appUserPermissionsList = own(appUserPermissionsList).attach(view.getAppUserPermissionsList());
+        this.appPermissionsEdit = own(appPermissionsEdit).attach(view.getAppPermissionsEdit());
 
         appUserPermissionsList.setShowLevel(view.getShowLevel());
 

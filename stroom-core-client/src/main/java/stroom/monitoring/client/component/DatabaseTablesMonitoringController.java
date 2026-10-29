@@ -26,13 +26,8 @@ import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerPanel;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -40,17 +35,16 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-/// Shows the sizes of Stroom's database tables.
+/// Shows the sizes of Stroom's database tables ([DatabaseTables]).
 public class DatabaseTablesMonitoringController extends ContentTabController {
 
     public static final String TAB_TYPE = "DatabaseTables";
 
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
-    private final PagerPanel view;
+    private final DatabaseTables view;
 
     private final RestFactory restFactory;
-    private final DataGrid<DBTableStatus> dataGrid;
     private final FindDBTableCriteria criteria;
     private RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
@@ -61,63 +55,17 @@ public class DatabaseTablesMonitoringController extends ContentTabController {
     /// @param restFactory Makes REST requests.
     @Inject
     public DatabaseTablesMonitoringController(final EventBus eventBus,
-                                              final PagerPanel view,
+                                              final DatabaseTables view,
                                               final RestFactory restFactory) {
         super(eventBus);
         this.view = view;
         initWidget(view);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(1000);
-        // Rows keyed by database and table
-        dataGrid.setKeyProvider(row -> row.getDb() + "." + row.getTable());
-        dataGrid.setTableName("Database Tables");
-        view.setDataWidget(dataGrid);
-
-        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-                new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
-            @Override
-            public String getValue(final DBTableStatus row) {
-                return row.getDb();
-            }
-        }, DBTableStatus.FIELD_DATABASE, 200);
-
-        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-                new TextCell(), DBTableStatus.FIELD_TABLE, true) {
-            @Override
-            public String getValue(final DBTableStatus row) {
-                return row.getTable();
-            }
-        }, DBTableStatus.FIELD_TABLE, 200);
-
-        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-                new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
-            @Override
-            public String getValue(final DBTableStatus row) {
-                return ModelStringUtil.formatCsv(row.getCount());
-            }
-        }, DBTableStatus.FIELD_ROW_COUNT, 100);
-
-        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-                new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
-            @Override
-            public String getValue(final DBTableStatus row) {
-                return ModelStringUtil.formatIECByteSizeString(row.getDataSize());
-            }
-        }, DBTableStatus.FIELD_DATA_SIZE, 100);
-
-        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-                new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
-            @Override
-            public String getValue(final DBTableStatus row) {
-                return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
-            }
-        }, DBTableStatus.FIELD_INDEX_SIZE, 100);
-
         criteria = new FindDBTableCriteria();
         refresh();
 
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        view.setOnSortChange(this::refresh);
     }
 
     private void refresh() {
@@ -128,18 +76,18 @@ public class DatabaseTablesMonitoringController extends ContentTabController {
                                     final Consumer<ResultPage<DBTableStatus>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     CriteriaUtil.setRange(criteria, range);
-                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                    CriteriaUtil.setSortList(criteria, view.getColumnSortList());
                     restFactory
                             .create(DB_STATUS_RESOURCE)
                             .method(res -> res.findSystemTableStatus(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .owner(DatabaseTablesMonitoringController.this)
-                            .taskMonitorFactory(view)
+                            .taskMonitorFactory(view.getTaskMonitor())
                             .exec();
                 }
             };
-            dataProvider.addDataDisplay(dataGrid);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }

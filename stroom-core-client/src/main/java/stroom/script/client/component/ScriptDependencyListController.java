@@ -29,40 +29,48 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /// A script's dependencies ([ScriptDependencyList]), by name: Add picks a script to depend on, Remove
 /// removes those selected once confirmed, unless the script is read only ([Contexts#READ_ONLY]).
 public class ScriptDependencyListController extends Controller {
 
-    private final ScriptDependencyList view;
+    private ScriptDependencyList view;
     private final ExplorerPopupController scriptPicker;
     private List<DocRef> scripts;
 
     private Runnable onChange = () -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ScriptDependencyList)] gives it its list.
     ///
     /// @param eventBus     The application's event bus.
-    /// @param view         The content.
     /// @param scriptPicker Picks a script to depend on.
     @Inject
     public ScriptDependencyListController(final EventBus eventBus,
-                                          final ScriptDependencyList view,
                                           final ExplorerPopupController scriptPicker) {
         super(eventBus);
-        this.view = view;
         this.scriptPicker = own(scriptPicker);
-        initWidget(view);
 
         scriptPicker.setIncludeNullSelection(false);
         scriptPicker.setIncludedTypes(ScriptDoc.TYPE);
         scriptPicker.setRequiredPermissions(DocumentPermission.USE);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ScriptDependencyListController attach(final ScriptDependencyList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
 
         view.setOnAdd(this::onAdd);
         view.setOnRemove(this::onRemove);
         // Read only as the script document is
         watch(Contexts.READ_ONLY, view::setReadOnly);
+        return this;
     }
 
     private void onAdd() {

@@ -50,7 +50,9 @@
                     <td>Preview</td>
                     <td>
                         <g:FlowPanel addStyleNames="floormap-layer-style-preview-row">
-                            <g:SimplePanel ui:field="previewPanel" addStyleNames="floormap-layer-style-preview"/>
+                            <g:SimplePanel addStyleNames="floormap-layer-style-preview">
+                                <tx:Html ui:field="preview"/>
+                            </g:SimplePanel>
                             <!-- Uploaded assets are only served once the document is saved, so an
                                  image picked here can fail to render until then -->
                             <tx:Label addStyleNames="floormap-layer-style-hint"

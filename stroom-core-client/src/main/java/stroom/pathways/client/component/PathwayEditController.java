@@ -42,7 +42,7 @@ public class PathwayEditController extends Controller {
     private Pathway pathway;
     private boolean readOnly = true;
 
-    /// Made by GIN, with its content and its parts.
+    /// Made by GIN, with its content and its parts, which it attaches to the content's.
     ///
     /// @param eventBus       The application's event bus.
     /// @param view           The content.
@@ -56,10 +56,8 @@ public class PathwayEditController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.pathwayTree = own(pathwayTree);
-        this.constraintList = own(constraintList);
-        view.setTree(pathwayTree);
-        view.setConstraints(constraintList);
+        this.pathwayTree = own(pathwayTree).attach(view.getTree());
+        this.constraintList = own(constraintList).attach(view.getConstraints());
 
         own(pathwayTree.getSelectionModel().addSelectionChangeHandler(e -> {
             final PathNode selected = pathwayTree.getSelectionModel().getSelectedObject();

@@ -25,8 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.BiConsumer;
@@ -51,9 +49,9 @@ public class PipelineStructure extends Component {
     @UiField
     PipelineTree tree;
     @UiField
-    SimplePanel properties;
+    PropertyList properties;
     @UiField
-    SimplePanel pipelineReferences;
+    PipelineReferenceList pipelineReferences;
     @UiField
     ToolbarButton viewSource;
 
@@ -80,14 +78,16 @@ public class PipelineStructure extends Component {
         return tree;
     }
 
-    /// @param view The selected element's properties.
-    public void setProperties(final IsWidget view) {
-        properties.setWidget(view);
+    /// @return The selected element's properties, which its controller attaches the list's
+    /// controller to.
+    public PropertyList getProperties() {
+        return properties;
     }
 
-    /// @param view The selected element's pipeline references.
-    public void setPipelineReferences(final IsWidget view) {
-        pipelineReferences.setWidget(view);
+    /// @return The selected element's pipeline references, which its controller attaches the
+    /// list's controller to.
+    public PipelineReferenceList getPipelineReferences() {
+        return pipelineReferences;
     }
 
     /// @param enabled Whether an element can be added.

@@ -88,12 +88,10 @@ public abstract class AbstractQueryDataController<D> extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(tableController);
-        this.tableController = tableController;
+        this.tableController = own(tableController).attach(view.getTable());
         this.restFactory = restFactory;
 
         view.setOnAction(this::onAction);
-        view.setTable(tableController);
 
         tableController.setEmptyText("No data");
         tableController.setQueryTablePreferencesSupplier(() -> queryTablePreferences);

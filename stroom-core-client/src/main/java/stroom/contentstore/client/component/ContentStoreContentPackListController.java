@@ -36,6 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The content packs at the top of the App Store tab ([ContentStoreContentPackList]): a page at a
@@ -45,7 +46,7 @@ public class ContentStoreContentPackListController extends Controller {
 
     private static final ContentStoreResource CONTENT_STORE_RESOURCE = GWT.create(ContentStoreResource.class);
 
-    private final ContentStoreContentPackList view;
+    private ContentStoreContentPackList view;
     private final RestFactory restFactory;
 
     // Map of Content Packs -> status
@@ -57,21 +58,27 @@ public class ContentStoreContentPackListController extends Controller {
     private Runnable onStateChange = () -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ContentStoreContentPackList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Lists the packs and checks for upgrades.
     @Inject
     public ContentStoreContentPackListController(final EventBus eventBus,
-                                                 final ContentStoreContentPackList view,
                                                  final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ContentStoreContentPackListController attach(final ContentStoreContentPackList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
-        view.setDataProvider(createDataProvider(eventBus));
+        view.setDataProvider(createDataProvider(getEventBus()));
         view.setOnLoaded(() -> {
             // We get a LOADED event on every redraw, so we
             // use a flag to detect the new page requests
@@ -81,6 +88,7 @@ public class ContentStoreContentPackListController extends Controller {
                 doUpgradeCheck();
             }
         });
+        return this;
     }
 
     /// @param onStateChange Run when a pack's status changes, e.g. an upgrade is found, so the page

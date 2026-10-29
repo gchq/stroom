@@ -40,6 +40,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A document's execution schedules ([ScheduledProcessList]), a page at a time, the first selected
@@ -50,30 +51,41 @@ public class ScheduledProcessListController extends Controller {
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
-    private final ScheduledProcessList view;
+    private ScheduledProcessList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
+    private final NodeClient nodeClient;
+    private final RefCellsController refCells;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private ExecutionScheduleRequest request = ExecutionScheduleRequest.builder().build();
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ScheduledProcessList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds, and enables or disables, the schedules.
     /// @param dateTimeFormatter Formats the times shown.
     /// @param nodeClient        Lists the nodes, to mark schedules naming one that no longer exists.
     /// @param refCells          Lets the run as user cells open their users.
     @Inject
     public ScheduledProcessListController(final EventBus eventBus,
-                                          final ScheduledProcessList view,
                                           final RestFactory restFactory,
                                           final DateTimeFormatter dateTimeFormatter,
                                           final NodeClient nodeClient,
                                           final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
-        own(refCells);
+        this.dateTimeFormatter = dateTimeFormatter;
+        this.nodeClient = nodeClient;
+        this.refCells = own(refCells);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ScheduledProcessListController attach(final ScheduledProcessList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::format, refCells.configure(new UserRefCell.Builder<>()));
         view.setOnEnabledChange(this::updateEnabledState);
@@ -86,6 +98,7 @@ public class ScheduledProcessListController extends Controller {
                 nodeNames -> view.setKnownNodeNames(NullSafe.list(nodeNames)),
                 throwable -> view.clearKnownNodeNames(),
                 view.getTaskMonitor());
+        return this;
     }
 
     private void updateEnabledState(final ExecutionSchedule row, final Boolean enabled) {

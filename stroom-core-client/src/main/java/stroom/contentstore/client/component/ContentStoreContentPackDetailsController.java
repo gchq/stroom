@@ -36,6 +36,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
+
 /// The details of the content pack selected in the content store
 /// ([ContentStoreContentPackDetails]): installs it (asking for credentials if its repository needs
 /// them) or upgrades it, and tells its owner when it has.
@@ -43,7 +45,7 @@ public class ContentStoreContentPackDetailsController extends Controller {
 
     private static final ContentStoreResource CONTENT_STORE_RESOURCE = GWT.create(ContentStoreResource.class);
 
-    private final ContentStoreContentPackDetails view;
+    private ContentStoreContentPackDetails view;
     private final MarkdownConverter markdownConverter;
     private final RestFactory restFactory;
     private final Provider<CredentialsManagerDialogController> credentialsDialogProvider;
@@ -54,10 +56,9 @@ public class ContentStoreContentPackDetailsController extends Controller {
     private Runnable onInstalled = () -> {
     };
 
-    /// Made by GIN, with its details.
+    /// Made by GIN; [#attach(ContentStoreContentPackDetails)] gives it its details.
     ///
     /// @param eventBus                  The application's event bus.
-    /// @param view                      The details.
     /// @param markdownConverter         Renders the pack's description.
     /// @param restFactory               Installs and upgrades the pack.
     /// @param credentialsDialogProvider Makes the dialog that asks for the repository's credentials.
@@ -65,20 +66,28 @@ public class ContentStoreContentPackDetailsController extends Controller {
     @Inject
     public ContentStoreContentPackDetailsController(
             final EventBus eventBus,
-            final ContentStoreContentPackDetails view,
             final MarkdownConverter markdownConverter,
             final RestFactory restFactory,
             final Provider<CredentialsManagerDialogController> credentialsDialogProvider,
             final ClientSecurityContext securityContext) {
         super(eventBus);
-        this.view = view;
         this.markdownConverter = markdownConverter;
         this.restFactory = restFactory;
         this.credentialsDialogProvider = credentialsDialogProvider;
         this.securityContext = securityContext;
+    }
+
+    /// Attaches this to a pack's details, e.g. ones a template declares. The details are then this
+    /// controller's widget.
+    ///
+    /// @param view The details.
+    /// @return This, for its owner to keep.
+    public ContentStoreContentPackDetailsController attach(final ContentStoreContentPackDetails view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnInstall(this::install);
         view.setOnUpgrade(this::upgrade);
+        return this;
     }
 
     /// @param onInstalled What to run when a pack has been installed or upgraded, e.g. to show its

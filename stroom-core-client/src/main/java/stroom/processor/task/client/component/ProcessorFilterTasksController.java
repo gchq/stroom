@@ -49,12 +49,9 @@ public class ProcessorFilterTasksController extends Controller {
                                           final ProcessorTaskSummaryListController processorTaskSummary,
                                           final ProcessorTasksListController processorTaskList) {
         super(eventBus);
-        this.processorTaskSummary = own(processorTaskSummary);
-        this.processorTaskList = own(processorTaskList);
         initWidget(view);
-
-        view.setSummary(processorTaskSummary);
-        view.setTasks(processorTaskList);
+        this.processorTaskSummary = own(processorTaskSummary).attach(view.getSummary());
+        this.processorTaskList = own(processorTaskList).attach(view.getTasks());
 
         own(processorTaskSummary.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.

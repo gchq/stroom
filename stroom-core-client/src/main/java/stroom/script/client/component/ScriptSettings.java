@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A script's Settings tab: the other scripts it depends on (a list its controller shows here).
@@ -31,16 +29,16 @@ public class ScriptSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel dependencies;
+    ScriptDependencyList dependencies;
 
     /// Makes the tab, with no list.
     public ScriptSettings() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param dependencies The scripts it depends on.
-    public void setDependencyList(final IsWidget dependencies) {
-        this.dependencies.setWidget(dependencies);
+    /// @return The scripts it depends on, which its controller attaches the list's controller to.
+    public ScriptDependencyList getDependencyList() {
+        return dependencies;
     }
 
 

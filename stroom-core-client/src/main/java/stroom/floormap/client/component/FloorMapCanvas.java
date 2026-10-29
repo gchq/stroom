@@ -301,11 +301,15 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// or the details of a single entity. What the glyph itself cannot say.
     @UiField
     FlowPanel hoverTooltip;
+    /// The hover panel's heading: a cluster's `"10 users"` or an entity's name.
+    @UiField
+    Label hoverCaption;
+    /// The hover panel's lines under its heading, one per member or detail.
+    @UiField
+    FlowPanel hoverLines;
 
     private static final String HOVER_TOOLTIP_VISIBLE =
             "stroom-floormap-hover-tooltip--visible";
-    private static final String HOVER_TOOLTIP_CAPTION_CLASS =
-            "stroom-floormap-hover-tooltip__caption";
     private static final String HOVER_TOOLTIP_LINE_CLASS =
             "stroom-floormap-hover-tooltip__line";
 
@@ -1064,15 +1068,13 @@ public class FloorMapCanvas extends Component implements RequiresResize {
             return;
         }
 
-        hoverTooltip.clear();
-        final Label captionLabel = new Label(caption);
-        captionLabel.addStyleName(HOVER_TOOLTIP_CAPTION_CLASS);
-        hoverTooltip.add(captionLabel);
+        hoverCaption.setText(caption);
+        hoverLines.clear();
         if (lines != null) {
             for (final String line : lines) {
                 final Label lineLabel = new Label(line);
                 lineLabel.addStyleName(HOVER_TOOLTIP_LINE_CLASS);
-                hoverTooltip.add(lineLabel);
+                hoverLines.add(lineLabel);
             }
         }
 

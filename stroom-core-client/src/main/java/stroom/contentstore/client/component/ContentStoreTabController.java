@@ -48,12 +48,10 @@ public class ContentStoreTabController extends ContentTabController {
                                      final ContentStoreContentPackDetailsController contentPackDetails) {
         super(eventBus);
         initWidget(view);
-        this.contentPackList = own(contentPackList);
-        this.contentPackDetails = own(contentPackDetails);
+        this.contentPackList = own(contentPackList).attach(view.getContentPackList());
+        this.contentPackDetails = own(contentPackDetails).attach(view.getContentPackDetails());
         contentPackList.setOnStateChange(this::updateState);
         contentPackDetails.setOnInstalled(this::updateState);
-        view.setContentPackListView(contentPackList);
-        view.setContentPackDetailsView(contentPackDetails);
 
         own(contentPackList.getSelectionModel().addSelectionHandler(this::onContentPackSelected));
     }

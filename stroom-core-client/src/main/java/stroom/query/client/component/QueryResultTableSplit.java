@@ -22,12 +22,10 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// A query's results table, beside the source of the row selected when the row has one (both shown
-/// here by its controller).
+/// A query's results table, beside the source of the row selected when the row has one.
 public class QueryResultTableSplit extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -35,9 +33,11 @@ public class QueryResultTableSplit extends Component {
     @UiField
     SplitPane split;
     @UiField
-    SimplePanel table;
+    QueryResultTable table;
     @UiField
     SimplePanel source;
+    @UiField
+    QueryTextPane textPane;
 
     /// Makes it, with the source hidden.
     public QueryResultTableSplit() {
@@ -45,14 +45,15 @@ public class QueryResultTableSplit extends Component {
         split.setPaneHidden(source, true);
     }
 
-    /// @param table The results table.
-    public void setTable(final IsWidget table) {
-        this.table.setWidget(table);
+    /// @return The results table, which its controller attaches the table's controller to.
+    public QueryResultTable getTable() {
+        return table;
     }
 
-    /// @param source The source of the row selected.
-    public void setSource(final IsWidget source) {
-        this.source.setWidget(source);
+    /// @return The source of the row selected, which its controller attaches the pane's controller
+    ///         to.
+    public QueryTextPane getTextPane() {
+        return textPane;
     }
 
     /// @param shown Whether the source shows beside the table.

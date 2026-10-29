@@ -111,14 +111,13 @@ public class DataViewerController
     private final TabData infoTab = new TabDataImpl(INFO_TAB_NAME);
     private final TabData contextTab = new TabDataImpl(CONTEXT_TAB_NAME);
 
-    private final DataViewer dataView;
     private final HtmlPane htmlPane;
     // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
     private final ControllerLayer htmlLayer;
     private final DataTextPaneController textPane;
     private final ControllerLayer textPaneLayer;
     private final ItemNavigatorController itemNavigator;
-    private final SourceProgressBar sourceProgressBar;
+    private final ClassificationLabelController classificationLabelController;
     private final MarkerListController markerList;
     private final ControllerLayer markerLayer;
     private final UiConfigCache uiConfigCache;
@@ -126,6 +125,13 @@ public class DataViewerController
     private final boolean userHasPipelineSteppingPermission;
     private final NoNavigatorData noNavigatorData = new NoNavigatorData();
     private final NavigatorData navigatorData = new NavigatorData();
+
+    private DataViewer dataView;
+    private SourceProgressBar sourceProgressBar;
+    // Whether the progress bar belongs in the view at all (not on the Info tab, nor for data with
+    // errors), and whether there is progress for it to show; it shows when both are true
+    private boolean progressInView = true;
+    private boolean progressBarShown;
 
     private DisplayMode displayMode = null;
     private DataViewType initDataViewType;
@@ -160,15 +166,13 @@ public class DataViewerController
 
     private static final List<String> STREAM_ATTRIBUTE_NAMES = List.of("Parent Stream Id", "Stream Id");
 
-    /// Made by GIN, with its content and its parts.
+    /// Made by GIN, with its parts; [#attach(DataViewer)] gives it its viewer.
     ///
     /// @param eventBus                      The application's event bus.
     /// @param htmlPane                      Shows the stream's Info.
     /// @param itemNavigator                 Navigates the stream's parts and records.
-    /// @param dataView                      The content.
     /// @param classificationLabelController Gives the classification banner its colours.
     /// @param textPane                      Shows the data.
-    /// @param sourceProgressBar             Shows how far through the data the content is.
     /// @param markerList                    Shows the stream's markers, e.g. its errors.
     /// @param sourceTabPlugin               Opens the stream's source in a tab.
     /// @param uiConfigCache                 Gives how much data to show at a time.
@@ -178,28 +182,22 @@ public class DataViewerController
     public DataViewerController(final EventBus eventBus,
                                 final HtmlPane htmlPane,
                                 final ItemNavigatorController itemNavigator,
-                                final DataViewer dataView,
                                 final ClassificationLabelController classificationLabelController,
                                 final DataTextPaneController textPane,
-                                final SourceProgressBar sourceProgressBar,
                                 final MarkerListController markerList,
                                 final SourceTabPlugin sourceTabPlugin,
                                 final UiConfigCache uiConfigCache,
                                 final ClientSecurityContext securityContext,
                                 final RestFactory restFactory) {
         super(eventBus);
-        initWidget(dataView);
-        own(itemNavigator);
-        own(textPane);
+        this.itemNavigator = own(itemNavigator);
+        // The data's pane is one of the layers swapped in and out of the view as tabs change
+        this.textPane = own(textPane).attach(new DataTextPane());
         own(markerList);
-        own(classificationLabelController).attach(dataView.getClassificationLabel());
-        this.dataView = dataView;
+        this.classificationLabelController = own(classificationLabelController);
         this.htmlPane = htmlPane;
         this.htmlLayer = new ControllerLayer(htmlPane);
-        this.itemNavigator = itemNavigator;
-        this.textPane = textPane;
         textPaneLayer = new ControllerLayer(textPane);
-        this.sourceProgressBar = sourceProgressBar;
         // Use properties mode for meta
         this.markerList = markerList;
         this.markerLayer = new ControllerLayer(markerList);
@@ -213,31 +211,59 @@ public class DataViewerController
         textPane.getOptions().getViewAsHexOption().setChangeHandler((isOn) ->
                 update(false));
 
+        userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
+
+        onDispose(() -> {
+            if (delayedFetchDataTimer != null) {
+                delayedFetchDataTimer.cancel();
+            }
+        });
+        own(htmlPane.addDomHandler(e ->
+                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
+        own(OpenLinkUtil.addClickHandler(this, htmlPane));
+    }
+
+    /// Attaches this to a viewer, e.g. one a template declares, with its tabs, and its navigator
+    /// and classification banner to the viewer's. The viewer is then this controller's widget,
+    /// e.g. to show it as a dialog.
+    ///
+    /// @param view The viewer.
+    /// @return This, for its owner to keep.
+    public DataViewerController attach(final DataViewer view) {
+        this.dataView = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        classificationLabelController.attach(view.getClassificationLabel());
+        itemNavigator.attach(view.getNavigator());
+        sourceProgressBar = view.getProgressBar();
+
         addTab(infoTab);
         addTab(errorTab);
         addTab(dataTab);
         addTab(metaTab);
         addTab(contextTab);
 
-        userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
-
         itemNavigator.setDisplay(noNavigatorData);
-        dataView.setOnSourceLink(this::openSourceController);
-        dataView.setSourceLinkVisible(true, true);
-        dataView.setNavigator(itemNavigator);
-        dataView.setProgress(sourceProgressBar);
-        sourceProgressBar.setVisible(false);
+        view.setOnSourceLink(this::openSourceController);
+        view.setSourceLinkVisible(true, true);
+        view.setNavigatorVisible(true);
+        setProgressInView(true);
+        setProgressBarShown(false);
 
-        dataView.setOnSelectTab(this::onNewTabSelected);
-        onDispose(() -> {
-            if (delayedFetchDataTimer != null) {
-                delayedFetchDataTimer.cancel();
-            }
-        });
-        dataView.setOnShowMenu(this::fireEvent);
-        own(htmlPane.addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
-        own(OpenLinkUtil.addClickHandler(this, htmlPane));
+        view.setOnSelectTab(this::onNewTabSelected);
+        view.setOnShowMenu(this::fireEvent);
+        return this;
+    }
+
+    // Puts the progress bar in the view, or takes it out
+    private void setProgressInView(final boolean inView) {
+        progressInView = inView;
+        dataView.setProgressVisible(progressInView && progressBarShown);
+    }
+
+    // Shows the progress bar, if it is in the view, or hides it
+    private void setProgressBarShown(final boolean shown) {
+        progressBarShown = shown;
+        dataView.setProgressVisible(progressInView && progressBarShown);
     }
 
     @Override
@@ -303,13 +329,13 @@ public class DataViewerController
                     fetchMetaInfoData(getCurrentMetaId());
                     dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
-                    dataView.setProgress(null);
+                    setProgressInView(false);
                     itemNavigator.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextControllerContent();
                 } else {
                     setNavigationControlsVisible(true);
-                    dataView.setProgress(sourceProgressBar);
+                    setProgressInView(true);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -393,7 +419,7 @@ public class DataViewerController
 
             final FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
 
-            sourceProgressBar.setVisible(true);
+            setProgressBarShown(true);
 
             // Don't want to confuse the user so the prog bar need to be based on the char/byte content,
             // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
@@ -424,10 +450,10 @@ public class DataViewerController
                         dataRange.getCharOffsetTo()));
             } else {
                 dumpRangeInfo(fetchDataResult);
-                sourceProgressBar.setVisible(false);
+                setProgressBarShown(false);
             }
         } else {
-            sourceProgressBar.setVisible(false);
+            setProgressBarShown(false);
         }
     }
 
@@ -518,7 +544,7 @@ public class DataViewerController
                 if (sourceLocation.getDataRange() != null) {
                     // We are displaying a specific range of the data so hide the
                     // nav controls
-                    dataView.setNavigator(null);
+                    dataView.setNavigatorVisible(false);
                 }
                 highlights = new ArrayList<>();
                 if (sourceLocation.getFirstHighlight() != null) {
@@ -988,11 +1014,11 @@ public class DataViewerController
             // Data may be multi-part so one part may have errors but the rest not
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, false);
-            dataView.setProgress(null);
+            setProgressInView(false);
         } else {
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, true);
-            dataView.setProgress(sourceProgressBar);
+            setProgressInView(true);
             refreshProgressBar(result != null);
             itemNavigator.refreshNavigator();
             refreshHighlights(result);
@@ -1130,9 +1156,9 @@ public class DataViewerController
         // navigate, so its navigator stays hidden (as fetchData hides it)
         final boolean isDataRange = currentSourceLocation != null && currentSourceLocation.getDataRange() != null;
         if (visible && !isDataRange) {
-            dataView.setNavigator(itemNavigator);
+            dataView.setNavigatorVisible(true);
         } else {
-            dataView.setNavigator(null);
+            dataView.setNavigatorVisible(false);
         }
     }
 

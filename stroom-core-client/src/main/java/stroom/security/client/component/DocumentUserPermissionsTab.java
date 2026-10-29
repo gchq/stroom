@@ -29,8 +29,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -45,7 +43,7 @@ public class DocumentUserPermissionsTab extends Component {
     @UiField
     SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
-    SimplePanel docUserPermissionsList;
+    DocumentUserPermissionsList docUserPermissionsList;
     @UiField
     FormGroup detailsFormGroup;
     @UiField
@@ -62,9 +60,9 @@ public class DocumentUserPermissionsTab extends Component {
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
     }
 
-    /// @param list The users and groups, a controller of its own.
-    public void setList(final IsWidget list) {
-        docUserPermissionsList.setWidget(list.asWidget());
+    /// @return The users and groups.
+    public DocumentUserPermissionsList getList() {
+        return docUserPermissionsList;
     }
 
     /// @return Which users and groups are listed.

@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A pathways document's Pathways tab: its pathways above the paths of the one selected, each
@@ -32,23 +30,24 @@ public class PathwaysSplit extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel pathwayList;
+    PathwayList pathwayList;
     @UiField
-    SimplePanel pathwayTree;
+    PathwayTree pathwayTree;
 
     /// Makes the panes, with nothing in them.
     public PathwaysSplit() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param view The pathways.
-    public void setPathwayList(final IsWidget view) {
-        pathwayList.setWidget(view);
+    /// @return The pathways, which its controller attaches the list's controller to.
+    public PathwayList getPathwayList() {
+        return pathwayList;
     }
 
-    /// @param view The paths of the pathway selected.
-    public void setPathwayTree(final IsWidget view) {
-        pathwayTree.setWidget(view);
+    /// @return The paths of the pathway selected, which its controller attaches the graph's
+    ///         controller to.
+    public PathwayTree getPathwayTree() {
+        return pathwayTree;
     }
 
 

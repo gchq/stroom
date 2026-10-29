@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -73,7 +74,7 @@ import java.util.function.Function;
 /// [draw()][FloorMapCanvas#draw] method.
 public class FloorMapCanvasController extends Controller {
 
-    private final FloorMapCanvas view;
+    private FloorMapCanvas view;
 
 
     // -------------------------------------------------------------------------
@@ -442,12 +443,19 @@ public class FloorMapCanvasController extends Controller {
         this.onContextMenu = onContextMenu;
     }
 
-    /// Made by GIN, with the canvas it draws on.
+    /// Made by GIN; [#attach(FloorMapCanvas)] gives it the canvas it draws on.
+    @Inject
+    public FloorMapCanvasController() {
+        // Nothing to do until it has its canvas
+    }
+
+    /// Attaches this to a canvas, e.g. one a template declares, and draws it. The canvas is then
+    /// this controller's widget.
     ///
     /// @param view The canvas.
-    @Inject
-    public FloorMapCanvasController(final FloorMapCanvas view) {
-        this.view = view;
+    /// @return This, for its owner to keep.
+    public FloorMapCanvasController attach(final FloorMapCanvas view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         handleMouseEvents();
@@ -470,6 +478,7 @@ public class FloorMapCanvasController extends Controller {
 
         // Perform initial draw
         redraw();
+        return this;
     }
 
     /// Applies the one-time initial view the first time it can, then leaves the

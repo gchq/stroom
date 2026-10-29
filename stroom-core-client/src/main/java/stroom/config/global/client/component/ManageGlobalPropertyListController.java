@@ -68,11 +68,11 @@ public class ManageGlobalPropertyListController extends Controller {
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
-    private final ManageGlobalPropertyList view;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
     private final Set<String> unreachableNodes = new HashSet<>();
+    private ManageGlobalPropertyList view;
 
     // propName => (node => effectiveValue)
     private final Map<String, Map<String, String>> nodeToClusterEffectiveValuesMap = new HashMap<>();
@@ -103,32 +103,39 @@ public class ManageGlobalPropertyListController extends Controller {
     private Consumer<String> onErrors = errors -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ManageGlobalPropertyList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Fetches the properties.
     /// @param nodeClient  Lists the nodes.
     @Inject
     public ManageGlobalPropertyListController(final EventBus eventBus,
-                                              final ManageGlobalPropertyList view,
                                               final RestFactory restFactory,
                                               final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
-        initWidget(view);
 
         dataProvider = new ListDataProvider<>();
-        view.setDataProvider(dataProvider);
         dataProvider.setListUpdater(this::refreshTable);
 
-        view.setOnSortChange(this::refresh);
         // Timers stop with the list
         onDispose(refreshAllNodesTimer::reset);
         onDispose(updateChildMapsTimer::reset);
         onDispose(nameFilterTimer::cancel);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ManageGlobalPropertyListController attach(final ManageGlobalPropertyList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.setDataProvider(dataProvider);
+        view.setOnSortChange(this::refresh);
+        return this;
     }
 
     private void resetLocalState() {

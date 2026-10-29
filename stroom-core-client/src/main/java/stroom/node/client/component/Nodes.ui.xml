@@ -2,13 +2,18 @@
 <ui:UiBinder
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
+        xmlns:n="urn:import:stroom.node.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client">
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="500px, *"
                          names="Nodes, Node jobs" addStyleNames="max">
-            <g:SimplePanel ui:field="nodeList" styleName="max dashboard-panel"/>
+            <g:SimplePanel styleName="max dashboard-panel">
+                <n:NodeStatusList ui:field="nodeList"/>
+            </g:SimplePanel>
             <g:FlowPanel styleName="max dashboard-panel form">
-                <g:SimplePanel ui:field="nodeJobList" styleName="max"/>
+                <g:SimplePanel styleName="max">
+                    <n:NodeJobList ui:field="nodeJobList"/>
+                </g:SimplePanel>
             </g:FlowPanel>
         </split:SplitPane>
     </g:SimplePanel>

@@ -57,8 +57,8 @@ public class UsersController extends ContentTabController {
                            final Provider<CreateUserController> createUserProvider,
                            final UserAndGroupActions actions) {
         super(eventBus);
-        own(userList);
-        this.userList = userList;
+        // A screen that is the list and nothing else, so shows the list as its own
+        this.userList = own(userList).attach(new UserList());
         this.createUserProvider = createUserProvider;
         this.actions = own(actions);
 

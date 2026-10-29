@@ -24,7 +24,6 @@ import stroom.data.client.CriteriaUtil;
 import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -63,11 +62,21 @@ public class AnnotationTagListController extends Controller {
         return view.getSelectionModel();
     }
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
+    /// @param enabled Whether Edit and Delete are enabled, for a selected tag.
+    public void setSelectionActionsEnabled(final boolean enabled) {
+        view.setSelectionActionsEnabled(enabled);
+    }
+
+    /// Names the buttons after the kind of tag listed, e.g. "New Annotation Status".
     ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return view.getToolbar();
+    /// @param tagName The kind of tag, e.g. `Annotation Status`.
+    public void setTagName(final String tagName) {
+        view.setTagName(tagName);
+    }
+
+    /// @param onAction Given the toolbar's action pressed.
+    public void setOnAction(final Consumer<AnnotationTagList.TagAction> onAction) {
+        view.setOnAction(onAction);
     }
 
     /// Finds the tags again; the first time, adds the columns for the type and starts the list.

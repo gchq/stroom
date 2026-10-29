@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -40,7 +39,7 @@ public class ServerTasks extends Component {
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel listContainer;
+    TaskManagerList list;
 
     private Consumer<String> onFilterChange = text -> {
     };
@@ -63,11 +62,9 @@ public class ServerTasks extends Component {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
-    /// Shows the list of tasks.
-    ///
-    /// @param list The list.
-    public void setList(final Widget list) {
-        listContainer.setWidget(list);
+    /// @return The tasks, which its controller attaches the list's controller to.
+    public TaskManagerList getList() {
+        return list;
     }
 
     /// Shows why the server rejected the filter, or clears it when passed null.

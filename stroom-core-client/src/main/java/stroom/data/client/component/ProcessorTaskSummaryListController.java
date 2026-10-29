@@ -44,6 +44,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// Processor tasks counted by pipeline, feed, priority and status ([ProcessorTaskSummaryList]),
@@ -54,36 +55,45 @@ public class ProcessorTaskSummaryListController extends Controller {
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
     private final RestFactory restFactory;
-    private final ProcessorTaskSummaryList view;
     private RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
+    private final InfoTooltipController infoTooltip;
+    private final RefCellsController refCells;
+    private ProcessorTaskSummaryList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ProcessorTaskSummaryList)] gives it its list.
     ///
     /// @param eventBus         The application's event bus.
-    /// @param view             The content.
     /// @param restFactory      Counts the tasks.
     /// @param infoTooltip      Shows a row's info.
     /// @param refCells         Lets the pipeline and feed cells open them.
     @Inject
     public ProcessorTaskSummaryListController(final EventBus eventBus,
-                                              final ProcessorTaskSummaryList view,
                                               final RestFactory restFactory,
                                               final InfoTooltipController infoTooltip,
                                               final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
-        own(infoTooltip);
+        this.refCells = own(refCells);
+        this.infoTooltip = own(infoTooltip);
         this.restFactory = restFactory;
+        criteria = new ExpressionCriteria();
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The
+    /// list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ProcessorTaskSummaryListController attach(final ProcessorTaskSummaryList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
-        criteria = new ExpressionCriteria();
         view.addColumns(refCells.configure(new DocRefCell.Builder<ProcessorTaskSummary>()),
                 refCells.configure(new FeedRefCell.Builder<ProcessorTaskSummary>()));
         view.setOnShowInfo((row, popupPosition, anchor) ->
                 infoTooltip.show(info(row), popupPosition, anchor));
         view.setOnSortChange(this::refresh);
+        return this;
     }
 
     // A row's info: what it counts

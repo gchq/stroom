@@ -18,6 +18,7 @@ package stroom.data.client.component;
 
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
+import stroom.widget.progress.client.component.SourceProgressBar;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.text.client.Label;
 
@@ -50,13 +51,15 @@ public class SourceViewer extends Component {
     @UiField
     Label lblType;
     @UiField
-    SimplePanel navigatorContainer;
+    CharacterNavigator navigator;
     @UiField
-    SimplePanel progressBarPanel;
+    SourceProgressBar progressBar;
     @UiField
     SpinnerLarge spinner;
     @UiField
     ClassificationWrapper classification;
+    @UiField
+    DataTextPane text;
     @UiField
     SimplePanel metaListContainer;
 
@@ -105,9 +108,9 @@ public class SourceViewer extends Component {
         lblType.setText(type);
     }
 
-    /// @param text The source's text.
-    public void setText(final IsWidget text) {
-        classification.setContent(text);
+    /// @return The source's text, which its controller attaches the pane's controller to.
+    public DataTextPane getText() {
+        return text;
     }
 
     /// @param classification The data's classification, or blank for none.
@@ -120,13 +123,10 @@ public class SourceViewer extends Component {
         return classification.getClassificationLabel();
     }
 
-    /// @param navigator The navigator of the source's characters, or null for none.
-    public void setNavigator(final IsWidget navigator) {
-        if (navigator != null) {
-            navigatorContainer.setWidget(navigator);
-        } else {
-            navigatorContainer.clear();
-        }
+    /// @return The navigator of the source's characters, which its controller attaches the
+    /// navigator's controller to.
+    public CharacterNavigator getNavigator() {
+        return navigator;
     }
 
     /// @param metaList The streams being stepped through, or null for none.
@@ -138,13 +138,10 @@ public class SourceViewer extends Component {
         }
     }
 
-    /// @param progress How far through the stream the source shown is, or null for none.
-    public void setProgress(final IsWidget progress) {
-        if (progress != null) {
-            progressBarPanel.setWidget(progress);
-        } else {
-            progressBarPanel.clear();
-        }
+    /// @return The bar showing how far through the stream the source shown is, hidden until there
+    /// is progress to show.
+    public SourceProgressBar getProgressBar() {
+        return progressBar;
     }
 
     /// @return The spinner shown while the source loads.

@@ -30,6 +30,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /// A processor filter's feed dependencies ([FeedDependencyList]), as its owner gives them: New and Edit
@@ -37,31 +38,39 @@ import java.util.UUID;
 /// document, so the list is never read only.
 public class FeedDependencyListController extends Controller implements Focus {
 
-    private final FeedDependencyList view;
     private final List<FeedDependency> feedDependencies = new ArrayList<>();
     private final Provider<FeedDependencyEditorController> feedDependencyEditorProvider;
+    private final RefCellsController refCells;
+    private FeedDependencyList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FeedDependencyList)] gives it its list.
     ///
     /// @param eventBus                     The application's event bus.
-    /// @param view                         The content.
     /// @param feedDependencyEditorProvider Makes a feed dependency's editor.
     /// @param refCells                     Lets the feed cells open their feeds.
     @Inject
     public FeedDependencyListController(
             final EventBus eventBus,
-            final FeedDependencyList view,
             final Provider<FeedDependencyEditorController> feedDependencyEditorProvider,
             final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.feedDependencyEditorProvider = feedDependencyEditorProvider;
-        own(refCells);
+        this.refCells = own(refCells);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public FeedDependencyListController attach(final FeedDependencyList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(refCells.configure(new FeedRefCell.Builder<>()));
         view.setOnAdd(this::onAdd);
         view.setOnEdit(feedDependency -> showEditor(feedDependency, false));
         view.setOnRemove(this::onRemove);
+        return this;
     }
 
     @Override

@@ -2,6 +2,7 @@
 <!-- A processor profile: its name, node group, processing schedules and time zone -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:p="urn:import:stroom.processor.client.component"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:qv="urn:import:stroom.query.client.component">
@@ -18,7 +19,9 @@
         </form:FormGroup>
         <form:FormGroup identity="processingSchedules" label="Processing Schedules" addStyleNames="dock-max"
                         helpText="The periods when filters using this profile may process data, each with optional thread limits. No processing happens outside all of these periods.">
-            <g:SimplePanel ui:field="list" styleName="dock-max"/>
+            <g:SimplePanel styleName="dock-max">
+                <p:ProfilePeriodList ui:field="list"/>
+            </g:SimplePanel>
         </form:FormGroup>
         <g:SimplePanel addStyleNames="form-group">
             <qv:TimeZoneBox ui:field="timeZone"/>

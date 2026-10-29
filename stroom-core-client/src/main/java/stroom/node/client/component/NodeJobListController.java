@@ -43,6 +43,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -53,46 +54,33 @@ public class NodeJobListController extends Controller {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
 
-    private final NodeJobList view;
     private final NodeClient nodeClient;
+    private final DateTimeFormatter dateTimeFormatter;
     private final JobNodeActionsController actions;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
 
+    private NodeJobList view;
     private boolean autoRefresh;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(NodeJobList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the job nodes.
     /// @param actionsProvider   Makes what does the job nodes' actions.
     /// @param dateTimeFormatter Formats the times shown.
     /// @param nodeClient        Lists the enabled nodes.
     @Inject
     public NodeJobListController(final EventBus eventBus,
-                                 final NodeJobList view,
                                  final RestFactory restFactory,
                                  final Provider<JobNodeActionsController> actionsProvider,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final NodeClient nodeClient) {
         super(eventBus);
-        this.view = view;
         this.nodeClient = nodeClient;
-        initWidget(view);
+        this.dateTimeFormatter = dateTimeFormatter;
         dataProvider = buildDataProvider(eventBus, restFactory);
-
-        view.addColumns(dateTimeFormatter::formatWithDuration, this::openJobNodeAsCommandLink);
         actions = make(actionsProvider);
-        actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
-                this::internalRefresh);
-        view.setOnEnabledChange(actions::setEnabled);
-        view.setOnEditSchedule(actions::showSchedule);
-        view.setOnShowActionMenu(actions::showActionMenu);
-        view.setOnShowEnabledChange(this::internalRefresh);
-        view.setOnAutoRefreshChange(this::onAutoRefreshToggled);
-
-        refreshNodeStates();
 
         // NodeStatusListController may change a node
         // Currently the node state does not affect how the job nodes are displayed
@@ -123,6 +111,28 @@ public class NodeJobListController extends Controller {
                         }
                     }
                 });
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, and asks which nodes are enabled.
+    /// The list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public NodeJobListController attach(final NodeJobList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.addColumns(dateTimeFormatter::formatWithDuration, this::openJobNodeAsCommandLink);
+        actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
+                this::internalRefresh);
+        view.setOnEnabledChange(actions::setEnabled);
+        view.setOnEditSchedule(actions::showSchedule);
+        view.setOnShowActionMenu(actions::showActionMenu);
+        view.setOnShowEnabledChange(this::internalRefresh);
+        view.setOnAutoRefreshChange(this::onAutoRefreshToggled);
+
+        refreshNodeStates();
+        return this;
     }
 
     private void refreshNodeStates() {

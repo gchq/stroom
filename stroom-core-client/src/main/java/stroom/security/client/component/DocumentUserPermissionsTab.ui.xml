@@ -5,7 +5,8 @@
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:tx="urn:import:stroom.widget.text.client">
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:sec="urn:import:stroom.security.client.component">
     <!-- The details below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 200px" names="Users and groups, Details"
@@ -37,8 +38,9 @@
                     <p>Lists users/groups, optionally filtered based on the value of the
                         <em>Permission Visibility</em> dropdown.</p>
                 </form:HelpHTML>
-                <g:SimplePanel ui:field="docUserPermissionsList"
-                               styleName="document-user-permissions-tab__list"/>
+                <g:SimplePanel styleName="document-user-permissions-tab__list">
+                    <sec:DocumentUserPermissionsList ui:field="docUserPermissionsList"/>
+                </g:SimplePanel>
             </form:FormGroup>
         </g:FlowPanel>
         <form:FormGroup ui:field="detailsFormGroup"

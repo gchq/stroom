@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A rule's duplicate check rows ([DuplicateManagementList]), a page at a time; those selected can
@@ -46,28 +47,22 @@ public class DuplicateManagementListController extends Controller {
     private static final DuplicateCheckResource DUPLICATE_CHECK_RESOURCE =
             GWT.create(DuplicateCheckResource.class);
 
-    private final DuplicateManagementList view;
+    private DuplicateManagementList view;
     private final RestFactory restFactory;
     private final FindDuplicateCheckCriteria criteria;
     private final RestDataProvider<DuplicateCheckRow, ResultPage<DuplicateCheckRow>> dataProvider;
     private boolean initialised;
     private boolean readOnly = true;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DuplicateManagementList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Finds and deletes the rows.
     @Inject
     public DuplicateManagementListController(final EventBus eventBus,
-                                             final DuplicateManagementList view,
                                              final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
-        initWidget(view);
-        view.setOnDelete(this::onDelete);
-        view.setOnSelectionChange(this::enableButtons);
 
         criteria = new FindDuplicateCheckCriteria();
         //noinspection Convert2Diamond // cos GWT
@@ -93,6 +88,19 @@ public class DuplicateManagementListController extends Controller {
                 }
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DuplicateManagementListController attach(final DuplicateManagementList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.setOnDelete(this::onDelete);
+        view.setOnSelectionChange(this::enableButtons);
+        return this;
     }
 
     private void enableButtons() {

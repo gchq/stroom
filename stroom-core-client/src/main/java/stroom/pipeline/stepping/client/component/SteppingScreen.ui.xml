@@ -5,13 +5,14 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:pp="urn:import:stroom.pipeline.stepping.client.component"
-             xmlns:tab="urn:import:stroom.widget.tab.client">
+             xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="stepping-screen max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal stepping-screen__top">
             <g:SimplePanel styleName="stepping-screen__pipeline">
                 <pp:PipelinePathBar ui:field="pipelinePathBar"/>
             </g:SimplePanel>
-            <g:FlowPanel ui:field="right" styleName="dock-min stepping-screen__controls">
+            <g:FlowPanel styleName="dock-min stepping-screen__controls">
                 <!-- The log pane toggle and the step's progress, in a slot of a fixed width before the
                      step location and controls, so that the pipeline's bar beside them doesn't change
                      width as they come and go -->
@@ -19,12 +20,13 @@
                     <b:Toolbar name="Log pane">
                         <b:ToolbarToggleButton ui:field="toggleLogPane" svg="EXCLAMATION" title="Log Pane"/>
                     </b:Toolbar>
-                    <g:SimplePanel ui:field="stepMessage" styleName="stepping-screen__progress-message"/>
+                    <tx:Label ui:field="stepMessage" styleName="stepping-screen__progress-message"/>
                     <!-- Tells screen reader users that a step has begun and where it got to (the
                          progress message changes too often, while searching, to be announced) -->
                     <div ui:field="stepAnnouncement" class="sr-only" role="status" aria-live="polite"></div>
                 </g:HTMLPanel>
-                <!-- The step location link and the step controls go here (setStepControls) -->
+                <pp:StepLocationLink ui:field="stepLocationLink"/>
+                <pp:StepControl ui:field="stepControl"/>
                 <b:Toolbar name="Stepping">
                     <b:ToolbarButton ui:field="terminate" svg="STOP" title="Terminate Stepping" enabled="false"
                                      addStyleNames="query-buttons__button query-buttons__button--stop"/>

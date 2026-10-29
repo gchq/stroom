@@ -64,6 +64,11 @@ public class CurveTabLayout extends Component {
         menu.setOnClick(this::onMenu);
     }
 
+    /// @param role The layout's WAI-ARIA role, e.g. `main`, a landmark screen readers can go to.
+    public void setRole(final String role) {
+        getElement().setAttribute("role", role);
+    }
+
     /// @param onToggleSidebar Run when the user hides or shows the sidebar.
     public void setOnToggleSidebar(final Runnable onToggleSidebar) {
         this.onToggleSidebar = Objects.requireNonNull(onToggleSidebar, "onToggleSidebar");

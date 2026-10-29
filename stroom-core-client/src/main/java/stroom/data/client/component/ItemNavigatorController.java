@@ -22,25 +22,35 @@ import stroom.widget.component.client.Controller;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.Objects;
+
 /// Moves the data viewer between the items of what it shows ([HasItems], e.g. a stream's records)
 /// with its [ItemNavigator], and opens the item selection dialog when the user asks to choose one.
 public class ItemNavigatorController extends Controller {
 
-    private final ItemNavigator view;
     private final Provider<ItemSelectionController> itemSelectionProvider;
+    private ItemNavigator view;
     private HasItems display;
 
-    /// Made by GIN, with its navigator and what makes its selection dialog.
+    /// Made by GIN, with what makes its selection dialog; [#attach(ItemNavigator)] gives it its
+    /// navigator.
     ///
-    /// @param view                  Its component.
     /// @param itemSelectionProvider Makes the item selection.
     @Inject
-    public ItemNavigatorController(final ItemNavigator view,
-                                   final Provider<ItemSelectionController> itemSelectionProvider) {
-        this.view = view;
+    public ItemNavigatorController(final Provider<ItemSelectionController> itemSelectionProvider) {
         this.itemSelectionProvider = itemSelectionProvider;
+    }
+
+    /// Attaches this to a navigator, e.g. one a template declares. The navigator is then this
+    /// controller's widget.
+    ///
+    /// @param view The navigator.
+    /// @return This, for its owner to keep.
+    public ItemNavigatorController attach(final ItemNavigator view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnAction(this::onAction);
+        return this;
     }
 
     /// @param display What the navigator moves between the items of, or null for nothing.

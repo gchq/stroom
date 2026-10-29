@@ -39,6 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,9 +50,10 @@ public class AnalyticDataShardListController extends Controller {
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =
             GWT.create(AnalyticDataShardResource.class);
 
-    private final AnalyticDataShardList view;
+    private AnalyticDataShardList view;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
+    private final DateTimeFormatter dateTimeFormatter;
     private final FindAnalyticDataShardCriteria criteria = new FindAnalyticDataShardCriteria();
     private final RestDataProvider<AnalyticDataShard, ResultPage<AnalyticDataShard>> dataProvider;
     private final Map<String, List<AnalyticDataShard>> responseMap = new HashMap<>();
@@ -59,25 +61,21 @@ public class AnalyticDataShardListController extends Controller {
     private boolean initialised;
     private Consumer<ResultPage<AnalyticDataShard>> dataConsumer;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(AnalyticDataShardList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the shards on each node.
     /// @param nodeClient        Lists the nodes.
     /// @param dateTimeFormatter Formats when each shard was made.
     @Inject
     public AnalyticDataShardListController(final EventBus eventBus,
-                                           final AnalyticDataShardList view,
                                            final RestFactory restFactory,
                                            final NodeClient nodeClient,
                                            final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
-        initWidget(view);
-        view.addColumns(dateTimeFormatter::formatWithDuration);
+        this.dateTimeFormatter = dateTimeFormatter;
 
         delayedUpdate = new DelayedUpdate(this::update);
         onDispose(delayedUpdate::reset);
@@ -94,6 +92,18 @@ public class AnalyticDataShardListController extends Controller {
                         view.getTaskMonitor());
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public AnalyticDataShardListController attach(final AnalyticDataShardList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        view.addColumns(dateTimeFormatter::formatWithDuration);
+        return this;
     }
 
     // Combines the shards from all the nodes

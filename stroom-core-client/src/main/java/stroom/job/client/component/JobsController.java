@@ -49,13 +49,8 @@ public class JobsController extends ContentTabController implements Refreshable 
                           final JobNodeListController jobNodeList) {
         super(eventBus);
         initWidget(view);
-        own(jobList);
-        own(jobNodeList);
-        this.jobList = jobList;
-        this.jobNodeList = jobNodeList;
-
-        view.setJobListView(jobList);
-        view.setJobNodeListView(jobNodeList);
+        this.jobList = own(jobList).attach(view.getJobList());
+        this.jobNodeList = own(jobNodeList).attach(view.getJobNodeList());
 
         own(jobList.getSelectionModel().addSelectionHandler(event -> {
             final Job row = NullSafe.get(

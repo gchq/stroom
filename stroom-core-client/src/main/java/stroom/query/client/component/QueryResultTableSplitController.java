@@ -58,13 +58,8 @@ public class QueryResultTableSplitController
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(tableController);
-        own(textPane);
-        this.tableController = tableController;
-        this.textPane = textPane;
-
-        view.setTable(tableController);
-        view.setSource(textPane);
+        this.tableController = own(tableController).attach(view.getTable());
+        this.textPane = own(textPane).attach(view.getTextPane());
 
         own(tableController.getSelectionModel().addSelectionHandler(event ->
                 onSelection(tableController.getSelectionModel().getSelected())));

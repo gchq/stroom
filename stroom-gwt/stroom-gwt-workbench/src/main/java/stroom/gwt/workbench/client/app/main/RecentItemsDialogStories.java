@@ -19,9 +19,8 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.RecentItems;
-import stroom.explorer.client.component.FindDocResultList;
 import stroom.explorer.client.component.FindDocResultListController;
-import stroom.explorer.client.component.FindPanel;
+import stroom.explorer.client.component.FindDocuments;
 import stroom.explorer.client.component.RecentItemsController;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -156,11 +155,10 @@ public final class RecentItemsDialogStories {
         // The controller, with the content and result list controller that GIN would inject
         final FindDocResultListController resultList = new FindDocResultListController(
                 eventBus,
-                new FindDocResultList(),
                 harness.getRestFactory());
         final RecentItemsController dialog = harness.own(new RecentItemsController(
                 eventBus,
-                new FindPanel(),
+                new FindDocuments(),
                 resultList,
                 recentItems,
                 SelectorWidgets.quickFilterContextHandlerFactory(harness)));

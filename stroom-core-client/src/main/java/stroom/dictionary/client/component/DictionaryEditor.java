@@ -111,7 +111,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 ImportsTabController::read,
                 ImportsTabController::write);
         addTab(EFFECTIVE_WORDS,
-                effectiveWordsListProvider::get,
+                () -> effectiveWordsListProvider.get().attach(new EffectiveWordsList()),
                 (effectiveWords, docRef, doc) -> effectiveWords.setDocRef(docRef));
         addTab(DOCUMENTATION,
                 () -> {

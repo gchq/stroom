@@ -48,6 +48,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -59,10 +60,12 @@ public class ProcessorListController extends Controller implements Refreshable {
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final ProcessorList view;
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final FetchProcessorRequest request;
     private final RefCellsController refCells;
+    private final InfoTooltipController infoTooltip;
+    private final ProcessorInfoBuilder processorInfoBuilder;
+    private ProcessorList view;
     private ProcessorListRow nextSelection;
 
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
@@ -72,37 +75,25 @@ public class ProcessorListController extends Controller implements Refreshable {
     private ExpressionOperator expression;
     private boolean initiated;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ProcessorList)] gives it its list.
     ///
     /// @param eventBus             The application's event bus.
-    /// @param view                 The content.
     /// @param infoTooltip          Shows a row's info.
     /// @param restFactory          Fetches the processors and saves their changes.
     /// @param processorInfoBuilder Writes a row's info.
     /// @param refCells             Lets the pipeline and user cells open their pipelines and users.
     @Inject
     public ProcessorListController(final EventBus eventBus,
-                                   final ProcessorList view,
                                    final InfoTooltipController infoTooltip,
                                    final RestFactory restFactory,
                                    final ProcessorInfoBuilder processorInfoBuilder,
                                    final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.refCells = own(refCells);
-        own(infoTooltip);
+        this.infoTooltip = own(infoTooltip);
+        this.processorInfoBuilder = processorInfoBuilder;
         this.request = new FetchProcessorRequest();
-        initWidget(view);
-
-        view.setOnShowInfo((row, popupPosition, anchor) ->
-                infoTooltip.show(processorInfoBuilder.get(row), popupPosition, anchor));
         own(OpenLinkUtil.addClickHandler(this, infoTooltip.asWidget()));
-        view.setOnExpand((row, expanded) -> {
-            request.setRowExpanded(row, expanded);
-            refresh();
-        });
-        view.setOnEnabledChange(this::onEnabledChange);
-        view.setOnPriorityChange(this::onPriorityChange);
 
         this.processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>() {
             @Override
@@ -175,6 +166,26 @@ public class ProcessorListController extends Controller implements Refreshable {
                 onChangeData(data);
             }
         };
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ProcessorListController attach(final ProcessorList view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+
+        view.setOnShowInfo((row, popupPosition, anchor) ->
+                infoTooltip.show(processorInfoBuilder.get(row), popupPosition, anchor));
+        view.setOnExpand((row, expanded) -> {
+            request.setRowExpanded(row, expanded);
+            refresh();
+        });
+        view.setOnEnabledChange(this::onEnabledChange);
+        view.setOnPriorityChange(this::onPriorityChange);
+        return this;
     }
 
     /// Adds the columns, the first time.

@@ -47,9 +47,11 @@ public class PipelineTree extends AbstractPipelineTree {
 
     @UiField
     DraggableTreePanel<PipelineElement> layoutPanel;
+    // The tree, which the template declares in the draggable panel
+    @UiField
+    PipelineTreePanel treePanel;
 
-    // DraggableTreePanel takes its two panels through setTreePanels, not as template children
-    private final PipelineTreePanel treePanel = new PipelineTreePanel();
+    // The copy of what is dragged, on the page only while dragging, so not declared
     private final PipelineTreePanel subTreePanel = new PipelineTreePanel();
     private final TreeKeyboard<PipelineElement> keyboard;
     private boolean allowNullSelection = true;
@@ -62,7 +64,7 @@ public class PipelineTree extends AbstractPipelineTree {
     /// Makes the tree, with no pipeline yet.
     public PipelineTree() {
         initWidget(BINDER.createAndBindUi(this));
-        layoutPanel.setTreePanels(treePanel, subTreePanel);
+        layoutPanel.setDraggedCopy(subTreePanel);
 
         keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "element", "elements");
         keyboard.setNameOf(PipelineElement::getDisplayName);

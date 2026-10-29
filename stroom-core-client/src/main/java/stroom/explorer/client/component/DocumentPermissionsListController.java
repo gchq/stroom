@@ -48,8 +48,9 @@ public class DocumentPermissionsListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final DocumentPermissionsList view;
     private final RestFactory restFactory;
+    private final RefCellsController refCells;
+    private DocumentPermissionsList view;
     private final Builder criteriaBuilder = new Builder();
     private RestDataProvider<FindResultWithPermissions, ResultPage<FindResultWithPermissions>> dataProvider;
     private ExpressionOperator lastFilter;
@@ -58,23 +59,30 @@ public class DocumentPermissionsListController extends Controller {
     private Consumer<ResultPage<FindResultWithPermissions>> onResultPage = resultPage -> {
     };
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DocumentPermissionsList)] gives it its list.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param restFactory Finds the documents.
     /// @param refCells    Lets the document cells open their documents.
     @Inject
     public DocumentPermissionsListController(final EventBus eventBus,
-                                             final DocumentPermissionsList view,
                                              final RestFactory restFactory,
                                              final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.refCells = own(refCells);
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DocumentPermissionsListController attach(final DocumentPermissionsList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
-        own(refCells);
         view.addColumns(refCells.configure(new DocRefCell.Builder<FindResultWithPermissions>()));
+        return this;
     }
 
     /// Finds the documents again; the first time, starts the list.

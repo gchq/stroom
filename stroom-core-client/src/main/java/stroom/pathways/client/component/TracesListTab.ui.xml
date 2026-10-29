@@ -7,7 +7,9 @@
     <!-- A Traces store's Traces tab: its traces above the selected one's spans -->
     <split:SplitPane vertical="true" thin="true" sizes="440px, *"
                      names="Traces, Trace overview" addStyleNames="max default-min-sizes">
-        <g:SimplePanel ui:field="tracesList" addStyleNames="max"/>
+        <g:SimplePanel addStyleNames="max">
+            <pp:TracesList ui:field="tracesList"/>
+        </g:SimplePanel>
         <g:SimplePanel addStyleNames="max">
             <pp:TraceOverviewChart ui:field="traceOverview"/>
         </g:SimplePanel>

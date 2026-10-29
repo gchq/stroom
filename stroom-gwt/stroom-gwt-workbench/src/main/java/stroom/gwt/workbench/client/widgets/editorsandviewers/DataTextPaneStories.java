@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.data.client.component.DataTextPane;
 import stroom.data.client.component.DataTextPaneController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -87,7 +88,8 @@ public final class DataTextPaneStories {
                                  final String text,
                                  final Consumer<DataTextPaneController> setUp) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
-        final DataTextPaneController pane = harness.own(EditorWidgets.dataTextPane(harness.getEventBus()));
+        final DataTextPaneController pane = harness.own(EditorWidgets.dataTextPane(harness.getEventBus())
+                .attach(new DataTextPane()));
         pane.setText(text);
         final Spy onBeginStepping = context.fn(ON_BEGIN_STEPPING);
         pane.setOnBeginStepping(() -> onBeginStepping.call());

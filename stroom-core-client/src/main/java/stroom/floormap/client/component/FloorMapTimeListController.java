@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -34,24 +35,33 @@ import java.util.function.Predicate;
 /// date and time preference, and drawn again when it changes; its help button shows the help.
 public class FloorMapTimeListController extends Controller {
 
-    private final FloorMapTimeList view;
+    private final DateTimeFormatter dateTimeFormatter;
+    private FloorMapTimeList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FloorMapTimeList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus, which says when preferences change.
-    /// @param view              The content.
     /// @param dateTimeFormatter Shows the times as the user prefers.
     @Inject
     public FloorMapTimeListController(final EventBus eventBus,
-                                      final FloorMapTimeList view,
                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a Time List, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The Time List.
+    /// @return This, for its owner to keep.
+    public FloorMapTimeListController attach(final FloorMapTimeList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         // The platform's formatter, as every grid uses: the user's time zone and pattern
         view.setTimeFormatter(dateTimeFormatter::format);
         listen(ChangeCurrentPreferencesEvent.getType(), e -> view.redraw());
         FloorMapEditorHelp.wire(view.getHelpButton(), "Time List", FloorMapEditorHelp.timeList());
+        return this;
     }
 
     /// Shows the entries in place of those shown, with none selected.

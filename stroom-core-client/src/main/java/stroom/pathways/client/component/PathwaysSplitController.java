@@ -30,7 +30,7 @@ public class PathwaysSplitController extends Controller {
     private final PathwayListController pathwayList;
     private PathwaysDoc document;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN, with its content and its parts, which it attaches to the content's.
     ///
     /// @param eventBus    The application's event bus.
     /// @param view        The content.
@@ -42,11 +42,9 @@ public class PathwaysSplitController extends Controller {
                                    final PathwayListController pathwayList,
                                    final PathwayTreeController pathwayTree) {
         super(eventBus);
-        this.pathwayList = own(pathwayList);
-        own(pathwayTree);
         initWidget(view);
-        view.setPathwayList(pathwayList);
-        view.setPathwayTree(pathwayTree);
+        this.pathwayList = own(pathwayList).attach(view.getPathwayList());
+        own(pathwayTree).attach(view.getPathwayTree());
 
         pathwayList.setOnSelectionChange(selected -> pathwayTree.read(document, selected));
     }

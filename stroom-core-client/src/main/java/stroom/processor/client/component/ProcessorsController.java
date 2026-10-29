@@ -111,7 +111,7 @@ public class ProcessorsController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(processorList);
+        own(processorList).attach(view.getProcessorList());
         own(expressionTree).attach(view.getExpressionTree());
         this.processorList = processorList;
         this.processorEditProvider = processorEditProvider;
@@ -124,7 +124,6 @@ public class ProcessorsController extends Controller {
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
 
-        view.setProcessorList(processorList);
 
         own(processorList.getSelectionModel().addSelectionHandler(event -> {
             updateData();

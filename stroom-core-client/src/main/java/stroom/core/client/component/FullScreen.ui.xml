@@ -3,11 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
          stop it held the whole screen, with no name -->
-    <g:SimplePanel styleName="full-screen">
-        <g:FlowPanel styleName="full-screen">
-            <g:ResizeLayoutPanel ui:field="contentPanel"
-                                 styleName="full-screen__content-panel">
-            </g:ResizeLayoutPanel>
-        </g:FlowPanel>
-    </g:SimplePanel>
+    <g:FlowPanel styleName="full-screen">
+        <g:ResizeLayoutPanel ui:field="contentPanel"
+                             styleName="full-screen__content-panel">
+        </g:ResizeLayoutPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

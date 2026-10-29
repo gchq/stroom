@@ -23,8 +23,6 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A floor map's Editor tab (all its parts shown here by its controller):
@@ -48,24 +46,24 @@ public class FloorMapEditor extends Component {
     @UiField
     SplitPane topSplitPane;
     @UiField
-    SimplePanel canvas;
+    FloorMapCanvas canvas;
     @UiField
     LinkTabPanel dock;
     @UiField
-    SimplePanel timeline;
+    FloorMapTimeline timeline;
     @UiField
-    SimplePanel factList;
+    FloorMapFactList factList;
     @UiField
-    SimplePanel timeList;
+    FloorMapTimeList timeList;
 
     /// Makes the tab, with nothing in it.
     public FloorMapEditor() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param canvas The map canvas.
-    public void setCanvas(final IsWidget canvas) {
-        this.canvas.setWidget(canvas);
+    /// @return The map canvas, which its controller attaches the canvas's controller to.
+    public FloorMapCanvas getCanvas() {
+        return canvas;
     }
 
     /// @return The right-hand dock, for its controller to attach to.
@@ -73,19 +71,19 @@ public class FloorMapEditor extends Component {
         return dock;
     }
 
-    /// @param timeline The timeline.
-    public void setTimeline(final IsWidget timeline) {
-        this.timeline.setWidget(timeline);
+    /// @return The timeline, which its controller attaches the timeline's controller to.
+    public FloorMapTimeline getTimeline() {
+        return timeline;
     }
 
-    /// @param factList The Fact List.
-    public void setFactList(final IsWidget factList) {
-        this.factList.setWidget(factList);
+    /// @return The Fact List, which its controller attaches the list's controller to.
+    public FloorMapFactList getFactList() {
+        return factList;
     }
 
-    /// @param timeList The Time List.
-    public void setTimeList(final IsWidget timeList) {
-        this.timeList.setWidget(timeList);
+    /// @return The Time List, which its controller attaches the list's controller to.
+    public FloorMapTimeList getTimeList() {
+        return timeList;
     }
 
     /// Shows or hides the dock and its splitter, keeping the width it was dragged to.

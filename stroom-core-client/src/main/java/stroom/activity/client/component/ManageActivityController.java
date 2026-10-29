@@ -90,7 +90,7 @@ public class ManageActivityController extends Controller {
                                     final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
         this.view = view;
-        this.activityList = own(activityList);
+        this.activityList = own(activityList).attach(view.getList());
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
@@ -98,7 +98,6 @@ public class ManageActivityController extends Controller {
         this.currentActivity = currentActivity;
         initWidget(view);
 
-        view.setList(activityList);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         activityList.setFilterErrorConsumer(view::setFilterError);

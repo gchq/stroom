@@ -70,15 +70,11 @@ public class ScheduledProcessingController extends Controller {
                                          final ScheduledProcessEditController scheduledProcessEdit) {
         super(eventBus);
         initWidget(view);
-        own(scheduleList);
-        own(historyList);
         own(scheduledProcessEdit);
         this.restFactory = restFactory;
-        this.scheduleList = scheduleList;
-        this.historyList = historyList;
+        this.scheduleList = own(scheduleList).attach(view.getScheduleList());
+        this.historyList = own(historyList).attach(view.getHistoryList());
         this.scheduledProcessEdit = scheduledProcessEdit;
-        view.setScheduleList(scheduleList);
-        view.setHistoryList(historyList);
         scheduleList.setOnAdd(this::add);
         scheduleList.setOnEdit(this::edit);
         scheduleList.setOnDelete(this::remove);

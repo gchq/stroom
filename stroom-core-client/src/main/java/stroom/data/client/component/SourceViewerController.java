@@ -95,7 +95,6 @@ public class SourceViewerController extends Controller implements Focus {
     /// @param eventBus                      The application's event bus.
     /// @param view                          The content.
     /// @param classificationLabelController Gives the classification banner its colours.
-    /// @param sourceProgressBar             Shows how far through the stream the source is.
     /// @param textPane                      Shows the source's text.
     /// @param characterNavigator            Navigates the source's characters.
     /// @param uiConfigCache                 Gives how much source to show at a time.
@@ -105,7 +104,6 @@ public class SourceViewerController extends Controller implements Focus {
     public SourceViewerController(final EventBus eventBus,
                                   final SourceViewer view,
                                   final ClassificationLabelController classificationLabelController,
-                                  final SourceProgressBar sourceProgressBar,
                                   final DataTextPaneController textPane,
                                   final CharacterNavigatorController characterNavigator,
                                   final UiConfigCache uiConfigCache,
@@ -114,22 +112,15 @@ public class SourceViewerController extends Controller implements Focus {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(textPane);
-        own(characterNavigator);
+        this.textPane = own(textPane).attach(view.getText());
+        this.characterNavigator = own(characterNavigator).attach(view.getNavigator());
         own(classificationLabelController).attach(view.getClassificationLabel());
-        this.sourceProgressBar = sourceProgressBar;
-        this.textPane = textPane;
-        this.characterNavigator = characterNavigator;
+        this.sourceProgressBar = view.getProgressBar();
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.clientSecurityContext = clientSecurityContext;
 
         setEditorOptions();
-
-        view.setText(textPane);
-        view.setNavigator(characterNavigator);
-
-        setupProgressBar(view, sourceProgressBar);
 
         textPane.setOnBeginStepping(this::beginStepping);
 
@@ -173,12 +164,6 @@ public class SourceViewerController extends Controller implements Focus {
     @Override
     public void focus() {
         textPane.focus();
-    }
-
-    private void setupProgressBar(final SourceViewer view,
-                                  final SourceProgressBar sourceProgressBar) {
-        view.setProgress(sourceProgressBar);
-        sourceProgressBar.setVisible(false);
     }
 
     private void setEditorOptions() {

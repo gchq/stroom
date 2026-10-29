@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.data.client.component.CharacterNavigator;
 import stroom.data.client.component.CharacterNavigatorController;
 import stroom.data.client.component.CharacterRangeSelection;
 import stroom.data.client.component.CharacterRangeSelectionController;
@@ -37,7 +36,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.shared.AppPermission;
-import stroom.widget.progress.client.component.SourceProgressBar;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -204,15 +202,12 @@ public final class SourceStories {
     /// Creates the controller and its components, as GIN would.
     static SourceViewerController sourceController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
-        final SourceProgressBar sourceProgressBar = new SourceProgressBar();
         final CharacterNavigatorController characterNavigator = new CharacterNavigatorController(
-                new CharacterNavigator(),
                 () -> new CharacterRangeSelectionController(eventBus, new CharacterRangeSelection()));
         return new SourceViewerController(
                 eventBus,
                 new SourceViewer(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
-                sourceProgressBar,
                 EditorWidgets.dataTextPane(eventBus),
                 characterNavigator,
                 harness.getUiConfigCache(),

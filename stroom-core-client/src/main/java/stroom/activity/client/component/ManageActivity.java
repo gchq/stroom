@@ -24,8 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -39,13 +37,13 @@ public class ManageActivity extends Component {
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel list;
+    ActivityList list;
 
     private Supplier<SafeHtml> tooltipContentSupplier = () -> null;
     private Consumer<String> onFilterChange = filter -> {
     };
 
-    /// Makes empty content.
+    /// Makes the content, with its list empty.
     public ManageActivity() {
         initWidget(BINDER.createAndBindUi(this));
         nameFilter.setOnChange(text -> onFilterChange.accept(text));
@@ -57,9 +55,9 @@ public class ManageActivity extends Component {
         nameFilter.forceFocus();
     }
 
-    /// @param list The activities, below the filter.
-    public void setList(final IsWidget list) {
-        this.list.setWidget(list);
+    /// @return The activities, below the filter.
+    public ActivityList getList() {
+        return list;
     }
 
     /// @param tooltipContentSupplier Gives the filter's help, when it is asked for.

@@ -16,13 +16,12 @@
 
 package stroom.analytics.client.component;
 
+import stroom.query.client.component.QueryResultTable;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An analytic rule's Shards tab: its data shards above the rows of the shard selected (both shown
@@ -32,23 +31,24 @@ public class AnalyticDataShards extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel shardList;
+    AnalyticDataShardList shardList;
     @UiField
-    SimplePanel table;
+    QueryResultTable table;
 
     /// Makes the tab, with no shards or rows.
     public AnalyticDataShards() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param shardList The rule's data shards.
-    public void setShardList(final IsWidget shardList) {
-        this.shardList.setWidget(shardList);
+    /// @return The rule's data shards, which its controller attaches the list's controller to.
+    public AnalyticDataShardList getShardList() {
+        return shardList;
     }
 
-    /// @param table The rows of the shard selected.
-    public void setTable(final IsWidget table) {
-        this.table.setWidget(table);
+    /// @return The rows of the shard selected, which its controller attaches the table's
+    ///         controller to.
+    public QueryResultTable getTable() {
+        return table;
     }
 
 

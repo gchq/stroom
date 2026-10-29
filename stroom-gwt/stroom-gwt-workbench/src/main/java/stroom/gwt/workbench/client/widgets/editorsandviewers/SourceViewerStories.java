@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.client.component.DataViewer;
 import stroom.data.client.component.DataViewerController;
-import stroom.data.client.component.ItemNavigator;
 import stroom.data.client.component.ItemNavigatorController;
 import stroom.data.client.component.ItemSelection;
 import stroom.data.client.component.ItemSelectionController;
@@ -43,7 +42,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.widget.progress.client.component.SourceProgressBar;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -211,9 +209,9 @@ public final class SourceViewerStories {
                     // The data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line
                     play.expect(play.querySelector(".ace_gutter")).not().toBeVisible();
-                    // A range has nothing to navigate, so there is no item navigator (it was once
+                    // A range has nothing to navigate, so the item navigator is hidden (it was once
                     // shown again when the data arrived)
-                    play.expect(play.querySelector(".item-navigator")).toBeNull();
+                    play.expect(play.querySelector(".item-navigator")).not().toBeVisible();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // No location: nothing is fetched
@@ -240,22 +238,20 @@ public final class SourceViewerStories {
     private static DataViewerController dataController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final ItemNavigatorController itemNavigator = new ItemNavigatorController(
-                new ItemNavigator(),
                 () -> new ItemSelectionController(eventBus, new ItemSelection()));
         return new DataViewerController(
                 eventBus,
                 new HtmlPane(),
                 itemNavigator,
-                new DataViewer(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 EditorWidgets.dataTextPane(eventBus),
-                new SourceProgressBar(),
                 new MarkerListController(eventBus, new MarkerList()),
                 // Only used to open the source in a new tab, which the workbench doesn't have
                 null,
                 harness.getUiConfigCache(),
                 harness.getInjector().getClientSecurityContext(),
-                harness.getRestFactory());
+                harness.getRestFactory())
+                .attach(new DataViewer());
     }
 
     private static SourceLocation location(final long metaId) {

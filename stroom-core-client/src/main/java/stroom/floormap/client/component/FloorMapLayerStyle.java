@@ -99,7 +99,7 @@ public class FloorMapLayerStyle extends Component {
     @UiField
     ColourBox colourBox;
     @UiField
-    SimplePanel previewPanel;
+    Html preview;
 
     private Runnable onChange = () -> {
     };
@@ -220,7 +220,7 @@ public class FloorMapLayerStyle extends Component {
 
     /// @param style The style the preview draws.
     public void setPreview(final TypeStyle style) {
-        previewPanel.setWidget(new Html(FloorMapSwatchHtml.mapPreview(style, PREVIEW_SIZE_PX)));
+        preview.setHTML(FloorMapSwatchHtml.mapPreview(style, PREVIEW_SIZE_PX));
     }
 
     private void applyModeEnablement() {

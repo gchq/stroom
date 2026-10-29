@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -63,36 +64,43 @@ public class PropertyListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final PropertyList view;
     private final Provider<NewPropertyController> newPropertyProvider;
     private final RestFactory restFactory;
     private final DocumentPluginRegistry documentPluginRegistry;
+    private final RefCellsController refCells;
 
+    private PropertyList view;
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
     private PipelineElement currentElement;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(PropertyList)] gives it its list.
     ///
     /// @param eventBus               The application's event bus.
-    /// @param view                   The content.
     /// @param newPropertyProvider    Makes a property's editor.
     /// @param restFactory            Fetches the documents' names.
     /// @param documentPluginRegistry Makes and saves embedded documents.
     /// @param refCells               Lets the value cells open their documents.
     @Inject
     public PropertyListController(final EventBus eventBus,
-                                  final PropertyList view,
                                   final Provider<NewPropertyController> newPropertyProvider,
                                   final RestFactory restFactory,
                                   final DocumentPluginRegistry documentPluginRegistry,
                                   final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         this.newPropertyProvider = newPropertyProvider;
         this.restFactory = restFactory;
         this.documentPluginRegistry = documentPluginRegistry;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public PropertyListController attach(final PropertyList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         view.addColumns(
@@ -104,6 +112,7 @@ public class PropertyListController extends Controller {
                 refCells.configure(new DocRefCell.Builder<>()));
         view.setOnEdit(this::onEdit);
         watch(Contexts.READ_ONLY, view::setReadOnly);
+        return this;
     }
 
     private Source getSource(final PipelineProperty property) {

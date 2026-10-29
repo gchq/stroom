@@ -25,24 +25,33 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The floor map editor's Fact List panel ([FloorMapFactList]): its owner gives it the facts and
 /// the selection, and is told of the selection and the actions; its help button shows the help.
 public class FloorMapFactListController extends Controller {
 
-    private final FloorMapFactList view;
+    private FloorMapFactList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(FloorMapFactList)] gives it its list.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     @Inject
-    public FloorMapFactListController(final EventBus eventBus, final FloorMapFactList view) {
+    public FloorMapFactListController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a Fact List, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The Fact List.
+    /// @return This, for its owner to keep.
+    public FloorMapFactListController attach(final FloorMapFactList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         FloorMapEditorHelp.wire(view.getHelpButton(), "Fact List", FloorMapEditorHelp.factList());
+        return this;
     }
 
     /// @return The grid's element id, for the canvas to point `aria-describedby` at.

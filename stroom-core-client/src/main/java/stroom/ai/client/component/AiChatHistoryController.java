@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-/// Chat History ([FindPanel] over an [AiChatHistoryResultList]): the user's Ask Stroom AI chats,
+/// Chat History ([AiChatHistory]: a [FindPanel] over an [AiChatHistoryResultList]): the user's Ask Stroom AI chats,
 /// filtered by name, in a dialog made for one use; OK, Enter or a double click opens the one chosen.
 public class AiChatHistoryController extends Controller {
 
@@ -44,22 +44,21 @@ public class AiChatHistoryController extends Controller {
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                         The application's event bus.
-    /// @param view                             The content.
+    /// @param content                          The content.
     /// @param resultList                       Finds the chats, and lists them.
     /// @param quickFilterContextHandlerFactory Makes the filter's recent filters.
     @Inject
     public AiChatHistoryController(final EventBus eventBus,
-                                   final FindPanel view,
+                                   final AiChatHistory content,
                                    final AiChatHistoryResultListController resultList,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
-        this.view = view;
-        this.resultList = own(resultList);
-        initWidget(view);
+        initWidget(content);
+        this.view = content.getFindPanel();
+        this.resultList = own(resultList).attach(content.getResultList());
 
         // Named for screen readers, as its placeholder is only a hint, lost once something is typed
         view.setFilterGuidance("Filter chats", null);
-        view.setResultView(resultList);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindAiChatHistoryCriteria.QUICK_FILTER_CONTEXT, this, () -> taskMonitor().createTaskMonitor()));
         view.setOnFilterChange(this::changeQuickFilter);

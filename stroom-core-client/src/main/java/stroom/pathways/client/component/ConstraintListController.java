@@ -29,30 +29,37 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /// A pathway node's constraints ([ConstraintList]): New and Edit open a constraint's editor, Delete
 /// deletes those selected once confirmed, unless read only.
 public class ConstraintListController extends Controller {
 
-    private final ConstraintList view;
+    private ConstraintList view;
     private final Provider<ConstraintEditorController> constraintEditorProvider;
 
     private PathNode pathNode;
     private boolean readOnly = true;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ConstraintList)] gives it its list.
     ///
     /// @param eventBus                 The application's event bus.
-    /// @param view                     The content.
     /// @param constraintEditorProvider Makes a constraint's editor.
     @Inject
     public ConstraintListController(final EventBus eventBus,
-                                    final ConstraintList view,
                                     final Provider<ConstraintEditorController> constraintEditorProvider) {
         super(eventBus);
-        this.view = view;
         this.constraintEditorProvider = constraintEditorProvider;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ConstraintListController attach(final ConstraintList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         view.setOnNew(() -> {
@@ -80,6 +87,7 @@ public class ConstraintListController extends Controller {
                 }
             }
         });
+        return this;
     }
 
     private void onAdd() {

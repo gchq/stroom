@@ -26,6 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /// A processor profile's periods ([ProfilePeriodList]), as its owner gives them: New and Edit open the
@@ -33,26 +34,33 @@ import java.util.UUID;
 /// never read only.
 public class ProfilePeriodListController extends Controller implements Focus {
 
-    private final ProfilePeriodList view;
     private final List<ProfilePeriod> profilePeriods = new ArrayList<>();
     private final Provider<ProfilePeriodEditorController> profilePeriodEditorProvider;
+    private ProfilePeriodList view;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ProfilePeriodList)] gives it its list.
     ///
     /// @param eventBus                    The application's event bus.
-    /// @param view                        The content.
     /// @param profilePeriodEditorProvider Makes a period's editor.
     @Inject
     public ProfilePeriodListController(final EventBus eventBus,
-                                       final ProfilePeriodList view,
                                        final Provider<ProfilePeriodEditorController> profilePeriodEditorProvider) {
         super(eventBus);
-        this.view = view;
         this.profilePeriodEditorProvider = profilePeriodEditorProvider;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ProfilePeriodListController attach(final ProfilePeriodList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnAdd(this::onAdd);
         view.setOnEdit(this::showEditor);
         view.setOnRemove(this::onRemove);
+        return this;
     }
 
     @Override

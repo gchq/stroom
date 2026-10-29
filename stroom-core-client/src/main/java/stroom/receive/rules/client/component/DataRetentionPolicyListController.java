@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.component;
 
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
@@ -28,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -35,18 +35,24 @@ import java.util.function.Function;
 /// menu has the items its owner gives.
 public class DataRetentionPolicyListController extends Controller implements Focus {
 
-    private final DataRetentionPolicyList view;
+    private DataRetentionPolicyList view;
     private Function<DataRetentionRule, List<Item>> actionMenuItemProvider = rule -> List.of();
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(DataRetentionPolicyList)] gives it its list.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     @Inject
-    public DataRetentionPolicyListController(final EventBus eventBus,
-                                             final DataRetentionPolicyList view) {
+    public DataRetentionPolicyListController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public DataRetentionPolicyListController attach(final DataRetentionPolicyList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnShowActionMenu((row, popupPosition) -> ShowMenuEvent
                 .builder()
@@ -54,6 +60,7 @@ public class DataRetentionPolicyListController extends Controller implements Foc
                 .items(actionMenuItemProvider.apply(row))
                 .popupPosition(popupPosition)
                 .fire(this));
+        return this;
     }
 
     @Override
@@ -69,13 +76,6 @@ public class DataRetentionPolicyListController extends Controller implements Foc
     /// @return The selection, one rule at most.
     public MultiSelectionModel<DataRetentionRule> getSelectionModel() {
         return view.getSelectionModel();
-    }
-
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return view.getToolbar();
     }
 
     /// @param onEnabledChange Given a rule and whether it is now enabled.

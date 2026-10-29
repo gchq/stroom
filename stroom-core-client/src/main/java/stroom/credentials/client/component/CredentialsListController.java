@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The credentials ([CredentialsList]) the user may see, a page at a time: New and Edit open a
@@ -44,16 +45,17 @@ import java.util.function.Consumer;
 /// confirmed. Without the permission to see credentials, none are fetched.
 public class CredentialsListController extends Controller {
 
-    private final CredentialsList view;
     private final CredentialClient credentialClient;
     private final Provider<CredentialEditController> credentialEditProvider;
     private final Provider<ReplaceSecretController> replaceSecretProvider;
+    private final ClientSecurityContext securityContext;
+    private final ExpiryFormatter expiryFormatter;
+    private CredentialsList view;
     private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> dataProvider;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(CredentialsList)] gives it its list.
     ///
     /// @param eventBus                        The application's event bus.
-    /// @param view                            The content.
     /// @param credentialClient                Finds, makes and deletes the credentials.
     /// @param credentialEditProvider          Makes a credential's editor.
     /// @param replaceSecretProvider           Makes the dialog that replaces a credential's secret.
@@ -61,17 +63,26 @@ public class CredentialsListController extends Controller {
     /// @param expiryFormatter                 Formats when a credential expires.
     @Inject
     public CredentialsListController(final EventBus eventBus,
-                                     final CredentialsList view,
                                      final CredentialClient credentialClient,
                                      final Provider<CredentialEditController> credentialEditProvider,
                                      final Provider<ReplaceSecretController> replaceSecretProvider,
                                      final ClientSecurityContext securityContext,
                                      final ExpiryFormatter expiryFormatter) {
         super(eventBus);
-        this.view = view;
         this.credentialClient = credentialClient;
         this.credentialEditProvider = credentialEditProvider;
         this.replaceSecretProvider = replaceSecretProvider;
+        this.securityContext = securityContext;
+        this.expiryFormatter = expiryFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
+    /// widget, e.g. to show it as a screen of its own.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public CredentialsListController attach(final CredentialsList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(expiryFormatter::formatWithDuration);
         view.setOnAdd(this::handleAddButtonClick);
@@ -81,9 +92,10 @@ public class CredentialsListController extends Controller {
 
         // Avoid permissions issues if the user doesn't have the AppPermission to see the data
         if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
-            dataProvider = createDataProvider(eventBus);
+            dataProvider = createDataProvider(getEventBus());
             view.setDataProvider(dataProvider);
         }
+        return this;
     }
 
     // Sets up the data provider for the list of credentials

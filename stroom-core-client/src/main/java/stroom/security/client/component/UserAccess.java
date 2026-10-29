@@ -21,8 +21,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The User Access screen: who has access, and the selected user's sessions.
@@ -31,27 +29,23 @@ public class UserAccess extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel listContainer;
+    UserAccessList list;
     @UiField
-    SimplePanel sessionsContainer;
+    UserSessionsList sessions;
 
-    /// Makes the screen, with no content until it is given it.
+    /// Makes the screen, with its lists empty.
     public UserAccess() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// Shows the list of who has access.
-    ///
-    /// @param view Its view.
-    public void setList(final IsWidget view) {
-        listContainer.setWidget(view.asWidget());
+    /// @return The list of who has access.
+    public UserAccessList getList() {
+        return list;
     }
 
-    /// Shows the selected user's sessions.
-    ///
-    /// @param view Their view.
-    public void setSessionList(final IsWidget view) {
-        sessionsContainer.setWidget(view.asWidget());
+    /// @return The selected user's sessions.
+    public UserSessionsList getSessions() {
+        return sessions;
     }
 
     // --------------------------------------------------------------------------------

@@ -2,17 +2,22 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:c="urn:import:stroom.widget.component.client">
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:cs="urn:import:stroom.contentstore.client.component">
     <g:SimplePanel styleName="max">
 
         <split:SplitPane vertical="true" thin="true" sizes="400px, *"
                          names="Content packs, Content pack details" addStyleNames="max">
-            <g:SimplePanel ui:field="contentPackList" styleName="max dashboard-panel"/>
+            <g:SimplePanel styleName="max dashboard-panel">
+                <cs:ContentStoreContentPackList ui:field="contentPackList"/>
+            </g:SimplePanel>
             <!-- The details scroll, so the keyboard must be able to reach them to scroll them, even
                  when they hold nothing else the keyboard reaches (e.g. a pack with no links and both
                  buttons disabled). A named region, so screen readers say what has the focus -->
-            <c:AriaPanel ui:field="contentPackDetails" styleName="max dashboard-panel content-store-tab__details"
-                         role="region" tabIndex="0" ariaLabel="Content pack details"/>
+            <c:AriaPanel styleName="max dashboard-panel content-store-tab__details"
+                         role="region" tabIndex="0" ariaLabel="Content pack details">
+                <cs:ContentStoreContentPackDetails ui:field="contentPackDetails"/>
+            </c:AriaPanel>
         </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>

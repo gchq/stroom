@@ -31,13 +31,23 @@
     top: 0px;
     bottom: 0px;
     overflow: hidden;
-	display: flex;
-	flex-direction: column;
 	background-color: var(--page__background-color);
 }
 
+/* The main area: the main toolbar and the content */
+.main-screen__main {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
 /* The main area, below the maintenance banner while it is shown */
-.main-screen.main-screen--banner {
+.main-screen__main--banner {
     top: 20px;
 }
 
@@ -61,6 +71,12 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+/* The content beside the docked panel, filling the rest of the space */
+.main-screen__docked-content {
+    width: 100%;
+    height: 100%;
 }
 
 .main-screen__content-panel {

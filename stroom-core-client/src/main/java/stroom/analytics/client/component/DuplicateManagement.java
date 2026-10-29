@@ -25,8 +25,6 @@ import stroom.widget.tickbox.client.TickBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -49,7 +47,7 @@ public class DuplicateManagement extends Component {
     @UiField
     TextBox columns;
     @UiField
-    SimplePanel list;
+    DuplicateManagementList list;
 
     private Runnable onChange = () -> {
     };
@@ -92,9 +90,9 @@ public class DuplicateManagement extends Component {
                 columnNames);
     }
 
-    /// @param list The remembered duplicates.
-    public void setList(final IsWidget list) {
-        this.list.setWidget(list);
+    /// @return The remembered duplicates, which its controller attaches the list's controller to.
+    public DuplicateManagementList getList() {
+        return list;
     }
 
     /// @param onChange Run when the user changes a setting.

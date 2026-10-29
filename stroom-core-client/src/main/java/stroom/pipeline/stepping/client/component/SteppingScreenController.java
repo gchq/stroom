@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.ExpressionValidator;
 import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.MetaList;
 import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.component.SteppingMetaListController;
 import stroom.dispatch.client.RestFactory;
@@ -172,8 +173,6 @@ public class SteppingScreenController extends Controller {
         this.view = view;
         initWidget(view);
         own(sourceController);
-        own(stepLocationLink);
-        own(stepControl);
         own(steppingFilterEditor);
         this.restFactory = restFactory;
 
@@ -182,11 +181,12 @@ public class SteppingScreenController extends Controller {
         this.sourceController = sourceController;
         this.sourceLayer = new ControllerLayer(sourceController);
         this.elementProvider = elementProvider;
-        this.stepLocationLink = stepLocationLink;
-        this.stepControl = stepControl;
+        this.stepLocationLink = own(stepLocationLink).attach(view.getStepLocationLink());
+        this.stepControl = own(stepControl).attach(view.getStepControl());
         this.steppingFilterEditor = steppingFilterEditor;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
-        this.steppingMetaList = make(metaListControllerProvider);
+        // Shown in the source viewer while stepping, so made here rather than declared
+        this.steppingMetaList = make(metaListControllerProvider).attach(new MetaList());
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
@@ -205,8 +205,6 @@ public class SteppingScreenController extends Controller {
         view.setOnToggleLogPane(this::onToggleLogPane);
 
         sourceController.setOnClassification(this::setClassification);
-
-        view.setStepControls(stepLocationLink, stepControl);
 
         steppingMetaList.getToolbar().setName("Stream actions");
         streamListFilter = steppingMetaList.getToolbar().button(SvgImage.FILTER, "Filter Streams",

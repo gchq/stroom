@@ -54,6 +54,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -64,46 +65,54 @@ public class ProcessorTasksListController extends Controller {
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
-    private final ProcessorTasksList view;
     private final RestFactory restFactory;
     private final InfoTooltipController infoTooltip;
     private final DateTimeFormatter dateTimeFormatter;
     private final ExpressionCriteria criteria;
+    private final RefCellsController refCells;
+    private ProcessorTasksList view;
     private RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
     // Counts the Info clicks, so that only the latest click's tooltip is shown
     private int infoRequestCount;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(ProcessorTasksList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the tasks, and a task's stream for its info.
     /// @param infoTooltip       Shows a task's info.
     /// @param dateTimeFormatter Formats times in the user's preferences.
     /// @param refCells          Lets the feed and pipeline cells open them.
     @Inject
     public ProcessorTasksListController(final EventBus eventBus,
-                                        final ProcessorTasksList view,
                                         final RestFactory restFactory,
                                         final InfoTooltipController infoTooltip,
                                         final DateTimeFormatter dateTimeFormatter,
                                         final RefCellsController refCells) {
         super(eventBus);
-        this.view = view;
-        own(refCells);
+        this.refCells = own(refCells);
         own(infoTooltip);
         this.restFactory = restFactory;
         this.infoTooltip = infoTooltip;
         this.dateTimeFormatter = dateTimeFormatter;
+        criteria = new ExpressionCriteria();
+        own(OpenLinkUtil.addClickHandler(this, infoTooltip.asWidget()));
+    }
+
+    /// Attaches this to a list, e.g. one a template declares, which it fills from the server. The
+    /// list is then this controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public ProcessorTasksListController attach(final ProcessorTasksList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
-        criteria = new ExpressionCriteria();
         view.addColumns(dateTimeFormatter::format,
                 refCells.configure(new FeedRefCell.Builder<ProcessorTask>()),
                 refCells.configure(new DocRefCell.Builder<ProcessorTask>()));
         view.setOnShowInfo(this::showInfo);
-        own(OpenLinkUtil.addClickHandler(this, infoTooltip.asWidget()));
         view.setOnSortChange(this::refresh);
+        return this;
     }
 
     private void showInfo(final ProcessorTask row, final PopupPosition popupPosition, final Element anchor) {
