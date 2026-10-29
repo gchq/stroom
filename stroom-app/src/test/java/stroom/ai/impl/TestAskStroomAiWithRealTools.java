@@ -78,6 +78,8 @@ class TestAskStroomAiWithRealTools extends AbstractAiIntegrationTest {
     private ExplorerNodeService explorerNodeService;
     @Inject
     private Store store;
+    @Inject
+    private AiChatRunManager runManager;
 
     private FakeModelServer model;
     private UserRef user;
@@ -179,7 +181,8 @@ class TestAskStroomAiWithRealTools extends AbstractAiIntegrationTest {
         }
     }
 
-    // The chat's messages once the run has answered (or failed), as the user's client would poll for them.
+    // The chat's messages once the run has answered (or failed), as the user's client would poll for them, and has
+    // ended, so that nothing it does is left to happen once the test's database has gone.
     private List<AiChatMessage> answered(final int chatId) {
         final Instant until = Instant.now().plus(Duration.ofMinutes(2));
         while (Instant.now().isBefore(until)) {
@@ -188,7 +191,7 @@ class TestAskStroomAiWithRealTools extends AbstractAiIntegrationTest {
                     .filter(message -> message.getMessageType() == AiMessageType.AI_RESPONSE
                                        || message.getMessageType() == AiMessageType.ERROR)
                     .findFirst();
-            if (last.isPresent()) {
+            if (last.isPresent() && !runManager.isRunningHere(chatId)) {
                 assertThat(last.get().getMessageType())
                         .as("The run failed: %s", last.get().getMessage())
                         .isEqualTo(AiMessageType.AI_RESPONSE);
