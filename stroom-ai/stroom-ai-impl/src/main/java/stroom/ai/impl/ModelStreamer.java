@@ -22,6 +22,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -76,9 +77,69 @@ class ModelStreamer {
                           final boolean showReasoning,
                           final BooleanSupplier cancelled) {
         final Collector collector = new Collector();
-        final long startMs = System.currentTimeMillis();
-        // Some models stream on the calling thread, so the call is made on its own thread to leave this one free
-        // to write what has arrived.
+        stream(model, request, chatId, collector);
+        final StreamedRow answerRow = new StreamedRow(chatId, AiMessageType.STREAMING_ANSWER);
+        final StreamedRow thinkingRow = new StreamedRow(chatId, AiMessageType.STREAMING_THINKING);
+        try {
+            final ChatResponse response = await(collector.future, cancelled, collector::cancel, () -> {
+                if (showReasoning) {
+                    thinkingRow.write(collector.thinking());
+                }
+                answerRow.write(collector.answer());
+            });
+            return new StreamedResponse(response, collector.thinkingMs(System.currentTimeMillis()));
+        } finally {
+            thinkingRow.delete();
+            answerRow.delete();
+        }
+    }
+
+    /// Calls the model for something the chat doesn't show as it is written (e.g. a summary of earlier steps), so
+    /// that a stop is seen while the model is answering rather than only once it has answered. A model that
+    /// streams has its stream cancelled; one that doesn't is given up on, and its answer ignored when it comes.
+    ///
+    /// @param chatModel      The model, used if it can't stream.
+    /// @param streamingModel The model as one that streams, or null.
+    /// @param request        The request.
+    /// @param chatId         The chat the call is for.
+    /// @param cancelled      Says if the user has stopped the run.
+    /// @return The model's response.
+    /// @throws TaskTerminatedException If the run was stopped.
+    ChatResponse callUnseen(final ChatModel chatModel,
+                            final StreamingChatModel streamingModel,
+                            final ChatRequest request,
+                            final int chatId,
+                            final BooleanSupplier cancelled) {
+        if (cancelled.getAsBoolean()) {
+            throw new TaskTerminatedException();
+        }
+        if (streamingModel != null) {
+            final Collector collector = new Collector();
+            stream(streamingModel, request, chatId, collector);
+            return await(collector.future, cancelled, collector::cancel, () -> {
+            });
+        }
+        // A blocking call can't be interrupted, so it is left to finish on its own thread.
+        final CompletableFuture<ChatResponse> future = new CompletableFuture<>();
+        Thread.ofVirtual()
+                .name("ai-model-call-" + chatId)
+                .start(() -> {
+                    try {
+                        future.complete(chatModel.chat(request));
+                    } catch (final RuntimeException e) {
+                        future.completeExceptionally(e);
+                    }
+                });
+        return await(future, cancelled, () -> future.cancel(false), () -> {
+        });
+    }
+
+    // Some models stream on the calling thread, so the call is made on its own thread to leave the caller free to
+    // look at what has arrived.
+    private static void stream(final StreamingChatModel model,
+                               final ChatRequest request,
+                               final int chatId,
+                               final Collector collector) {
         Thread.ofVirtual()
                 .name("ai-model-stream-" + chatId)
                 .start(() -> {
@@ -88,28 +149,34 @@ class ModelStreamer {
                         collector.onError(e);
                     }
                 });
-        final StreamedRow answerRow = new StreamedRow(chatId, AiMessageType.STREAMING_ANSWER);
-        final StreamedRow thinkingRow = new StreamedRow(chatId, AiMessageType.STREAMING_THINKING);
+    }
+
+    /// Waits for the model's response, looking every [#FLUSH_INTERVAL] to see if the run has been stopped.
+    ///
+    /// @param future       Completed with the response.
+    /// @param cancelled    Says if the user has stopped the run.
+    /// @param cancel       Gives up on the call.
+    /// @param eachInterval Run each time the response hasn't come yet, e.g. to show what has arrived.
+    private static ChatResponse await(final CompletableFuture<ChatResponse> future,
+                                      final BooleanSupplier cancelled,
+                                      final Runnable cancel,
+                                      final Runnable eachInterval) {
+        final long startMs = System.currentTimeMillis();
         try {
             while (true) {
                 try {
-                    final ChatResponse response = collector.future.get(FLUSH_INTERVAL.toMillis(),
-                            TimeUnit.MILLISECONDS);
-                    return new StreamedResponse(response, collector.thinkingMs(System.currentTimeMillis()));
+                    return future.get(FLUSH_INTERVAL.toMillis(), TimeUnit.MILLISECONDS);
                 } catch (final TimeoutException e) {
                     if (cancelled.getAsBoolean()) {
-                        collector.cancel();
+                        cancel.run();
                         throw new TaskTerminatedException();
                     }
                     if (System.currentTimeMillis() - startMs > MAX_WAIT.toMillis()) {
-                        collector.cancel();
+                        cancel.run();
                         throw new RuntimeException("The model did not finish answering within "
                                                    + MAX_WAIT.toMinutes() + " minutes");
                     }
-                    if (showReasoning) {
-                        thinkingRow.write(collector.thinking());
-                    }
-                    answerRow.write(collector.answer());
+                    eachInterval.run();
                 }
             }
         } catch (final ExecutionException e) {
@@ -119,11 +186,8 @@ class ModelStreamer {
             throw new RuntimeException(e.getCause());
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            collector.cancel();
+            cancel.run();
             throw new TaskTerminatedException();
-        } finally {
-            thinkingRow.delete();
-            answerRow.delete();
         }
     }
 

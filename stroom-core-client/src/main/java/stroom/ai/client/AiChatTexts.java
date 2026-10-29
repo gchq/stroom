@@ -18,7 +18,11 @@ package stroom.ai.client;
 
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
+import stroom.ai.shared.AiContextUsage;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
+
+import java.util.stream.Collectors;
 
 /// What the chat panel says and shows about chats and their parts, kept out of the presenter so it can be
 /// tested without a browser.
@@ -108,6 +112,34 @@ public final class AiChatTexts {
         return percent >= CONTEXT_WARN_PERCENT
                 ? "warn"
                 : null;
+    }
+
+    /// @param usage How much of the model's context window a chat uses, and by what.
+    /// @return A note that the tool definitions alone take at least [AiContextUsage#TOOL_DEFINITIONS_NOTE_PERCENT]
+    /// of the context window, naming the largest, or null if they take less (or the window isn't known).
+    static String toolDefinitionsNote(final AiContextUsage usage) {
+        final long tools = NullSafe.getOrElse(usage.getParts().get(AiContextUsage.PART_TOOL_DEFINITIONS),
+                Long::longValue,
+                0L);
+        final int window = usage.getContextWindowTokens();
+        if (window <= 0 || tools * 100 < (long) AiContextUsage.TOOL_DEFINITIONS_NOTE_PERCENT * window) {
+            return null;
+        }
+        final String largest = usage.getLargestTools().entrySet().stream()
+                .map(tool -> tool.getKey() + " " + kilo(tool.getValue()))
+                .collect(Collectors.joining(", "));
+        return "The tool definitions alone take " + (tools * 100 / window) + "% of the context window, which "
+               + "compacting the chat can't make smaller." + (largest.isEmpty()
+                ? ""
+                : " The largest: " + largest + ".");
+    }
+
+    /// @param tokens A number of tokens.
+    /// @return It as the context meter shows it, in thousands from 1,000 (e.g. "12k").
+    static String kilo(final long tokens) {
+        return tokens >= 1000
+                ? (tokens / 1000) + "k"
+                : String.valueOf(tokens);
     }
 
     /// @param trusted True if the tool's server is trusted.

@@ -18,9 +18,11 @@ package stroom.ai.impl;
 
 import stroom.openai.shared.OpenAIModelDoc;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
@@ -118,6 +120,40 @@ class TestContextUsageTracker {
         tracker.forget(1);
         assertThat(tracker.getLastCall(1)).isEmpty();
         assertThat(tracker.getShortenedParts(1)).isZero();
+    }
+
+    @Test
+    void testRecord_keepsTheLargestToolsAndTheStepsAsSent() {
+        final List<ToolSpecification> tools = List.of(
+                ToolSpecification.builder().name("small").description("s").build(),
+                ToolSpecification.builder().name("large").description("l".repeat(4_000)).build(),
+                ToolSpecification.builder().name("middle").description("m".repeat(400)).build());
+        final ToolExecutionRequest call = ToolExecutionRequest.builder().id("c1").name("small").arguments("{}")
+                .build();
+        final List<ChatMessage> sent = List.of(
+                UserMessage.from("q".repeat(4_000)),
+                AiMessage.from("looking", List.of(call)),
+                ToolExecutionResultMessage.from(call, "r".repeat(400)),
+                UserMessage.from(McpAgentChat.COLLAPSED_STEPS_NOTE + "\n- small({}) -> r"));
+
+        tracker.record(1, null, sent, tools, ChatResponse.builder()
+                .aiMessage(AiMessage.from("ok"))
+                .tokenUsage(new TokenUsage(2_000, 10))
+                .build());
+
+        assertThat(tracker.getLargestTools(1).keySet()).containsExactly("large", "middle", "small");
+        assertThat(tracker.getLargestTools(1).values().stream().mapToLong(Long::longValue).sum())
+                .isEqualTo(tracker.getToolDefinitionTokens(1));
+        // The question isn't one of its steps; the call, its result and the note of earlier steps are.
+        assertThat(tracker.getSentStepTokens(1)).hasValueSatisfying(tokens -> assertThat(tokens)
+                .isGreaterThan(100L)
+                .isLessThan(1_000L));
+        assertThat(ContextUsageTracker.largest(java.util.Map.of("a", 1L, "b", 3L, "c", 2L), 2).keySet())
+                .containsExactly("b", "c");
+
+        tracker.forget(1);
+        assertThat(tracker.getLargestTools(1)).isEmpty();
+        assertThat(tracker.getSentStepTokens(1)).isEmpty();
     }
 
     @Test

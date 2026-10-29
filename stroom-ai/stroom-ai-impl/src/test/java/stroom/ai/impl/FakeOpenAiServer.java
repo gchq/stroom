@@ -38,7 +38,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 /// An OpenAI-compatible chat completions server running in-process on a random port, for testing a whole agent
 /// run through the real model client, HTTP client and streaming. It streams the replies it is given, in order
 /// (an answer, or a call of a tool), as server-sent events, and records each request it receives. A request that
-/// isn't streamed (e.g. for a summary) is answered whole, from replies of its own.
+/// isn't streamed is answered whole, and one for a summary of the run's steps (streamed, so it can be stopped) is
+/// answered, from replies of their own.
 final class FakeOpenAiServer implements AutoCloseable {
 
     private static final String DEFAULT_ANSWER = "Done.";
@@ -71,7 +72,7 @@ final class FakeOpenAiServer implements AutoCloseable {
         return this;
     }
 
-    /// Adds an answer to the replies to requests that aren't streamed, given whole.
+    /// Adds an answer to the replies to requests that aren't streamed, given whole, and to requests for a summary.
     FakeOpenAiServer answerWhole(final String text) {
         wholeAnswers.add(text);
         return this;
@@ -100,9 +101,14 @@ final class FakeOpenAiServer implements AutoCloseable {
                 answerWhole(exchange, Objects.requireNonNullElse(wholeAnswers.poll(), DEFAULT_WHOLE_ANSWER));
                 return;
             }
-            final Map<String, Object> reply = replies.isEmpty()
-                    ? Map.of("answer", DEFAULT_ANSWER)
-                    : replies.poll();
+            final Map<String, Object> reply;
+            if (isSummaryRequest(request)) {
+                reply = Map.of("answer", Objects.requireNonNullElse(wholeAnswers.poll(), DEFAULT_WHOLE_ANSWER));
+            } else {
+                reply = replies.isEmpty()
+                        ? Map.of("answer", DEFAULT_ANSWER)
+                        : replies.poll();
+            }
             exchange.getResponseHeaders().add("Content-Type", "text/event-stream");
             exchange.sendResponseHeaders(200, 0);
             final OutputStream out = exchange.getResponseBody();
@@ -126,6 +132,15 @@ final class FakeOpenAiServer implements AutoCloseable {
             out.write("data: [DONE]\n\n".getBytes(StandardCharsets.UTF_8));
             out.flush();
         }
+    }
+
+    /// @param request A request's body.
+    /// @return True if it asks for a summary of a run's steps.
+    @SuppressWarnings("unchecked")
+    static boolean isSummaryRequest(final Map<String, Object> request) {
+        final List<Map<String, Object>> messages = (List<Map<String, Object>>) request.get("messages");
+        return messages != null && !messages.isEmpty()
+               && McpAgentChat.TURN_SUMMARY_PROMPT.equals(messages.getFirst().get("content"));
     }
 
     private static void answerWhole(final HttpExchange exchange, final String text) throws IOException {
