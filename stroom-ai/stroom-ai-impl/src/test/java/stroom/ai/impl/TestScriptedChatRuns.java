@@ -557,7 +557,8 @@ class TestScriptedChatRuns {
                 ConsentGates.chat(new ToolConsent(approvalDao, aiDao, AiConfig::new, () -> runManager), aiService,
                         runManager),
                 Mockito.mock(AiAuditLog.class),
-                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
+                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), new TurnSummaries(),
+                AiConfig::new, aiDao,
                 new UserActions(userActionLookup),
                 new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
     }
