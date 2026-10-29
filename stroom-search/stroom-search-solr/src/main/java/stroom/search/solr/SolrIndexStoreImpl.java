@@ -18,6 +18,7 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.query.api.datasource.FieldType;
@@ -76,6 +77,14 @@ public class SolrIndexStoreImpl
                 SolrIndexDoc::builder,
                 SolrIndexDoc::copy);
         this.solrIndexClientCache = solrIndexClientCache;
+    }
+
+    @Override
+    protected DependencyRemapFunction<SolrIndexDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .defaultExtractionPipeline(dependencyRemapper.remap(doc.getDefaultExtractionPipeline()))
+                .build();
     }
 
     @Override

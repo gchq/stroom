@@ -23,6 +23,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
 import stroom.security.api.SecurityContext;
@@ -73,15 +74,31 @@ class DataRetentionRulesServiceImpl
     protected DependencyRemapFunction<DataRetentionRules> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final List<DataRetentionRule> rules = doc.getRules();
-            if (rules != null && !rules.isEmpty()) {
-                rules.forEach(receiveDataRule -> {
-                    if (receiveDataRule.getExpression() != null) {
-                        dependencyRemapper.remapExpression(receiveDataRule.getExpression());
-                    }
-                });
+            if (NullSafe.hasItems(rules)) {
+                final List<DataRetentionRule> remappedRules = rules
+                        .stream()
+                        .map(rule -> remapRule(rule, dependencyRemapper))
+                        .toList();
+                return doc.copy().rules(remappedRules).build();
             }
             return doc;
         };
+    }
+
+    private DataRetentionRule remapRule(final DataRetentionRule rule,
+                                        final DependencyRemapper dependencyRemapper) {
+        if (rule.getExpression() == null) {
+            return rule;
+        }
+        return new DataRetentionRule(
+                rule.getRuleNumber(),
+                rule.getCreationTime(),
+                rule.getName(),
+                rule.isEnabled(),
+                dependencyRemapper.remapExpression(rule.getExpression()),
+                rule.getAge(),
+                rule.getTimeUnit(),
+                rule.isForever());
     }
 
     @Override
