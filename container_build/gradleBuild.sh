@@ -230,10 +230,11 @@ main() {
     -x test \
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
+  echo -e "${GREEN}Distribution built successfully${NC}"
   echo "::endgroup::"
-
-  echo -e "${GREEN}Done${NC}"
 }
 
+echo "::group::Gradle build timings"
 # Get a time for the whole build
 time main "$@"
+echo "::endgroup::"

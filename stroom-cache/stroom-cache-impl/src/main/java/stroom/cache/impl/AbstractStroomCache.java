@@ -103,6 +103,9 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
      */
     abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
+    /// Return true if this cache is a self-loading cache.
+    abstract boolean isLoadingCache();
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public synchronized void rebuild() {
@@ -135,10 +138,20 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     newCacheConfig.getExpireAfterWrite(),
                     StroomDuration::getDuration,
                     newCacheBuilder::expireAfterWrite);
-            NullSafe.consume(
-                    newCacheConfig.getRefreshAfterWrite(),
-                    StroomDuration::getDuration,
-                    newCacheBuilder::refreshAfterWrite);
+
+            NullSafe.consume(newCacheConfig.getRefreshAfterWrite(), refreshAfterWrite -> {
+                if (isLoadingCache()) {
+                    // refreshAfterWrite only supported for loading caches
+                    newCacheBuilder.refreshAfterWrite(refreshAfterWrite.getDuration());
+                } else {
+                    LOGGER.warn(() -> LogUtil.message(
+                            "Config property '{}' with value '{}' is not supported for non-loading caches. " +
+                            "Cache '{}' is a non-loading cache. This property will be ignored",
+                            newCacheConfig.getFullPath(CacheConfig.PROP_NAME_REFRESH_AFTER_WRITE),
+                            refreshAfterWrite,
+                            name));
+                }
+            });
 
             if (removalNotificationConsumer != null) {
                 final RemovalListener<K, V> removalListener = createRemovalListener();
