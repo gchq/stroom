@@ -58,15 +58,16 @@ public class PermissionChangeResourceImpl implements PermissionChangeResource {
     @Override
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);
-        fireGenericEntityChangeEvent(request.getDocRef().getType());
+        fireEntityChangeEvent(request.getDocRef());
         return Boolean.TRUE;
     }
 
-    private void fireGenericEntityChangeEvent(final String type) {
-        Objects.requireNonNull(type);
+    private void fireEntityChangeEvent(final DocRef docRef) {
+        // A DocRef must have a UUID, so use the changed doc rather than a type-only DocRef
+        Objects.requireNonNull(docRef);
         EntityEvent.fire(
                 entityEventBusProvider.get(),
-                DocRef.builder().type(type).build(),
+                docRef,
                 EntityAction.UPDATE);
     }
 }
