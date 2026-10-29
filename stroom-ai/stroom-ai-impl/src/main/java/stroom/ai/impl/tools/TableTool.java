@@ -280,8 +280,12 @@ class TableTool extends AbstractWorkspaceTool {
                 limit(args.get("limit")));
 
         final Result result = TableEngine.run(workspace.localFile(path), Format.forPath(path), query);
+        // A snapshot of a table's results may hold only some of the rows its search found, which the answer must say.
         final String summary = result.rowsMatched() + " of " + result.rowsRead() + " rows matched; the result has "
-                               + result.rows().size() + " row(s).";
+                               + result.rows().size() + " row(s)."
+                               + CurrentResultsTool.coverage(workspace, path, result.rowsRead())
+                                       .map(coverage -> " " + coverage)
+                                       .orElse("");
         if (out != null) {
             writeCsv(workspace, out, result, workspace.sourceDocUuid(path));
             return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"

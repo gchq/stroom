@@ -119,7 +119,7 @@ class TestTableSummariser {
         assertThat(summariser.buildBatches(table(3), fewRows, Integer.MAX_VALUE, 3).capped()).isFalse();
 
         final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
-        summariser.summarise(TableSummaryRequest.builder()
+        final TableSummaryResult result = summariser.summarise(TableSummaryRequest.builder()
                 .source(new TableSource("t", table(5), false))
                 .chatModel(chatModel(prompt -> {
                     prompts.add(prompt);
@@ -129,6 +129,8 @@ class TestTableSummariser {
                 .query("What is going on?")
                 .build());
         assertThat(prompts.getFirst()).contains("only the first 3 rows of a larger table are given");
+        // And so is the reader, whatever the model made of it.
+        assertThat(result.text()).contains("This answer covers only the first 3 rows of a larger table");
     }
 
     @Test
@@ -221,15 +223,22 @@ class TestTableSummariser {
     }
 
     @Test
-    void truncatedSource_tellsTheModelThatThereWasMoreData() {
+    void truncatedSource_tellsTheModelAndTheReaderThatThereWasMoreData() {
         final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
 
-        summariser.summarise(request(new TableSource("truncated", table(2), true), prompt -> {
-            prompts.add(prompt);
-            return "answer";
-        }).build());
+        final TableSummaryResult result = summariser.summarise(request(new TableSource("truncated", table(2), true),
+                prompt -> {
+                    prompts.add(prompt);
+                    return "answer";
+                }).build());
 
         assertThat(prompts.getFirst()).contains("only the first 100 rows of a larger table are given");
+        assertThat(result.text()).isEqualTo("answer\n\n---\n*Note: This answer covers only the first 100 rows of a "
+                                            + "larger table.*");
+
+        // A table given whole has no such note.
+        assertThat(summariser.summarise(request(new TableSource("whole", table(2), false), prompt -> "answer")
+                .build()).text()).isEqualTo("answer");
     }
 
     @Test
