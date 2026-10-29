@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* An annotation found by Find Annotation (stroom.annotation.client.FindAnnotationCell), named BEM style. Imported after stroom-annotation.css, where it was. */
+/* An annotation found by Find Annotation (stroom.annotation.client.FindAnnotationCell), named BEM style. */
 .find-annotation-cell {
 	display: flex;
 	flex-direction: column;

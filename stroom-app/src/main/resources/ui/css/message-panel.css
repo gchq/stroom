@@ -17,7 +17,7 @@
 /*
    A message over the middle of what it is put in (stroom.widget.datagrid.client.MessagePanel), e.g.
    a list's or a visualisation's errors: message-panel, holding message-panel__message. Was
-   dashboard.css's dashboardVis-messageOuter and dashboardVis-messageInner.
+   dashboard.css's old dashboardVis-messageOuter and dashboardVis-messageInner.
 */
 
 .message-panel {

@@ -17,7 +17,6 @@
 /*
    A setting of an annotation (stroom.annotation.client.SettingBlock), shown as its value with a
    hint (or button) to change it, named BEM style (block, block__element, block--modifier).
-   Imported after stroom-annotation.css, where it was.
 */
 .setting-block {
     border-radius: 6px;
@@ -32,6 +31,10 @@
 
 .setting-block:hover {
     background-color: var(--border-color);
+}
+
+.setting-block:hover .setting-block__icon {
+    opacity: 0.6;
 }
 
 .setting-block__icon {
@@ -77,11 +80,4 @@
 
 .setting-block:has(> .setting-block__icon:focus-visible) {
     background-color: var(--border-color);
-}
-
-/* A missing value (None, Nobody) is muted, too faint on a highlighted setting's background, so it
-   takes the text colour there */
-.setting-block:hover .annotationLabel--empty,
-.setting-block:has(> .setting-block__icon:focus-visible) .annotationLabel--empty {
-    color: var(--text-color);
 }

@@ -10,10 +10,10 @@
     color:var(--text-color--red);
 }
 
-.data-grid__row--selected .dataGridDisabledCell .red-green-text-cell--green,
-.data-grid__row--selected .dataGridDisabledCell .red-green-text-cell--red,
-.dataGridDisabledCell .red-green-text-cell--green,
-.dataGridDisabledCell .red-green-text-cell--red {
+.data-grid__row--selected .data-grid__cell--disabled .red-green-text-cell--green,
+.data-grid__row--selected .data-grid__cell--disabled .red-green-text-cell--red,
+.data-grid__cell--disabled .red-green-text-cell--green,
+.data-grid__cell--disabled .red-green-text-cell--red {
     color:var(--text-color--disabled);
 }
 

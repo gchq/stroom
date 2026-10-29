@@ -10,26 +10,26 @@
       takes, which the Java shows for the field's type and condition, then the field's type. It is
       shown while its term is edited
     -->
-    <g:FlowPanel styleName="termEditor-outer" visible="false">
-        <g:FlowPanel ui:field="inner" styleName="termEditor-inner">
-            <i:BaseSelectionBox ui:field="fieldListBox" addStyleNames="termEditor-item dropdown field"/>
-            <i:SelectionBox ui:field="conditionListBox" addStyleNames="termEditor-item dropdown condition"/>
-            <i:SuggestionBox ui:field="value" addStyleNames="termEditor-item wide" visible="false"/>
-            <i:SuggestionBox ui:field="valueFrom" addStyleNames="termEditor-item narrow" visible="false"/>
-            <dt:DateTimeBox ui:field="date" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
+    <g:FlowPanel styleName="term-editor" visible="false">
+        <g:FlowPanel ui:field="inner" styleName="term-editor__fields">
+            <i:BaseSelectionBox ui:field="fieldListBox" addStyleNames="term-editor__item term-editor__item--field"/>
+            <i:SelectionBox ui:field="conditionListBox" addStyleNames="term-editor__item term-editor__item--condition"/>
+            <i:SuggestionBox ui:field="value" addStyleNames="term-editor__item term-editor__item--wide" visible="false"/>
+            <i:SuggestionBox ui:field="valueFrom" addStyleNames="term-editor__item term-editor__item--narrow" visible="false"/>
+            <dt:DateTimeBox ui:field="date" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
                             visible="false"/>
-            <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
+            <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
                             visible="false"/>
-            <tx:Label ui:field="andLabel" addStyleNames="termEditor-label" wordWrap="false" text=" and "
+            <tx:Label ui:field="andLabel" addStyleNames="term-editor__label" wordWrap="false" text=" and "
                      visible="false"/>
-            <i:SuggestionBox ui:field="valueTo" addStyleNames="termEditor-item narrow" visible="false"/>
-            <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true" addStyleNames="termEditor-item narrow"
+            <i:SuggestionBox ui:field="valueTo" addStyleNames="term-editor__item term-editor__item--narrow" visible="false"/>
+            <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
                             visible="false"/>
-            <dd:DropDownBox ui:field="docRefBox" addStyleNames="termEditor-item docRef termEditor-item--doc"
+            <dd:DropDownBox ui:field="docRefBox" addStyleNames="term-editor__item term-editor__item--picker term-editor__item--doc"
                             visible="false"/>
-            <dd:DropDownBox ui:field="userRefBox" addStyleNames="termEditor-item docRef" visible="false"/>
+            <dd:DropDownBox ui:field="userRefBox" addStyleNames="term-editor__item term-editor__item--picker" visible="false"/>
         </g:FlowPanel>
-        <tx:Label ui:field="fieldTypeLabel" addStyleNames="termEditor-label fieldType" wordWrap="false"
+        <tx:Label ui:field="fieldTypeLabel" addStyleNames="term-editor__label term-editor__label--field-type" wordWrap="false"
                  visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

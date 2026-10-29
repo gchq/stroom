@@ -21,8 +21,8 @@
                 <form:FormGroup identity="userName" label="User Name" required="true"
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
-                        <g:FlowPanel addStyleNames="userNameTextBoxOuter">
-                            <form:TextBox ui:field="userName" addStyleNames="userNameTextBox"
+                        <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
+                            <form:TextBox ui:field="userName" addStyleNames="sign-in-page__user-name"
                                           placeholder="Enter User Name"/>
                         </g:FlowPanel>
 

@@ -32,7 +32,7 @@ public class DurationLabel {
     }
 
     public void append(final HtmlBuilder builder, final long time, final long nowMs) {
-        span(builder, "annotationDurationLabel", time, nowMs);
+        span(builder, "duration-label", time, nowMs);
     }
 
     public void span(final HtmlBuilder builder, final String className, final long time, final long nowMs) {

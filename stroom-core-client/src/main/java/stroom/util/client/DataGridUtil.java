@@ -73,7 +73,7 @@ public class DataGridUtil {
     public static final int DEFAULT_PCT_WARNING_THRESHOLD = 80;
     public static final int DEFAULT_PCT_DANGER_THRESHOLD = 90;
 
-    private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
+    private static final String DISABLED_CELL_CLASS = "data-grid__cell--disabled";
     // The theme's muted text colour, which is 4.5:1 on rows in both themes (#666666 wasn't on dark ones)
     private static final String LOW_LIGHT_COLOUR = "var(--text-color--muted)";
 

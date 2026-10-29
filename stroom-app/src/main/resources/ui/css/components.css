@@ -367,7 +367,7 @@
     color: var(--danger);
 }
 
-.dataGridDisabledCell .nodePingBar-error-text {
+.data-grid__cell--disabled .nodePingBar-error-text {
     font-weight: 400;
     color: var(--text-color--disabled);
 }
@@ -393,22 +393,22 @@
      color: var(--black);
 }
 
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy,
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn,
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max {
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__healthy,
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__warn,
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__max {
      background-color: var(--text-color--disabled);
 }
 
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text {
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text {
     color: var(--text-color--disabled) ;
 }
 
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn .nodePingBar-text,
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max .nodePingBar-text {
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__warn .nodePingBar-text,
+.data-grid__cell--disabled .nodePingBar-bar.nodePingBar-severity__max .nodePingBar-text {
      color: var(--black);
 }
 
-.dataGridDisabledCell span.nodePingBar-text {
+.data-grid__cell--disabled span.nodePingBar-text {
     color: var(--text-color--disabled) ;
 }
 
@@ -471,11 +471,11 @@
 .userRefLinkContainer:hover .svg-image.hoverIcon,
 .docRefLinkContainer:hover .svg-image.hoverIcon,
 .commandLinkContainer:hover .svg-image,
-.dataGridDisabledCell.data-grid__cell:hover .userRefLinkContainer .svg-image,
-.dataGridDisabledCell.data-grid__cell:hover .docRefLinkContainer .svg-image,
-.dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
-.dataGridDisabledCell .docRefLinkContainer:hover .svg-image.hoverIcon,
-.dataGridDisabledCell .commandLinkContainer:hover .svg-image {
+.data-grid__cell--disabled.data-grid__cell:hover .userRefLinkContainer .svg-image,
+.data-grid__cell--disabled.data-grid__cell:hover .docRefLinkContainer .svg-image,
+.data-grid__cell--disabled .userRefLinkContainer:hover .svg-image.hoverIcon,
+.data-grid__cell--disabled .docRefLinkContainer:hover .svg-image.hoverIcon,
+.data-grid__cell--disabled .commandLinkContainer:hover .svg-image {
     opacity: .8;
     color: var(--text-color);
     cursor: pointer;
@@ -506,8 +506,8 @@
 /* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
    reference, or an annotation history entry's actions button */
 [data-row-action]:focus-visible,
-.annotationLink:focus-visible,
-.annotationHistoryActions:focus-visible {
+.annotation-history__link:focus-visible,
+.annotation-history__actions:focus-visible {
     outline: none;
     box-shadow: var(--focus-shadow);
     border-radius: .25rem;
@@ -708,7 +708,7 @@
     width: 100%;
 }
 
-.data-grid.showValueFilters .dashboard-table-filter-cell {
+.data-grid.result-table__grid--value-filters .dashboard-table-filter-cell {
     display: block;
 }
 

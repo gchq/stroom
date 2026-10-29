@@ -42,12 +42,12 @@ export function readColumn(page, name) {
     for (const g of scope.querySelectorAll('.data-grid, [role=grid]')) {
       if (!(g.offsetWidth > 0)) continue;
       const heads = [...g.querySelectorAll('thead th, [role=columnheader]')];
-      const idx = heads.findIndex((h) => strip(h.querySelector('.column-label')?.textContent ?? h.textContent) === wanted);
+      const idx = heads.findIndex((h) => strip(h.querySelector('.column-header__label')?.textContent ?? h.textContent) === wanted);
       if (idx < 0) continue;
       const h = heads[idx];
       const icon = h.querySelector('[class*="fields-sort-"]');
       const direction = icon ? (/descending/.test(icon.className.baseVal ?? icon.className) ? 'desc' : 'asc') : null;
-      const order = norm(h.querySelector('.column-sortOrder')?.textContent) || null;
+      const order = norm(h.querySelector('.column-header__sort-order')?.textContent) || null;
       const rows = [...g.querySelectorAll('tbody tr, [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && norm(r.textContent));
       const values = rows.map((r) => {
         const cells = r.querySelectorAll('td, [role=gridcell]');

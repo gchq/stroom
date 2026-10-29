@@ -20,7 +20,7 @@
     background-color: var(--row__background-color--even);
 }
 
-.data-grid__row--selected .dataGridDisabledCell .percent-bar-cell {
+.data-grid__row--selected .data-grid__cell--disabled .percent-bar-cell {
     border-color: var(--text-color--disabled);
 }
 
@@ -46,8 +46,8 @@
      background-color: var(--danger);
 }
 
-.dataGridDisabledCell .percent-bar-cell__bar.percent-bar-cell__bar--healthy,
-.dataGridDisabledCell .percent-bar-cell__bar.percent-bar-cell__bar--warning,
-.dataGridDisabledCell .percent-bar-cell__bar.percent-bar-cell__bar--danger {
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--healthy,
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--warning,
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--danger {
      background-color: var(--text-color--disabled);
 }

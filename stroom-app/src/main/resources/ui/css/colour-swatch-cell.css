@@ -27,6 +27,6 @@
 .colour-swatch-cell__text {
 }
 
-.dataGridDisabledCell .colour-swatch-cell__swatch {
+.data-grid__cell--disabled .colour-swatch-cell__swatch {
     opacity: var(--disabled-opacity);
 }

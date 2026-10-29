@@ -47,7 +47,7 @@ public class DashboardBody extends Component {
 
     /// @param designMode Whether the dashboard is being designed.
     public void setDesignMode(final boolean designMode) {
-        root.setStyleName("dashboard__designMode", designMode);
+        root.setStyleName("dashboard--design-mode", designMode);
     }
 
 

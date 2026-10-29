@@ -206,7 +206,7 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab,
-.dashboard__designMode .tab-bar--link .tab-bar__tab {
+.dashboard--design-mode .tab-bar--link .tab-bar__tab {
     cursor: pointer;
 }
 
@@ -216,7 +216,7 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab:hover,
-.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
+.dashboard--design-mode .tab-bar--link .tab-bar__tab:hover {
     opacity: 1;
     text-decoration: underline;
 }

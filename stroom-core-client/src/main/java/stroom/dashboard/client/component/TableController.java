@@ -488,9 +488,9 @@ public class TableController extends DashboardComponentController
     private void setShowValueFilters(final boolean showValueFilters) {
         valueFilterButton.setState(showValueFilters);
         if (showValueFilters) {
-            dataGrid.addStyleName("showValueFilters");
+            dataGrid.addStyleName("result-table__grid--value-filters");
         } else {
-            dataGrid.removeStyleName("showValueFilters");
+            dataGrid.removeStyleName("result-table__grid--value-filters");
         }
     }
 
@@ -736,7 +736,7 @@ public class TableController extends DashboardComponentController
         if (index >= 0) {
             final Element headerCell = dataGrid.getHeaderCellElement(index);
             return headerCell != null
-                    ? ElementUtil.findChild(headerCell, "column-valueFilterIcon")
+                    ? ElementUtil.findChild(headerCell, "column-header__value-filter-icon")
                     : null;
         }
 

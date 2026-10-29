@@ -18,7 +18,7 @@ import { waitForMenu } from '../lib/settle.mjs';
 
 // GWT UI adapter — how to locate/drive the classic Stroom UI.
 //
-// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.userNameTextBox`, PasswordBox (its input
+// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.sign-in-page__user-name`, PasswordBox (its input
 // `.password-box__input`), "Sign In" button (`.LoginViewSignInButton`). On first login Stroom forces a
 // password change via an OK/Cancel popup (`ChangePasswordViewImpl.ui.xml`): two PasswordBoxes, told
 // apart by their placeholders (new password "Enter Password", confirm "Confirm Password"), then the
@@ -32,12 +32,12 @@ export const gwt = {
 
   /** Wait for the internal-IdP sign-in form (after the BFF redirects an unauth'd load). */
   async waitForSignIn(page) {
-    await page.waitForSelector('input.userNameTextBox, input[type=text]', { timeout: 45_000 });
+    await page.waitForSelector('input.sign-in-page__user-name, input[type=text]', { timeout: 45_000 });
   },
 
   async signIn(page, { user, pass }) {
     await this.waitForSignIn(page);
-    await page.locator('input.userNameTextBox, input[type=text]').first().fill(user);
+    await page.locator('input.sign-in-page__user-name, input[type=text]').first().fill(user);
     await page.locator('input.password-box__input, input[type=password]').first().fill(pass);
     await page.getByRole('button', { name: /sign in/i }).click();
   },
@@ -105,7 +105,7 @@ export const gwt = {
    */
   async assertSignedIn(page, creds = {}) {
     const seen = await page.evaluate(() => ({
-      signInForm: !!document.querySelector('input.userNameTextBox, input.password-box__input'),
+      signInForm: !!document.querySelector('input.sign-in-page__user-name, input.password-box__input'),
       app: !!document.querySelector('.explorer-cell, .navigationTree, button[title="Main Menu"]'),
       url: window.location.href,
     }));

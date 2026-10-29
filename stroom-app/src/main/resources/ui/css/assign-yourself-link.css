@@ -16,8 +16,7 @@
 
 /*
    An annotation's 'Assign Yourself' link (stroom.annotation.client.AssignYourselfLink), named BEM
-   style; it is disabled with the shared disabled class (DisabledState). Imported after
-   stroom-annotation.css, where it was.
+   style; it is disabled with the shared disabled class (DisabledState).
 */
 .assign-yourself-link {
     display: inline-block;

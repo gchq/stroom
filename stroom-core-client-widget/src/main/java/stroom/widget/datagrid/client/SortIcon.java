@@ -71,8 +71,8 @@ public final class SortIcon {
             // Add icon.
             div.append(getSafeHtml(svgImage));
             // Add order.
-            div.div(c -> c.append(order), Attribute.className("column-sortOrder"));
-        }, Attribute.className("column-sortIcon"), Attribute.title(title));
+            div.div(c -> c.append(order), Attribute.className("column-header__sort-order"));
+        }, Attribute.className("column-header__sort"), Attribute.title(title));
     }
 
     private static SafeHtml getSafeHtml(final SvgImage svgImage) {

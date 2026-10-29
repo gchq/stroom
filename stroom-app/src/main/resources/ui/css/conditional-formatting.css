@@ -493,7 +493,7 @@
 
 
 
-.conditionalFormatStyleSelection .cf-colour-swatch {
+.selection-box--swatches .cf-colour-swatch {
     border: none;
     width: 100%;
     height: 100%;

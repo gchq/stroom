@@ -6,9 +6,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client">
-    <g:FlowPanel ui:field="layout" styleName="termEditor-outer" visible="false">
-        <g:FlowPanel ui:field="inner" styleName="termEditor-inner">
-            <i:SelectionBox ui:field="listBox" addStyleNames="termEditor-item operator" ariaLabel="Operator"/>
+    <g:FlowPanel ui:field="layout" styleName="term-editor" visible="false">
+        <g:FlowPanel ui:field="inner" styleName="term-editor__fields">
+            <i:SelectionBox ui:field="listBox" addStyleNames="term-editor__item term-editor__item--operator" ariaLabel="Operator"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

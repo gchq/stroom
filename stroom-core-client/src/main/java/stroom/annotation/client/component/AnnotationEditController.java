@@ -111,7 +111,7 @@ public class AnnotationEditController extends Controller implements Focus {
     private static final String ENTRY_TYPE_ATTRIBUTE = "entryType";
     private static final String GROUP_ID_ATTRIBUTE = "groupId";
     // The class of an entry's actions button, which opens the entry's menu
-    private static final String ENTRY_ACTIONS_CLASS = "annotationHistoryActions";
+    private static final String ENTRY_ACTIONS_CLASS = "annotation-history__actions";
     private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
@@ -119,27 +119,27 @@ public class AnnotationEditController extends Controller implements Focus {
             SvgImage.ELLIPSES_VERTICAL.getSvg() +
             "</div>");
     private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryLine\"></div>");
+            "<div class=\"annotation-history__line\"></div>");
     private static final SafeHtml EXPAND = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"setting-block-expander icon-colour__grey svgIcon\">" +
+            "<div class=\"annotation-history__expander icon-colour__grey svgIcon\">" +
             SvgImage.ARROW_DOWN.getSvg() +
             "</div>");
     private static final SafeHtml COLLAPSE = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"setting-block-expander icon-colour__grey svgIcon\">" +
+            "<div class=\"annotation-history__expander icon-colour__grey svgIcon\">" +
             SvgImage.ARROW_UP.getSvg() +
             "</div>");
 
-    private static final Attribute HISTORY_INNER = Attribute.className("annotationHistoryInner");
-    private static final Attribute HISTORY_COMMENT_BORDER = Attribute.className("annotationHistoryCommentBorder");
-    private static final Attribute HISTORY_COMMENT_HEADER = Attribute.className("annotationHistoryCommentHeader");
-    private static final Attribute HISTORY_COMMENT_BODY = Attribute.className("annotationHistoryCommentBody");
+    private static final Attribute HISTORY_INNER = Attribute.className("annotation-history");
+    private static final Attribute HISTORY_COMMENT_BORDER = Attribute.className("annotation-history__comment");
+    private static final Attribute HISTORY_COMMENT_HEADER = Attribute.className("annotation-history__comment-header");
+    private static final Attribute HISTORY_COMMENT_BODY = Attribute.className("annotation-history__comment-body");
     private static final Attribute HISTORY_GROUP_HEADER = Attribute
-            .className("annotationHistoryCommentHeader annotationHistoryGroupHeader");
-    private static final Attribute HISTORY_GROUP_BODY = Attribute.className("annotationHistoryGroupBody");
-    private static final Attribute HISTORY_LABEL = Attribute.className("annotationHistoryLabel");
-    private static final Attribute HISTORY_ITEM = Attribute.className("annotationHistoryItem");
-    private static final Attribute ANNOTATION_TABLE = Attribute.className("annotationTable");
-    private static final Attribute ANNOTATION_LINK = Attribute.className("annotationLink");
+            .className("annotation-history__comment-header annotation-history__group-header");
+    private static final Attribute HISTORY_GROUP_BODY = Attribute.className("annotation-history__group-body");
+    private static final Attribute HISTORY_LABEL = Attribute.className("annotation-history__label");
+    private static final Attribute HISTORY_ITEM = Attribute.className("annotation-history__item");
+    private static final Attribute ANNOTATION_TABLE = Attribute.className("annotation-history__table");
+    private static final Attribute ANNOTATION_LINK = Attribute.className("annotation-history__link");
     // An event or annotation reference is a link the keyboard can reach and follow (with Enter)
     private static final Attribute LINK_ROLE = new Attribute("role", "link");
     private static final Attribute LINK_TAB_INDEX = new Attribute("tabindex", "0");

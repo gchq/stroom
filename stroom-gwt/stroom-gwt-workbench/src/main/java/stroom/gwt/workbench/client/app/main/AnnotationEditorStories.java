@@ -79,7 +79,7 @@ public final class AnnotationEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
-                    final Query title = play.querySelector(".annotationTitleTextBox");
+                    final Query title = play.querySelector(".annotation-edit__title");
                     // The history renders the entries
                     play.findByText("Looking into it.");
                     play.clear(title);
@@ -98,7 +98,7 @@ public final class AnnotationEditorStories {
                     // box's label 'Add a comment'
                     play.click(play.getByRole("button", StroomDom.button("Choose Comment")));
                     play.click(screen.findByText("Escalate"));
-                    play.waitFor(() -> play.expect(play.querySelector("textarea.annotationComment").value())
+                    play.waitFor(() -> play.expect(play.querySelector("textarea.annotation-edit__comment").value())
                             .toMatch(TextMatch.containing("Escalating to on-call.")));
                     ContentStorySupport.expectNoProblems(play);
                 })
@@ -239,7 +239,7 @@ public final class AnnotationEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
-                    play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
+                    play.fireEvent().mouseDown(play.querySelectorAll(".annotation-history__comment-header").nth(0));
                     play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
@@ -258,7 +258,7 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
                     // Pressing an entry's header (here the comment's) shows its menu
-                    play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
+                    play.fireEvent().mouseDown(play.querySelectorAll(".annotation-history__comment-header").nth(0));
                     play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));

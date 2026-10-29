@@ -1205,13 +1205,13 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     if (!await phase(`change it to ${spec.status} (Change Status)`, async () => {
       await annotate('Change Status');
       const dlg = page.locator('.dialog').last();
-      await dlg.locator('.annotationSettingHeading').first().click({ timeout: 5_000 });
+      await dlg.locator('.annotation-setting__heading').first().click({ timeout: 5_000 });
       await settle(1000);
       // The chooser is a popup of its own, not inside the dialog.
       await page.locator('.popupContent').filter({ hasNotText: 'Change Status' })
         .getByText(spec.status, { exact: true }).first().click({ timeout: 5_000 });
       await settle(600);
-      const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
+      const shown = (await dlg.locator('.annotation-setting__value').first().textContent()).trim();
       if (shown !== spec.status) throw new Error(`the dialog shows "${shown}" after choosing "${spec.status}"`);
       await okAndCheck('Change Status');
       const row = await rowOf();
@@ -1224,7 +1224,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       const dlg = page.locator('.dialog').last();
       await dlg.locator('.assign-yourself-link').first().click({ timeout: 5_000 });
       await settle(600);
-      const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
+      const shown = (await dlg.locator('.annotation-setting__value').first().textContent()).trim();
       if (!shown || shown === 'Nobody') throw new Error(`the dialog still shows "${shown}" after Assign Yourself`);
       await okAndCheck('Change Assigned To');
       const row = await rowOf();
@@ -1245,7 +1245,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await annotate('Edit Annotation');
       await toTab(new RegExp(`#${id} `));
       // The history as shown (it has no hidden copy of its text since gchq/stroom#5897)
-      return page.locator('.annotationHistoryContainer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
+      return page.locator('.annotation-edit__history-outer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
     };
     if (spec.comment && await phase('add a comment', async () => {
       if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {

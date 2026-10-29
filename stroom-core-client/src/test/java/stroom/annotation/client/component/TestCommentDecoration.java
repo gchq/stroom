@@ -33,20 +33,20 @@ class TestCommentDecoration {
 
         assertThat(builder.toSafeHtml().toString())
                 .isEqualTo("safe: \"This is related to " +
-                           "<u class=\"annotationLink\" annotationId=\"6\" role=\"link\" tabindex=\"0\" "
+                           "<u class=\"annotation-history__link\" annotationId=\"6\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Annotation 6\">#6</u>" +
                            " and " +
-                           "<u class=\"annotationLink\" annotationId=\"3\" role=\"link\" tabindex=\"0\" "
+                           "<u class=\"annotation-history__link\" annotationId=\"3\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Annotation 3\">#3</u>" +
                            ", " +
                            "and events " +
-                           "<u class=\"annotationLink\" eventId=\"739:10\" role=\"link\" tabindex=\"0\" "
+                           "<u class=\"annotation-history__link\" eventId=\"739:10\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Event 739:10\">739:10</u>" +
                            ", " +
-                           "<u class=\"annotationLink\" eventId=\"739:14\" role=\"link\" tabindex=\"0\" "
+                           "<u class=\"annotation-history__link\" eventId=\"739:14\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Event 739:14\">739:14</u>" +
                            " and " +
-                           "<u class=\"annotationLink\" eventId=\"739:22\" role=\"link\" tabindex=\"0\" "
+                           "<u class=\"annotation-history__link\" eventId=\"739:22\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Event 739:22\">739:22</u>" +
                            " " +
                            "is where it happens\"");
@@ -59,14 +59,14 @@ class TestCommentDecoration {
 
         // An em space between links with nothing between them, so each is a target of its own
         assertThat(builder.toSafeHtml().asString())
-                .isEqualTo("<u class=\"annotationLink\" annotationId=\"5\" role=\"link\" tabindex=\"0\" "
+                .isEqualTo("<u class=\"annotation-history__link\" annotationId=\"5\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Annotation 5\">#5</u>\u2003"
-                           + "<u class=\"annotationLink\" annotationId=\"6\" role=\"link\" tabindex=\"0\" "
+                           + "<u class=\"annotation-history__link\" annotationId=\"6\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Annotation 6\">#6</u>"
                            + " and "
-                           + "<u class=\"annotationLink\" eventId=\"1:2\" role=\"link\" tabindex=\"0\" "
+                           + "<u class=\"annotation-history__link\" eventId=\"1:2\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Event 1:2\">1:2</u>\u2003"
-                           + "<u class=\"annotationLink\" annotationId=\"7\" role=\"link\" tabindex=\"0\" "
+                           + "<u class=\"annotation-history__link\" annotationId=\"7\" role=\"link\" tabindex=\"0\" "
                            + "aria-label=\"Annotation 7\">#7</u>");
     }
 }

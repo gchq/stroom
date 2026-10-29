@@ -189,3 +189,9 @@
         box-shadow: none;
     }
 }
+
+/* The tab (or splitter) pressed with the mouse in design mode, until it is released (FlexLayout) */
+.flex-layout__tab--selected {
+    text-decoration: underline;
+    cursor: pointer;
+}

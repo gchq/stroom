@@ -108,12 +108,12 @@
 }
 
 /* In a conditional formatting rule's style, a colour swatch filling the box */
-.conditionalFormatStyleSelection .selection-box__value {
+.selection-box--swatches .selection-box__value {
     padding: 0;
 }
 
 /* In an expression's term, as flat as the term's other fields (term-editor.css) */
-.termEditor-inner .selection-box__value {
+.term-editor__fields .selection-box__value {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;

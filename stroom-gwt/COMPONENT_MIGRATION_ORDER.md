@@ -1203,6 +1203,16 @@ after wave 26.
 > widgets that put GWT's classes on the page, replaced by Stroom's (`stroom.widget.text.client`),
 > each with its own BEM class; checkstyle refuses GWT's. See `wave-27.md`.
 
+## 28. CSS step 3: BEM names for the components' own classes
+
+Record: [`component-migration/wave-28.md`](component-migration/wave-28.md). Added 29 October 2026,
+after wave 27.
+
+> **Done, 29 October 2026**: the annotation, term editor and dashboard classes, the data grid's
+> cell classes, the sign-in and password names and a few more renamed BEM style; the annotation's
+> and the dashboard's sheets split into a sheet per block. What isn't BEM is now only in the shared
+> sheets, for step 4. See `wave-28.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

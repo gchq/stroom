@@ -337,9 +337,9 @@ public class TermEditor extends Component {
 
         // Make the condition box wider if needed.
         if (conditions.contains(Condition.MATCHES_REGEX_CASE_SENSITIVE)) {
-            conditionListBox.addStyleName("condition-wide");
+            conditionListBox.addStyleName("term-editor__item--condition-wide");
         } else {
-            conditionListBox.removeStyleName("condition-wide");
+            conditionListBox.removeStyleName("term-editor__item--condition-wide");
         }
 
         conditionListBox.setValue(selected);

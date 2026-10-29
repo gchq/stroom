@@ -39,11 +39,11 @@
     border-radius: 4rem;
 }
 
-.sign-in-page .sign-in-page__form-panel .userNameTextBoxOuter {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__user-name-outer {
 
 }
 
-.sign-in-page .sign-in-page__form-panel .userNameTextBox {
+.sign-in-page .sign-in-page__form-panel .sign-in-page__user-name {
     width: 100%;
 }
 

@@ -85,7 +85,7 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
 
                     // When
                     durationLabel.div(sub,
-                            "annotationDurationLabel",
+                            "duration-label",
                             value.getCreateTimeMs(),
                             System.currentTimeMillis());
 

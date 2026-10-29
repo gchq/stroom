@@ -84,7 +84,7 @@ public final class DecorateCommentStories {
                 .story("DecoratesLinks", context -> render(context, COMMENTS))
                 .withPlay(play -> {
                     play.findByText("just a comment");
-                    final Query history = play.querySelector(".annotationHistoryInner");
+                    final Query history = play.querySelector(".annotation-history");
                     play.expect("the comments as rendered", () -> commentShapes(history.element().get()))
                             .toEqual(Arrays.asList(
                                     "see |[#42]| and |[1234:5]| done",
@@ -100,7 +100,7 @@ public final class DecorateCommentStories {
                 .story("LinksInvokeHandlers", context -> render(context, "#7 then 100:200"))
                 .withPlay(play -> {
                     play.findByText("#7");
-                    final Query links = play.querySelectorAll("u.annotationLink");
+                    final Query links = play.querySelectorAll("u.annotation-history__link");
                     play.expect(links).toHaveLength(2);
                     // Stroom opens a link on a mousedown on it
                     play.fireEvent().mouseDown(links.nth(0));
@@ -130,7 +130,7 @@ public final class DecorateCommentStories {
         final NodeList<Element> bodies = history.getElementsByTagName("div");
         for (int i = 0; i < bodies.getLength(); i++) {
             final Element body = bodies.getItem(i);
-            if (body.hasClassName("annotationHistoryCommentBody")) {
+            if (body.hasClassName("annotation-history__comment-body")) {
                 final List<String> parts = new ArrayList<>();
                 final NodeList<Node> nodes = body.getChildNodes();
                 for (int j = 0; j < nodes.getLength(); j++) {

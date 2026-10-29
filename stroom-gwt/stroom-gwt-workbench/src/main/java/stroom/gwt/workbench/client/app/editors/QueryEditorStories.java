@@ -559,7 +559,7 @@ public final class QueryEditorStories {
                     play.click(play.screen().findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
                     // Stroom hides the column at once, without searching again; the preference is
                     // kept on the document, which is now dirty, and is sent with the next search
-                    play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
+                    play.waitFor(() -> play.expect(play.queryByText("Count", ".column-header__label")).toBeNull());
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
@@ -642,7 +642,7 @@ public final class QueryEditorStories {
                     play.findByText("alpha");
                     // The values filter is opened by the filter icon of the column's header
                     clickHeader(play, play.within(header(play, "Count").closest("th, [data-hcol]"))
-                            .querySelector(".column-valueFilterIcon"));
+                            .querySelector(".column-header__value-filter-icon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD)
                                     .toSpyMatcher()));
@@ -864,7 +864,7 @@ public final class QueryEditorStories {
                     play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
                     // The statuses are a chooser in the 'Change Status' dialog
                     final Play dialog = dialog(screen, "Change Status");
-                    play.click(dialog.querySelector(".annotationSettingHeading"));
+                    play.click(dialog.querySelector(".annotation-setting__heading"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_TAGS_PATH).toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.getByText("Open")).toBeInTheDocument());
@@ -1145,7 +1145,7 @@ public final class QueryEditorStories {
 
     // The header of a column of the results table
     private static Query header(final Play play, final String name) {
-        return play.getByText(name, ".column-top .column-label");
+        return play.getByText(name, ".column-header__label");
     }
 
     private static Play dialog(final Play screen, final String caption) {

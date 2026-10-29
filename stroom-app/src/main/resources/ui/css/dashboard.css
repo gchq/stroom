@@ -14,26 +14,11 @@
  * limitations under the License.
  */
 
-/*
-.dashboard-body .tab-bar--link .tab-bar__tab {
-    cursor: default;
-    text-decoration: none;
-}
+/* A dashboard's body (FlexLayout): its scrolling panel and the design surface its panes are
+   laid on, with a grid in design mode. Its splitters, and the glass and marker shown while
+   dragging, are in flex-layout.css. */
 
-.dashboard-body.dashboard__designMode .tab-bar--link .tab-bar__tab {
-  cursor: pointer;
-}
-
-.dashboard-body .tab-bar--link .tab-bar__tab:hover {
-    text-decoration: none;
-}
-
-.dashboard-body.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
-    text-decoration: underline;
-}
-*/
-
-.dashboard-outerPanel {
+.dashboard__outer {
     display: flex;
     flex-grow: 1;
 	user-select: none;
@@ -41,7 +26,7 @@
 	-moz-user-select: none;
 }
 
-.dashboard-scrollPanel {
+.dashboard__scroll {
     display: flex;
     flex-grow: 1;
     overflow: hidden;
@@ -51,11 +36,11 @@
 	background-color: var(--dashboard-panel__grid-background-color);
 }
 
-.dashboard-scrollPanel--horizontal-scroll {
+.dashboard__scroll--horizontal {
     overflow-x: auto;
 }
 
-.dashboard-scrollPanel--vertical-scroll {
+.dashboard__scroll--vertical {
     overflow-y: auto;
 }
 
@@ -65,7 +50,7 @@
 	position: relative;
 }
 
-.dashboard-designSurface {
+.dashboard__design-surface {
     position: absolute;
     overflow: hidden;
     min-width: 100%;
@@ -73,222 +58,9 @@
     background: var(--dashboard-panel__grid-background-color);
 }
 
-.dashboard__designMode .dashboard-designSurface {
+.dashboard--design-mode .dashboard__design-surface {
     background-image:
         linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
         linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
     background-size: 2rem 2rem;
 }
-
-.dashboard-panel {
-}
-
-/* A dashboard's splitters, and the glass and marker FlexLayout shows while dragging, are in
-   flex-layout.css */
-
-.flexLayout-selected {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.tabLayout {
-    display: flex;
-    background-color: var(--dashboard-panel__background-color);
-    color: var(--control__text-color);
-}
-
-.tabLayout .tabLayout-contentOuter {
-    display: flex;
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.tabLayout .tabLayout-contentInner {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.tabLayout .tabLayout-barOuter {
-    display: flex;
-    flex-grow: 0;
-    flex-shrink: 0;
-    gap: 5px;
-    padding: 5px 5px 0 5px;
-    cursor: default;
-    z-index: 5;
-    min-height: 31px;
-}
-
-.tabLayout .tabLayout-tabContainer {
-    display: flex;
-    flex-grow: 1;
-	padding: 0.25rem;
-}
-
-.tabLayout .tabLayout-tabBar {
-    display: flex;
-    flex-grow: 1;
-	position: relative;
-}
-
-.tabLayout .tabLayout-content {
-    display: flex;
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.tabLayout .tabLayout-buttons {
-	z-index: 5;
-	opacity: 0;
-	transition: opacity 0.3s;
-    -webkit-transition: opacity 0.3s;
-}
-
-.tabLayout:hover .tabLayout-buttons,
-/* Keyboard users can tab to the buttons, so they show when the pane has focus */
-.tabLayout:focus-within .tabLayout-buttons {
-	opacity: 0.6;
-}
-
-.tabLayout-buttons:focus-within {
-	opacity: 1;
-}
-
-.tabLayout-buttons button {
-    color: var(--button__image-color);
-}
-
-.column-top {
-    display: flex;
-    width: 100%;
-    flex-direction: row;
-	cursor: pointer;
-	opacity: 0.9;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-}
-
-.column-label {
-	display: inline;
-	height: 16px;
-	padding: 0px;
-	padding-right: 5px;
-	font-weight: 500;
-}
-
-.data-grid--header-selection .column-label {
-	cursor: pointer;
-}
-
-.data-grid--header-selection .column-top:hover {
-    opacity: 1;
-}
-
-.data-grid--header-selection .column-top:hover .column-label {
-    text-decoration: underline;
-}
-
-.column-sortIcon {
-    display: flex;
-    flex-direction: row;
-	cursor: pointer;
-	opacity: 0.9;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-}
-
-.column-sortOrder {
-	display: inline-block;
-	font-size: var(--font-size-8);
-	vertical-align: top;
-	text-decoration: none;
-}
-
-.column-valueFilter {
-    display: flex;
-    flex-grow: 1;
-    flex-direction: row-reverse;
-    padding-right: 5px;
-}
-
-/* Fills the component's tab content, below its tab bar. Not absolute, as the tab content isn't
-   positioned, which put it (and the visualisation) at the top of the tab layout, under the tab bar */
-.dashboardVis-outerLayout {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.dashboardVis-innerLayout {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* Below the toolbar row: where the visualisation's frame is laid (over the inner layout) */
-.visBody {
-    position: relative;
-    min-height: 0;
-}
-
-/* A dashboard input pane's padding (TextInput, KeyValueInput and ListInput) */
-.dashboard-input {
-    padding: 0 0.4rem 0.4rem 0.4rem;
-}
-
-.selectionItemCell-content .listInputItem-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 2em;
-    width: 390px;
-}
-
-.listInputItem-container .listInputItem-word {
-    display: inline-block;
-}
-
-.listInputItem-container .listInputItem-source {
-    display: flex;
-    flex-direction: row;
-    gap: 0.25em;
-}
-
-.listInputItem-container .listInputItem-source-text {
-    display: inline-block;
-    color: var(--text-color--disabled);
-}
-
-/** DEBUG **/
-/*
-.gwt-Frame {
-  background-color: rgba(255,255,0,0.5);
-}
-
-.tabLayout .tabLayout-contentInner {
-    background-color: blue;
-}
-*/
-
-/* Fills the query's result pane below its tabs, as .dashboardVis-outerLayout does */
-.queryVis-outerLayout {
-    position: relative;
-    width: 100%;
-    height: 100%;
- }
-
- .queryVis-innerLayout {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
- }

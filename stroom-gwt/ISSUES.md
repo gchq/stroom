@@ -2075,7 +2075,10 @@ this extends it to every handler. When counted (wave 13), the converted componen
   `annotationContainer`, `annotationHistory*`, `annotationButtons`, `annotationTextBox` and the rest
   (`stroom-annotation.css`; only the button width moved, to `annotation-edit.css`), and the traces
   list's `traces-toolbar` (`pathways.css`, set in `TracesListTabController`). Rename them with their
-  rules to `annotation-edit__…` and `traces-list-tab__toolbar` in one pass each.
+  rules to `annotation-edit__…` and `traces-list-tab__toolbar` in one pass each. **The annotation
+  editor's done** (wave 28, 29 October 2026: `annotation-edit`, `annotation-setting`,
+  `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is a valid BEM name and
+  stays.
 * Read-only read once rather than followed (found 27 October 2026, in wave 12's audit; as before
   the wave): the pipeline's Structure tab, a document's Assets tab and the scheduled processing pane
   take `Contexts.READ_ONLY` when they read, so a lock change without a re-read leaves their buttons

@@ -46,14 +46,14 @@ public class ColumnHeaderHtmlUtil {
     public static void write(final Column column,
                              final HtmlBuilder hb) {
         hb.div(div -> writeHeader(column, div),
-                Attribute.className("column-top"),
+                Attribute.className("column-header"),
                 Attribute.title(getColumnInfoString(column).asString()));
     }
 
     public static void writeHeader(final Column column,
                                    final HtmlBuilder hb) {
         // Output name.
-        hb.div(column.getName(), Attribute.className("column-label"));
+        hb.div(column.getName(), Attribute.className("column-header__label"));
 
         // Show group icon.
         if (column.getGroup() != null) {

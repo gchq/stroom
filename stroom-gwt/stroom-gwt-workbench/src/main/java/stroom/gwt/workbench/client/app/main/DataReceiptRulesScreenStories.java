@@ -188,7 +188,7 @@ public final class DataReceiptRulesScreenStories {
                     // GWT has no aria-sort; the sorted header shows a sort icon
                     final Query nameHeader = play.getByText("Name", "th *, [data-hcol] *").closest("th, [data-hcol]");
                     final Query grid = nameHeader.closest(".data-grid");
-                    play.expect(play.within(nameHeader).querySelector(".column-sortIcon")).not().toBeNull();
+                    play.expect(play.within(nameHeader).querySelector(".column-header__sort")).not().toBeNull();
                     play.expect("the field order", () -> fieldOrder(grid.element().get()))
                             .toBe("Feed,System");
                     play.click(nameHeader);

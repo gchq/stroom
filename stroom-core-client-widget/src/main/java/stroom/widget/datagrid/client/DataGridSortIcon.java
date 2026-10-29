@@ -47,8 +47,8 @@ final class DataGridSortIcon {
         final HtmlBuilder hb = new HtmlBuilder();
         hb.div(div -> {
             div.append(SvgImageUtil.toSafeHtml(image, "svgIcon"));
-            div.div(c -> c.append(order), Attribute.className("column-sortOrder"));
-        }, Attribute.className("column-sortIcon"), Attribute.title(title));
+            div.div(c -> c.append(order), Attribute.className("column-header__sort-order"));
+        }, Attribute.className("column-header__sort"), Attribute.title(title));
         return hb.toSafeHtml();
     }
 }

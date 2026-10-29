@@ -305,7 +305,7 @@ public class FlexLayout extends Composite {
             capture();
             event.preventDefault();
             targetElement = element.getParentElement();
-            targetElement.addClassName("flexLayout-selected");
+            targetElement.addClassName("flex-layout__tab--selected");
         }
     }
 
@@ -446,7 +446,7 @@ public class FlexLayout extends Composite {
         mouseDown = false;
 
         if (targetElement != null) {
-            targetElement.removeClassName("flexLayout-selected");
+            targetElement.removeClassName("flex-layout__tab--selected");
             targetElement = null;
         }
     }
@@ -1527,14 +1527,14 @@ public class FlexLayout extends Composite {
         this.layoutConstraints = layoutConstraints;
 
         if (layoutConstraints.isFitWidth()) {
-            scrollPanel.removeStyleName("dashboard-scrollPanel--horizontal-scroll");
+            scrollPanel.removeStyleName("dashboard__scroll--horizontal");
         } else {
-            scrollPanel.addStyleName("dashboard-scrollPanel--horizontal-scroll");
+            scrollPanel.addStyleName("dashboard__scroll--horizontal");
         }
         if (layoutConstraints.isFitHeight()) {
-            scrollPanel.removeStyleName("dashboard-scrollPanel--vertical-scroll");
+            scrollPanel.removeStyleName("dashboard__scroll--vertical");
         } else {
-            scrollPanel.addStyleName("dashboard-scrollPanel--vertical-scroll");
+            scrollPanel.addStyleName("dashboard__scroll--vertical");
         }
 
         clear();

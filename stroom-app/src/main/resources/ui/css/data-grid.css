@@ -633,8 +633,8 @@
    and bottom), a mouse-over that fades in, and no pressed look (pressing a row selects it there and
    then).
 
-   A cell's own styles (from its column) dataGridDisabledCell, for a row that is switched off, and
-   dataGridAlertText, for text that warns, are also given their colours here.
+   A cell's own styles (from its column) data-grid__cell--disabled, for a row that is switched off, and
+   data-grid__alert-text, for text that warns, are also given their colours here.
 */
 
 /* Mouse over: a row that isn't selected fades into the hovered colour. A selected row shows no
@@ -681,19 +681,19 @@
 /* A disabled row (an item switched off, e.g. a disabled rule, job or node) has its text greyed;
    its tick boxes, spinners and icons still work, so are drawn as usual. A control that really
    can't be used shows its own disabled look */
-.dataGridDisabledCell {
+.data-grid__cell--disabled {
     color: var(--text-color--disabled);
 }
 
-.data-grid__row--selected .dataGridDisabledCell {
+.data-grid__row--selected .data-grid__cell--disabled {
     color: var(--text-color--disabled--selected);
 }
 
-.dataGridAlertText {
+.data-grid__alert-text {
     color: var(--text-color--red);
 }
 
-.data-grid__row--selected .dataGridAlertText {
+.data-grid__row--selected .data-grid__alert-text {
     color: var(--row__text-color--red--selected);
 }
 
@@ -729,7 +729,7 @@
         outline-color: HighlightText;
     }
 
-    .data-grid .data-grid__row:not([aria-selected="true"]) .dataGridDisabledCell {
+    .data-grid .data-grid__row:not([aria-selected="true"]) .data-grid__cell--disabled {
         color: GrayText;
     }
 }

@@ -36,11 +36,11 @@ public class ColumnTitleCell extends AbstractCell<Column> {
 
         // Add value filter button.
         hb.div(div -> {
-            String className = "svgIcon column-valueFilterIcon";
+            String className = "svgIcon column-header__value-filter-icon";
             if (column.getColumnValueSelection() != null && column.getColumnValueSelection().isEnabled()) {
                 className += " icon-colour__blue";
             }
             div.append(SvgImageUtil.toSafeHtml(SvgImage.VALUE_FILTER, className));
-        }, Attribute.className("column-valueFilter"));
+        }, Attribute.className("column-header__value-filter"));
     }
 }

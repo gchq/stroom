@@ -1,0 +1,87 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A dashboard pane (TabLayout): its tab bar, its actions (shown on a hover or with the focus)
+   and the selected component below. */
+
+.tab-layout {
+    display: flex;
+    background-color: var(--dashboard-panel__background-color);
+    color: var(--control__text-color);
+}
+
+.tab-layout .tab-layout__content-outer {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.tab-layout .tab-layout__content-inner {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.tab-layout .tab-layout__bar-outer {
+    display: flex;
+    flex-grow: 0;
+    flex-shrink: 0;
+    gap: 5px;
+    padding: 5px 5px 0 5px;
+    cursor: default;
+    z-index: 5;
+    min-height: 31px;
+}
+
+.tab-layout .tab-layout__tab-container {
+    display: flex;
+    flex-grow: 1;
+	padding: 0.25rem;
+}
+
+.tab-layout .tab-layout__tab-bar {
+    display: flex;
+    flex-grow: 1;
+	position: relative;
+}
+
+.tab-layout .tab-layout__content {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.tab-layout .tab-layout__buttons {
+	z-index: 5;
+	opacity: 0;
+	transition: opacity 0.3s;
+    -webkit-transition: opacity 0.3s;
+}
+
+.tab-layout:hover .tab-layout__buttons,
+/* Keyboard users can tab to the buttons, so they show when the pane has focus */
+.tab-layout:focus-within .tab-layout__buttons {
+	opacity: 0.6;
+}
+
+.tab-layout__buttons:focus-within {
+	opacity: 1;
+}
+
+.tab-layout__buttons button {
+    color: var(--button__image-color);
+}

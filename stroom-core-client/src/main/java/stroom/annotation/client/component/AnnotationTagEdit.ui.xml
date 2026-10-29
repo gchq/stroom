@@ -21,7 +21,7 @@
                         label="Style"
                         helpText="The colour used to show this label on annotations. Default is None."
                         screenReaderText="Colour used to show the label. Default is None.">
-            <l:SelectionBox ui:field="formattingStyle" addStyleNames="conditionalFormatStyleSelection"/>
+            <l:SelectionBox ui:field="formattingStyle" addStyleNames="selection-box--swatches"/>
         </form:FormGroup>
 
         <b:Button ui:field="editPermissions"

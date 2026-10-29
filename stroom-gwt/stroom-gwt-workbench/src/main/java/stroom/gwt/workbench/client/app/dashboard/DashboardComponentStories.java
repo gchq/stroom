@@ -359,7 +359,7 @@ public final class DashboardComponentStories {
                     final Query addColumn = play.getByRole("button", "Add Column");
                     // How many columns the table has, before any is added (a second column of the
                     // same kind is named apart, so the columns are counted)
-                    final Query headers = play.querySelectorAll(".column-top .column-label");
+                    final Query headers = play.querySelectorAll(".column-header__label");
                     final Value<Integer> before = play.capture("the columns", headers.count());
                     // The list's options, not the columns' headers, which are named the same
                     play.click(addColumn);
@@ -541,7 +541,7 @@ public final class DashboardComponentStories {
                     final Play handler = DashboardPlays.dialog(screen, "Add New Selection Handler");
                     play.click(handler.getByTitle("Add Term"));
                     final Query fieldPicker = handler.querySelector(
-                            ".termEditor-item.field " + StroomDom.SELECTION_BOX);
+                            ".term-editor__item--field " + StroomDom.SELECTION_BOX);
                     play.waitFor(() -> play.expect(fieldPicker).toBeInTheDocument());
                     play.click(fieldPicker);
                     // The data source of the embedded (copied) query is found from its StroomQL, for
@@ -862,7 +862,7 @@ public final class DashboardComponentStories {
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
         DashboardPlays.clickHeader(play, play.within(DashboardPlays.headerCell(play, "Name"))
-                .querySelector(".column-valueFilterIcon"));
+                .querySelector(".column-header__value-filter-icon"));
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 COLUMN_VALUES_REQUEST.toSpyMatcher()));
         play.click(screen.findByText("Select None"));

@@ -116,18 +116,19 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    ISSUES.md): stale baselines from earlier waves' deliberate changes, to look at and take again, and
    the visualisations' random layouts, to seed or leave out. Until then a change to them can't be
    seen.
-1. **Dead weight** (no look change): load Font Awesome only in the visualisation frame; delete the
+1. **Dead weight** (done in wave 26, 28 October 2026; no look change): load Font Awesome only in the visualisation frame; delete the
    ten unloaded files; delete the unused classes' rules (the 54 maybe built at runtime checked by
    hand), the rules for GWT widgets no longer used, the unused custom properties, and the classes
    set that nothing styles (or list them as hooks).
-2. **Replace the remaining GWT widgets first** (the user's direction, 28 October 2026): every GWT
+2. **Replace the remaining GWT widgets first** (done in wave 27, 28 October 2026) (the user's direction, 28 October 2026): every GWT
    widget still used gets a Stroom widget of its own, even if it only wraps GWT's (as Stroom's
    `TextBox` extends GWT's), with its own BEM block and stylesheet, so no screen relies on a `gwt-*`
    class (e.g. `.gwt-Label`'s `nowrap`, which cut off Replace Secret's warning). The inventory is
    ISSUES.md's "GWT widgets and raw controls used where a Stroom component should be". This leaves
    `standard.css` and `standard-mod.css` styling nothing Stroom shows, so step 4 can delete them
    rather than move their rules.
-3. **Rename what isn't BEM**, block by block (annotation, dashboard, term editor, pathways, floor
+3. **Rename what isn't BEM** (done in wave 28, 29 October 2026, but for the shared sheets' own
+   classes, which step 4 names as it moves them), block by block (annotation, dashboard, term editor, pathways, floor
    map, conditional formatting, AI messages, sign-in and password, data grid's cells), and split
    the sheets that hold several blocks; move styling of one block from another's sheet to a
    modifier. As wave 17 did for the view-named classes.

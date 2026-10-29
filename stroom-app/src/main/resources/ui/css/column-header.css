@@ -1,0 +1,75 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A table column's header (ColumnHeaderHtmlUtil, ColumnTitleCell): its name, its sort icon and
+   order, and its value filter button. */
+
+.column-header {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+	cursor: pointer;
+	opacity: 0.9;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.column-header__label {
+	display: inline;
+	height: 16px;
+	padding: 0px;
+	padding-right: 5px;
+	font-weight: 500;
+}
+
+.data-grid--header-selection .column-header__label {
+	cursor: pointer;
+}
+
+.data-grid--header-selection .column-header:hover {
+    opacity: 1;
+}
+
+.data-grid--header-selection .column-header:hover .column-header__label {
+    text-decoration: underline;
+}
+
+.column-header__sort {
+    display: flex;
+    flex-direction: row;
+	cursor: pointer;
+	opacity: 0.9;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.column-header__sort-order {
+	display: inline-block;
+	font-size: var(--font-size-8);
+	vertical-align: top;
+	text-decoration: none;
+}
+
+.column-header__value-filter {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+    padding-right: 5px;
+}

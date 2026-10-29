@@ -41,7 +41,7 @@
                         identity="cfStyle"
                         label="Style"
                         helpText="Standard colour style to apply to matching rows.">
-            <l:SelectionBox ui:field="formattingStyle" addStyleNames="conditionalFormatStyleSelection"/>
+            <l:SelectionBox ui:field="formattingStyle" addStyleNames="selection-box--swatches"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="customStyleGroup"

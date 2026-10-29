@@ -1,0 +1,48 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* An annotation's settings (status, assigned to, labels, collections, retention), on its
+   Annotation tab and in the Change Status and Change Assigned To dialogs: each shows its value,
+   selected to change it (SettingBlock). */
+
+/* 5px above and below as well as the form's room for focus rings */
+.form.max.annotation-setting {
+    padding: calc(var(--focus-ring__room) + 5px) var(--focus-ring__room);
+}
+
+.annotation-setting__heading {
+    width: 100%;
+}
+
+.annotation-setting__heading--clickable {
+    cursor: pointer;
+}
+
+.annotation-setting__value {
+    flex-grow: 1;
+}
+
+/* A field with no value ("None", "Nobody") */
+.annotation-setting__value--empty {
+    color: var(--text-color--muted);
+}
+
+/* A missing value (None, Nobody) is muted, too faint on a highlighted setting's background, so it
+   takes the text colour there */
+.setting-block:hover .annotation-setting__value--empty,
+.setting-block:has(> .setting-block__icon:focus-visible) .annotation-setting__value--empty {
+    color: var(--text-color);
+}

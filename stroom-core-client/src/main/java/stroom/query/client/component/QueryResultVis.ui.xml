@@ -5,10 +5,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.dashboard.client.vis"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <g:FlowPanel styleName="queryVis-outerLayout dock-container-vertical">
+    <g:FlowPanel styleName="vis-layout dock-container-vertical">
         <v:VisToolbarRow ui:field="toolbarRow"/>
-        <g:FlowPanel styleName="dock-max visBody">
-            <g:SimplePanel ui:field="visContainer" styleName="queryVis-innerLayout"/>
+        <g:FlowPanel styleName="dock-max vis-layout__body">
+            <g:SimplePanel ui:field="visContainer" styleName="vis-layout__inner"/>
             <dg:MessagePanel ui:field="messagePanel"/>
         </g:FlowPanel>
     </g:FlowPanel>

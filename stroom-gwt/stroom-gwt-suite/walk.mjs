@@ -452,7 +452,7 @@ async function readDesignHeaders() {
       .map((th) => {
         const r = th.getBoundingClientRect();
         const hit = document.elementFromPoint(r.x + 20, r.y + r.height / 2);
-        return { name: norm(th.querySelector('.column-label')?.textContent ?? th.textContent), ok: th.contains(hit) };
+        return { name: norm(th.querySelector('.column-header__label')?.textContent ?? th.textContent), ok: th.contains(hit) };
       })
       .filter((h) => h.name && h.ok).map((h) => h.name);
   }, { ...columnScope, designOn: toggleOn('Design Mode') }).catch(() => []);
@@ -462,7 +462,7 @@ async function clickDesignHeader(name) {
   const box = await page.evaluate(([wanted, selector]) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const th = [...document.querySelectorAll(selector)]
-      .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
+      .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-header__label')?.textContent ?? e.textContent) === wanted);
     if (!th) return null;
     const r = th.getBoundingClientRect();
     const hit = document.elementFromPoint(r.x + 20, r.y + r.height / 2);
@@ -487,7 +487,7 @@ async function tabBarOf(tab) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const lab = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted);
-    const bar = lab?.closest('.tabLayout-barOuter');
+    const bar = lab?.closest('.tab-layout__bar-outer');
     if (!bar) return null;
     const r = bar.getBoundingClientRect();
     const settings = [...bar.querySelectorAll('button[title="Tab Actions"]')].find((b) => b.offsetWidth > 0);
@@ -1335,13 +1335,13 @@ async function driveStep(step) {
     const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.selection-box__value')?.textContent.trim(), step.selector);
     console.log(`      (set-select ${step.selector} = "${step.value}" → box reads "${shows}")`);
   } else if (step.via === 'click-in-header') {
-    // A child of a column HEADER — the `.column-valueFilterIcon` that opens ColumnValuesFilterPresenter.
+    // A child of a column HEADER — the `.column-header__value-filter-icon` that opens ColumnValuesFilterPresenter.
     // The same MyDataGrid mouseup path as the column menu, so the same move → press → release, but
     // aimed at the icon: `QueryTableColumnsManager.onShowMenu` looks at the event's target.
     const box = await page.evaluate(([wanted, child]) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const th = [...document.querySelectorAll('[role=columnheader]')]
-        .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
+        .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-header__label')?.textContent ?? e.textContent) === wanted);
       const el = th?.querySelector(child);
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -1752,7 +1752,7 @@ if (DIRECTED.includes('cf')) {
         { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],
-      route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-valueFilterIcon', opens: 'dialog' }] },
+      route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-header__value-filter-icon', opens: 'dialog' }] },
   );
   console.log('  + 2 directed conditional-formatting seed(s): Formatting Type = Custom, the value-filter icon');
 }

@@ -840,7 +840,7 @@ Also:
   moved over it (a deferred native preview handler), and a click moves the mouse in again from the
   body, so `QueryEditorStories.clickHeader(play, target)` fires a mousemove, waits 200ms, then
   mousedown/mouseup/click. A column's menu opens on a left click (not a context menu); the values
-  filter on the header's `.column-valueFilterIcon`. Header labels are `.column-top .column-label`.
+  filter on the header's `.column-header__value-filter-icon`. Header labels are `.column-header__label`.
 * **Form groups**: a `FormGroup`'s label names the one form control in it (an input, select or text
   area, even inside a panel or composite such as a tick box or password box), so find it with
   `getByLabelText(label)`. A group with several controls is `role="group"`, named by its label

@@ -37,10 +37,10 @@ import java.util.Map;
 final class DashboardPlays {
 
     /// The label of a component's tab (a Stroom link tab).
-    static final String COMPONENT_TAB = ".tabLayout-tabBar .tab-bar__label";
+    static final String COMPONENT_TAB = ".tab-layout__tab-bar .tab-bar__label";
 
     /// A tab layout (a panel).
-    static final String PANEL = ".tabLayout";
+    static final String PANEL = ".tab-layout";
 
     /// A splitter between panels.
     static final String SPLITTER = ".flex-layout__splitter";
@@ -197,7 +197,7 @@ final class DashboardPlays {
     /// @param name The column's name.
     /// @return The label of a results table's column header.
     static Query header(final Play play, final String name) {
-        return play.getByText(name, ".column-top .column-label");
+        return play.getByText(name, ".column-header__label");
     }
 
     /// @param play The play.

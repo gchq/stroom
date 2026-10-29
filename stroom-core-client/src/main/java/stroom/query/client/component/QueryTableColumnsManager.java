@@ -96,7 +96,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             final Heading heading = headingSupplier.get();
             if (heading != null) {
                 final Element element = Element.as(event.getEventTarget());
-                final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
+                final Element columnTop = ElementUtil.findParent(element, "column-header", 3);
                 if (columnTop != null) {
                     final int colIndex = heading.getColIndex();
                     if (currentMenuColIndex == colIndex) {
@@ -132,7 +132,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                         public void run() {
                             final Element th = heading.getElement();
                             final Element target = event.getEventTarget().cast();
-                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
+                            final Element button = ElementUtil.findChild(th, "column-header__value-filter-icon");
                             final boolean isFilterButton = button.isOrHasChild(target);
                             final Element diableFilterButton = ElementUtil.findChild(th,
                                     "dashboard-table-filter-cell-disable-button");
@@ -700,7 +700,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .icon(SvgImage.VALUE_FILTER)
                 .text("Filter Values")
                 .command(() -> showValuesFilter(column, colIndex, th,
-                        ElementUtil.findChild(th, "column-valueFilterIcon")))
+                        ElementUtil.findChild(th, "column-header__value-filter-icon")))
                 .highlight(column.getColumnValueSelection() != null
                            && column.getColumnValueSelection().isEnabled())
                 .build();

@@ -5,43 +5,43 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:annotation="urn:import:stroom.annotation.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <!-- An annotation's Annotation tab (stroom-annotation.css, annotation-edit.css) -->
-    <g:FlowPanel styleName="annotationContainer">
-        <g:FlowPanel styleName="annotationTop">
+    <!-- An annotation's Annotation tab (annotation-edit.css) -->
+    <g:FlowPanel styleName="annotation-edit">
+        <g:FlowPanel styleName="annotation-edit__top">
             <annotation:SettingBlock ui:field="titleBlock">
-                <g:FlowPanel addStyleNames="annotationTitleContainer">
+                <g:FlowPanel addStyleNames="annotation-edit__title-container">
                     <!-- Named, as a placeholder is only a hint, and the title each is given (its
                          value, for when it is too long to show) would otherwise be read as its name -->
                     <form:TextBox ui:field="titleTextBox" placeholder="Title" ariaLabel="Title"
-                               addStyleNames="annotationTitle annotationTitleTextBox annotationTextBox allow-focus"/>
-                    <tx:Label ui:field="annotationId" styleName="annotationId"/>
+                               addStyleNames="annotation-edit__title annotation-edit__text-box allow-focus"/>
+                    <tx:Label ui:field="annotationId" styleName="annotation-edit__id"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
             <annotation:SettingBlock ui:field="subjectBlock">
-                <g:FlowPanel addStyleNames="annotationSubjectContainer">
+                <g:FlowPanel addStyleNames="annotation-edit__subject-container">
                     <form:TextBox ui:field="subjectTextBox" placeholder="Subject" ariaLabel="Subject"
-                               addStyleNames="annotationSubject annotationSubjectTextBox annotationTextBox allow-focus"/>
+                               addStyleNames="annotation-edit__subject annotation-edit__text-box allow-focus"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
         </g:FlowPanel>
-        <g:FlowPanel styleName="annotationBottom">
-            <g:FlowPanel styleName="dock-max annotationLeft">
-                <g:SimplePanel styleName="annotationHistory">
+        <g:FlowPanel styleName="annotation-edit__bottom">
+            <g:FlowPanel styleName="dock-max annotation-edit__left">
+                <g:SimplePanel styleName="annotation-edit__history">
                     <!-- Shown once the history is fetched -->
                     <g:FlowPanel ui:field="historyContainer"
-                                 styleName="max dock-container-vertical annotationHistoryContainer"
+                                 styleName="max dock-container-vertical"
                                  visible="false">
-                        <tx:Html ui:field="historyHtml" styleName="dock-max annotationHistoryOuter"/>
+                        <tx:Html ui:field="historyHtml" styleName="dock-max annotation-edit__history-outer"/>
                         <b:Button ui:field="copyHistory" icon="COPY" text="Copy History"
-                                  addStyleNames="dock-min allow-focus annotationHistoryCopyButton"/>
+                                  addStyleNames="dock-min allow-focus annotation-edit__copy-history"/>
                     </g:FlowPanel>
                 </g:SimplePanel>
                 <form:FormGroup identity="annotationComment" label="Add a comment"
                                 helpText="Text to add to the annotation's history. Select Comment to save it. Choose Comment adds the text of a standard comment to the end of this text."
                                 screenReaderText="Saved to the history when you select Comment.">
-                    <g:FlowPanel styleName="annotationCommentContainer">
-                        <form:TextArea ui:field="comment" addStyleNames="annotationComment allow-focus"/>
-                        <g:FlowPanel ui:field="buttons" styleName="annotationButtons">
+                    <g:FlowPanel styleName="annotation-edit__comment-container">
+                        <form:TextArea ui:field="comment" addStyleNames="annotation-edit__comment allow-focus"/>
+                        <g:FlowPanel ui:field="buttons" styleName="annotation-edit__buttons">
                             <b:Button ui:field="commentButton" addStyleNames="allow-focus annotation-edit__button"
                                       text="Choose Comment"/>
                             <b:Button ui:field="create" icon="ADD"
@@ -51,21 +51,21 @@
                     </g:FlowPanel>
                 </form:FormGroup>
             </g:FlowPanel>
-            <g:FlowPanel styleName="dock-min dock-container-vertical annotationRight">
-                <g:FlowPanel styleName="max form annotationSetting">
+            <g:FlowPanel styleName="dock-min dock-container-vertical annotation-edit__right">
+                <g:FlowPanel styleName="max form annotation-setting">
                     <annotation:SettingBlock ui:field="statusBlock" title="Change Status">
                         <form:FormGroup identity="annotationStatus" label="Status"
                                         helpText="The current status of the annotation. Select it to choose a different status.">
-                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <tx:Label ui:field="status" styleName="annotationLabel"/>
+                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                                <tx:Label ui:field="status" styleName="annotation-setting__value"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
                     <annotation:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
                         <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
                                         helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself.">
-                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <tx:Label ui:field="assignedTo" styleName="annotationLabel"/>
+                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                                <tx:Label ui:field="assignedTo" styleName="annotation-setting__value"/>
                                 <annotation:AssignYourselfLink ui:field="assignYourself"/>
                             </g:FlowPanel>
                         </form:FormGroup>
@@ -73,28 +73,28 @@
                     <annotation:SettingBlock ui:field="annotationLabelBlock" title="Change Labels">
                         <form:FormGroup identity="annotationLabel" label="Labels"
                                         helpText="The labels attached to the annotation. Select them to add or remove labels.">
-                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <tx:Html ui:field="labels" styleName="annotationLabel"/>
+                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                                <tx:Html ui:field="labels" styleName="annotation-setting__value"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
                     <annotation:SettingBlock ui:field="annotationCollectionBlock" title="Change Collections">
                         <form:FormGroup identity="annotationCollection" label="Collections"
                                         helpText="The collections this annotation belongs to. Select them to add or remove collections.">
-                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <tx:Html ui:field="collections" styleName="annotationLabel"/>
+                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                                <tx:Html ui:field="collections" styleName="annotation-setting__value"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
                     <annotation:SettingBlock ui:field="annotationRetentionPeriodBlock" title="Change Retention Period">
                         <form:FormGroup identity="annotationRetentionPeriod" label="Retain For"
                                         helpText="How long the annotation is kept, measured from when it was created. Select it to change the period or keep it forever.">
-                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <tx:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
+                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                                <tx:Label ui:field="retentionPeriod" styleName="annotation-setting__value"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
-                    <g:SimplePanel styleName="annotationDelete">
+                    <g:SimplePanel styleName="annotation-edit__delete">
                         <b:Button ui:field="delete" icon="DELETE" addStyleNames="allow-focus button--contained-secondary"
                                   text="Delete Annotation"/>
                     </g:SimplePanel>

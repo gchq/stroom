@@ -73,7 +73,7 @@ public final class ExpressionBuilderStories {
             "Disable Selected Expression Item", "Delete Selected Expression Item");
     private static final String POPUP = ".selection-popup";
     // The field picker of the selected term (a Stroom SelectionBox), and its parts
-    private static final String FIELD_PICKER = ".termEditor-item.field";
+    private static final String FIELD_PICKER = ".term-editor__item--field";
     private static final DocRef DATA_SOURCE = new DocRef("Index", "index-uuid-1", "Example Index");
     // The looks of an item while another is moved: one that would take it, one that won't, and the
     // one moved (with the items in it)
@@ -178,7 +178,7 @@ public final class ExpressionBuilderStories {
                 .story("KeyboardEditing", context -> editor(context, complexExpression(), false))
                 .withPlay(play -> {
                     final Query fieldInput = play.querySelector(FIELD_PICKER + " .selection-box__input");
-                    final Query value = play.querySelector(".termEditor-item [aria-label='Value']");
+                    final Query value = play.querySelector(".term-editor__item [aria-label='Value']");
                     play.run("focus the toolbar's last button",
                             () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
                     play.keyboard("{Tab}{ArrowRight}");
@@ -189,7 +189,7 @@ public final class ExpressionBuilderStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(fieldInput).toHaveFocus());
                     play.keyboard("{Tab}");
-                    play.expect(play.querySelector(".termEditor-item.condition .selection-box__input"))
+                    play.expect(play.querySelector(".term-editor__item--condition .selection-box__input"))
                             .toHaveFocus();
                     play.keyboard("{Tab}");
                     play.expect(value).toHaveFocus();
@@ -225,7 +225,7 @@ public final class ExpressionBuilderStories {
                     play.keyboard("{ArrowLeft}");
                     play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
                     play.keyboard("{Enter}");
-                    final Query operator = play.querySelector(".termEditor-item .selection-box__input");
+                    final Query operator = play.querySelector(".term-editor__item .selection-box__input");
                     play.waitFor(() -> play.expect(operator).toHaveFocus());
                     play.keyboard("{Tab}");
                     play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
@@ -367,7 +367,7 @@ public final class ExpressionBuilderStories {
                 .story("TermFieldContextMenu", context -> editor(context, complexExpression(), false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query value = play.querySelector(".termEditor-item [aria-label='Value']");
+                    final Query value = play.querySelector(".term-editor__item [aria-label='Value']");
                     play.click(play.getByText(USER_ID, ".expression-item__label"));
                     play.waitFor(() -> play.expect(value).toBeVisible());
                     play.rightClick(value);
@@ -382,7 +382,7 @@ public final class ExpressionBuilderStories {
                     play.click(play.within(menu).getByRole("menuitem", TextMatch.containing("Select All")));
                     play.waitFor(() -> play.expect(value).toHaveFocus());
 
-                    play.rightClick(play.querySelector(".termEditor-item.condition .selection-box__input"));
+                    play.rightClick(play.querySelector(".term-editor__item--condition .selection-box__input"));
                     final Query conditionMenu = screen.findByRole("menu");
                     play.expect(play.within(conditionMenu).getByRole("menuitem", TextMatch.containing("Add Term")))
                             .toBeInTheDocument();
@@ -649,7 +649,7 @@ public final class ExpressionBuilderStories {
                     }
                     // And no value editor while the term has no field.
                     // Stroom's term editor keeps its value box, hidden
-                    play.expect(play.querySelector(".termEditor-item.wide")).not().toBeVisible();
+                    play.expect(play.querySelector(".term-editor__item--wide")).not().toBeVisible();
                 })
                 // A field list served by a data source is only fetched when needed
                 .story("AsyncFieldSourceFetchesOnlyWhenNeeded",

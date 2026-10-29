@@ -168,11 +168,11 @@
     padding-bottom: 0;
 }
 
-/* A disabled row's value is greyed, as the row's other text is (its cells' dataGridDisabledCell) */
-.dataGridDisabledCell .value-spinner__input {
+/* A disabled row's value is greyed, as the row's other text is (its cells' data-grid__cell--disabled) */
+.data-grid__cell--disabled .value-spinner__input {
     color: var(--text-color--disabled);
 }
 
-.data-grid__row--selected .dataGridDisabledCell .value-spinner__input {
+.data-grid__row--selected .data-grid__cell--disabled .value-spinner__input {
     color: var(--text-color--disabled--selected);
 }

@@ -402,7 +402,7 @@ public final class AnalyticRuleEditorStories {
         play.findByText("alpha");
         play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
         // Stroom opens a column's menu when its header is clicked
-        QueryEditorStories.clickHeader(play, play.getByText("Count", ".column-top .column-label"));
+        QueryEditorStories.clickHeader(play, play.getByText("Count", ".column-header__label"));
         play.click(screen.findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
         play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled"));
         // The preference is also sent with the next search

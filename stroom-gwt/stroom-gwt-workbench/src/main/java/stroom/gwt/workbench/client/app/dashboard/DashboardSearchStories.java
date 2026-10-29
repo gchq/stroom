@@ -145,7 +145,7 @@ public final class DashboardSearchStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     play.click(play.findByText("Name = alpha"));
-                    final Query value = play.querySelector(".termEditor-item [aria-label='Value']");
+                    final Query value = play.querySelector(".term-editor__item [aria-label='Value']");
                     play.waitFor(() -> play.expect(value).toBeVisible());
                     play.click(value);
                     play.keyboard("{Enter}");

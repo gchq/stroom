@@ -40,7 +40,10 @@
 @import url("split-pane.css");
 @import url("tab-bar.css");
 @import url("tab-selector.css");
-@import url("stroom-annotation.css");
+@import url("annotation-edit.css");
+@import url("annotation-setting.css");
+@import url("annotation-history.css");
+@import url("duration-label.css");
 @import url("assign-yourself-link.css");
 @import url("find-annotation-cell.css");
 @import url("setting-block.css");
@@ -165,6 +168,11 @@
 @import url("column-value-cell.css");
 @import url("link-button.css");
 @import url("dashboard.css");
+@import url("tab-layout.css");
+@import url("column-header.css");
+@import url("vis-layout.css");
+@import url("dashboard-input.css");
+@import url("list-input-item.css");
 @import url("full-screen.css");
 @import url("result-table.css");
 @import url("query-edit.css");
@@ -196,7 +204,6 @@
 @import url("duplicate-management.css");
 @import url("imports-tab.css");
 @import url("user-and-groups.css");
-@import url("annotation-edit.css");
 @import url("pipeline-structure.css");
 @import url("scheduled-processing.css");
 @import url("annotation-tag-text.css");

@@ -38,10 +38,10 @@
     vertical-align: top;
 }
 
-.result-table__grid.showValueFilters input {
+.result-table__grid.result-table__grid--value-filters input {
     display: inline-block;
 }
 
-.result-table__grid.showValueFilters .data-grid__header-cell {
+.result-table__grid.result-table__grid--value-filters .data-grid__header-cell {
     padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
 }

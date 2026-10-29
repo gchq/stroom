@@ -191,7 +191,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             }
         });
 
-        glass = new Glass("resizeGlass");
+        glass = new Glass("timeline-glass");
 
         panel.addMouseDownHandler(e -> {
 
@@ -360,7 +360,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
 //
 //
 //                if (glass == null) {
-//                    glass = new Glass("resizeGlass");
+//                    glass = new Glass("timeline-glass");
 //                }
 //                glass.show();
 //                resizing = true;

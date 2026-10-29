@@ -78,20 +78,20 @@ public class ListInput extends Component {
                                 docRef::getUuid))
                 .map(sourceVal -> HtmlBuilder.builder()
                         .div(containerBuilder -> containerBuilder
-                                        .div(word, cssClass("-word"))
+                                        .div(word, cssClass("__word"))
                                         .div(sourceBuilder -> {
                                             sourceBuilder
-                                                    .div(sourceVal, cssClass("-source-text"))
+                                                    .div(sourceVal, cssClass("__source-text"))
                                                     .append(DICT_ICON_HTML);
-                                        }, cssClass("-source")),
-                                cssClass("-container"))
+                                        }, cssClass("__source")),
+                                cssClass(""))
                         .toSafeHtml())
                 .orElseGet(() ->
                         SafeHtmlUtils.fromString(word));
     }
 
     private static Attribute cssClass(final String suffix) {
-        return Attribute.className("listInputItem" + suffix);
+        return Attribute.className("list-input-item" + suffix);
     }
 
     /// Sets the values offered, after a blank one, keeping the value chosen.

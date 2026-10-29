@@ -198,8 +198,8 @@ public final class IndexVolumesScreenStories {
                     play.expect(dialog.queryByText("1.2G")).toBeNull();
                     // The INACTIVE volume's cells have GWT's disabled class, the ACTIVE one's don't
                     final Play vol2 = dialog.within(dialog.getByText("/vol2").closest(StroomDom.GRID_ROW));
-                    play.expect(vol2.querySelectorAll(".dataGridDisabledCell").count()).toBeGreaterThan(0);
-                    play.expect(vol1.querySelectorAll(".dataGridDisabledCell").count()).toBe(0);
+                    play.expect(vol2.querySelectorAll(".data-grid__cell--disabled").count()).toBeGreaterThan(0);
+                    play.expect(vol1.querySelectorAll(".data-grid__cell--disabled").count()).toBe(0);
                     // ...and no cell dims itself with an inline opacity
                     play.expect(dialog.getByText("/vol2").closest(StroomDom.GRID_ROW).element())
                             .toSatisfy("has no inline opacity",

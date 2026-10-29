@@ -79,7 +79,7 @@ final class IdpPlays {
     static Play fillPasswords(final Play play, final String caption, final String password, final String confirm) {
         final Play dialog = passwordDialog(play, caption);
         // The dialog shows the policy's message
-        play.expect(dialog.querySelector(".passwordPolicyMessage")).not().toHaveTextContent("");
+        play.expect(dialog.querySelector(".password-policy")).not().toHaveTextContent("");
         play.type(dialog.getByPlaceholderText("Enter Password"), password);
         play.type(dialog.getByPlaceholderText("Confirm Password"), confirm);
         return dialog;
