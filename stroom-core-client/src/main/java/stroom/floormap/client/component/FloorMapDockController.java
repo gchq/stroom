@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.component;
 
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.Layer;
@@ -30,11 +31,12 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
-/// A reusable, tabbed dock ([FloorMapDock]) hosted on the right-hand edge of the Floor Map
-/// canvas in both the Map and Editor tabs. It holds control panels as curve tabs (the
-/// same chrome as the document tab bar) and shows the active tab's content in a
-/// [LayerContainer].
+/// A reusable, tabbed dock (a [LinkTabPanel] its host's template declares) hosted on the
+/// right-hand edge of the Floor Map canvas in both the Map and Editor tabs. It holds control
+/// panels as curve tabs (the same chrome as the document tab bar) and shows the active tab's
+/// content in a [LayerContainer].
 ///
 /// Panels are registered with [#addTab(String, IsWidget)]; the
 /// first tab added becomes the active tab. This single call is the integration
@@ -45,26 +47,33 @@ import java.util.Map;
 /// views own visibility and width (via their split panels).
 public class FloorMapDockController extends Controller {
 
-    private final FloorMapDock view;
+    private LinkTabPanel view;
 
     /// Tab → its content's layer, in insertion (display) order.
     private final Map<TabData, Layer> tabContent = new LinkedHashMap<>();
 
     private TabData selectedTab;
 
-    /// Made by GIN, with its dock.
+    /// Made by GIN; [#attach(LinkTabPanel)] gives it its dock.
     ///
     /// @param eventBus The application's event bus, which the tab bar's overflow menu is shown on.
-    /// @param view     The dock.
     @Inject
-    public FloorMapDockController(final EventBus eventBus,
-                                  final FloorMapDock view) {
+    public FloorMapDockController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a dock, e.g. one a template declares. The dock is then this controller's
+    /// widget.
+    ///
+    /// @param view The dock.
+    /// @return This, for its owner to keep.
+    public FloorMapDockController attach(final LinkTabPanel view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         own(view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
         // The bar's overflow menu (tabs that don't fit) is shown by whoever handles the event
         own(view.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        return this;
     }
 
     /// Adds a tab showing the given content; its owner keeps owning it.

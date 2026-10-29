@@ -30,8 +30,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.BooleanSupplier;
 
-/// A streaming analytic rule's processing ([StreamingProcessing]): the rule's processors and their
-/// filters, a new filter starting with the expression the rule's query gives.
+/// A streaming analytic rule's processing: the rule's processors and their filters, a new filter
+/// starting with the expression the rule's query gives.
 public class StreamingProcessingController extends Controller {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE = GWT.create(AnalyticProcessResource.class);
@@ -43,20 +43,17 @@ public class StreamingProcessingController extends Controller {
     /// Made by GIN, with its content and its parts.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The content.
     /// @param processors  The rule's processors and their filters.
     /// @param restFactory Gets the expression a new filter starts with.
     @Inject
     public StreamingProcessingController(final EventBus eventBus,
-                                         final StreamingProcessing view,
                                          final ProcessorsController processors,
                                          final RestFactory restFactory) {
         super(eventBus);
-        initWidget(view);
         own(processors);
         this.processors = processors;
         this.restFactory = restFactory;
-        view.setProcessors(processors);
+        initWidget(processors.asWidget());
 
         processors.setEditInterceptor(() -> {
             if (isDocumentDirty.getAsBoolean()) {

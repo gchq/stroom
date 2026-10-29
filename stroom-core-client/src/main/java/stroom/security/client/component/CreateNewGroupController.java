@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A user group's name ([NameEntry]): the form Add User Group shows to create one, and the Edit
@@ -45,24 +46,31 @@ public class CreateNewGroupController extends Controller implements Focus {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final NameEntry view;
     private final RestFactory restFactory;
+    private NameEntry view;
 
-    /// Made by GIN, with its name field.
+    /// Made by GIN; [#attach(NameEntry)] gives it its name field.
     ///
     /// @param eventBus    The application's event bus.
-    /// @param view        The name field.
     /// @param restFactory Creates and updates the group.
     @Inject
     public CreateNewGroupController(final EventBus eventBus,
-                                    final NameEntry view,
                                     final RestFactory restFactory) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+    }
+
+    /// Attaches this to a name field, e.g. one a template declares. The field is then this
+    /// controller's widget, e.g. to show it as the Edit User Group dialog.
+    ///
+    /// @param view The name field.
+    /// @return This, for its owner to keep.
+    public CreateNewGroupController attach(final NameEntry view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         // Shown as its own dialog (edit); a dialog it is shown in gives its own
         view.setOnEnter(() -> ControllerDialog.pressAction(this, DialogAction.OK));
+        return this;
     }
 
     /// @param onEnter What Enter in the name does, e.g. press OK on the dialog it is shown in.

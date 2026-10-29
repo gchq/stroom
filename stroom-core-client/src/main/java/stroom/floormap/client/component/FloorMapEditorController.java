@@ -247,7 +247,7 @@ public class FloorMapEditorController
         // load.
         this.floorMapObjectEdit.setAspectRatioResolver(
                 canvas::getImageAspectRatio);
-        final FloorMapDockController dock = make(dockProvider);
+        final FloorMapDockController dock = make(dockProvider).attach(view.getDock());
         this.setScaleProvider = setScaleProvider;
         this.layersPanel = layersPanel;
         layersPanel.setEditorMode(true);
@@ -302,7 +302,6 @@ public class FloorMapEditorController
         layersPanel.setOnDiscover(this::onDiscoverTypes);
 
         view.setCanvas(canvas);
-        view.setDock(dock);
         view.setTimeline(floorMapTimeline);
         view.setFactList(floorMapFactList);
         view.setTimeList(floorMapTimeList);

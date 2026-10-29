@@ -63,6 +63,7 @@ public class LinkTabPanel extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // The tabs name the panel their content is shown in
         tabBar.setTabPanel(layerContainer.getElement());
+        updateToolbarRow();
     }
 
     /// @return The tab bar.
@@ -91,6 +92,7 @@ public class LinkTabPanel extends Component {
     /// @param visible Whether to show the toolbar, e.g. once it has buttons.
     public void setToolbarVisible(final boolean visible) {
         toolbar.setVisible(visible);
+        updateToolbarRow();
     }
 
     /// Shows the tab showing's own toolbars after the toolbar, in place of any shown.
@@ -103,6 +105,13 @@ public class LinkTabPanel extends Component {
         for (final Widget widget : toolbars) {
             toolbarContainer.add(widget);
         }
+        updateToolbarRow();
+    }
+
+    // The toolbar row is hidden while it has nothing to show, so that a gap its owner puts between
+    // the panel's rows isn't doubled by an empty one
+    private void updateToolbarRow() {
+        toolbarContainer.setVisible(toolbar.isVisible() || toolbarContainer.getWidgetCount() > 1);
     }
 
     /// Says, or stops saying, that what is shown is read only, and why. It is put in and taken out

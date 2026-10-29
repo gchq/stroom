@@ -35,19 +35,16 @@ public class AccountsController extends ContentTabController
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus      The application's event bus.
-    /// @param view          Its component.
     /// @param accountsList  The accounts list.
     /// @param uiConfigCache The UI's configuration.
     @Inject
     public AccountsController(final EventBus eventBus,
-                              final Accounts view,
                               final AccountsListController accountsList,
                               final UiConfigCache uiConfigCache) {
         super(eventBus);
-        initWidget(view);
         own(accountsList);
         this.accountsList = accountsList;
-        view.setList(accountsList.asWidget());
+        initWidget(accountsList.asWidget());
     }
 
     @Override

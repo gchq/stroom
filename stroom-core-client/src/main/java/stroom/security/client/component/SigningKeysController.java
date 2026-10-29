@@ -53,24 +53,24 @@ public class SigningKeysController extends ContentTabController implements Refre
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              Its component.
     /// @param signingKeyList    The signing key list.
     /// @param restFactory       Makes REST requests.
     /// @param dateTimeFormatter Formats dates and times.
     @Inject
     public SigningKeysController(final EventBus eventBus,
-                                 final SigningKeys view,
                                  final SigningKeyListController signingKeyList,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        initWidget(view);
         own(signingKeyList);
         this.signingKeyList = signingKeyList;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setList(signingKeyList);
+        // A single list. Unlike User Access there is no detail pane, because there is nothing further
+        // about a signing key that is safe to show: the stored key includes its private material, so
+        // the list's columns are the whole of what leaves the server.
+        initWidget(signingKeyList.asWidget());
 
         signingKeyList.getToolbar().setName("Signing key actions");
         revokeButton = signingKeyList.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",

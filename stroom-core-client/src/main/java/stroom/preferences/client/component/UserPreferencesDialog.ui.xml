@@ -3,12 +3,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tab="urn:import:stroom.widget.tab.client">
+             xmlns:e="urn:import:stroom.entity.client.component">
     <g:FlowPanel styleName="user-preferences-dialog max dock-container-vertical form">
-        <g:FlowPanel styleName="dock-min link-tab-panel">
-            <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
-        </g:FlowPanel>
-        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
+        <e:LinkTabPanel ui:field="tabs" addStyleNames="user-preferences-dialog__tabs dock-max overflow-hidden"/>
         <g:FlowPanel styleName="user-preferences-dialog__buttons button-group">
             <b:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default" icon="OK"/>
             <b:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"

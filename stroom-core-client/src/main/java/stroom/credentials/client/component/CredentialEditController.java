@@ -27,7 +27,6 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.component.client.Layer;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.tab.client.TabData;
@@ -36,8 +35,6 @@ import stroom.widget.tab.client.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /// Adds or edits a credential ([CredentialEdit]) in a dialog made for one use: its Settings, saved
@@ -47,14 +44,15 @@ public class CredentialEditController extends Controller {
     // Wide enough for the Permissions tab
     private static final int DIALOG_WIDTH = 750;
     private static final int DIALOG_HEIGHT = 750;
+    private static final TabData SETTINGS = new TabDataImpl("Settings", false);
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions", false);
 
     private final CredentialEdit view;
     private final CredentialClient credentialClient;
     private final CredentialSettingsController credentialSettings;
+    private final ControllerLayer credentialSettingsLayer;
     private final DocumentUserPermissionsTabController permissions;
-    // The tabs, each with its content
-    private final Map<TabData, Layer> tabViewMap = new HashMap<>();
-    private TabData selectedTab;
+    private final ControllerLayer permissionsLayer;
 
     /// Made by GIN, with its content.
     ///
@@ -72,19 +70,16 @@ public class CredentialEditController extends Controller {
         super(eventBus);
         this.view = view;
         this.credentialSettings = own(credentialSettings);
+        credentialSettingsLayer = new ControllerLayer(credentialSettings);
         this.permissions = own(permissions);
+        permissionsLayer = new ControllerLayer(permissions);
         this.credentialClient = credentialClient;
         initWidget(view);
 
-        final TabData detailsTab = addTab("Settings", new ControllerLayer(credentialSettings));
-        changeSelectedTab(detailsTab);
-        addTab("Permissions", new ControllerLayer(permissions));
-
-        view.setOnTabSelected(tab -> {
-            if (tab != null && tab != selectedTab) {
-                changeSelectedTab(tab);
-            }
-        });
+        view.addTab(SETTINGS);
+        view.addTab(PERMISSIONS);
+        switchTab(SETTINGS);
+        view.setOnTabSelected(this::switchTab);
         view.setOnShowMenu(getEventBus()::fireEvent);
     }
 
@@ -133,22 +128,11 @@ public class CredentialEditController extends Controller {
                 .fire();
     }
 
-    private TabData addTab(final String text, final Layer layer) {
-        final TabData tab = new TabDataImpl(text, false);
-        tabViewMap.put(tab, layer);
-        view.addTab(tab);
-        return tab;
-    }
-
-    private void changeSelectedTab(final TabData tab) {
-        if (selectedTab != tab) {
-            selectedTab = tab;
-            if (selectedTab != null) {
-                final Layer layer = tabViewMap.get(selectedTab);
-                if (layer != null) {
-                    view.showTab(tab, layer);
-                }
-            }
+    private void switchTab(final TabData tab) {
+        if (SETTINGS.equals(tab)) {
+            view.showTab(tab, credentialSettingsLayer);
+        } else if (PERMISSIONS.equals(tab)) {
+            view.showTab(tab, permissionsLayer);
         }
     }
 

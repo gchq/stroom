@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* The part of a pager panel that holds its list (PagerPanel, HeadedPagerPanel), scrolling. */
+/* The part of a pager panel that holds its list (PagerPanel), scrolling. */
 
 .list-container {
     overflow: auto;

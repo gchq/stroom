@@ -1291,6 +1291,15 @@ after wave 36.
 > editor, query help and current selection are converted, and their 20 parents declare them. See
 > `wave-37.md`.
 
+## 38. UI audit wave 4: empty wrappers and duplicate frames
+
+Record: [`component-migration/wave-38.md`](component-migration/wave-38.md). Added 29 October 2026,
+after wave 37.
+
+> **Done, 29 October 2026**: eight wrapper components with nothing but a slot, `HeadedPagerPanel` and
+> four copies of `LinkTabPanel`'s markup went; Create User declares its group form. See
+> `wave-38.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

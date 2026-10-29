@@ -45,7 +45,7 @@ class TestCreateNewGroupController {
         // The REST resource is made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
         view = Mockito.mock(NameEntry.class);
-        controller = new CreateNewGroupController(new SimpleEventBus(), view, restFactory);
+        controller = new CreateNewGroupController(new SimpleEventBus(), restFactory).attach(view);
     }
 
     @AfterEach

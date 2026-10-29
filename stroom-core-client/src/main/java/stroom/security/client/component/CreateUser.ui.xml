@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:e="urn:import:stroom.entity.client.component"
              xmlns:sec="urn:import:stroom.security.client.component">
     <g:FlowPanel styleName="create-user form max dock-container-vertical">
         <form:FormGroup ui:field="createTypesFormGroup"
@@ -12,8 +13,9 @@
                         screenReaderText="Add one identity provider user or several at once.">
             <i:SelectionBox ui:field="createTypes" addStyleNames="create-user__type dock-min w-100"/>
         </form:FormGroup>
-        <!-- One of these is shown, for the type chosen; the group's name is added by its controller -->
-        <g:FlowPanel ui:field="panel" addStyleNames="dock-max">
+        <!-- One of these is shown, for the type chosen -->
+        <g:FlowPanel addStyleNames="dock-max">
+            <e:NameEntry ui:field="groupForm" visible="false"/>
             <sec:CreateExternalUser ui:field="externalUser" visible="false"/>
             <sec:CreateMultipleUsers ui:field="multipleUsers" visible="false"/>
         </g:FlowPanel>

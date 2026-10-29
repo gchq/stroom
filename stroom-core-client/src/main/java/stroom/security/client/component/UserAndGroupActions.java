@@ -19,6 +19,7 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
+import stroom.entity.client.component.NameEntry;
 import stroom.security.client.UserAndGroupHelper;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
@@ -102,7 +103,7 @@ public class UserAndGroupActions extends Controller {
     public void edit(final UserListController userList) {
         final User user = userList.getSelectionModel().getSelected();
         if (user != null && user.isGroup()) {
-            createNewGroupControllerProvider.get().edit(this,
+            createNewGroupControllerProvider.get().attach(new NameEntry()).edit(this,
                     user,
                     UserAndGroupHelper.createAfterChangeConsumer(userList),
                     taskMonitor());

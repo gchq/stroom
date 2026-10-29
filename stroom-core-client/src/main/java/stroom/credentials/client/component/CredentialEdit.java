@@ -16,11 +16,10 @@
 
 package stroom.credentials.client.component;
 
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.menu.client.ShowMenuEvent;
-import stroom.widget.tab.client.LayerContainerImpl;
-import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
@@ -36,9 +35,7 @@ public class CredentialEdit extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    LinkTabBar tabBar;
-    @UiField
-    LayerContainerImpl layerContainer;
+    LinkTabPanel tabs;
 
     private Consumer<TabData> onTabSelected = tab -> {
     };
@@ -48,15 +45,13 @@ public class CredentialEdit extends Component {
     /// Makes the tabs, with none until [#addTab(TabData)].
     public CredentialEdit() {
         initWidget(BINDER.createAndBindUi(this));
-        // The tabs control the layer container, as their tab panel
-        tabBar.setTabPanel(layerContainer.getElement());
-        tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
-        tabBar.addShowMenuHandler(event -> onShowMenu.accept(event));
+        tabs.getTabBar().addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
+        tabs.getTabBar().addShowMenuHandler(event -> onShowMenu.accept(event));
     }
 
     /// @param tab A tab to add to the tab bar.
     public void addTab(final TabData tab) {
-        tabBar.addTab(tab);
+        tabs.getTabBar().addTab(tab);
     }
 
     /// Shows a tab as selected, with its content.
@@ -64,8 +59,8 @@ public class CredentialEdit extends Component {
     /// @param tab   The tab.
     /// @param layer Its content.
     public void showTab(final TabData tab, final Layer layer) {
-        tabBar.selectTab(tab);
-        layerContainer.show(layer);
+        tabs.getTabBar().selectTab(tab);
+        tabs.getLayerContainer().show(layer);
     }
 
     /// @param onTabSelected Given the tab the user selects.

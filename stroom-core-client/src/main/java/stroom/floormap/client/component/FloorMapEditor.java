@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.component;
 
+import stroom.entity.client.component.LinkTabPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
 
@@ -49,7 +50,7 @@ public class FloorMapEditor extends Component {
     @UiField
     SimplePanel canvas;
     @UiField
-    SimplePanel dock;
+    LinkTabPanel dock;
     @UiField
     SimplePanel timeline;
     @UiField
@@ -67,9 +68,9 @@ public class FloorMapEditor extends Component {
         this.canvas.setWidget(canvas);
     }
 
-    /// @param dock The right-hand dock.
-    public void setDock(final IsWidget dock) {
-        this.dock.setWidget(dock);
+    /// @return The right-hand dock, for its controller to attach to.
+    public LinkTabPanel getDock() {
+        return dock;
     }
 
     /// @param timeline The timeline.

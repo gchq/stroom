@@ -58,26 +58,23 @@ public class ApiKeysController extends ContentTabController
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus           The application's event bus.
-    /// @param view               Its component.
     /// @param apiKeysList        The API keys list.
     /// @param restFactory        Makes REST requests.
     /// @param uiConfigCache      The UI's configuration.
     /// @param editApiKeyProvider Makes the edit API key.
     @Inject
     public ApiKeysController(final EventBus eventBus,
-                             final ApiKeys view,
                              final ApiKeysListController apiKeysList,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
                              final Provider<EditApiKeyController> editApiKeyProvider) {
         super(eventBus);
-        initWidget(view);
         own(apiKeysList);
         this.apiKeysList = apiKeysList;
         this.restFactory = restFactory;
         this.editApiKeyProvider = editApiKeyProvider;
 
-        view.setList(apiKeysList);
+        initWidget(apiKeysList.asWidget());
 
         apiKeysList.getToolbar().setName("API key actions");
         addButton = apiKeysList.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);

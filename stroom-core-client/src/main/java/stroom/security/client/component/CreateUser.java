@@ -17,6 +17,7 @@
 package stroom.security.client.component;
 
 import stroom.docref.HasDisplayValue;
+import stroom.entity.client.component.NameEntry;
 import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
@@ -25,8 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -44,13 +43,12 @@ public class CreateUser extends Component {
     @UiField
     SelectionBox<CreateType> createTypes;
     @UiField
-    FlowPanel panel;
+    NameEntry groupForm;
     @UiField
     CreateExternalUser externalUser;
     @UiField
     CreateMultipleUsers multipleUsers;
 
-    private Widget groupForm;
     private Consumer<CreateType> onTypeChange = type -> {
     };
 
@@ -60,13 +58,9 @@ public class CreateUser extends Component {
         createTypes.addValueChangeHandler(this::onCreateTypes);
     }
 
-    /// Adds the form for a group's name, shown when a group is to be added.
-    ///
-    /// @param form The form, its controller's widget.
-    public void setGroupForm(final IsWidget form) {
-        groupForm = form.asWidget();
-        groupForm.setVisible(false);
-        panel.insert(groupForm, 0);
+    /// @return The form for a group's name, for its controller to attach to.
+    public NameEntry getGroupForm() {
+        return groupForm;
     }
 
     /// @return The form for one identity provider user, for its controller to attach to.
@@ -110,9 +104,7 @@ public class CreateUser extends Component {
     }
 
     private void showForm(final CreateType createType) {
-        if (groupForm != null) {
-            groupForm.setVisible(createType == CreateType.USER_GROUP);
-        }
+        groupForm.setVisible(createType == CreateType.USER_GROUP);
         externalUser.setVisible(createType == CreateType.IDP_USER);
         multipleUsers.setVisible(createType == CreateType.MULTI_IDP_USERS);
     }

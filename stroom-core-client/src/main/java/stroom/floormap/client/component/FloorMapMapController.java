@@ -402,7 +402,7 @@ public class FloorMapMapController
         this.floorMapTracking = make(floorMapTrackingProvider);
         this.layersPanel = layersPanel;
         this.floorMapGroups = make(floorMapGroupsProvider);
-        final FloorMapDockController dock = make(dockProvider);
+        final FloorMapDockController dock = make(dockProvider).attach(view.getDock());
 
         // Default initial time
         this.selectedTime = System.currentTimeMillis();
@@ -432,7 +432,6 @@ public class FloorMapMapController
                 floorMapGroups::createGroupWith);
 
         view.setMap(canvas);
-        view.setDock(dock);
         view.setTimeline(floorMapTimeline);
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).

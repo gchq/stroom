@@ -36,18 +36,14 @@ public class SourceTabController extends ContentTabController {
     ///
     /// @param eventBus         The application's event bus.
     /// @param sourceController The source controller.
-    /// @param view             Its component.
     @Inject
     public SourceTabController(final EventBus eventBus,
-                               final SourceViewerController sourceController,
-                               final SourceTab view) {
+                               final SourceViewerController sourceController) {
         super(eventBus);
-        initWidget(view);
         own(sourceController);
         this.sourceController = sourceController;
 
-        view.setSourceView(sourceController);
-
+        initWidget(sourceController.asWidget());
     }
 
     @Override

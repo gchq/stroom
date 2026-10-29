@@ -46,20 +46,19 @@ public class CreateUserController extends Controller {
     ///
     /// @param eventBus              The application's event bus.
     /// @param view                  The content.
-    /// @param group                 Adds a group, with the form for its name.
+    /// @param groupProvider         Makes what adds a group.
     /// @param externalUserProvider  Makes what adds one identity provider user.
     /// @param multipleUsersProvider Makes what adds several.
     @Inject
     public CreateUserController(final EventBus eventBus,
                                 final CreateUser view,
-                                final CreateNewGroupController group,
+                                final Provider<CreateNewGroupController> groupProvider,
                                 final Provider<CreateExternalUserController> externalUserProvider,
                                 final Provider<CreateMultipleUsersController> multipleUsersProvider) {
         super(eventBus);
         this.view = view;
-        this.group = own(group);
         initWidget(view);
-        view.setGroupForm(group);
+        group = make(groupProvider).attach(view.getGroupForm());
         externalUser = make(externalUserProvider).attach(view.getExternalUser());
         multipleUsers = make(multipleUsersProvider).attach(view.getMultipleUsers());
 

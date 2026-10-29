@@ -38,17 +38,14 @@ public class DataPreviewTabController extends ContentTabController {
     ///
     /// @param eventBus       The application's event bus.
     /// @param dataController The data controller.
-    /// @param view           Its component.
     @Inject
     public DataPreviewTabController(final EventBus eventBus,
-                                    final DataViewerController dataController,
-                                    final DataPreviewTab view) {
+                                    final DataViewerController dataController) {
         super(eventBus);
-        initWidget(view);
         own(dataController);
         this.dataController = dataController;
         this.dataController.setDisplayMode(DisplayMode.STROOM_TAB);
-        view.setContentView(dataController);
+        initWidget(dataController.asWidget());
     }
 
     @Override

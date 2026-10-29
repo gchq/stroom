@@ -32,16 +32,13 @@ public class CredentialsController extends ContentTabController {
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus        The application's event bus.
-    /// @param view            Its component.
     /// @param credentialsList The credentials list.
     @Inject
     public CredentialsController(final EventBus eventBus,
-                                 final Credentials view,
                                  final CredentialsListController credentialsList) {
         super(eventBus);
-        initWidget(view);
         own(credentialsList);
-        view.setCredentialsListView(credentialsList);
+        initWidget(credentialsList.asWidget());
     }
 
     @Override

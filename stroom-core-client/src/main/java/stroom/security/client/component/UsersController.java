@@ -48,24 +48,21 @@ public class UsersController extends ContentTabController {
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus           The application's event bus.
-    /// @param view               Its component.
     /// @param userList           The user list.
     /// @param createUserProvider Makes the create user.
     /// @param actions            The actions.
     @Inject
     public UsersController(final EventBus eventBus,
-                           final Users view,
                            final UserListController userList,
                            final Provider<CreateUserController> createUserProvider,
                            final UserAndGroupActions actions) {
         super(eventBus);
-        initWidget(view);
         own(userList);
         this.userList = userList;
         this.createUserProvider = createUserProvider;
         this.actions = own(actions);
 
-        view.setUserList(this.userList);
+        initWidget(userList.asWidget());
 
         this.userList.setLabel("Users:");
         this.userList.setHelpText(HtmlBuilder.builder()

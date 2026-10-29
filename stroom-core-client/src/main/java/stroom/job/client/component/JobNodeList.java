@@ -29,7 +29,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.HeadedPagerPanel;
+import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -54,7 +55,9 @@ public class JobNodeList extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    HeadedPagerPanel pager;
+    FormGroup heading;
+    @UiField
+    PagerPanel pager;
     @UiField
     ToolbarToggleButton showEnabled;
     @UiField
@@ -166,7 +169,7 @@ public class JobNodeList extends Component {
 
     /// @param heading The heading above the list, or `null` for none.
     public void setHeading(final String heading) {
-        pager.setHeading(heading);
+        this.heading.setLabel(heading);
     }
 
     /// @return Whether only the enabled job nodes are to be shown.

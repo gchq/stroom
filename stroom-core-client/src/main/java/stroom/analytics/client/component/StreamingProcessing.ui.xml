@@ -1,6 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A streaming analytic rule's processing: its processors and their filters -->
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel ui:field="processors" styleName="max"/>
-</ui:UiBinder>
