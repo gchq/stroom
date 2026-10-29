@@ -187,7 +187,7 @@ class AnalyticRuleStoreImpl
         final AnalyticRuleDoc ruleDoc = readDocument(docRef);
 
         if (docRef != null && ruleDoc != null && AnalyticRuleDoc.TYPE.equals(docRef.getType())) {
-            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.STREAMING)) {
+            if (AnalyticProcessType.STREAMING.equals(ruleDoc.getAnalyticProcessType())) {
                 final ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
                 final List<DocRef> processorFilters = filterResultPage.getValues().stream()
@@ -200,7 +200,7 @@ class AnalyticRuleStoreImpl
                 docRefs.addAll(getStore().findDocRefsEmbeddedIn(docRef));
             }
 
-            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.SCHEDULED_QUERY)) {
+            if (AnalyticProcessType.SCHEDULED_QUERY.equals(ruleDoc.getAnalyticProcessType())) {
                 final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
                         .ownerDocRef(docRef)
                         .build();
