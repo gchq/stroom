@@ -20,6 +20,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.Store;
 import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.importexport.api.ImportExportDocument;
@@ -35,6 +36,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -165,6 +168,33 @@ class TestStoreImplDocDependencies {
         verify(docDependencyService, times(1)).propagateName(docRefWithUuid(uuid));
         verify(docDependencyService, never()).removeDependencies(any());
         verifyNoMoreInteractions(docDependencyService);
+    }
+
+    @Test
+    void getDependencies_extractsWithoutWriting() {
+        final DocRef docRef = store.createDocument("dict1");
+        clearInvocations(docDependencyService);
+
+        assertThat(store.getDependencies(docRef))
+                .containsExactly(DEP);
+        // Extraction alone must not write, the dependency rebuild writes the edges itself.
+        verifyNoMoreInteractions(docDependencyService);
+    }
+
+    @Test
+    void getDependencies_missingDocument() {
+        final DocRef docRef = new DocRef(DictionaryDoc.TYPE, UUID.randomUUID().toString(), "missing");
+
+        assertThatThrownBy(() -> store.getDependencies(docRef))
+                .isInstanceOf(DocumentNotFoundException.class);
+    }
+
+    @Test
+    void getDependencies_wrongType() {
+        final DocRef docRef = new DocRef("Feed", UUID.randomUUID().toString(), "feed");
+
+        assertThatThrownBy(() -> store.getDependencies(docRef))
+                .isInstanceOf(RuntimeException.class);
     }
 
     private static DocRef docRefWithUuid(final String uuid) {

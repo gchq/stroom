@@ -84,6 +84,11 @@ public class Doc extends TableImpl<DocRecord> {
      */
     public final TableField<DocRecord, String> VERSION = createField(DSL.name("version"), SQLDataType.VARCHAR(36).nullable(false).defaultValue(DSL.inline("", SQLDataType.VARCHAR)), this, "");
 
+    /**
+     * The column <code>stroom.doc.dependency_version</code>.
+     */
+    public final TableField<DocRecord, Integer> DEPENDENCY_VERSION = createField(DSL.name("dependency_version"), SQLDataType.INTEGER, this, "");
+
     private Doc(Name alias, Table<DocRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
