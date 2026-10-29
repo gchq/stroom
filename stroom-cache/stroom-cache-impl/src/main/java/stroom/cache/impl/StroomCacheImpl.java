@@ -26,7 +26,7 @@ import jakarta.inject.Provider;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-class StroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
+final class StroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
 
     public StroomCacheImpl(final String name,
                            final Supplier<CacheConfig> cacheConfigSupplier,

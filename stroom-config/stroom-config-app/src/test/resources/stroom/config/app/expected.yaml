@@ -852,6 +852,18 @@ appConfig:
       HISTOGRAM: 16
       METRIC: 16
       TRACE: 64
+    docByDocRefCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    docByNameCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     mergeStatusRetention: "P30D"
     mergedCheckpointCacheTtl: "PT10M"
     minTimeToKeepSnapshotEnv: "PT20M"
@@ -863,12 +875,6 @@ appConfig:
     sendPartRetryDelay: "PT10S"
     shardMergeThreadCount: 4
     snapshotRetryFetchInterval: "PT1M"
-    stateDocCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
     claimTasksOnWorker: false

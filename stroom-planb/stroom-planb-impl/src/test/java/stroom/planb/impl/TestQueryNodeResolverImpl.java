@@ -51,7 +51,9 @@ class TestQueryNodeResolverImpl {
     private static final String STORAGE_NODE = "node1";
     private static final String OTHER_LOCAL_TYPE = "SomeForkStore";
 
-    /** A cache that answers from a fixed name → document map. */
+    /**
+     * A cache that answers from a fixed name → document map.
+     */
     private static PlanBDocCache cacheOf(final Map<String, PlanBDocument> docs) {
         return new PlanBDocCache() {
             @Override
@@ -68,8 +70,9 @@ class TestQueryNodeResolverImpl {
 
     private static QueryNodeResolverImpl resolver(final Map<String, PlanBDocument> docs,
                                                   final Set<String> registeredTypes) {
-        final PlanBConfig config = new PlanBConfig(
-                null, List.of(STORAGE_NODE), null, null, null, null);
+        final PlanBConfig config = PlanBConfig.builder()
+                .nodeList(List.of(STORAGE_NODE))
+                .build();
         return new QueryNodeResolverImpl(cacheOf(docs), () -> config, registeredTypes);
     }
 

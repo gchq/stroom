@@ -159,7 +159,6 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
             }
 
             final Cache<K, V> newCache = createCacheFromBuilder(newCacheBuilder);
-
             final CacheHolder<K, V> newCacheHolder = new CacheHolder<>(newCache, newCacheBuilder, newCacheConfig);
             LOGGER.debug("Assigning new cacheHolder instance");
             this.cacheHolder = newCacheHolder;

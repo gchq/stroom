@@ -35,7 +35,19 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final CacheConfig stateDocCache;
+    private static final CacheConfig DEFAULT_DOC_BY_NAME_CACHE_CONFIG = CacheConfig
+            .builder()
+            .maximumSize(1000L)
+            .expireAfterWrite(StroomDuration.ofMinutes(10))
+            .build();
+    private static final CacheConfig DEFAULT_DOC_BY_DOC_REF_CACHE_CONFIG = CacheConfig
+            .builder()
+            .maximumSize(1000L)
+            .expireAfterWrite(StroomDuration.ofMinutes(10))
+            .build();
+
+    private final CacheConfig docByNameCache;
+    private final CacheConfig docByDocRefCache;
     private final List<String> nodeList;
     private final String path;
     private final StroomDuration minTimeToKeepSnapshots;
@@ -54,11 +66,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     public PlanBConfig(final String path) {
-        this(CacheConfig
-                        .builder()
-                        .maximumSize(1000L)
-                        .expireAfterWrite(StroomDuration.ofMinutes(10))
-                        .build(),
+        this(DEFAULT_DOC_BY_NAME_CACHE_CONFIG,
+                DEFAULT_DOC_BY_DOC_REF_CACHE_CONFIG,
                 Collections.emptyList(),
                 path,
                 StroomDuration.ofMinutes(10),
@@ -82,31 +91,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 StroomDuration.ofSeconds(10));
     }
 
-    @Deprecated
-    public PlanBConfig(final CacheConfig stateDocCache,
-                       final List<String> nodeList,
-                       final String path,
-                       final StroomDuration minTimeToKeepSnapshots,
-                       final StroomDuration minTimeToKeepSnapshotEnv,
-                       final StroomDuration snapshotRetryFetchInterval) {
-        this(stateDocCache,
-             nodeList,
-             path,
-             minTimeToKeepSnapshots,
-             minTimeToKeepSnapshotEnv,
-             snapshotRetryFetchInterval,
-             null,
-             4,
-             null,
-             null,
-             StroomDuration.ofDays(30),
-             3,
-             StroomDuration.ofSeconds(10));
-    }
-
     @SuppressWarnings("unused")
     @JsonCreator
-    public PlanBConfig(@JsonProperty("stateDocCache") final CacheConfig stateDocCache,
+    public PlanBConfig(@JsonProperty("docByNameCache") final CacheConfig docByNameCache,
+                       @JsonProperty("docByDocRefCache") final CacheConfig docByDocRefCache,
                        @JsonProperty("nodeList") final List<String> nodeList,
                        @JsonProperty("path") final String path,
                        @JsonProperty("minTimeToKeepSnapshots") final StroomDuration minTimeToKeepSnapshots,
@@ -114,29 +102,30 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("snapshotRetryFetchInterval") final StroomDuration snapshotRetryFetchInterval,
                        @JsonProperty("defaultShardCounts") final java.util.Map<StateType, Integer> defaultShardCounts,
                        @JsonProperty("shardMergeThreadCount") final Integer shardMergeThreadCount,
-                       @JsonProperty("minTimeToKeepStoreShardEnv")
-                       final StroomDuration minTimeToKeepStoreShardEnv,
-                       @JsonProperty("mergedCheckpointCacheTtl")
-                       final StroomDuration mergedCheckpointCacheTtl,
+                       @JsonProperty("minTimeToKeepStoreShardEnv") final StroomDuration minTimeToKeepStoreShardEnv,
+                       @JsonProperty("mergedCheckpointCacheTtl") final StroomDuration mergedCheckpointCacheTtl,
                        @JsonProperty("mergeStatusRetention") final StroomDuration mergeStatusRetention,
                        @JsonProperty("sendPartAttempts") final Integer sendPartAttempts,
                        @JsonProperty("sendPartRetryDelay") final StroomDuration sendPartRetryDelay) {
-        this.stateDocCache = stateDocCache;
+        this.docByNameCache = Objects.requireNonNullElse(docByNameCache, DEFAULT_DOC_BY_NAME_CACHE_CONFIG);
+        this.docByDocRefCache = Objects.requireNonNullElse(docByDocRefCache, DEFAULT_DOC_BY_DOC_REF_CACHE_CONFIG);
         this.nodeList = nodeList;
         this.path = path;
         this.minTimeToKeepSnapshots = minTimeToKeepSnapshots;
         this.minTimeToKeepSnapshotEnv = minTimeToKeepSnapshotEnv;
         this.snapshotRetryFetchInterval = snapshotRetryFetchInterval;
-        this.defaultShardCounts = defaultShardCounts != null ? defaultShardCounts : java.util.Map.of(
-                StateType.STATE, 16,
-                StateType.TEMPORAL_STATE, 32,
-                StateType.RANGED_STATE, 16,
-                StateType.TEMPORAL_RANGED_STATE, 32,
-                StateType.SESSION, 32,
-                StateType.HISTOGRAM, 16,
-                StateType.METRIC, 16,
-                StateType.TRACE, 64
-        );
+        this.defaultShardCounts = defaultShardCounts != null
+                ? defaultShardCounts
+                : java.util.Map.of(
+                        StateType.STATE, 16,
+                        StateType.TEMPORAL_STATE, 32,
+                        StateType.RANGED_STATE, 16,
+                        StateType.TEMPORAL_RANGED_STATE, 32,
+                        StateType.SESSION, 32,
+                        StateType.HISTOGRAM, 16,
+                        StateType.METRIC, 16,
+                        StateType.TRACE, 64
+                );
         this.shardMergeThreadCount = shardMergeThreadCount != null && shardMergeThreadCount > 0
                 ? shardMergeThreadCount
                 : 4;
@@ -152,9 +141,15 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty
-    @JsonPropertyDescription("Cache for Plan B state docs.")
-    public CacheConfig getStateDocCache() {
-        return stateDocCache;
+    @JsonPropertyDescription("Cache for Plan B state docs, by name.")
+    public CacheConfig getDocByNameCache() {
+        return docByNameCache;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Cache for Plan B state docs, by uuid.")
+    public CacheConfig getDocByDocRefCache() {
+        return docByDocRefCache;
     }
 
     @JsonProperty
@@ -250,7 +245,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "PlanBConfig{" +
-               "stateDocCache=" + stateDocCache +
+               "stateDocCache=" + docByNameCache +
                ", nodeList=" + nodeList +
                ", path='" + path + '\'' +
                ", minTimeToKeepSnapshots=" + minTimeToKeepSnapshots +
@@ -275,7 +270,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             return false;
         }
         final PlanBConfig that = (PlanBConfig) o;
-        return Objects.equals(stateDocCache, that.stateDocCache) &&
+        return Objects.equals(docByNameCache, that.docByNameCache) &&
                Objects.equals(nodeList, that.nodeList) &&
                Objects.equals(path, that.path) &&
                Objects.equals(minTimeToKeepSnapshots, that.minTimeToKeepSnapshots) &&
@@ -293,7 +288,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public int hashCode() {
         return Objects.hash(
-                stateDocCache,
+                docByNameCache,
                 nodeList,
                 path,
                 minTimeToKeepSnapshots,
@@ -316,9 +311,14 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
-        private CacheConfig stateDocCache;
+        private CacheConfig docByNameCache;
+        private CacheConfig docByUuidCache;
         private List<String> nodeList;
         private String path;
         private StroomDuration minTimeToKeepSnapshots;
@@ -334,11 +334,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
         public Builder() {
             // Set defaults
-            this.stateDocCache = CacheConfig
-                    .builder()
-                    .maximumSize(1000L)
-                    .expireAfterWrite(StroomDuration.ofMinutes(10))
-                    .build();
+            this.docByNameCache = DEFAULT_DOC_BY_NAME_CACHE_CONFIG;
+            this.docByUuidCache = DEFAULT_DOC_BY_DOC_REF_CACHE_CONFIG;
             this.nodeList = Collections.emptyList();
             this.path = "${stroom.home}/planb";
             this.minTimeToKeepSnapshots = StroomDuration.ofMinutes(10);
@@ -363,7 +360,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         }
 
         public Builder(final PlanBConfig config) {
-            this.stateDocCache = config.stateDocCache;
+            this.docByNameCache = config.docByNameCache;
+            this.docByUuidCache = config.docByDocRefCache;
             this.nodeList = config.nodeList;
             this.path = config.path;
             this.minTimeToKeepSnapshots = config.minTimeToKeepSnapshots;
@@ -378,8 +376,13 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.sendPartRetryDelay = config.sendPartRetryDelay;
         }
 
-        public Builder stateDocCache(final CacheConfig stateDocCache) {
-            this.stateDocCache = stateDocCache;
+        public Builder docByNameCache(final CacheConfig docByNameCache) {
+            this.docByNameCache = Objects.requireNonNull(docByNameCache);
+            return this;
+        }
+
+        public Builder docByUuidCache(final CacheConfig docByUuidCache) {
+            this.docByUuidCache = Objects.requireNonNull(docByUuidCache);
             return this;
         }
 
@@ -445,7 +448,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
         public PlanBConfig build() {
             return new PlanBConfig(
-                    stateDocCache,
+                    docByNameCache,
+                    docByUuidCache,
                     nodeList,
                     path,
                     minTimeToKeepSnapshots,
