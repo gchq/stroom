@@ -57,6 +57,8 @@ public final class ToolSummaries {
             Map.entry("draft_index_mapping", "Onboarding: drafts the fields of an index."),
             Map.entry("draft_translation_mapping", "Onboarding: drafts a translation mapping from the sample."),
             Map.entry("elastic_index_templates", "Reads the Elasticsearch templates of an Elastic Index's index."),
+            Map.entry("explain_processing",
+                    "Explains why processing is stuck or slow, and how filters are prioritised and scheduled."),
             Map.entry("fetch_events", "Fetches the source events behind the rows of a table of results."),
             Map.entry("find_elastic_clusters", "Lists the Elastic Cluster documents and the indexes that use them."),
             Map.entry("find_in_content", "Finds text in the content of documents."),

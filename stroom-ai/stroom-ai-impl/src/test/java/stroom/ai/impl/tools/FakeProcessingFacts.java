@@ -134,7 +134,7 @@ final class FakeProcessingFacts implements ProcessingFacts {
         check("Manage Processors");
         return filters.stream()
                 .filter(filter -> !enabledOnly || filter.isEnabled())
-                .sorted((a, b) -> Integer.compare(b.getPriority(), a.getPriority()))
+                .sorted(ProcessingExplainer.WORK_ORDER)
                 .limit(limit)
                 .toList();
     }
