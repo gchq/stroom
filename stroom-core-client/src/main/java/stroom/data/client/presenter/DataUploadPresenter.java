@@ -22,12 +22,15 @@ import stroom.data.client.view.FileData.Status;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.shared.UploadFeedSource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -42,15 +45,20 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DataUploadPresenter
         extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-    private DocRef feedRef;
-    private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
     private final FeedClient feedClient;
+    private final DocSelectionBoxPresenter feedSelectionPresenter;
+    private final List<String> streamTypes = new ArrayList<>();
+    private DocRef initialFeedRef;
+    private Runnable onUploaded;
     private HidePopupRequestEvent currentHideRequest;
 
     @Inject
@@ -58,10 +66,16 @@ public class DataUploadPresenter
                                final DataUploadView view,
                                final RestFactory restFactory,
                                final FeedClient feedClient,
-                               final DataTypeUiManager dataTypeUiManager) {
+                               final DataTypeUiManager dataTypeUiManager,
+                               final DocSelectionBoxPresenter feedSelectionPresenter) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
         this.feedClient = feedClient;
+        this.feedSelectionPresenter = feedSelectionPresenter;
+
+        feedSelectionPresenter.setIncludedTypes(FeedDoc.TYPE);
+        feedSelectionPresenter.setRequiredPermissions(DocumentPermission.EDIT);
+        view.setFeedView(feedSelectionPresenter.getView());
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
 
@@ -71,20 +85,21 @@ public class DataUploadPresenter
                     final Long effectiveMs = getView().getEffectiveDate();
                     final UploadDataRequest request = new UploadDataRequest(
                             resourceKey,
-                            feedRef.getName(),
+                            feedSelectionPresenter.getSelectedEntityReference().getName(),
                             getView().getType().getValue(),
                             effectiveMs,
                             getView().getMetaData(),
-                            fileName);
+                            fileName,
+                            getView().getFeedSource());
 
                     //noinspection unused
                     restFactory
                             .create(DATA_RESOURCE)
                             .method(res -> res.upload(request))
                             .onSuccess(result ->
-                                    AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
+                                    AlertEvent.fireInfo(DataUploadPresenter.this, "Uploaded file",
                                             () -> {
-                                                metaPresenter.refresh();
+                                                NullSafe.run(onUploaded);
                                                 currentHideRequest.hide();
                                             }))
                             .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
@@ -95,8 +110,19 @@ public class DataUploadPresenter
                 .taskMonitorFactory(this, "Uploading Data");
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        // Default the stream type to the one set on the feed the user picks.
+        registerHandler(feedSelectionPresenter.addDataSelectionHandler(event ->
+                setTypeFromFeed(event.getSelectedItem())));
+    }
+
+    /// Checks the dialog has everything needed to upload, showing a warning if not.
+    ///
+    /// @return True if the upload can go ahead.
     public boolean valid() {
-        if (feedRef == null) {
+        if (feedSelectionPresenter.getSelectedEntityReference() == null) {
             AlertEvent.fireWarn(this, "Feed not set!", null);
             return false;
         }
@@ -123,24 +149,27 @@ public class DataUploadPresenter
         getView().getFileUpload().submit();
     }
 
-    public void show(final MetaPresenter streamPresenter, final DocRef feedRef) {
-        this.metaPresenter = streamPresenter;
-        this.feedRef = feedRef;
-        feedClient.load(feedRef,
-                this::fireShowPopup,
-                throwable -> error("Error fetching feed: " + throwable.getMessage()),
-                DataUploadPresenter.this);
+    /// Shows the upload dialog.
+    ///
+    /// @param feedRef    The feed to select when the dialog opens, or null to let the user
+    ///                   pick one, e.g. when uploading from the main menu.
+    /// @param onUploaded Called after a successful upload, or null if nothing needs to happen.
+    public void show(final DocRef feedRef, final Runnable onUploaded) {
+        this.initialFeedRef = feedRef;
+        this.onUploaded = onUploaded;
+        feedSelectionPresenter.setSelectedEntityReference(feedRef, true);
+        fireShowPopup();
     }
 
-    private void fireShowPopup(final FeedDoc feedDoc) {
-        final PopupSize popupSize = PopupSize.resizable(430, 480);
+    private void fireShowPopup() {
+        final PopupSize popupSize = PopupSize.resizable(500, 620);
 
         //noinspection unused
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Upload")
-                .onShow(e -> onShow(feedDoc))
+                .caption("Upload Data")
+                .onShow(e -> onShow())
                 .onHideRequest(e -> {
                     currentHideRequest = e;
                     if (e.isOk()) {
@@ -158,22 +187,42 @@ public class DataUploadPresenter
                 .fire();
     }
 
-    private void onShow(final FeedDoc feedDoc) {
+    private void onShow() {
         dataTypeUiManager.getTypes(list -> {
+            streamTypes.clear();
             getView().getType().clear();
             if (NullSafe.hasItems(list)) {
+                streamTypes.addAll(list);
                 getView().getType().addItems(list);
-                String streamType = feedDoc.getStreamType();
-
-                if (streamType == null || !list.contains(streamType)) {
-                    // Fallback default value
-                    streamType = StreamTypeNames.RAW_EVENTS;
-                }
-                getView().getType().setValue(streamType);
+                getView().getType().setValue(StreamTypeNames.RAW_EVENTS);
+                setTypeFromFeed(initialFeedRef);
             }
         }, this);
 
-        getView().focus();
+        if (initialFeedRef == null) {
+            feedSelectionPresenter.focus();
+        } else {
+            getView().focus();
+        }
+    }
+
+    private void setTypeFromFeed(final DocRef feedRef) {
+        if (feedRef != null) {
+            feedClient.load(feedRef,
+                    feedDoc -> {
+                        String streamType = feedDoc.getStreamType();
+                        if (streamType == null || !streamTypes.contains(streamType)) {
+                            // Fallback default value
+                            streamType = StreamTypeNames.RAW_EVENTS;
+                        }
+                        getView().getType().setValue(streamType);
+                    },
+                    throwable -> AlertEvent.fireError(
+                            this,
+                            "Error fetching feed: " + throwable.getMessage(),
+                            null),
+                    this);
+        }
     }
 
     private void error(final String message) {
@@ -195,5 +244,14 @@ public class DataUploadPresenter
         String getMetaData();
 
         CustomFileUpload getFileUpload();
+
+        /// Sets the view of the feed picker.
+        ///
+        /// @param view The feed picker's view.
+        void setFeedView(View view);
+
+        /// @return Whether every stream goes into the selected feed, or into the feed named in
+        /// its own `.meta`/`.manifest` entry.
+        UploadFeedSource getFeedSource();
     }
 }
