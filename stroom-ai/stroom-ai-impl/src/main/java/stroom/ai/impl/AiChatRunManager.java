@@ -513,6 +513,13 @@ public class AiChatRunManager {
     }
 
     /// @param chatId The chat.
+    /// @return True while a run of the chat is working on this node, until it has tidied up after itself (e.g. a
+    /// test waiting for a run to end before its database goes).
+    boolean isRunningHere(final int chatId) {
+        return localRuns.containsKey(chatId);
+    }
+
+    /// @param chatId The chat.
     /// @return True if the chat's run on this node has been asked to stop.
     public boolean isStopRequested(final int chatId) {
         final LocalRun localRun = localRuns.get(chatId);
