@@ -115,6 +115,28 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testIsRunningHere_whileTheWorkRunsAndNotOnceTheRunHasTidiedUp() {
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .thenReturn(Optional.of(run));
+        final AtomicBoolean whileWorking = new AtomicBoolean();
+        final AtomicBoolean whileTidying = new AtomicBoolean();
+        // The last thing a run does as it ends is tidy the chat's messages.
+        Mockito.doAnswer(invocation -> {
+            whileTidying.set(runManager.isRunningHere(1));
+            return 0;
+        }).when(aiDao).changeMessageTypes(1, AiChatRunManager.QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
+
+        assertThat(runManager.isRunningHere(1)).isFalse();
+        runManager.start(1, r -> whileWorking.set(runManager.isRunningHere(1)));
+
+        assertThat(whileWorking).isTrue();
+        assertThat(whileTidying).isTrue();
+        assertThat(runManager.isRunningHere(1)).isFalse();
+        // Another chat's run isn't this one's.
+        assertThat(runManager.isRunningHere(2)).isFalse();
+    }
+
+    @Test
     void testExecute_messagesTheRunDidNotPickUpAreKeptAsSentWhenItEnds() {
         runManager.execute(run, r -> {
             throw new IllegalStateException("model failed");

@@ -42,11 +42,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 final class FakeModelServer implements AutoCloseable {
 
     private static final String DEFAULT_ANSWER = "Done.";
-    private static final String SIDE_ANSWER = "Acme logons";
+    static final String SIDE_ANSWER = "Acme logons";
 
     private final HttpServer server;
     private final Deque<Map<String, Object>> replies = new ConcurrentLinkedDeque<>();
     private final List<Map<String, Object>> agentRequests = Collections.synchronizedList(new ArrayList<>());
+    private final List<Map<String, Object>> sideRequests = Collections.synchronizedList(new ArrayList<>());
 
     private FakeModelServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -91,6 +92,14 @@ final class FakeModelServer implements AutoCloseable {
         }
     }
 
+    /// @return The body of every request that offered no tools (e.g. naming the chat, or a batch of a table being
+    /// summarised), in order.
+    List<Map<String, Object>> sideRequests() {
+        synchronized (sideRequests) {
+            return List.copyOf(sideRequests);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void handle(final HttpExchange exchange) throws IOException {
         try (exchange) {
@@ -104,6 +113,7 @@ final class FakeModelServer implements AutoCloseable {
                         ? Map.of("answer", DEFAULT_ANSWER)
                         : replies.poll();
             } else {
+                sideRequests.add(request);
                 reply = Map.of("answer", SIDE_ANSWER);
             }
             final boolean streamed = !Boolean.FALSE.equals(request.get("stream"));
