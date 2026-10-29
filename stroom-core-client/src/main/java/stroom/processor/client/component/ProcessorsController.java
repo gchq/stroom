@@ -77,7 +77,6 @@ public class ProcessorsController extends Controller {
 
     private ProcessorType processorType;
     private DocRef docRef;
-    //    private ProcessorListRow selectedProcessor;
     private boolean buttonsCreated;
 
     private boolean allowCreate;
@@ -416,16 +415,6 @@ public class ProcessorsController extends Controller {
             }
         }
     }
-
-//    private void setPermissions() {
-//        if (selectedProcessor instanceof ProcessorFilterRow) {
-//            final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
-//            final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
-//                    processorFilterRow.getProcessorFilter().getUuid(),
-//                    null);
-//            ShowPermissionsDialogEvent.fire(this, processorFilterRef);
-//        }
-//    }
 
     /// Lists the processors again, keeping the selected one selected.
     public void refresh() {

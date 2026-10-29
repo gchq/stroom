@@ -188,13 +188,11 @@ public class QueryResultVisController
     @Override
     public void addLayer(final LayerContainer layerContainer) {
         layerContainer.add(asWidget());
-        // visFrame.setVisible(true);
     }
 
     @Override
     public boolean removeLayer() {
         asWidget().removeFromParent();
-        // visFrame.setVisible(false);
         return false;
     }
 
@@ -203,7 +201,6 @@ public class QueryResultVisController
         view.onResize();
     }
 
-//    @Override
     public void onRemove() {
         releaseVis();
         RootPanel.get().remove(visFrame);
@@ -267,9 +264,6 @@ public class QueryResultVisController
 
     private void cleanupSearchModelAssociation() {
         if (currentSearchModel != null) {
-            // Remove this component from the list of components the search
-            // model expects to update.
-//            currentSearchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
@@ -306,8 +300,6 @@ public class QueryResultVisController
         currentData = getEmptyData();
         currentError = null;
         update();
-
-//        setDataInternal(null);
     }
 
     @Override
@@ -319,15 +311,10 @@ public class QueryResultVisController
 
     private void setDataInternal(final Result componentResult) {
         try {
-//            if (getVisSettings() != null && getVisSettings().getVisualisation() != null) {
             if (componentResult != null) {
                 final QLVisResult visResult = (QLVisResult) componentResult;
 
                 currentData = getJSONData(visResult);
-//                    final List<String> errors = visResult.getErrors();
-//                    if (currentError == null && errors != null && !errors.isEmpty()) {
-//                        currentError = String.join("\n", errors);
-//                    }
 
 
                 // Put a new function in the cache if there isn't one already.
@@ -357,12 +344,6 @@ public class QueryResultVisController
                     currentFunction = visFunction;
                     visFunction.addStatusHandler(this);
                 }
-//            } else if (currentFunction != null) {
-//                currentFunction.removeStatusHandler(this);
-//                currentFunction = null;
-//
-//                view.showMessage("No visualisation");
-//            }
 
                 updateStatusMessage();
             }
@@ -585,38 +566,6 @@ public class QueryResultVisController
         }
     }
 
-//    @Override
-//    public void read(final ComponentConfig componentConfig) {
-//        super.read(componentConfig);
-//
-//        final ComponentSettings settings = componentConfig.getSettings();
-//        if (!(settings instanceof VisComponentSettings)) {
-//            setSettings(VisComponentSettings.builder().build());
-//        }
-//    }
-//
-//    private VisComponentSettings getVisSettings() {
-//        return (VisComponentSettings) getSettings();
-//    }
-
-    //    @Override
-//    public void link() {
-//        String tableId = getVisSettings().getTableId();
-//        tableId = getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
-//        updateTableId(tableId);
-//    }
-//
-//    @Override
-//    protected void changeSettings() {
-//        super.changeSettings();
-//
-//        updateTableId(getVisSettings().getTableId());
-//
-//        // Update the current settings JSON and refresh the visualisation.
-//        currentSettings = getJSONSettings();
-//        refreshVisualisation();
-//    }
-//
     private void refreshVisualisation() {
         visFrame.setData(context, currentSettings, currentData);
     }
@@ -645,16 +594,11 @@ public class QueryResultVisController
             for (int i = 0; i < tabs.size(); i++) {
                 final JSONObject tab = JSONUtil.getObject(tabs.get(i));
                 if (tab != null) {
-                    // final String name = JSONUtil.getString(tab.get("name"));
                     final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
                     if (controls != null) {
                         for (int j = 0; j < controls.size(); j++) {
                             final JSONObject control = JSONUtil.getObject(controls.get(j));
                             final String id = JSONUtil.getString(control.get("id"));
-                            // final String type =
-                            // JSONUtil.getString(control.get("type"));
-                            // final String label =
-                            // JSONUtil.getString(control.get("label"));
 
                             final JSONValue val = dynamicSettings.get(id);
                             if (val != null) {

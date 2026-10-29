@@ -17,7 +17,6 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.item.client.EventBinder;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
@@ -46,30 +45,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     LinkTabBar tabBar;
     @UiField
     LayerContainerImpl layerContainer;
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(tabBar.addSelectionHandler(event -> {
-                final TabData selected = event.getSelectedItem();
-                selectTab(selected);
-                final int index = tabBar.getTabs().indexOf(selected);
-                getTabLayoutConfig().setSelected(index);
-                changeHandler.onChange();
-            }));
-            registerHandler(tabBar.addShowMenuHandler(flexLayout::showMenu));
-            registerHandler(settings.addDomHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    final TabData selectedTab = tabBar.getSelectedTab();
-                    if (selectedTab instanceof final DashboardPane component) {
-//                        component.showSettings();
-                        flexLayout.showTabMenu(settings.getElement(),
-                                TabLayout.this,
-                                component.getTabConfig());
-                    }
-                }
-            }, ClickEvent.getType()));
-        }
-    };
 
     /// @param flexLayout      The layout the pane is in, which shows its tabs' menus.
     /// @param tabLayoutConfig The pane's tabs.
@@ -84,15 +59,24 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(BINDER.createAndBindUi(this));
         tabBar.setTabPanel(layerContainer.getElement());
 
-        bind();
-    }
-
-    public void bind() {
-        eventBinder.bind();
-    }
-
-    public void unbind() {
-        eventBinder.unbind();
+        tabBar.addSelectionHandler(event -> {
+            final TabData selected = event.getSelectedItem();
+            selectTab(selected);
+            final int index = tabBar.getTabs().indexOf(selected);
+            getTabLayoutConfig().setSelected(index);
+            changeHandler.onChange();
+        });
+        tabBar.addShowMenuHandler(flexLayout::showMenu);
+        settings.addDomHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                final TabData selectedTab = tabBar.getSelectedTab();
+                if (selectedTab instanceof final DashboardPane component) {
+                    flexLayout.showTabMenu(settings.getElement(),
+                            this,
+                            component.getTabConfig());
+                }
+            }
+        }, ClickEvent.getType());
     }
 
     public void addTab(final MutableTabConfig tabConfig, final DashboardPane component) {

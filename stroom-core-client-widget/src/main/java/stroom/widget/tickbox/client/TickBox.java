@@ -40,18 +40,11 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.editor.client.IsEditor;
-import com.google.gwt.editor.client.LeafValueEditor;
-import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.i18n.client.HasDirection.Direction;
-import com.google.gwt.i18n.shared.DirectionEstimator;
-import com.google.gwt.i18n.shared.HasDirectionEstimator;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -59,10 +52,7 @@ import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
-import com.google.gwt.user.client.ui.DirectionalTextHelper;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.HasDirectionalSafeHtml;
 import com.google.gwt.user.client.ui.HasName;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
@@ -77,18 +67,8 @@ import java.util.function.Consumer;
  * it has the focus, the clicks and the state), the box drawn for it ({@code tick-box__mark}) and its
  * text ({@code tick-box__label}). Clicking anywhere on it ticks it, as the label wraps the check box.
  * Its states are the check box's: checked, disabled and {@code aria-readonly}.
- *
- * <p>
- * <h3>Built-in Bidi Text Support</h3>
- * This widget is capable of automatically adjusting its direction according to
- * its content. This feature is controlled by {@link #setDirectionEstimator} or
- * passing a DirectionEstimator parameter to the constructor, and is off by
- * default.
- * </p>
  */
-public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
-        HasDirectionalSafeHtml, HasDirectionEstimator,
-        IsEditor<LeafValueEditor<Boolean>> {
+public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus {
 
     private static final String CHECK = "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path fill=\"currentColor\" d=\"M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z\"></path></svg>";
 
@@ -97,14 +77,9 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
-            DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
-
-    final DirectionalTextHelper directionalTextHelper;
     final InputElement inputElem;
     final SpanElement checkmarkElem;
     private final SpanElement labelElem;
-    private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
     private boolean readOnly;
     private Consumer<Boolean> onChange;
@@ -122,10 +97,6 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
 
         // An id of its own, until setIdentity gives it one (e.g. for a form group's label)
         inputElem.setId(DOM.createUniqueId());
-
-        // setText and setHTML (GWT's text methods) set the label's text, as setLabel does, rather than
-        // replacing the drawn box's tick
-        directionalTextHelper = new DirectionalTextHelper(labelElem, true);
 
         // Accessibility: setting tab index to be 0 by default, ensuring element
         // appears in tab sequence. FocusWidget's setElement method already
@@ -203,32 +174,6 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
         }
     }
 
-    @Override
-    public LeafValueEditor<Boolean> asEditor() {
-        if (editor == null) {
-            editor = TakesValueEditor.of(this);
-        }
-        return editor;
-    }
-
-    @Override
-    public DirectionEstimator getDirectionEstimator() {
-        return directionalTextHelper.getDirectionEstimator();
-    }
-
-    /**
-     * Returns the value property of the input element that backs this widget.
-     * This is the value that will be associated with the CheckBox name and
-     * submitted to the server if a {@link FormPanel} that holds it is submitted
-     * and the box is checked.
-     * <p>
-     * Don't confuse this with {@link #getValue}, which returns true or false if
-     * the widget is checked.
-     */
-    public String getFormValue() {
-        return inputElem.getValue();
-    }
-
     /// @param label The text beside the tick box, which names it, or null or blank for none.
     public void setLabel(final String label) {
         labelElem.setInnerText(NullSafe.string(label));
@@ -257,9 +202,12 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
         this.inputElem.setId(identity);
     }
 
+    // getText, setText, getHTML and setHTML (GWT's text methods) use the label, as setLabel does,
+    // rather than replacing the drawn box and its tick
+
     @Override
     public String getHTML() {
-        return directionalTextHelper.getHtml();
+        return labelElem.getInnerHTML();
     }
 
     @Override
@@ -274,20 +222,11 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
 
     @Override
     public String getText() {
-        return directionalTextHelper.getText();
-    }
-
-    @Override
-    public Direction getTextDirection() {
-        return directionalTextHelper.getTextDirection();
+        return labelElem.getInnerText();
     }
 
     /**
      * Determines whether this check box is currently checked.
-     * <p>
-     * Note that this <em>does not</em> return the value property of the checkbox
-     * input element wrapped by this widget. For access to that property, see
-     * {@link #getFormValue()}
      *
      * @return <code>true</code> if the check box is checked, false otherwise.
      * Will not return null
@@ -301,62 +240,9 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
         }
     }
 
-    /**
-     * Determines whether this check box is currently checked.
-     *
-     * @return <code>true</code> if the check box is checked
-     * @deprecated Use {@link #getValue} instead
-     */
-    @Deprecated
-    public boolean isChecked() {
-        // Funny comparison b/c getValue could in theory return null
-        return getValue() == true;
-    }
-
     @Override
     public boolean isEnabled() {
         return !inputElem.isDisabled();
-    }
-
-    @Override
-    public void setAccessKey(final char key) {
-        inputElem.setAccessKey("" + key);
-    }
-
-    /**
-     * Checks or unchecks this check box. Does not fire {@link ValueChangeEvent}.
-     * (If you want the event to fire, use {@link #setValue(Boolean, boolean)})
-     *
-     * @param checked <code>true</code> to check the check box.
-     * @deprecated Use {@link #setValue(Boolean)} instead
-     */
-    @Deprecated
-    public void setChecked(final boolean checked) {
-        setValue(checked);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * See note at {@link #setDirectionEstimator(DirectionEstimator)}.
-     */
-    @Override
-    public void setDirectionEstimator(final boolean enabled) {
-        directionalTextHelper.setDirectionEstimator(enabled);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Note: DirectionEstimator should be set before the label has any content;
-     * it's highly recommended to set it using a constructor. Reason: if the
-     * label already has non-empty content, this will update its direction
-     * according to the new estimator's result. This may cause flicker, and thus
-     * should be avoided.
-     */
-    @Override
-    public void setDirectionEstimator(final DirectionEstimator directionEstimator) {
-        directionalTextHelper.setDirectionEstimator(directionEstimator);
     }
 
     @Override
@@ -374,29 +260,9 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
         }
     }
 
-    /**
-     * Set the value property on the input element that backs this widget. This is
-     * the value that will be associated with the CheckBox's name and submitted to
-     * the server if a {@link FormPanel} that holds it is submitted and the box is
-     * checked.
-     * <p>
-     * Don't confuse this with {@link #setValue}, which actually checks and
-     * unchecks the box.
-     *
-     * @param value
-     */
-    public void setFormValue(final String value) {
-        inputElem.setAttribute("value", value);
-    }
-
-    @Override
-    public void setHTML(final SafeHtml html, final Direction dir) {
-        directionalTextHelper.setHtml(html, dir);
-    }
-
     @Override
     public void setHTML(@IsSafeHtml final String html) {
-        directionalTextHelper.setHtml(html);
+        labelElem.setInnerHTML(html);
     }
 
     @Override
@@ -417,20 +283,11 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
 
     @Override
     public void setText(final String text) {
-        directionalTextHelper.setText(text);
-    }
-
-    @Override
-    public void setText(final String text, final Direction dir) {
-        directionalTextHelper.setText(text, dir);
+        labelElem.setInnerText(text);
     }
 
     /**
      * Checks or unchecks the check box.
-     * <p>
-     * Note that this <em>does not</em> set the value property of the checkbox
-     * input element wrapped by this widget. For access to that property, see
-     * {@link #setFormValue(String)}
      *
      * @param value true to check, false to uncheck; null value implies false
      */
@@ -442,10 +299,6 @@ public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, F
     /**
      * Checks or unchecks the check box, firing {@link ValueChangeEvent} if
      * appropriate.
-     * <p>
-     * Note that this <em>does not</em> set the value property of the checkbox
-     * input element wrapped by this widget. For access to that property, see
-     * {@link #setFormValue(String)}
      *
      * @param value      true to check, false to uncheck; null value implies false
      * @param fireEvents If true, and value has changed, fire a

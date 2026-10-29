@@ -119,13 +119,11 @@ public class ServerTasksController extends ContentTabController
     ///
     /// @param nodeName The node's name.
     /// @param taskName The task's name.
-    /// @param userName The user's name.
-    public void changeNameFilter(final String nodeName, final String taskName, final String userName) {
+    public void changeNameFilter(final String nodeName, final String taskName) {
         final StringBuilder sb = new StringBuilder();
         boolean hasAdded;
         hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_NODE, nodeName);
         hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_NAME, taskName) || hasAdded;
-        hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_USER, userName) || hasAdded;
         if (hasAdded) {
             changeNameFilter(sb.toString().trim());
         }

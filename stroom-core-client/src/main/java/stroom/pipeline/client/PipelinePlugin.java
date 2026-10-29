@@ -104,8 +104,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                     true,
                     false,
                     new DefaultTaskMonitorFactory(this));
-            // Highlight the item in the explorer tree.
-            //            highlight(docRef);
 
             final PipelineEditor pipelineEditor = getEditor(host);
             if (pipelineEditor != null) {

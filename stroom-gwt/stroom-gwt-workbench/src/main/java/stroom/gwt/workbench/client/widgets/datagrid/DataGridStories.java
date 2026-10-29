@@ -35,6 +35,7 @@ import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.datagrid.client.model.ColumnSizing;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -908,8 +909,12 @@ public final class DataGridStories {
         final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
-        grid.addPercentColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", 25);
-        grid.addPercentColumn(DataGridUtil.textColumnBuilder(Note::getDescription).build(), "Description", 50);
+        grid.addColumn(DataGridUtil.textColumnBuilder(Note::getName).build(),
+                DataGridUtil.headingBuilder("Name").build(),
+                ColumnSizing.percent(25));
+        grid.addColumn(DataGridUtil.textColumnBuilder(Note::getDescription).build(),
+                DataGridUtil.headingBuilder("Description").build(),
+                ColumnSizing.percent(50));
         grid.addAutoResizableColumn(DataGridUtil.textColumnBuilder(DataGridStories::noteValue).build(),
                 "Value", 100);
         grid.setRowData(DataGridRows.notes());

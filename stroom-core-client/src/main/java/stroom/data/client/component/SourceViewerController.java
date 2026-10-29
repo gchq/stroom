@@ -17,7 +17,6 @@
 package stroom.data.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.DisplayMode;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -151,10 +150,8 @@ public class SourceViewerController extends Controller implements Focus {
                 .withHighlight(currentTextHighlight)
                 .build();
 
-        // Can either take the user to the same location they are currently at, regardless of highlight
+        // Takes the user to the same location they are currently at, regardless of highlight
         setSourceLocation(sourceLocation);
-        // or always take them to the approx location of the highlight
-//        setSourceLocationUsingHighlight(sourceLocation);
     }
 
     /**
@@ -253,7 +250,6 @@ public class SourceViewerController extends Controller implements Focus {
             if (receivedSourceLocation != null && isCurrentSourceSuitable(sourceLocation)) {
                 // The requested highlight is inside the currently held data so just update
                 // the highlight in the editor
-//                GWT.log("Using existing source");
 
                 // Update the highlight in case refresh is called
                 requestedSourceLocation = receivedSourceLocation.copy()
@@ -296,9 +292,6 @@ public class SourceViewerController extends Controller implements Focus {
                                         (HIGHLIGHT_CONTEXT_LINES_BEFORE * HexDump.MAX_BYTES_PER_LINE)))
                 .orElse(0L);
 
-//        GWT.log("old hl byteOffset: " + highlight.getOptByteOffsetFrom().get()
-//                + " newByteOffset: " + newByteOffsetFrom);
-
         return DataRange.fromByteOffset(newByteOffsetFrom);
     }
 
@@ -336,7 +329,6 @@ public class SourceViewerController extends Controller implements Focus {
                 newColNo = (int) (highlightStart.getColNo()
                         - sourceConfig.getMaxCharactersPerFetch()
                         + highlightLen
-//                        - receivedSourceLocation.getDataRange().getLength()
                         + HIGHLIGHT_CONTEXT_CHARS_BEFORE);
             } else {
                 // we need to change the visible range
@@ -362,8 +354,6 @@ public class SourceViewerController extends Controller implements Focus {
             newSourceStart = DefaultLocation.of(1, 1);
         }
 
-//        GWT.log("Highlight: " + highlight.toString()
-//                + " new start: " + newSourceStart.toString());
         return newSourceStart;
     }
 
@@ -400,15 +390,6 @@ public class SourceViewerController extends Controller implements Focus {
                     && sourceLocation.getFirstHighlight().isInsideRange(
                     receivedSourceLocation.getDataRange().getLocationFrom(),
                     receivedSourceLocation.getDataRange().getLocationTo());
-
-//            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
-//                    + " isSameSource: " + receivedSourceLocation.isSameSource(sourceLocation)
-//                    + " isInsideRange: " + sourceLocation.getHighlight().isInsideRange(
-//                        receivedSourceLocation.getDataRange().getLocationFrom(),
-//                        receivedSourceLocation.getDataRange().getLocationTo())
-//                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
-//                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
-//                    + " result: " + result);
         }
         return result;
     }
@@ -416,14 +397,6 @@ public class SourceViewerController extends Controller implements Focus {
     /// @param metaList The streams being stepped through, or null for none.
     public void setMetaList(final IsWidget metaList) {
         view.setMetaList(metaList);
-    }
-
-    public void setNavigatorControlsVisible(final boolean isVisible) {
-        if (isVisible) {
-            view.setNavigator(characterNavigator);
-        } else {
-            view.setNavigator(null);
-        }
     }
 
     public void setSteppingSource(final boolean isSteppingSource) {

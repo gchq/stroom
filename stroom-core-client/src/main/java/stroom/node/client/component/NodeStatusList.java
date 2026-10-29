@@ -365,9 +365,6 @@ public class NodeStatusList extends Component {
         }
         final String severityClass = PING_SEVERITY_CLASS_BASE + severityClassSuffix;
 
-//        GWT.log("ping: " + ping + ", msg '" + msg + "', severityClass: "
-//                + severityClass + ", barWidthPct: " + barWidthPct);
-
         final String text;
         final String title;
         final boolean isErrorMsg;

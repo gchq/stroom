@@ -198,7 +198,6 @@ public class DataGrid<R> extends Widget
     private boolean multiSelectable;
     private boolean multiLine;
     private boolean virtual;
-    private int rowHeight;
     private boolean hideHeader;
     private boolean allowMove = true;
     private boolean allowResize = true;
@@ -376,24 +375,6 @@ public class DataGrid<R> extends Widget
                                        final Header<?> header,
                                        final int initialMinimumWidth) {
         addColumn(column, header, ColumnSizing.fill(initialMinimumWidth));
-    }
-
-    /// Add a column whose starting width is a percentage of the grid's initial visible width.
-    ///
-    /// @param column  The column.
-    /// @param name    The header text. Treated as HTML, as `MyDataGrid` does.
-    /// @param percent The percentage, e.g. `25`.
-    public void addPercentColumn(final Column<R, ?> column, final String name, final double percent) {
-        addColumn(column, textHeader(name), ColumnSizing.percent(percent));
-    }
-
-    /// Add a column whose starting width is a percentage of the grid's initial visible width.
-    ///
-    /// @param column  The column.
-    /// @param header  The header.
-    /// @param percent The percentage, e.g. `25`.
-    public void addPercentColumn(final Column<R, ?> column, final Header<?> header, final double percent) {
-        addColumn(column, header, ColumnSizing.percent(percent));
     }
 
     /// Add a column with explicit sizing settings.
@@ -789,19 +770,6 @@ public class DataGrid<R> extends Widget
         }
     }
 
-    /// @return Whether virtual rendering has been requested.
-    public boolean isVirtual() {
-        return virtual;
-    }
-
-    /// Set the fixed row height used in virtual mode.
-    ///
-    /// @param rowHeight The height in pixels, or `0` to measure it from the current density.
-    public void setRowHeight(final int rowHeight) {
-        this.rowHeight = Math.max(0, rowHeight);
-        scheduleRender();
-    }
-
     /// Makes the grid a list rather than a grid (see [DataGridProfile]): its roles, whether it has a
     /// header, and its keys. Set it before the grid is shown.
     ///
@@ -1090,13 +1058,6 @@ public class DataGrid<R> extends Widget
     /// @return The key provider, or `null`.
     public ProvidesKey<R> getKeyProvider() {
         return keyProvider;
-    }
-
-    /// Does nothing. Kept for compatibility with `MyDataGrid`; hover is pure CSS here.
-    ///
-    /// @param skipRowHoverCheck Ignored.
-    public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
-        // Hover is handled by CSS.
     }
 
     // --------------------------------------------------------------------------------
@@ -1695,12 +1656,6 @@ public class DataGrid<R> extends Widget
     /// @return Whether the focus is in the grid's rows; the keyboard row is only shown while it is.
     boolean hasRowFocus() {
         return hasFocus;
-    }
-
-    /// @return The fixed row height set ([#setRowHeight(int)]), or 0 for rows as high as their
-    /// content.
-    int getFixedRowHeight() {
-        return rowHeight;
     }
 
     /// @return The row styles set ([#setRowStyles(RowStyles)]), or null.

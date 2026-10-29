@@ -24,7 +24,6 @@ import stroom.statistics.impl.sql.client.State.Mask;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -46,8 +45,6 @@ public class StatisticsCustomMaskList extends Component {
     private static final String AUTO_GENERATE_TITLE = "Auto-generate Roll-up Permutations";
     private static final String REMOVE_TITLE = "Remove Selected Roll-up Permutation";
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton newButton;
     @UiField

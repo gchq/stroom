@@ -47,11 +47,6 @@ public class DynamicStyles {
         update();
     }
 
-    public static void remove(final SafeHtml className) {
-        styles.remove(className);
-        update();
-    }
-
     private static void update() {
         final HtmlBuilder builder = new HtmlBuilder();
         for (final Entry<SafeHtml, SafeStyles> entry : styles.entrySet()) {

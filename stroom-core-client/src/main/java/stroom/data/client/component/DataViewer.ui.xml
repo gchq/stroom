@@ -24,8 +24,7 @@
                     </g:HTMLPanel>
                 </g:FlowPanel>
                 <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min data-viewer__progress-bar-panel"/>
-                <tab:LayerContainerImpl ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"
-                                        fade="true"/>
+                <tab:LayerContainerImpl ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"/>
                 <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
             </g:FlowPanel>
         </d:content>

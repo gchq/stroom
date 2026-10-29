@@ -50,7 +50,7 @@ public class WordsTabController extends Controller {
         editor.getOptions().getStylesOption().setUnavailable();
         editor.getFormatAction().setUnavailable();
         own(editor.addValueChangeHandler(event -> onChange.run()));
-        own(editor.addFormatListener(event -> onChange.run()));
+        own(editor.addFormatListener(() -> onChange.run()));
         // Read only as its document is
         watch(Contexts.READ_ONLY, editor::setReadOnly);
     }

@@ -252,33 +252,6 @@ public class QueryPaneController
                     run(true, true, selectionQuery);
                 }
             }
-
-//            if (component instanceof HasAbstractFields) {
-//                final VisPresenter visController = (VisPresenter) component;
-//                final List<Map<String, String>> selection = visController.getCurrentSelection();
-//                String params = "";
-//                if (selection != null) {
-//                    for (final Map<String, String> map : selection) {
-//                        for (final Entry<String, String> entry : map.entrySet()) {
-//                            params += entry.getKey() + "=" + entry.getValue() + " ";
-//                        }
-//                    }
-//                }
-//                onQuery(params, null);
-//            }
-
-//                if (getTextSettings().getTableId() == null) {
-//                    if (component instanceof TableController) {
-//                        currentTableController = (TableController) component;
-//                        update(currentTableController);
-//                    }
-//                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
-//                    if (component instanceof TableController) {
-//                        currentTableController = (TableController) component;
-//                        update(currentTableController);
-//                    }
-//                }
-//            }
         }));
     }
 

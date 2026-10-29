@@ -457,7 +457,6 @@ public class TableController extends DashboardComponentController
         super.setDashboardContext(dashboardContext);
         own(getDashboardContext().addContextChangeListener(() -> {
             if (initialised && updateSelectionFilter()) {
-//                reset();
                 refresh();
             }
         }));
@@ -986,9 +985,6 @@ public class TableController extends DashboardComponentController
         }
 
         updateFields();
-
-        // Not sure what this was needed for....
-//        getComponents().fireComponentChangeEvent(this);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -1072,17 +1068,6 @@ public class TableController extends DashboardComponentController
             getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
             getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
         }
-
-//        GWT.log(tableSettings.getFields().stream()
-//                .map(field ->
-//                        String.join(
-//                                ", ",
-//                                field.getId(),
-//                                field.getName(),
-//                                Boolean.toString(field.isVisible()),
-//                                Boolean.toString(field.isSpecial())))
-//                .collect(Collectors.joining("\n")));
-//        }
     }
 
     void updateColumns() {

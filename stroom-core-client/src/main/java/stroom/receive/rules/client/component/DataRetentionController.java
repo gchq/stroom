@@ -86,12 +86,6 @@ public class DataRetentionController extends ContentTabController
         retentionPolicy.setOnDirtyChange(this::setDirty);
         this.dataRetentionImpactProvider = dataRetentionImpactProvider;
 
-//        settingsController.addDirtyHandler(event -> {
-//            if (event.isDirty()) {
-//                setDirty(true);
-//            }
-//        });
-
         addTab(RULES_TAB);
         addTab(IMPACT_SUMMARY_TAB);
         selectTab(RULES_TAB);
@@ -187,18 +181,8 @@ public class DataRetentionController extends ContentTabController
     }
 
     private boolean isDirty() {
-//        return retentionPolicyController != null && retentionPolicyController.isDirty();
         return dirty;
     }
-
-//    @Override
-//    public void refresh() {
-//        if (selectedTab != null) {
-//            if (currentContent != null && currentContent instanceof Refreshable) {
-//                ((Refreshable) currentContent).refresh();
-//            }
-//        }
-//    }
 
     private DataRetentionImpactController getOrCreateImpact() {
         if (dataRetentionImpact == null) {

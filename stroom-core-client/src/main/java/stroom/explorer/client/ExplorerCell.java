@@ -69,10 +69,6 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         return getCellClassName() + "__expander";
     }
 
-    public String getTickBoxClassName() {
-        return getCellClassName() + "__tick-box";
-    }
-
     /// Sets what the tick boxes show, for a tick tree, whose items have them.
     ///
     /// @param selectionModel The ticks (a [TickBoxSelectionModel], which gives the items tick

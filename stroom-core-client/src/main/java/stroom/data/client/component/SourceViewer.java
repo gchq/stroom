@@ -17,7 +17,6 @@
 package stroom.data.client.component;
 
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.FabButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.text.client.Label;
@@ -54,8 +53,6 @@ public class SourceViewer extends Component {
     SimplePanel navigatorContainer;
     @UiField
     SimplePanel progressBarPanel;
-    @UiField
-    FabButton steppingButton;
     @UiField
     SpinnerLarge spinner;
     @UiField

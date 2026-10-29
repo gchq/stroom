@@ -51,13 +51,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodesController> {
         getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
                     final JobNode jobNode = openNodeEvent.getJobNode();
-                    open(nodeController -> {
-                        if (jobNode != null) {
-                            nodeController.setSelected(jobNode);
-                        } else {
-                            nodeController.setSelected(openNodeEvent.getNodeName());
-                        }
-                    });
+                    open(nodeController -> nodeController.setSelected(jobNode));
                 });
     }
 
@@ -90,14 +84,4 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodesController> {
     public String getType() {
         return NodesController.TAB_TYPE;
     }
-
-//    private void openNode(final String nodeName) {
-//        final NodesController nodeController = open();
-//        nodeController.setSelected(nodeName);
-//    }
-//
-//    private void openNodeJob(final JobNode jobNode) {
-//        final NodesController nodeController = open();
-//        nodeController.setSelected(jobNode);
-//    }
 }

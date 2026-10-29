@@ -60,15 +60,6 @@ public class TaskProgressUtil {
         // Validate criteria.
         criteria.validateSortField();
 
-//        input
-//                .stream()
-//                .flatMap(List::stream)
-//                .map(TaskProgress::getId)
-//                .map(taskId -> NullSafe.get(taskId.getParentId(), TaskId::getId)
-//                        + " - "
-//                        + taskId.getId())
-//                .forEach(GWT::log);
-
         final Map<TaskId, TaskProgress> totalMap;
         try {
             totalMap = input
@@ -76,21 +67,6 @@ public class TaskProgressUtil {
                     .flatMap(List::stream)
                     .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
         } catch (final Exception e) {
-//            try {
-//                input
-//                        .stream()
-//                        .flatMap(List::stream)
-//                        .collect(Collectors.groupingBy(TaskProgress::getId, Collectors.toList()))
-//                        .entrySet()
-//                        .stream()
-//                        .filter(entry -> entry.getValue().size() > 1)
-//                        .forEach(entry -> {
-//                            GWT.log("Task " + entry.getKey().getId() + " has "
-//                                    + entry.getValue().size() + " instances");
-//                        });
-//            } catch (Exception ex) {
-//                GWT.log("Error trying to debug error: " + ex.getMessage());
-//            }
             throw new RuntimeException(e);
         }
 
@@ -213,15 +189,11 @@ public class TaskProgressUtil {
                     state = true;
                 } else if (treeAction.hasExpandedState(parent)) {
                     state = treeAction.isRowExpanded(parent);
-//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
-//                    ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
                 } else {
                     // Expansion state has not been set so decide the initial state here
                     state = getDefaultExpansionState(criteria, parent, childMap);
                     treeAction.setRowExpanded(parent, state);
                 }
-//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
-//                ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
                 parent.setExpander(new Expander(depth, state, false));
             } else {
                 state = true;
@@ -284,13 +256,6 @@ public class TaskProgressUtil {
             if (taskProgress.isMatchedInFilter()) {
                 // This task is a match so return true
 
-//            GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": "
-//                    + (root != null ? root.getId().getId() : "null")
-//                    + " " + (root != null ? root.getTaskName() : "null") + " - "
-//                    + (taskProgress != null ? taskProgress.getId().getId() : "null")
-//                    + " " + (taskProgress != null ? taskProgress.getTaskName() : "null")
-//                    + " returning:" + true + "FILTERED OUT");
-
                 result = true;
             } else {
                 // See if any of this task's children are a match
@@ -302,12 +267,6 @@ public class TaskProgressUtil {
                             break;
                         }
                     }
-//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": "
-//                        + (root != null ? root.getId().getId() : "null")
-//                        + " " + (root != null ? root.getTaskName() : "null") + " - "
-//                        + (taskProgress != null ? taskProgress.getId().getId() : "null")
-//                        + " " + (taskProgress != null ? taskProgress.getTaskName() : "null")
-//                        + " returning:" + result + "HAS_MATCHED_KIDS");
                 }
             }
         }

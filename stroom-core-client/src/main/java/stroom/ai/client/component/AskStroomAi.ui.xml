@@ -21,7 +21,7 @@
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
         <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom">
-            <tx:Label ui:field="emptyPrompt" styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
+            <tx:Label styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom-inner">
                 <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__message-pane">
                     <tx:Label ui:field="contextIndicator"

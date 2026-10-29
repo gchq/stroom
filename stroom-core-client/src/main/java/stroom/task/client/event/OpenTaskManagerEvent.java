@@ -28,35 +28,22 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerEvent.Handler>
     private static Type<Handler> TYPE;
     private final String nodeName;
     private final String taskName;
-    private final String userName;
 
-    private OpenTaskManagerEvent(final String nodeName, final String taskName, final String userName) {
+    private OpenTaskManagerEvent(final String nodeName, final String taskName) {
         // Private constructor.
         this.nodeName = nodeName;
         this.taskName = taskName;
-        this.userName = userName;
     }
 
     public static void fire(final HasHandlers handlers,
                             final String taskName) {
-        handlers.fireEvent(new OpenTaskManagerEvent(null, taskName, null));
+        handlers.fireEvent(new OpenTaskManagerEvent(null, taskName));
     }
 
     public static void fire(final HasHandlers handlers,
                             final String nodeName,
                             final String taskName) {
-        handlers.fireEvent(new OpenTaskManagerEvent(nodeName, taskName, null));
-    }
-
-    public static void fire(final HasHandlers handlers,
-                            final String nodeName,
-                            final String taskName,
-                            final String userName) {
-        handlers.fireEvent(new OpenTaskManagerEvent(nodeName, taskName, userName));
-    }
-
-    public static void fire(final HasHandlers handlers) {
-        handlers.fireEvent(new OpenTaskManagerEvent(null, null, null));
+        handlers.fireEvent(new OpenTaskManagerEvent(nodeName, taskName));
     }
 
     public static Type<Handler> getType() {
@@ -82,10 +69,6 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerEvent.Handler>
 
     public String getTaskName() {
         return taskName;
-    }
-
-    public String getUserName() {
-        return userName;
     }
 
     // --------------------------------------------------------------------------------

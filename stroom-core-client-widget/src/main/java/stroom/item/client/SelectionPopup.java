@@ -65,16 +65,6 @@ public class SelectionPopup<T, I extends SelectionItem> {
     // Whether the list has been shown and has the focus
     private boolean shown;
 
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            super.onBind();
-            registerHandler(popupPanel.addCloseHandler(event -> hide()));
-            selectionList.setOnClose(SelectionPopup.this::hide);
-            registerHandler(() -> selectionList.setOnClose(null));
-        }
-    };
-
     /// Makes a popup with an empty list; [#setModel] gives it its options.
     public SelectionPopup() {
         popupPanel = new PopupPanel() {
@@ -108,6 +98,14 @@ public class SelectionPopup<T, I extends SelectionItem> {
         popupPanel.addCloseHandler(event -> {
             if (onClose != null) {
                 onClose.run();
+            }
+            // The list forgets where it was however the popup closes (hide, or a click outside it)
+            selectionList.destroy();
+        });
+        // The list asks to close (Escape, or choosing with nothing to choose) only while it is shown
+        selectionList.setOnClose(() -> {
+            if (popupPanel.isShowing()) {
+                hide();
             }
         });
         selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
@@ -190,7 +188,6 @@ public class SelectionPopup<T, I extends SelectionItem> {
         if (popupPanel.isShowing()) {
             hide();
         } else {
-            eventBinder.bind();
             popupPanel.setPopupPosition(-1000, -1000);
             popupPanel.show();
             // Defer the command to position and make visible because we need the
@@ -206,15 +203,6 @@ public class SelectionPopup<T, I extends SelectionItem> {
                         (int) position.getTop());
                 afterShow();
             });
-
-//            popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
-//                final Position position = PositionUtil
-//                        .getPosition(4, popupPosition, offsetWidth, offsetHeight);
-//                popupPanel.setPopupPosition(
-//                        (int) position.getLeft(),
-//                        (int) position.getTop());
-//                afterShow();
-//            });
         }
     }
 
@@ -248,9 +236,12 @@ public class SelectionPopup<T, I extends SelectionItem> {
     }
 
     public void hide() {
-        eventBinder.unbind();
-        popupPanel.hide();
-        selectionList.destroy();
+        if (popupPanel.isShowing()) {
+            // Its close handler makes the list forget where it was
+            popupPanel.hide();
+        } else {
+            selectionList.destroy();
+        }
     }
 
     /// Sets what is told when the popup closes, however it closes (a choice, Escape, Tab or a click

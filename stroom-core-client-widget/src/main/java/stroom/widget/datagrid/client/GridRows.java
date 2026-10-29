@@ -515,13 +515,9 @@ final class GridRows<R> {
         return null;
     }
 
-    /// @return The height of a row of one line: the grid's fixed row height if it has one, else
-    /// one measured with the first row's cells at the current density.
+    /// @return The height of a row of one line, measured with the first row's cells at the current
+    /// density.
     double getOneLineRowHeight() {
-        final int rowHeight = grid.getFixedRowHeight();
-        if (rowHeight > 0) {
-            return rowHeight;
-        }
         if (measuredRowHeight > 0) {
             return measuredRowHeight;
         }

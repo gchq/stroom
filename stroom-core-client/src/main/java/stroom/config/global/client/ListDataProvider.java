@@ -50,11 +50,6 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
         redraw(requestedRange);
     }
 
-    //    public void setPartialList(final List<R> list, final Range range, final int totalSize) {
-//        this.list = list;
-//        this.requestedRange = range;
-//        this.totalSize = totalSize;
-//    }
     public void setPartialList(final List<R> partialList, final int totalSize) {
         this.list = partialList;
         this.isFullList = false;

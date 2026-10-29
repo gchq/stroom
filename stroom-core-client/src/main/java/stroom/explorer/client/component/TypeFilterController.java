@@ -108,6 +108,9 @@ public class TypeFilterController extends Controller implements DocumentTypeSele
         ControllerDialog.hide(this, true, false);
     }
 
+    /// Sets what is run each time the popup is hidden. For the workbench's harness, whose stories
+    /// observe the popup hiding with it.
+    ///
     /// @param onHidden Run each time the popup is hidden.
     public void setOnHidden(final Runnable onHidden) {
         this.onHidden = onHidden;

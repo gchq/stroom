@@ -298,7 +298,6 @@ public class MetaBrowserController
 
 
     public void refresh() {
-//        GWT.log("Refresh");
         // Get a new list of streams.
         metaList.refresh();
         metaRelationList.refresh();
@@ -444,9 +443,6 @@ public class MetaBrowserController
     private void shouldEnableDelete(final MetaListController metaList,
                                     final Selection<Long> streamIdSet,
                                     final Consumer<Boolean> isEnabledConsumer) {
-//        if (streamIdSet != null) {
-//            GWT.log("streamIdSet (" + streamIdSet.size() + ") - " + streamIdSet);
-//        }
         final boolean someSelected = isSomeSelected(metaList, streamIdSet);
         if (someSelected) {
             final Set<Status> statusSet = MetaExpressionUtil.getStatusSet(getCriteria().getExpression());
@@ -458,14 +454,12 @@ public class MetaBrowserController
             if (allowDelete) {
                 if (streamIdSet != null) {
                     if (streamIdSet.isMatchAll()) {
-//                        return true;
                         isDeleteEnabled = true;
                     } else {
                         for (final Long id : streamIdSet.getSet()) {
                             final Meta meta = getMeta(metaList, id);
                             if (meta != null
                                 && !Status.DELETED.equals(meta.getStatus())) {
-//                                return true;
                                 isDeleteEnabled = true;
                                 break;
                             }

@@ -73,7 +73,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-//
 
 /// Shows the execution schedules of analytic rules and reports, and edits, runs and deletes them.
 public class ExecutionSchedulesController extends ContentTabController {
@@ -104,8 +103,6 @@ public class ExecutionSchedulesController extends ContentTabController {
     private ButtonView clearFilterButton;
     private ButtonView runJobNowButton;
     private ButtonView deleteButton;
-
-//    private final ScheduledQueryAnalyticExecutor scheduledQueryExecutor;
 
     private final RefCellsController refCells;
 

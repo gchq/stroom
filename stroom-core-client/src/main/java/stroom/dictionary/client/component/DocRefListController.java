@@ -74,9 +74,4 @@ public class DocRefListController extends Controller {
     public Toolbar getToolbar() {
         return view.getToolbar();
     }
-
-    /// @param visible Whether the pager's refresh button shows.
-    public void setRefreshVisible(final boolean visible) {
-        view.setRefreshVisible(visible);
-    }
 }

@@ -269,7 +269,7 @@ public class QueryEditController
             onChange();
         }));
         //noinspection unused event
-        own(editor.addFormatListener(event -> onChange()));
+        own(editor.addFormatListener(this::onChange));
         queryToolbar.setOnStart(this::toggleStart);
         queryToolbar.setOnTimeRangeChange(() -> {
             run();

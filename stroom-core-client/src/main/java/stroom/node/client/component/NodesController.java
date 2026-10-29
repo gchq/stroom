@@ -91,14 +91,6 @@ public class NodesController extends ContentTabController
         return TAB_TYPE;
     }
 
-    /// Selects a node.
-    ///
-    /// @param nodeName The node's name.
-    public void setSelected(final String nodeName) {
-        nodeStatusList.setSelected(nodeName);
-        nodeJobList.read(nodeName);
-    }
-
     /// Selects a node and its job.
     ///
     /// @param jobNode The job on its node.

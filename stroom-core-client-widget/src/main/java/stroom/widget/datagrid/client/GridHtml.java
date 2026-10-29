@@ -18,6 +18,7 @@ package stroom.widget.datagrid.client;
 
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.TableText;
+import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -123,7 +124,9 @@ final class GridHtml<R> {
                     header.render(context, sb);
                     sb.appendHtmlConstant("</div>");
                     if (sorted) {
-                        sb.append(DataGridSortIcon.render(ascending, sortIndex + 1));
+                        final HtmlBuilder icon = new HtmlBuilder();
+                        SortIcon.append(icon, ascending, sortIndex + 1);
+                        sb.append(icon.toSafeHtml());
                     }
                     sb.appendHtmlConstant("</div>");
                 } else {

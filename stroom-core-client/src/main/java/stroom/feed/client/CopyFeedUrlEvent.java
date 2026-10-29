@@ -22,8 +22,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-import java.util.Objects;
-
 public class CopyFeedUrlEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
@@ -57,27 +55,6 @@ public class CopyFeedUrlEvent extends GwtEvent<Handler> {
 
     public String getName() {
         return name;
-    }
-
-    public static Builder builder(final HasHandlers handlers, final String name) {
-        return new Builder(handlers, name);
-    }
-
-    // --------------------------------------------------------------------------------
-
-    public static final class Builder {
-
-        private final HasHandlers hasHandlers;
-        private final String name;
-
-        private Builder(final HasHandlers hasHandlers, final String name) {
-            this.hasHandlers = Objects.requireNonNull(hasHandlers);
-            this.name = Objects.requireNonNull(name);
-        }
-
-        public void fire() {
-            hasHandlers.fireEvent(new CopyFeedUrlEvent(name));
-        }
     }
 
     // --------------------------------------------------------------------------------

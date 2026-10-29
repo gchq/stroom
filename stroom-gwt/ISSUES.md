@@ -22,8 +22,9 @@ where help describes one of these bugs it says what happens today.
 **Structure, not behaviour:** the UI audit of 29 October 2026 (naming, packages, dead code, BEM CSS,
 and composition all the way up) has its own record, [UI_AUDIT.md](UI_AUDIT.md), with every finding
 in [ui-audit/findings.md](ui-audit/findings.md): 210 verified findings (about 190 distinct), nine
-themes and eleven proposed waves, waiting for approval. The one behaviour bug it found (the XSD
-browser's pattern heading) is under [Smaller oddities](#smaller-oddities) as well.
+themes and eleven waves, approved and under way (from wave 35). The one behaviour bug it found (the
+XSD browser's pattern heading, fixed in wave 36) is under [Smaller oddities](#smaller-oddities) as
+well.
 
 ## Data not saved or not used
 
@@ -1891,11 +1892,18 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
-**Confirmed** (29 October 2026, in the UI audit, widgets-2-07): the XSD browser heads a type's
-pattern restrictions "Enumeration". `XSDConstraintDisplay` (`:47`, `:49`) asks `getList` for the
-enumeration list and, when there is none, for the pattern list, both with `enumeration = true`, so
-the "Pattern" heading (`:64`) is never used. Fix: pass `false` for the pattern list, with a story
-showing a pattern-restricted type. Master has it too (changelog entry when fixed).
+**Fixed** (29 October 2026, wave 36; changelog entry): ~~the XSD browser heads a type's
+pattern restrictions "Enumeration". `XSDConstraintDisplay` asked `getList` for the enumeration list
+and, when there was none, for the pattern list, both with `enumeration = true`, so the "Pattern"
+heading was never used.~~ `getList` takes the heading, and the XSD browser's Enumeration and Pattern
+Constraint stories show each. Master has it too.
+
+**Open** (29 October 2026, wave 36): eleven images in `stroom-app/src/main/resources/ui/images/xsdbrowser/`
+are named by nothing now that `xsd-browser.css`'s unused rules went (`xsdBrowser-Title.png`,
+`xsdBrowser-Title-selected.png`, `xsdTitleAttributes.png`, `xsdTitleDirectives.png`,
+`xsdTitleGroups.png`, `xsdTree01.png`, `04`, `07`, `08`, `10` and `11`). AGENTS.md keeps changes to
+`ui/images` to `GenerateSvgImages`, and these are PNGs it doesn't make, so they wait for a decision
+to delete them by hand.
 
 **Reported.**
 

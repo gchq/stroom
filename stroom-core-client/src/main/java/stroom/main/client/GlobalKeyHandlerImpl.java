@@ -39,11 +39,6 @@ public class GlobalKeyHandlerImpl implements GlobalKeyHandler {
         // track the currently selected tab
         eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedTabData = e.getTabData();
-//            if (selectedTabData != null) {
-//                GWT.log("Selected tab - label: '" + tabData.getLabel()
-//                        + "', type: " + tabData.getType()
-//                        + ", class: " + tabData.getClass().getName());
-//            }
         });
     }
 
@@ -54,7 +49,6 @@ public class GlobalKeyHandlerImpl implements GlobalKeyHandler {
         // else we pass the action down to the current tab to deal with
         final Action action = KeyBinding.test(nativeEvent);
         if (action != null && selectedTabData != null) {
-//                GWT.log("Passing " + action + " to " + selectedTabData.getClass().getName());
             final boolean wasActionConsumed = selectedTabData.handleKeyAction(action);
             if (wasActionConsumed) {
                 // Stop anyone else dealing with this key bind

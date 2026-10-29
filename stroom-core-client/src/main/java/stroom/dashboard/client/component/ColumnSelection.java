@@ -24,7 +24,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -47,8 +46,6 @@ public class ColumnSelection extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    @UiField
-    PagerPanel pager;
     @UiField
     DataGrid<ColumnRef> dataGrid;
 

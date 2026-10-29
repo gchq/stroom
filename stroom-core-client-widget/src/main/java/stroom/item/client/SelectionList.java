@@ -91,21 +91,17 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // Whether more than one option can be chosen (see setMultiSelect)
     private boolean multiSelect;
 
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(quickFilter.addValueChangeHandler(e -> {
-                if (!Objects.equals(e.getValue(), lastFilter)) {
-                    lastFilter = e.getValue();
-                    refresh(true, false);
-                }
-            }));
-        }
-    };
-
     /// Makes an empty list, e.g. one a template declares; [#setModel] gives it its options.
     public SelectionList() {
         initWidget(BINDER.createAndBindUi(this));
+        // Only while the list is on the page: a filter cleared while it is not is applied by
+        // whatever cleared it
+        quickFilter.addValueChangeHandler(e -> {
+            if (isAttached() && !Objects.equals(e.getValue(), lastFilter)) {
+                lastFilter = e.getValue();
+                refresh(true, false);
+            }
+        });
         cellTable = new DataGrid<>(100);
         cellTable.setProfile(DataGridProfile.LISTBOX);
         // Options to choose, not a table to copy or export: the grid's own menu would offer that
@@ -294,16 +290,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         }
         return -1;
-    }
-
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
-    }
-
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
     }
 
     private I getCurrentParent() {

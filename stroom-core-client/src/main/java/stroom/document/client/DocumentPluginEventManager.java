@@ -224,35 +224,6 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
 
-        // // 2. Handle requests to close tabs.
-        // registerHandler(getEventBus().addHandler(
-        // RequestCloseTabEvent.getType(), new RequestCloseTabHandler() {
-        // @Override
-        // public void onCloseTab(final RequestCloseTabEvent event) {
-        // final TabData tabData = event.getTabData();
-        // if (tabData instanceof EntityTabData) {
-        // final EntityTabData entityTabData = (EntityTabData) tabData;
-        // final DocumentPlugin<?> plugin = pluginMap
-        // .get(entityTabData.getType());
-        // if (plugin != null) {
-        // plugin.close(entityTabData, false);
-        // }
-        // }
-        // }
-        // }));
-        //
-        // // 3. Handle requests to close all tabs.
-        // registerHandler(getEventBus().addHandler(
-        // RequestCloseAllTabsEvent.getType(), new CloseAllTabsHandler() {
-        // @Override
-        // public void onCloseAllTabs(
-        // final RequestCloseAllTabsEvent event) {
-        // for (final DocumentPlugin<?> plugin : pluginMap.values()) {
-        // plugin.closeAll(event.isLogoffAfterClose());
-        // }
-        // }
-        // }));
-
         // 4. Handle explorer events and open items as required.
         getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
             // Remember the selection model.
@@ -281,27 +252,11 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
 
-//        clientPropertyCache.get()
-//                .onSuccess(uiConfig -> {
-//                    registerHandler(
-//                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
-//                                final Hyperlink hyperlink = new Hyperlink.Builder()
-//                                        .text("Permissions")
-//                                        .href(uiConfig.getUrl().getDocumentPermissions() +
-//                                        event.getExplorerNode().getUuid())
-//                                        .type(HyperlinkType.TAB + "|Document Permissions")
-//                                        .icon(SvgPresets.PERMISSIONS)
-//                                        .build();
-//                                HyperlinkEvent.fire(this, hyperlink);
-//                            }));
-//                });
-
 
         // 11. Handle entity reload events.
         getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(event.getDocRef().getType());
             if (plugin != null) {
-//                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
             }
         });
@@ -696,32 +651,6 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-//    private void deleteDocument(final DocRef document, final DocumentTabData tabData) {
-//        delete(document).onSuccess(e -> {
-//            if (tabData != null) {
-//                // Cleanup reference to this tab data.
-//                removeTabData(tabData);
-//                contentManager.forceClose(tabData);
-//            }
-//            // Refresh the explorer tree so the document is marked as deleted.
-//            RefreshExplorerTreeEvent.fire(DocumentPlugin.this);
-//        });
-//    }
-
-
-//    /**
-//     * 8.1. This method will copy documents.
-//     */
-//    void copyDocument(final Controller popup, final DocRef document, final DocRef folder,
-//                      final PermissionInheritance permissionInheritance) {
-//        copy(document, folder, permissionInheritance).onSuccess(newDocRef -> {
-//            // Hide the copy document controller.
-//            HidePopupEvent.fire(DocumentPluginEventManager.this, popup);
-//
-//            // Select it in the explorer tree.
-//            highlight(newDocRef);
-//        });
-//    }
 
 
     public void create(final String docType,
@@ -1158,40 +1087,6 @@ public class DocumentPluginEventManager extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
-
-//        final FutureImpl<List<Item>> future = new FutureImpl<>();
-//        final List<ExplorerNode> selectedItems = getSelectedItems();
-//        final boolean singleSelection = selectedItems.size() == 1;
-//        final ExplorerNode primarySelection = getPrimarySelection();
-//
-//        fetchPermissions(selectedItems,
-//                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
-//                    final List<Item> menuItems = new ArrayList<>();
-//
-////                    // Only allow the new menu to appear if we have a single selection.
-////                    addNewMenuItem(menuItems,
-////                            singleSelection,
-////                            documentPermissionMap,
-////                            primarySelection,
-////                            documentTypes);
-////                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-//                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-////                    menuItems.add(new Separator(5));
-////                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-//                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-////                    menuItems.add(new Separator(9));
-////                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-//
-//                    future.setResult(menuItems);
-//                }));
-//
-//        // Add menu bar item menu.
-//        event.getMenuItems()
-//                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem.Builder()
-//                        .priority(11)
-//                        .text("Item")
-//                        .children(future)
-//                        .build());
     }
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
@@ -1896,7 +1791,6 @@ public class DocumentPluginEventManager extends Plugin {
                                                final boolean enabled) {
         final Command command = () -> {
             if (docRef != null) {
-//                ShowDocumentPermissionsEvent.fire(DocumentPluginEventManager.this, docRef);
                 OpenDocumentEvent.builder(DocumentPluginEventManager.this, docRef)
                         .selectedTab(CommonDocLinkTab.PERMISSIONS)
                         .fire();

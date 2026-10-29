@@ -329,7 +329,6 @@ public class TracesList extends Component {
         dataGrid.addResizableColumn(column,
                 name,
                 width);
-//        dataGrid.sort(column);
     }
 
     private void addTimeColumn(final String name,
@@ -349,7 +348,6 @@ public class TracesList extends Component {
         dataGrid.addResizableColumn(column,
                 name,
                 width);
-//        dataGrid.sort(column);
     }
 
 

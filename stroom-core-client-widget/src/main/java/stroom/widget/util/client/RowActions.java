@@ -78,13 +78,13 @@ public final class RowActions {
 
     /// @param element An element, or null.
     /// @return Whether the element is a row action.
-    public static boolean isRowAction(final Element element) {
+    private static boolean isRowAction(final Element element) {
         return element != null && element.hasAttribute(ATTRIBUTE);
     }
 
     /// @param event An event.
     /// @return Whether the event's target is a row action.
-    public static boolean isRowActionEvent(final NativeEvent event) {
+    private static boolean isRowActionEvent(final NativeEvent event) {
         final EventTarget target = event.getEventTarget();
         return Element.is(target) && isRowAction(Element.as(target));
     }

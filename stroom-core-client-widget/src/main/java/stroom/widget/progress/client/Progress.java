@@ -66,11 +66,6 @@ public class Progress {
         return new Progress(0, (double) 100, 0, progressPct);
     }
 
-    public static Progress simpleProgress(final double progress,
-                                          final double upperBound) {
-        return new Progress(0, upperBound, 0, progress);
-    }
-
     public static Progress boundedRange(final double upperBound,
                                         final double rangeFromInc,
                                         final double rangeToInc) {

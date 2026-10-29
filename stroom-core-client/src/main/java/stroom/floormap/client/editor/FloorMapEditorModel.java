@@ -265,16 +265,6 @@ public class FloorMapEditorModel {
         return Collections.unmodifiableList(serverEntriesAtCurrentTime);
     }
 
-    /// The selected fact's server shards, sorted by effective time, as last handed
-    /// to [#onTimeListFetched].
-    ///
-    /// Returned unmodifiable, for the same reason as
-    /// [#getServerEntriesAtCurrentTime()]. `onTimeListFetched` is
-    /// `void`, so this is the only way to observe what it stored.
-    public List<TemporalEntry> getServerEntriesForSelectedFact() {
-        return Collections.unmodifiableList(serverEntriesForSelectedFact);
-    }
-
     /// Returns the merged canvas entries (server + pending changes).
     ///
     /// @return merged entries; never `null`

@@ -392,9 +392,6 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
                 // Don't constrain if we are resizing.
                 if (!resizeWidth && !resizeHeight) {
-                    // Add some constraints to stop the dialog being moved off screen.
-                    //            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
-                    //            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
                     left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
                     top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
                 }

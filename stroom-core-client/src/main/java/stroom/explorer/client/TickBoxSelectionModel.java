@@ -135,10 +135,6 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
             if (allUnticked) {
                 modifyState(parent, TickBoxState.UNTICK);
-
-                // No longer selecting parent items to fix issue #3671
-//            } else if (allTicked) {
-//                modifyState(parent, TickBoxState.TICK);
             } else {
                 modifyState(parent, TickBoxState.HALF_TICK);
             }

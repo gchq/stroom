@@ -20,7 +20,6 @@ import stroom.statistics.impl.sql.client.State.Field;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -41,8 +40,6 @@ public class StatisticsFieldList extends Component {
     private static final String EDIT_TITLE = "Edit Selected Statistic Field";
     private static final String REMOVE_TITLE = "Remove Selected Statistic Fields";
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton newButton;
     @UiField

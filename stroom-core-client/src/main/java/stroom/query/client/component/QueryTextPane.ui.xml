@@ -12,15 +12,11 @@
                 <b:ToolbarButton ui:field="close" svg="CLOSE" title="Close Text Pane"/>
             </b:Toolbar>
         </g:FlowPanel>
-        <g:FlowPanel styleName="dock-max stepping-button-container">
+        <g:FlowPanel styleName="dock-max">
             <g:FlowPanel styleName="max">
                 <ed:CodeEditor ui:field="editor" visible="false"/>
                 <ed:HtmlPane ui:field="html" visible="false"/>
             </g:FlowPanel>
-            <b:FabButton ui:field="steppingButton"
-                         addStyleNames="stepping-button"
-                         icon="STEPPING"
-                         title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>
         <l:ClassificationLabel ui:field="classification" styleName="dock-min classification-label classification-label--one-line"/>
         <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>

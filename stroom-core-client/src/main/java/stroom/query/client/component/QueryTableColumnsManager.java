@@ -385,16 +385,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
     private List<Column> getColumns() {
         return tableController.getCurrentColumns();
-//
-//      if (tableController.getSettings() != null && tableController.getTableComponentSettings().getColumns() != null) {
-//            return new ArrayList<>(tableController.getTableComponentSettings().getColumns());
-//        }
-//        return new ArrayList<>();
     }
-
-//    private void updateColumns(final List<Column> columns) {
-//        tableController.setPreferredColumns(columns);
-//    }
 
     private void showColumn(final Column column) {
         final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().visible(true).build());
@@ -470,18 +461,10 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private List<Item> getMenuItems(final Column column, final int colIndex, final Element th) {
         final List<Item> menuItems = new ArrayList<>();
 
-//        // Create rename menu.
-//        menuItems.add(createRenameMenu(column));
-//        // Create expression menu.
-//        menuItems.add(createExpressionMenu(column));
         // Create sort menu.
         menuItems.add(createSortMenu(column));
-//        // Create group by menu.
-//        menuItems.add(createGroupByMenu(column));
         // Create format menu.
         menuItems.add(createFormatMenu(column));
-//        // Add filter menu item.
-//        menuItems.add(createFilterMenu(column));
         // Add column filter menu item.
         menuItems.add(createColumnFilterMenu(column));
         // The values filter, as the header's filter icon opens it, for the keyboard
@@ -490,9 +473,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
         menuItems.add(createMoveLastMenu(column));
-
-//        // Create duplicate menu.
-//        menuItems.add(createDuplicateMenu(column));
 
         // Create hide menu.
         menuItems.add(createHideMenu(column));
@@ -505,40 +485,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
         menuItems.add(createConditionalFormattingMenu(column));
 
-//        // Create remove menu.
-//        menuItems.add(createRemoveMenu(column));
-
         return menuItems;
     }
-
-//    private Item createRenameMenu(final Column column) {
-//        return new IconMenuItem.Builder()
-//                .priority(0)
-//                .icon(SvgImage.EDIT)
-//                .text("Rename")
-//                .command(() -> showRename(column))
-//                .build();
-//    }
-
-//    private Item createExpressionMenu(final Column column) {
-//        boolean highlight = false;
-//        if (column.getExpression() != null) {
-//            String expression = column.getExpression();
-//            expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
-//            expression = expression.trim();
-//            if (expression.length() > 0) {
-//                highlight = true;
-//            }
-//        }
-//
-//        return new IconMenuItem.Builder()
-//                .priority(1)
-//                .icon(SvgImage.FIELDS_EXPRESSION)
-//                .text("Expression")
-//                .command(() -> showExpression(column))
-//                .highlight(highlight)
-//                .build();
-//    }
 
     private Item createSortMenu(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
@@ -554,7 +502,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        // An action, so not SortIcon.UNSORTED, which names the state
+        // An action, so it says what it does rather than naming the unsorted state
         menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
@@ -578,108 +526,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .highlight(column.getSort() != null && column.getSort().getDirection() == sortDirection)
                 .build();
     }
-
-//    private Item createGroupByMenu(final Column column) {
-//        final List<Item> menuItems = new ArrayList<>();
-//        final int maxGroup = fixGroups(getColumns());
-//        for (int i = 0; i < maxGroup; i++) {
-//            final int group = i;
-//            final Item item = new IconMenuItem.Builder()
-//                    .priority(i)
-//                    .icon(SvgImage.FIELDS_GROUP)
-//                    .text("Level " + (i + 1))
-//                    .command(() -> setGroup(column, group))
-//                    .highlight(column.getGroup() != null && column.getGroup() == i)
-//                    .build();
-//            menuItems.add(item);
-//        }
-//
-//        // Add the next possible group if the column isn't the only column in the
-//        // next group.
-//        if (addNextGroup(maxGroup, column)) {
-//            final Item item = new IconMenuItem.Builder()
-//                    .priority(maxGroup)
-//                    .icon(SvgImage.FIELDS_GROUP)
-//                    .text("Level " + (maxGroup + 1))
-//                    .command(() -> setGroup(column, maxGroup))
-//                    .build();
-//            menuItems.add(item);
-//        }
-//
-//        final Item item = new IconMenuItem.Builder()
-//                .priority(maxGroup + 1)
-//                .text("Not grouped")
-//                .command(() -> setGroup(column, null))
-//                .build();
-//        menuItems.add(item);
-//
-//        return new IconParentMenuItem.Builder()
-//                .priority(3)
-//                .icon(SvgImage.FIELDS_GROUP)
-//                .text("Group")
-//                .children(menuItems)
-//                .highlight(column.getGroup() != null)
-//                .build();
-//    }
-
-//    private void setGroup(final Column column, final Integer group) {
-//        if (!Objects.equals(column.getGroup(), group)) {
-//            replaceColumn(column, column.copy().group(group).build());
-//            fixGroups(getColumns());
-//            tableController.setDirty(true);
-//            tableController.updateColumns();
-//            tableController.refresh();
-//        }
-//    }
-//
-//    private boolean addNextGroup(final int maxGroup, final Column column) {
-//        // If the column we are dragging has no group then add the next possible
-//        // group.
-//        if (column.getGroup() == null) {
-//            return true;
-//        }
-//
-//        // If the group the dragging column belongs to is not the current max
-//        // group then add the next possible group.
-//        if (column.getGroup() < maxGroup - 1) {
-//            return true;
-//        }
-//
-//        // If there is another column with the same group level as the dragging
-//        // group then add the next possible group.
-//        for (final Column col : getColumns()) {
-//            if (col != column && col.getGroup() != null && col.getGroup() >= column.getGroup()) {
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-//
-//    private int fixGroups(final List<Column> columns) {
-//        // Make a map that groups columns by group depth.
-//        final Map<Integer, List<Column>> map = new HashMap<>();
-//        for (final Column column : columns) {
-//            final Integer group = column.getGroup();
-//            if (group != null) {
-//                map.computeIfAbsent(group, k -> new ArrayList<>()).add(column);
-//            }
-//        }
-//
-//        // Fix group depths and add columns to grouped columns list.
-//        final List<Integer> depths = new ArrayList<>(map.keySet());
-//        Collections.sort(depths);
-//
-//        for (int i = 0; i < depths.size(); i++) {
-//            final Integer depth = depths.get(i);
-//            final List<Column> groupedColumns = map.get(depth);
-//            for (final Column column : groupedColumns) {
-//                replaceColumn(column, column.copy().group(i).build());
-//            }
-//        }
-//
-//        return depths.size();
-//    }
 
     private Item createColumnFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
@@ -734,15 +580,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .command(() -> moveLast(column))
                 .build();
     }
-
-//    private Item createDuplicateMenu(final Column column) {
-//        return new IconMenuItem.Builder()
-//                .priority(8)
-//                .icon(SvgImage.COPY)
-//                .text("Duplicate")
-//                .command(() -> duplicateColumn(column))
-//                .build();
-//    }
 
     private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()

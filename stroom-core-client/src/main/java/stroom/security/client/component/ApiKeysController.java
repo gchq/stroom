@@ -88,15 +88,6 @@ public class ApiKeysController extends ContentTabController
                 this::deleteSelectedKeys);
         deleteButton.setEnabled(false);
 
-//        uiConfigCache.get(uiConfig -> {
-//            if (uiConfig != null) {
-//                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-//                        "API Keys Quick Filter",
-//                        FindApiKeyCriteria.FILTER_FIELD_DEFINITIONS,
-//                        uiConfig.getHelpUrlQuickFilter()));
-//            }
-//        }, this);
-
         own(getSelectionModel().addSelectionHandler(e -> {
             onSelection();
             if (e.getSelectionType().isDoubleSelect()
@@ -144,19 +135,10 @@ public class ApiKeysController extends ContentTabController
     }
 
     private void deleteSelectedKeys() {
-        // This is the one selected using row selection, not the checkbox
-//        final HashedApiKey selectedApiKey = getSelectionModel().getSelected();
 
-        // The ones selected with the checkboxes
-//        final Set<Integer> selectedSet = NullSafe.set(selection.getSet());
-//        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
-//        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
         final List<HashedApiKey> selectedItems = getSelectedItems();
 
         final Runnable onSuccess = () -> {
-////            if (clearSelection) {
-//                getSelectionModel().clear();
-////            }
             getSelectionModel().clear();
             refresh();
         };
@@ -212,7 +194,6 @@ public class ApiKeysController extends ContentTabController
                            "\n\nOnce deleted, anyone using this API Key will no longer by able to authenticate with it "
                            + "and it will not be possible to re-create it.";
         ConfirmEvent.fire(this, msg, ok -> {
-//                GWT.log("id: " + id);
             if (ok) {
                 restFactory
                         .create(API_KEY_RESOURCE)

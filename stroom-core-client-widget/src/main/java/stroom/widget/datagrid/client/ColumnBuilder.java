@@ -54,9 +54,6 @@ public class ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
     private FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater = null;
     private BrowserEventHandler<T_ROW> browserEventHandler = null;
 
-//    public ColumnBuilder() {
-//    }
-
     public ColumnBuilder(final Function<T_ROW, T_CELL_VAL> valueExtractor,
                          final Supplier<T_CELL> cellSupplier) {
         this.valueExtractor = valueExtractor;

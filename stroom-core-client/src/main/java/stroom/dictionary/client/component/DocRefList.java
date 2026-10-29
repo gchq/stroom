@@ -112,11 +112,6 @@ public class DocRefList extends Component {
         return pager.getToolbar();
     }
 
-    /// @param visible Whether the pager's refresh button shows.
-    public void setRefreshVisible(final boolean visible) {
-        pager.getRefreshButton().setVisible(visible);
-    }
-
     /// @param onOpen Given a document to open, when its link is pressed.
     public void setOnOpen(final Consumer<DocRef> onOpen) {
         this.onOpen = onOpen;

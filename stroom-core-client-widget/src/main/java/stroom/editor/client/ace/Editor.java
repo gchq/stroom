@@ -230,13 +230,6 @@ public class Editor extends Composite implements
         }
     }
 
-    public void replaceSelectedText(final String text) {
-        if (started) {
-            editor.replaceSelectedText(text);
-            this.text = editor.getText();
-        }
-    }
-
     public void insertSnippet(final String snippet) {
         if (started) {
             editor.insertSnippet(snippet);
@@ -349,9 +342,6 @@ public class Editor extends Composite implements
                 try {
                     editor.setMode(mode);
 
-
-//                    GWT.log("mode: " + editor.getMode());
-//                    GWT.log("mode: " + editor.getModeShortName());
                 } catch (final RuntimeException e) {
                     throw new RuntimeException(
                             "Unable to set mode '" +
@@ -426,7 +416,6 @@ public class Editor extends Composite implements
 
     private void updateGotoLocation() {
         if (started && gotoLocationDirty) {
-//            GWT.log("Goto " + gotoLocation.getLineNo() + ":" + gotoLocation.getColNo());
             editor.gotoPosition(gotoLocation.getLineNo(), gotoLocation.getColNo());
             gotoLocationDirty = false;
         }
@@ -614,7 +603,7 @@ public class Editor extends Composite implements
         }
     }
 
-    public void markClean() {
+    private void markClean() {
         editor.markClean();
     }
 

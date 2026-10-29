@@ -58,8 +58,7 @@ public class TaskManagerPlugin extends MonitoringPlugin<ServerTasksController> {
             open(taskManagerController -> {
                 taskManagerController.changeNameFilter(
                         event.getNodeName(),
-                        event.getTaskName(),
-                        event.getUserName());
+                        event.getTaskName());
             });
         });
 

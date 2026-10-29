@@ -88,10 +88,6 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
         return doubleSelect;
     }
 
-    public boolean isSingleSelect() {
-        return !doubleSelect;
-    }
-
     @Override
     protected void dispatch(final DataSelectionHandler<I> handler) {
         handler.onSelection(this);

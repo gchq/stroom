@@ -30,12 +30,6 @@ public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
             return null;
         }
 
-//        log("----------------------");
-//        model.getChildMap().forEach((k, v) -> {
-//            log(k.getId() + " -> " + v.stream().map(PipelineElement::getId).collect(Collectors.joining(",")));
-//        });
-//        log("----------------------");
-
         return build(model.getChildMap());
     }
 
@@ -51,12 +45,6 @@ public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
                              final PipelineElement parent,
                              final Map<PipelineElement, List<PipelineElement>> childMap) {
 
-//        log("----------------------");
-//        childMap.forEach((k, v) -> {
-//            log(k.getId() + " -> " + v.stream().map(PipelineElement::getId).collect(Collectors.joining(",")));
-//        });
-//        log("----------------------");
-
         final List<PipelineElement> children = childMap.get(parent);
         if (children != null) {
             for (final PipelineElement child : children) {
@@ -65,9 +53,4 @@ public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
             }
         }
     }
-
-//    private void log(String message) {
-////        LoggerFactory.getLogger(DefaultPipelineTreeBuilder.class).info(message);
-////        GWT.log(message);
-//    }
 }

@@ -27,6 +27,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.job.shared.JobNode;
 import stroom.node.client.component.NodesController;
 
 import com.google.gwt.core.client.GWT;
@@ -188,8 +189,8 @@ public final class NodesScreenStories {
                 .build();
         final NodesController controller = harness.show(injector.getNodesController());
         if (selectedNode != null) {
-            // As NodeMonitoringPlugin does for an OpenNodeEvent with a node name
-            controller.setSelected(selectedNode);
+            // As NodeMonitoringPlugin does for an OpenNodeEvent (the Jobs screen's 'Node' link)
+            controller.setSelected(JobNode.builder().nodeName(selectedNode).build());
         }
         return harness.asWidget();
     }

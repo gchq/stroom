@@ -106,9 +106,10 @@ public final class FloorMapHistogramBuckets {
                 : (int) count;
     }
 
+    // For tests
     /// The index of the bucket `time` falls in, counting from the bucket containing
     /// `start`, or `-1` where it falls outside the range from `start` to `end`.
-    public static int bucketIndex(final long start, final long end, final long time) {
+    static int bucketIndex(final long start, final long end, final long time) {
         if (time < start || time > end) {
             return -1;
         }

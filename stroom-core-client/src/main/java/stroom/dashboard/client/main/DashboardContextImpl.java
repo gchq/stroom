@@ -578,18 +578,6 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         public String getName() {
             return name;
         }
-
-        public List<Param> getParams() {
-            return params;
-        }
-
-        public List<List<Param>> getSelectionList() {
-            return selectionList;
-        }
-
-        public List<ColumnSelectionFilter> getFilterList() {
-            return filterList;
-        }
     }
 
     private static class ColumnSelectionFilter {

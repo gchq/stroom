@@ -215,11 +215,9 @@ public class MarkdownEditController extends Controller implements HasToolbar {
         if (NullSafe.isBlankString(rawMarkdown) && !readOnly) {
             GWT.log("setText, editMode: true");
             setEditMode(true);
-//            editModeButton.setState(true);
         } else {
             GWT.log("setText, editMode: false");
             setEditMode(false);
-//            editModeButton.setState(false);
         }
     }
 
@@ -248,7 +246,6 @@ public class MarkdownEditController extends Controller implements HasToolbar {
             if (!Objects.equals(iFrameHtmlContent, lastRenderedMarkdown)) {
                 lastRenderedMarkdown = iFrameHtmlContent;
                 preview.setSrcDoc(iFrameHtmlContent.asString());
-//                iFrameController.getWidget().getElement().setScrollTop(50);
             }
         }
     }

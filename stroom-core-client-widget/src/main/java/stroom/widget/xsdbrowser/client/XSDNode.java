@@ -121,7 +121,7 @@ public class XSDNode implements Comparable<XSDNode> {
         return ref;
     }
 
-    public String getBase() {
+    private String getBase() {
         return base;
     }
 

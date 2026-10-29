@@ -53,8 +53,6 @@ public class Pager extends AbstractPager {
     @UiField
     RefreshButton refresh;
     @UiField
-    Label lblTitle;
-    @UiField
     Label lblFrom;
     @UiField
     TextBox txtFrom;
@@ -64,10 +62,6 @@ public class Pager extends AbstractPager {
     TextBox txtTo;
     @UiField
     Label lblOf;
-    @UiField
-    Label lblToSeparator;
-    @UiField
-    Label lblOfSeparator;
     private boolean editing;
     // When false, the Last button stays disabled even for an exact row count. Lets a caller show the
     // exact total ("of N") while forbidding a jump to the last page (e.g. a forward-only cursor source
@@ -168,7 +162,7 @@ public class Pager extends AbstractPager {
         txtTo.setFocus(true);
     }
 
-    public void setEditing(final boolean editing) {
+    private void setEditing(final boolean editing) {
         if (this.editing != editing) {
             this.editing = editing;
             if (editing) {
@@ -214,93 +208,6 @@ public class Pager extends AbstractPager {
         } catch (final NumberFormatException e) {
             return 0;
         }
-    }
-
-    @Override
-    public void firstPage() {
-        super.firstPage();
-    }
-
-    @Override
-    public int getPage() {
-        return super.getPage();
-    }
-
-    @Override
-    public void setPage(final int index) {
-        super.setPage(index);
-    }
-
-    @Override
-    public int getPageCount() {
-        return super.getPageCount();
-    }
-
-    @Override
-    public boolean hasNextPage() {
-        return super.hasNextPage();
-    }
-
-    @Override
-    public boolean hasNextPages(final int pages) {
-        return super.hasNextPages(pages);
-    }
-
-    @Override
-    public boolean hasPage(final int index) {
-        return super.hasPage(index);
-    }
-
-    @Override
-    public boolean hasPreviousPage() {
-        return super.hasPreviousPage();
-    }
-
-    @Override
-    public boolean hasPreviousPages(final int pages) {
-        return super.hasPreviousPages(pages);
-    }
-
-    @Override
-    public void lastPage() {
-        super.lastPage();
-    }
-
-    @Override
-    public void lastPageStart() {
-        super.lastPageStart();
-    }
-
-    @Override
-    public void nextPage() {
-        super.nextPage();
-    }
-
-    @Override
-    public void previousPage() {
-        super.previousPage();
-    }
-
-    @Override
-    public void setPageSize(final int pageSize) {
-        super.setPageSize(pageSize);
-    }
-
-    @Override
-    public void setPageStart(final int index) {
-        super.setPageStart(index);
-    }
-
-    /**
-     * Let the page know that the table is loading. Call this method to clear
-     * all data from the table and hide the current range when new data is being
-     * loaded into the table.
-     */
-    public void startLoading() {
-        getDisplay().setRowCount(0, true);
-        lblFrom.setText("?");
-        lblTo.setText("?");
-        lblOf.setText("?");
     }
 
     @Override
@@ -358,10 +265,6 @@ public class Pager extends AbstractPager {
         this.lastPageAllowed = lastPageAllowed;
         final HasRows display = getDisplay();
         last.setEnabled(display != null && display.isRowCountExact() && hasNextPage() && lastPageAllowed);
-    }
-
-    public void setTitle(final String title) {
-        lblTitle.setText(title);
     }
 
     public interface Binder extends UiBinder<Widget, Pager> {

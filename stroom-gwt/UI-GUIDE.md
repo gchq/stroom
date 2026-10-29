@@ -21,6 +21,7 @@ says.
   Data comes in through setters named for what they do (`setRules(rules)`, `setName(name)`), events go out through one callback each (`setOnChange(Runnable)`), and a set of actions is one enum with one callback (`setOnAction(Consumer<RuleAction>)`) and `setAvailableActions(...)`.
   Repetition and conditions are in its Java (`setRules` adds a row per rule; `setVisible`).
   Its handlers are wired in Java, in its constructor (`button.setOnClick(...)`, `box.addKeyDownHandler(...)`), never with `@UiHandler` (checkstyle refuses it, `UiHandlerAnnotation`). Use the widget's callback where it has one and nothing else sets it, otherwise its `addXxxHandler`.
+  Every `@UiField` is used by its Java, and every `ui:field` is bound to one (or named in the template, `{name.…}`); a widget nothing needs to reach has no `ui:field` (`TestTemplateBindings` checks both).
   It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
 
 * **A controller wires it.** `FooController.java`, beside it in the area's `client.component` package, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.

@@ -50,7 +50,6 @@ public class ComponentSettingsDialog extends Component {
     public ComponentSettingsDialog() {
         initWidget(BINDER.createAndBindUi(this));
         tabBar.setTabPanel(layerContainer.getElement());
-        layerContainer.setFade(true);
         tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
         tabBar.addShowMenuHandler(event -> onShowMenu.accept(event));
     }

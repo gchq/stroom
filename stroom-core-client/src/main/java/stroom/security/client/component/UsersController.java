@@ -43,7 +43,6 @@ public class UsersController extends ContentTabController {
     private final Provider<CreateUserController> createUserProvider;
     private final UserAndGroupActions actions;
 
-    //    private final ToolbarButton editButton;
     private final ToolbarButton deleteButton;
 
     /// Made by GIN, with its screen and its parts.
@@ -81,7 +80,6 @@ public class UsersController extends ContentTabController {
         final Toolbar toolbar = userList.getToolbar();
         toolbar.setName("User actions");
         toolbar.button(SvgImage.ADD, "Create User", this::onCreateUserOrGroup);
-//        editButton = toolbar.button(SvgImage.EDIT, "Edit User", this::onEditUserOrGroup);
         deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected User", this::onDelete);
         deleteButton.setEnabled(false);
 
@@ -121,12 +119,9 @@ public class UsersController extends ContentTabController {
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
         if (selected != null) {
-//            editButton.setTitle("Edit " + getDescription(selected));
-//            editButton.setEnabled(true);
             deleteButton.setTitle("Delete " + getDescription(selected));
             deleteButton.setEnabled(true);
         } else {
-//            editButton.setEnabled(false);
             deleteButton.setTitle("Delete Selected User");
             deleteButton.setEnabled(false);
         }

@@ -2,7 +2,7 @@
 <!-- A table's columns, each with a tick box to choose it, with a pager -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <dg:PagerPanel ui:field="pager">
+    <dg:PagerPanel>
         <dg:DataGrid ui:field="dataGrid" tableName="Column Selection"/>
     </dg:PagerPanel>
 </ui:UiBinder>

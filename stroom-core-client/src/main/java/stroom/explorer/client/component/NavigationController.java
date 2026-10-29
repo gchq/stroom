@@ -402,7 +402,6 @@ public class NavigationController extends Controller
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
-//        GWT.log("onRefresh " + event);
         treeController.refresh();
     }
 

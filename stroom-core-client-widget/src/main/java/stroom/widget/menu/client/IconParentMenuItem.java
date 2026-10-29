@@ -80,9 +80,6 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
         }
 
         public IconParentMenuItem build() {
-//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-//                text = ((Preset) enabledIcon).getTitle();
-//            }
             return new IconParentMenuItem(
                     priority,
                     enabledIcon,

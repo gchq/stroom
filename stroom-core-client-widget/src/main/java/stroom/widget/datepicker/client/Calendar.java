@@ -171,12 +171,6 @@ public class Calendar extends Composite implements HasValue<UTCDate> {
         }
     }
 
-    /// Puts the focus on the grid's day with the tab stop: the chosen day, if it is in the month
-    /// shown.
-    public void focusGrid() {
-        grid.focus();
-    }
-
     /// Shows the month the given number of months on (back, if negative).
     ///
     /// @param months The number of months.

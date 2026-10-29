@@ -325,10 +325,6 @@ public class PipelineModel {
                 final PipelineElement linkTo = combinedData.getElements().get(link.getTo());
 
                 parentMap.put(linkTo, linkFrom);
-//                GWT.log("put "
-//                        + NullSafe.get(linkFrom, PipelineElement::getId)
-//                        + " -> "
-//                        + NullSafe.get(linkTo, PipelineElement::getId));
                 childMap.computeIfAbsent(linkFrom, k -> new ArrayList<>()).add(linkTo);
             }
         }
@@ -420,9 +416,6 @@ public class PipelineModel {
     /// @throws PipelineModelException If the pipeline can't be built with it there.
     public void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
             throws PipelineModelException {
-//        debugLinks("LINKS 1", pipelineData.getLinks());
-//        debugLinks("LINKS 1", combinedData.getLinks());
-
         PipelineData pipelineData = pipelineLayer.getPipelineData();
         final String id = existingElement.getId();
 
@@ -437,9 +430,6 @@ public class PipelineModel {
         // Make sure this element isn't shadowed anymore.
         builder.getElements().getRemoveList().remove(existingElement);
 
-//        debugLinks("LINKS 2", pipelineData.getLinks());
-//        debugLinks("LINKS 2", combinedData.getLinks());
-
         // Make sure this link isn't marked as removed.
         final PipelineLink pipelineLink = PipelineDataUtil.createLink(parent.getId(), id);
         builder.getLinks().getRemoveList().remove(pipelineLink);
@@ -452,39 +442,10 @@ public class PipelineModel {
         pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
 
 
-//        debugLinks("LINKS 3", pipelineData.getLinks());
-//        debugLinks("LINKS 3", combinedData.getLinks());
-
         buildCombinedData();
-
-//        debugLinks("LINKS 4", pipelineData.getLinks());
-//        debugLinks("LINKS 4", combinedData.getLinks());
 
         refresh();
     }
-
-//    private void debugLinks(final String title, final Map<String, List<PipelineLink>> links) {
-//        log("-----------");
-//        log(title);
-//
-//        log("--- Add ---");
-//        links.forEach((k, v) -> v.forEach(link -> log(link.getFrom() + " -> " + link.getTo())));
-//        log("-----------");
-//    }
-//
-//    private void debugLinks(final String title, final PipelineLinks links) {
-//        log("-----------");
-//        log(title);
-//        log("--- Add ---");
-//        if (links.getAdd() != null) {
-//            links.getAdd().forEach(link -> log(link.getFrom() + " -> " + link.getTo()));
-//        }
-//        log("--- Remove ---");
-//        if (links.getRemove() != null) {
-//            links.getRemove().forEach(link -> log(link.getFrom() + " -> " + link.getTo()));
-//        }
-//        log("-----------");
-//    }
 
     public void removeElement(final PipelineElement element) throws PipelineModelException {
         final String id = element.getId();

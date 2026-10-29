@@ -7,13 +7,13 @@
     <b:ToolbarRow>
         <b:Toolbar name="Document actions">
             <b:ToolbarButton ui:field="save" svg="SAVE" title="Save"/>
-            <b:ToolbarButton ui:field="saveAs" svg="SAVEAS" title="Save As"/>
+            <b:ToolbarButton svg="SAVEAS" title="Save As"/>
             <b:ToolbarSeparator/>
             <b:ToolbarToggleButton ui:field="filter" svg="FILTER" title="Show Filters"/>
         </b:Toolbar>
         <b:Toolbar name="Paging">
             <b:ToolbarButton ui:field="first" svg="FAST_BACKWARD" title="First"/>
-            <b:ToolbarButton ui:field="last" svg="FAST_FORWARD" title="Last"/>
+            <b:ToolbarButton svg="FAST_FORWARD" title="Last"/>
         </b:Toolbar>
     </b:ToolbarRow>
 </ui:UiBinder>

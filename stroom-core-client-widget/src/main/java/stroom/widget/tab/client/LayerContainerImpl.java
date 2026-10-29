@@ -38,8 +38,6 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
 
     private final FlowPanel panel;
     private final Set<Layer> layers = new HashSet<>();
-    private boolean fade;
-    //    private TransitionTimer transitionTimer;
     private Layer selectedLayer;
 
     public LayerContainerImpl() {
@@ -58,11 +56,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
                 onResize();
             }
 
-//            if (fade) {
-//                fadeTransition();
-//            } else {
             instantTransition();
-//            }
         }
     }
 
@@ -70,15 +64,9 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
         final Iterator<Layer> iter = layers.iterator();
         while (iter.hasNext()) {
             final Layer layer = iter.next();
-//            final double opacity;
-//            if (layer == selectedLayer) {
-//                opacity = 1;
-//            } else {
-//                opacity = 0;
-//            }
 
             // Change the opacity on the layer.
-            layer.setLayerVisible(fade, layer == selectedLayer);
+            layer.setLayerVisible(false, layer == selectedLayer);
 
             if (layer != selectedLayer) {
                 if (layer.removeLayer()) {
@@ -87,23 +75,10 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
             }
         }
     }
-//
-//    private void fadeTransition() {
-//        if (transitionTimer == null) {
-//            transitionTimer = new TransitionTimer(layers, 300);
-//        }
-//        transitionTimer.setSelectedContent(selectedLayer);
-//        transitionTimer.update();
-//    }
 
     @Override
     public void clear() {
         show(null);
-    }
-
-    @Override
-    public void setFade(final boolean fade) {
-//        this.fade = fade;
     }
 
     @Override
@@ -120,65 +95,6 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
         widget.addStyleName("layer-container__layer");
         panel.add(widget);
     }
-
-//    private static class TransitionTimer extends Timer {
-//
-//        private static final int FREQUENCY = 40;
-//
-//        private final Set<Layer> layers;
-//        private final double duration;
-//
-//        private Layer selectedLayer;
-//        private long start;
-//
-//        public TransitionTimer(final Set<Layer> layers, final double duration) {
-//            this.layers = layers;
-//            this.duration = duration;
-//        }
-//
-//        @Override
-//        public void run() {
-//            final long elapsed = System.currentTimeMillis() - start;
-//            final double percent = Math.max(0, Math.min(1, elapsed / duration));
-//
-//            final Iterator<Layer> iter = layers.iterator();
-//            while (iter.hasNext()) {
-//                final Layer layer = iter.next();
-//                if (layer != null) {
-//                    double opacity = layer.getOpacity();
-//
-//                    if (layer == selectedLayer) {
-//                        opacity = percent;
-//                    } else {
-//                        opacity = 1 - percent;
-//                    }
-//
-//                    // Change the opacity on the layer.
-//                    layer.setOpacity(opacity);
-//
-//                    if (opacity == 0) {
-//                        if (layer.removeLayer()) {
-//                            iter.remove();
-//                        }
-//                    }
-//                }
-//            }
-//
-//            if (percent == 1) {
-//                this.cancel();
-//            }
-//        }
-//
-//        public void update() {
-//            cancel();
-//            start = System.currentTimeMillis();
-//            scheduleRepeating(FREQUENCY);
-//        }
-//
-//        public void setSelectedContent(final Layer selectedLayer) {
-//            this.selectedLayer = selectedLayer;
-//        }
-//    }
 
 
     // --------------------------------------------------------------------------------

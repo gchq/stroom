@@ -26,7 +26,6 @@ public final class ScrollbarMetrics {
     private static final SimplePanel inner = new SimplePanel();
     private static final SimplePanel outer = new SimplePanel();
     private static int horizontalScrollBarWidth = -1;
-    private static int verticalScrollBarWidth = -1;
 
     private ScrollbarMetrics() {
         // Utility class.
@@ -39,13 +38,6 @@ public final class ScrollbarMetrics {
         return horizontalScrollBarWidth;
     }
 
-    public static int getVerticalScrollBarWidth() {
-        if (verticalScrollBarWidth == -1) {
-            calc();
-        }
-        return verticalScrollBarWidth;
-    }
-
     private static void calc() {
         inner.setStyleName("scrollbar-metrics__content");
         outer.setWidget(inner);
@@ -53,7 +45,6 @@ public final class ScrollbarMetrics {
         RootPanel.get().add(outer);
 
         horizontalScrollBarWidth = 100 - outer.getElement().getClientHeight();
-        verticalScrollBarWidth = 100 - outer.getElement().getClientWidth();
 
         RootPanel.get().remove(outer);
     }

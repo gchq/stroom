@@ -50,15 +50,11 @@ public class IndicatorLines {
                 if (storedError.getLocation() != null && storedError.getLocation().getLineNo() > 0) {
                     map.computeIfAbsent(storedError.getLocation().getLineNo(), k -> new Indicator())
                             .add(storedError.getSeverity(), storedError);
-//                    GWT.log("map(25) after add:\n>> " + map.get(25));
                 } else {
                     locationAgnosticIndicator.add(storedError.getSeverity(), storedError);
-//                    GWT.log("locationAgnosticIndicator after add:\n>> " + locationAgnosticIndicator);
                 }
             }
         }
-//        GWT.log("map(25) at end of ctor2:\n>> " + map.get(25));
-//        GWT.log("locationAgnosticIndicator at end of ctor2:\n>> " + locationAgnosticIndicator);
     }
 
     private IndicatorLines(final Indicators allIndicators,
@@ -152,10 +148,6 @@ public class IndicatorLines {
 
     public Indicator getIndicator(final int lineNo) {
         return map.get(lineNo);
-    }
-
-    public Indicator getLocationAgnosticIndicator() {
-        return locationAgnosticIndicator;
     }
 
     @Override

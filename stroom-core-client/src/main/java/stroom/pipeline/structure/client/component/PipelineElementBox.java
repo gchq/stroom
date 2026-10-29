@@ -80,7 +80,6 @@ public class PipelineElementBox extends Box<PipelineElement> {
                               final PipelineElement pipelineElement,
                               final SvgImage icon,
                               final String iconName) {
-//        GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineModel = pipelineModel;
         this.pipelineElement = pipelineElement;
         this.typeName = iconName;

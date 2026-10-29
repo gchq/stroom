@@ -141,11 +141,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         layout();
     }
 
-    /// @return Whether the panes are stacked one above another, rather than side by side.
-    public boolean isVertical() {
-        return vertical;
-    }
-
     /// @param thin Whether the splitters are thin lines, rather than gaps between the panes.
     public void setThin(final boolean thin) {
         setStyleName(THIN, thin);
@@ -244,12 +239,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         layout();
     }
 
-    /// @param widget The pane's widget.
-    /// @return Whether the pane is hidden.
-    public boolean isPaneHidden(final Widget widget) {
-        return panes.get(requireIndexOf(widget)).hidden;
-    }
-
     /// Sets a pane's size, as [#setSizes] does for all of them.
     ///
     /// @param widget The pane's widget.
@@ -279,13 +268,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     public void restore() {
         maximised = -1;
         layout();
-    }
-
-    /// @return The widget of the maximised pane, or null if no pane is maximised.
-    public Widget getMaximised() {
-        return maximised >= 0
-                ? panes.get(maximised).widget
-                : null;
     }
 
     /// Does nothing for the panes' widgets, which are told when their own panes are resized

@@ -18,7 +18,7 @@
                                          opensMenu="true" addStyleNames="tab-layout__settings-button"/>
                     </b:Toolbar>
                 </g:FlowPanel>
-                <tab:LayerContainerImpl ui:field="layerContainer" styleName="tab-layout__content" fade="true"/>
+                <tab:LayerContainerImpl ui:field="layerContainer" styleName="tab-layout__content"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FlowPanel>

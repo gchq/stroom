@@ -253,11 +253,6 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
                 builder.build(),
                 dataViewType,
                 displayMode);
-//        if (isPreview) {
-//            ShowDataEvent.fire(this, sourceLocation);
-//        } else {
-//            ShowSourceEvent.fire(this, sourceLocation, displayMode);
-//        }
     }
 
     private void openStepping(final String href) {

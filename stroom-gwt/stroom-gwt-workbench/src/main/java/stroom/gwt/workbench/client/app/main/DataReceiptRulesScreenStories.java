@@ -186,7 +186,8 @@ public final class DataReceiptRulesScreenStories {
                     play.findByText("System");
                     // The field columns are sortable, sorted by name ascending to start with.
                     // GWT has no aria-sort; the sorted header shows a sort icon
-                    final Query nameHeader = play.getByText("Name", "th *, [data-hcol] *").closest("th, [data-hcol]");
+                    final Query nameHeader = play.getByText("Name", StroomDom.GRID_HEADER_TEXT)
+                            .closest(StroomDom.GRID_HEADER_CELL);
                     final Query grid = nameHeader.closest(".data-grid");
                     play.expect(play.within(nameHeader).querySelector(".column-header__sort")).not().toBeNull();
                     play.expect("the field order", () -> fieldOrder(grid.element().get()))

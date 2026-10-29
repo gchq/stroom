@@ -39,18 +39,15 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     private final SafeHtml content;
 
     private ShowHelpEvent(final Element element,
-                          final PopupPosition popupPosition,
                           final SafeHtml content) {
-        this.popupPosition = Objects.requireNonNullElseGet(popupPosition, () -> {
-            final Rect relativeRect = new Rect(element);
-            return new PopupPosition(relativeRect, PopupLocation.RIGHT);
-        });
+        // Beside the element
+        this.popupPosition = new PopupPosition(new Rect(element), PopupLocation.RIGHT);
         this.element = element;
         this.content = Objects.requireNonNullElse(content, SafeHtmlUtils.EMPTY_SAFE_HTML);
     }
 
     private ShowHelpEvent(final Builder builder) {
-        this(builder.element, builder.popupPosition, builder.content);
+        this(builder.element, builder.content);
     }
 
     public static Type<Handler> getType() {
@@ -88,10 +85,6 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
         handler.onShow(this);
     }
 
-//    public PopupPosition getPopupPosition() {
-//        return popupPosition;
-//    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -107,17 +100,11 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
 
     public static final class Builder {
 
-        private PopupPosition popupPosition;
         private Element element;
         private SafeHtml content;
         private ShowHelpEvent.Handler showHandler;
 
         private Builder() {
-        }
-
-        public Builder withPopupPosition(final PopupPosition val) {
-            popupPosition = val;
-            return this;
         }
 
         public Builder withContent(final SafeHtml content) {

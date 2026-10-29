@@ -43,7 +43,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.component.client.ControllerNode;
 
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -74,29 +73,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             documentPluginEventManager.registerPlugin(type, this);
         }
     }
-
-//
-//    protected void registerAsPluginForType(final String type) {
-//        this.documentPluginEventManager.registerPlugin(type, this);
-//    }
-//
-//    /**
-//     * 1. This method will create a new document and show it in the content pane.
-//     */
-//    void createDocument(final Controller<?, ?> popup,
-//    final DocRef folder,
-//    final String name,
-//    final PermissionInheritance permissionInheritance) {
-//        create(getType(), name, folder, permissionInheritance).onSuccess(docRef -> {
-//            // Hide the create document controller.
-//            HidePopupEvent.fire(DocumentPlugin.this, popup);
-//
-//            highlight(docRef);
-//
-//            // Open the item in the content pane.
-//            open(docRef, true);
-//        });
-//    }
 
     /**
      * 4. This method will open a document and show it in the content pane.
@@ -169,7 +145,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 }
 
                 if (selectedLinkTab != null) {
-//                    GWT.log("existing - " + existingTab.getClass().getName());
                     if (existingTab instanceof final HasCommonTabs hasCommonTabs) {
                         hasCommonTabs.selectCommonTab(selectedLinkTab);
                     }
@@ -488,18 +463,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
-
-//    private void deleteDocument(final DocRef document, final DocumentTabData tabData) {
-//        delete(document).onSuccess(e -> {
-//            if (tabData != null) {
-//                // Cleanup reference to this tab data.
-//                removeTabData(tabData);
-//                contentManager.forceClose(tabData);
-//            }
-//            // Refresh the explorer tree so the document is marked as deleted.
-//            RefreshExplorerTreeEvent.fire(DocumentPlugin.this);
-//        });
-//    }
 
     private void removeTabData(final DocumentTabData tabData) {
         documentTabManager.remove(tabData.getDocRef(), tabData);

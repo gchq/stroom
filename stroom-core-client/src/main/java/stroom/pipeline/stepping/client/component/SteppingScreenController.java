@@ -271,8 +271,6 @@ public class SteppingScreenController extends Controller {
                 }
             }
         }));
-
-//        steppingMetaList.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
     private void setClassification(final String classification) {
@@ -350,10 +348,6 @@ public class SteppingScreenController extends Controller {
         });
     }
 
-    public ResultPage<MetaRow> getMetaList() {
-        return steppingMetaList.getResultPage();
-    }
-
     private FindMetaCriteria getCriteria() {
         return steppingMetaList.getCriteria();
     }
@@ -366,10 +360,6 @@ public class SteppingScreenController extends Controller {
         pipelineElementTypesFactory.get(taskMonitor(), elementTypes -> {
             final List<PipelineElement> elements = new ArrayList<>();
             getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
-//            GWT.log("elements: \n" + NullSafe.stream(elements)
-//                    .map(PipelineElement::toString)
-//                    .map(str -> "  " + str)
-//                    .collect(Collectors.joining("\n")));
 
             // Make a note of the selected element as it is lost on refresh
             final PipelineElement selectedObject = pipelinePathBar.getSelectionModel()
@@ -551,9 +541,6 @@ public class SteppingScreenController extends Controller {
 
                     // Update IO data.
                     refreshEditorIO(steppingElement, elementData);
-
-                    // Update with any errors not specific to an editor pane
-//                            refreshGenericErrors(steppingElement, elementId);
 
                     updateToggleConsoleBtnVisibility(indicators, elementId);
                 } else {

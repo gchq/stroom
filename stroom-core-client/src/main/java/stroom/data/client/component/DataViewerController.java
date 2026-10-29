@@ -308,7 +308,6 @@ public class DataViewerController
                     refreshProgressBar(false);
                     refreshTextControllerContent();
                 } else {
-//                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
                     dataView.setProgress(sourceProgressBar);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
@@ -498,17 +497,6 @@ public class DataViewerController
     }
 
     public void fetchData(final Meta meta) {
-//        currentSourceLocation = SourceLocation.builder(meta.getId())
-//                .build();
-//        currentStreamType = meta.getTypeName();
-//        markerList.resetExpandedSeverities();
-//
-////        GWT.log("ID " + getCurrentMetaId()
-////                + " streamType " + currentStreamType
-////                + " part " + getCurrentPartNo()
-////                + " seg " + getCurrentSegmentNo());
-//
-//        update(true, meta.getTypeName());
 
         fetchData(meta, SourceLocation.builder(meta.getId()).build(), true);
     }
@@ -607,7 +595,6 @@ public class DataViewerController
                                     currentSourceLocation.getMetaId(),
                                     currentSourceLocation.getPartIndex()))
                             .onSuccess(availableChildStreamTypes -> {
-//                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
@@ -665,8 +652,6 @@ public class DataViewerController
 
     private void setEffectiveChildStreamType(final String streamTypeName,
                                              final Set<String> availableChildStreamTypes) {
-//        GWT.log(currentStreamType + " - " + currentChildDataType + " - " + availableChildStreamTypes);
-
         if (effectiveChildStreamType != null
             && availableChildStreamTypes.contains(effectiveChildStreamType)) {
             if (!Objects.equals(currentSourceLocation.getChildType(), effectiveChildStreamType)) {
@@ -705,7 +690,6 @@ public class DataViewerController
                 dataRange = DataRange.fromCharOffset(0,
                         sourceConfig.getMaxCharactersInPreviewFetch());
             }
-//            GWT.log("Using data range " + dataRange.toString());
 
             // TODO @AT Do we need to pass the highlight?
             final SourceLocation.Builder builder = SourceLocation.builder(currentSourceLocation.getMetaId())
@@ -747,10 +731,6 @@ public class DataViewerController
 
             final boolean isSame = Objects.equals(getCurrentMetaId(), lastId)
                                    && Objects.equals(getCurrentPartIndex(), lastPartNo);
-//            GWT.log(lastId + ":" + lastPartNo
-//                    + " => "
-//                    + getCurrentMetaId() + ":" + getCurrentPartIndex()
-//                    + " = " + isSame);
             return isSame;
         } else {
             return false;
@@ -842,21 +822,6 @@ public class DataViewerController
                         PART_PAGER_UNIT);
             }
         }
-//            GWT.log("Segment Pager Offset: " + dataPagerOffset
-//                    + " Length: " + dataPagerLength
-//                    + " Total: " + dataPagerCount
-//                    + " Exact: " + (dataPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult
-//                    ? ((FetchDataResult) result).getDataType()
-//                    : "-"));
-//
-//            GWT.log("Data Pager Offset: " + commonPagerOffset
-//                    + " Length: " + commonPagerLength
-//                    + " Total: " + commonPagerCount
-//                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult
-//                    ? ((FetchDataResult) result).getDataType()
-//                    : "-"));
     }
 
     long getCurrentErrorsPageOffset() {
@@ -869,10 +834,6 @@ public class DataViewerController
 
     private void setPageResponse(final AbstractFetchDataResult result,
                                  final boolean fireEvents) {
-//        GWT.log("Received"
-//                + " id " + result.getSourceLocation().getId()
-//                + " streamType " + result.getStreamTypeName()
-//                + " childStreamType " + result.getSourceLocation().getChildType());
         ignoreActions = true;
         this.lastResult = result;
 
@@ -933,11 +894,6 @@ public class DataViewerController
 
     private void updateAvailableAndSelectedTabs(final String streamType,
                                                 final Set<String> availableChildStreamTypes) {
-
-//        GWT.log("streamType " + currentStreamType
-//                + " childStreamType " + currentSourceLocation.getChildType()
-//                + " availableChildStreamTypes " + availableChildStreamTypes
-//                + " effectiveChildStreamType " + effectiveChildStreamType);
 
         if (availableChildStreamTypes == null) {
             // Hide all links
@@ -1386,14 +1342,6 @@ public class DataViewerController
             this.itemRangeSupplier = () -> new OffsetRange(itemOffsetSupplier.get(), 1L);
             this.name = name;
             this.maxItemsPerPage = 1;
-        }
-
-        public void setItemNoFromConsumer(final Consumer<Long> itemNoFromConsumer) {
-            this.itemNoFromConsumer = itemNoFromConsumer;
-        }
-
-        public void setItemRangeSupplier(final Supplier<OffsetRange> itemRangeSupplier) {
-            this.itemRangeSupplier = itemRangeSupplier;
         }
 
         @Override

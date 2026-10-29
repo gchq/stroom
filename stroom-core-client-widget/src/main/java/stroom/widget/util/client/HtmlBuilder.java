@@ -298,10 +298,6 @@ public class HtmlBuilder {
         return this;
     }
 
-    public HtmlBuilder appendEscapedLines(final String text) {
-        return appendTrustedString(SafeHtmlUtils.htmlEscape(text).replaceAll("\n", "<br/>"));
-    }
-
     public SafeHtml toSafeHtml() {
         return sb.toSafeHtml();
     }

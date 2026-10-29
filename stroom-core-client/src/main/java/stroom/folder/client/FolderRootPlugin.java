@@ -27,7 +27,6 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
@@ -60,42 +59,6 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
         this.securityContext = securityContext;
     }
 
-//    @Override
-//    protected void onBind() {
-//        super.onBind();
-//
-//        // 4. Handle explorer events and open items as required.
-//        registerHandler(
-//                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
-//                    final SelectionType selectionType = event.getSelectionType();
-//                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
-//                        final ExplorerNode selected = event.getSelectionModel().getSelected();
-//                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
-//                            if (controller == null && selectionType.isDoubleSelect()) {
-//                                // If the controller is null then we haven't got
-//                                // this tab open.
-//                                // Create a new controller.
-//                                controller = createEditor();
-//                            }
-//
-//                            if (controller != null) {
-//                                final CloseContentEvent.Handler closeHandler = evt -> {
-//                                    // Give the content manager the ok to
-//                                    // close the tab.
-//                                    evt.getCallback().closeTab(true);
-//
-//                                    // After we close the tab set the
-//                                    // controller back to null so
-//                                    // that we can open it again.
-//                                    controller = null;
-//                                };
-//                                contentManager.open(closeHandler, controller, controller);
-//                            }
-//                        }
-//                    }
-//                }));
-//    }
-
     @Override
     protected DocumentEditorHost<DocRef> createEditor() {
         return FolderTabs.canOpen(securityContext)
@@ -108,8 +71,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
-        // Root folder is just a constant so no load needed
-//        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
+        // The root folder is a constant, so there is nothing to load
     }
 
     @Override

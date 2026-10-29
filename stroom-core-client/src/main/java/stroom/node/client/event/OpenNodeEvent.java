@@ -31,23 +31,10 @@ public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
     private final String nodeName;
     private final JobNode jobNode;
 
-    private OpenNodeEvent(final String nodeName) {
-        Objects.requireNonNull(nodeName);
-        this.nodeName = nodeName;
-        this.jobNode = null;
-    }
-
     private OpenNodeEvent(final JobNode jobNode) {
         Objects.requireNonNull(jobNode);
         this.nodeName = jobNode.getNodeName();
         this.jobNode = jobNode;
-    }
-
-    /**
-     * Open the named node on the nodes screen
-     */
-    public static void fire(final HasHandlers handlers, final String nodeName) {
-        handlers.fireEvent(new OpenNodeEvent(nodeName));
     }
 
     /**

@@ -9,7 +9,8 @@ the workbench in all five dimensions, a second agent per slice tried to refute e
 evidence and its verifier's note are in [ui-audit/findings.md](ui-audit/findings.md). Nothing was
 changed by the audit itself; the waves below were approved on 29 October 2026 (Decisions).*
 
-**Progress.** Wave 1 done 29 October 2026 (order wave 35, `component-migration/wave-35.md`).
+**Progress.** Wave 1 done 29 October 2026 (order wave 35, `component-migration/wave-35.md`); wave 2
+done 29 October 2026 (order wave 36, `component-migration/wave-36.md`).
 
 ## Summary
 

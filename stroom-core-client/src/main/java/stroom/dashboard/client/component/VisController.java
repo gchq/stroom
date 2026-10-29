@@ -211,13 +211,11 @@ public class VisController
     @Override
     public void addLayer(final LayerContainer layerContainer) {
         layerContainer.add(asWidget());
-        // visFrame.setVisible(true);
     }
 
     @Override
     public boolean removeLayer() {
         asWidget().removeFromParent();
-        // visFrame.setVisible(false);
         return false;
     }
 
@@ -392,10 +390,6 @@ public class VisController
 
                     currentSettings = getJSONSettings();
                     currentData = getJSONData(visResult);
-//                    final List<String> errors = visResult.getErrors();
-//                    if (currentError == null && errors != null && !errors.isEmpty()) {
-//                        currentError = String.join("\n", errors);
-//                    }
                 }
 
                 // Put a new function in the cache if there isn't one already.
@@ -746,7 +740,6 @@ public class VisController
                 .visualisation(visComponentSettings.getVisualisation())
                 .json(visComponentSettings.getJson())
                 .tableSettings(currentLinkedTableSettings)
-//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(fetch)
                 .build();
     }
@@ -762,7 +755,6 @@ public class VisController
                 .visualisation(visComponentSettings.getVisualisation())
                 .json(visComponentSettings.getJson())
                 .tableSettings(currentLinkedTableSettings)
-//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(Fetch.ALL)
                 .build();
     }
@@ -781,16 +773,11 @@ public class VisController
             for (int i = 0; i < tabs.size(); i++) {
                 final JSONObject tab = JSONUtil.getObject(tabs.get(i));
                 if (tab != null) {
-                    // final String name = JSONUtil.getString(tab.get("name"));
                     final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
                     if (controls != null) {
                         for (int j = 0; j < controls.size(); j++) {
                             final JSONObject control = JSONUtil.getObject(controls.get(j));
                             final String id = JSONUtil.getString(control.get("id"));
-                            // final String type =
-                            // JSONUtil.getString(control.get("type"));
-                            // final String label =
-                            // JSONUtil.getString(control.get("label"));
 
                             final JSONValue val = dynamicSettings.get(id);
                             if (val != null) {

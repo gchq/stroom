@@ -17,6 +17,9 @@
 
 package stroom.gwt.workbench.client.app.screen;
 
+import stroom.gwt.workbench.framework.client.play.EventInit;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 
 import java.util.Objects;
@@ -34,13 +37,13 @@ public final class StroomDom {
     /// The data rows of a `DataGrid` (`data-row`). A cell's row is
     /// `play.getByText(x).closest(GRID_ROW)`.
     public static final String GRID_ROW = ".data-grid__row[data-row]";
-    /// A column's header cell in either grid: a `MyDataGrid`'s `th` or a `DataGrid`'s
-    /// `[data-hcol]`. A header's cell is `play.getByText(x).closest(GRID_HEADER_CELL)`.
-    public static final String GRID_HEADER_CELL = "th, [data-hcol]";
-    /// What holds a header's text in either grid, for `getByText(name, GRID_HEADER_TEXT)`.
-    public static final String GRID_HEADER_TEXT = "th, th *, [data-hcol], [data-hcol] *";
-    /// What holds a cell's text in either grid, for `getByText(text, GRID_CELL_TEXT)`.
-    public static final String GRID_CELL_TEXT = "td *, [data-col] *";
+    /// A `DataGrid` column's header cell. A header's cell is
+    /// `play.getByText(x).closest(GRID_HEADER_CELL)`.
+    public static final String GRID_HEADER_CELL = "[data-hcol]";
+    /// What holds a header's text, for `getByText(name, GRID_HEADER_TEXT)`.
+    public static final String GRID_HEADER_TEXT = "[data-hcol], [data-hcol] *";
+    /// What holds a cell's text, for `getByText(text, GRID_CELL_TEXT)`.
+    public static final String GRID_CELL_TEXT = "[data-col] *";
     /// The class of a selected `DataGrid` row.
     public static final String SELECTED_ROW = "data-grid__row--selected";
     /// The class of the header of a grid column that can be sorted.
@@ -75,6 +78,20 @@ public final class StroomDom {
     public static TextMatch button(final String text) {
         final String quoted = quote(Objects.requireNonNull(text));
         return TextMatch.regex("^" + quoted + "$", "");
+    }
+
+    /// Clicks a part of a `DataGrid` column's header (e.g. its label or value filter icon) where it
+    /// is, without moving the mouse in from the page's body as user-event's click does: pointer
+    /// events, then mouse events, then the click, as a browser sends them.
+    ///
+    /// @param play   The play.
+    /// @param target The part of the header to click.
+    public static void clickHeader(final Play play, final Query target) {
+        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
+        play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
+        play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }
 
     private static String quote(final String text) {

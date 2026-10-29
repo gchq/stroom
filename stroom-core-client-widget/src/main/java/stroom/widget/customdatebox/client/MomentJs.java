@@ -42,21 +42,6 @@ public final class MomentJs {
         return -1;
     }-*/;
 
-    /**
-     * moment(date, format) returns the date/time in local time. If the date string has no*
-     * timezone information it is assumed to be local time.
-     * See https://momentjs.com/docs/#/parsing/utc/
-     */
-    public static native double nativeFromCustomFormatString(final String date,
-                                                             final String format)/*-{
-        if ($wnd.moment(date, format).isValid()) {
-           var moment = $wnd.moment(date, format);
-           var date = moment.toDate();
-           return date.getTime();
-        }
-        return -1;
-    }-*/;
-
     public static native String nativeToDateString(final double ms,
                                                    final String use,
                                                    final String dateTimePattern,

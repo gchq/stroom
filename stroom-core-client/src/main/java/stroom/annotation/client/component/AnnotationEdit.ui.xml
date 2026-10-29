@@ -41,7 +41,7 @@
                                 screenReaderText="Saved to the history when you select Comment.">
                     <g:FlowPanel styleName="annotation-edit__comment-container">
                         <form:TextArea ui:field="comment" addStyleNames="annotation-edit__comment allow-focus"/>
-                        <g:FlowPanel ui:field="buttons" styleName="annotation-edit__buttons">
+                        <g:FlowPanel styleName="annotation-edit__buttons">
                             <b:Button ui:field="commentButton" addStyleNames="allow-focus annotation-edit__button"
                                       text="Choose Comment"/>
                             <b:Button ui:field="create" icon="ADD"

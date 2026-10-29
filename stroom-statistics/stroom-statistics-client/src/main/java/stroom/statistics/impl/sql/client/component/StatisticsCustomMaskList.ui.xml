@@ -4,7 +4,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <dg:PagerPanel ui:field="pager" toolbarName="Roll-up actions">
+    <dg:PagerPanel toolbarName="Roll-up actions">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Roll-up Permutation"/>
         <b:ToolbarButton ui:field="autoGenerateButton" svg="GENERATE" title="Auto-generate Roll-up Permutations"/>
         <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Roll-up Permutation"

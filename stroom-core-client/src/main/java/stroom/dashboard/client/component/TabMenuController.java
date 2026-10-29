@@ -96,18 +96,8 @@ public class TabMenuController extends Controller {
             if (Objects.equals(currentTabConfig, tabConfig)) {
                 HideMenuEvent.builder().fire(this);
 
-//            } else if (!dashboard.isDesignMode()) {
-//                showSettings(tabConfig);
-
             } else {
-//                if (currentTabConfig != null) {
-//                    HideMenuEvent.builder().fire(this);
-//                }
-//
                 currentTabConfig = tabConfig;
-//                new Timer() {
-//                    @Override
-//                    public void run() {
                 Rect relativeRect = new Rect(target);
                 relativeRect = relativeRect.grow(3);
                 final PopupPosition popupPosition = new PopupPosition(
@@ -125,8 +115,6 @@ public class TabMenuController extends Controller {
                         .popupPosition(popupPosition)
                         .onHide(e -> currentTabConfig = null)
                         .fire(this);
-//                    }
-//                }.schedule(0);
             }
         }
     }

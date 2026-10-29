@@ -104,7 +104,6 @@ public class Hyperlink {
         if (value.length() <= pos + 2 || value.charAt(pos) != startChar) {
             // Not valid
             return null;
-//            throwException(value, pos, startChar, endChar);
         }
 
         final StringBuilder sb = new StringBuilder();
@@ -113,15 +112,11 @@ public class Hyperlink {
             if (c == endChar) {
                 return sb.toString();
             } else if (c == '[' || c == ']' || c == '(' || c == ')') {
-                // Unexpected char
-//                throwException(value, pos, startChar, endChar);
                 return null;
             } else {
                 sb.append(c);
             }
         }
-        // If we get here it wasn't a valid token
-//        throwException(value, pos, startChar, endChar);
         return null;
     }
 

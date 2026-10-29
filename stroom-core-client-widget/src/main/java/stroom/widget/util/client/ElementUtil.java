@@ -212,10 +212,6 @@ public class ElementUtil {
         return getWindowScrollY() + getBoundingClientRectTop(el);
     }
 
-    public static double getClientBottom(final Element el) {
-        return getWindowScrollY() + getBoundingClientRectBottom(el);
-    }
-
     public static native double getBoundingClientRectLeft(Element el) /*-{
         return el.getBoundingClientRect().left || 0;
     }-*/;

@@ -139,7 +139,7 @@ public class RefreshButton
 
     /// Shows whether what the button refreshes is refreshing, from [#setRefreshing(boolean)] and the
     /// tasks started by its task monitors.
-    public void updateRefreshState() {
+    private void updateRefreshState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
         }

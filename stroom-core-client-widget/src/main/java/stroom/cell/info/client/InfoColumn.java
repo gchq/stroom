@@ -51,7 +51,7 @@ public abstract class InfoColumn<T> extends Column<T, CellIcon> {
         super.onBrowserEvent(context, elem, row, event);
         Element target = event.getEventTarget().cast();
 
-        // Find the cell (MyDataGrid's td, DataGrid's [data-col]), or the element in it
+        // Find the cell (DataGrid's [data-col]), or the element in it
         while (target.getParentElement() != null
                && !isCell(target)
                && !isCell(target.getParentElement())) {
@@ -64,6 +64,6 @@ public abstract class InfoColumn<T> extends Column<T, CellIcon> {
     }
 
     private static boolean isCell(final Element element) {
-        return element.getTagName().equalsIgnoreCase("td") || element.hasAttribute("data-col");
+        return element.hasAttribute("data-col");
     }
 }

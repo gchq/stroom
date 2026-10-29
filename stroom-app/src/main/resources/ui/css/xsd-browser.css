@@ -183,10 +183,6 @@
 	margin-bottom: 20px;
 }
 
-.xsd-browser__node-type-box {
-	margin-bottom: 40px;
-}
-
 .xsd-browser__icon {
 	margin-right: 5px;
 }
@@ -261,18 +257,6 @@
   height: 20px;
 }
 
-.xsd-browser__browser-title {
-  background-image: url("../images/xsdbrowser/xsdBrowser-Title.png");
-  width: 32px;
-  height: 500px;
-}
-
-.xsd-browser__browser-title-selected {
-  background-image: url("../images/xsdbrowser/xsdBrowser-Title-selected.png");
-  width: 32px;
-  height: 500px;
-}
-
 .xsd-browser__node-choice {
   background-image: url("../images/xsdbrowser/xsdChoice.png");
   width: 15px;
@@ -309,20 +293,8 @@
   height: 20px;
 }
 
-.xsd-browser__title-attributes {
-  background-image: url("../images/xsdbrowser/xsdTitleAttributes.png");
-  width: var(--icon-width);
-  height: var(--icon-height);
-}
-
 .xsd-browser__title-complex-type {
   background-image: url("../images/xsdbrowser/xsdTitleComplexType.png");
-  width: var(--icon-width);
-  height: var(--icon-height);
-}
-
-.xsd-browser__title-directives {
-  background-image: url("../images/xsdbrowser/xsdTitleDirectives.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
@@ -335,12 +307,6 @@
 
 .xsd-browser__title-elements {
   background-image: url("../images/xsdbrowser/xsdTitleElements.png");
-  width: var(--icon-width);
-  height: var(--icon-height);
-}
-
-.xsd-browser__title-groups {
-  background-image: url("../images/xsdbrowser/xsdTitleGroups.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
@@ -363,12 +329,6 @@
   height: var(--icon-height);
 }
 
-.xsd-browser__tree-01 {
-  background-image: url("../images/xsdbrowser/xsdTree01.png");
-  width: 15px;
-  height: 20px;
-}
-
 .xsd-browser__tree-02 {
   background-image: url("../images/xsdbrowser/xsdTree02.png");
   width: 15px;
@@ -377,12 +337,6 @@
 
 .xsd-browser__tree-03 {
   background-image: url("../images/xsdbrowser/xsdTree03.png");
-  width: 15px;
-  height: 20px;
-}
-
-.xsd-browser__tree-04 {
-  background-image: url("../images/xsdbrowser/xsdTree04.png");
   width: 15px;
   height: 20px;
 }
@@ -399,32 +353,8 @@
   height: 20px;
 }
 
-.xsd-browser__tree-07 {
-  background-image: url("../images/xsdbrowser/xsdTree07.png");
-  width: 15px;
-  height: 20px;
-}
-
-.xsd-browser__tree-08 {
-  background-image: url("../images/xsdbrowser/xsdTree08.png");
-  width: 15px;
-  height: 20px;
-}
-
 .xsd-browser__tree-09 {
   background-image: url("../images/xsdbrowser/xsdTree09.png");
-  width: 15px;
-  height: 20px;
-}
-
-.xsd-browser__tree-10 {
-  background-image: url("../images/xsdbrowser/xsdTree10.png");
-  width: 15px;
-  height: 20px;
-}
-
-.xsd-browser__tree-11 {
-  background-image: url("../images/xsdbrowser/xsdTree11.png");
   width: 15px;
   height: 20px;
 }

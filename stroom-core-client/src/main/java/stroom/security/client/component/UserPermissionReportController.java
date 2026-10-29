@@ -176,55 +176,6 @@ public class UserPermissionReportController extends Controller {
         documentPermissionsList.resetRange();
         refresh();
     }
-//
-//    public void show(final DocRef docRef, final Runnable onClose) {
-//        if (docRef != null) {
-//            final ExpressionTerm term = new ExpressionTerm(
-//                    true,
-//                    DocumentPermissionFields.DOCUMENT.getFldName(),
-//                    Condition.IS_DOC_REF,
-//                    null,
-//                    docRef);
-//            show(ExpressionOperator.builder().op(Op.AND).addTerm(term).build(), onClose);
-//        }
-//    }
-//
-//    public void show(final ExpressionOperator expression, final Runnable onClose) {
-//        setExpression(expression);
-//
-//        final PopupSize popupSize = PopupSize.builder()
-//                .width(Size
-//                        .builder()
-//                        .initial(800)
-//                        .min(400)
-//                        .resizable(true)
-//                        .build())
-//                .height(Size
-//                        .builder()
-//                        .initial(800)
-//                        .min(400)
-//                        .resizable(true)
-//                        .build())
-//                .build();
-//        ShowPopupEvent.builder(this)
-//                .popupType(PopupType.CLOSE_DIALOG)
-//                .popupSize(popupSize)
-//                .caption("Change Permissions")
-//                .onHideRequest(e -> {
-//                    onClose.run();
-//                    e.hide();
-//                })
-//                .fire();
-//    }
-//
-//    public void setExpression(final ExpressionOperator expression) {
-//        this.filterExpression = expression;
-//
-//        // We only want to see documents tha the current user is effectively the owner of as they can't change
-//        // permissions on anything else.
-//        documentListController.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
-//        refresh();
-//    }
 
     /// Lists the documents with a user's or group's permissions on them.
     ///
@@ -238,20 +189,5 @@ public class UserPermissionReportController extends Controller {
         documentPermissionsList.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
         refresh();
     }
-
-//    @Override
-//    public SvgImage getIcon() {
-//        return SvgImage.FILE_RAW;
-//    }
-//
-//    @Override
-//    public String getLabel() {
-//        return "Document Permission Report For '" + userRef.toDisplayString() + "'";
-//    }
-//
-//    @Override
-//    public String getType() {
-//        return "DocumentPermissionReport";
-//    }
 
 }

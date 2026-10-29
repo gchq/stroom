@@ -36,7 +36,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     private int minStep = 1;
     private int maxStep = 99;
     private int delta = 1;
-    private int initialSpeed = INITIAL_SPEED;
     private long value = 0;
     private long min = 0;
     private long max = 100;
@@ -51,7 +50,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         public void cancel() {
             super.cancel();
             step = minStep;
-            speed = initialSpeed;
+            speed = INITIAL_SPEED;
             counter = 0;
         }
 
@@ -166,13 +165,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     }
 
     /**
-     * @return the minimum spinner step
-     */
-    public int getMinStep() {
-        return minStep;
-    }
-
-    /**
      * @param minStep the minimum step for this spinner
      */
     public void setMinStep(final int minStep) {
@@ -223,14 +215,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         if (!enabled) {
             timer.cancel();
         }
-    }
-
-    /**
-     * @param initialSpeed the initial speed of the spinner. Higher values mean lower
-     *                     speed, default value is 7
-     */
-    public void setInitialSpeed(final int initialSpeed) {
-        this.initialSpeed = initialSpeed;
     }
 
     /**

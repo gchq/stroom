@@ -76,11 +76,7 @@ public class OperatorEditor extends Composite {
 
     /// Does nothing: a change is written to the operator as it is made.
     public void write() {
-        if (editing) {
-//            layout.setVisible(false);
-//
-//            editing = false;
-        }
+        // A change is written as it is made
     }
 
     /// Hides the editor, if it is editing.

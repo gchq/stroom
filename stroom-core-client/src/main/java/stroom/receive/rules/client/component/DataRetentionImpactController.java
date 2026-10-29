@@ -157,9 +157,7 @@ public class DataRetentionImpactController extends Controller {
                         treeAction.reset();
                         isQueryRunning = false;
                         refreshVisibleData();
-//                        GWT.log("Query finished (success)");
                     } else {
-//                        GWT.log("Query finished (different queryId)");
                         clearTable();
                         isQueryRunning = false;
                         refreshVisibleData();
@@ -185,7 +183,6 @@ public class DataRetentionImpactController extends Controller {
                         clearTable();
                         refreshVisibleData();
                         updateButtonStates();
-//                        GWT.log("Cancel finished (success)");
                     })
                     .onFailure(error -> {
                         // Have to assume it is still running
@@ -228,7 +225,6 @@ public class DataRetentionImpactController extends Controller {
                 })
                 .orElse(Collections.emptyList());
         dataProvider.setCompleteList(rows);
-//        rows.forEach(row -> GWT.log(row.toString()));
         updateButtonStates();
     }
 

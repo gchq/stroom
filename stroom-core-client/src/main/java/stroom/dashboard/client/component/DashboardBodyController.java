@@ -214,29 +214,11 @@ public class DashboardBodyController
         restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore Pane Layout", this::onRestoreTabs);
         restoreTabsButton.setVisible(false);
 
-//                <g:FlowPanel styleName="dashboard-body__top dock-min dock-container-horizontal">
-//            <g:FlowPanel styleName="dock-max">
-//                <g:Button ui:field="designModeButton" text="Enter Design Mode" width="200px"/>
-//            </g:FlowPanel>
-//        </g:FlowPanel>
-//        <g:FlowPanel
-//                styleName="dashboard-body__top dashboard-body__design-buttons dock-min dock-container-horizontal">
-//            <g:FlowPanel styleName="dock-min dashboard-body__top-buttons">
-//                <g:Button ui:field="addPanelButton" text="Add Panel"/>
-//                <g:Button ui:field="addInputButton" text="Add Input"/>
-//                <g:Button ui:field="constraintsButton" text="Constraints"/>
-//            </g:FlowPanel>
-//        </g:FlowPanel>
-
 
         NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
-//        final String linkParams = ;
         setParamsFromLink(urlParameters.getParams());
         setEmbedded(urlParameters.isEmbedded());
         setQueryOnOpen(urlParameters.isQueryOnOpen());
-//        dashboardController.setParamsFromLink(params);
-//        dashboardController.setEmbedded(embedded);
-//        dashboardController.setQueryOnOpen(queryOnOpen);
 
         queryToolbar.setOnStart(this::toggleStart);
         queryToolbar.setOnTimeRangeChange(() -> {
@@ -327,14 +309,9 @@ public class DashboardBodyController
         selectionInfoButton.setVisible(designMode);
         layoutController.setDesignMode(designMode);
         view.setDesignMode(designMode);
-//        components.forEach(component -> component.setDesignMode(designMode));
 
         editModeButton.setState(designMode);
     }
-
-//    public boolean isDesignMode() {
-//        return designMode;
-//    }
 
     private void onAdd() {
         restoreTabs();
@@ -445,8 +422,6 @@ public class DashboardBodyController
                     splitLayoutConfig.add(tabLayoutConfig);
                     splitLayoutConfig.add(layoutConfig);
                     layoutConfig = splitLayoutConfig;
-
-//                    dashboardConfig = dashboardConfig.copy().layout(layoutConfig).build();
                 }
 
                 if (componentConfigList != null) {
@@ -460,61 +435,7 @@ public class DashboardBodyController
                         }
                     }
                 }
-
-            } else {
-                // /**
-                // * ADD TEST DATA
-                // */
-                // final SplitLayoutData down = new
-                // SplitLayoutData(Dimension.Y);
-                // for (int i = 0; i < 3; i++) {
-                // final SplitLayoutData across = new
-                // SplitLayoutData(Dimension.X);
-                // down.add(across);
-                //
-                // for (int l = 0; l < 2; l++) {
-                // final SplitLayoutData down2 = new
-                // SplitLayoutData(Dimension.Y);
-                // across.add(down2);
-                //
-                // for (int j = 0; j < 3; j++) {
-                // final TabLayoutData tablayout = new TabLayoutData();
-                // down2.add(tablayout);
-                //
-                // for (int k = 0; k < 2; k++) {
-                // final String type = TableController.TYPE;
-                // final String id = type + "_" +
-                // String.valueOf(System.currentTimeMillis());
-                //
-                // final ComponentData componentData = new ComponentData();
-                // componentData.setId(id);
-                //
-                // final ComponentPresenter component =
-                // componentRegistry.getComponent(type);
-                // component.read(componentData);
-                //
-                // components.add(component);
-                // componentViews.put(id, component.getView());
-                //
-                // final TabData tabData = new TabData();
-                // tabData.setId(id);
-                // tabData.setName(component.getType() + " " + i + ":" + j + ":"
-                // + k);
-                //
-                // tablayout.add(tabData);
-                // }
-                // }
-                // }
-                // }
-                // dashboardData.setLayout(down);
-                // /**
-                // * DONE - ADD TEST DATA
-                // */
             }
-
-            // if (dashboardData.getTabVisibility() != null) {
-            // tabVisibility.setSelectedItem(dashboardData.getTabVisibility());
-            // }
 
             layoutController.configure(layoutConfig, layoutConstraints, preferredSize);
 
@@ -571,7 +492,6 @@ public class DashboardBodyController
         final DashboardPane component = components.add(type, componentConfig.getId());
         if (component != null) {
             component.setDashboardContext(dashboardContext);
-//            component.setDesignMode(designMode);
 
             component.setOnChange(this::onChange);
 

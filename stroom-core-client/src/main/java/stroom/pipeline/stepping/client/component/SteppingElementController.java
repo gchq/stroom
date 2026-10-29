@@ -577,7 +577,7 @@ public class SteppingElementController extends Controller {
             // clean. Note that element code is not part of the pipeline structure, so this must not
             // touch the pipeline model: rebuilding it on each keypress makes the editor lag.
             own(codeEditor.addValueChangeHandler(event -> onCodeChange()));
-            own(codeEditor.addFormatListener(event -> onCodeChange()));
+            own(codeEditor.addFormatListener(this::onCodeChange));
 
             // Ctrl+Enter or Shift+Enter in the code refreshes the step (added once, not each time
             // the code is loaded)

@@ -49,19 +49,13 @@ public class QueryTextPaneController extends Controller {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-//    private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
-
     private final QueryTextPane view;
     private final CodeEditorController editor;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private List<FetchDataRequest> fetchDataQueue;
     private Timer delayedFetchDataTimer;
-    //    private Long currentStreamId;
-//    private Long currentPartIndex;
-//    private Long currentRecordIndex;
     private Set<String> currentHighlightStrings;
-//    private boolean playButtonVisible;
 
     private boolean isHtml;
 
@@ -110,7 +104,6 @@ public class QueryTextPaneController extends Controller {
                           final Set<String> highlightStrings,
                           final boolean isHtml) {
         this.isHtml = isHtml;
-//        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
         // visible first.
@@ -119,13 +112,6 @@ public class QueryTextPaneController extends Controller {
             if (isDisposed()) {
                 return;
             }
-//            // Determine if we should show tha play button.
-//            playButtonVisible = !isHtml
-//                    && getTextSettings().isShowStepping()
-//                    && securityContext.hasAppPermission(AppPermissionEnum.STEPPING_PERMISSION);
-//
-//            // Show the play button if we have fetched input data.
-//            getView().setSteppingVisible(playButtonVisible);
 
             view.setClassification(classification);
             if (isHtml) {
@@ -141,8 +127,6 @@ public class QueryTextPaneController extends Controller {
                 }
 
                 editor.setText(data, true);
-////                rawController.setHighlights(highlights);
-//                rawController.setControlsVisible(playButtonVisible);
             }
         });
     }
@@ -275,8 +259,6 @@ public class QueryTextPaneController extends Controller {
         this.hideFunction = hideFunction;
 
         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
-//        request.setPipeline(getTextSettings().getPipeline());
-//        request.setShowAsHtml(getTextSettings().isShowAsHtml());
 
         ensureFetchDataQueue();
         fetchDataQueue.add(request);
@@ -289,274 +271,6 @@ public class QueryTextPaneController extends Controller {
             hideFunction.run();
         }
     }
-
-//
-//    private void update(final TableController tableController) {
-//        boolean updating = false;
-//        String message = "";
-//
-//        final String permissionCheck = checkPermissions();
-//        if (permissionCheck != null) {
-//            isHtml = false;
-//            showData(permissionCheck, null, null, isHtml);
-//            updating = true;
-//
-//        } else {
-//            currentStreamId = null;
-//            currentPartIndex = null;
-//            currentRecordIndex = null;
-//            currentHighlightStrings = null;
-//
-//            if (tableController != null) {
-//                final List<TableRow> selection = tableController.getSelectedRows();
-//                if (selection != null && selection.size() == 1) {
-//                  final Field streamIdField = chooseBestField(tableController, getTextSettings().getStreamIdField());
-//                    final Field partNoField = chooseBestField(tableController, getTextSettings().getPartNoField());
-//                  final Field recordNoField = chooseBestField(tableController, getTextSettings().getRecordNoField());
-//                  final Field lineFromField = chooseBestField(tableController, getTextSettings().getLineFromField());
-//                    final Field colFromField = chooseBestField(tableController, getTextSettings().getColFromField());
-//                    final Field lineToField = chooseBestField(tableController, getTextSettings().getLineToField());
-//                    final Field colToField = chooseBestField(tableController, getTextSettings().getColToField());
-//
-//                    // Just use the first row.
-//                    final TableRow selected = selection.get(0);
-//                    currentStreamId = getLong(streamIdField, selected);
-//                    currentPartIndex = convertToIndex(getLong(partNoField, selected));
-//                    currentRecordIndex = convertToIndex(getLong(recordNoField, selected));
-//                    final Long currentLineFrom = getLong(lineFromField, selected);
-//                    final Long currentColFrom = getLong(colFromField, selected);
-//                    final Long currentLineTo = getLong(lineToField, selected);
-//                    final Long currentColTo = getLong(colToField, selected);
-//
-////                    GWT.log("TextPresenter - selected table row = " + selected);
-////                    GWT.log("TextPresenter - " +
-////                            "streamIdField=" +
-////                            streamIdField +
-////                            "partNoField=" +
-////                            partNoField +
-////                            "recordNoField=" +
-////                            recordNoField +
-////                            "currentStreamId=" +
-////                            currentStreamId +
-////                            ", currentPartIndex=" +
-////                            currentPartIndex +
-////                            ", currentRecordIndex=" +
-////                            currentRecordIndex);
-//
-//                    // Validate settings.
-//                    if (getTextSettings().getStreamIdField() == null) {
-//                        message = "No stream id field is configured";
-//
-//                    } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
-//                        message = "No stream id found in selection";
-//
-//                    } else if (getTextSettings().getRecordNoField() == null
-//                            && !(
-//                            getTextSettings().getLineFromField() != null
-//                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
-//                        //                                                              be used rather than record no.
-//                        message = "No record number field is configured";
-//
-//                    } else if (getTextSettings().getRecordNoField() != null && currentRecordIndex == null) {
-//                        message = "No record number field found in selection";
-//
-//                    } else {
-//                        DataRange dataRange = null;
-//                        TextRange highlight = null;
-//                        if (currentLineFrom != null
-//                                && currentColFrom != null
-//                                && currentLineTo != null
-//                                && currentColTo != null) {
-//                            dataRange = DataRange.between(
-//                                    new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
-//                                    new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
-//
-//                            highlight = new TextRange(
-//                                    new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
-//                                    new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
-//                        }
-//
-//                        final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-//                                .withPartIndex(currentPartIndex != null
-//                                        ? currentPartIndex
-//                                        : 0)
-//                                .withRecordIndex(currentRecordIndex != null
-//                                        ? currentRecordIndex
-//                                        : 0)
-//                                .withDataRange(dataRange)
-//                                .withHighlight(highlight)
-//                                .build();
-//
-//                        currentHighlightStrings = tableController.getHighlights();
-//
-////                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
-//
-////                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
-////                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
-////                                .withChildStreamType(null);
-//
-////                        request.setStreamId(currentStreamId);
-////                        request.setStreamRange(currentStreamRange);
-////                        request.setChildStreamType(null);
-//
-//                        // If we have a source highlight then use it.
-////                        if (highlight != null) {
-////                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
-////                            // -1 to offset to make zero based
-////                            // +1 to length to make inclusive
-////                            currentPageRange = new OffsetRange(
-////                                    highlight.getFrom().getLineNo() - 1L,
-////                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
-////                        } else {
-////                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L);
-////                        }
-//
-//                        // TODO @AT Fix/implement
-//                        // If we have a source highlight then use it.
-////                        if (highlight != null) {
-//////                            dataRangeBuilder
-//////                                    .fromLocation(highlight.getFrom())
-//////                                    .toLocation(highlight.getTo());
-////                        } else {
-//////                            // TODO assume this is segmented data
-////////                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 0L, 1L);
-////////                            request.setPageRange(new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L));
-//////
-//////                            // Convert it to zero based
-//////                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);
-////                        }
-//
-//                        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
-//                        request.setPipeline(getTextSettings().getPipeline());
-//                        request.setShowAsHtml(getTextSettings().isShowAsHtml());
-//
-//                        ensureFetchDataQueue();
-//                        fetchDataQueue.add(request);
-//                        delayedFetchDataTimer.cancel();
-//                        delayedFetchDataTimer.schedule(250);
-//                        updating = true;
-//                    }
-//                }
-//            }
-//        }
-//
-//        // If we aren't updating the data display then clear it.
-//        if (!updating) {
-//            showData(message, null, null, isHtml);
-//        }
-//    }
-//
-//    private Field chooseBestField(final TableController tableController, final Field field) {
-//        if (field != null) {
-//            final TableComponentSettings tableComponentSettings = tableController.getTableSettings();
-//            final List<Field> fields = tableComponentSettings.getFields();
-//            // Try and choose by id.
-//            for (final Field f : fields) {
-//                if (f.getId() != null && f.getId().equals(field.getId())) {
-//                    return f;
-//                }
-//            }
-//            // Try and choose by name.
-//            for (final Field f : fields) {
-//                if (f.getName() != null && f.getName().equals(field.getName())) {
-//                    return f;
-//                }
-//            }
-//        }
-//        return null;
-//    }
-//
-//    private long getStartLine(final TextRange highlight) {
-//        int lineNoFrom = highlight.getFrom().getLineNo();
-//        if (lineNoFrom == 1) {
-//            // Content starts on first line so convert to an offset as the server code
-//            // works in zero based line numbers
-//            return lineNoFrom - 1;
-//        } else {
-//            //
-//            return lineNoFrom;
-//        }
-//    }
-//
-//    private long getLineCount(final TextRange highlight) {
-//        int lineNoFrom = highlight.getFrom().getLineNo();
-//        if (lineNoFrom == 1) {
-//            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;
-//        } else {
-//            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo();
-//        }
-//    }
-
-//    private Long getLong(final Field field, List<Field> fields, final Row row) {
-//        if (field != null && fields != null && row != null) {
-//            int index = -1;
-//
-//            if (index == -1 && field.getId() != null) {
-//                // Try matching on id alone.
-//                for (int i = 0; i < fields.size(); i++) {
-//                    if (field.getId().equals(fields.get(i).getId())) {
-//                        index = i;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (index == -1 && field.getName() != null) {
-//                // Try matching on name alone.
-//                for (int i = 0; i < fields.size(); i++) {
-//                    if (field.getName().equals(fields.get(i).getName())) {
-//                        index = i;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (index != -1) {
-//                if (row.getValues().size() > index) {
-//                    return getLong(row.getValues().get(index));
-//                }
-//            }
-//        }
-//        return null;
-//    }
-
-//    private Long convertToIndex(final Long no) {
-//        if (no != null) {
-//            return no - 1;
-//        }
-//        return null;
-//    }
-//
-//    private Long getLong(final Column column, final TableRow row) {
-//        if (column != null && row != null) {
-//            return getLong(row.getText(column.getId()));
-//        }
-//        return null;
-//    }
-
-//    private Long getLong(final String string) {
-//        if (string != null) {
-//            try {
-//                return Long.valueOf(string);
-//            } catch (final NumberFormatException e) {
-//                // Ignore.
-//            }
-//        }
-//
-//        return null;
-//    }
-
-//    private String checkPermissions() {
-//        if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_PERMISSION)) {
-//            if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
-//                return "You do not have permission to display this item";
-//            } else if (getTextSettings().getPipeline() == null) {
-//                return "You must choose a pipeline to display this item";
-//            }
-//        }
-//
-//        return null;
-//    }
 
     private void ensureFetchDataQueue() {
         if (fetchDataQueue == null) {
@@ -616,98 +330,5 @@ public class QueryTextPaneController extends Controller {
             };
         }
     }
-//
-//    @Override
-//    public void read(final ComponentConfig componentConfig) {
-//        super.read(componentConfig);
-//
-//        final TextComponentSettings.Builder builder;
-//        final ComponentSettings settings = componentConfig.getSettings();
-//
-//        if (settings instanceof TextComponentSettings) {
-//            final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
-//            builder = textComponentSettings.copy();
-//
-//            final Version version = Version.parse(textComponentSettings.getModelVersion());
-//            final boolean old = version.lt(CURRENT_MODEL_VERSION);
-//
-//            // special field names have changed from EventId to __event_id__ so we need to deal
-//            // with those and replace them, also rebuild existing special fields just in case
-//            if (textComponentSettings.getStreamIdField() == null
-//                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdField().getName()))
-//                    || (old && textComponentSettings.getStreamIdField().isSpecial())) {
-//                builder.streamIdField(TableController.buildSpecialField(IndexConstants.STREAM_ID));
-//            }
-//            if (textComponentSettings.getRecordNoField() == null
-//                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoField().getName()))
-//                    || (old && textComponentSettings.getRecordNoField().isSpecial())) {
-//                builder.recordNoField(TableController.buildSpecialField(IndexConstants.EVENT_ID));
-//            }
-//
-//        } else {
-//            builder = TextComponentSettings.builder();
-//            builder.streamIdField(TableController.buildSpecialField(IndexConstants.STREAM_ID));
-//            builder.recordNoField(TableController.buildSpecialField(IndexConstants.EVENT_ID));
-//        }
-//
-//        builder.modelVersion(CURRENT_MODEL_VERSION.toString());
-//        setSettings(builder.build());
-//    }
-//
-//    private TextComponentSettings getTextSettings() {
-//        return (TextComponentSettings) getSettings();
-//    }
-//
-//    @Override
-//    public void link() {
-//        final String tableId = getTextSettings().getTableId();
-//        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
-//
-//        // If we can't get the same table id then set to null so that changes to any table can be listened to.
-//        if (!Objects.equals(tableId, newTableId)) {
-//            newTableId = null;
-//        }
-//
-//        setSettings(getTextSettings()
-//                .copy()
-//                .tableId(newTableId)
-//                .build());
-//        update(currentTableController);
-//    }
-//
-//    @Override
-//    public void changeSettings() {
-//        super.changeSettings();
-//        update(currentTableController);
-//    }
-//
-//    @Override
-//    public ComponentType getType() {
-//        return TYPE;
-//    }
-//
-//    @Override
-//    public void beginStepping() {
-//        if (currentStreamId != null) {
-//            final StepLocation stepLocation = new StepLocation(
-//                    currentStreamId,
-//                    currentPartIndex != null
-//                            ? currentPartIndex
-//                            : 0,
-//                    currentRecordIndex != null
-//                            ? currentRecordIndex
-//                            : 0);
-//
-//            BeginPipelineSteppingEvent.fire(
-//                    this,
-//                    null,
-//                    null,
-//                    StepType.REFRESH,
-//                    stepLocation,
-//                    null);
-//        } else {
-//            AlertEvent.fireError(this, "No stream id", null);
-//        }
-//    }
 
 }

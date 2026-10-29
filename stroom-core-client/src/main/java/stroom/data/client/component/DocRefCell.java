@@ -398,28 +398,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             if (canOpenFunction == null) {
                 canOpenFunction = v -> true;
             }
-//
-//                public static String getTextFromDocRef(final DocRef docRef) {
-//                    return getTextFromDocRef(docRef, DisplayType.AUTO);
-//                }
-//
-//                public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
-//                    if (docRef == null) {
-//                        return null;
-//                    } else {
-//                        return docRef.getDisplayValue(Objects.requireNonNullElse(displayType, DisplayType.AUTO));
-//                    }
-//                }
-//
-//            }
-//
-//
-//
-//        } else if (docRef != null) {
-//            cellHtmlText = SafeHtmlUtils.fromString(getTextFromDocRef(docRef, displayType));
-//        } else {
-//            cellHtmlText = SafeHtmlUtils.EMPTY_SAFE_HTML;
-//        }
 
 
             return new DocRefCell<>(

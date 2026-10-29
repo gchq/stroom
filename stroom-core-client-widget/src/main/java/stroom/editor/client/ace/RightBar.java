@@ -28,10 +28,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 public class RightBar extends Composite {
 
     private static final int SUMMARY_CONTAINER_HEIGHT = 13;
-    private static final int OVERVIEW_WIDTH = 13;
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private IndicatorLines indicators;
-    private int width;
     private Editor editor;
 
     public RightBar() {
@@ -49,7 +47,6 @@ public class RightBar extends Composite {
         event.stopPropagation();
         event.preventDefault();
 
-//        if (eventType == Event.ONMOUSEDOWN && MouseUtil.isPrimary(event)
         if (indicators != null) {
             final String className = target.getClassName();
             if (className != null) {
@@ -61,7 +58,6 @@ public class RightBar extends Composite {
                         if (eventType == Event.ONMOUSEDOWN) {
                             editor.gotoLine(line);
                         } else if (eventType == Event.ONMOUSEOVER) {
-//                                final Element parent = target.cast();
                             final int x = target.getAbsoluteLeft();
                             final int y = target.getAbsoluteTop();
                             final Indicator indicator = indicators.getIndicator(line);
@@ -96,7 +92,6 @@ public class RightBar extends Composite {
     public void render(final IndicatorLines indicators, final boolean visible) {
         this.indicators = indicators;
         final StringBuilder sb = new StringBuilder();
-        int width = 0;
 
         if (visible) {
             if (indicators != null) {
@@ -198,11 +193,8 @@ public class RightBar extends Composite {
                     }
                 }
             }
-
-            width = OVERVIEW_WIDTH;
         }
 
-        this.width = width;
         getElement().setInnerHTML(sb.toString());
     }
 
@@ -279,10 +271,6 @@ public class RightBar extends Composite {
 
             indicatorPopup.setPopupPosition(x, y);
         });
-    }
-
-    public int getWidth() {
-        return width;
     }
 
     public void setEditor(final Editor editor) {

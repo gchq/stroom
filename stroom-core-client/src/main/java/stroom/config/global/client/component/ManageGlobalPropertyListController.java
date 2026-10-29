@@ -149,8 +149,6 @@ public class ManageGlobalPropertyListController extends Controller {
 
         resetLocalState();
 
-//        GWT.log("Refresh table called");
-
         restFactory
                 .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.list(criteria))
@@ -166,9 +164,6 @@ public class ManageGlobalPropertyListController extends Controller {
                     final List<ConfigPropertyRow> rows = listConfigResponse.getValues().stream()
                             .map(ConfigPropertyRow::new)
                             .collect(Collectors.toList());
-
-//                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
-//                    + " total: " + listConfigResponse.getPageResponse().getTotal());
 
                     dataProvider.setPartialList(
                             rows,
@@ -212,7 +207,6 @@ public class ManageGlobalPropertyListController extends Controller {
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
-//        GWT.log("Refreshing " + nodeName);
         criteria.setPageRequest(new PageRequest(
                 view.getVisibleRange().getStart(),
                 view.getVisibleRange().getLength()));
@@ -247,17 +241,12 @@ public class ManageGlobalPropertyListController extends Controller {
     }
 
     private void handleNodeResponse(final ListConfigResponse listConfigResponse) {
-//        GWT.log("Handling response for node " + listConfigResponse.getNodeName());
         unreachableNodes.remove(listConfigResponse.getNodeName());
 
         // Add the node's result to our maps
         listConfigResponse.getValues().forEach(configProperty -> {
             final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
             final String source = configProperty.getSource().getName();
-
-//            if (configProperty.getNameAsString().equals("stroom.statistics.sql.db.connectionPool.maxPoolSize")) {
-//                GWT.log(listConfigResponse.getNodeName() + " - eff: " + effectiveValue + " source " + source);
-//            }
 
             updateNodeKeyedMaps(
                     listConfigResponse.getNodeName(),
@@ -281,11 +270,6 @@ public class ManageGlobalPropertyListController extends Controller {
                         k -> new HashMap<>())
                 .put(nodeName, effectiveValue);
 
-//        if (propName.equals("stroom.statistics.sql.db.connectionPool.maxPoolSize")) {
-//            GWT.log(nodeName + " - " + effectiveValue + " - "
-//                    + nodeToClusterEffectiveValuesMap.get(propName).get(nodeName));
-//        }
-
         nodeToClusterSourcesMap.computeIfAbsent(
                         propName,
                         k -> new HashMap<>())
@@ -305,7 +289,6 @@ public class ManageGlobalPropertyListController extends Controller {
                         if (effectiveValues.size() <= 1) {
                             effectiveValueStr = row.getEffectiveValueAsString();
                         } else {
-//                            GWT.log(row.configProperty.getNameAsString() + effectiveValues);
                             effectiveValueStr = MULTIPLE_VALUES_MSG;
                         }
                     }

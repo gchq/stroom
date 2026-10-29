@@ -58,7 +58,6 @@ public class DataGridComparatorFactory<T> {
                 if (column instanceof final OrderByColumn<?, ?> orderByColumn) {
                     final String sortField = orderByColumn.getField();
                     final boolean isAscending = columnSortInfo.isAscending();
-//                    GWT.log("sortField " + i + ": " + sortField + " isAscending: " + isAscending);
                     Comparator<T> comparator = null;
                     final Function<T, U> extractor = (Function<T, U>) fieldNameToExtractorMap.get(sortField);
                     if (extractor != null) {

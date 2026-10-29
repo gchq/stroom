@@ -30,37 +30,12 @@ import java.util.function.Consumer;
 /// goes to the next result starting with what is typed.
 public final class FindResultLists {
 
-    /// How many results a page has.
-    public static final int PAGE_SIZE = 100;
-
     private FindResultLists() {
         // Static utility
     }
 
-    /// Makes a list of results.
-    ///
-    /// @param name           The list's name, for assistive technology, e.g. "Documents found".
-    /// @param cell           Draws a result.
-    /// @param selectionModel The selection model: the result with the focus is chosen.
-    /// @param onOpen         Opens a result (Enter, or a double click, on it).
-    /// @param onUpFromFirst  What Up on the first result does, e.g. focusing the filter, or null.
-    /// @param <T>            The type of a result.
-    /// @return The list.
-    public static <T> DataGrid<T> create(final String name,
-                                         final Cell<T> cell,
-                                         final MultiSelectionModelImpl<T> selectionModel,
-                                         final Consumer<T> onOpen,
-                                         final Runnable onUpFromFirst) {
-        final DataGrid<T> list = new DataGrid<>(PAGE_SIZE);
-        list.setProfile(DataGridProfile.LISTBOX);
-        list.setAccessibleName(name);
-        list.setStriped(true);
-        wire(list, cell, selectionModel, onOpen, onUpFromFirst);
-        return list;
-    }
-
     /// Makes a list a template declares into a list of results: its one column, drawn by `cell`, and how
-    /// it is selected and opened. The template gives it its page size ([#PAGE_SIZE]), profile
+    /// it is selected and opened. The template gives it its page size (100), profile
     /// (`LISTBOX`), name and stripes:
     ///
     /// ```

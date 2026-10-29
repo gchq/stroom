@@ -23,7 +23,6 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.pathways.client.component.TracesEditor;
 import stroom.pathways.shared.TracesDoc;
-import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -34,23 +33,15 @@ import javax.inject.Singleton;
 @Singleton
 public class TracesPlugin extends ContentPlugin<DocumentEditorHost<TracesDoc>> {
 
-    private final ClientSecurityContext securityContext;
-    private final Provider<TracesEditor> tracesEditorProvider;
-    private final ContentManager contentManager;
-
     @Inject
     public TracesPlugin(final EventBus eventBus,
                         final Provider<TracesEditor> tracesEditorProvider,
                         final ContentManager contentManager,
-                        final ClientSecurityContext securityContext,
                         final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus,
                 contentManager,
                 () -> new DocumentEditorHost<>(eventBus, tracesEditorProvider.get(), TracesDoc.TYPE),
                 documentPluginRegistry);
-        this.securityContext = securityContext;
-        this.tracesEditorProvider = tracesEditorProvider;
-        this.contentManager = contentManager;
 
         getEventBus().addHandler(
                 ShowTracesEvent.getType(), showTracesEvent -> {

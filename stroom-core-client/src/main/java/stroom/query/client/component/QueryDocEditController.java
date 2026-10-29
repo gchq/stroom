@@ -220,22 +220,12 @@ public class QueryDocEditController
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                                             final String query,
                                             final TimeRange timeRange) {
-//        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-//        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
-//                ScheduledQueryAnalyticProcessConfig.builder()
-//                        .node(analyticUiDefaultConfig.getDefaultNode())
-//                        .schedule(new Schedule(ScheduleType.CRON, CronExpressions.EVERY_HOUR.getExpression()))
-//                        .contiguous(true)
-//                        .scheduleBounds(new ScheduleBounds(System.currentTimeMillis(), null))
-//                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-//                        .build();
         final AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-//                .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
@@ -376,11 +366,6 @@ public class QueryDocEditController
                         case SCHEDULED_QUERY:
                             createDefaultScheduledReport(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                             break;
-//                        case TABLE_BUILDER:
-//                            createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
-//                            break;
-//                        default:
-//                            createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
                 .owner(this)
@@ -410,22 +395,12 @@ public class QueryDocEditController
                                               final ReportUiDefaultConfig analyticUiDefaultConfig,
                                               final String query,
                                               final TimeRange timeRange) {
-//        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-//        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
-//                ScheduledQueryAnalyticProcessConfig.builder()
-//                        .node(analyticUiDefaultConfig.getDefaultNode())
-//                        .schedule(new Schedule(ScheduleType.CRON, CronExpressions.EVERY_HOUR.getExpression()))
-//                        .contiguous(true)
-//                        .scheduleBounds(new ScheduleBounds(System.currentTimeMillis(), null))
-//                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-//                        .build();
         final ReportDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-//                .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();

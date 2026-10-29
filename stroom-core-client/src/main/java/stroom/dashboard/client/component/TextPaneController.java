@@ -138,7 +138,6 @@ public class TextPaneController extends DashboardComponentController {
                           final Set<String> highlightStrings,
                           final boolean isHtml) {
         TextPaneController.this.isHtml = isHtml;
-//        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
         // visible first.
@@ -177,7 +176,6 @@ public class TextPaneController extends DashboardComponentController {
                 }
 
                 rawEditor.setText(data, true);
-//                rawEditor.setHighlights(highlights);
                 rawEditor.setControlsVisible(playButtonVisible);
             }
         });
@@ -384,21 +382,6 @@ public class TextPaneController extends DashboardComponentController {
                     final Long currentLineTo = getLong(getTextSettings().getLineToColumn(), selected);
                     final Long currentColTo = getLong(getTextSettings().getColToColumn(), selected);
 
-//                    GWT.log("TextPresenter - selected table row = " + selected);
-//                    GWT.log("TextPresenter - " +
-//                            "streamIdField=" +
-//                            streamIdField +
-//                            "partNoField=" +
-//                            partNoField +
-//                            "recordNoField=" +
-//                            recordNoField +
-//                            "currentStreamId=" +
-//                            currentStreamId +
-//                            ", currentPartIndex=" +
-//                            currentPartIndex +
-//                            ", currentRecordIndex=" +
-//                            currentRecordIndex);
-
                     // Validate settings.
                     if (getTextSettings().getStreamIdColumn() == null) {
                         message = "No stream id field is configured";
@@ -445,43 +428,6 @@ public class TextPaneController extends DashboardComponentController {
 
                         currentHighlightStrings = hasSelectedRows.getHighlights();
 
-//                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
-
-//                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
-//                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
-//                                .withChildStreamType(null);
-
-//                        request.setStreamId(currentStreamId);
-//                        request.setStreamRange(currentStreamRange);
-//                        request.setChildStreamType(null);
-
-                        // If we have a source highlight then use it.
-//                        if (highlight != null) {
-//                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
-//                            // -1 to offset to make zero based
-//                            // +1 to length to make inclusive
-//                            currentPageRange = new OffsetRange(
-//                                    highlight.getFrom().getLineNo() - 1L,
-//                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
-//                        } else {
-//                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L);
-//                        }
-
-                        // TODO @AT Fix/implement
-                        // If we have a source highlight then use it.
-//                        if (highlight != null) {
-////                            dataRangeBuilder
-////                                    .fromLocation(highlight.getFrom())
-////                                    .toLocation(highlight.getTo());
-//                        } else {
-////                            // TODO assume this is segmented data
-//////                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 0L, 1L);
-//////                            request.setPageRange(new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L));
-////
-////                            // Convert it to zero based
-////                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);
-//                        }
-
                         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
                         request.setPipeline(getTextSettings().getPipeline());
                         request.setShowAsHtml(getTextSettings().isShowAsHtml());
@@ -509,7 +455,6 @@ public class TextPaneController extends DashboardComponentController {
             // works in zero based line numbers
             return lineNoFrom - 1;
         } else {
-            //
             return lineNoFrom;
         }
     }
@@ -522,39 +467,6 @@ public class TextPaneController extends DashboardComponentController {
             return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo();
         }
     }
-
-//    private Long getLong(final Field field, List<Field> fields, final Row row) {
-//        if (field != null && fields != null && row != null) {
-//            int index = -1;
-//
-//            if (index == -1 && field.getId() != null) {
-//                // Try matching on id alone.
-//                for (int i = 0; i < fields.size(); i++) {
-//                    if (field.getId().equals(fields.get(i).getId())) {
-//                        index = i;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (index == -1 && field.getName() != null) {
-//                // Try matching on name alone.
-//                for (int i = 0; i < fields.size(); i++) {
-//                    if (field.getName().equals(fields.get(i).getName())) {
-//                        index = i;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (index != -1) {
-//                if (row.getValues().size() > index) {
-//                    return getLong(row.getValues().get(index));
-//                }
-//            }
-//        }
-//        return null;
-//    }
 
     private Long convertToIndex(final Long no) {
         if (no != null) {

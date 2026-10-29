@@ -171,7 +171,7 @@ public final class AccountsScreenStories {
                                     "{\"sortList\": [{\"id\": \"userid\", \"desc\": false}]}")));
                     // GWT's headers have no aria-sort; the sorted header shows
                     // the 'Sort Ascending' icon
-                    play.expect(play.within(play.getByText("User Id").closest("th, [data-hcol]"))
+                    play.expect(play.within(play.getByText("User Id").closest(StroomDom.GRID_HEADER_CELL))
                             .getByTitle(SortIcon.SORT_ASCENDING)).toBeInTheDocument();
                     expectNoProblems(play);
                 });

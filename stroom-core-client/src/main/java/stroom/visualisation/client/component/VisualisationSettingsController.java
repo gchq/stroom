@@ -64,7 +64,7 @@ public class VisualisationSettingsController extends Controller {
         view.setOnChange(this::markChanged);
         own(settings.addValueChangeHandler(event -> markChanged()));
         own(script.addSelectionListener(event -> markChanged()));
-        own(settings.addFormatListener(event -> markChanged()));
+        own(settings.addFormatListener(this::markChanged));
         watch(Contexts.READ_ONLY, this::setReadOnly);
     }
 

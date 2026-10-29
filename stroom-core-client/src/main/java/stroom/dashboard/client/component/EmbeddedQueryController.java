@@ -215,16 +215,6 @@ public class EmbeddedQueryController
                     // Give the new data to the table.
                     currentTableController.setData(componentResult);
                 }
-//                else {
-//                    if (start) {
-//                        currentTableController.reset();
-//                        currentTableController.endSearch();
-//                        start = false;
-//                        hasData = false;
-//                        destroyCurrentTable();
-//                        updateVisibleResult();
-//                    }
-//                }
             }
 
             @Override
@@ -294,16 +284,6 @@ public class EmbeddedQueryController
 
                     currentVisController.setData(componentResult);
                 }
-//                else {
-//                    if (start) {
-//                        currentVisController.clear();
-//                        currentVisController.endSearch();
-//                        start = false;
-//                        hasData = false;
-//                        destroyCurrentVis();
-//                        updateVisibleResult();
-//                    }
-//                }
             }
 
             @Override
@@ -430,33 +410,6 @@ public class EmbeddedQueryController
                     }
                 }
             }
-
-//            if (component instanceof HasAbstractFields) {
-//                final VisPresenter visController = (VisPresenter) component;
-//                final List<Map<String, String>> selection = visController.getCurrentSelection();
-//                String params = "";
-//                if (selection != null) {
-//                    for (final Map<String, String> map : selection) {
-//                        for (final Entry<String, String> entry : map.entrySet()) {
-//                            params += entry.getKey() + "=" + entry.getValue() + " ";
-//                        }
-//                    }
-//                }
-//                onQuery(params, null);
-//            }
-
-//                if (getTextSettings().getTableId() == null) {
-//                    if (component instanceof TableController) {
-//                        currentTableController = (TableController) component;
-//                        update(currentTableController);
-//                    }
-//                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
-//                    if (component instanceof TableController) {
-//                        currentTableController = (TableController) component;
-//                        update(currentTableController);
-//                    }
-//                }
-//            }
         }));
     }
 
@@ -777,7 +730,6 @@ public class EmbeddedQueryController
     @Override
     public void onError(final List<ErrorMessage> errors) {
         currentErrors = errors;
-//        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
     }
 
     @Override
@@ -792,7 +744,6 @@ public class EmbeddedQueryController
 
     @Override
     public void onSearching(final boolean searching) {
-//        tableController.onSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
         if (!searching) {

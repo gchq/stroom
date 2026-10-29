@@ -349,54 +349,6 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         Event.releaseCapture(panel.getElement());
     }
 
-//    @Override
-//    public void onBrowserEvent(final Event event) {
-//        super.onBrowserEvent(event);
-//        if (event.getTypeInt() == Event.ONMOUSEDOWN) {
-//            final Element element = event.getEventTarget().cast();
-//            if ("startSlider".equals(element.getId())) {
-//                startX = event.getClientX();
-//                offsetX = startX - element.getAbsoluteLeft();
-//
-//
-//                if (glass == null) {
-//                    glass = new Glass("timeline-glass");
-//                }
-//                glass.show();
-//                resizing = true;
-//
-//
-//            }
-//        } else if (event.getTypeInt() == Event.ONMOUSEUP) {
-//            if (glass != null) {
-//                glass.hide();
-//                resizing = false;
-//            }
-//        } else if (event.getTypeInt() == Event.ONMOUSEMOVE) {
-//            if (resizing) {
-//                final int width = panel.getElement().getClientWidth();
-//                final int left = panel.getElement().getScrollLeft();
-//                final int right = panel.getElement().getScrollLeft() + panel.getElement().getClientWidth();
-//                final double diff = event.getClientX() - left;
-//                final double increments = (double) extents.totalDuration.toEpochNanos() / width;
-//                if (event.getClientX() < left) {
-//                    windowStart = extents.min;
-//                } else if (event.getClientX() > right) {
-//                    windowStart = extents.max;
-//                } else {
-//                    windowStart = NanoTime.ofNanos((long) (diff * increments));
-//                }
-//
-//                if (windowEnd != null && windowStart.isGreaterThan(windowEnd)) {
-//                    windowStart = windowEnd;
-//                }
-//
-//                refresh();
-//            }
-//        }
-//
-//    }
-
     public void setTrace(final Trace trace) {
         this.largeMode = false;
         this.largeRoot = null;
@@ -845,14 +797,6 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         final double bigOffsetPct = (bigAbsolute / (duration - bigChunk)) * 100D;
         final double smallOffsetPct = (smallAbsolute / (duration - smallChunk)) * 100D;
 
-//        GWT.log("bigChunk=" + bigChunk +
-//                ", smallChunk=" + smallChunk +
-//                ", bigPreChunk=" + bigPreChunk +
-//                ", smallPreChunk=" + smallPreChunk +
-//                ", duration=" + duration +
-//                ", bigWidthPct=" + bigWidthPct +
-//                ", smallWidthPct=" + smallWidthPct);
-
         // The grid's spacing and offsets, which .timeline-bar and .grid-lines draw their lines by
         return "--grid-lines__big-size: " +
                bigWidthPct +
@@ -922,83 +866,6 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
                     Attribute.className("children"));
         }
 
-
-//                    <div class="operation-item " data-expanded="true" data-span-id="7d62e820df6d74d8">
-//                        <div class="operation-content">
-//                            <span class="expand-icon">▼</span>
-//                            <span class="service-name">order-service</span>
-//                            <span class="operation-name">POST /orders</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-http" style="left: 0%; width: 100%;"></div>
-//                            <span class="duration" style="left: 100%;">245.00ms</span>
-//                        </div>
-//                    </div>
-//                <div class="children" data-parent="7d62e820df6d74d8">
-//                    <div class="operation-item indent-1" data-expanded="true" data-span-id="d1e5f7a9b2c8e123">
-//                        <div class="operation-content">
-//                            <span class="expand-icon">▼</span>
-//                            <span class="service-name">inventory-service</span>
-//                            <span class="operation-name">check_inventory</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-internal" style="left: 0%; width: 56.37545993458708%;"></div>
-//                            <span class="duration" style="left: 56.37545993458708%;">65.00ms</span>
-//                        </div>
-//                    </div>
-//                <div class="children" data-parent="d1e5f7a9b2c8e123">
-//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="e3f8a1c5d9e7b456">
-//                        <div class="operation-content">
-//                            <span class="expand-icon"></span>
-//                            <span class="service-name">inventory-service</span>
-//                            <span class="operation-name">GET /inventory/:product</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-internal" style="left: 0%; width: 20.602769828291088%;"></div>
-//                            <span class="duration" style="left: 20.602769828291088%;">25.00ms</span>
-//                        </div>
-//                    </div>
-//
-//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="f5b9c2e6a4d8f789">
-//                        <div class="operation-content">
-//                            <span class="expand-icon"></span>
-//                            <span class="service-name">inventory-service</span>
-//                            <span class="operation-name">cache.get</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-cache"
-//                            style="left: 25.713154129190514%; width: 5.110384300899427%;"></div>
-//                            <span class="duration" style="left: 30.82353843008994%;">5.00ms</span>
-//                        </div>
-//                    </div>
-//                </div>
-//                    <div class="operation-item indent-1" data-expanded="true" data-span-id="a7c3e8f1b5d9a012">
-//                        <div class="operation-content">
-//                            <span class="expand-icon">▼</span>
-//                            <span class="service-name">payment-service</span>
-//                            <span class="operation-name">process_payment</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-internal"
-//                            style="left: 61.48584423548651%; width: 38.51415576451349%;"></div>
-//                            <span class="duration" style="left: 100%;">85.00ms</span>
-//                        </div>
-//                    </div>
-//                <div class="children" data-parent="a7c3e8f1b5d9a012">
-//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="b8d4f9a2c6e1b345">
-//                        <div class="operation-content">
-//                            <span class="expand-icon"></span>
-//                            <span class="service-name">payment-service</span>
-//                            <span class="operation-name">stripe.charge</span>
-//                        </div>
-//                        <div class="waterfall-container">
-//                            <div class="span-bar span-grpc"
-//                            style="left: 66.59622853638594%; width: 33.40377146361406%;"></div>
-//                            <span class="duration" style="left: 100%;">75.00ms</span>
-//                        </div>
-//                    </div>
-//                </div></div></div>
-//    </div>
     }
 
     // Indent computed from depth so nesting works at any depth (there is no fixed set of indent-N

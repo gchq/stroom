@@ -90,7 +90,7 @@ public class MarkdownPreviewController extends Controller {
             delayedConvertTimer.schedule(1_000);
             onChange.run();
         }));
-        own(editor.addFormatListener(event -> onChange.run()));
+        own(editor.addFormatListener(() -> onChange.run()));
 
         preview = view.getPreview();
         preview.setId(MARKDOWN_PREVIEW_FRAME_ID);

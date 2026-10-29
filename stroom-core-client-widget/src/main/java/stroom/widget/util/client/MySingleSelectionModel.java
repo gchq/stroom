@@ -191,23 +191,4 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
         return doubleSelectTest.addDoubleSelectHandler(handler);
     }
 
-
-//    @Override
-//    public void setSelected(T item, boolean selected) {
-//        super.setSelected(item, selected);
-//        if (doubleClickTest != null) {
-//            if (doubleClickTest.isDoubleClick(selected)) {
-//                DoubleClickEvent.fire(eventBus);
-//            }
-//        }
-//    }
-//
-//    public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
-//        if (eventBus == null) {
-//            eventBus = new SimpleEventBus();
-//            doubleClickTest = new DoubleClickTester();
-//        }
-//
-//        return eventBus.addHandler(DoubleClickEvent.getType(), handler);
-//    }
 }

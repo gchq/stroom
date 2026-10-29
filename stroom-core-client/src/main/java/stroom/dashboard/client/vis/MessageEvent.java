@@ -30,17 +30,8 @@ public class MessageEvent extends JavaScriptObject {
         return getData(this);
     }
 
-    public final String getOrigin() {
-        return getOrigin(this);
-    }
-
     private final native String getData(MessageEvent evt)
     /*-{
     return evt.data;
-    }-*/;
-
-    private final native String getOrigin(MessageEvent evt)
-    /*-{
-    return evt.origin;
     }-*/;
 }

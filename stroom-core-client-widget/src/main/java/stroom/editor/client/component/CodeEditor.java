@@ -32,13 +32,11 @@ import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.text.client.Html;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -63,9 +61,6 @@ import java.util.stream.Collectors;
 public class CodeEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // Never shown: the overview bar shows its own, which hides itself on a click (see ISSUES.md;
-    // kept until removals are allowed)
-    private static final IndicatorPopup INDICATOR_POPUP = new IndicatorPopup();
     private static final String HIGHLIGHT_CLASS = "code-editor__highlight";
 
     @UiField
@@ -97,9 +92,7 @@ public class CodeEditor extends Component {
                 GlobalResizeObserver.removeListener(content.getElement());
             }
         });
-        editor.addDomHandler(this::onMouseDown, MouseDownEvent.getType());
         editor.addDomHandler(this::onContextMenu, ContextMenuEvent.getType());
-        errorPanel.addDomHandler(this::onMouseDown, MouseDownEvent.getType());
         errorPanel.addDomHandler(this::onContextMenu, ContextMenuEvent.getType());
     }
 
@@ -252,14 +245,6 @@ public class CodeEditor extends Component {
             editor.setVisible(true);
             // Ace was hidden, so lays itself out again for the size it has now
             layout();
-        }
-    }
-
-    private void onMouseDown(final MouseDownEvent event) {
-        // A right press opens the menu on contextmenu (onContextMenu), once Ace has put the cursor
-        // where it was pressed
-        if (!MouseUtil.isSecondary(event)) {
-            INDICATOR_POPUP.hide();
         }
     }
 

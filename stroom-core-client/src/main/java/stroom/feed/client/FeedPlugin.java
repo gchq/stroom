@@ -63,9 +63,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 feedClient.getDocRefForName(event.getName(), docRef -> {
                     if (docRef != null) {
-                        open(docRef, event.isForceOpen(),
-                                event.isFullScreen(),
-                                new DefaultTaskMonitorFactory(this));
+                        open(docRef, event.isForceOpen(), false, new DefaultTaskMonitorFactory(this));
                     }
                 }, new ExplorerTaskMonitorFactory(this)));
 

@@ -3,7 +3,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <dg:PagerPanel ui:field="pager" toolbarName="Constraint actions">
+    <dg:PagerPanel toolbarName="Constraint actions">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Constraint"/>
         <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Constraint" enabled="false"/>
         <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Constraints" enabled="false"/>

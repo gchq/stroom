@@ -125,9 +125,9 @@ public class FormGroup extends Composite implements HasWidgets {
     FlowPanel formGroupPanel;
     @UiField
     FormLabel formLabel;
-    // Made here, as it is private to the package
+    // Made in the constructor, as it is private to the package
     @UiField(provided = true)
-    final FormGroupHelpButton helpButton = new FormGroupHelpButton();
+    final FormGroupHelpButton helpButton;
     @UiField
     FlowPanel labelPanel;
     @UiField
@@ -181,6 +181,7 @@ public class FormGroup extends Composite implements HasWidgets {
     private boolean disabled = false;
 
     public FormGroup() {
+        helpButton = new FormGroupHelpButton();
         initWidget(BINDER.createAndBindUi(this));
         // Only the parts in use are shown, arranged once there is something to show (add)
         formGroupPanel.clear();
@@ -652,12 +653,6 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setHelpText(final String helpText) {
         this.helpText = helpText;
 
-//        // This allows us to have hard coded help in the ui.xml but override it
-//        // using helpText, or set helpText back to null to use the hardcoded
-//        // ui.xml content
-//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
-//            this.helpText = helpHTML.getHTML();
-//        }
         updateHelpButton();
     }
 
@@ -684,58 +679,28 @@ public class FormGroup extends Composite implements HasWidgets {
         final HelpHTML helpHTML = getHelpHTML();
 
         final SafeHtml effectiveHelpText;
-//        final boolean haveHelpText;
 
         if (helpTextOverride != null) {
-//            haveHelpText = true;
             effectiveHelpText = helpTextOverride;
         } else if (NullSafe.isNonBlankString(plainHelpText)) {
-//            haveHelpText = true;
             // Escape any html in there, wrap it in a para so styling is consistent
             effectiveHelpText = HtmlBuilder.builder()
                     .para(paraBuilder -> paraBuilder.append(SafeHtmlUtils.fromString(plainHelpText)))
                     .toSafeHtml();
         } else if (helpHTML != null) {
-//            haveHelpText = true;
             effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
         } else {
-//            haveHelpText = false;
             effectiveHelpText = null;
         }
 
         helpButton.setHelpContent(effectiveHelpText);
         updateHelpDescription();
 
-//        if (haveHelpText) {
-//            helpButton.setHelpContent(effectiveHelpText);
-//        } else {
-//            helpButton.setHelpContent(null);
-//        }
         updateLabelPanel();
-
-//        if (NullSafe.isNonBlankString(plainHelpText)) {
-//            haveHelpText = true;
-//            // Escape any html in there
-//            effectiveHelpText = SafeHtmlUtils.fromString(plainHelpText);
-//        }
-//
-//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
-//            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
-//            haveHelpText = true;
-//        } else {
-//
-//        }
-//        if (!NullSafe.isBlankString(getHelpText())) {
-//            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
-//        } else {
-//            helpButton.setHelpContent(null);
-//        }
-//        updateLabelPanel();
     }
 
     @Override
     public void add(final Widget widget) {
-//        GWT.log("Adding widget " + widget.getClass().getName());
 
         if (widget instanceof HelpHTML) {
             addHelpHtml((HelpHTML) widget);
@@ -755,12 +720,6 @@ public class FormGroup extends Composite implements HasWidgets {
             updateLabelTarget();
         }
         updateFormGroupPanel();
-//
-//        formGroupPanel.clear();
-//        formGroupPanel.add(labelPanel);
-//        formGroupPanel.add(descriptionPanel);
-//        formGroupPanel.add(widget);
-//        formGroupPanel.add(feedback);
     }
 
 
@@ -782,10 +741,6 @@ public class FormGroup extends Composite implements HasWidgets {
         this.helpHTML = helpHTML;
 
         updateHelpButton();
-//        // helpText trumps helpHTML
-//        if (NullSafe.isBlankString(helpText)) {
-//            this.helpText = this.helpHTML.getHTML();
-//        }
     }
 
     @Override
@@ -798,10 +753,6 @@ public class FormGroup extends Composite implements HasWidgets {
         updateLabelPanel();
         updateDescriptionPanel();
         updateFormGroupPanel();
-//        formGroupPanel.clear();
-//        formGroupPanel.add(labelPanel);
-//        formGroupPanel.add(descriptionPanel);
-//        formGroupPanel.add(feedback);
     }
 
     private void updateFormGroupPanel() {

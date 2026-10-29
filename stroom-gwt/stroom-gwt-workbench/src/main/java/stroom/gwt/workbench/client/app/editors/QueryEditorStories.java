@@ -35,7 +35,6 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -641,7 +640,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     // The values filter is opened by the filter icon of the column's header
-                    clickHeader(play, play.within(header(play, "Count").closest("th, [data-hcol]"))
+                    StroomDom.clickHeader(play, play.within(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL))
                             .querySelector(".column-header__value-filter-icon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD)
@@ -1157,31 +1156,12 @@ public final class QueryEditorStories {
     }
 
     // Runs the query and opens the menu of a column.
-    // Stroom opens a column's menu when its header is clicked (MyDataGrid's
+    // Stroom opens a column's menu when its header is clicked (the grid's
     // HeadingListener.onShowMenu), not on a context menu
     private static void executeAndOpenColumnMenu(final Play play, final String column) {
         execute(play);
         play.findByText("alpha");
-        clickHeader(play, header(play, column));
-    }
-
-    /// Clicks a part of a results table's column header. MyDataGrid only handles a header's mouse
-    /// buttons once the mouse has moved over it (it attaches a native preview handler after the
-    /// move, and drops it when the mouse leaves), so the play moves the mouse over the header,
-    /// waits, then presses and releases the button there without moving again (user-event's
-    /// click would move the mouse in from the page's body). Pointer events go before the mouse
-    /// events, as a browser sends them: the new grid (DataGrid) reads the pointer events.
-    ///
-    /// @param play   The play.
-    /// @param target The part of the header to click, e.g. its label or value filter icon.
-    static void clickHeader(final Play play, final Query target) {
-        play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
-        play.sleep(200);
-        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().click(target, EventInit.create().atCentreOf(target));
+        StroomDom.clickHeader(play, header(play, column));
     }
 
     // Checks the request for a new document that ShowCreateDocumentDialogEvent makes

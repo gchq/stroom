@@ -35,13 +35,9 @@ final class ToolbarTemplate extends Composite {
     @UiField
     ToolbarButton save;
     @UiField
-    ToolbarButton saveAs;
-    @UiField
     ToolbarToggleButton filter;
     @UiField
     ToolbarButton first;
-    @UiField
-    ToolbarButton last;
 
     ToolbarTemplate(final Runnable onSave, final Consumer<Boolean> onFilter, final Runnable onFirst) {
         initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));

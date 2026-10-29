@@ -5,7 +5,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:btn="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
 
@@ -37,13 +36,7 @@
             <g:FlowPanel styleName="dock-max dock-container-vertical">
                 <g:SimplePanel ui:field="progressBarPanel"
                                styleName="dock-min source-viewer__progress-bar-panel"/>
-                <g:FlowPanel ui:field="container"
-                             styleName="dock-max default-min-sizes stepping-button-container">
-                    <btn:FabButton ui:field="steppingButton"
-                                   addStyleNames="stepping-button"
-                                   title="Enter Stepping Mode"
-                                   icon="STEPPING"
-                                   visible="false"/>
+                <g:FlowPanel styleName="dock-max default-min-sizes source-viewer__content">
                     <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
                     <d:ClassificationWrapper ui:field="classification"/>
                 </g:FlowPanel>

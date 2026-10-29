@@ -76,7 +76,7 @@ public class DateTimeModel {
         currentMonth = getFirstDayOfMonth(UTCDate.create());
     }
 
-    public static UTCDate getFirstDayOfMonth(final UTCDate date) {
+    private static UTCDate getFirstDayOfMonth(final UTCDate date) {
         return UTCDate.create(
                 date.getFullYear(),
                 date.getMonth(),
@@ -186,7 +186,6 @@ public class DateTimeModel {
      */
     public void shiftCurrentMonth(final int deltaMonths) {
         CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);
-//        refresh();
     }
 
     public UTCDate getTodayUTC() {
@@ -278,7 +277,7 @@ public class DateTimeModel {
         return sb.toString();
     }
 
-    public String getOffsetString(final UTCDate value) {
+    private String getOffsetString(final UTCDate value) {
         final String tz = parseTimeZone(value);
         String offset = tz.replaceAll("GMT", "");
         offset = offset.replaceAll(":", "");
@@ -310,7 +309,7 @@ public class DateTimeModel {
         return millis;
     }
 
-    public String parseTimeZone(final UTCDate value) {
+    private String parseTimeZone(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)

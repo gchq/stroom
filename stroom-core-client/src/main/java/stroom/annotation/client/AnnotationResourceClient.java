@@ -78,17 +78,6 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-//    public void getAnnotationByRef(final DocRef annotationRef,
-//                                   final Consumer<Annotation> consumer,
-//                                   final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(ANNOTATION_RESOURCE)
-//                .method(res -> res.getAnnotationByRef(annotationRef))
-//                .onSuccess(consumer)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
-
     public void getAnnotationById(final long annotationId,
                                   final Consumer<Annotation> consumer,
                                   final TaskMonitorFactory taskMonitorFactory) {

@@ -149,7 +149,6 @@ public class MainController extends Controller {
                     public void run() {
                         if (click) {
                             stopAutoRefresh();
-                            // refresh();
                             startAutoRefresh();
                         }
 

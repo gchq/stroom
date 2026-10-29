@@ -82,6 +82,5 @@ public class ProcessorTasksTabController extends Controller {
     /// @param document The document, which may be null.
     public void read(final DocRef docRef, final Object document) {
         processorTaskSummary.read(docRef, document);
-//        processorTaskList.read(docRef, entity);
     }
 }

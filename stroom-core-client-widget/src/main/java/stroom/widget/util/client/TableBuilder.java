@@ -64,19 +64,6 @@ public class TableBuilder {
         return this;
     }
 
-//    @Override
-//    public String toString() {
-//        final HtmlBuilder htmlBuilder = new HtmlBuilder();
-//        write(htmlBuilder);
-//        return htmlBuilder.toString();
-//    }
-//
-//    public SafeHtml toSafeHtml() {
-//        final HtmlBuilder htmlBuilder = new HtmlBuilder();
-//        write(htmlBuilder);
-//        return htmlBuilder.toSafeHtml();
-//    }
-
     public void write(final HtmlBuilder htmlBuilder) {
         htmlBuilder.appendTrustedString("<table>");
 

@@ -73,7 +73,7 @@ public class QueryModel implements HasHandlers {
     private QuerySearchRequest currentSearch;
     private boolean searching;
     private boolean polling;
-    private SourceType sourceType = SourceType.QUERY_UI;
+    private final SourceType sourceType = SourceType.QUERY_UI;
     private Set<String> currentHighlights;
     private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
 
@@ -212,12 +212,7 @@ public class QueryModel implements HasHandlers {
         }
 
         currentSearch = searchBuilder.build();
-//            }
-//        }
-//
         if (query != null) {
-//            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
-//            if (dataSourceRef != null && expression != null) {
             // Let the query controller know search is active.
             setSearching(true);
 
@@ -229,7 +224,6 @@ public class QueryModel implements HasHandlers {
             // Start polling.
             polling = true;
             poll(storeHistory);
-//            }
         }
     }
 
@@ -352,8 +346,6 @@ public class QueryModel implements HasHandlers {
                     .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
-//                        GWT.log(response.toString());
-
                         if (search == currentSearch) {
                             if (response != null) {
                                 currentQueryKey = response.getQueryKey();
@@ -487,14 +479,6 @@ public class QueryModel implements HasHandlers {
 
     public void addTokenErrorListener(final TokenErrorListener listener) {
         tokenErrorListeners.add(listener);
-    }
-
-    public void removeTokenErrorListener(final TokenErrorListener listener) {
-        tokenErrorListeners.remove(listener);
-    }
-
-    public void setSourceType(final SourceType sourceType) {
-        this.sourceType = sourceType;
     }
 
     /// Says what shows the progress of the requests this makes, e.g. the controller that uses it.

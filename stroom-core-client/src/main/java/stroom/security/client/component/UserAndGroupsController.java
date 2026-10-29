@@ -300,7 +300,6 @@ public class UserAndGroupsController extends Controller {
 
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
-//        GWT.log("onSelection - selected: " + selected);
         onSelection(NullSafe.get(selected, User::asRef));
     }
 
@@ -438,27 +437,6 @@ public class UserAndGroupsController extends Controller {
                     .create(USER_RESOURCE)
                     .method(res -> res.copyGroupsAndPermissions(fromUser.getUuid(), toUser.getUuid()))
                     .onSuccess(user -> {
-                        // Add a consumer to monitor the new result list when there is a refresh.
-                        // This allows us to try to select the newly added item.
-//                        targetList.setResultPageConsumer(resultPage -> {
-//                            targetList.setResultPageConsumer(null);
-//                            if (selection == null) {
-//                                targetList.getSelectionModel().clear();
-//                            } else {
-//                                if (resultPage != null && resultPage.getValues() != null) {
-//                                    final Optional<User> optional = resultPage
-//                                            .getValues()
-//                                            .stream()
-//                                            .filter(u -> u.getUuid().equals(selection.getUuid()))
-//                                            .findAny();
-//                                    if (optional.isPresent()) {
-//                                        targetList.getSelectionModel().setSelected(optional.get());
-//                                    } else {
-//                                        targetList.getSelectionModel().clear();
-//                                    }
-//                                }
-//                            }
-//                        });
                         userList.refresh();
                         parentsList.refresh();
                         childrenList.refresh();

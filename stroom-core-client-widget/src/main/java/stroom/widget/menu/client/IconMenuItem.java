@@ -152,9 +152,6 @@ public class IconMenuItem extends MenuItem {
         }
 
         public IconMenuItem build() {
-//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-//                text = ((Preset) enabledIcon).getTitle();
-//            }
             return new IconMenuItem(
                     priority,
                     enabledIcon,

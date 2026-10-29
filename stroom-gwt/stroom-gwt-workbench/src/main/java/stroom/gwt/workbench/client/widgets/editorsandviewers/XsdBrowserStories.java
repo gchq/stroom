@@ -222,6 +222,23 @@ public final class XsdBrowserStories {
                     play.expect(sequence).toHaveStyle("position", "absolute");
                     play.expect(play.getByText("1..3")).toHaveClass("xsd-browser__occurrence-label");
                 })
+                // A type restricted to listed values: its constraints are headed "Enumeration"
+                .story("EnumerationConstraint", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "GenreType"))
+                .withPlay(play -> {
+                    final Query heading = play.querySelector(".xsd-browser__restriction-type");
+                    play.waitFor(() -> play.expect(heading).toHaveTextContent("Enumeration"));
+                    play.expect(play.getByText("non-fiction")).toBeVisible();
+                })
+                // A type restricted to a pattern: its constraints are headed "Pattern" (they were
+                // headed "Enumeration", as every restriction's were)
+                .story("PatternConstraint", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "IsbnType"))
+                .withPlay(play -> {
+                    final Query heading = play.querySelector(".xsd-browser__restriction-type");
+                    play.waitFor(() -> play.expect(heading).toHaveTextContent("Pattern"));
+                    play.expect(play.getByText("[0-9]{13}")).toBeVisible();
+                })
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
                 // XML parser recovers, and GWT's XSDModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)

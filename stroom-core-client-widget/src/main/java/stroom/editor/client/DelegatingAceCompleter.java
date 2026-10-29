@@ -67,10 +67,6 @@ public class DelegatingAceCompleter {
     public void registerCompletionProviders(final String editorId,
                                             final AceEditorMode aceEditorMode,
                                             final AceCompletionProvider... completionProviders) {
-//        GWT.log("Registering " + completionProviders.length
-//                + " with id " + editorId
-//                + " and mode " + aceEditorMode);
-
         final String modeName = aceEditorMode != null
                 ? aceEditorMode.getName()
                 : null;
@@ -85,13 +81,6 @@ public class DelegatingAceCompleter {
             }
         }
 
-        logCompletionProvidersCount();
-    }
-
-    private void logCompletionProvidersCount() {
-//        GWT.log("Delegated completers count: " + editorIdToCompletionProviderMap.values().stream()
-//                .mapToLong(List::size)
-//                .sum());
     }
 
     /**
@@ -114,14 +103,12 @@ public class DelegatingAceCompleter {
      * Remove all providers specific to this editor regardless of editor mode
      */
     public void deRegisterCompletionProviders(final String editorId) {
-//        GWT.log("DeRegistering id " + editorId);
         if (editorId != null) {
             // Not removing while streaming over the keys (which could fail or skip entries), and
             // mode-only keys have no editor id
             editorIdToCompletionProviderMap.keySet()
                     .removeIf(mapKey -> editorId.equals(mapKey.getEditorId()));
         }
-        logCompletionProvidersCount();
     }
 
     /**
@@ -129,11 +116,9 @@ public class DelegatingAceCompleter {
      * editor instances.
      */
     public void deRegisterCompletionProviders(final AceEditorMode mode) {
-//        GWT.log("DeRegistering mode " + mode);
         if (mode != null) {
             editorIdToCompletionProviderMap.remove(MapKey.fromModeName(mode.getName()));
         }
-        logCompletionProvidersCount();
     }
 
     private void getProposals(final AceEditor editor,
@@ -213,20 +198,16 @@ public class DelegatingAceCompleter {
             return new MapKey(editorId, modeName);
         }
 
-        public static MapKey fromEditorId(final String editorId) {
+        private static MapKey fromEditorId(final String editorId) {
             return new MapKey(editorId, null);
         }
 
-        public static MapKey fromModeName(final String modeName) {
+        private static MapKey fromModeName(final String modeName) {
             return new MapKey(null, modeName);
         }
 
         public String getEditorId() {
             return editorId;
-        }
-
-        public String getModeName() {
-            return modeName;
         }
 
         @Override

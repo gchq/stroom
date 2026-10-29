@@ -303,9 +303,6 @@ public class FilterCell
                 valueUpdater.update(column);
             }
         }
-//
-//        // Blur the element.
-//        super.finishEditing(parent, newValue, key, valueUpdater);
     }
 
     @Override

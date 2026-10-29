@@ -45,7 +45,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -61,8 +60,6 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     SimplePanel content;
     @UiField
     SpinnerLarge spinner;
-    @UiField
-    FlowPanel titleBar;
     @UiField
     DivElement hint;
     @UiField
@@ -214,9 +211,6 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
             double left = dragStartWindow.getLeft() + dx;
             double top = dragStartWindow.getTop() + dy;
 
-            // Add some constraints to stop the dialog being moved off screen.
-            //            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
-            //            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
             left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
             top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
 

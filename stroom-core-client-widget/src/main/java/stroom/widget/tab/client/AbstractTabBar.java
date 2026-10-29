@@ -565,12 +565,6 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     private boolean hasFocus(final Element element) {
         if (element != null) {
             final Element activeElement = getActiveElement(Document.get());
-//            GWT.log("Active Element = " + (activeElement == null
-//                    ? "null"
-//                    : activeElement.getTagName()));
-//            GWT.log("Current tab index = " + (element == null
-//                    ? "null"
-//                    : element.getTagName()));
             return activeElement != null && activeElement.equals(element);
         }
         return false;
@@ -608,7 +602,6 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     }
 
     private void focusTabIndexElement() {
-//        GWT.log("Focus: " + currentTabIndexElement);
 
         if (currentTabIndexElement != null) {
             currentTabIndexElement.focus();
@@ -828,7 +821,6 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     @Override
     public void onBrowserEvent(final Event event) {
-//        GWT.log("onBrowserEvent " + event.getType());
         if (Event.ONKEYDOWN == event.getTypeInt()) {
             onKeyDown(event);
 

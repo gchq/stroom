@@ -79,7 +79,6 @@ public class ExplorerTreeController extends Controller {
 
     private List<ExplorerNode> currentRootNodes;
     private boolean selectParentIfNotFound = false;
-    private Consumer<FetchExplorerNodeResult> onData;
     private Consumer<String> onFilterError;
 
     /// Made by GIN; [#attach(ExplorerTree)] gives it its tree.
@@ -111,13 +110,6 @@ public class ExplorerTreeController extends Controller {
     /// @param taskMonitorFactory What shows it, or null for what its owners provide.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
-    }
-
-    /// Sets what is told the nodes each time they are fetched.
-    ///
-    /// @param onData Given what was fetched.
-    public void setOnData(final Consumer<FetchExplorerNodeResult> onData) {
-        this.onData = onData;
     }
 
     /// Sets what is told why the server rejected the name filter, or null when it applied it, each
@@ -213,7 +205,6 @@ public class ExplorerTreeController extends Controller {
             for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
-//                    GWT.log("setEnsureVisible: " + node.getName());
                 }
             }
         }
@@ -229,7 +220,6 @@ public class ExplorerTreeController extends Controller {
             for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
-//                    GWT.log("setEnsureVisible: " + node.getName());
                 }
             }
         }
@@ -275,10 +265,6 @@ public class ExplorerTreeController extends Controller {
                 fetching = true;
                 Scheduler.get().scheduleDeferred(() -> {
                     final FetchExplorerNodesRequest criteria = currentCriteria;
-//                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
-//                            + " openItems: " + openItems.getOpenItems().size()
-//                            + " minDepth: " + minDepth
-//                            + " ensureVisible: " + ensureVisible);
                     restFactory
                             .create(EXPLORER_RESOURCE)
                             .method(res -> res.fetchExplorerNodes(criteria))
@@ -295,10 +281,6 @@ public class ExplorerTreeController extends Controller {
 
     private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
-//        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
-//                + " openItems: " + NullSafe.size(result.getOpenedItems())
-//                + " tempOpenedItems: " + NullSafe.size(result.getTemporaryOpenedItems()));
-
         fetching = false;
         // Check if the filter settings have changed
         // since we were asked to fetch.
@@ -377,7 +359,6 @@ public class ExplorerTreeController extends Controller {
                 }
             }
             if (nextSelection != null) {
-//                GWT.log("nextSelection: " + nextSelection);
                 explorerTree.setInitialSelectedItem(nextSelection);
             } else if (previousSelection != null && !rows.contains(previousSelection)) {
                 // The previously selected item has gone (e.g. it was just deleted). Select the row that
@@ -400,7 +381,6 @@ public class ExplorerTreeController extends Controller {
             // ensure visibility of. We can forget them now as we have a result that should have
             // opened required folders to make them visible.
             if (nextSelection != null && !ExplorerTree.NULL_SELECTION.equals(nextSelection)) {
-//                GWT.log("Clearing ensureVisible & forceSelection");
                 ensureVisible = null;
                 forceSelection = null;
             }
@@ -470,9 +450,6 @@ public class ExplorerTreeController extends Controller {
         if (onFilterError != null) {
             onFilterError.accept(NullSafe.get(result.getFilterError(), TokenError::getText));
         }
-        if (onData != null) {
-            onData.accept(result);
-        }
     }
 
     /// Forgets the open folders, what to show and the name filter, and empties the tree.
@@ -484,7 +461,6 @@ public class ExplorerTreeController extends Controller {
     ///
     /// @param initialNameFilter The name filter, or null for none.
     public void reset(final String initialNameFilter) {
-//        GWT.log("reset with initialQuickFilter: " + initialNameFilter);
         explorerTreeFilterBuilder.setNameFilter(initialNameFilter);
         explorerTree.setData(new ArrayList<>());
         openItems.clear();
@@ -494,7 +470,6 @@ public class ExplorerTreeController extends Controller {
 
     /// Opens every folder, and fetches them.
     public void expandAll() {
-//        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
         minDepth = 1000;
         ensureVisible = null;
@@ -503,16 +478,10 @@ public class ExplorerTreeController extends Controller {
 
     /// Closes every folder but the roots, and fetches again.
     public void collapseAll() {
-//        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
         minDepth = 1;
         ensureVisible = null;
         refresh();
-    }
-
-    /// @return Whether the tree's first item is [ExplorerTree#NULL_SELECTION].
-    public boolean isIncludeNullSelection() {
-        return includeNullSelection;
     }
 
     /// Sets whether the tree's first item is [ExplorerTree#NULL_SELECTION], which a picker

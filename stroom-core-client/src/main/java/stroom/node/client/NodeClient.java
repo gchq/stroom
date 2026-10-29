@@ -106,11 +106,6 @@ public class NodeClient {
                 .exec();
     }
 
-//    public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
-//                             final RestErrorHandler errorHandler) {
-//        listAllNodes(nodeListConsumer, errorConsumer, null);
-//    }
-
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final RestErrorHandler errorHandler,
                              final TaskMonitorFactory taskMonitorFactory) {

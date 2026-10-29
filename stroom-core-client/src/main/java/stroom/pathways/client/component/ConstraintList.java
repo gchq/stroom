@@ -23,7 +23,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -45,8 +44,6 @@ public class ConstraintList extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton newButton;
     @UiField

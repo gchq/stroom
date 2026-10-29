@@ -23,7 +23,6 @@ import stroom.editor.client.ace.Editor;
 import stroom.editor.client.ace.Indicator;
 import stroom.editor.client.ace.IndicatorLines;
 import stroom.editor.client.ace.Marker;
-import stroom.editor.client.event.FormatEvent;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.AceEditorTheme;
@@ -60,7 +59,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /// A code editor's controller: it sets the text of its [CodeEditor] and holds its options
@@ -84,7 +82,8 @@ public class CodeEditorController extends Controller {
 
     private final Action formatAction = new Action("Format", false, this::format);
     private final AceEditorController aceEditorController;
-    private final Listeners<FormatEvent> formatListeners = new Listeners<>();
+    // Told nothing but that the text was formatted
+    private final Listeners<Void> formatListeners = new Listeners<>();
     private CodeEditor view;
     private Editor editor;
     private CodeEditorOptions options;
@@ -204,11 +203,6 @@ public class CodeEditorController extends Controller {
         this.formattedHighlightsFunc = highlightsFunction;
     }
 
-    /// @return The Ace editor's ID, e.g. to register completion providers for it.
-    public String getEditorId() {
-        return editor.getId();
-    }
-
     /// Puts the focus on the text.
     public void focus() {
         view.focus();
@@ -219,19 +213,9 @@ public class CodeEditorController extends Controller {
         return editor.isClean();
     }
 
-    /// Marks the text as unchanged, e.g. once it is saved.
-    public void markClean() {
-        editor.markClean();
-    }
-
     /// @param text Text to insert where the cursor is.
     public void insertTextAtCursor(final String text) {
         editor.insertTextAtCursor(text);
-    }
-
-    /// @param text Text to put in place of the text selected.
-    public void replaceSelectedText(final String text) {
-        editor.replaceSelectedText(text);
     }
 
     /// @param snippet An Ace snippet to insert where the cursor is, with its tab stops.
@@ -304,9 +288,9 @@ public class CodeEditorController extends Controller {
     ///
     /// @param listener Told each time.
     /// @return The registration, for the listener's owner to own.
-    public HandlerRegistration addFormatListener(final Consumer<FormatEvent> listener) {
+    public HandlerRegistration addFormatListener(final Runnable listener) {
         // As GWT's registration, which the editor's format handlers are given
-        return formatListeners.add(listener)::removeHandler;
+        return formatListeners.add(ignored -> listener.run())::removeHandler;
     }
 
     /// Listens for the text changing, until the registration is removed.
@@ -447,7 +431,7 @@ public class CodeEditorController extends Controller {
 
             editor.focus();
 
-            formatListeners.fire(new FormatEvent());
+            formatListeners.fire(null);
 
             applyFormattedHighlights(formattedText);
         });

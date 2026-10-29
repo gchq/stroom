@@ -21,7 +21,6 @@ import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -175,24 +174,6 @@ final class DashboardPlays {
         return screen.within(screen.findByText(caption, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
-    /// Clicks a part of a results table's column header, as the query batch's
-    /// `QueryEditorStories.clickHeader` does: `MyDataGrid` only handles a header's mouse buttons
-    /// once the mouse has moved over it.
-    ///
-    /// @param play   The play.
-    /// @param target The part of the header to click.
-    static void clickHeader(final Play play, final Query target) {
-        play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
-        play.sleep(200);
-        // Pointer events before mouse events, as a browser sends them: the new grid
-        // (DataGrid) reads the pointer events, MyDataGrid the mouse events
-        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().click(target, EventInit.create().atCentreOf(target));
-    }
-
     /// @param play The play.
     /// @param name The column's name.
     /// @return The label of a results table's column header.
@@ -204,7 +185,7 @@ final class DashboardPlays {
     /// @param name The column's name.
     /// @return A results table's column header cell, with its filter box and button.
     static Query headerCell(final Play play, final String name) {
-        return header(play, name).closest("th, [data-hcol]");
+        return header(play, name).closest(StroomDom.GRID_HEADER_CELL);
     }
 
     /// Drags with the mouse, as Stroom's `FlexLayout` reads it (mouse events, the move and release

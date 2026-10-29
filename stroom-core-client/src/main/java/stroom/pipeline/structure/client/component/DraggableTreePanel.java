@@ -97,7 +97,6 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
     private Consumer<E> onSelect;
     private BiConsumer<E, E> onDragStart;
     private BiConsumer<E, E> onDragEnd;
-    private BiConsumer<E, E> onDragCancel;
     private Box<E> box;
     // The item under the pointer, if it would take what is dragged: where it is dropped
     private Box<E> targetBox;
@@ -186,14 +185,6 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
     /// @param onDragEnd Given its new parent and the item.
     public void setOnDragEnd(final BiConsumer<E, E> onDragEnd) {
         this.onDragEnd = onDragEnd;
-    }
-
-    /// Sets what is told when a drag ends without a drop on a target (released over nothing, over an
-    /// item that refuses it or where it came from, or Escape pressed), which puts it back.
-    ///
-    /// @param onDragCancel Given its parent, where it was put back, and the item.
-    public void setOnDragCancel(final BiConsumer<E, E> onDragCancel) {
-        this.onDragCancel = onDragCancel;
     }
 
     @Override
@@ -673,7 +664,6 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
         setTargetBox(null);
         setRefusedBox(null);
         treePanel.refresh();
-        cancelDragging(dragParent, child);
     }
 
     private void setTargetBox(final Box<E> target) {
@@ -729,12 +719,6 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
     private void endDragging(final E parent, final E child) {
         if (onDragEnd != null) {
             onDragEnd.accept(parent, child);
-        }
-    }
-
-    private void cancelDragging(final E parent, final E child) {
-        if (onDragCancel != null) {
-            onDragCancel.accept(parent, child);
         }
     }
 

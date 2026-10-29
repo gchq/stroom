@@ -13,7 +13,7 @@
     <g:HTMLPanel styleName="dialog__container">
         <g:SimplePanel styleName="dialog__frame"/>
         <g:FlowPanel styleName="dialog__layout">
-            <g:FlowPanel ui:field="titleBar" styleName="dialog__title-bar">
+            <g:FlowPanel styleName="dialog__title-bar">
                 <svg:Icon ui:field="icon" addStyleNames="dialog__icon"/>
                 <tx:Label ui:field="titleText" styleName="dialog__title">Caption</tx:Label>
                 <g:SimplePanel styleName="dialog__spinner">

@@ -174,7 +174,6 @@ public class FlexLayout extends Composite {
     @Override
     public void onBrowserEvent(final Event event) {
         final int eventType = event.getTypeInt();
-//        if (designMode) {
         if ("focusin".equals(event.getType())) {
             final Element target = event.getEventTarget().cast();
             focusMemory.remember(target, getTargetSplitter(target));
@@ -192,10 +191,6 @@ public class FlexLayout extends Composite {
                 onMouseUp(event);
             }
         }
-//        }
-//        else if (MouseUtil.isPrimary(event) && Event.ONMOUSEUP == eventType) {
-//            showMenu(event);
-//        }
     }
 
     private void onMouseMove(final Event event) {
@@ -203,11 +198,6 @@ public class FlexLayout extends Composite {
         final double x = event.getClientX();
         final double y = event.getClientY();
         final Element target = event.getEventTarget().cast();
-
-//        // If we are adding a new component then let the user start to select where to put it.
-//        if (!busy && newComponents != null) {
-//            enterNewComponentDestinationMode(newComponents, x, y);
-//        }
 
         if (mouseDown) {
             // The mouse is down, so we might be moving a splitter or dragging
@@ -316,10 +306,6 @@ public class FlexLayout extends Composite {
         // Find the selection target.
         final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
         if (mouseTarget != null) {
-            // If the event target was not a splitter then see if it was a tab.
-//            final TabData tab = mouseTarget.getFirstTab();
-//            if (Objects.equals(selection.getFirstTab(), tab)) {
-//                final TabLayout tabLayout = mouseTarget.tabLayout;
             if (mouseTarget.tabLayout != null && mouseTarget.tabWidget != null) {
                 final MutableTabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
                 if (tabConfig != null) {
@@ -329,7 +315,6 @@ public class FlexLayout extends Composite {
                             tabConfig);
                 }
             }
-//            }
         }
     }
 
@@ -545,7 +530,6 @@ public class FlexLayout extends Composite {
                                    final List<MutableTabConfig> tabGroup,
                                    final MutableTabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
-//        GWT.log("moveTabOntoTab");
         boolean moved = false;
 
         for (final MutableTabConfig tabConfig : tabGroup) {
@@ -626,7 +610,6 @@ public class FlexLayout extends Composite {
                                    final List<MutableTabConfig> tabGroup,
                                    final MutableTabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
-//        GWT.log("moveTabOutside");
         // Ensure we have a parent.
         MutableSplitLayoutConfig parent = targetTabLayoutConfig.getParent();
         if (parent == null) {
@@ -738,7 +721,6 @@ public class FlexLayout extends Composite {
                                      final List<MutableTabConfig> tabGroup,
                                      final MutableSplitLayoutConfig targetSplitLayoutConfig,
                                      final Pos targetPos) {
-//        GWT.log("moveTabOntoSplit");
         boolean moved = false;
 
         for (final MutableTabConfig tabConfig : tabGroup) {
@@ -1390,14 +1372,6 @@ public class FlexLayout extends Composite {
                                 } else if (selection == null || !tabData.equals(selection.getFirstTab())) {
                                     final double clientLeft = ElementUtil.getClientLeft(tabElement);
                                     final double clientRight = ElementUtil.getClientRight(tabElement);
-//                                    Console.log(tabData.getLabel() +
-//                                            " " +
-//                                            "clientLeft=" +
-//                                            clientLeft +
-//                                            " clientRight=" +
-//                                            clientRight +
-//                                            " x=" +
-//                                            x);
 
                                     if (x >= clientLeft && x <= clientRight) {
                                         // If the mouse position is over the tab then we might want to insert before
@@ -1410,7 +1384,6 @@ public class FlexLayout extends Composite {
                                                 Collections.singletonList(tabData),
                                                 i,
                                                 linkTab);
-//                                        Console.log("tab");
 
                                     } else if (x > clientRight) {
                                         // If the mouse position is right of the right-hand side of the tab then we
@@ -1423,7 +1396,6 @@ public class FlexLayout extends Composite {
                                                 Collections.singletonList(tabData),
                                                 i + 1,
                                                 linkTab);
-//                                        Console.log("after tab");
                                     }
                                 }
                             }
@@ -1598,10 +1570,6 @@ public class FlexLayout extends Composite {
 
             final double visibleWidth = Math.floor(ElementUtil.getSubPixelClientWidth(scrollPanel.getElement()));
             final double visibleHeight = Math.floor(ElementUtil.getSubPixelClientHeight(scrollPanel.getElement()));
-//            GWT.log(getElement() + " visibleWidth=" + visibleWidth + " visibleHeight=" + visibleHeight);
-//            double barWidth = 12;
-//            boolean scrollX = false;
-//            boolean scrollY = false;
 
             if (!layoutConstraints.isFitWidth()) {
                 if (preferredSize.getWidth() > 0) {
@@ -1630,22 +1598,6 @@ public class FlexLayout extends Composite {
                     designHeight = minHeight * 2;
                 }
             }
-
-//            for (int i = 0; i < 2; i++) {
-//                if (!scrollX) {
-//                    if (designWidth > visibleWidth) {
-//                        scrollX = true;
-//                        visibleHeight -= barWidth;
-//                    }
-//                }
-//
-//                if (!scrollY) {
-//                    if (designHeight > visibleHeight) {
-//                        scrollY = true;
-//                        visibleWidth -= barWidth;
-//                    }
-//                }
-//            }
 
             final double width;
             if (layoutConstraints.isFitWidth()) {
@@ -1678,19 +1630,6 @@ public class FlexLayout extends Composite {
                     designSurfaceSize = outerSize;
                 }
 
-//                GWT.log("visibleWidth=" +
-//                        visibleWidth +
-//                        " designWidth=" +
-//                        designWidth +
-//                        " visibleHeight=" +
-//                        visibleHeight +
-//                        " designHeight=" +
-//                        designHeight +
-//                        " width=" +
-//                        width +
-//                        " height=" +
-//                        height);
-
                 designSurface.setSize(
                         designSurfaceSize.getWidth() + "px",
                         designSurfaceSize.getHeight() + "px");
@@ -1698,10 +1637,6 @@ public class FlexLayout extends Composite {
                 recalculateAll();
 
                 if (clear) {
-                    // Unbind tab layouts and clear.
-                    for (final TabLayout tabLayout : layoutToWidgetMap.values()) {
-                        tabLayout.unbind();
-                    }
                     layoutToWidgetMap.clear();
                     splitToWidgetMap.clear();
                 }
@@ -1738,7 +1673,6 @@ public class FlexLayout extends Composite {
 
             // Perform a resize on all child layouts.
             Scheduler.get().scheduleDeferred(this::resizeChildWidgets);
-//            resizeChildWidgets();
         }
     }
 

@@ -74,10 +74,6 @@ public class DateTimeConstants {
         }
     }
 
-    public String[] getLanguages() {
-        return languages;
-    }
-
     public String[] getDayOfWeekNames() {
         return dayOfWeekNames;
     }

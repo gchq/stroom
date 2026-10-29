@@ -60,7 +60,6 @@ public class ContentTemplateTabController extends ContentTabController
     private static final ContentTemplateResource CONTENT_TEMPLATE_RESOURCE = GWT.create(
             ContentTemplateResource.class);
 
-    //    private static final Preset DISABLE_TEMPLATE_ICON = SvgPresets.DISABLE.title("Enable/Disable template");
     protected static final CellIcon ADD_ABOVE_ICON = CellIcon.of(SvgImage.ADD_ABOVE,
             "Add new template above the selected one");
     protected static final CellIcon ADD_BELOW_ICON = CellIcon.of(SvgImage.ADD_BELOW,
@@ -90,7 +89,6 @@ public class ContentTemplateTabController extends ContentTabController
 
     private boolean dirty;
     private String lastLabel;
-//    private DataRetentionPresenter dataRetentionController;
 
     /// Made by GIN, with its screen and its parts.
     ///
@@ -118,7 +116,6 @@ public class ContentTemplateTabController extends ContentTabController
         this.restFactory = restFactory;
 
         view.setTableView(contentTemplateList);
-//        view.setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
@@ -291,12 +288,6 @@ public class ContentTemplateTabController extends ContentTabController
                                 .text("Delete Template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
-//                .withIconMenuItem(itemBuilder ->
-//                        itemBuilder
-//                                .icon(SvgImage.DISABLE)
-//                                .text("Enable/Disable template")
-//                                .command(() ->
-//                                        setRuleEnabledState(contentTemplate, !contentTemplate.isEnabled())))
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
@@ -323,9 +314,6 @@ public class ContentTemplateTabController extends ContentTabController
                 final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
                 final int index = contentTemplates.indexOf(currTemplate);
                 contentTemplates.set(index, newTemplate);
-//                    contentTemplates.remove(index);
-//                    contentTemplates.add(index, newTemplate);
-//                    index = contentTemplates.indexOf(newTemplate);
                 update();
                 setDirty(true);
                 setSelected(contentTemplates.get(index));
@@ -470,8 +458,6 @@ public class ContentTemplateTabController extends ContentTabController
 
             update();
             setDirty(true);
-//            getSelectionModel()
-//                    .setSelected(contentTemplates.get(sourceIdx));
             setSelected(newTemplate);
         }
     }
@@ -592,28 +578,12 @@ public class ContentTemplateTabController extends ContentTabController
 
     private void update() {
         if (contentTemplates != null) {
-            // Set rule numbers on all the rules for display purposes.
-//            for (int i = 0; i < contentTemplates.size(); i++) {
-//                final ContentTemplate rule = contentTemplates.get(i);
-//                final DataRetentionRule newRule = new DataRetentionRule(
-//                        i + 1,
-//                        rule.getCreationTime(),
-//                        rule.getName(),
-//                        rule.isEnabled(),
-//                        rule.getExpression(),
-//                        rule.getAge(),
-//                        rule.getTimeUnit(),
-//                        rule.isForever());
-//                contentTemplates.set(i, newRule);
-//            }
             // Ensure all the template numbers are correct after any moves/deletes/copies etc.
             final List<ContentTemplate> tempList = ContentTemplates.resetTemplateNumbers(contentTemplates);
             contentTemplates.clear();
             contentTemplates.addAll(tempList);
 
             contentTemplateList.setData(contentTemplates);
-            // Update the policy so the impact tab can see the unsaved changes
-//            contentTemplates.setRules(getTemplates());
         }
         updateButtons();
     }
@@ -626,7 +596,6 @@ public class ContentTemplateTabController extends ContentTabController
         if (selected) {
             index = contentTemplates.indexOf(selection);
         }
-//        GWT.log("index: " + index);
 
         saveButton.setEnabled(loadedPolicy && dirty);
         addAboveButton.setEnabled(loadedPolicy);

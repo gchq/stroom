@@ -26,9 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
@@ -40,23 +37,6 @@ public class App implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
-
-//        GWT.setUncaughtExceptionHandler(e -> {
-//            GWT.log(e.getClass().getName());
-//
-//            final StringBuilder stringBuilder = new StringBuilder();
-//            appendStackTraces(e, stringBuilder);
-////            final String stack;
-////            if (e.getCause() != null && e.getCause().getStackTrace() != null) {
-////                stack = appendStackTraces(e.getCause().getStackTrace());
-////            } else if (e.getStackTrace() != null) {
-////                stack = appendStackTraces(e.getStackTrace());
-////            } else {
-////                stack = "";
-////            }
-//
-//            Window.alert("ERROR: " + stringBuilder);
-//        });
 
         final String path = Window.Location.getPath();
         GWT.log("path: " + path + ", queryString: " + Window.Location.getQueryString());
@@ -84,37 +64,10 @@ public class App implements EntryPoint {
                 // Start the login manager. This will attempt to auto login with PKI and
                 // will therefore start the rest of the application.
                 ginjector.getLoginManager().fetchUserAndPermissions();
-
-                // Remember how places were used in case we want to use URLs and history
-                // at some point.
-                // ginjector.getPlaceManager().revealCurrentPlace();
             }, new QuietTaskMonitorFactory());
 
             ginjector.getTabSessionManager().getTabSessionsThenAccept(s ->
                     ginjector.getNavigationPlugin().setTabSessions(s));
-        }
-    }
-
-    private void appendStackTraces(final Throwable e, final StringBuilder stringBuilder) {
-        if (e.getStackTrace() != null) {
-            //noinspection SizeReplaceableByIsEmpty // cos GWT
-            if (stringBuilder.length() > 0) {
-                stringBuilder.append("\n");
-            }
-            stringBuilder.append(e.getClass().getName())
-                    .append(" - ")
-                    .append(e.getMessage())
-                    .append(":\n");
-
-            final String stack = Arrays.stream(e.getStackTrace())
-                    .map(StackTraceElement::toString)
-                    .collect(Collectors.joining("\n"));
-            stringBuilder.append(stack);
-
-            final Throwable cause = e.getCause();
-            if (cause != null) {
-                appendStackTraces(cause, stringBuilder);
-            }
         }
     }
 }

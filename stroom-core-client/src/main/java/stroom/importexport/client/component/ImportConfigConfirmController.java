@@ -541,9 +541,7 @@ public class ImportConfigConfirmController extends Controller {
     }
 
     private void clearCaches() {
-        // TODO : Add cache clearing functionality.
-        // ClearScriptCacheEvent.fire(this);
-        // ClearFunctionCacheEvent.fire(this);
+        // TODO : Add cache clearing functionality (clear the script and function caches).
     }
 
 }

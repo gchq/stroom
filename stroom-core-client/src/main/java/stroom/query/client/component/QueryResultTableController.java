@@ -279,14 +279,6 @@ public class QueryResultTableController
         own(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
                 .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
 
-//        own(dataGrid.addColumnSortHandler(event -> {
-//            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-//                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-//                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-//                refresh();
-//            }
-//        }));
-
         pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
         own(selectionModel.addSelectionHandler(event -> {
@@ -322,10 +314,6 @@ public class QueryResultTableController
             groupSelection.open(row.getGroupKey());
         }
     }
-
-//    public void setRequestedRange(final OffsetRange requestedRange) {
-//        this.requestedRange = requestedRange;
-//    }
 
     @Override
     public GroupSelection getGroupSelection() {
@@ -504,71 +492,6 @@ public class QueryResultTableController
         }
     }
 
-//    @Override
-//    protected void addColumns(final boolean allowSelectAll) {
-//        addSelectedColumn(allowSelectAll);
-//
-//        addInfoColumn();
-//
-//        addCreatedColumn();
-//        addStreamTypeColumn();
-//        addFeedColumn();
-//        addPipelineColumn();
-//
-//        addRightAlignedAttributeColumn(
-//                "Raw",
-//                MetaFields.RAW_SIZE,
-//                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
-//                ColumnSizeConstants.SMALL_COL);
-//        addRightAlignedAttributeColumn(
-//                "Disk",
-//                MetaFields.FILE_SIZE,
-//                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
-//                ColumnSizeConstants.SMALL_COL);
-//        addRightAlignedAttributeColumn(
-//                "Read",
-//                MetaFields.REC_READ,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                ColumnSizeConstants.SMALL_COL);
-//        addRightAlignedAttributeColumn(
-//                "Write",
-//                MetaFields.REC_WRITE,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                ColumnSizeConstants.SMALL_COL);
-//        addRightAlignedAttributeColumn(
-//                "Fatal",
-//                MetaFields.REC_FATAL,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                40);
-//        addRightAlignedAttributeColumn(
-//                "Error",
-//                MetaFields.REC_ERROR,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                40);
-//        addRightAlignedAttributeColumn(
-//                "Warn",
-//                MetaFields.REC_WARN,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                40);
-//        addRightAlignedAttributeColumn(
-//                "Info",
-//                MetaFields.REC_INFO,
-//                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
-//                40);
-//        addAttributeColumn(
-//                "Retention",
-//                DataRetentionFields.RETENTION_AGE_FIELD,
-//                Function.identity(),
-//                ColumnSizeConstants.SMALL_COL);
-//
-//        addEndColumn();
-//    }
-
-//    @Override
-//    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
-//        return null;
-//    }
-
     @Override
     public void reset() {
         selectionModel.clear(true);
@@ -585,13 +508,6 @@ public class QueryResultTableController
 
     @Override
     public void startSearch() {
-//        final TableSettings tableSettings = getTableSettings()
-//                .copy()
-//                .buildTableSettings();
-//        tableResultRequest = tableResultRequest
-//                .copy()
-//                .tableSettings(tableSettings)
-//                .build();
 
         setPause(false, false);
         pagerView.getRefreshButton().setRefreshing(true);
@@ -735,7 +651,6 @@ public class QueryResultTableController
                 }
             }
 
-//                dataGrid.redrawHeaders();
             dataGrid.resizeTableToFitColumns();
 
             fireColumnAndDataUpdate();
@@ -919,7 +834,6 @@ public class QueryResultTableController
             }
         }
 
-//                dataGrid.redrawHeaders();
         dataGrid.resizeTableToFitColumns();
 
         fireColumnAndDataUpdate();

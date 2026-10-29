@@ -7,14 +7,13 @@
              xmlns:refresh-button="urn:import:stroom.data.pager.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="paging-bar">
-        <tx:Label ui:field="lblTitle" styleName="paging-bar__label"/>
         <g:HTMLPanel styleName="paging-bar__space">&nbsp;</g:HTMLPanel>
         <tx:Label ui:field="lblFrom" styleName="paging-bar__label"/>
         <form:TextBox ui:field="txtFrom" addStyleNames="paging-bar__text-box" visible="false"/>
-        <tx:Label ui:field="lblToSeparator" text="&nbsp;to&nbsp;" styleName="paging-bar__label"/>
+        <tx:Label text="&nbsp;to&nbsp;" styleName="paging-bar__label"/>
         <tx:Label ui:field="lblTo" styleName="paging-bar__label"/>
         <form:TextBox ui:field="txtTo" addStyleNames="paging-bar__text-box" visible="false"/>
-        <tx:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="paging-bar__label"/>
+        <tx:Label text="&nbsp;of&nbsp;" styleName="paging-bar__label"/>
         <tx:Label ui:field="lblOf" styleName="paging-bar__label"/>
         <g:HTMLPanel styleName="paging-bar__space">&nbsp;</g:HTMLPanel>
         <paging:Toolbar name="Paging">

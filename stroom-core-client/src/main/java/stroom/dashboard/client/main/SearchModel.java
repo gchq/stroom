@@ -348,8 +348,6 @@ public class SearchModel implements HasHandlers {
                     .create(DASHBOARD_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
-//                        GWT.log(response.toString());
-
                         if (search == currentSearch) {
                             if (response != null) {
                                 currentQueryKey = response.getQueryKey();

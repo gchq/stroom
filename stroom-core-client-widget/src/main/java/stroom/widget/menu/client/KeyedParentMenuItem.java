@@ -106,9 +106,6 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
         }
 
         public KeyedParentMenuItem build() {
-//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-//                text = ((Preset) enabledIcon).getTitle();
-//            }
             return new KeyedParentMenuItem(
                     priority,
                     enabledIcon,

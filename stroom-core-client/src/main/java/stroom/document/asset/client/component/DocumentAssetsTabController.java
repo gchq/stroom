@@ -154,7 +154,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
 
         // Hook up the dirty events on the editor
         own(editor.addValueChangeHandler(event -> onEditorContentChanged()));
-        own(editor.addFormatListener(event -> onEditorContentChanged()));
+        own(editor.addFormatListener(this::onEditorContentChanged));
 
         // Ensure editor is disabled by default
         disableEditor();

@@ -24,7 +24,6 @@ import stroom.query.api.TextAttributes;
 import stroom.security.client.ClassNameBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 public class ConditionalFormattingSwatchUtil {
@@ -78,26 +77,6 @@ public class ConditionalFormattingSwatchUtil {
                         : formattingStyle.getDisplayValue());
         return SafeHtmlUtil.getTemplate()
                 .divWithClass(classNameBuilder.build(), inner);
-    }
-
-    public static SafeHtml createCustomSwatch(final String backgroundColour,
-                                              final String textColour,
-                                              final TextAttributes textAttributes) {
-        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
-        classNameBuilder.addClassName(CF_COLOUR_SWATCH);
-        classNameBuilder.addAll(getTextAttributeClassNames(textAttributes));
-
-        final SafeStylesBuilder safeStylesBuilder = new SafeStylesBuilder();
-        SafeHtmlUtil.asTrustedColour(backgroundColour)
-                .ifPresent(safeStylesBuilder::trustedBackgroundColor);
-        SafeHtmlUtil.asTrustedColour(textColour)
-                .ifPresent(safeStylesBuilder::trustedColor);
-
-        return SafeHtmlUtil.getTemplate()
-                .divWithClassAndStyle(
-                        classNameBuilder.build(),
-                        safeStylesBuilder.toSafeStyles(),
-                        SafeHtmlUtil.getSafeHtml("Custom"));
     }
 
     public static ClassNameBuilder getTextAttributeClassNames(final TextAttributes textAttributes) {

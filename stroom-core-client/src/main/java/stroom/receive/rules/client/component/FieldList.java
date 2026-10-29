@@ -22,7 +22,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -45,8 +44,6 @@ public class FieldList extends Component {
     private static final String TYPE_FIELD = "type";
     private static final String OBFUSCATED_FIELD = "obfuscated";
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton newButton;
     @UiField

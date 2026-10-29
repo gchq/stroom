@@ -25,7 +25,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -44,8 +43,6 @@ public class NotificationList extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton addButton;
     @UiField

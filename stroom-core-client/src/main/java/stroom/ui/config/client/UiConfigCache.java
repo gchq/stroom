@@ -75,6 +75,8 @@ public class UiConfigCache implements HasHandlers {
     /// Stops the regular refresh of the client properties, e.g. when this cache is no longer
     /// used because the UI that created it is being thrown away. The properties can still be
     /// fetched with [#get(Consumer)] and [#refresh(Consumer, TaskMonitorFactory)].
+    ///
+    /// For the workbench's harness, which throws away each story's UI without closing the window.
     public void stopRefreshing() {
         refreshTimer.cancel();
     }

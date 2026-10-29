@@ -28,7 +28,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 public final class SortIcon {
 
     public static final String SORT = "Sort";
-    public static final String UNSORTED = "Unsorted";
     public static final String SORT_ASCENDING = "Sort Ascending";
     public static final String SORT_DESCENDING = "Sort Descending";
     public static final SvgImage SORT_ASCENDING_ICON = SvgImage.FIELDS_SORT_ASCENDING;

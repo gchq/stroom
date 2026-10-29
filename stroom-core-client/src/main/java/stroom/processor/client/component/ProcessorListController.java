@@ -71,7 +71,6 @@ public class ProcessorListController extends Controller implements Refreshable {
 
     private ExpressionOperator expression;
     private boolean initiated;
-    private ProcessorListRowResultPage currentResultPageResponse;
 
     /// Made by GIN, with its content.
     ///
@@ -172,7 +171,6 @@ public class ProcessorListController extends Controller implements Refreshable {
 
             @Override
             protected void changeData(final ProcessorListRowResultPage data) {
-                currentResultPageResponse = data;
                 super.changeData(data);
                 onChangeData(data);
             }
@@ -255,11 +253,6 @@ public class ProcessorListController extends Controller implements Refreshable {
     /// @param nextSelection The row to select once the next fetch is in, e.g. one just added.
     public void setNextSelection(final ProcessorListRow nextSelection) {
         this.nextSelection = nextSelection;
-    }
-
-    /// @return The last page fetched.
-    public ProcessorListRowResultPage getCurrentResultPageResponse() {
-        return currentResultPageResponse;
     }
 
     private void onChangeData(final ProcessorListRowResultPage data) {

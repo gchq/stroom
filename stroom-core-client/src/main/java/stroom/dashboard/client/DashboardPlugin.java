@@ -118,10 +118,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             editor.setQueryOnOpen(queryOnOpen);
             final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
 
-            //        // Register the tab as being open.
-            //        documentToTabDataMap.put(docRef, tabData);
-            //        tabDataToDocumentMap.put(tabData, docRef);
-
             // Load the document and show the tab.
             final CloseContentEvent.Handler closeHandler = event -> {
                 // Tell the controller we are closing.

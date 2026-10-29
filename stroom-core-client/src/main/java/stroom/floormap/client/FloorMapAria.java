@@ -19,7 +19,6 @@ package stroom.floormap.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.UIObject;
 
 /// ARIA attribute helpers for the floor map's views.
@@ -39,8 +38,8 @@ import com.google.gwt.user.client.ui.UIObject;
 /// - Rows like *Position (X, Y)* hold two inputs under one visible
 ///   label, which cannot name both.
 ///
-/// [#label(UIObject, String)] is the fix where the target really is an
-/// input; [#group(UIObject, String)] is the fix for the composite and
+/// [#labelInnerControl(UIObject, String)] is the fix where a composite wraps a
+/// single input; [#group(UIObject, String)] is the fix for the
 /// multi-control cases, where the honest description of the row is "a named group
 /// of controls" rather than "one named control".
 ///
@@ -51,7 +50,6 @@ public final class FloorMapAria {
 
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_LABELLEDBY = "aria-labelledby";
-    private static final String ARIA_HIDDEN = "aria-hidden";
     private static final String ROLE = "role";
 
     /// Tag names that can take keyboard focus without an explicit tabindex. Used by
@@ -64,29 +62,12 @@ public final class FloorMapAria {
         // Utility class.
     }
 
-    /// Names a single control. Use only where the element really is the control —
-    /// on a wrapper `div` an `aria-label` is ignored, because an
-    /// element with no role has nothing to attach a name to. Use
-    /// [#group(UIObject, String)] there instead.
-    public static void label(final UIObject uiObject, final String label) {
-        if (uiObject != null) {
-            uiObject.getElement().setAttribute(ARIA_LABEL, label);
-        }
-    }
-
-    /// As [#label(UIObject, String)], for a raw element.
-    public static void label(final Element element, final String label) {
-        if (element != null) {
-            element.setAttribute(ARIA_LABEL, label);
-        }
-    }
-
     /// Names the real control nested inside a composite widget, rather than the
     /// widget's wrapper element.
     ///
     /// Use for a composite that wraps exactly one control — `TickBox`,
     /// whose root is a `label.tick-box` with the `<input>` inside it.
-    /// [#label(UIObject, String)] on such a widget lands the name on the wrapper,
+    /// An `aria-label` on such a widget lands the name on the wrapper,
     /// where it is dropped; [#group(UIObject, String)] would work but describes a
     /// single checkbox as a group of controls, which is a worse reading than naming the
     /// checkbox itself.
@@ -165,69 +146,6 @@ public final class FloorMapAria {
         }
     }
 
-    /// Names `target` after the text already sitting in a [Grid] cell.
-    ///
-    /// Several of the floor map's dialogs lay out label/control pairs as a
-    /// two-column `Grid`, which puts the label text in a `<td>`. A
-    /// `<td>` is not a `<label>`, so that text names nothing —
-    /// visually it reads as a form, but to a screen reader the controls are
-    /// anonymous.
-    ///
-    /// This wires the two together via `aria-labelledby` rather than by
-    /// swapping the cell for a real `<label for>`, because `aria-labelledby`
-    /// leaves the existing markup and CSS (`td:first-child` alignment and
-    /// colour rules) untouched. The trade-off is that clicking the text does not
-    /// focus the control the way a real `<label>` would.
-    ///
-    /// @param grid   the grid holding the label text
-    /// @param row    the label cell's row
-    /// @param column the label cell's column
-    /// @param target the control to name
-    public static void labelledByCell(final Grid grid,
-                                      final int row,
-                                      final int column,
-                                      final UIObject target) {
-        if (grid == null || target == null) {
-            return;
-        }
-        labelledBy(target, cellId(grid, row, column));
-    }
-
-    /// Marks a grid used only to lay out a form (a label beside each control) as presentation, so
-    /// that a screen reader reads its labels and controls in turn rather than announcing a table of
-    /// rows and columns. Its cells keep their ids, so [#labelledByCell(Grid, int, int, UIObject)]
-    /// still names the controls from them.
-    ///
-    /// @param grid The grid laying out the form.
-    public static void layoutTable(final Grid grid) {
-        if (grid != null) {
-            grid.getElement().setAttribute(ROLE, "presentation");
-        }
-    }
-
-    /// As [#labelledByCell(Grid, int, int, UIObject)], for a composite widget whose real control
-    /// is inside it, e.g. a selection box, whose combobox is its text box: the name goes on that
-    /// control, where on the wrapper it would be dropped (see [#labelInnerControl(UIObject, String)]).
-    ///
-    /// @param grid   The grid holding the label's cell.
-    /// @param row    The label cell's row.
-    /// @param column The label cell's column.
-    /// @param target The composite widget holding the control to name.
-    public static void labelledByCellInnerControl(final Grid grid,
-                                                  final int row,
-                                                  final int column,
-                                                  final UIObject target) {
-        if (grid == null || target == null) {
-            return;
-        }
-        final Element control = firstFocusable(target.getElement());
-        if (control == null) {
-            labelledByCell(grid, row, column, target);
-            return;
-        }
-        control.setAttribute(ARIA_LABELLEDBY, cellId(grid, row, column));
-    }
-
     /// As [#labelledBy(UIObject, String)], for a composite widget whose real control is inside it,
     /// e.g. a selection box, whose combobox is its text box: the name goes on that control, where on
     /// the wrapper it would be dropped (see [#labelInnerControl(UIObject, String)]).
@@ -244,51 +162,6 @@ public final class FloorMapAria {
             return;
         }
         control.setAttribute(ARIA_LABELLEDBY, id);
-    }
-
-    // The id of a grid cell, given one if it has none
-    private static String cellId(final Grid grid, final int row, final int column) {
-        final Element cell = grid.getCellFormatter().getElement(row, column);
-        // Reuse an id if the cell already has one — labelling two controls from
-        // the same cell (a value box and its unit list, say) must not renumber it.
-        String id = cell.getId();
-        if (id == null || id.isEmpty()) {
-            id = uniqueId("floormap-label");
-            cell.setId(id);
-        }
-        return id;
-    }
-
-    /// Hides `uiObject` from assistive technology while leaving it visible.
-    ///
-    /// Only correct when the content is genuinely redundant — decoration, or
-    /// text already carried by an adjacent control's accessible name. Hiding
-    /// anything else simply deletes it for screen-reader users.
-    public static void hide(final UIObject uiObject) {
-        if (uiObject != null) {
-            uiObject.getElement().setAttribute(ARIA_HIDDEN, "true");
-        }
-    }
-
-    /// Configures `uiObject` as a polite, atomic live region.
-    ///
-    /// `role="status"` carries an implicit `aria-live="polite"`; both are set
-    /// because some screen readers honour only one. `aria-atomic` makes the region read
-    /// as a whole sentence rather than diffed word by word.
-    ///
-    /// The caller still owns visibility: a live region must remain rendered, since a hidden
-    /// one is dropped from the accessibility tree and never announces. The floor map's regions
-    /// use the `stroom-floormap-visually-hidden` class for that.
-    ///
-    /// Exists so the canvas and Layers panels cannot drift apart on the attribute triple —
-    /// they had it copied verbatim.
-    public static void liveRegion(final UIObject uiObject) {
-        if (uiObject != null) {
-            final Element element = uiObject.getElement();
-            element.setAttribute(ROLE, "status");
-            element.setAttribute("aria-live", "polite");
-            element.setAttribute("aria-atomic", "true");
-        }
     }
 
     /// A document-unique id, for wiring up `for` / `aria-labelledby`.

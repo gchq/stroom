@@ -222,7 +222,7 @@
     text-decoration: none;
 }
 
-/* A sortable header's title: its name, then its sort icon (DataGridSortIcon) */
+/* A sortable header's title: its name, then its sort icon (SortIcon) */
 .data-grid__sort {
     display: flex;
     gap: 5px;

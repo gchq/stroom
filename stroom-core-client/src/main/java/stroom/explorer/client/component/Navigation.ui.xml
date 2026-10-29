@@ -6,7 +6,7 @@
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:e="urn:import:stroom.explorer.client.component">
-    <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
+    <g:FlowPanel styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <!-- A click on the logo opens the main menu, as the Main Menu button beside it does, so
                  for the keyboard and screen readers it would be a second, nameless Main Menu: it is

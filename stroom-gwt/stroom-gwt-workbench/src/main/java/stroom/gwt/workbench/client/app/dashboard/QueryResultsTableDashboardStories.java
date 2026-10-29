@@ -81,7 +81,7 @@ public final class QueryResultsTableDashboardStories {
                     // column's menu when its header is clicked (not a context menu)
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("5")).toBeInTheDocument());
-                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Count"));
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Count"));
                     play.click(DashboardPlays.menuItem(screen, "Edit Expression"));
                     final Play dialog = DashboardPlays.dialog(screen, "Set Expression For 'Count'");
                     // The Ace editor has no label, and the help's quick filter's placeholder is

@@ -176,11 +176,6 @@ public final class FloorMapCluster {
         return Math.min(1.0 + GROWTH_PER_DECADE * Math.log10(memberCount), MAX_SIZE_FACTOR);
     }
 
-    /// The widest any cluster glyph can be drawn, as a multiple of a lone entity's.
-    public static double maxSizeFactor() {
-        return MAX_SIZE_FACTOR;
-    }
-
     /// `true` if the given entity is one of this cluster's members.
     ///
     /// @param id an entity id; may be `null`

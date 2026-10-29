@@ -51,8 +51,6 @@ public class AppModule extends AbstractGinModule {
 
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
-        // bind(CurrentUser.class).in(Singleton.class);
-
         bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();

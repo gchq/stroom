@@ -146,8 +146,6 @@ public class DynamicColumnSelectionListModel
             resultPage = counts;
         } else if ("Custom.".equals(parentPath)) {
             resultPage = custom;
-//        } else if ("Annotation Links.".equals(parentPath)) {
-//            resultPage = annotationLinks;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {

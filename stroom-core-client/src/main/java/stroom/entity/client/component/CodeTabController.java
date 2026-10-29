@@ -49,7 +49,7 @@ public class CodeTabController extends Controller {
         initWidget(view);
         this.editor = own(editor).attach(view);
         own(editor.addValueChangeHandler(event -> onChange.run()));
-        own(editor.addFormatListener(event -> onChange.run()));
+        own(editor.addFormatListener(() -> onChange.run()));
         watch(Contexts.READ_ONLY, readOnly -> {
             editor.setReadOnly(readOnly);
             editor.getFormatAction().setAvailable(!readOnly);

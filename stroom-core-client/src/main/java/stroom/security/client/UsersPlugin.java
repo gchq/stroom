@@ -65,7 +65,6 @@ public class UsersPlugin extends MonitoringPlugin<UsersController> {
                             .priority(20)
                             .icon(ICON)
                             .text(SCREEN_NAME)
-//                            .action(getOpenAction())
                             .command(this::open)
                             .build());
         }

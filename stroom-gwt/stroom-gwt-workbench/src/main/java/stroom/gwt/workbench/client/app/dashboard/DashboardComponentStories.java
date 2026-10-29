@@ -280,7 +280,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
                     final Play rename = DashboardPlays.dialog(screen, "Rename Field");
                     final Query name = rename.getByLabelText("Name");
@@ -301,7 +301,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
                     final Play rename = DashboardPlays.dialog(screen, "Rename Field");
                     final Query name = rename.getByLabelText("Name");
@@ -323,7 +323,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     // Stroom opens a column's menu when its header is clicked
-                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.waitFor(() -> play.expect(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT))
                             .toBeInTheDocument());
                     for (final String item : List.of("Edit Expression", "Group", "Duplicate", "Remove")) {
@@ -391,7 +391,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.click(DashboardPlays.menuItem(screen, "Filter"));
                     final Play dialog = DashboardPlays.dialog(screen, "Filter 'Name'");
                     play.click(dialog.getByText("Include Exclude", StroomDom.LINK_TAB_LABEL));
@@ -456,7 +456,7 @@ public final class DashboardComponentStories {
                     play.expect(filterBox(play)).toHaveClass("dashboard-table-filter-cell-text-disabled");
 
                     // A click turns it on again, without opening the column's menu
-                    DashboardPlays.clickHeader(play, filterButton(play));
+                    StroomDom.clickHeader(play, filterButton(play));
                     play.waitFor(() -> play.expect(filterButton(play)).toHaveAttribute("title", "Disable Filter"));
                     play.expect(filterBox(play)).not().toHaveClass("dashboard-table-filter-cell-text-disabled");
                     play.expect(play.screen().querySelector(StroomDom.MENU_ITEM_TEXT)).not().toBeInTheDocument();
@@ -523,9 +523,9 @@ public final class DashboardComponentStories {
                     play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
                     // The grid's Enabled column has no header text, and the toolbar's buttons are
                     // SelectionHandlersController's, each named for what it acts on
-                    play.waitFor(() -> play.expect(settings.getByText("Expression", "th, [data-hcol], [data-hcol] *"))
+                    play.waitFor(() -> play.expect(settings.getByText("Expression", StroomDom.GRID_HEADER_TEXT))
                             .toBeInTheDocument());
-                    play.expect(settings.querySelectorAll("th, [data-hcol]")).toHaveLength(2);
+                    play.expect(settings.querySelectorAll(StroomDom.GRID_HEADER_CELL)).toHaveLength(2);
                     for (final String title : List.of("New Selection Handler", "Edit Selected Selection Handler",
                             "Duplicate Selected Selection Handler", "Delete Selected Selection Handler",
                             "Move Selection Handler Up", "Move Selection Handler Down")) {
@@ -742,9 +742,9 @@ public final class DashboardComponentStories {
                                             DashboardPlays.componentRequest(body, "t1"),
                                             "tableSettings", "conditionalFormattingRules", 0, "id")))
                                     .toSpyMatcher()));
-                    // The rows: a <tr> in MyDataGrid, a role="row" div in the new grid
-                    play.expect(play.getByText("beta").closest("tr, [role=\"row\"]")).toHaveClass("cf-red");
-                    play.expect(play.getByText("alpha").closest("tr, [role=\"row\"]")).not().toHaveClass("cf-red");
+                    // The rows (role="row")
+                    play.expect(play.getByText("beta").closest("[role=\"row\"]")).toHaveClass("cf-red");
+                    play.expect(play.getByText("alpha").closest("[role=\"row\"]")).not().toHaveClass("cf-red");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A custom conditional formatting rule colours the rows that match with its dark
@@ -861,7 +861,7 @@ public final class DashboardComponentStories {
         final Play screen = play.screen();
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-        DashboardPlays.clickHeader(play, play.within(DashboardPlays.headerCell(play, "Name"))
+        StroomDom.clickHeader(play, play.within(DashboardPlays.headerCell(play, "Name"))
                 .querySelector(".column-header__value-filter-icon"));
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 COLUMN_VALUES_REQUEST.toSpyMatcher()));

@@ -37,3 +37,8 @@
     width: 100%;
     height: 10px;
 }
+
+/* Holds the text, so the busy spinner centres on it */
+.source-viewer__content {
+    position: relative;
+}

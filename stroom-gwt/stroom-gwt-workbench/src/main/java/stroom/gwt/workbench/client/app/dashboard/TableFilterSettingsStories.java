@@ -73,7 +73,7 @@ public final class TableFilterSettingsStories {
                     // The tick boxes are a grid's (TickBoxCell), found by their column's row; the
                     // select-all tick box is the grid's header
                     play.waitFor(() -> play.expect(dialog.getByText("Count")).toBeInTheDocument());
-                    play.expect(dialog.querySelector("th .tick-box, [data-hcol] .tick-box")).toBeInTheDocument();
+                    play.expect(dialog.querySelector("[data-hcol] .tick-box")).toBeInTheDocument();
                     play.expect(tickBox(dialog, "Name")).toBeInTheDocument();
                     final Query count = tickBox(dialog, "Count");
                     play.expect(count).toHaveAttribute("aria-checked", "false");

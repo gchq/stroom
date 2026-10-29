@@ -94,16 +94,6 @@ public class IconCell extends AbstractCell<CellIcon> {
                     value.getName(),
                     value.getIcon(),
                     className));
-//            if (value.getTitle() != null && !value.getTitle().isEmpty()) {
-//                sb.append(template.icon(
-//                        className,
-//                        value.getTitle(),
-//                        SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
-//            } else {
-//                sb.append(template.icon(
-//                        className,
-//                        SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
-//            }
         }
     }
 }

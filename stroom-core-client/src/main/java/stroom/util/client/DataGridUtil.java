@@ -18,7 +18,6 @@ package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
-import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.IconCell;
@@ -40,7 +39,6 @@ import stroom.docref.DocRef;
 import stroom.util.client.DataGridComparatorFactory.Builder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.UserRef;
@@ -63,7 +61,6 @@ import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 
 import java.util.Objects;
 import java.util.OptionalDouble;
-import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -116,17 +113,6 @@ public class DataGridUtil {
                         extractor.apply(row),
                         highlightCssColour,
                         isHighlightedPredicate.test(row));
-    }
-
-    public static <T_ROW> Function<T_ROW, SafeHtml> colouredCellExtractor(
-            final Function<T_ROW, String> extractor,
-            final Function<String, String> valueToColourFunc) {
-
-        return row -> {
-            final String value = extractor.apply(row);
-            final String colourCode = valueToColourFunc.apply(value);
-            return SafeHtmlUtil.getColouredText(extractor.apply(row), colourCode);
-        };
     }
 
     public static <T_ROW, T_CELL> Column<T_ROW, T_CELL> column(
@@ -208,30 +194,6 @@ public class DataGridUtil {
         };
     }
 
-//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableTextColumn(
-//            final T_VIEW view,
-//            final Function<T_ROW, String> cellValueExtractor,
-//            final String name,
-//            final int width) {
-//        view.addResizableColumn(buildColumn(cellValueExtractor, TextCell::new), name, width);
-//    }
-//
-//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableNumericTextColumn(
-//            final T_VIEW view,
-//            final Function<T_ROW, Number> cellValueExtractor,
-//            final String name,
-//            final int width) {
-//        view.addResizableColumn(numericTextColumn(cellValueExtractor), name, width);
-//    }
-//
-//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableSafeHtmlColumn(
-//            final T_VIEW view,
-//            final Function<T_ROW, SafeHtml> cellValueExtractor,
-//            final String name,
-//            final int width) {
-//        view.addResizableColumn(safeHtmlColumn(cellValueExtractor), name, width);
-//    }
-
     public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
@@ -271,15 +233,6 @@ public class DataGridUtil {
         return val
                 ? "Yes"
                 : "No";
-    }
-
-    /**
-     * @return A IEC byte string (e.g. '369G') or '?'
-     */
-    public static String formatAsIECByteString(final OptionalLong optSizeBytes) {
-        return optSizeBytes != null && optSizeBytes.isPresent()
-                ? ModelStringUtil.formatIECByteSizeString(optSizeBytes.getAsLong())
-                : "?";
     }
 
     /**
@@ -374,30 +327,6 @@ public class DataGridUtil {
                 () -> new ValueSpinnerCell(name, minValue, maxValue));
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, String, ColourSwatchCell> colourSwatchColumnBuilder(
-            final Function<T_ROW, String> cssColourExtractor) {
-        return new ColumnBuilder<T_ROW, String, ColourSwatchCell>(cssColourExtractor, ColourSwatchCell::new);
-    }
-
-    public static <T_ROW> ColumnBuilder<T_ROW, String, TextCell> iecByteStringColumnBuilder(
-            final Function<T_ROW, Long> bytesExtractor, final String valueIfNull) {
-
-        final Function<T_ROW, String> bytesAsStrExtractor = row -> {
-            if (row == null || bytesExtractor == null) {
-                return valueIfNull;
-            } else {
-                final Long bytes = bytesExtractor.apply(row);
-                if (bytes == null) {
-                    return valueIfNull;
-                } else {
-                    return ModelStringUtil.formatIECByteSizeString(bytes);
-                }
-            }
-        };
-
-        return new ColumnBuilder<T_ROW, String, TextCell>(bytesAsStrExtractor, TextCell::new);
-    }
-
     /**
      * Builds a read only tick box that is either ticked or un-ticked.
      *
@@ -441,14 +370,6 @@ public class DataGridUtil {
                 false,
                 false,
                 isUpdatable));
-    }
-
-    public static <T_ROW> Function<T_ROW, TickBoxState> createTickBoxExtractor(
-            final Function<T_ROW, Boolean> booleanExtractor) {
-        return row -> {
-            final Boolean bool = Objects.requireNonNull(booleanExtractor).apply(row);
-            return TickBoxState.fromBoolean(bool);
-        };
     }
 
     /**
@@ -621,20 +542,6 @@ public class DataGridUtil {
                         .build());
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> feedRefColumnBuilder(
-            final Function<T_ROW, String> nameExtractionFunction,
-            final RefCellsController refCells) {
-
-        Objects.requireNonNull(nameExtractionFunction);
-
-        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
-                Function.identity(),
-                () -> refCells
-                        .configure(new FeedRefCell.Builder<T_ROW>())
-                        .nameFunction(nameExtractionFunction)
-                        .build());
-    }
-
     /**
      * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
      * and to open the doc.
@@ -689,15 +596,6 @@ public class DataGridUtil {
     public static <T_ROW> Function<T_ROW, String> toStringFunc(final Function<T_ROW, Object> valueExtractor) {
         return (T_ROW row) ->
                 NullSafe.toStringOrElse(row, valueExtractor, "");
-    }
-
-    /**
-     * Returns a {@link Function} that will extract a boolean value from the row and
-     * render it as Yes/No.
-     */
-    public static <T_ROW> Function<T_ROW, String> toYesNoFunc(final Function<T_ROW, Boolean> valueExtractor) {
-        return (T_ROW row) ->
-                DataGridUtil.formatAsYesNo(valueExtractor.apply(row));
     }
 
     /**

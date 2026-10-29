@@ -77,7 +77,7 @@ public class IconBox extends Component {
     ///
     /// @param widget   The field, or a widget holding it (its first input is the field).
     /// @param svgImage The icon, e.g. [SvgImage#CALENDAR].
-    public void setWidget(final Widget widget, final SvgImage svgImage) {
+    private void setWidget(final Widget widget, final SvgImage svgImage) {
         addField(widget);
         setIcon(svgImage);
     }
@@ -120,7 +120,7 @@ public class IconBox extends Component {
     /// value spinner's.
     ///
     /// @param widget The field, or a widget holding it (its first input is the field).
-    public void setDropDownWidget(final Widget widget) {
+    private void setDropDownWidget(final Widget widget) {
         setWidget(widget, SvgImage.ARROW_DOWN);
         addStyleName(DROP_DOWN_CLASS_NAME);
     }

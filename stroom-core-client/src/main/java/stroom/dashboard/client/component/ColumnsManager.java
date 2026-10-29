@@ -634,7 +634,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        // An action, so not SortIcon.UNSORTED, which names the state
+        // An action, so it says what it does rather than naming the unsorted state
         menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)

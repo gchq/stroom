@@ -82,8 +82,6 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     ToolbarButton deleteAll;
     @UiField
     ToolbarButton configure;
-    @UiField
-    Label emptyPrompt;
 
     @UiField
     SimplePanel markdownPreview;

@@ -246,7 +246,6 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
                 hideRequestHandler = e -> {
-//                    GWT.log("isOk: " + e.isOk());
                     HidePopupEvent.builder(controller)
                             .autoClose(e.isAutoClose())
                             .ok(e.isOk())
@@ -269,7 +268,6 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 
-//            if (!controller.getView().asWidget().isVisible()) {
             controller.fireEvent(new ShowPopupEvent(
                     controller,
                     popupType,
@@ -282,7 +280,6 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                     hideHandler,
                     modal,
                     elements));
-//            }
         }
     }
 }

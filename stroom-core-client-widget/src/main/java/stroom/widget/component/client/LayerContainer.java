@@ -25,7 +25,5 @@ public interface LayerContainer extends RequiresResize {
 
     void clear();
 
-    void setFade(boolean fade);
-
     void add(IsWidget widget);
 }

@@ -11,7 +11,7 @@
     <g:FlowPanel styleName="find-panel find-panel--dialog max dock-container-vertical">
         <g:FlowPanel styleName="find-panel__top dock-container-horizontal dock-min">
             <form:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus" ariaLabel="Find in content"/>
-            <p:Toolbar ui:field="buttonContainer" name="Search options"
+            <p:Toolbar name="Search options"
                        addStyleNames="dock-min find-buttons toolbar--control">
                 <p:ToolbarToggleButton ui:field="toggleMatchCase" svg="CASE_SENSITIVE" title="Match case"/>
                 <p:ToolbarToggleButton ui:field="toggleRegex" svg="REGEX" title="Regex"/>

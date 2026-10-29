@@ -1272,6 +1272,15 @@ after wave 34; the first of [`UI_AUDIT.md`](UI_AUDIT.md)'s waves.
 > modules and story-only widgets (with their stories) went. All 1,739 stories pass with the leak
 > check, and no screenshot changed but the visualisations' known unsteady ones. See `wave-35.md`.
 
+## 36. UI audit wave 2: dead code, part 2
+
+Record: [`component-migration/wave-36.md`](component-migration/wave-36.md). Added 29 October 2026,
+after wave 35.
+
+> **Done, 29 October 2026**: commented-out code, unused members, `FormatEvent` and `EventBinder`
+> went; the XSD browser heads a pattern restriction "Pattern"; `TestTemplateBindings` checks every
+> `@UiField` is used and every `ui:field` bound. See `wave-36.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

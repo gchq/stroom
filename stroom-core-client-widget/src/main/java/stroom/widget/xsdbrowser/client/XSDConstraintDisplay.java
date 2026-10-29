@@ -44,9 +44,9 @@ public class XSDConstraintDisplay extends Composite {
             }
 
             final XSDConstraint constraints = new XSDConstraint(typeNode);
-            SimplePanel list = getList(constraints.getEnumerationList(), true);
+            SimplePanel list = getList(constraints.getEnumerationList(), "Enumeration");
             if (list == null) {
-                list = getList(constraints.getPatternList(), true);
+                list = getList(constraints.getPatternList(), "Pattern");
             }
             if (list != null) {
                 layout.setWidget(list);
@@ -54,15 +54,10 @@ public class XSDConstraintDisplay extends Composite {
         }
     }
 
-    private SimplePanel getList(final List<String> list, final boolean enumeration) {
-        if (list != null && list.size() > 0) {
-            Label lblRestrictionType = null;
-
-            if (enumeration) {
-                lblRestrictionType = oneLineLabel("Enumeration");
-            } else {
-                lblRestrictionType = oneLineLabel("Pattern");
-            }
+    // The restriction's values under a heading naming its kind, or null if it has none
+    private SimplePanel getList(final List<String> list, final String restrictionType) {
+        if (list != null && !list.isEmpty()) {
+            final Label lblRestrictionType = oneLineLabel(restrictionType);
             lblRestrictionType.addStyleName("xsd-browser__restriction-type");
 
             // The restriction's type, then its values, one above another

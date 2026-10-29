@@ -5,7 +5,7 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="dock-container-vertical">
         <g:SimplePanel styleName="dock-max">
-            <dg:PagerPanel ui:field="pager">
+            <dg:PagerPanel>
                 <dg:DataGrid ui:field="dataGrid" tableName="Elastic Index Fields"/>
             </dg:PagerPanel>
         </g:SimplePanel>

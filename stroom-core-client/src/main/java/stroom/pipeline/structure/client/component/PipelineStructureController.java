@@ -632,9 +632,6 @@ public class PipelineStructureController extends Controller {
         } else {
             final CodeEditorController jsonEditor = makeDialog(jsonEditorProvider).attach(new CodeEditor());
             jsonEditor.setMode(AceEditorMode.JSON);
-//            jsonEditor.getIndicatorsOption().setAvailable(false);
-//            jsonEditor.getIndicatorsOption().setOn(false);
-//            jsonEditor.getStylesOption().setOn(true);
             jsonEditor.asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);

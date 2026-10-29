@@ -1122,16 +1122,17 @@ class TestFloorMapEditorModel {
     // onTimeListFetched
     // -----------------------------------------------------------------------
 
-    /// Entries fetched for the time list are stored sorted by effective time,
+    /// Entries fetched for the time list are listed sorted by effective time,
     /// regardless of the order they were fetched in.
     @Test
     void testOnTimeListFetched_sortsEntries() {
+        model.setSelectedFactKey("k1");
         model.onTimeListFetched(List.of(
                 entry("k1", 300, "{}"),
                 entry("k1", 100, "{}"),
                 entry("k1", 200, "{}")));
 
-        final List<TemporalEntry> stored = model.getServerEntriesForSelectedFact();
+        final List<TemporalEntry> stored = model.buildMergedTimeList();
         assertThat(stored.getFirst().getEffectiveTimeMs()).isEqualTo(100);
         assertThat(stored.get(1).getEffectiveTimeMs()).isEqualTo(200);
         assertThat(stored.get(2).getEffectiveTimeMs()).isEqualTo(300);
@@ -1141,8 +1142,9 @@ class TestFloorMapEditorModel {
     /// than throwing.
     @Test
     void testOnTimeListFetched_null_yieldsEmpty() {
+        model.setSelectedFactKey("k1");
         model.onTimeListFetched(null);
-        assertThat(model.getServerEntriesForSelectedFact()).isEmpty();
+        assertThat(model.buildMergedTimeList()).isEmpty();
     }
 
     // -----------------------------------------------------------------------

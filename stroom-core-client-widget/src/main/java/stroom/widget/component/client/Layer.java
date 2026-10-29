@@ -25,10 +25,6 @@ public interface Layer extends RequiresResize {
     String VISIBLE = "layer-container__layer--visible";
     String FADE = "layer-container__layer--fade";
 
-//    double getOpacity();
-//
-//    void setOpacity(double opacity);
-
     void setLayerVisible(boolean fade, boolean visible);
 
     void addLayer(LayerContainer container);
