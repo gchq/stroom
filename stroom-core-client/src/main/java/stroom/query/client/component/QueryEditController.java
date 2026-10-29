@@ -128,7 +128,7 @@ public class QueryEditController
         super(eventBus);
         this.view = view;
         initWidget(view);
-        own(queryHelp);
+        own(queryHelp).attach(view.getQueryHelp());
         own(queryToolbar);
         own(queryResultController);
         this.queryHelp = queryHelp;
@@ -253,7 +253,6 @@ public class QueryEditController
 //        this.editor.getWidget().addAttachHandler(event ->
 //                this.editor.registerCompletionProviders(queryHelp.getKeyedAceCompletionProvider()));
 
-        view.setHelp(queryHelp);
 
         view.addTab(TABLE);
         view.addTab(VISUALISATION);

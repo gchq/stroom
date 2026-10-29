@@ -112,7 +112,7 @@ public class ProcessorsController extends Controller {
         this.view = view;
         initWidget(view);
         own(processorList);
-        own(expressionTree);
+        own(expressionTree).attach(view.getExpressionTree());
         this.processorList = processorList;
         this.processorEditProvider = processorEditProvider;
         this.expressionTree = expressionTree;
@@ -125,7 +125,6 @@ public class ProcessorsController extends Controller {
         expressionTree.setSelectionModel(null);
 
         view.setProcessorList(processorList);
-        view.setDetails(expressionTree);
 
         own(processorList.getSelectionModel().addSelectionHandler(event -> {
             updateData();

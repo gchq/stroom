@@ -20,6 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
@@ -33,8 +34,6 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
@@ -51,7 +50,7 @@ public class ProcessorEdit extends Component {
             new SimpleDuration(30L, TimeUnit.SECONDS);
 
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
     @UiField
     DateTimeBox minMetaCreateTimeMs;
     @UiField
@@ -83,9 +82,9 @@ public class ProcessorEdit extends Component {
         maxTaskCreationDelayEnabled.addValueChangeHandler(e -> updateEnabled());
     }
 
-    /// @param view The expression that selects the filter's streams.
-    public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view);
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// @return The earliest create time of the streams processed, or `null` for none.

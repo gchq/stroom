@@ -23,8 +23,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An expression's editor, which its [ExpressionEditorController] fills: a toolbar of the
@@ -47,7 +45,7 @@ public class ExpressionEditor extends Component {
     @UiField
     ToolbarButton deleteItemButton;
     @UiField
-    SimplePanel expressionTree;
+    ExpressionTree expressionTree;
 
     private Runnable onAddTerm = () -> {
     };
@@ -60,7 +58,7 @@ public class ExpressionEditor extends Component {
     private Runnable onDelete = () -> {
     };
 
-    /// Makes the editor, with no tree yet.
+    /// Makes the editor, with its tree.
     public ExpressionEditor() {
         initWidget(BINDER.createAndBindUi(this));
         addTermButton.setOnClick(() -> onAddTerm.run());
@@ -70,9 +68,9 @@ public class ExpressionEditor extends Component {
         deleteItemButton.setOnClick(() -> onDelete.run());
     }
 
-    /// @param tree The expression's tree, which its controller owns.
-    public void setExpressionTree(final IsWidget tree) {
-        expressionTree.setWidget(tree.asWidget());
+    /// @return The expression's tree, which its controller attaches the tree's controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
     }
 
     /// @param framed Whether the editor is framed as a control is (`stroom-control`), as it is

@@ -45,7 +45,7 @@ says.
 ## Making, owning and releasing
 
 * **Smart parts attach.** A part that needs data (e.g. a document picker) is declared dumb in the template (`<dd:DropDownBox ui:field="feedBox"/>`), and the controller makes the part's controller and attaches it: `feedSelection = make(docSelectionProvider); feedSelection.attach(view.getFeedBox());`.
-  A part that has no component of its own to declare goes in a slot: the component has a setter for it (`setExpressionEditor(IsWidget)`), and the controller owns the part's controller and passes its widget in.
+  A child with a component of its own is declared the same way, and its controller, which doesn't inject its view, attaches to it: `expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());` (`ExpressionEditorController.attach(ExpressionEditor)`). Only top-level screens and dialogs inject their views. A slot (a setter taking an `IsWidget`) is only for a child chosen at runtime.
 
 * **Own what you show.** Whoever shows a controller owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes one owned until it is hidden (a dialog), `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
   Something that isn't a controller (a plugin, a manager, an app-wide helper) injects `AppRoot`: `appRoot.make(provider)` makes one the app keeps (e.g. a dialog shown again and again), `appRoot.makeDialog(provider)` one owned until it is hidden, and `ControllerDialog.showOnce(appRoot, provider.get())` shows a dialog for one use; a helper a controller makes is given `() -> makeDialog(provider)` by it.

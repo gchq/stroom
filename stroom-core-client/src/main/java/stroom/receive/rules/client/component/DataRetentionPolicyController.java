@@ -91,14 +91,13 @@ public class DataRetentionPolicyController extends Controller {
         this.view = view;
         initWidget(view);
         own(dataRetentionPolicyList);
-        own(expressionTree);
+        own(expressionTree).attach(view.getExpressionTree());
         this.dataRetentionPolicyList = dataRetentionPolicyList;
         this.expressionTree = expressionTree;
         this.ruleEditorProvider = ruleEditorProvider;
         this.restFactory = restFactory;
 
         view.setRuleList(dataRetentionPolicyList, dataRetentionPolicyList.getToolbar());
-        view.setExpression(expressionTree);
         view.setOnAction(this::onAction);
 
         // Stop users from selecting expression items.

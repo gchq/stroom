@@ -19,6 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.query.QueryCell;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.query.client.component.ExpressionTree;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
@@ -28,8 +29,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -43,7 +42,7 @@ public class QueryHistory extends Component {
     @UiField
     DataGrid<StoredQuery> list;
     @UiField
-    ScrollPanel expression;
+    ExpressionTree expressionTree;
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel = new MultiSelectionModelImpl<>();
     private Consumer<StoredQuery> onSelect = query -> {
@@ -97,9 +96,9 @@ public class QueryHistory extends Component {
         return selectionModel.getSelected();
     }
 
-    /// @param expressionTree The chosen query's expression, a controller of its own.
-    public void setExpressionTree(final IsWidget expressionTree) {
-        expression.setWidget(expressionTree.asWidget());
+    /// @return The expression's tree, which its controller attaches the tree's controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
     }
 
     /// @param onSelect Given the query chosen, or `null` for none, each time the choice changes.

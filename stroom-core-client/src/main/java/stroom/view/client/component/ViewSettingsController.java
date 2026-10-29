@@ -61,7 +61,7 @@ public class ViewSettingsController extends Controller {
                                   final UiConfigCache uiConfigCache) {
         super(eventBus);
         initWidget(view);
-        own(expressionEditor);
+        own(expressionEditor).attach(view.getExpressionEditor());
         this.expressionEditor = expressionEditor;
 
         dataSource = make(docSelectionProvider);
@@ -75,7 +75,6 @@ public class ViewSettingsController extends Controller {
         pipeline.setIncludedTypes(PipelineDoc.TYPE);
         pipeline.setRequiredPermissions(DocumentPermission.USE);
 
-        view.setExpression(expressionEditor);
 
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(guard(extendedUiConfig -> {

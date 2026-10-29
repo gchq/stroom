@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A selection handler: whether it is enabled, its expression and the selection it can use -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dc="urn:import:stroom.dashboard.client.component"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
@@ -16,12 +18,16 @@
                             label="Additional Query Expression"
                             helpText="Expression added when other components on the dashboard have a selection. Use selection parameters such as ${{component.table-AB1C2.selection.Name}, which you can insert from Current Selection. If several handlers are enabled, their expressions are combined with OR."
                             screenReaderText="Use selection parameters, e.g. ${{component.&lt;id&gt;.selection.&lt;column&gt;}.">
-                <g:SimplePanel ui:field="layout" styleName="dock-max control-box"/>
+                <g:SimplePanel styleName="dock-max control-box">
+                    <q:ExpressionEditor ui:field="expressionEditor"/>
+                </g:SimplePanel>
             </form:FormGroup>
             <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
                             label="Current Selection"
                             helpText="Parameters and selected values currently available from other components. Use the insert button next to a value to add it to the expression, or the copy button to copy it.">
-                <g:SimplePanel ui:field="currentSelection" styleName="dock-max overflow-hidden"/>
+                <g:SimplePanel styleName="dock-max overflow-hidden">
+                    <dc:CurrentSelection ui:field="currentSelection"/>
+                </g:SimplePanel>
             </form:FormGroup>
         </split:SplitPane>
     </g:FlowPanel>

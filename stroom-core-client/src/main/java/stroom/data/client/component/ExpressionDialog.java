@@ -16,13 +16,12 @@
 
 package stroom.data.client.component;
 
+import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The filter dialogs' content (Filter Streams, Filter Processors and the like): an expression
@@ -32,17 +31,16 @@ public class ExpressionDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
 
     /// Makes the content.
     public ExpressionDialog() {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param expressionEditor The expression editor, which its controller makes with its own
-    ///                         content.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
 

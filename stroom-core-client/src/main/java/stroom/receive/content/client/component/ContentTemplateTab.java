@@ -16,6 +16,7 @@
 
 package stroom.receive.content.client.component;
 
+import stroom.query.client.component.ExpressionTree;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
@@ -44,7 +45,7 @@ public class ContentTemplateTab extends Component {
     @UiField
     FormGroup expressionFormGroup;
     @UiField
-    SimplePanel expression;
+    ExpressionTree expressionTree;
 
     /// Makes the screen, with no content until it is given it.
     public ContentTemplateTab() {
@@ -73,17 +74,17 @@ public class ContentTemplateTab extends Component {
         }
     }
 
+    /// @return The selected template's expression's tree, which its controller attaches the tree's
+    ///         controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
+    }
+
     /// Shows the selected template's expression, or hides it.
     ///
-    /// @param view The expression's view, or null for none.
-    public void setExpressionView(final IsWidget view) {
-        if (view != null) {
-            this.expressionFormGroup.setVisible(true);
-            this.expression.setWidget(view.asWidget());
-        } else {
-            this.expressionFormGroup.setVisible(false);
-            this.expression.setWidget(null);
-        }
+    /// @param visible Whether it is shown, as a template is selected.
+    public void setExpressionVisible(final boolean visible) {
+        expressionFormGroup.setVisible(visible);
     }
 
     // --------------------------------------------------------------------------------

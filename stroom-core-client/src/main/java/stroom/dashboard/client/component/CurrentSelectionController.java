@@ -23,25 +23,34 @@ import stroom.widget.component.client.Controller;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A dashboard's current selection ([CurrentSelection]): a press on a value copies it, or inserts
 /// it where its owner says.
 public class CurrentSelectionController extends Controller {
 
-    private final CurrentSelection view;
+    private CurrentSelection view;
     private Consumer<String> onInsert;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(CurrentSelection)] gives it its content.
     ///
     /// @param eventBus The application's event bus.
-    /// @param view     The content.
     @Inject
-    public CurrentSelectionController(final EventBus eventBus, final CurrentSelection view) {
+    public CurrentSelectionController(final EventBus eventBus) {
         super(eventBus);
-        this.view = view;
+    }
+
+    /// Attaches this to a current selection, e.g. one a template declares. The current selection
+    /// is then this controller's widget, e.g. to show it as a dialog.
+    ///
+    /// @param view The current selection.
+    /// @return This, for its owner to keep.
+    public CurrentSelectionController attach(final CurrentSelection view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.setOnMouseDown(event -> CopyTextUtil.onClick(event, this, onInsert));
+        return this;
     }
 
     /// Shows a dashboard's current selection.

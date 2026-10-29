@@ -22,6 +22,7 @@ import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.CustomConditionalFormattingStyle;
 import stroom.query.api.TextAttributes;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
@@ -31,7 +32,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -47,7 +47,7 @@ public class ConditionalFormattingRuleEditor extends Component {
     @UiField
     FormGroup customStyleGroup;
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
     @UiField
     TickBox enabled;
     @UiField
@@ -87,9 +87,9 @@ public class ConditionalFormattingRuleEditor extends Component {
         formattingStyle.setValue(ConditionalFormattingStyle.NONE);
     }
 
-    /// @param expressionEditor The expression editor, a controller of its own.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// @return Whether matching rows are hidden.

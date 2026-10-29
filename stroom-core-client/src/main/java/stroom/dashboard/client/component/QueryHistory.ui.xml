@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A query's history, above the expression of the one chosen -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
@@ -9,6 +10,8 @@
         <g:SimplePanel styleName="max stroom-control">
             <dg:DataGrid ui:field="list" pageSize="100000" profile="LISTBOX" accessibleName="Query history"/>
         </g:SimplePanel>
-        <g:ScrollPanel ui:field="expression" styleName="max stroom-control"/>
+        <g:ScrollPanel styleName="max stroom-control">
+            <q:ExpressionTree ui:field="expressionTree"/>
+        </g:ScrollPanel>
     </split:SplitPane>
 </ui:UiBinder>

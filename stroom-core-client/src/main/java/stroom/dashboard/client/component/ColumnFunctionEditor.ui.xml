@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A dashboard table column's expression: the query help beside its editor -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:ed="urn:import:stroom.editor.client.component"
@@ -8,7 +9,9 @@
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical column-function-editor">
         <split:SplitPane thin="true" sizes="300px, *"
                          names="Help, Expression" addStyleNames="dock-max control-box">
-            <g:SimplePanel ui:field="queryHelp" styleName="max"/>
+            <g:SimplePanel styleName="max">
+                <q:QueryHelp ui:field="queryHelp"/>
+            </g:SimplePanel>
             <g:SimplePanel styleName="dock-max">
                 <ed:CodeEditor ui:field="editor"/>
             </g:SimplePanel>

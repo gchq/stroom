@@ -1,5 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
@@ -53,8 +54,9 @@
                         label="Data Retention Expression (matching data will be deleted)"
                         addStyleNames="default-min-sizes dock-max"
                         helpText="Documents in this index that match this expression are deleted by the 'Solr Index Retention' job. If the expression has no terms, nothing is deleted.">
-            <g:SimplePanel ui:field="retentionExpressionPanel"
-                           styleName="dock-max"/>
+            <g:SimplePanel styleName="dock-max">
+                <q:ExpressionEditor ui:field="retentionExpressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

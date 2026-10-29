@@ -61,11 +61,10 @@ public class ConditionalFormattingRuleEditorController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
         this.customRowStyleProvider = customRowStyleProvider;
         // The rule's form frames the expression's editor itself
         expressionEditor.setFramed(false);
-        view.setExpressionEditor(expressionEditor);
         view.setOnEditCustomStyle(this::onEditCustomStyle);
     }
 

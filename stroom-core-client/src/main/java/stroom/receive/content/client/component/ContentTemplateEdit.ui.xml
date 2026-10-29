@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A content template: what it creates, from which pipeline, for data matching its expression -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
@@ -80,7 +81,9 @@
                         label="Expression"
                         addStyleNames="dock-max"
                         helpText="When data arrives for a feed that does not exist yet, the first active template whose expression matches the data's header attributes is used. Attribute names are not case sensitive; an empty expression matches all data.">
-            <g:SimplePanel ui:field="expression" styleName="max"/>
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

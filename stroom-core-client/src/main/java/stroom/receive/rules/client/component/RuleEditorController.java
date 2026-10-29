@@ -60,10 +60,9 @@ public class RuleEditorController extends Controller {
                                 final UiConfigCache uiConfigCache) {
         super(eventBus);
         this.view = view;
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
         this.uiConfigCache = uiConfigCache;
         initWidget(view);
-        view.setExpressionEditor(expressionEditor.asWidget());
         view.setActions(List.of(ReceiveAction.RECEIVE, ReceiveAction.REJECT, ReceiveAction.DROP));
     }
 

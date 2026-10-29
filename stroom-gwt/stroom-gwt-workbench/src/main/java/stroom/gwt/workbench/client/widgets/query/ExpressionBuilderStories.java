@@ -922,9 +922,8 @@ public final class ExpressionBuilderStories {
                                  final RestHandler decorate) {
         final ScreenHarness harness = harness(context, decorate);
         final ExpressionTreeController tree = treeController(harness);
-        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(),
-                new ExpressionEditor(),
-                tree);
+        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(), tree)
+                .attach(new ExpressionEditor());
         harness.own(controller);
         controller.init(DATA_SOURCE, fieldModel(harness, dynamicFields));
         controller.read(expression);
@@ -936,7 +935,7 @@ public final class ExpressionBuilderStories {
 
     private static Widget readOnly(final StoryContext context) {
         final ScreenHarness harness = harness(context);
-        final ExpressionTreeController tree = treeController(harness);
+        final ExpressionTreeController tree = treeController(harness).attach(new ExpressionTree());
         harness.own(tree);
         // As Stroom's read only views of an expression (e.g. ProcessorsController) do
         tree.setSelectionModel(null);
@@ -955,9 +954,8 @@ public final class ExpressionBuilderStories {
     /// @return The editor's widget.
     public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
         final ExpressionTreeController tree = treeController(harness);
-        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(),
-                new ExpressionEditor(),
-                tree);
+        final ExpressionEditorController controller = new ExpressionEditorController(harness.getEventBus(), tree)
+                .attach(new ExpressionEditor());
         harness.own(controller);
         controller.init(DATA_SOURCE, fieldModel(harness, false));
         controller.setReadOnly(readOnly);
@@ -966,7 +964,7 @@ public final class ExpressionBuilderStories {
     }
 
     private static ExpressionTreeController treeController(final ScreenHarness harness) {
-        return new ExpressionTreeController(harness.getEventBus(), new ExpressionTree(), () ->
+        return new ExpressionTreeController(harness.getEventBus(), () ->
                 new TermEditorController(harness.getEventBus(),
                         harness.getRestFactory(),
                         harness.getUiConfigCache(),

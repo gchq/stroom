@@ -2,6 +2,7 @@
 <!-- A pipeline's or analytic rule's Processors tab: the processors and their filters above, and
      the selected one's details and filter expression below -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
@@ -16,7 +17,7 @@
                     <tx:Html ui:field="info"/>
                 </split:ScrollPane>
                 <split:ScrollPane addStyleNames="max dashboard-panel">
-                    <g:SimplePanel ui:field="details"/>
+                    <q:ExpressionTree ui:field="expressionTree"/>
                 </split:ScrollPane>
             </split:SplitPane>
         </split:SplitPane>

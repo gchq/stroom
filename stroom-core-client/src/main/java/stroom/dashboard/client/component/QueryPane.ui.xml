@@ -29,6 +29,8 @@
             </b:Toolbar>
             <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>
-        <g:FlowPanel ui:field="expressionTree" styleName="dock-max query-pane__expression-tree"/>
+        <g:FlowPanel styleName="dock-max query-pane__expression-tree">
+            <q:ExpressionTree ui:field="expressionTree"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

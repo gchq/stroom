@@ -16,14 +16,13 @@
 
 package stroom.view.client.component;
 
+import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A view's Settings tab: its data source and pipeline pickers (attached to by its controller), and
@@ -37,7 +36,7 @@ public class ViewSettings extends Component {
     @UiField
     DropDownBox pipeline;
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
 
     /// Makes the tab, with nothing chosen.
     public ViewSettings() {
@@ -54,9 +53,9 @@ public class ViewSettings extends Component {
         return pipeline;
     }
 
-    /// @param expression The filter on the streams analytic rules process.
-    public void setExpression(final IsWidget expression) {
-        this.expression.setWidget(expression);
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
 

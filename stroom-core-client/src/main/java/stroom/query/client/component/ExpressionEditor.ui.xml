@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:q="urn:import:stroom.query.client.component">
     <!--
       An expression's editor (expression-editor.css): a toolbar of the expression's actions over
       its tree, which scrolls. Framed as a control (stroom-control) unless its owner frames it
@@ -18,7 +19,9 @@
                              enabled="false"/>
         </b:Toolbar>
         <g:ScrollPanel styleName="dock-max">
-            <g:SimplePanel ui:field="expressionTree" styleName="expression-editor__tree"/>
+            <g:SimplePanel styleName="expression-editor__tree">
+                <q:ExpressionTree ui:field="expressionTree"/>
+            </g:SimplePanel>
         </g:ScrollPanel>
     </g:FlowPanel>
 </ui:UiBinder>

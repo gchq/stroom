@@ -16,14 +16,13 @@
 
 package stroom.dashboard.client.component;
 
+import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A dashboard query's selection handler: whether it is enabled, the expression it adds when other
@@ -33,11 +32,11 @@ public class SelectionHandlerEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel layout;
+    ExpressionEditor expressionEditor;
     @UiField
     TickBox enabled;
     @UiField
-    SimplePanel currentSelection;
+    CurrentSelection currentSelection;
 
     /// Makes the form, empty.
     public SelectionHandlerEditor() {
@@ -49,14 +48,14 @@ public class SelectionHandlerEditor extends Component {
         enabled.setFocus(true);
     }
 
-    /// @param expressionEditor The expression editor, a controller of its own.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        layout.add(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
-    /// @param currentSelection The selection now, a controller of its own.
-    public void setCurrentSelection(final IsWidget currentSelection) {
-        this.currentSelection.setWidget(currentSelection.asWidget());
+    /// @return The current selection, which its controller attaches its controller to.
+    public CurrentSelection getCurrentSelection() {
+        return currentSelection;
     }
 
     /// @return Whether the handler is enabled.

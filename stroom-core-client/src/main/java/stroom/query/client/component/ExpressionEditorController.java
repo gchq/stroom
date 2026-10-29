@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /// An expression's editor ([ExpressionEditor]): its toolbar's and context menu's actions on the
@@ -45,30 +46,36 @@ import java.util.function.Predicate;
 /// formatting rule and selection handler, and more.
 public class ExpressionEditorController extends Controller implements Focus {
 
-    private final ExpressionEditor view;
     private final ExpressionTreeController expressionTree;
     private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
+    private ExpressionEditor view;
     private boolean readOnly;
 
     private Runnable onChange = () -> {
     };
 
-    /// Made by GIN, with its editor and the tree it shows.
+    /// Made by GIN, with the tree it shows; [#attach(ExpressionEditor)] gives it its editor.
     ///
-    /// @param eventBus            The application's event bus, which the context menu is shown on.
-    /// @param view                The editor.
+    /// @param eventBus       The application's event bus, which the context menu is shown on.
     /// @param expressionTree The expression's tree.
     @Inject
     public ExpressionEditorController(final EventBus eventBus,
-                                      final ExpressionEditor view,
                                       final ExpressionTreeController expressionTree) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
         this.expressionTree = own(expressionTree);
         this.selectionModel = expressionTree.getSelectionModel();
+        own(expressionTree.addSelectionListener(event -> setButtonsEnabled()));
+    }
 
-        view.setExpressionTree(expressionTree);
+    /// Attaches this to an editor, e.g. one a template declares, and its tree to the editor's
+    /// tree. The editor is then this controller's widget, e.g. to show it as a dialog.
+    ///
+    /// @param view The editor.
+    /// @return This, for its owner to keep.
+    public ExpressionEditorController attach(final ExpressionEditor view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
+        expressionTree.attach(view.getExpressionTree());
 
         expressionTree.setOnChange(this::onChange);
 
@@ -78,7 +85,6 @@ public class ExpressionEditorController extends Controller implements Focus {
         view.setOnDisable(this::disable);
         view.setOnDelete(this::delete);
 
-        own(expressionTree.addSelectionListener(event -> setButtonsEnabled()));
         own(expressionTree.addContextMenuHandler(event -> {
             // On a term's field, the field's edit items come first; a read-only expression has
             // no actions of its own, but its fields can still be copied from
@@ -90,6 +96,7 @@ public class ExpressionEditorController extends Controller implements Focus {
                 showMenu(menuItems, event.getPopupPosition(), event.getEditTarget());
             }
         }));
+        return this;
     }
 
     @Override

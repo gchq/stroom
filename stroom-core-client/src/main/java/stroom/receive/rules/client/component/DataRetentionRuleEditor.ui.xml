@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A data retention rule: its name, how long it keeps data and the data it applies to -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
@@ -26,7 +27,9 @@
         </form:FormGroup>
         <form:FormGroup identity="dataRetentionRuleExpression" label="Expression" addStyleNames="dock-max"
                         helpText="Selects the data this rule applies to, using stream meta fields. Only the matching rule highest in the list (the highest rule number) applies; data that matches no rule is kept.">
-            <g:SimplePanel ui:field="expression" styleName="max"/>
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

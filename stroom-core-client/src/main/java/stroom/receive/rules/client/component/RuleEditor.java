@@ -17,6 +17,7 @@
 package stroom.receive.rules.client.component;
 
 import stroom.item.client.SelectionBox;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
@@ -24,8 +25,6 @@ import stroom.widget.form.client.TextBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collection;
@@ -38,7 +37,7 @@ public class RuleEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
     @UiField
     TextBox name;
     @UiField
@@ -49,9 +48,9 @@ public class RuleEditor extends Component {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param expressionEditor The expression's editor, a controller owned by this component's controller.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor);
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// @param actions The actions a rule may take, in the order they are offered.

@@ -16,6 +16,7 @@
 
 package stroom.quickfilter.client.component;
 
+import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.popup.client.PopupUtil;
 import stroom.widget.text.client.Label;
@@ -23,8 +24,6 @@ import stroom.widget.text.client.Label;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A quick filter as an expression tree, below a message when its text couldn't be converted.
@@ -35,7 +34,7 @@ public class AdvancedQuickFilter extends Component {
     @UiField
     Label message;
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
 
     /// Makes the form, with no message.
     public AdvancedQuickFilter() {
@@ -52,9 +51,9 @@ public class AdvancedQuickFilter extends Component {
         });
     }
 
-    /// @param expressionEditor The expression editor, a controller of its own.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// @param text A message shown above the tree, or `null` to hide it.

@@ -29,6 +29,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.SimpleFieldSelectionListModel;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.receive.rules.client.component.DataRetentionImpact.ImpactAction;
 import stroom.widget.component.client.Controller;
@@ -244,7 +245,8 @@ public class DataRetentionImpactController extends Controller {
     }
 
     private void openFilterController() {
-        final ExpressionEditorController expressionEditor = expressionEditorProvider.get();
+        final ExpressionEditorController expressionEditor = expressionEditorProvider.get()
+                .attach(new ExpressionEditor());
         expressionEditor.read(criteria.getExpression());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(FILTERABLE_FIELDS);

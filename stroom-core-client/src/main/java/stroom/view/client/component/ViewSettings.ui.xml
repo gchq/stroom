@@ -2,6 +2,7 @@
 <!-- A view's Settings tab: its data source, the pipeline that extracts its fields, and the filter
      on the streams analytic rules process -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
@@ -21,7 +22,9 @@
         <form:FormGroup identity="viewSettingsFilterExpression" label="Meta Filter" addStyleNames="dock-max"
                         helpText="Expression that limits which streams are processed when the view is used by an analytic rule, based on stream (meta) fields such as Feed or Type."
                         screenReaderText="Limits which streams analytic rules process.">
-            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
+            <g:SimplePanel styleName="max default-min-sizes">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

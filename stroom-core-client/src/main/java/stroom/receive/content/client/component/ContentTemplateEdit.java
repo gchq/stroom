@@ -18,6 +18,7 @@ package stroom.receive.content.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.receive.content.shared.TemplateType;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
@@ -31,8 +32,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -63,7 +62,7 @@ public class ContentTemplateEdit extends Component {
     @UiField
     ValueSpinner processorMaxConcurrent;
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
 
     /// Makes the form, with the processor's defaults.
     public ContentTemplateEdit() {
@@ -89,9 +88,9 @@ public class ContentTemplateEdit extends Component {
         name.setFocus(true);
     }
 
-    /// @param expressionEditor The expression editor, a controller of its own.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// @return The pipeline picker, for its controller to attach to.

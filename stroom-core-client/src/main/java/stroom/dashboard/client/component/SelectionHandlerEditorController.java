@@ -57,12 +57,10 @@ public class SelectionHandlerEditorController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
-        this.currentSelection = own(currentSelection);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
+        this.currentSelection = own(currentSelection).attach(view.getCurrentSelection());
         // Its slot frames the expression's editor itself
         expressionEditor.setFramed(false);
-        view.setExpressionEditor(expressionEditor);
-        view.setCurrentSelection(currentSelection);
 
         currentSelection.setOnInsert(expressionEditor::insertValue);
     }

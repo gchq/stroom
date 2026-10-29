@@ -109,7 +109,7 @@ public class ContentTemplateTabController extends ContentTabController
         this.view = view;
         initWidget(view);
         own(contentTemplateList);
-        own(expressionTree);
+        own(expressionTree).attach(view.getExpressionTree());
         this.contentTemplateList = contentTemplateList;
         this.expressionTree = expressionTree;
         this.templateEditorProvider = templateEditorProvider;
@@ -327,14 +327,14 @@ public class ContentTemplateTabController extends ContentTabController
             final String description;
             if (contentTemplate != null) {
                 description = contentTemplate.getDescription();
-                view.setExpressionView(expressionTree);
+                view.setExpressionVisible(true);
                 expressionTree.read(contentTemplate.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
                     edit(contentTemplate);
                 }
             } else {
                 description = null;
-                view.setExpressionView(null);
+                view.setExpressionVisible(false);
                 expressionTree.read(null);
             }
             view.setDescription(description);

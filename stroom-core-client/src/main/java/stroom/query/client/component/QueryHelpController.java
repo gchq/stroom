@@ -49,19 +49,19 @@ import java.util.Set;
 /// selected, and inserts it into the editor it is linked to, or copies it.
 public class QueryHelpController extends Controller {
 
-    private final QueryHelp view;
     private final DynamicQueryHelpSelectionListModel model;
     private final QueryHelpAceCompletionProvider keyedAceCompletionProvider;
     private final QueryHelpDetailProvider detailProvider;
     private final MarkdownConverter markdownConverter;
+    private final UiConfigCache uiConfigCache;
+    private QueryHelp view;
 
     // The editor items are inserted into, once linked
     private CodeEditorController editor;
 
-    /// Made by GIN, with its help.
+    /// Made by GIN; [#attach(QueryHelp)] gives it its help.
     ///
     /// @param eventBus                   The application's event bus.
-    /// @param view                       The help.
     /// @param keyedAceCompletionProvider Gives a linked editor its completions.
     /// @param detailProvider             Fetches an item's details.
     /// @param model                      Fetches the contents.
@@ -69,25 +69,33 @@ public class QueryHelpController extends Controller {
     /// @param uiConfigCache              Gives the address of the quick filter's help.
     @Inject
     public QueryHelpController(final EventBus eventBus,
-                               final QueryHelp view,
                                final QueryHelpAceCompletionProvider keyedAceCompletionProvider,
                                final QueryHelpDetailProvider detailProvider,
                                final DynamicQueryHelpSelectionListModel model,
                                final MarkdownConverter markdownConverter,
                                final UiConfigCache uiConfigCache) {
         super(eventBus);
-        this.view = view;
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
         this.detailProvider = detailProvider;
         this.model = model;
         this.markdownConverter = markdownConverter;
-        initWidget(view);
+        this.uiConfigCache = uiConfigCache;
 
         // Its helpers show their requests' progress as this does (its context's, when they start)
         final TaskMonitorFactory taskMonitorFactory = () -> taskMonitor().createTaskMonitor();
         keyedAceCompletionProvider.setTaskMonitorFactory(taskMonitorFactory);
         detailProvider.setTaskMonitorFactory(taskMonitorFactory);
         model.setTaskMonitorFactory(taskMonitorFactory);
+    }
+
+    /// Attaches this to a help, e.g. one a template declares, which it fills from the server. The
+    /// help is then this controller's widget.
+    ///
+    /// @param view The help.
+    /// @return This, for its owner to keep.
+    public QueryHelpController attach(final QueryHelp view) {
+        this.view = Objects.requireNonNull(view, "view");
+        initWidget(view);
 
         view.getSelectionList().setModel(model);
         view.setOnCopy(this::onCopy);
@@ -107,6 +115,7 @@ public class QueryHelpController extends Controller {
                 updateDetails();
             }
         }));
+        return this;
     }
 
     /// @return The provider of completions from the help, for an editor.

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.component;
 
+import stroom.query.client.component.ExpressionTree;
 import stroom.query.client.component.QueryButtons;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
@@ -25,8 +26,6 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -60,7 +59,7 @@ public class QueryPane extends Component {
     @UiField
     QueryButtons queryButtons;
     @UiField
-    FlowPanel expressionTree;
+    ExpressionTree expressionTree;
 
     private Consumer<QueryPaneAction> onAction = action -> {
     };
@@ -81,9 +80,9 @@ public class QueryPane extends Component {
         queryButtons.setOnStart(() -> onAction.accept(QueryPaneAction.RUN));
     }
 
-    /// @param expressionTree The expression.
-    public void setExpressionTree(final IsWidget expressionTree) {
-        this.expressionTree.add(expressionTree);
+    /// @return The expression's tree, which its controller attaches the tree's controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
     }
 
     /// Enables the actions on the expression item selected, or disables them when none is.

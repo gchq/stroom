@@ -153,7 +153,7 @@ public class QueryPaneController
         super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
-        own(expressionTree);
+        own(expressionTree).attach(view.getExpressionTree());
         own(history);
         own(favourites);
         this.expressionTree = expressionTree;
@@ -169,7 +169,6 @@ public class QueryPaneController
         // Shows its requests' progress as this controller's owners do (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitor());
 
-        view.setExpressionTree(expressionTree);
         view.setOnAction(this::onAction);
         view.setProcessVisible(securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION));
 

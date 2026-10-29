@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- A conditional formatting rule: the rows it matches and how they are shown -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
@@ -13,7 +14,9 @@
                         label="Row Match Expression"
                         helpText="All rows matching this expression are formatted according to this rule's settings."
                         screenReaderText="Rows matching this expression get this rule's formatting.">
-            <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
+            <g:SimplePanel styleName="dock-max stroom-control">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

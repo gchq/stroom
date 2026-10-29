@@ -113,7 +113,7 @@ public class ProcessorEditController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
         make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
         make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
 
@@ -121,7 +121,6 @@ public class ProcessorEditController extends Controller {
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.clientSecurityContext = clientSecurityContext;
         this.feedDependenciesEditorProvider = feedDependenciesEditorProvider;
-        view.setExpressionView(expressionEditor);
         view.setOnEditFeedDependencies(this::onEditFeedDependencies);
         runAsUser = make(runAsUserProvider);
         runAsUser.attach(view.getRunAsUserBox());

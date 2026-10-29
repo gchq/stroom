@@ -10,7 +10,8 @@ evidence and its verifier's note are in [ui-audit/findings.md](ui-audit/findings
 changed by the audit itself; the waves below were approved on 29 October 2026 (Decisions).*
 
 **Progress.** Wave 1 done 29 October 2026 (order wave 35, `component-migration/wave-35.md`); wave 2
-done 29 October 2026 (order wave 36, `component-migration/wave-36.md`).
+done 29 October 2026 (order wave 36, `component-migration/wave-36.md`); wave 3 done 29 October 2026
+(order wave 37, `component-migration/wave-37.md`).
 
 ## Summary
 

@@ -43,6 +43,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -52,7 +53,8 @@ import java.util.function.Predicate;
 /// term editors.
 public class ExpressionTreeController extends Controller implements HasContextMenuHandlers {
 
-    private final ExpressionTree view;
+    private final Provider<TermEditorController> termEditorControllerProvider;
+    private ExpressionTree view;
     private DefaultTreeForTreeLayout<Item> tree;
     private MySingleSelectionModel<Item> selectionModel;
     private Runnable onChange = () -> {
@@ -60,22 +62,33 @@ public class ExpressionTreeController extends Controller implements HasContextMe
 
     private final Listeners<Item> selectionListeners = new Listeners<>();
 
-    /// Made by GIN, with its tree.
+    /// Made by GIN; [#attach(ExpressionTree)] gives it its tree.
     ///
-    /// @param eventBus                   The application's event bus.
-    /// @param view                       The tree.
+    /// @param eventBus                     The application's event bus.
     /// @param termEditorControllerProvider Makes what each of its term editors needs.
     @Inject
     public ExpressionTreeController(final EventBus eventBus,
-                                    final ExpressionTree view,
                                     final Provider<TermEditorController> termEditorControllerProvider) {
         super(eventBus);
-        this.view = view;
+        this.termEditorControllerProvider = termEditorControllerProvider;
+        selectionModel = new MySingleSelectionModel<>();
+        own(selectionModel.addSelectionChangeHandler(event -> {
+            selectionListeners.fire(selectionModel.getSelectedObject());
+            view.refresh();
+        }));
+    }
+
+    /// Attaches this to a tree, e.g. one a template declares, giving each of its term editors what
+    /// it needs. The tree is then this controller's widget.
+    ///
+    /// @param view The tree.
+    /// @return This, for its owner to keep.
+    public ExpressionTreeController attach(final ExpressionTree view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         for (final TermEditor termEditor : view.getTermEditors()) {
             make(termEditorControllerProvider).attach(termEditor);
         }
-        selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
         // The Delete key deletes the focused item, as the toolbar's Delete does the selected one
         view.setRemoveHandler(item -> {
@@ -84,13 +97,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
                 delete();
             }
         });
-
-        if (selectionModel != null) {
-            own(selectionModel.addSelectionChangeHandler(event -> {
-                selectionListeners.fire(selectionModel.getSelectedObject());
-                view.refresh();
-            }));
-        }
+        return this;
     }
 
     /// Listens for the selection changing, e.g. to enable the buttons that act on it.

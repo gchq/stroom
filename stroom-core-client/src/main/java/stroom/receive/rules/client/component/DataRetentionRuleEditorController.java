@@ -53,10 +53,9 @@ public class DataRetentionRuleEditorController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
         // Shows its requests' progress as this controller's context does, once it is shown
         fieldSelectionBoxModel.setTaskMonitorFactory(() -> taskMonitor().createTaskMonitor());
-        view.setExpressionEditor(expressionEditor);
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(MetaFields.STREAM_STORE_DOC_REF));
         expressionEditor.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);

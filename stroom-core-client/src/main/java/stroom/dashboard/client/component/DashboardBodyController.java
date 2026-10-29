@@ -274,7 +274,7 @@ public class DashboardBodyController
     private void onSelectionInfo() {
         // Kept between showings, as it shows the selection as it changes
         if (currentSelection == null) {
-            currentSelection = make(currentSelectionControllerProvider);
+            currentSelection = make(currentSelectionControllerProvider).attach(new CurrentSelection());
         }
 
         // Showing it again while it is shown hides it, so it listens only from its first showing

@@ -125,6 +125,8 @@ class TestProcessorEditController {
         Mockito.doReturn(null).when(view).getMinMetaCreateTimeBox();
         Mockito.doReturn(null).when(view).getMaxMetaCreateTimeBox();
         final ExpressionEditorController editExpressionController = Mockito.mock(ExpressionEditorController.class);
+        // Attached to the editor the dialog's template declares
+        Mockito.when(editExpressionController.attach(Mockito.any())).thenReturn(editExpressionController);
         Mockito.when(editExpressionController.write()).thenReturn(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.EQUALS).value("TEST").build())
                 .build());

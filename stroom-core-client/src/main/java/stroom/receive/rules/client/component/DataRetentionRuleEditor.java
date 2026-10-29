@@ -17,6 +17,7 @@
 package stroom.receive.rules.client.component;
 
 import stroom.item.client.SelectionBox;
+import stroom.query.client.component.ExpressionEditor;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
@@ -27,8 +28,6 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A data retention rule: its name, whether it keeps data for ever or for how long, and the
@@ -38,7 +37,7 @@ public class DataRetentionRuleEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel expression;
+    ExpressionEditor expressionEditor;
     @UiField
     TextBox name;
     @UiField
@@ -65,9 +64,9 @@ public class DataRetentionRuleEditor extends Component {
         timeUnit.addItem(TimeUnit.YEARS);
     }
 
-    /// @param expressionEditor The expression editor, a controller of its own.
-    public void setExpressionEditor(final IsWidget expressionEditor) {
-        expression.setWidget(expressionEditor.asWidget());
+    /// @return The expression's editor, which its controller attaches the editor's controller to.
+    public ExpressionEditor getExpressionEditor() {
+        return expressionEditor;
     }
 
     /// Puts the keyboard focus on the name.

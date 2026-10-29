@@ -17,13 +17,12 @@
 package stroom.dashboard.client.component;
 
 import stroom.editor.client.component.CodeEditor;
+import stroom.query.client.component.QueryHelp;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of a dashboard table column's expression editor: the query help beside the
@@ -33,11 +32,11 @@ public class ColumnFunctionEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel queryHelp;
+    QueryHelp queryHelp;
     @UiField
     CodeEditor editor;
 
-    /// Makes the content, with no query help until [#setQueryHelp(IsWidget)].
+    /// Makes the content, with its query help.
     public ColumnFunctionEditor() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -47,9 +46,9 @@ public class ColumnFunctionEditor extends Component {
         return editor;
     }
 
-    /// @param queryHelp The query help, beside the editor.
-    public void setQueryHelp(final IsWidget queryHelp) {
-        this.queryHelp.setWidget(queryHelp);
+    /// @return The query help, which its controller attaches the help's controller to.
+    public QueryHelp getQueryHelp() {
+        return queryHelp;
     }
 
 

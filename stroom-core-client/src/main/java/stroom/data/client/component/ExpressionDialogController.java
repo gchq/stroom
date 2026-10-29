@@ -52,8 +52,7 @@ public class ExpressionDialogController extends Controller {
                                       final ExpressionEditorController expressionEditor) {
         super(eventBus);
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
-        view.setExpressionEditor(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
     }
 
     /// Edits an expression in a dialog, owned by `opener` until it is closed. Cancel closes it;

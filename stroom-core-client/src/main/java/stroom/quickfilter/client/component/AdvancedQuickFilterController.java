@@ -83,9 +83,8 @@ public class AdvancedQuickFilterController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
         this.restFactory = restFactory;
-        view.setExpressionEditor(expressionEditor);
     }
 
     /// Parses the filter's text and shows it as a tree. The opener owns the dialog until it is

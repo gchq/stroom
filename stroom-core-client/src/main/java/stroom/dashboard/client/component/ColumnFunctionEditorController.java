@@ -71,10 +71,9 @@ public class ColumnFunctionEditorController extends Controller {
                                           final QueryHelpController queryHelp) {
         super(eventBus);
         this.restFactory = restFactory;
-        this.queryHelp = own(queryHelp);
+        this.queryHelp = own(queryHelp).attach(view.getQueryHelp());
         initWidget(view);
         editor = make(codeEditorProvider).attach(view.getEditor());
-        view.setQueryHelp(queryHelp);
     }
 
     /// Shows a column's expression in a dialog, owned by `tableController` until it is closed. OK

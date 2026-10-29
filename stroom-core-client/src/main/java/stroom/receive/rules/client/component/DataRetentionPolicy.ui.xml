@@ -1,11 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- The data retention rules' Rules tab: the list of rules above the selected rule's expression -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client">
     <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                      names="Retention rules, Expression" addStyleNames="max">
         <g:SimplePanel ui:field="table" styleName="max"/>
-        <g:SimplePanel ui:field="expression" styleName="max"/>
+        <g:SimplePanel styleName="max">
+            <q:ExpressionTree ui:field="expressionTree"/>
+        </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

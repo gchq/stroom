@@ -1857,6 +1857,13 @@ a close, two on both attempts); all 22 of its stories passed it at 4 workers str
 leak check is the one most sensitive to load (it failed once under load in waves 28 and 30 too); a
 leak failure there needs a rerun at 4 workers before it is believed.
 
+**Screenshots without styles** (29 October 2026, waves 36 and 37): under load at 8 workers a
+story's screenshot is now and then taken before the page's stylesheets have applied (every element
+stacked at the left, unstyled: Processor Task Summary's Refresh Keeps Selection in wave 36's full
+run, two Pipeline Editor stories in wave 37's), alongside a burst of stories that pass only on a
+second attempt. Both came right at 4 workers. To do: the runner could wait for the stylesheets (e.g.
+`document.styleSheets` all loaded, or a known rule applied) before its first screenshot.
+
 ### A grid whose columns are made afresh loses its sort
 
 **Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and

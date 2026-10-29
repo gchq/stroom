@@ -1281,6 +1281,16 @@ after wave 35.
 > went; the XSD browser heads a pattern restriction "Pattern"; `TestTemplateBindings` checks every
 > `@UiField` is used and every `ui:field` bound. See `wave-36.md`.
 
+## 37. UI audit wave 3: children attached
+
+Record: [`component-migration/wave-37.md`](component-migration/wave-37.md). Added 29 October 2026,
+after wave 36.
+
+> **Done, 29 October 2026**: a child's controller attaches to the component its parent's template
+> declares (`attach(Component)`) rather than injecting its view; the expression tree, expression
+> editor, query help and current selection are converted, and their 20 parents declare them. See
+> `wave-37.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

@@ -1,5 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
@@ -9,7 +10,9 @@
                         label="Expression"
                         helpText="Selects the received data this rule applies to, using its header attributes. The first matching rule's action is used; data that matches no rule is rejected."
                         addStyleNames="dock-max">
-            <g:SimplePanel ui:field="expression" styleName="max"/>
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
         </form:FormGroup>
 
         <form:FormGroup identity="ruleRuleName"

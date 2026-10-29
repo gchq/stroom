@@ -16,6 +16,7 @@
 
 package stroom.receive.rules.client.component;
 
+import stroom.query.client.component.ExpressionTree;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
@@ -52,7 +53,7 @@ public class RuleSetSettings extends Component {
     @UiField
     SimplePanel table;
     @UiField
-    SimplePanel expression;
+    ExpressionTree expressionTree;
 
     /// Makes the screen, with no list or expression yet.
     public RuleSetSettings() {
@@ -75,9 +76,9 @@ public class RuleSetSettings extends Component {
         addButton(toolbar, RuleAction.MOVE_DOWN, SvgImage.DOWN, "Move Rule Down");
     }
 
-    /// @param expressionTree The selected rule's expression, a controller owned by this component's controller.
-    public void setExpression(final IsWidget expressionTree) {
-        expression.setWidget(expressionTree);
+    /// @return The expression's tree, which its controller attaches the tree's controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
     }
 
     /// @param onAction Given each action the user takes.

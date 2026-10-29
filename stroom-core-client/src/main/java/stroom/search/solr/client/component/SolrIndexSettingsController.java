@@ -70,7 +70,7 @@ public class SolrIndexSettingsController extends Controller {
                                        final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus);
         this.view = view;
-        this.expressionEditor = own(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getRetentionExpressionEditor());
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         initWidget(view);
@@ -82,7 +82,6 @@ public class SolrIndexSettingsController extends Controller {
         pipeline.setIncludedTypes(PipelineDoc.TYPE);
         pipeline.setRequiredPermissions(DocumentPermission.VIEW);
 
-        view.setRetentionExpressionView(expressionEditor);
         view.setOnChange(this::markChanged);
         view.setOnTestConnection(this::onTestConnection);
 

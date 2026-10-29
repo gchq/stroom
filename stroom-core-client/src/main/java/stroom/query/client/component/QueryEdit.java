@@ -26,8 +26,6 @@ import stroom.widget.tab.client.TabData;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -39,7 +37,7 @@ public class QueryEdit extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel help;
+    QueryHelp queryHelp;
     @UiField
     CodeEditor editor;
     @UiField
@@ -53,9 +51,9 @@ public class QueryEdit extends Component {
         tabBar.setTabPanel(layerContainer.getElement());
     }
 
-    /// @param help The query's help.
-    public void setHelp(final IsWidget help) {
-        this.help.setWidget(help);
+    /// @return The query help, which its controller attaches the help's controller to.
+    public QueryHelp getQueryHelp() {
+        return queryHelp;
     }
 
     /// @return The query's editor, for its controller to attach to.

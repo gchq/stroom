@@ -67,11 +67,10 @@ public class QueryHistoryController extends Controller {
         this.view = view;
         initWidget(view);
         this.restFactory = restFactory;
-        own(expressionTree);
+        own(expressionTree).attach(view.getExpressionTree());
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
-        view.setExpressionTree(expressionTree);
         view.addColumn(dateTimeFormatter);
 
         view.setOnSelect(query -> expressionTree.read(query == null || query.getQuery() == null

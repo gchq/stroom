@@ -76,12 +76,11 @@ public class QueryFavouritesController extends Controller {
         this.view = view;
         initWidget(view);
         this.restFactory = restFactory;
-        this.expressionTree = own(expressionTree);
+        this.expressionTree = own(expressionTree).attach(view.getExpressionTree());
         this.favouriteNameProvider = favouriteNameProvider;
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
-        view.setExpressionTree(expressionTree);
         view.addColumn(dateTimeFormatter);
 
         view.setOnAction(this::onAction);

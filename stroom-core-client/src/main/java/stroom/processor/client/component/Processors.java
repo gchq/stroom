@@ -16,6 +16,7 @@
 
 package stroom.processor.client.component;
 
+import stroom.query.client.component.ExpressionTree;
 import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Html;
 
@@ -39,9 +40,9 @@ public class Processors extends Component {
     @UiField
     Html info;
     @UiField
-    SimplePanel details;
+    ExpressionTree expressionTree;
 
-    /// Makes the tab, with no list or expression until they are set.
+    /// Makes the tab, with no list until it is set, and no expression shown.
     public Processors() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -56,9 +57,9 @@ public class Processors extends Component {
         this.info.setHTML(info);
     }
 
-    /// @param details The selected filter's expression.
-    public void setDetails(final IsWidget details) {
-        this.details.setWidget(details);
+    /// @return The expression's tree, which its controller attaches the tree's controller to.
+    public ExpressionTree getExpressionTree() {
+        return expressionTree;
     }
 
 

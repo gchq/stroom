@@ -67,8 +67,7 @@ public class ContentTemplateEditController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionEditor = own(expressionEditor);
-        view.setExpressionEditor(expressionEditor);
+        this.expressionEditor = own(expressionEditor).attach(view.getExpressionEditor());
 
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         // Shows its requests' progress as this controller's context does, once it is shown
