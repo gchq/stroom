@@ -175,7 +175,8 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
         // And counted there, over all of them.
         final ToolResultRecord counted = byTool.get("table");
         assertThat(counted.error()).as(counted.text()).isFalse();
-        assertThat(counted.text()).startsWith(TOTAL_STREAMS + " of " + TOTAL_STREAMS + " rows matched");
+        assertThat(counted.text()).startsWith(TOTAL_STREAMS + " of " + TOTAL_STREAMS + " rows matched")
+                .contains("Coverage: all " + TOTAL_STREAMS + " row(s) the table's search found.");
         assertCounts(counted.text());
         assertRowsNotSentToTheModel();
     }
@@ -197,10 +198,12 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
         final ToolResultRecord taken = byTool.get("current_results");
         assertThat(taken.error()).as(taken.text()).isFalse();
         assertThat(taken.text()).contains("1000", String.valueOf(TOTAL_STREAMS));
-        // The counts are of those rows only.
+        // The counts are of those rows only, and say so.
         final ToolResultRecord counted = byTool.get("table");
         assertThat(counted.error()).as(counted.text()).isFalse();
-        assertThat(counted.text()).startsWith("1000 of 1000 rows matched");
+        assertThat(counted.text()).startsWith("1000 of 1000 rows matched")
+                .contains("Coverage: the first 1000 of " + TOTAL_STREAMS + " row(s) the table's search found.")
+                .contains("Say so");
         assertThat(rowCounts(counted.text()).values().stream().mapToInt(Integer::intValue).sum()).isEqualTo(1_000);
     }
 
@@ -222,7 +225,8 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
         assertThat(taken.text()).contains(snapshot, String.valueOf(TOTAL_STREAMS));
         final ToolResultRecord counted = byTool.get("table");
         assertThat(counted.error()).as(counted.text()).isFalse();
-        assertThat(counted.text()).startsWith(TOTAL_STREAMS + " of " + TOTAL_STREAMS + " rows matched");
+        assertThat(counted.text()).startsWith(TOTAL_STREAMS + " of " + TOTAL_STREAMS + " rows matched")
+                .contains("Coverage: all " + TOTAL_STREAMS + " row(s) the table's search found.");
         assertCounts(counted.text());
         assertRowsNotSentToTheModel();
     }
