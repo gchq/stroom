@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.9-parallel-pathways] - 2026-10-29
+
+* Refactor : Replace the cache `Plan B State Doc Cache` (property `stateDocCache`) with two caches; `Plan B Doc Cache (by name)` (property `docByNameCache`) and `Plan B Doc Cache (by DocRef)` (property `docByDocRefCache`).
+
+
 ## [v7.14-beta.9] - 2026-10-29
 
 * Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.
@@ -2811,7 +2816,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.8-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...HEAD
+[v7.14-beta.9-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.9-parallel-pathways
 [v7.14-beta.8-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.8-parallel-pathways
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
