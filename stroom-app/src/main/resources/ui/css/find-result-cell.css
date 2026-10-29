@@ -61,9 +61,6 @@
     font-family: var(--monospace-font-family);
 }
 
-.find-result-cell__sample-before {
-}
-
 .find-result-cell__highlight {
     background-color: var(--highlight__background-color);
     border-radius: 2px;
@@ -78,9 +75,6 @@
 
 .data-grid__row--selected .find-result-cell__highlight {
 	background-color: var(--highlight__background-color--selected);
-}
-
-.find-result-cell__sample-after {
 }
 
 .find-result-cell__name {

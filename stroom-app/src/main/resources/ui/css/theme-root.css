@@ -21,14 +21,14 @@
        for things drawn as icons (fields use the --control__*--disabled colours instead) */
     --disabled-opacity: 0.4;
 
-    /* Some bootstrap defaults */
-    --bootstrap-error-rgb: 220, 53, 69;
-    --bootstrap-warning-rgb: 255, 193, 7;
-    --bootstrap-success-rgb: 40, 167, 69;
+    /* The status colours: danger, warning and success (Bootstrap's, which Stroom kept) */
+    --status__color--danger-rgb: 220, 53, 69;
+    --status__color--warning-rgb: 255, 193, 7;
+    --status__color--success-rgb: 40, 167, 69;
 
-    --bootstrap-error: rgb(var(--bootstrap-error-rgb));
-    --bootstrap-warning: rgb(var(--bootstrap-warning-rgb));
-    --bootstrap-success: rgb(var(--bootstrap-success-rgb));
+    --status__color--danger: rgb(var(--status__color--danger-rgb));
+    --status__color--warning: rgb(var(--status__color--warning-rgb));
+    --status__color--success: rgb(var(--status__color--success-rgb));
 
     /* Keyboard focus: the control's border in a dark colour (at least 3:1 on white) and a crisp 4px
        band of it at 30% around the control, so focus changes the control's shape as well as its colour */
@@ -319,25 +319,22 @@
 
     /* Status */
     --ok: var(--blue-500);
-    --warn: var(--bootstrap-warning);
-    --error: var(--bootstrap-error);
+    --warn: var(--status__color--warning);
+    --error: var(--status__color--danger);
     --fatal: var(--black);
 
     /* Form fields */
     --primary-rgb: var(--blue-500-rgb);
-    --valid-rgb: var(--bootstrap-success-rgb);
-    --invalid-rgb: var(--bootstrap-error-rgb);
-    --feedback-rgb: var(--bootstrap-error-rgb);
+    --valid-rgb: var(--status__color--success-rgb);
+    --invalid-rgb: var(--status__color--danger-rgb);
+    --feedback-rgb: var(--status__color--danger-rgb);
 
     --primary: var(--blue-500);
-    /* A status's colour: a meter's level (the node ping bar, the percent bar cell) and the advanced
-       quick filter's warning. Bootstrap's primary, warning and danger, which they took before
-       Bootstrap went (Bootstrap's --primary outranked this sheet's, being loaded later) */
+    /* A meter's healthy level (the node ping bar, the percent bar cell): Bootstrap's primary, which
+       they took before Bootstrap went (it outranked this sheet's --primary, being loaded later) */
     --status__color--ok: #007bff;
-    --status__color--warning: #ffc107;
-    --status__color--danger: #dc3545;
-    --valid: var(--bootstrap-success);
-    --invalid: var(--bootstrap-error);
+    --valid: var(--status__color--success);
+    --invalid: var(--status__color--danger);
     /* 4.5:1 on dialogs, including a translucent one over the sign-in page */
     --feedback: var(--red-800);
 

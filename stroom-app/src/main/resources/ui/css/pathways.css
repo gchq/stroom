@@ -440,12 +440,6 @@
     cursor: default;
 }
 
-.service-name {
-    color: #ff8c42;
-    font-weight: 500;
-    margin-right: 8px;
-}
-
 .operation-content .doc-ref-link {
     flex: 1;
     min-width: 0;
@@ -538,8 +532,6 @@
    would go through it, but can't be seen */
 .timeline-glass {
     position: absolute;
-    left: 0px;
-    top: 0px;
     margin: 0px;
     padding: 0px;
     border-width: 0px;
@@ -547,4 +539,8 @@
     opacity: 0;
     z-index: 10;
     cursor: col-resize;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
 }

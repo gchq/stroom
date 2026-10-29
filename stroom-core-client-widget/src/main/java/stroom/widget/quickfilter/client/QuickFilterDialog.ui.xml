@@ -6,7 +6,7 @@
              xmlns:c="urn:import:stroom.widget.component.client">
     <g:FlowPanel styleName="max dock-container-vertical quick-filter-layout">
         <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>
-        <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background"/>
+        <g:SimplePanel ui:field="data" styleName="dock-max control-box"/>
         <!-- Says which item is chosen, to screen readers -->
         <c:AriaPanel ui:field="status" styleName="sr-only" ariaLive="polite"/>
     </g:FlowPanel>

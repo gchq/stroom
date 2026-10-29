@@ -26,14 +26,14 @@
              the split pane's own class) -->
         <l:SplitPane vertical="true" sizes="300px, *" names="Results, Text"
                      addStyleNames="find-panel__bottom dock-max overflow-hidden">
-            <g:SimplePanel styleName="max form-control-border form-control-background">
+            <g:SimplePanel styleName="max control-box">
                 <!-- A striped list of a page of results, the one with the focus chosen -->
                 <dg:PagerPanel ui:field="pager">
                     <dg:DataGrid ui:field="resultList" pageSize="100" profile="LISTBOX"
                                  accessibleName="Content found" striped="true"/>
                 </dg:PagerPanel>
             </g:SimplePanel>
-            <g:FlowPanel styleName="max form-control-border form-control-background">
+            <g:FlowPanel styleName="max control-box">
                 <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
                 <ed:CodeEditor ui:field="text"/>
             </g:FlowPanel>

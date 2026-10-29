@@ -142,7 +142,7 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    rules moved to their components, the element defaults the app relies on written into the base
    sheet (found by diffing every screen with and without it), then `bootstrap.min.css` gone. The
    riskiest step, so on its own, with a full screenshot review.
-6. **Rationalise**: duplicates merged into the shared patterns or removed; the common combinations
+6. **Rationalise** (done in wave 32, 29 October 2026): duplicates merged into the shared patterns or removed; the common combinations
    given a named class each, or folded into the components' blocks; the remaining inline styles moved
    to classes and custom properties.
 7. **Enforce**: the check above, in the build.

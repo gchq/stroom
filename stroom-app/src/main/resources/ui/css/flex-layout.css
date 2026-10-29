@@ -110,8 +110,6 @@
    a background for the mouse to be caught, so it is transparent instead */
 .flex-layout__glass {
     position: absolute;
-    left: 0;
-    top: 0;
     margin: 0;
     padding: 0;
     border-width: 0;
@@ -119,6 +117,10 @@
     opacity: 0;
     z-index: 10;
     cursor: default;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
 }
 
 /* The glass's mouse cursor, as what is dragged */
@@ -137,13 +139,15 @@
 /* The marker: where a dragged tab would be dropped (a highlighted area), or the dragged splitter */
 .flex-layout__marker {
     position: absolute;
-    left: 0;
-    top: 0;
     margin: 0;
     padding: 0;
     background: var(--splitter__background-color--highlight);
     opacity: 0.6;
     z-index: 5;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
 }
 
 /* Where a dragged tab would go in a tab bar */

@@ -39,24 +39,8 @@
     border-radius: 4rem;
 }
 
-.sign-in-page .sign-in-page__form-panel .sign-in-page__user-name-outer {
-
-}
-
 .sign-in-page .sign-in-page__form-panel .sign-in-page__user-name {
     width: 100%;
-}
-
-.sign-in-page .sign-in-page__form-panel .feedback {
-    display: block;
-    width: 100%;
-    margin-top: .25rem;
-    font-size: 80%;
-    min-height: 16px;
-    color: var(--feedback);
-}
-
-.sign-in-page .sign-in-page__form-panel .sign-in-page__sign-in-button {
 }
 
 .sign-in-page .sign-in-page__form-panel .sign-in-page__forgot-password {

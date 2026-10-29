@@ -20,7 +20,7 @@
              xmlns:t="urn:import:stroom.document.asset.client.component">
 
     <!-- The asset tree, which scrolls itself, in a bordered panel -->
-    <g:SimplePanel styleName="max form-control-border form-control-background">
+    <g:SimplePanel styleName="max control-box">
         <t:DocumentAssetTree ui:field="tree" accessibleName="Assets"/>
     </g:SimplePanel>
 

@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dash="urn:import:stroom.dashboard.client.component">
     <g:SimplePanel styleName="max">
-        <g:SimplePanel styleName="max form-control-border form-control-background">
+        <g:SimplePanel styleName="max control-box">
             <dash:SelectionHandlerList ui:field="handlerList"/>
         </g:SimplePanel>
     </g:SimplePanel>

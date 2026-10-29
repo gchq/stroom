@@ -7,7 +7,7 @@
         <form:FormGroup identity="filter" label="Filter" addStyleNames="dock-max"
                         helpText="Text to filter this column's values by. Plain text keeps rows whose value contains it; start with ! to exclude, or use operators such as =, &gt;, &lt; with and, or and not, e.g. &gt;100 and &lt;200."
                         screenReaderText="Plain text matches values containing it. Operators such as &gt;, = and ! are allowed.">
-            <g:SimplePanel styleName="dock-max form-control-border form-control-background">
+            <g:SimplePanel styleName="dock-max control-box">
                 <ed:CodeEditor ui:field="editor"/>
             </g:SimplePanel>
         </form:FormGroup>

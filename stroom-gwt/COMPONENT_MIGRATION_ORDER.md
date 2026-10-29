@@ -1243,6 +1243,16 @@ after wave 30.
 > helpers, `custom-bootstrap.css` is dissolved, and its colour variables are the theme's status
 > colours. Only Edit Tags' field changed look (a standard text field now). See `wave-31.md`.
 
+## 32. CSS step 6: rationalise
+
+Record: [`component-migration/wave-32.md`](component-migration/wave-32.md). Added 29 October 2026,
+after wave 31.
+
+> **Done, 29 October 2026**: `base.css`'s overridden declarations gone; `control-box` for the
+> framed and filled control box; the status colours named for what they are; the last static inline
+> styles are classes or custom properties; duplicates of `sr-only` and `.feedback`, empty rules and
+> dead rules gone. No screenshot changed. See `wave-32.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

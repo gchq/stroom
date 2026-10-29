@@ -122,7 +122,6 @@
 @import url("stepping-screen.css");
 @import url("value-spinner.css");
 @import url("duration-picker.css");
-@import url("line-col-input.css");
 @import url("expander-cell.css");
 @import url("icon-cell.css");
 @import url("form-label.css");
@@ -142,6 +141,7 @@
 @import url("key-binding-preferences.css");
 @import url("form-controls.css");
 @import url("table-builder-processing.css");
+@import url("delete-confirm.css");
 @import url("info-table.css");
 @import url("query-help-detail.css");
 @import url("node-ping-bar.css");

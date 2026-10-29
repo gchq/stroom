@@ -16,7 +16,7 @@
                             label="Additional Query Expression"
                             helpText="Expression added when other components on the dashboard have a selection. Use selection parameters such as ${{component.table-AB1C2.selection.Name}, which you can insert from Current Selection. If several handlers are enabled, their expressions are combined with OR."
                             screenReaderText="Use selection parameters, e.g. ${{component.&lt;id&gt;.selection.&lt;column&gt;}.">
-                <g:SimplePanel ui:field="layout" styleName="dock-max form-control-border form-control-background"/>
+                <g:SimplePanel ui:field="layout" styleName="dock-max control-box"/>
             </form:FormGroup>
             <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
                             label="Current Selection"

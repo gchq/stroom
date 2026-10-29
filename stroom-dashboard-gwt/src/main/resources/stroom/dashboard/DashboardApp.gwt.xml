@@ -57,7 +57,6 @@
     <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
     <inherits name="stroom.widget.datepicker.DatePicker"/>
 
-    <inherits name="stroom.widget.debug.Debug"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
     <!-- The quick filter box (the widget library) -->
     <inherits name="stroom.widget.quickfilter.QuickFilter"/>

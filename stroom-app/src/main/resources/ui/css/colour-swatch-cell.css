@@ -24,9 +24,6 @@
     border-color: var(--text-color);
 }
 
-.colour-swatch-cell__text {
-}
-
 .data-grid__cell--disabled .colour-swatch-cell__swatch {
     opacity: var(--disabled-opacity);
 }

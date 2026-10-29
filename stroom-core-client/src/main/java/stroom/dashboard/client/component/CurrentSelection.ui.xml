@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:layout="urn:import:stroom.widget.layout.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <layout:ScrollPane addStyleNames="max form-control-border form-control-background">
+    <layout:ScrollPane addStyleNames="max control-box">
         <tx:Html ui:field="currentSelection"/>
     </layout:ScrollPane>
 </ui:UiBinder>

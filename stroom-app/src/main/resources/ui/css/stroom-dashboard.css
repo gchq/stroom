@@ -1,8 +1,5 @@
 
 
-.stroom-dashboard-table {
-}
-
 .stroom-dashboard-table .data-grid__cell > div {
 	text-overflow: ellipsis;
 	overflow-x: hidden;

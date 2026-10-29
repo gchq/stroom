@@ -40,7 +40,8 @@ import java.util.function.Consumer;
 /// colon, e.g. `12` or `12:5`. Only digits and a colon can be typed; anything else that makes it
 /// no such position marks it invalid (`aria-invalid`, as `FieldValidity` does).
 ///
-/// BEM block `line-col-input` (`line-col-input.css`), its text box `line-col-input__field`; its markup
+/// BEM block `line-col-input` (no rules of its own: its field looks as every text field does), its
+/// text box `line-col-input__field`; its markup
 /// is `LineColInput.ui.xml`.
 public class LineColInput extends Composite {
 

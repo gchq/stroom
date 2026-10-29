@@ -25,7 +25,7 @@
     padding: 8px 12px;
     border: 1px solid var(--error);
     border-radius: 4px;
-    background-color: rgba(var(--bootstrap-error-rgb), 0.15);
+    background-color: rgba(var(--status__color--danger-rgb), 0.15);
     height: 100px;
     overflow-y: auto;
 }

@@ -43,9 +43,6 @@
     color: var(--navigation-icon-button__color);
 }
 
-.navigation .navigation__name-filter-panel {
-}
-
 /* The current activity, below the explorer, as a button that changes it (was stroom.css's
    activityOuter and activityButton) */
 .navigation__activity {

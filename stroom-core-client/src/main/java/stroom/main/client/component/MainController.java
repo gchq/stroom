@@ -106,12 +106,10 @@ public class MainController extends Controller {
         own(RootPanel.get().addDomHandler(globalKeyHandler::onKeyUp, KeyUpEvent.getType()));
 
         listen(TaskStartEvent.getType(), event -> {
-            // DebugPane.debug("taskStart:" + event.getTaskCount());
             taskCount++;
             updateSpinnerState();
         });
         listen(TaskEndEvent.getType(), event -> {
-            // DebugPane.debug("taskEnd:" + event.getTaskCount());
             taskCount--;
             updateSpinnerState();
         });

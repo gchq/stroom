@@ -18,9 +18,6 @@
    The source viewer (stroom.data.client.component.SourceViewer), named BEM style. Its rules were in `components.css`.
 */
 
-.source-viewer__character-navigator {
-}
-
 .source-viewer__title-text {
     display: inline-block;
     padding-top: 3px;

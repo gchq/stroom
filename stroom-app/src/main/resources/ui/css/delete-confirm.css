@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-/*
-   A line and column input (stroom.widget.linecolinput.client.LineColInput), named BEM style: a
-   text field (text-field.css) for e.g. 12:5. A value that is no such position is marked invalid
-   (aria-invalid), which shows as every invalid text field does (text-field.css), so it has nothing of its own
-   to style yet beyond its block.
-*/
-.line-col-input {
+/* A delete confirmation's list of what else it deletes (DocumentPluginEventManager): a gap between
+   the summary of contained items by type and the items themselves */
+.delete-confirm__gap {
+    height: 6px;
 }
-

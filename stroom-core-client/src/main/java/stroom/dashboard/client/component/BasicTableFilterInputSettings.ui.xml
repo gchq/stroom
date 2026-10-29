@@ -23,7 +23,7 @@
         <form:FormGroup label="Columns To Display" addStyleNames="dock-max"
                         helpText="Columns of the selected table to show value filters for. Tick each column you want users to filter on."
                         screenReaderText="Tick the columns to show filters for.">
-            <g:SimplePanel styleName="max form-control-border form-control-background">
+            <g:SimplePanel styleName="max control-box">
                 <dash:ColumnSelection ui:field="columns"/>
             </g:SimplePanel>
         </form:FormGroup>

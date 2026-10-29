@@ -14,7 +14,7 @@
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-max dock-container-vertical quick-filter-layout overflow-hidden">
             <view:QuickFilter accessibleName="Filter values" ui:field="quickFilter" addStyleNames="dock-min"/>
-            <g:SimplePanel styleName="dock-max form-control-border form-control-background overflow-hidden">
+            <g:SimplePanel styleName="dock-max control-box overflow-hidden">
                 <!-- The values, each ticked or not -->
                 <dg:PagerPanel ui:field="pager">
                     <dg:DataGrid ui:field="list" pageSize="100" profile="LISTBOX" accessibleName="Values"/>

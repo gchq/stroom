@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// splitters for real is in the `Drag` stories of `Widgets/Layout/SplitPane`.
 ///
 /// A regular splitter is a gap between bordered panes, so its panes are bordered as Stroom's views
-/// border them (`form-control-border form-control-background`, as `FindInContent` does).
+/// border them (`control-box`, as `FindInContent` does).
 /// Its states are drawn as a thin splitter's are, a line and a handle, in the middle of its gap.
 public final class SplitPaneStateStories {
 
@@ -207,11 +207,11 @@ public final class SplitPaneStateStories {
     }
 
     // A pane beside a regular splitter, which Stroom's views give a border and background, e.g.
-    // FindInContent's "max form-control-border form-control-background"
+    // FindInContent's "max control-box"
     private static void bordered(final Widget pane) {
         // In place of the left pane's tint
         pane.getElement().getStyle().clearProperty("background");
-        pane.addStyleName("form-control-border form-control-background");
+        pane.addStyleName("control-box");
     }
 
     private static String testId(final Kind kind, final State state) {

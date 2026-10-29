@@ -32,7 +32,6 @@
 }
 
 html {
-    font-family: sans-serif;
     line-height: 1.15;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
@@ -52,14 +51,8 @@ section {
 }
 
 body {
-    margin: 0;
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-    font-size: 1rem;
-    font-weight: 400;
     line-height: 1.5;
-    color: #212529;
     text-align: left;
-    background-color: #fff;
 }
 
 [tabindex="-1"]:focus:not(:focus-visible) {
@@ -79,12 +72,6 @@ h4,
 h5,
 h6 {
     margin-top: 0;
-    margin-bottom: .5rem;
-}
-
-p {
-    margin-top: 0;
-    margin-bottom: 1rem;
 }
 
 abbr[data-original-title],
@@ -136,10 +123,6 @@ strong {
     font-weight: bolder;
 }
 
-small {
-    font-size: 80%;
-}
-
 sub,
 sup {
     position: relative;
@@ -157,13 +140,11 @@ sup {
 }
 
 a {
-    color: #007bff;
     text-decoration: none;
     background-color: transparent;
 }
 
 a:hover {
-    color: #0056b3;
     text-decoration: underline;
 }
 
@@ -197,17 +178,12 @@ figure {
 }
 
 img {
-    vertical-align: middle;
     border-style: none;
 }
 
 svg {
     overflow: hidden;
     vertical-align: middle;
-}
-
-table {
-    border-collapse: collapse;
 }
 
 caption {
@@ -225,7 +201,6 @@ th {
 
 label {
     display: inline-block;
-    margin-bottom: .5rem;
 }
 
 button {
@@ -295,7 +270,6 @@ input[type=radio] {
 
 textarea {
     overflow: auto;
-    resize: vertical;
 }
 
 fieldset {
@@ -368,35 +342,12 @@ h6 {
     line-height: 1.2;
 }
 
-h1 {
-    font-size: 2.5rem;
-}
-
-h2 {
-    font-size: 2rem;
-}
-
-h3 {
-    font-size: 1.75rem;
-}
-
-h4 {
-    font-size: 1.5rem;
-}
-
 h5 {
     font-size: 1.25rem;
 }
 
 h6 {
     font-size: 1rem;
-}
-
-hr {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    border: 0;
-    border-top: 1px solid rgba(0,0,0,.1);
 }
 
 small {
@@ -411,7 +362,6 @@ mark {
 
 code {
     font-size: 87.5%;
-    color: #e83e8c;
     word-wrap: break-word;
 }
 
@@ -435,8 +385,6 @@ kbd kbd {
 
 pre {
     display: block;
-    font-size: 87.5%;
-    color: #212529;
 }
 
 pre code {
@@ -464,25 +412,9 @@ label {
 
 /* GWT's standard theme, Stroom's changes to it and stroom.css */
 
-body,
-table td,
-select {
-  font-family: var(--regular-font-family);
-  font-size: var(--font-size-11);
-}
-
 pre {
   font-family: var(--monospace-font-family);
   font-size: var(--font-size-11);
-}
-
-body {
-  color: black;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  background: #fff;
-  direction: ltr;
 }
 
 a,
@@ -500,18 +432,6 @@ a:hover {
 .welcome-tab__body a,
 .authentication-error__message-container a {
   text-decoration: underline;
-}
-
-body,
-table td,
-select {
-	font-family: var(--regular-font-family);
-	font-size: var(--font-size-13);
-	font-weight: 400;
-
-	-moz-box-sizing: border-box;
-	-ms-box-sizing: border-box;
-	box-sizing: border-box;
 }
 
 textarea {
@@ -615,7 +535,6 @@ textarea:where(:not(.text-field)) {
 	display: block;
 	margin: 0px;
 	_margin-top: -1px;
-	border: solid 1px var(--control__border-color);
 	resize: none;
 	height: 80px;
 	/* To ensure we get a pointer for the scrollbar */

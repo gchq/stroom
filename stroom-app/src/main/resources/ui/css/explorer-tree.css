@@ -68,9 +68,6 @@
     position: relative;
 }
 
-.explorer-cell--filter-match .explorer-cell__text {
-}
-
 .explorer-cell--filter-no-match .explorer-cell__text {
     color: var(--navigation__text-color--no-match);
 }

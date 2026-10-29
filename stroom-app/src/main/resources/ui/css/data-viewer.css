@@ -63,9 +63,6 @@
     height: 0px;
 }
 
-.data-viewer__source-link-label {
-}
-
 /* The source link: a pointer and an underline on a hover while it can be followed, greyed
    while it can't (was stroom.css's clickableLabel) */
 .data-viewer__source-link-label.data-viewer__source-link-label--enabled {

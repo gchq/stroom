@@ -4,7 +4,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical overflow-hidden">
-        <g:FlowPanel styleName="max form-control-border form-control-background">
+        <g:FlowPanel styleName="max control-box">
             <dg:DataGrid ui:field="list" pageSize="100000" profile="LISTBOX" accessibleName="Tab sessions"
                          addStyleNames="w-100"/>
         </g:FlowPanel>

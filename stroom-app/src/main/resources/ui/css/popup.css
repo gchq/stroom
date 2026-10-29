@@ -59,11 +59,13 @@
 
 .popup-drag-glass {
     position: absolute;
-    left: 0;
-    top: 0;
 	background-color: transparent;
 	visibility: hidden;
 	z-index: 5;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
 }
 
 .popup-drag-glass--visible {

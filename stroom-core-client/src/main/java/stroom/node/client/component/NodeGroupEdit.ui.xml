@@ -24,7 +24,7 @@
         </form:FormGroup>
         <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max"
                         helpText="Tick the nodes to include in or exclude from this group, depending on Node Inclusion Behaviour.">
-            <g:SimplePanel ui:field="list" styleName="dock-max form-control-border form-control-background"/>
+            <g:SimplePanel ui:field="list" styleName="dock-max control-box"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

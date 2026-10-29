@@ -7,7 +7,7 @@
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical column-function-editor">
         <split:SplitPane thin="true" sizes="300px, *"
-                         names="Help, Expression" addStyleNames="dock-max form-control-border form-control-background">
+                         names="Help, Expression" addStyleNames="dock-max control-box">
             <g:SimplePanel ui:field="queryHelp" styleName="max"/>
             <g:SimplePanel styleName="dock-max">
                 <ed:CodeEditor ui:field="editor"/>

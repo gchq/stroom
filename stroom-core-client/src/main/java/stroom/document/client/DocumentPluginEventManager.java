@@ -872,13 +872,13 @@ public class DocumentPluginEventManager extends Plugin {
                         ? "The following contained item will also be deleted:"
                         : "The following " + count + " contained items will also be deleted:";
                 // Summary: a header div followed by one div per doc type count.
-                builder.div(header, Attribute.className("deleteConfirm-summaryHeader"));
+                builder.div(header, Attribute.className("delete-confirm__summary-header"));
                 buildTypeCountLines(info.getChildTypeCounts()).forEach(line ->
-                        builder.div(line, Attribute.className("deleteConfirm-typeCount")));
+                        builder.div(line, Attribute.className("delete-confirm__type-count")));
 
                 // Extra gap between the summary and the detailed item list.
                 builder.div(hb -> {
-                }, Attribute.className("deleteConfirm-gap"), Attribute.style("height:6px"));
+                }, Attribute.className("delete-confirm__gap"));
 
                 // Detail: one icon + name row per item.
                 appendDocRefRows(builder, info.getChildItems());
@@ -906,7 +906,7 @@ public class DocumentPluginEventManager extends Plugin {
             }
             if (NullSafe.hasItems(info.getVisibleDependants())) {
                 builder.div("The following items depend on this:",
-                        Attribute.className("deleteConfirm-summaryHeader"));
+                        Attribute.className("delete-confirm__summary-header"));
                 appendDocRefRows(builder, info.getVisibleDependants());
             }
             if (info.isHasHiddenDependants()) {

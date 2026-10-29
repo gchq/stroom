@@ -18,6 +18,6 @@
             </div>
         </div>
         <tx:Label ui:field="feedback" styleName="value-spinner__feedback"/>
-        <div ui:field="status" class="value-spinner__status" aria-live="polite"></div>
+        <div ui:field="status" class="value-spinner__status sr-only" aria-live="polite"></div>
     </g:HTMLPanel>
 </ui:UiBinder>

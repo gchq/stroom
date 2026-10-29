@@ -22,7 +22,6 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.canvas.client.Canvas;
-import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SetSelectionModel;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -193,12 +192,8 @@ public class TreeRenderer<T> {
                         // Set new item.
                         lastItemUnderCursor = item;
 
-                        // Set the cursor.
-                        if (item != null) {
-                            topCanvas.getElement().getStyle().setCursor(Cursor.POINTER);
-                        } else {
-                            topCanvas.getElement().getStyle().setCursor(Cursor.DEFAULT);
-                        }
+                        // A pointer over an item (layered-canvas.css)
+                        topCanvas.setStyleName("layered-canvas__layer--pointer", item != null);
                     }
                 }
             }));

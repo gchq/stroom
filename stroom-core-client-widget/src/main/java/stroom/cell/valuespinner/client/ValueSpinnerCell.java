@@ -596,7 +596,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                   + "<input class=\"text-field value-spinner__input\" type=\"text\" role=\"spinbutton\""
                   + " value=\"{0}\" aria-valuenow=\"{1}\" aria-label=\"{2}\" aria-valuemin=\"{3}\""
                   + " aria-valuemax=\"{4}\" tabindex=\"-1\"></input>{5}</div>"
-                  + "<span class=\"value-spinner__status\" aria-live=\"polite\"></span></div>")
+                  + "<span class=\"value-spinner__status sr-only\" aria-live=\"polite\"></span></div>")
         SafeHtml input(String text, String value, String name, String min, String max, SafeHtml steps);
 
         // As input, for a field whose typed value was rejected: marked invalid and described by
@@ -607,7 +607,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                   + " value=\"{0}\" aria-valuenow=\"{1}\" aria-label=\"{2}\" aria-valuemin=\"{3}\""
                   + " aria-valuemax=\"{4}\" tabindex=\"-1\" aria-invalid=\"true\" aria-describedby=\"{6}\""
                   + " title=\"{7}\"></input>{5}</div>"
-                  + "<span id=\"{6}\" class=\"value-spinner__status\" aria-live=\"polite\">{7}</span></div>")
+                  + "<span id=\"{6}\" class=\"value-spinner__status sr-only\" aria-live=\"polite\">{7}</span></div>")
         SafeHtml rejectedInput(String text, String value, String name, String min, String max, SafeHtml steps,
                                String statusId, String rejection);
 

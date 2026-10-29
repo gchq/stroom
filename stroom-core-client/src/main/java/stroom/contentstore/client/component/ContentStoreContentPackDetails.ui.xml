@@ -9,7 +9,7 @@
         <g:FlowPanel styleName="contentstore-details-vertical">
             <tx:Label ui:field="name" addStyleNames="contentstore-details-heading"/>
             <tx:Html ui:field="details" wordWrap="true"
-                    addStyleNames="contentstore-details-markdown form-control-border form-control-background"/>
+                    addStyleNames="contentstore-details-markdown control-box"/>
             <g:FlowPanel styleName="contentstore-details-list">
                 <tx:Label addStyleNames="contentstore-details-name" text="Installed status:"/>
                 <tx:Label ui:field="installedStatus"/>

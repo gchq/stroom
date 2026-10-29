@@ -11,10 +11,10 @@
         <split:SplitPane sizes="400px, *"
                          names="Paths, Constraints" addStyleNames="dock-max">
             <form:FormGroup identity="pathwayDetails" label="Paths">
-                <g:SimplePanel ui:field="tree" styleName="max form-control-background form-control-border"/>
+                <g:SimplePanel ui:field="tree" styleName="max control-box"/>
             </form:FormGroup>
             <form:FormGroup identity="pathwayConstraints" label="Constraints">
-                <g:SimplePanel ui:field="constraints" styleName="max form-control-background form-control-border"/>
+                <g:SimplePanel ui:field="constraints" styleName="max control-box"/>
             </form:FormGroup>
         </split:SplitPane>
     </g:FlowPanel>

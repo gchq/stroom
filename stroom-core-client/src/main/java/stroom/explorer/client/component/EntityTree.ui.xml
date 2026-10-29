@@ -7,7 +7,7 @@
     <!-- A quick filter above the explorer's tree, in a bordered panel, which its controller fills -->
     <g:FlowPanel styleName="max dock-container-vertical quick-filter-layout">
         <v:QuickFilter accessibleName="Filter documents" ui:field="nameFilter" addStyleNames="dock-min"/>
-        <layout:ScrollPane addStyleNames="dock-max form-control-border form-control-background">
+        <layout:ScrollPane addStyleNames="dock-max control-box">
             <ex:ExplorerTree ui:field="tree"/>
         </layout:ScrollPane>
     </g:FlowPanel>

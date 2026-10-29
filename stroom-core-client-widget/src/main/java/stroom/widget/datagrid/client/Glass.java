@@ -16,11 +16,11 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 
 public class Glass {
@@ -60,19 +60,15 @@ public class Glass {
     }
 
     public void show(final double left, final double top, final double width, final double height) {
+        ensureGlass();
+        // Its place and size, which the glass's class reads (e.g. left: var(--glass__left, 0))
+        CssProperties.set(glassElem, "--glass__left", left + "px");
+        CssProperties.set(glassElem, "--glass__top", top + "px");
+        CssProperties.set(glassElem, "--glass__width", width + "px");
+        CssProperties.set(glassElem, "--glass__height", height + "px");
         if (!glassAttached) {
             glassAttached = true;
-            ensureGlass();
-            glassElem.getStyle().setLeft(left, Unit.PX);
-            glassElem.getStyle().setTop(top, Unit.PX);
-            glassElem.getStyle().setWidth(width, Unit.PX);
-            glassElem.getStyle().setHeight(height, Unit.PX);
             Document.get().getBody().appendChild(glassElem);
-        } else {
-            glassElem.getStyle().setLeft(left, Unit.PX);
-            glassElem.getStyle().setTop(top, Unit.PX);
-            glassElem.getStyle().setWidth(width, Unit.PX);
-            glassElem.getStyle().setHeight(height, Unit.PX);
         }
 
         if (visibleClassName != null) {

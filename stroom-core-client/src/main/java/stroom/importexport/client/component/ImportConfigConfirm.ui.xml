@@ -8,7 +8,7 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form overflow-hidden default-min-sizes">
-        <g:SimplePanel styleName="dock-max form-control-border form-control-background">
+        <g:SimplePanel styleName="dock-max control-box">
             <!-- An import can hold many thousands of items, all on one page: draw only those in view -->
             <dg:DataGrid ui:field="dataGrid" tableName="Import Items" pageSize="100000" virtual="true"/>
         </g:SimplePanel>

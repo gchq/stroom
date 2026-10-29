@@ -73,8 +73,8 @@ public final class QuickFilterPanelStories {
                     play.expect(panel).toHaveClass("dock-container-vertical");
                     // No card: the border belongs to neither the outer nor the results in the page
                     // layout
-                    play.expect(panel).not().toHaveClass("form-control-border");
-                    play.expect(play.within(panel).querySelector(RESULTS)).not().toHaveClass("form-control-border");
+                    play.expect(panel).not().toHaveClass("control-box");
+                    play.expect(play.within(panel).querySelector(RESULTS)).not().toHaveClass("control-box");
                     // GWT's FormGroup contributes the padding
                     final Query group = play.within(panel).querySelector(".form-group.form-padding");
                     play.expect(group).not().toBeNull();
@@ -82,7 +82,7 @@ public final class QuickFilterPanelStories {
                     play.expect(play.getByText("Scotland")).toBeInTheDocument();
                 })
                 // The DIALOG layout - QuickFilterDialog: no FormGroup and no padding, and
-                // form-control-border form-control-background on the DATA PANEL alone
+                // control-box on the DATA PANEL alone
                 .story("DialogVariant", context -> {
                     final QuickFilterDialog dialog = new QuickFilterDialog();
                     final RowsView rows = new RowsView();
@@ -97,8 +97,7 @@ public final class QuickFilterPanelStories {
                     // The filter is a direct child - no FormGroup wrapper in this variant
                     play.expect(play.within(panel).querySelector(".form-group.form-padding")).toBeNull();
                     final Query results = play.within(panel).querySelector(RESULTS);
-                    play.expect(results).toHaveClass("form-control-border");
-                    play.expect(results).toHaveClass("form-control-background");
+                    play.expect(results).toHaveClass("control-box");
                 });
     }
 
