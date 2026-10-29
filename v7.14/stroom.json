@@ -2493,11 +2493,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRefs"
+                "$ref" : "#/components/schemas/ExportContentRequest"
               }
             }
           },
-          "description" : "docRefs",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -8453,66 +8453,6 @@
         "tags" : [ "Pathways" ]
       }
     },
-    "/pathways/v2/fetchPathway" : {
-      "post" : {
-        "operationId" : "fetchPathway",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FetchPathwayRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Pathway"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch one learnt pathway in full",
-        "tags" : [ "Pathways" ]
-      }
-    },
-    "/pathways/v2/findMutations" : {
-      "post" : {
-        "operationId" : "findPathwayMutations",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindPathwayMutationCriteria"
-              }
-            }
-          },
-          "description" : "criteria",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PathwayMutationResultPage"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the changes made to one learnt pathway",
-        "tags" : [ "Pathways" ]
-      }
-    },
     "/pathways/v2/findPathways" : {
       "post" : {
         "operationId" : "findPathways",
@@ -8540,39 +8480,6 @@
           }
         },
         "summary" : "Find pathways",
-        "tags" : [ "Pathways" ]
-      }
-    },
-    "/pathways/v2/findUsage" : {
-      "post" : {
-        "operationId" : "findPathwayUsage",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindPathwayMutationCriteria"
-              }
-            }
-          },
-          "description" : "criteria",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/PathwayUsage"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find how much each node of one learnt pathway had been used at each point in its history",
         "tags" : [ "Pathways" ]
       }
     },
@@ -15083,7 +14990,6 @@
           "mapping" : {
             "histogram" : "#/components/schemas/HistogramSettings",
             "metric" : "#/components/schemas/MetricSettings",
-            "pathways" : "#/components/schemas/PathwaysSettings",
             "rangeState" : "#/components/schemas/RangeStateSettings",
             "session" : "#/components/schemas/SessionSettings",
             "state" : "#/components/schemas/StateSettings",
@@ -17394,18 +17300,11 @@
       "Constraint" : {
         "type" : "object",
         "properties" : {
-          "lastUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
           "name" : {
             "type" : "string"
           },
           "optional" : {
             "type" : "boolean"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "value" : {
             "$ref" : "#/components/schemas/ConstraintValue"
@@ -18731,18 +18630,6 @@
         },
         "required" : [ "uuid" ]
       },
-      "DocRefs" : {
-        "type" : "object",
-        "properties" : {
-          "docRefs" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DocRef"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
       "DocumentAsset" : {
         "type" : "object",
         "properties" : {
@@ -19969,6 +19856,25 @@
           }
         }
       },
+      "ExportContentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "uniqueItems" : true
+          },
+          "includedTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "ExpressionCriteria" : {
         "type" : "object",
         "properties" : {
@@ -20398,6 +20304,9 @@
             },
             "uniqueItems" : true
           },
+          "refresh" : {
+            "type" : "boolean"
+          },
           "showAlerts" : {
             "type" : "boolean"
           },
@@ -20466,17 +20375,6 @@
             "items" : {
               "$ref" : "#/components/schemas/NodeStatusResult"
             }
-          }
-        }
-      },
-      "FetchPathwayRequest" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "pathwaysDocRef" : {
-            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -21033,30 +20931,6 @@
           }
         }
       },
-      "FindPathwayMutationCriteria" : {
-        "type" : "object",
-        "properties" : {
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "pathwayName" : {
-            "type" : "string"
-          },
-          "pathwaysDocRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
       "FindProcessorProfileRequest" : {
         "type" : "object",
         "properties" : {
@@ -21226,12 +21100,6 @@
           },
           "filter" : {
             "type" : "string"
-          },
-          "ignoredSpanNames" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -21497,7 +21365,7 @@
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE", "PATHWAYS" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
           },
           "type" : {
             "type" : "string"
@@ -23972,21 +23840,6 @@
           }
         }
       },
-      "NodeUsage" : {
-        "type" : "object",
-        "properties" : {
-          "lastUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "nodeUuid" : {
-            "type" : "string"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
-      },
       "NotificationConfig" : {
         "type" : "object",
         "properties" : {
@@ -24275,116 +24128,46 @@
       "PathNode" : {
         "type" : "object",
         "properties" : {
-          "children" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PathNode"
-            }
-          },
           "constraints" : {
             "type" : "object",
             "additionalProperties" : {
               "$ref" : "#/components/schemas/Constraint"
             }
           },
-          "lastUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
           "name" : {
             "type" : "string"
           },
-          "nodePath" : {
+          "path" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
           },
-          "retiredTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
+          "targets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PathNodeSequence"
+            }
           },
           "uuid" : {
             "type" : "string"
           }
         }
       },
-      "PathStep" : {
-        "type" : "object",
-        "properties" : {
-          "node" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "steps" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int32"
-            }
-          }
-        }
-      },
-      "PathUse" : {
-        "type" : "object",
-        "properties" : {
-          "createdByTraceId" : {
-            "type" : "string"
-          },
-          "firstUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "lastTraceTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "lastUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "root" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "source" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "traceTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          }
-        }
-      },
-      "Paths" : {
+      "PathNodeSequence" : {
         "type" : "object",
         "properties" : {
           "nodes" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/PathNode"
             }
           },
-          "paths" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PathUse"
-            }
+          "pathKey" : {
+            "$ref" : "#/components/schemas/PathKey"
           },
-          "sources" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "steps" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PathStep"
-            }
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
@@ -24403,86 +24186,11 @@
           "pathKey" : {
             "$ref" : "#/components/schemas/PathKey"
           },
-          "paths" : {
-            "$ref" : "#/components/schemas/Paths"
-          },
           "root" : {
             "$ref" : "#/components/schemas/PathNode"
           },
-          "timesUpdated" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTime" : {
             "$ref" : "#/components/schemas/NanoTime"
-          }
-        }
-      },
-      "PathwayMutation" : {
-        "type" : "object",
-        "properties" : {
-          "constraint" : {
-            "type" : "string"
-          },
-          "newValue" : {
-            "$ref" : "#/components/schemas/ConstraintValue"
-          },
-          "nodePath" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "nodeUuid" : {
-            "type" : "string"
-          },
-          "oldValue" : {
-            "$ref" : "#/components/schemas/ConstraintValue"
-          },
-          "optional" : {
-            "type" : "boolean"
-          },
-          "sequence" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "source" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "spanId" : {
-            "type" : "string"
-          },
-          "time" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "traceId" : {
-            "type" : "string"
-          },
-          "traceTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "PATHWAY_ADDED", "NODE_ADDED", "CONSTRAINT_ADDED", "CONSTRAINT_CHANGED", "CONSTRAINT_OPTIONAL", "CONSTRAINT_MIN_EXPANDED", "CONSTRAINT_MAX_EXPANDED", "CONSTRAINT_SET_EXPANDED", "CONSTRAINT_GENERALISED", "CONSTRAINT_RANGED", "CONSTRAINT_TYPE_CONFLICT", "CONSTRAINT_IGNORED", "NODE_ABSENT", "CONSTRAINT_BOUND_OPENED", "CONSTRAINT_NARROWED", "PATH_DROPPED", "NODE_RETIRED", "NODE_REVIVED" ]
-          }
-        }
-      },
-      "PathwayMutationResultPage" : {
-        "type" : "object",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PathwayMutation"
-            }
           }
         }
       },
@@ -24495,60 +24203,8 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/PathwaySummary"
+              "$ref" : "#/components/schemas/Pathway"
             }
-          }
-        }
-      },
-      "PathwaySummary" : {
-        "type" : "object",
-        "properties" : {
-          "createTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "lastUsedTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "nodes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "paths" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "sizeBytes" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "timesUpdated" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "timesUsed" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateTime" : {
-            "$ref" : "#/components/schemas/NanoTime"
-          }
-        }
-      },
-      "PathwayUsage" : {
-        "type" : "object",
-        "properties" : {
-          "nodes" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NodeUsage"
-            }
-          },
-          "sequence" : {
-            "type" : "integer",
-            "format" : "int64"
           }
         }
       },
@@ -24577,29 +24233,11 @@
           "description" : {
             "type" : "string"
           },
-          "hasSharedFileStoreData" : {
-            "type" : "boolean"
-          },
-          "ignoredAttributes" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "ignoredSpanNames" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
           "infoFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
           "name" : {
             "type" : "string"
-          },
-          "narrowingWindow" : {
-            "$ref" : "#/components/schemas/SimpleDuration"
           },
           "pathways" : {
             "type" : "array",
@@ -24607,11 +24245,14 @@
               "$ref" : "#/components/schemas/Pathway"
             }
           },
-          "sharedFileStore" : {
-            "$ref" : "#/components/schemas/SharedFileStoreSettings"
+          "processingNode" : {
+            "type" : "string"
           },
           "temporalOrderingTolerance" : {
             "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "tracesDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "type" : {
             "type" : "string"
@@ -24630,19 +24271,6 @@
             "type" : "string"
           }
         }
-      },
-      "PathwaysSettings" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractPlanBSettings"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "sharedFileStore" : {
-              "$ref" : "#/components/schemas/SharedFileStoreSettings"
-            }
-          }
-        } ]
       },
       "PermissionChangeEvent" : {
         "type" : "object",
@@ -25004,7 +24632,7 @@
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE", "PATHWAYS" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
           },
           "type" : {
             "type" : "string"
@@ -25870,7 +25498,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -30773,15 +30401,12 @@
           "name" : {
             "type" : "string"
           },
-          "pathwaysDocRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "settings" : {
             "$ref" : "#/components/schemas/AbstractPlanBSettings"
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE", "PATHWAYS" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
           },
           "type" : {
             "type" : "string"
