@@ -45,6 +45,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -79,6 +80,17 @@ final class ProcessingExplainer {
     static final Duration OVERDUE = Duration.ofMinutes(5);
     /// The most filters listed ahead of another, or in the cluster's priorities.
     static final int MAX_LISTED = 15;
+    /// The order filters get work in, as Stroom's `ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR` gives it:
+    /// highest priority first, then, of the same priority, the filter whose tracker is furthest behind (the lowest
+    /// stream id, then the lowest event id, it still has to reach). A filter not yet polled has no tracker, so it
+    /// goes last of its priority. Ties go to the lowest filter id, so the order is the same each time.
+    static final Comparator<ProcessorFilter> WORK_ORDER = Comparator
+            .comparingInt(ProcessorFilter::getPriority).reversed()
+            .thenComparingLong(filter -> NullSafe.getOrElse(filter.getProcessorFilterTracker(),
+                    ProcessorFilterTracker::getMinMetaId, Long.MAX_VALUE))
+            .thenComparingLong(filter -> NullSafe.getOrElse(filter.getProcessorFilterTracker(),
+                    ProcessorFilterTracker::getMinEventId, Long.MAX_VALUE))
+            .thenComparing(ProcessorFilter::getId);
 
     static final String PROCESSORS_TAB = "the pipeline's Processors tab";
     static final String FAILED_NOTE = "Stroom keeps no reason for a task that ran and failed: look in that node's "
@@ -730,7 +742,7 @@ final class ProcessingExplainer {
         long aheadCreated = 0;
         long aheadWork = 0;
         for (final ProcessorFilter other : enabled) {
-            if (Objects.equals(other.getId(), filter.getId()) || other.getPriority() <= filter.getPriority()
+            if (Objects.equals(other.getId(), filter.getId()) || WORK_ORDER.compare(other, filter) >= 0
                 || !profile.equals(NullSafe.string(other.getProfileName()))) {
                 continue;
             }
@@ -764,21 +776,21 @@ final class ProcessingExplainer {
                 ? "filters with no profile"
                 : "profile '" + profile + "'";
         if (aheadWork == 0) {
-            checks.add("priority", OK, "No higher-priority filter in " + scope + " has work waiting.", context, null);
+            checks.add("priority", OK, "No filter ahead of it in " + scope + " has work waiting.", context, null);
         } else if (aheadCreated >= settings.tasksToCreate()) {
-            checks.add("priority", SLOWING, "Higher-priority filters in " + scope + " already have " + aheadCreated
+            checks.add("priority", SLOWING, "Filters ahead of it in " + scope + " already have " + aheadCreated
                                             + " tasks made, at least the creation budget of "
                                             + settings.tasksToCreate() + " per run: task creation spends the budget "
                                             + "on them, so no new tasks are made for this filter until they drain.",
                     context, "Raise this filter's priority, cap the busier filters (their Max Processing Tasks, or "
                              + "a profile's thread limits), or give this filter its own profile.");
         } else if (created > 0 && running == 0) {
-            checks.add("priority", SLOWING, "Higher-priority filters in " + scope + " have " + aheadWork + " task(s) "
-                                            + "waiting, and work is handed out highest priority first: this "
+            checks.add("priority", SLOWING, "Filters ahead of it in " + scope + " have " + aheadWork + " task(s) "
+                                            + "waiting, and work is handed out in priority order: this "
                                             + "filter's " + created + " task(s) wait until they drain.",
                     context, "Raise this filter's priority if it should go first.");
         } else {
-            checks.add("priority", OK, aheadWork + " task(s) of higher-priority filters in " + scope + " go first, "
+            checks.add("priority", OK, aheadWork + " task(s) of filters ahead of it in " + scope + " go first, "
                                        + "but this filter is getting work.", context, null);
         }
         return context;
@@ -817,7 +829,10 @@ final class ProcessingExplainer {
         }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("rule", "Work goes to the highest priority first (1-100, default 10), within each processor "
-                           + "profile (filters without one share one). Each run, task creation spends a budget of "
+                           + "profile (filters without one share one). Of filters with the same priority, the one "
+                           + "whose tracker is furthest behind (the lowest stream id still to reach, then the lowest "
+                           + "event id) goes first, so the filter with the oldest work left catches up before newer "
+                           + "ones; 'filters' is in this order. Each run, task creation spends a budget of "
                            + settings.tasksToCreate() + " per profile, counting tasks a filter already has made, so "
                            + "a busy high-priority filter can leave lower ones in its profile with no new tasks.");
         result.put("filters_with_work", withWork);
@@ -832,7 +847,7 @@ final class ProcessingExplainer {
         }
         if (!starved.isEmpty()) {
             report.add("priorities", SLOWING, starved.size() + " filter(s) have tasks waiting with none handed out, "
-                                              + "behind higher-priority filters in their profile.",
+                                              + "behind the filters ahead of them in their profile.",
                     Map.of("starved", starved), "Raise their priority, or cap the filters ahead of them.");
         } else {
             report.add("priorities", OK, withWork + " enabled filter(s) have work, and none is waiting behind "

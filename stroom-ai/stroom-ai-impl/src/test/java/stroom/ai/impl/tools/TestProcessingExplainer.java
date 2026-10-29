@@ -353,6 +353,65 @@ class TestProcessingExplainer {
         assertThat(state(result, "priorities")).isEqualTo(ProcessingExplainer.SLOWING);
     }
 
+    @Test
+    void theClusterViewOrdersFiltersOfTheSamePriorityByHowFarBehindTheirTrackersAre() {
+        facts.filters.addAll(List.of(
+                filter(1, 10).processorFilterTracker(tracker().minMetaId(500).build()).build(),
+                filter(2, 10).processorFilterTracker(tracker().minMetaId(100).minEventId(7).build()).build(),
+                filter(3, 10).processorFilterTracker(tracker().minMetaId(100).minEventId(2).build()).build(),
+                filter(4, 50).processorFilterTracker(tracker().minMetaId(900).build()).build()));
+        facts.backlogs.put(1, counts(5, 0, 0));
+        facts.backlogs.put(2, counts(5, 1, 0));
+        facts.backlogs.put(3, counts(5, 1, 0));
+        facts.backlogs.put(4, counts(5, 1, 0));
+
+        final Map<String, Object> priorities = map(new ProcessingExplainer(facts).explainCluster().get("priorities"));
+
+        assertThat(((List<?>) priorities.get("filters")).stream().map(row -> map(row).get("id")))
+                .containsExactly(4, 3, 2, 1);
+        // Filter 1 is behind filters of its own priority, not only filter 4.
+        assertThat(((List<?>) priorities.get("filters")).stream()
+                .filter(row -> map(row).get("id").equals(1))
+                .map(row -> map(row).get("waiting_behind")))
+                .containsExactly(18L);
+        assertThat(strings(priorities.get("starved"))).containsExactly("filter 1 (ACME-Events, priority 10)");
+        assertThat(String.valueOf(priorities.get("rule"))).contains("the same priority")
+                .contains("tracker is furthest behind");
+    }
+
+    @Test
+    void aFilterOfTheSamePriorityWhoseTrackerIsFurtherBehindIsAheadOfIt() {
+        final ProcessorFilter mine = filter(1, 10).processorFilterTracker(tracker().minMetaId(500).build()).build();
+        final ProcessorFilter behind = filter(2, 10).pipelineUuid("p2").pipelineName("Behind")
+                .processorFilterTracker(tracker().minMetaId(100).build()).build();
+        facts.filters.addAll(List.of(mine, behind));
+        facts.pipelineFilters.put("p1", List.of(mine));
+        facts.backlogs.put(1, counts(5, 0, 0));
+        facts.backlogs.put(2, counts(40, 10, 2));
+
+        Map<String, Object> result = explainPipeline();
+        assertThat(state(result, "filter 1: priority")).isEqualTo(ProcessingExplainer.SLOWING);
+        assertThat(check(result, "filter 1: priority").get("finding")).asString()
+                .contains("Filters ahead of it").contains("52 task(s) waiting");
+
+        // Once its tracker is ahead of this one's, it waits behind this filter instead.
+        facts.filters.set(1, behind.copy().processorFilterTracker(tracker().minMetaId(900).build()).build());
+        result = explainPipeline();
+        assertThat(state(result, "filter 1: priority")).isEqualTo(ProcessingExplainer.OK);
+        assertThat(check(result, "filter 1: priority").get("finding")).asString()
+                .contains("No filter ahead of it");
+    }
+
+    @Test
+    void aFilterNotYetPolledGoesLastOfItsPriority() {
+        final ProcessorFilter unpolled = filter(1, 10).processorFilterTracker(null).build();
+        final ProcessorFilter polled = filter(2, 10).processorFilterTracker(tracker().minMetaId(9_999).build()).build();
+        final ProcessorFilter lower = filter(3, 5).build();
+
+        assertThat(List.of(lower, unpolled, polled).stream().sorted(ProcessingExplainer.WORK_ORDER).toList())
+                .containsExactly(polled, unpolled, lower);
+    }
+
     // --------------------------------------------------------------------------------
 
     private Map<String, Object> explainPipeline() {
