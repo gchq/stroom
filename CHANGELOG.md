@@ -12,6 +12,75 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.14-beta.9] - 2026-10-29
+
+* Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.
+
+* Bug **#5815** : Change Credentials so that editing their name or expiry no longer needs the secret to be re-entered. Secrets are never shown, the type is fixed once created and a new Replace Secret action replaces a secret in place. Also redact SSH key passphrases from audit logs.
+
+* Bug **#5815** : Fix creating Credentials with the name of existing Credentials taking over the existing Credentials and their secret. Duplicate and blank names are now rejected.
+
+* Feature **#5796** : Add a 'Key Store File' credential type that refers to a key store file at the same path on every node, e.g. one kept up to date by cert-manager, rather than an uploaded one. Paths must be in a directory listed in the new `stroom.credentials.allowedKeyStoreFileDirs` property, which is empty by default.
+
+* Feature **#5796** : Refresh cached HTTP clients in the background every 10 minutes (`stroom.pipeline.httpClientCache.refreshAfterWrite`) so that changes to key store files on disk are picked up. Clients still in use are only closed once finished with.
+
+* Build : Update gradle wrapper from 9.8.0 to 9.8.1.
+
+* Feature **#5796** : Add `stroom.credentials.keyStoreFiles` to create 'Key Store File' credentials from the YAML config when Stroom starts, owned by `stroom.credentials.keyStoreFilesOwnerSubjectId` (default the Administrators group).
+
+* Bug **#5887** : Stop S3 Event Service from setting DLQ message attributes with null/blank values.
+
+* Bug : Change default value of prop `receive.s3Event.sqs.maxNumberOfMessages` from 1000 to 10. Add config value validation constraints.
+
+* Feature **#5879** : Use Stroom credentials and HTTP client settings for Elastic Cluster documents. The API key is now chosen from the Access Token credentials and is no longer sent to the browser. TLS (key/trust stores), proxy and timeouts are set with the standard HTTP client settings. **Breaking change**: the inline CA certificate, API key ID/secret and timeouts are no longer used, so existing Elastic Cluster documents must be updated after upgrade. Create an Access Token credential holding the base64 encoded API key (the `encoded` value Elasticsearch returns) and, if needed, a PKCS12 trust store credential holding the cluster's CA certificate, then select them in the document. Testing a cluster now requires Edit permission on it.
+
+* Bug **#5878** : Fix Elasticsearch multi-fields (e.g. `User.Id.keyword`) not being shown in the field picker.
+
+* Feature **#5278** : Add expression function `shannonEntropy()` and XSLT function `shannon-entropy()` to calculate the Shannon entropy of a string.
+
+* Bug **#5878** : Fix Elasticsearch `unsigned_long` fields not being searchable for values beyond the range of a long.
+
+* Bug **#5878** : Fix Elasticsearch `version` fields not being searchable, as their values were expected to be numbers.
+
+* Bug **#5878** : Only offer the `=` and `!=` conditions for Elasticsearch `boolean` fields, rejecting others such as `matches regex`, which Elasticsearch does not support.
+
+* Bug **#5878** : Make Elasticsearch conditions on fields of the same `nested` object that are combined with AND match the same object, e.g. `Users.Name = alice AND Users.Role = admin` now only matches a user who is both, rather than any alice and any admin.
+
+* Bug **#5896** : Migrate the encoding of all existing API keys that use `SHA-` hashes from hex to base58. Stroom now encodes these hashes using base58, previously it used hex encoding.
+
+* Bug **#5878** : Fix extracted values of Elasticsearch `keyword`, `constant_keyword`, `wildcard`, `version` and `ip` fields always being blank and dates in milliseconds since the epoch being blank.
+
+* Feature **#5878** : Add support for Elasticsearch `match_only_text` fields (e.g. ECS's `message`), including their multi-fields, and the fields of `passthrough` objects (e.g. OpenTelemetry's `attributes`).
+
+* Bug **#5913** : Fix stepping failing with a MANAGE_TASKS_PERMISSION error for users without that permission.
+
+* Bug **#5895** : Fix the Add and Remove buttons on the User Groups tab of a user's or group's tab doing nothing.
+
+* Bug **#5871** : Fix export ignoring the document type filter when folders are selected.
+
+* Feature **#5920** : Add a Reload button to the Explorer tree that fetches the latest tree from the server, including changes made by other users, background processes or on other nodes, while keeping open folders, the filter and the selection.
+
+* Bug **#5878** : Report an error when an Elasticsearch `unsigned_long` value beyond the range of a long is returned, rather than truncating it.
+
+* Bug **#5662** : Fix stepping prefetch window being ignored once the stream's skeleton sweep has completed, causing a reprocess launch on every step.
+
+* Bug **#5930** : Fix stepping returning a 500 error when Stop is pressed while a step is in progress.
+
+* Bug **#5947** : Fix bug where setting cache prop `refreshAfterWrite` on a non-loading cache results in an exception being thrown. It now ignores the property and logs a warning.
+
+* Dependency : Uplift AWS libs from 2.46.7 to 2.57.3.
+
+* Dependency : Uplift jackson from 3.1.2 to 3.2.4.
+
+* Dependency : Uplift com.fasterxml.jackson:jackson-bom from 2.21.2 to 2.21.8.
+
+* Dependency : Uplift org.apache.zookeeper:zookeeper from 3.9.4 to 3.9.6.
+
+* Dependency : Uplift jetty from 12.1.9 to 12.1.14.
+
+* Bug **#5929** : Revert base docker images back to alpine 3.23 as 3.24 is breaking LMDB use.
+
 * Dependency : Change docker images to force `brotli-libs>=1.2.1-r0`.
 
 * Dependency : Uplift `com.hubspot.jinjava` from 2.8.2 to 2.8.4.
@@ -2719,7 +2788,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.9...HEAD
+[v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
 [v7.14-beta.6]: https://github.com/gchq/stroom/compare/v7.14-beta.5...v7.14-beta.6
