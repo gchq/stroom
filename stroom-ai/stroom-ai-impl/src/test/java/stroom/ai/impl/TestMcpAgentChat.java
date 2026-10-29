@@ -113,7 +113,7 @@ class TestMcpAgentChat {
     private final CurrentToolGrants toolGrants = () -> grants;
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog, new ModelStreamer(aiService),
-            new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
+            new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), AiConfig::new, aiDao, userActions,
             workspaceArguments, toolGrants);
 
     {
@@ -509,7 +509,7 @@ class TestMcpAgentChat {
         final McpAgentChat cappedChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), () -> config, aiDao, userActions,
                 workspaceArguments, toolGrants);
         final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
                 .id("1")
@@ -599,7 +599,7 @@ class TestMcpAgentChat {
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), () -> config, aiDao, userActions,
                 workspaceArguments, toolGrants);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
@@ -670,7 +670,7 @@ class TestMcpAgentChat {
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), () -> config, aiDao, userActions,
                 workspaceArguments, toolGrants);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
@@ -936,7 +936,7 @@ class TestMcpAgentChat {
                 .thenReturn(new ApprovalOutcome(ApprovalOutcome.Status.ALLOWED, null, null));
         final McpAgentChat answeredAtOnce = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, gate, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), AiConfig::new, aiDao, userActions,
                 workspaceArguments, toolGrants);
         final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
                 ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build())));
@@ -1809,6 +1809,43 @@ class TestMcpAgentChat {
         // The user sees what the run is doing while the summary is written.
         Mockito.verify(aiService).updateMessageText(Mockito.anyInt(),
                 Mockito.eq(McpAgentChat.SUMMARISING_PROGRESS + "…"));
+    }
+
+    @Test
+    void aRunCarryingOnFromTheStoredStepsPutsBackTheSummaryRatherThanWritingItAgain() {
+        // Seen: a run stopped for each form a tool asked the user to fill in and carried on in a new run from the
+        // question's stored steps, which summarised every step so far again, a minute or so after each form.
+        final List<ChatRequest> requests = new ArrayList<>();
+        estimateByStep(100);
+        agentChat.chat(summarisingModel(requests, 12, () -> "Read files a and b."), null, 7, messages,
+                searchToolset(), 99, new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0,
+                new ContextBudget(1_375, 80));
+        assertThat(requests.stream().filter(TestMcpAgentChat::isSummaryRequest)).hasSize(1);
+
+        // The next run is given the question's twelve steps as they were stored.
+        final List<ChatMessage> stored = new ArrayList<>(messages);
+        for (int n = 1; n <= 12; n++) {
+            stored.add(AiMessage.from("Step " + n, List.of(ToolExecutionRequest.builder()
+                    .id("call-" + n)
+                    .name("search")
+                    .arguments("{\"query\":\"q" + n + "\"}")
+                    .build())));
+            stored.add(ToolExecutionResultMessage.from("call-" + n, "search", "r".repeat(400)));
+        }
+        final List<ChatRequest> carriedOn = new ArrayList<>();
+        final ChatResponse response = agentChat.chat(summarisingModel(carriedOn, 0, () -> "Written again."), null,
+                7, stored, searchToolset(), 99, new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0,
+                new ContextBudget(1_375, 80));
+
+        assertThat(response.aiMessage().text()).isEqualTo("done");
+        assertThat(carriedOn).noneMatch(TestMcpAgentChat::isSummaryRequest);
+        final List<ChatMessage> sent = carriedOn.getFirst().messages();
+        assertThat(sent).filteredOn(UserMessage.class::isInstance)
+                .extracting(m -> ((UserMessage) m).singleText())
+                .containsOnlyOnce(McpAgentChat.TURN_SUMMARY_NOTE + "\nRead files a and b.");
+        // The steps the summary covers are in it; those it left as they were follow it.
+        assertThat(sent.stream().filter(AiMessage.class::isInstance).map(m -> ((AiMessage) m).text()).toList())
+                .containsExactly("Step 8", "Step 9", "Step 10", "Step 11", "Step 12");
     }
 
     @Test
