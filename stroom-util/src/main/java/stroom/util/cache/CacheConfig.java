@@ -123,8 +123,10 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             "Specifies that each entry should be automatically refreshed in the cache after " +
             "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
             "In ISO-8601 duration format, e.g. 'PT5M'. Refreshing is performed asynchronously and the current value " +
-            "provided until the refresh has occurred. This mechanism allows the cache to update values without any " +
-            "impact on performance.")
+            "is provided until the refresh has occurred. This mechanism allows the cache to update values " +
+            "without any impact on performance. This property is only supported for loading caches. " +
+            "If the cache is not a loading cache and this property is set, then it will be ignored and a " +
+            "warning will be logged.")
     @JsonProperty(PROP_NAME_REFRESH_AFTER_WRITE)
     @RequiresRestart(RestartScope.SYSTEM)
     public StroomDuration getRefreshAfterWrite() {
