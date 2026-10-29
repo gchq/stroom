@@ -30,6 +30,30 @@
     position: absolute;
     right: 5px;
     bottom: 5px;
+    vertical-align: top;
+}
+
+/* The values take the width, the names only what they need; rows and columns are spaced by
+   transparent borders */
+.welcome-tab__build-info th,
+.welcome-tab__build-info td {
+    width: 100%;
+    border-left: 5px solid transparent;
+    border-top: 4px solid transparent;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.welcome-tab__build-info tr:first-child th,
+.welcome-tab__build-info tr:first-child td {
+    height: 21px;
+    border-top: 0;
+}
+
+.welcome-tab__build-info th:first-child,
+.welcome-tab__build-info td:first-child {
+    width: 0;
+    border-left: 0;
 }
 
 /* A name: a row header, bold and to the start as the name cell it replaced */

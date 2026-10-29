@@ -96,3 +96,15 @@
 .pathway-tree__target-name {
     opacity: 0;
 }
+
+/* The bar above the tree: its toolbar, in a row */
+.pathway-tree__toolbar {
+    display: flex;
+    flex-grow: 1;
+    gap: var(--control__gap--horizontal);
+}
+
+/* The part that holds the tree, scrolling */
+.pathway-tree__list {
+    overflow: auto;
+}

@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,11 +83,47 @@ class TestStylesheets {
             "delete-confirm__summary-header", "delete-confirm__type-count", "dialog--resizable", "dock-min",
             "draggable-tree__status", "expression-tree", "expression-tree__canvas", "expression-tree__items",
             "file-chooser__button", "form-group__help-text", "form-page", "line-col-input", "line-col-input__field",
-            "navigation-header-spinner", "navigation__name-filter-panel", "password-box__status",
-            "pathway-tree__node-icon", "pipeline-tree__canvas", "pipeline-tree__items", "query-edit__results",
+            "navigation__name-filter-panel", "password-box__status", "pathway-tree__node-icon",
+            "pipeline-tree__canvas", "pipeline-tree__items", "query-buttons__button", "query-edit__results",
             "schedule-box__input", "selection-box__control", "selection-list__filter", "sign-in-page__sign-in-button",
             "sign-in-page__user-name-outer", "source-viewer__character-navigator", "stepping-filter-editor__elements",
             "tab-layout__settings-button", "term-editor__item--field", "timeline-date-box", "value-spinner__status");
+
+    // Sheets of shared patterns, each styling several blocks of its own (UI-GUIDE.md: the layout
+    // helpers, the shared form patterns, the fonts and the conditional formatting's colours)
+    private static final Set<String> SHARED_SHEETS = Set.of(
+            "layout-helpers.css", "form-controls.css", "font.css", "conditional-formatting.css");
+
+    // The page's settings, as classes on its root (the theme, density and font size), which any
+    // sheet may style its block under, or set its custom properties for
+    private static final Pattern ROOT_SETTINGS = Pattern.compile(
+            "stroom-(theme|density|font-size)-[\\w-]+");
+
+    // Sheets that still style blocks other than their own, to be split one block per sheet
+    // (UI_AUDIT.md wave 8); each must still do so, so the list only shrinks
+    private static final Set<String> SHEETS_TO_SPLIT = Set.of(
+            "ai-message.css", "analytic-email-destination.css", "annotation-history.css", "app-page.css",
+            "ask-stroom-ai.css", "authentication-error.css", "base.css", "batch-execution-schedule-edit.css",
+            "calendar.css", "chooser.css", "clipboard.css", "code-editor.css",
+            "contentstore-details.css", "create-document-types.css",
+            "curve-tab-layout.css", "dashboard-body.css", "dashboard.css", "data-grid.css", "date-time-box.css",
+            "date-time-view.css", "dialog.css", "drop-down.css", "duration-picker.css",
+            "explorer-node-edit-tags.css", "expression-tree.css",
+            "form-group.css", "form.css", "gitrepo-settings-form.css", "global-property-edit.css", "iframe.css",
+            "imports-tab.css", "info-tooltip.css", "inline-label-icon.css", "lozenge.css", "markdown.css",
+            "navigation.css", "password-box.css", "pathways.css", "popup.css", "query-help-detail.css",
+            "quick-filter.css", "ref-link.css", "result-table.css", "row-action.css", "selection-box.css",
+            "selection-popup.css", "setting-block.css", "sign-in-page.css", "stepping-button.css",
+            "stroom-dashboard.css", "stroom-floormap.css",
+            "svg-icon.css", "table-filter-cell.css", "table-filter.css", "term-editor.css", "theme.css",
+            "toolbar.css", "user-task.css", "vis.css");
+
+    // State words a state is given as a modifier, not as a class of its own (UI-GUIDE.md); only
+    // `disabled`, which GWT's widgets set, is kept as a bare class
+    private static final Set<String> STATE_WORDS = Set.of(
+            "readonly", "selected", "empty", "active", "open", "checked", "expanded", "collapsed",
+            "focused", "hover", "invalid", "error", "warning", "hidden", "maximised", "minimised",
+            "visible", "enabled", "current", "dirty", "loading", "valid");
 
     // Generated, its SVGs' own classes (st0 …) styled by their own style elements
     private static final String GENERATED_SVG_IMAGES = "SvgImage.java";
@@ -270,6 +307,49 @@ class TestStylesheets {
     }
 
     @Test
+    void testEachSheetStylesItsOwnBlock() {
+        final List<String> problems = new ArrayList<>();
+        final List<String> split = new ArrayList<>();
+        for (final String sheet : new TreeSet<>(loaded)) {
+            if (!isOwnSheet(sheet) || SHARED_SHEETS.contains(sheet)) {
+                continue;
+            }
+            final Set<String> others = otherBlocksStyled(sheet);
+            if (SHEETS_TO_SPLIT.contains(sheet)) {
+                if (others.isEmpty()) {
+                    split.add(sheet);
+                }
+            } else if (!others.isEmpty()) {
+                problems.add(sheet + " styles " + String.join(", ", others));
+            }
+        }
+        assertThat(problems)
+                .as("sheets styling blocks other than the one they're named after (another block may be "
+                    + "the context, e.g. `.data-grid .my-block__cell`, but not what is styled)")
+                .isEmpty();
+        assertThat(split)
+                .as("SHEETS_TO_SPLIT that style only their own block now: take them off the list")
+                .isEmpty();
+    }
+
+    @Test
+    void testNoBareStateClasses() {
+        final Map<String, Set<String>> problems = new TreeMap<>();
+        for (final String sheet : loaded) {
+            if (isOwnSheet(sheet)) {
+                for (final String name : classesIn(sheets.get(sheet))) {
+                    if (STATE_WORDS.contains(name)) {
+                        problems.computeIfAbsent(name, k -> new TreeSet<>()).add(sheet);
+                    }
+                }
+            }
+        }
+        assertThat(problems)
+                .as("bare state classes: give the block a modifier (`my-block--selected`) instead")
+                .isEmpty();
+    }
+
+    @Test
     void testCodeIsFound() {
         // So that the checks above can't pass by finding nothing
         assertThat(loaded).hasSizeGreaterThan(200);
@@ -307,6 +387,45 @@ class TestStylesheets {
             }
         }
         return names;
+    }
+
+    // Stroom's own sheets at the top of the folder (not a third party's, nor one in a subfolder)
+    private static boolean isOwnSheet(final String sheet) {
+        return THIRD_PARTY_SHEETS.stream().noneMatch(sheet::startsWith) && !sheet.contains("/");
+    }
+
+    // The blocks other than the sheet's own (its name) that its rules style: in each selector, the
+    // compound the rule applies to, unless it is also of the sheet's block (`.my-block.button`);
+    // the compounds before it are context, and `disabled` is a state, not a block
+    private static Set<String> otherBlocksStyled(final String sheet) {
+        final String own = sheet.substring(0, sheet.length() - ".css".length());
+        final String rules = QUOTED.matcher(withoutComments(sheets.get(sheet))).replaceAll("\"\"");
+        final Set<String> others = new TreeSet<>();
+        final Matcher selectors = SELECTOR.matcher(rules);
+        while (selectors.find()) {
+            final String group = selectors.group(1).trim();
+            if (group.startsWith("@")) {
+                continue;
+            }
+            for (final String selector : group.split(",")) {
+                final String[] compounds = ATTRIBUTE_SELECTOR.matcher(selector.trim()).replaceAll("")
+                        .split("\\s*[>+~]\\s*|\\s+");
+                final List<String> blocks = new ArrayList<>();
+                final Matcher classes = CLASS_IN_SELECTOR.matcher(compounds[compounds.length - 1]);
+                while (classes.find()) {
+                    final String name = classes.group(1);
+                    if (!"disabled".equals(name)
+                        && !NOT_STROOMS.matcher(name).matches()
+                        && !ROOT_SETTINGS.matcher(name).matches()) {
+                        blocks.add(block(name));
+                    }
+                }
+                if (!blocks.contains(own)) {
+                    others.addAll(blocks);
+                }
+            }
+        }
+        return others;
     }
 
     // The words in a file's strings and attribute values, which is where a class's name is written

@@ -14,7 +14,7 @@
                         label="Row Match Expression"
                         helpText="All rows matching this expression are formatted according to this rule's settings."
                         screenReaderText="Rows matching this expression get this rule's formatting.">
-            <g:SimplePanel styleName="dock-max stroom-control">
+            <g:SimplePanel styleName="dock-max control-box">
                 <q:ExpressionEditor ui:field="expressionEditor"/>
             </g:SimplePanel>
         </form:FormGroup>

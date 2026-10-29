@@ -5,9 +5,10 @@
              xmlns:q="urn:import:stroom.query.client.component">
     <!--
       An expression's editor (expression-editor.css): a toolbar of the expression's actions over
-      its tree, which scrolls. Framed as a control (stroom-control) unless its owner frames it
+      its tree, which scrolls. Framed as a control is (its framed modifier) unless its owner
+      frames it
     -->
-    <g:FlowPanel ui:field="root" styleName="max dock-container-vertical expression-editor stroom-control">
+    <g:FlowPanel ui:field="root" styleName="max dock-container-vertical expression-editor expression-editor--framed">
         <b:Toolbar name="Expression actions" addStyleNames="dock-min">
             <b:ToolbarButton ui:field="addTermButton" svg="ADD" title="Add Term"/>
             <b:ToolbarButton ui:field="addOperatorButton" svg="OPERATOR" title="Add Operator"/>

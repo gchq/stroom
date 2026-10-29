@@ -4,12 +4,12 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      A pathway's graph of nodes (pathways.css), under a toolbar of its actions. The graph's HTML
+      A pathway's graph of nodes (pathway-tree.css), under a toolbar of its actions. The graph's HTML
       and SVG are drawn from the pathway in the Java
     -->
     <g:FlowPanel addStyleNames="max dock-container-vertical">
-        <g:FlowPanel styleName="pager dock-container-horizontal dock-min align-center">
-            <g:FlowPanel addStyleNames="pager-toolbar">
+        <g:FlowPanel styleName="dock-container-horizontal dock-min align-center">
+            <g:FlowPanel addStyleNames="pathway-tree__toolbar">
                 <b:Toolbar name="Pathway actions">
                     <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Path"/>
                     <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Path" enabled="false"/>
@@ -18,7 +18,7 @@
                 </b:Toolbar>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel addStyleNames="list-container dock-max">
+        <g:FlowPanel addStyleNames="pathway-tree__list dock-max">
             <tx:Html ui:field="tree" addStyleNames="max"/>
         </g:FlowPanel>
     </g:FlowPanel>

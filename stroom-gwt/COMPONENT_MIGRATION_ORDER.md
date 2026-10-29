@@ -1319,6 +1319,16 @@ after wave 39.
 > annotations, the result table's filter, the pipeline path bar and the widgets' internals declare
 > their markup, icons and ARIA, and fixed inline styles are classes. See `wave-40.md`.
 
+## 41. UI audit wave 7: the stylesheet check and shared-class decisions
+
+Record: [`component-migration/wave-41.md`](component-migration/wave-41.md). Added 29 October 2026,
+after wave 40.
+
+> **Done, 29 October 2026**: `TestStylesheets` checks each sheet styles its own block (59 sheets
+> listed to split in wave 8) and that there are no bare state classes; `dashboard-panel` went,
+> `stroom-control` frames became `control-box`, and the borrowed classes have blocks of their own.
+> See `wave-41.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

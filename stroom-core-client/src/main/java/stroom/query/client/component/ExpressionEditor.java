@@ -73,10 +73,10 @@ public class ExpressionEditor extends Component {
         return expressionTree;
     }
 
-    /// @param framed Whether the editor is framed as a control is (`stroom-control`), as it is
-    ///               unless its owner frames it.
+    /// @param framed Whether the editor is framed as a control is (`expression-editor--framed`), as
+    ///               it is unless its owner frames it.
     public void setFramed(final boolean framed) {
-        root.setStyleName("stroom-control", framed);
+        root.setStyleName("expression-editor--framed", framed);
     }
 
     /// @param canAdd Whether terms and operators can be added.

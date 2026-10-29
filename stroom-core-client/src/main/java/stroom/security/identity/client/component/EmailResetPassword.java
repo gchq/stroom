@@ -18,8 +18,8 @@ package stroom.security.identity.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -36,9 +36,9 @@ public class EmailResetPassword extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox email;
+    FormGroup emailGroup;
     @UiField
-    Label emailFeedback;
+    TextBox email;
 
     private Runnable onEnter = () -> {
     };
@@ -71,13 +71,13 @@ public class EmailResetPassword extends Component {
     public boolean validate() {
         final boolean valid;
         if (email.getValue().length() == 0) {
-            FieldValidity.setInvalid(email, emailFeedback, "Email is required");
+            emailGroup.setFeedback("Email is required");
             valid = false;
         } else if (!EmailValidator.validate(email.getValue())) {
-            FieldValidity.setInvalid(email, emailFeedback, "Invalid email address");
+            emailGroup.setFeedback("Invalid email address");
             valid = false;
         } else {
-            FieldValidity.setValid(email, emailFeedback);
+            emailGroup.clearFeedback();
             valid = true;
         }
 

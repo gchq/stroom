@@ -89,18 +89,6 @@
     align-items: center;
 }
 
-.ask-stroom-ai__model-pane .play svg {
-    color: #4caf50;
-}
-
-.ask-stroom-ai__model-pane .pause svg {
-    color: #2196f3;
-}
-
-.ask-stroom-ai__model-pane .stop svg {
-    color: #d32f2f;
-}
-
 .ask-stroom-ai__model-pane .drop-down {
     width: 100%;
 }
@@ -114,11 +102,11 @@
 }
 
 /* ---- Empty state (centered input, ChatGPT-style) ---- */
-.ask-stroom-ai.empty .markdown-container {
+.ask-stroom-ai--empty .markdown-container {
     display: none;
 }
 
-.ask-stroom-ai.empty .ask-stroom-ai__bottom {
+.ask-stroom-ai--empty .ask-stroom-ai__bottom {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -127,7 +115,7 @@
     padding: 20px;
 }
 
-.ask-stroom-ai.empty .ask-stroom-ai__bottom-inner {
+.ask-stroom-ai--empty .ask-stroom-ai__bottom-inner {
     width: 100%;
     max-width: 500px;
 }
@@ -141,6 +129,6 @@
     user-select: none;
 }
 
-.ask-stroom-ai.empty .ask-stroom-ai__empty-prompt {
+.ask-stroom-ai--empty .ask-stroom-ai__empty-prompt {
     display: block;
 }

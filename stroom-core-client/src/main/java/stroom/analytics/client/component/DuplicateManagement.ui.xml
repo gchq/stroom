@@ -40,7 +40,7 @@
                 </form:HelpHTML>
             </form:FormGroup>
         </g:FlowPanel>
-        <g:SimplePanel styleName="duplicate-management__list dock-max dashboard-panel overflow-hidden">
+        <g:SimplePanel styleName="duplicate-management__list dock-max overflow-hidden">
             <an:DuplicateManagementList ui:field="list"/>
         </g:SimplePanel>
     </g:FlowPanel>

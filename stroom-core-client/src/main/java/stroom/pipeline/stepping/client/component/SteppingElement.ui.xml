@@ -12,15 +12,15 @@
     -->
     <l:SplitPane ui:field="layout" vertical="true" thin="true" sizes="50%, *, 15%" names="Code, Output, Log"
                  addStyleNames="max">
-        <g:SimplePanel ui:field="codePane" addStyleNames="max dashboard-panel overflow-hidden"/>
+        <g:SimplePanel ui:field="codePane" addStyleNames="max overflow-hidden"/>
         <l:SplitPane ui:field="inputAndOutput" thin="true" sizes="50%, *" names="Input, Output">
-            <d:ClassificationWrapper ui:field="input" addStyleNames="dashboard-panel overflow-hidden"/>
-            <d:ClassificationWrapper ui:field="output" addStyleNames="dashboard-panel overflow-hidden">
+            <d:ClassificationWrapper ui:field="input" addStyleNames="overflow-hidden"/>
+            <d:ClassificationWrapper ui:field="output" addStyleNames="overflow-hidden">
                 <d:content>
                     <ed:CodeEditor ui:field="outputEditor"/>
                 </d:content>
             </d:ClassificationWrapper>
         </l:SplitPane>
-        <ed:CodeEditor ui:field="log" addStyleNames="dashboard-panel overflow-hidden"/>
+        <ed:CodeEditor ui:field="log" addStyleNames="overflow-hidden"/>
     </l:SplitPane>
 </ui:UiBinder>

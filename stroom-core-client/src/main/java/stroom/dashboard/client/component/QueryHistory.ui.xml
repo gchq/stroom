@@ -7,10 +7,10 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <split:SplitPane vertical="true" sizes="*, 120px"
                      names="History, Selected query" addStyleNames="max default-min-sizes">
-        <g:SimplePanel styleName="max stroom-control">
+        <g:SimplePanel styleName="max control-box">
             <dg:DataGrid ui:field="list" pageSize="100000" profile="LISTBOX" accessibleName="Query history"/>
         </g:SimplePanel>
-        <g:ScrollPanel styleName="max stroom-control">
+        <g:ScrollPanel styleName="max control-box">
             <q:ExpressionTree ui:field="expressionTree"/>
         </g:ScrollPanel>
     </split:SplitPane>

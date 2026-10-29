@@ -9,7 +9,7 @@
                      names="Help items, Details" addStyleNames="query-help max">
         <sl:SelectionList ui:field="selectionList" accessibleName="Help contents"
                           keyboardSelectionPolicy="BOUND_TO_SELECTION"/>
-        <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
+        <g:FlowPanel styleName="max dock-container-vertical">
             <b:Toolbar name="Help actions" addStyleNames="dock-min">
                 <b:ToolbarButton ui:field="insertButton" svg="INSERT" title="Insert into Query" enabled="false"/>
                 <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy to Clipboard" enabled="false"/>

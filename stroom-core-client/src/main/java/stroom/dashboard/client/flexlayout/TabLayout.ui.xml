@@ -6,7 +6,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tab="urn:import:stroom.widget.tab.client">
     <g:FlowPanel styleName="tab-layout">
-        <g:FlowPanel styleName="tab-layout__content-outer dashboard-panel">
+        <g:FlowPanel styleName="tab-layout__content-outer">
             <g:FlowPanel styleName="tab-layout__content-inner">
                 <g:FlowPanel styleName="tab-layout__bar-outer">
                     <g:FlowPanel styleName="tab-layout__tab-container">

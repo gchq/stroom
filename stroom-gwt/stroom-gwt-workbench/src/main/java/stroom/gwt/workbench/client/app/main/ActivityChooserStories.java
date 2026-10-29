@@ -113,7 +113,7 @@ public final class ActivityChooserStories {
         final CurrentActivity currentActivity = injector.getCurrentActivity();
         final Button activityButton = new Button();
         activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        activityButton.setStyleName("navigation__activity-button dashboard-panel");
+        activityButton.setStyleName("navigation__activity-button");
         final SimplePanel activityOuter = new SimplePanel(activityButton);
         activityOuter.setStyleName("navigation__activity");
         activityButton.setOnClick(currentActivity::showActivityChooser);

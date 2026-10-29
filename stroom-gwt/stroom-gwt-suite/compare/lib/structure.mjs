@@ -357,7 +357,7 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
       // across every grid that opens sorted.
       const headLabel = (el) => {
         const c = el.cloneNode(true);
-        c.querySelectorAll('.column-header__sort-order').forEach((n) => n.remove());
+        c.querySelectorAll('.sort-icon__order, .column-header__sort-order').forEach((n) => n.remove());
         return norm(c.textContent);
       };
       const columns = heads.map((el, i) => {

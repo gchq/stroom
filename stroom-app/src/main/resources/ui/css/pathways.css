@@ -280,7 +280,7 @@
     overflow-y: auto;
 }
 
-.operation-item.selected {
+.operation-item--selected {
     background-color: rgba(255, 140, 66, 0.15);
 }
 

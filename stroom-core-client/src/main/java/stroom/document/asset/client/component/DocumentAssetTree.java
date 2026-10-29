@@ -298,7 +298,7 @@ public class DocumentAssetTree extends Composite implements Focus {
             if (item == null) {
                 return;
             }
-            // Indented by its depth, as the explorer's (explorer-tree.css's explorer-cell__expander)
+            // Indented by its depth, as the explorer's (explorer-cell.css's explorer-cell__expander)
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
                     "--explorer-cell__depth", String.valueOf(item.getDepth()));
             final SafeHtml expanderIcon;

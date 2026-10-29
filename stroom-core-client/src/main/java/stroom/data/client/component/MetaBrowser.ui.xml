@@ -7,15 +7,15 @@
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Streams, Details" addStyleNames="max">
-            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="max overflow-hidden">
                 <d:MetaList ui:field="streamList"/>
             </g:SimplePanel>
             <split:SplitPane vertical="true" thin="true" sizes="150px, *"
                              names="Related streams, Data" addStyleNames="max">
-                <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <g:SimplePanel styleName="max overflow-hidden">
                     <d:MetaList ui:field="streamRelationList"/>
                 </g:SimplePanel>
-                <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+                <g:SimplePanel styleName="max overflow-hidden">
                     <d:DataViewer ui:field="data"/>
                 </g:SimplePanel>
             </split:SplitPane>

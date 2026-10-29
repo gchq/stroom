@@ -27,12 +27,13 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A query's run button: Execute Query (Ctrl+Enter), which becomes Stop Query (Escape) while the
-/// query runs. The BEM block `query-buttons` (`query-buttons.css`), its markup `QueryButtons.ui.xml`.
+/// query runs, coloured by the toolbar button's `--play` and `--stop` modifiers (`toolbar-button.css`).
+/// Its markup is `QueryButtons.ui.xml`; `query-buttons__button` is a hook stories find it by.
 public class QueryButtons extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String PLAY = "query-buttons__button--play";
-    private static final String STOP = "query-buttons__button--stop";
+    private static final String PLAY = "toolbar-button--play";
+    private static final String STOP = "toolbar-button--stop";
 
     @UiField
     ToolbarButton start;

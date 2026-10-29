@@ -8,24 +8,25 @@
              xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <g:FlowPanel styleName="find-panel find-panel--dialog max dock-container-vertical">
-        <g:FlowPanel styleName="find-panel__top dock-container-horizontal dock-min">
-            <form:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus" ariaLabel="Find in content"/>
+    <g:FlowPanel styleName="find-in-content max dock-container-vertical">
+        <g:FlowPanel styleName="find-in-content__top dock-container-horizontal dock-min">
+            <form:TextArea ui:field="pattern" addStyleNames="find-in-content__pattern dock-max allow-focus"
+                           ariaLabel="Find in content"/>
             <p:Toolbar name="Search options"
-                       addStyleNames="dock-min find-buttons toolbar--control">
+                       addStyleNames="dock-min find-in-content__buttons toolbar--control">
                 <p:ToolbarToggleButton ui:field="toggleMatchCase" svg="CASE_SENSITIVE" title="Match case"/>
                 <p:ToolbarToggleButton ui:field="toggleRegex" svg="REGEX" title="Regex"/>
             </p:Toolbar>
         </g:FlowPanel>
         <!-- What may be typed, and what is wrong with it, under the pattern -->
-        <g:FlowPanel styleName="find-panel__guidance dock-min">
+        <g:FlowPanel styleName="find-in-content__guidance dock-min">
             <tx:Label ui:field="patternFeedback" styleName="form-group__feedback"/>
             <tx:Label ui:field="patternHint" styleName="form-group__description"/>
         </g:FlowPanel>
         <!-- The results above the text of the selected one (addStyleNames, as styleName would replace
              the split pane's own class) -->
         <l:SplitPane vertical="true" sizes="300px, *" names="Results, Text"
-                     addStyleNames="find-panel__bottom dock-max overflow-hidden">
+                     addStyleNames="find-in-content__bottom dock-max overflow-hidden">
             <g:SimplePanel styleName="max control-box">
                 <!-- A striped list of a page of results, the one with the focus chosen -->
                 <dg:PagerPanel ui:field="pager">

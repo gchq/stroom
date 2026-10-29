@@ -11,7 +11,7 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicTextSettingsId" label="Id"
                         helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. text-AB1C2). It cannot be changed.">
-            <tx:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+            <tx:Label ui:field="id" addStyleNames="w-100 text-label--value"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">

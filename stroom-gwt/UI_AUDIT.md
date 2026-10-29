@@ -14,7 +14,8 @@ done 29 October 2026 (order wave 36, `component-migration/wave-36.md`); wave 3 d
 (order wave 37, `component-migration/wave-37.md`); wave 4 done 29 October 2026 (order wave 38,
 `component-migration/wave-38.md`); wave 5 done 29 October 2026 (order wave 39,
 `component-migration/wave-39.md`, with what it left and why); wave 6 done 29 October 2026 (order
-wave 40, `component-migration/wave-40.md`).
+wave 40, `component-migration/wave-40.md`); wave 7 done 29 October 2026 (order wave 41,
+`component-migration/wave-41.md`).
 
 ## Summary
 

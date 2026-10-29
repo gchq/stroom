@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-/* A table column's header (ColumnHeaderHtmlUtil, ColumnTitleCell): its name, its sort icon and
-   order, and its value filter button. */
+/* A table column's header (ColumnHeaderHtmlUtil, ColumnTitleCell): its name, its sort icon
+   (sort-icon.css) and its value filter button. */
 
 .column-header {
     display: flex;
@@ -47,24 +47,6 @@
 
 .data-grid--header-selection .column-header:hover .column-header__label {
     text-decoration: underline;
-}
-
-.column-header__sort {
-    display: flex;
-    flex-direction: row;
-	cursor: pointer;
-	opacity: 0.9;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-}
-
-.column-header__sort-order {
-	display: inline-block;
-	font-size: var(--font-size-8);
-	vertical-align: top;
-	text-decoration: none;
 }
 
 .column-header__value-filter {

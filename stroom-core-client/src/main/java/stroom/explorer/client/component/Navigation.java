@@ -95,7 +95,7 @@ public class Navigation extends Component {
 
         logo.setContent(SvgImageUtil.toSafeHtml(
                 SvgImage.LOGO,
-                "navigation-logo-image"));
+                "navigation__logo-image"));
         logo.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event.getNativeEvent())) {
                 onToggleMenu.accept(event.getRelativeElement());

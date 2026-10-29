@@ -20,6 +20,7 @@ import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.text.client.Label;
 
@@ -43,26 +44,26 @@ public class ChangePassword extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    // The strength meter's bar and the length badge (BEM blocks, change-password.css)
-    private static final String STRENGTH_BAR = "password-strength__bar";
-    private static final String LENGTH_BLOCK = "password-length";
+    // The strength meter's bar and the length badge (change-password.css)
+    private static final String STRENGTH_BAR = "change-password__strength-bar";
+    private static final String LENGTH_BADGE = "change-password__length";
     // The strength meter's values, 0 (nothing typed) to 5, as a screen reader says them
     private static final String[] STRENGTH_NAMES = {"None", "Very weak", "Weak", "Fair", "Good", "Strong"};
 
     @UiField
     Label passwordPolicyMessage;
     @UiField
+    FormGroup passwordGroup;
+    @UiField
     PasswordBox password;
     @UiField
-    Label passwordFeedback;
+    FormGroup confirmPasswordGroup;
     @UiField
     PasswordBox confirmPassword;
     @UiField
     DivElement strengthMeter;
     @UiField
     DivElement strengthMeterBar;
-    @UiField
-    Label confirmPasswordFeedback;
     // The new password's length, in its box, coloured by whether it meets the policy
     @UiField
     AriaPanel passwordLengthBadge;
@@ -123,27 +124,26 @@ public class ChangePassword extends Component {
         boolean valid = true;
 
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
+            passwordGroup.setFeedback("Password is required");
             valid = false;
         } else if (password.getValue().length() < passwordPolicyConfig.getMinimumPasswordLength()) {
-            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is short");
+            passwordGroup.setFeedback("Password is short");
             valid = false;
         } else if (getPasswordStrength(password.getValue()) < passwordPolicyConfig.getMinimumPasswordStrength()) {
-            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is weak");
+            passwordGroup.setFeedback("Password is weak");
             valid = false;
         } else {
-            FieldValidity.setValid(password.getInput(), passwordFeedback);
+            passwordGroup.clearFeedback();
         }
 
         if (confirmPassword.getValue().length() == 0) {
-            FieldValidity.setInvalid(confirmPassword.getInput(), confirmPasswordFeedback,
-                    "Password confirmation is required");
+            confirmPasswordGroup.setFeedback("Password confirmation is required");
             valid = false;
         } else if (!confirmPassword.getValue().equals(password.getValue())) {
-            FieldValidity.setInvalid(confirmPassword.getInput(), confirmPasswordFeedback, "Passwords must match");
+            confirmPasswordGroup.setFeedback("Passwords must match");
             valid = false;
         } else {
-            FieldValidity.setValid(confirmPassword.getInput(), confirmPasswordFeedback);
+            confirmPasswordGroup.clearFeedback();
         }
 
         if (!valid) {
@@ -206,7 +206,7 @@ public class ChangePassword extends Component {
                 ? "--ok"
                 : "--weak"
                 : "--short";
-        passwordLengthBadge.setStyleName(LENGTH_BLOCK + " " + LENGTH_BLOCK + lengthModifier);
+        passwordLengthBadge.setStyleName(LENGTH_BADGE + " " + LENGTH_BADGE + lengthModifier);
     }
 
 

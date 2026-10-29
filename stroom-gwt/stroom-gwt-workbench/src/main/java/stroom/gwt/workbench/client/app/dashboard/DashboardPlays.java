@@ -46,9 +46,9 @@ final class DashboardPlays {
 
     /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".query-pane .query-buttons__button";
-    // The run button's modifiers while its query is idle and while it runs (query-buttons.css)
-    static final String QUERY_RUN_BUTTON_IDLE = "query-buttons__button--play";
-    static final String QUERY_RUN_BUTTON_RUNNING = "query-buttons__button--stop";
+    // The run button's modifiers while its query is idle and while it runs (toolbar-button.css)
+    static final String QUERY_RUN_BUTTON_IDLE = "toolbar-button--play";
+    static final String QUERY_RUN_BUTTON_RUNNING = "toolbar-button--stop";
 
     /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
     static final String DESIGN_MODE = "Design Mode";

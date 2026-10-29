@@ -7,12 +7,12 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:e="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max dock-container-vertical navigation">
-        <g:FlowPanel styleName="dock-min navigation-title-bar">
+        <g:FlowPanel styleName="dock-min navigation__title-bar">
             <!-- A click on the logo opens the main menu, as the Main Menu button beside it does, so
                  for the keyboard and screen readers it would be a second, nameless Main Menu: it is
                  left out of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and
                  hidden from them -->
-            <b:Button ui:field="logo" styleName="navigation-logo" tabIndex="-2" ariaHidden="true"/>
+            <b:Button ui:field="logo" styleName="navigation__logo" tabIndex="-2" ariaHidden="true"/>
             <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
                 <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>
@@ -21,7 +21,7 @@
         <g:SimplePanel styleName="dock-min navigation__name-filter-panel">
             <v:QuickFilter accessibleName="Filter explorer" ui:field="nameFilter" addStyleNames="dock-min navigation__name-filter"/>
         </g:SimplePanel>
-        <b:ToolbarRow addStyleNames="navigation-toolbar">
+        <b:ToolbarRow addStyleNames="navigation__toolbar">
             <!-- The explorer's buttons: one toolbar, so one tab stop -->
             <b:Toolbar name="Explorer" addStyleNames="toolbar--navigation">
                 <b:ToolbarButton ui:field="add" svg="ADD" title="New Document" opensMenu="true" enabled="false"/>
@@ -33,7 +33,7 @@
                 <b:ToolbarToggleButton ui:field="filter" svg="FILTER" title="Filter Document Types"/>
                 <b:ToolbarButton ui:field="find" svg="FIND" title="Find in Content"/>
             </b:Toolbar>
-            <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+            <spinner:SpinnerSmall ui:field="spinner"/>
         </b:ToolbarRow>
         <!-- The tree, shown once the explorer is first shown -->
         <layout:ScrollPane addStyleNames="dock-max">
@@ -42,7 +42,7 @@
         <!-- The current activity, when activities are used: pressing it chooses another -->
         <g:SimplePanel styleName="dock-min">
             <g:SimplePanel ui:field="activityOuter" styleName="navigation__activity" visible="false">
-                <b:Button ui:field="activityButton" styleName="navigation__activity-button dashboard-panel"/>
+                <b:Button ui:field="activityButton" styleName="navigation__activity-button"/>
             </g:SimplePanel>
         </g:SimplePanel>
     </g:FlowPanel>

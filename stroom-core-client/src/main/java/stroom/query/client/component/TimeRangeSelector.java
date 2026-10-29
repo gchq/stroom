@@ -44,7 +44,7 @@ import com.google.gwt.user.client.ui.HasValue;
 public class TimeRangeSelector extends Component implements HasValue<TimeRange>, Focus {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String READ_ONLY = "time-range-selector--readonly";
+    private static final String READ_ONLY = "time-range-selector--read-only";
     private static final String ARIA_DISABLED = "aria-disabled";
 
     @UiField

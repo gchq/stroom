@@ -18,8 +18,8 @@ package stroom.security.identity.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -36,9 +36,9 @@ public class CurrentPassword extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    PasswordBox password;
+    FormGroup passwordGroup;
     @UiField
-    Label passwordFeedback;
+    PasswordBox password;
 
     private Runnable onEnter = () -> {
     };
@@ -71,11 +71,11 @@ public class CurrentPassword extends Component {
     /// @return Whether one has.
     public boolean validate() {
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
+            passwordGroup.setFeedback("Password is required");
             FieldValidity.focusFirstInvalid(password.getInput());
             return false;
         }
-        FieldValidity.setValid(password.getInput(), passwordFeedback);
+        passwordGroup.clearFeedback();
         return true;
     }
 

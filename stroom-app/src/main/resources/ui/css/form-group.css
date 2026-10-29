@@ -42,11 +42,6 @@
     margin-top: 0.3em;
 }
 
-.dashboard-panel > .form-group label.form-group__label:not(:empty) {
-    margin-top: 0.3em;
-    margin-left: 0.2em;
-}
-
 /* The group's validation message, under its control. It keeps no space for itself while empty. */
 .form-group__feedback {
     display: block;
@@ -180,6 +175,13 @@
 
 .form-group--indented .form-group__label {
     margin-left: var(--control__gap--horizontal);
+}
+
+/* A list's heading, nudged in from a pane's edge (the job's node list; was the dashboard-panel's rule
+   for its direct form groups) */
+.form-group--inset-label label.form-group__label:not(:empty) {
+    margin-top: 0.3em;
+    margin-left: 0.2em;
 }
 
 .form-group__description-row--disabled {

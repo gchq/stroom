@@ -66,7 +66,7 @@ console.log('api:', JSON.stringify(api.map((a) => ({ url: a.url, status: a.statu
 console.log('buttons:', (await buttons()).filter((b) => /step|terminate/i.test(b)).join(' | '));
 await page.locator('button[title="Step Forward"]').first().click().catch((e) => console.log('forward failed:', e.message.split('\n')[0]));
 await page.waitForTimeout(5000);
-console.log('panes after forward:', await page.evaluate(() => [...document.querySelectorAll('.dashboard-panel')].filter((e) => e.offsetWidth > 0).map((e) => e.offsetWidth + 'x' + e.offsetHeight + ' ' + e.textContent.replace(/\s+/g, ' ').trim().slice(0, 60))));
+console.log('panes after forward:', await page.evaluate(() => [...document.querySelectorAll('.split-pane__pane')].filter((e) => e.offsetWidth > 0).map((e) => e.offsetWidth + 'x' + e.offsetHeight + ' ' + e.textContent.replace(/\s+/g, ' ').trim().slice(0, 60))));
 console.log('after forward — location:', await page.evaluate(() => [...document.querySelectorAll('.step-location-link')].map((e) => e.textContent)), 'dialogs:', JSON.stringify(await dialogs()));
 api.length = 0;
 await page.locator('button[title="Refresh Current Step"]').first().click();
@@ -79,7 +79,7 @@ const box = await page.evaluate(() => { const boxes = [...document.querySelector
 console.log('tree:', JSON.stringify(box));
 if (box.x) { await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(2500); }
 console.log('after select — dialogs:', JSON.stringify(await dialogs()));
-console.log('panes:', await page.evaluate(() => [...document.querySelectorAll('.dashboard-panel')].filter((e) => e.offsetWidth > 0).map((e) => e.className + ' ' + e.offsetWidth + 'x' + e.offsetHeight + ' ace=' + !!e.querySelector('.ace_editor'))));
+console.log('panes:', await page.evaluate(() => [...document.querySelectorAll('.split-pane__pane')].filter((e) => e.offsetWidth > 0).map((e) => e.className + ' ' + e.offsetWidth + 'x' + e.offsetHeight + ' ace=' + !!e.querySelector('.ace_editor'))));
 console.log('buttons:', (await buttons()).join(' | '));
 console.log('violations:', JSON.stringify(violations));
 await browser.close();

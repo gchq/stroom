@@ -6,10 +6,10 @@
          history of the one selected -->
     <split:SplitPane vertical="true" thin="true" sizes="400px, *"
                      names="Schedules, History" addStyleNames="scheduled-processing max">
-        <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+        <g:SimplePanel styleName="max overflow-hidden">
             <an:ScheduledProcessList ui:field="scheduleList"/>
         </g:SimplePanel>
-        <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+        <g:SimplePanel styleName="max overflow-hidden">
             <an:ScheduledProcessHistoryList ui:field="historyList"/>
         </g:SimplePanel>
     </split:SplitPane>

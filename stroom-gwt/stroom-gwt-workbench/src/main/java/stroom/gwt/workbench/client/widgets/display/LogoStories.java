@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Stories for the Stroom wordmark logo in the navigation header.
 ///
 /// There is no logo widget in GWT: the stories build it as Stroom's `Navigation` does, a
-/// `navigation-logo` button holding the [SvgImage#LOGO] image, whose click (with the primary
+/// `navigation__logo` button holding the [SvgImage#LOGO] image, whose click (with the primary
 /// button) opens the main menu in Stroom.
 public final class LogoStories {
 
@@ -69,8 +69,8 @@ public final class LogoStories {
     /// The logo, as `Navigation`'s UiBinder template and constructor build it.
     private static Button logo() {
         final Button logo = new Button();
-        logo.setStyleName("navigation-logo");
-        logo.setContent(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation-logo-image"));
+        logo.setStyleName("navigation__logo");
+        logo.setContent(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation__logo-image"));
         // Out of the tab order and hidden from screen readers, as the Main Menu button beside it in
         // Stroom does the same
         logo.getElement().setTabIndex(-2);

@@ -11,7 +11,7 @@
                         required="true">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <g:SimplePanel styleName="dock-max stroom-control">
+        <g:SimplePanel styleName="dock-max control-box">
             <fs:FsVolumeStatusList ui:field="list"/>
         </g:SimplePanel>
     </g:FlowPanel>

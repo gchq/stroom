@@ -19,12 +19,14 @@
    (form-heading). */
 
 /* A box holding a control, or a read-only field's text, framed and filled as an input is, in either
-   theme, so it stands apart from the dialog around it */
+   theme, so it stands apart from the dialog around it. A grid in it (data-grid.css) sits on the
+   box's colour */
 .control-box {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
     overflow: hidden;
     background-color: var(--control__background-color);
+    --data-grid__head-background-color: var(--control__background-color);
 }
 
 .form-control-border {

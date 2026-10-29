@@ -1,15 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
-  A visualisation's toolbar row (vis-toolbar-row.css), laid out as a table's pager row (PagerPanel's
-  pager and pager-toolbar): the buttons the visualisation asks for at the start, made in Java (no
+  A visualisation's toolbar row (vis-toolbar-row.css), laid out as a table's pager row: the buttons the visualisation asks for at the start, made in Java (no
   empty toolbar for screen readers to find until it asks for some), then its pause and resume button.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:r="urn:import:stroom.data.pager.client">
-    <g:FlowPanel styleName="pager dock-container-horizontal dock-min align-center vis-toolbar-row">
-        <g:FlowPanel styleName="pager-toolbar">
+    <g:FlowPanel styleName="dock-container-horizontal dock-min align-center vis-toolbar-row">
+        <g:FlowPanel styleName="vis-toolbar-row__actions">
             <b:Toolbar ui:field="visToolbar" name="Visualisation actions" visible="false"/>
         </g:FlowPanel>
         <b:Toolbar name="Visualisation updates">

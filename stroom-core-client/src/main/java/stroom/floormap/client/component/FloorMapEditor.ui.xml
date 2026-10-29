@@ -27,21 +27,21 @@
                  addStyleNames="max stroom-border-top">
         <!-- The dock starts 200px wide, and can be hidden by the toolbar's toggle -->
         <l:SplitPane ui:field="topSplitPane" thin="true" sizes="*, 200px" names="Map, Controls">
-            <g:SimplePanel styleName="dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="overflow-hidden">
                 <f:FloorMapCanvas ui:field="canvas"/>
             </g:SimplePanel>
-            <e:LinkTabPanel ui:field="dock" addStyleNames="dashboard-panel overflow-hidden"/>
+            <e:LinkTabPanel ui:field="dock" addStyleNames="overflow-hidden"/>
         </l:SplitPane>
         <g:FlowPanel styleName="max dock-container-vertical">
             <!-- The timeline is a compact bar of a fixed height (floormap-timeline-strip) -->
-            <g:SimplePanel styleName="dashboard-panel overflow-hidden stroom-border-bottom floormap-timeline-strip">
+            <g:SimplePanel styleName="overflow-hidden stroom-border-bottom floormap-timeline-strip">
                 <f:FloorMapTimeline ui:field="timeline"/>
             </g:SimplePanel>
             <l:SplitPane thin="true" sizes="50%, *" names="Fact List, Time List" addStyleNames="dock-max">
-                <g:SimplePanel styleName="dashboard-panel overflow-hidden">
+                <g:SimplePanel styleName="overflow-hidden">
                     <f:FloorMapFactList ui:field="factList"/>
                 </g:SimplePanel>
-                <g:SimplePanel styleName="dashboard-panel overflow-hidden">
+                <g:SimplePanel styleName="overflow-hidden">
                     <f:FloorMapTimeList ui:field="timeList"/>
                 </g:SimplePanel>
             </l:SplitPane>

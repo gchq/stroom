@@ -47,7 +47,7 @@ export function readColumn(page, name) {
       const h = heads[idx];
       const icon = h.querySelector('[class*="fields-sort-"]');
       const direction = icon ? (/descending/.test(icon.className.baseVal ?? icon.className) ? 'desc' : 'asc') : null;
-      const order = norm(h.querySelector('.column-header__sort-order')?.textContent) || null;
+      const order = norm(h.querySelector('.sort-icon__order, .column-header__sort-order')?.textContent) || null;
       const rows = [...g.querySelectorAll('tbody tr, [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && norm(r.textContent));
       const values = rows.map((r) => {
         const cells = r.querySelectorAll('td, [role=gridcell]');

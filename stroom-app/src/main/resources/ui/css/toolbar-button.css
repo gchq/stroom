@@ -124,3 +124,14 @@
     --icon-colour__white: var(--icon-colour__white__on);
     color: var(--page__background-color);
 }
+
+/* A button that starts or stops something (a query's Execute Query, a pipeline's Terminate, Ask
+   Stroom AI's Send): green to start (--play), red to stop (--stop). Two classes, to outweigh the
+   icon's own colour. */
+.toolbar-button.toolbar-button--play svg {
+    color: #4caf50;
+}
+
+.toolbar-button.toolbar-button--stop svg {
+    color: #d32f2f;
+}

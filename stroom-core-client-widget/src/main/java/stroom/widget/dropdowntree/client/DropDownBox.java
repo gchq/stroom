@@ -151,8 +151,8 @@ public class DropDownBox extends Component {
         updateState();
     }
 
-    // Read only: the normal field with its value greyed (the `readonly` class). It stays focusable
-    // and is `aria-disabled`, as a button can't be read only
+    // Read only: the normal field with its value greyed (`drop-down--read-only`). It stays
+    // focusable and is `aria-disabled`, as a button can't be read only
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
         updateState();
@@ -234,7 +234,7 @@ public class DropDownBox extends Component {
 
     private void updateState() {
         DisabledState.set(button.getElement(), !enabled);
-        setStyleName("readonly", isReadOnly() && enabled);
+        setStyleName("drop-down--read-only", isReadOnly() && enabled);
         // A button can't be read only, so a read-only picker is a button that does nothing
         if (isReadOnly()) {
             button.getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");

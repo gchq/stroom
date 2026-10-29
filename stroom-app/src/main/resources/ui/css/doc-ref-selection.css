@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-/* A list's pager toolbar (PagerPanel): its buttons in a row. */
-
-.pager-toolbar {
-    display: flex;
-    flex-grow: 1;
-    gap: var(--control__gap--horizontal);
+/* The documents changed, to choose which to save (stroom.pipeline.client.component.DocRefSelection):
+   the list scrolls */
+.doc-ref-selection__list {
+    overflow: auto;
 }

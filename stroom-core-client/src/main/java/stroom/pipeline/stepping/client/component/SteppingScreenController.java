@@ -192,7 +192,7 @@ public class SteppingScreenController extends Controller {
 
         view.setOnTerminate(this::terminate);
 
-        sourceController.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourceController.asWidget().addStyleName("overflow-hidden");
         sourceController.setSteppingSource(true);
 
         pipelinePathBar.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());

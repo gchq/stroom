@@ -15,7 +15,7 @@
   -->
 
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- The documents changed, each with a tick box to save it -->
+<!-- The documents changed, each with a tick box to save it (doc-ref-selection.css) -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
@@ -23,7 +23,7 @@
         <g:HTMLPanel styleName="message-container">
             <div>The following documents have changed. Please select the ones you want to save:</div>
         </g:HTMLPanel>
-        <g:FlowPanel addStyleNames="list-container dock-max">
+        <g:FlowPanel addStyleNames="doc-ref-selection__list dock-max">
             <dg:DataGrid ui:field="dataGrid" tableName="Document References" hasContextMenu="false"/>
         </g:FlowPanel>
     </g:FlowPanel>

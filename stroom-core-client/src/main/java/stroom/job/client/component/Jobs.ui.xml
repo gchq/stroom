@@ -6,11 +6,11 @@
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="400px, *"
                          names="Jobs, Job nodes" addStyleNames="max">
-            <g:SimplePanel styleName="max dashboard-panel">
+            <g:SimplePanel styleName="max">
                 <j:JobList ui:field="jobList"/>
             </g:SimplePanel>
-            <g:FlowPanel styleName="max dashboard-panel form">
-                <g:SimplePanel styleName="max dashboard-panel">
+            <g:FlowPanel styleName="max form">
+                <g:SimplePanel styleName="max">
                     <j:JobNodeList ui:field="jobNodeList"/>
                 </g:SimplePanel>
             </g:FlowPanel>

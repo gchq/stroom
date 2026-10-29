@@ -10,7 +10,7 @@
              xmlns:tx="urn:import:stroom.widget.text.client">
     <split:SplitPane sizes="245px, *"
                      names="Elements, Filter" addStyleNames="stepping-filter-editor max">
-        <split:ScrollPane addStyleNames="max stroom-control">
+        <split:ScrollPane addStyleNames="max control-box">
             <g:SimplePanel styleName="max">
                 <dg:DataGrid ui:field="elementChooser"
                              pageSize="100000"
@@ -35,7 +35,7 @@
                             label="Stepping Conditions"
                             addStyleNames="default-min-sizes dock-max"
                             helpText="XPath filters applied to the output of the selected element. Stepping stops at the next record where any filter matches. Use the toolbar buttons to add, edit or delete filters.">
-                <st:XPathList ui:field="xPathList" addStyleNames="dock-max stroom-control"/>
+                <st:XPathList ui:field="xPathList" addStyleNames="dock-max control-box"/>
             </form:FormGroup>
         </g:FlowPanel>
     </split:SplitPane>

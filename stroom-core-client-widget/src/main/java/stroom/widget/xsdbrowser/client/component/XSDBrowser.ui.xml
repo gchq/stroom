@@ -17,11 +17,11 @@
         </a:AriaPanel>
         <split:SplitPane thin="true" sizes="*, 200px"
                          names="Diagram, Details" addStyleNames="dock-max">
-            <view:XSDDisplay ui:field="diagram" styleName="dashboard-panel xsd-browser__diagram" />
+            <view:XSDDisplay ui:field="diagram" styleName="xsd-browser__diagram" />
             <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                              names="Documentation, Constraints" addStyleNames="max">
-                <tx:Html ui:field="documentation" styleName="dashboard-panel xsd-browser__documentation"/>
-                <view:XSDConstraintDisplay ui:field="constraints" styleName="dashboard-panel xsd-browser__constraints" />
+                <tx:Html ui:field="documentation" styleName="xsd-browser__documentation"/>
+                <view:XSDConstraintDisplay ui:field="constraints" styleName="xsd-browser__constraints" />
             </split:SplitPane>
         </split:SplitPane>
     </g:FlowPanel>

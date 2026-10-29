@@ -843,7 +843,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         hb.div(div -> {
             appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
-        }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
+        }, Attribute.className(isSelected(span) ? "operation-item operation-item--selected" : "operation-item"),
                 new Attribute("data-span-id", span.getSpanId()));
     }
 
@@ -857,7 +857,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         hb.div(div -> {
             appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
-        }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
+        }, Attribute.className(isSelected(span) ? "operation-item operation-item--selected" : "operation-item"),
                 new Attribute("data-span-id", span.getSpanId()));
 
         // Client-side prune: only descend into a span's children when it is expanded.

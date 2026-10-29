@@ -13,14 +13,12 @@
             <tx:Label text="Query:" styleName="dock-min"/>
             <form:TextBox ui:field="query" addStyleNames="dock-max" ariaLabel="Query"/>
             <b:Toolbar name="Query actions" addStyleNames="dock-min">
-                <b:ToolbarButton ui:field="reset" svg="UNDO" title="Reset to Default"
-                                 addStyleNames="query-buttons__button"/>
+                <b:ToolbarButton ui:field="reset" svg="UNDO" title="Reset to Default"/>
                 <b:ToolbarButton ui:field="run" svg="PLAY" title="Run"
-                                 addStyleNames="query-buttons__button query-buttons__button--play"/>
+                                 addStyleNames="toolbar-button--play"/>
                 <b:ToolbarButton ui:field="stop" svg="STOP" title="Stop"
-                                 addStyleNames="query-buttons__button query-buttons__button--stop"/>
-                <b:ToolbarButton ui:field="createDashboard" svg="DOCUMENT_DASHBOARD" title="Create Dashboard"
-                                 addStyleNames="query-buttons__button"/>
+                                 addStyleNames="toolbar-button--stop"/>
+                <b:ToolbarButton ui:field="createDashboard" svg="DOCUMENT_DASHBOARD" title="Create Dashboard"/>
             </b:Toolbar>
         </g:FlowPanel>
         <g:ScrollPanel ui:field="errorContainer" styleName="query-data-pane__error-container" visible="false">

@@ -54,7 +54,7 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
     private static final String SEND_BUTTON_CANCEL_TEXT = "Cancel";
-    private static final String EMPTY_STYLE = "empty";
+    private static final String EMPTY_STYLE = "ask-stroom-ai--empty";
     private boolean sending;
     private Consumer<String> onSend = message -> {
     };
@@ -292,15 +292,15 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
             // Its name (its title) says what pressing it does now
             run.setTitle(SEND_BUTTON_CANCEL_TEXT);
             run.setSvg(SvgImage.STOP);
-            run.addStyleName("stop");
-            run.removeStyleName("play");
+            run.addStyleName("toolbar-button--stop");
+            run.removeStyleName("toolbar-button--play");
         } else {
             sending = false;
             run.setEnabled(!message.getText().isEmpty());
             run.setTitle(SEND_BUTTON_NORMAL_TEXT);
             run.setSvg(SvgImage.PLAY);
-            run.addStyleName("play");
-            run.removeStyleName("stop");
+            run.addStyleName("toolbar-button--play");
+            run.removeStyleName("toolbar-button--stop");
         }
     }
 

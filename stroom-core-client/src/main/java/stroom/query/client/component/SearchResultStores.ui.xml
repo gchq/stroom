@@ -3,16 +3,16 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:q="urn:import:stroom.query.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client">
-    <g:SimplePanel styleName="max stroom-control search-result-stores">
+    <g:SimplePanel styleName="max control-box">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Result stores, Info" addStyleNames="max">
             <!-- The stores, their list's own -->
-            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="max overflow-hidden">
                 <q:ResultStoreList ui:field="list"/>
             </g:SimplePanel>
             <!-- The store's details scroll when they are long, so the keyboard can reach them to
                  scroll them: a named region that takes the focus -->
-            <split:ScrollPane addStyleNames="max dashboard-panel scroll-region"
+            <split:ScrollPane addStyleNames="max scroll-region"
                               focusable="true" role="region" ariaLabel="Info">
                 <g:SimplePanel ui:field="infoPanel"/>
             </split:ScrollPane>

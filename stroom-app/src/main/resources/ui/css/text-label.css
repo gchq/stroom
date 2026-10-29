@@ -22,3 +22,15 @@
 .text-label {
     white-space: nowrap;
 }
+
+/* A read-only value shown in a form (e.g. a component's id in its settings), which wraps, up to a
+   readable width, and can be selected, so copied */
+.text-label--value {
+    width: 100%;
+    max-width: 60em;
+    white-space: normal;
+    padding: 3px 0;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+}

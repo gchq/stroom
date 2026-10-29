@@ -17,9 +17,8 @@
 package stroom.widget.popup.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,9 +32,9 @@ public class NameDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox textBox;
+    FormGroup nameGroup;
     @UiField
-    Label feedback;
+    TextBox textBox;
 
     /// Makes the content with no name, valid.
     public NameDialog() {
@@ -61,13 +60,13 @@ public class NameDialog extends Component {
     ///
     /// @param message What is wrong with the name.
     public void setInvalid(final String message) {
-        FieldValidity.setInvalid(textBox, feedback, message);
+        nameGroup.setFeedback(message);
         textBox.setFocus(true);
     }
 
     /// Marks the name valid, clearing any message.
     public void setValid() {
-        FieldValidity.setValid(textBox, feedback);
+        nameGroup.clearFeedback();
     }
 
 

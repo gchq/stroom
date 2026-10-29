@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-/* The part of a pager panel that holds its list (PagerPanel), scrolling. */
+/* A document's assets as a tree (DocumentAssetTree), laid out as the explorer's tree is: its grid
+   fills it, and its cells are the explorer's (explorer-cell.css) */
+.document-asset-tree {
+    position: relative;
+}
 
-.list-container {
-    overflow: auto;
+.document-asset-tree__grid {
+    width: 100%;
 }

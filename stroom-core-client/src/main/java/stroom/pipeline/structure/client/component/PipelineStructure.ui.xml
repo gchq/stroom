@@ -10,7 +10,7 @@
     <g:SimplePanel addStyleNames="dock-container-vertical">
         <split:SplitPane vertical="true" thin="true" sizes="40%, *"
                          names="Pipeline elements, Properties and references" addStyleNames="dock-max">
-            <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
+            <g:FlowPanel styleName="max dock-container-vertical">
                 <g:FlowPanel styleName="dock-min pipeline-structure__bar">
                     <v:Toolbar name="Pipeline elements">
                         <v:ToolbarButton ui:field="add" svg="ADD" title="Add New Pipeline Element"/>
@@ -38,10 +38,10 @@
             </g:FlowPanel>
             <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                              names="Properties, Pipeline references" addStyleNames="max">
-                <g:SimplePanel styleName="dashboard-panel">
+                <g:SimplePanel>
                     <ps:PropertyList ui:field="properties"/>
                 </g:SimplePanel>
-                <g:SimplePanel styleName="dashboard-panel">
+                <g:SimplePanel>
                     <ps:PipelineReferenceList ui:field="pipelineReferences"/>
                 </g:SimplePanel>
             </split:SplitPane>

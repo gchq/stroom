@@ -105,11 +105,11 @@ public final class ChangePasswordStories {
                     final Query password = dialog.getByLabelText("Password");
                     play.type(password, "ab");
                     play.expect(password).toHaveFocus();
-                    play.expect(dialog.querySelector(".password-length")).toHaveTextContent("2");
+                    play.expect(dialog.querySelector(".change-password__length")).toHaveTextContent("2");
                     play.type(password, "c1Tr0ub4dour&3xtra");
                     play.expect(password).toHaveFocus();
                     IdpPlays.waitForStrengthScored(play, dialog, "2-5");
-                    play.expect(dialog.querySelector(".password-length")).toHaveTextContent("9+");
+                    play.expect(dialog.querySelector(".change-password__length")).toHaveTextContent("9+");
                     // The strength meter is a meter to screen readers, saying how strong the password is
                     final Query meter = dialog.getByRole("meter", "Password strength");
                     play.expect(meter).toHaveAttribute("aria-valuemax", "5");

@@ -23,7 +23,6 @@ import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -42,15 +41,13 @@ public class Login extends Component {
     private static final String PASSWORD_HELP = "Enter your Stroom account password.";
 
     @UiField
-    TextBox userName;
+    FormGroup userNameGroup;
     @UiField
-    Label userNameFeedback;
+    TextBox userName;
     @UiField
     FormGroup passwordGroup;
     @UiField
     PasswordBox password;
-    @UiField
-    Label passwordFeedback;
     @UiField
     Button signInButton;
     @UiField
@@ -106,17 +103,17 @@ public class Login extends Component {
         boolean valid = true;
 
         if (userName.getValue().length() == 0) {
-            FieldValidity.setInvalid(userName, userNameFeedback, "User name is required");
+            userNameGroup.setFeedback("User name is required");
             valid = false;
         } else {
-            FieldValidity.setValid(userName, userNameFeedback);
+            userNameGroup.clearFeedback();
         }
 
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
+            passwordGroup.setFeedback("Password is required");
             valid = false;
         } else {
-            FieldValidity.setValid(password.getInput(), passwordFeedback);
+            passwordGroup.clearFeedback();
         }
 
         if (!valid) {

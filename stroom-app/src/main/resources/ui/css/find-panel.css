@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-/* A filter or pattern above a list of what it finds: Find, Recent Items, Find in Content, the
-   annotation finders and the Ask Stroom AI chat history. As a dialog's content (find-panel--dialog)
-   its top has no padding of its own */
+/* A filter above a list of what it finds (FindPanel): Find, Recent Items, the annotation finders
+   and the Ask Stroom AI chat history. As a dialog's content (find-panel--dialog) its top has no
+   padding of its own */
 .find-panel {
     gap: var(--control__gap--vertical);
 }
@@ -28,21 +28,6 @@
 
 .find-panel--dialog .find-panel__top {
     padding: 0;
-}
-
-.find-panel__top .text-field--multiline {
-    /* Single line */
-    height: 2.1rem;
-}
-
-.find-panel__top .text-field--multiline.find-panel__pattern--multiline {
-    /* Multi line */
-    height: 6.3rem;
-}
-
-/* What may be typed in the pattern, and what is wrong with it, under the pattern */
-.find-panel__guidance {
-    margin: 0.2rem 0 0.4rem 0;
 }
 
 .find-panel__bottom {

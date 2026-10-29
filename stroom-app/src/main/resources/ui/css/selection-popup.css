@@ -29,7 +29,7 @@
     height: auto;
 }
 
-.selection-popup .list-container {
+.selection-popup .pager-panel__list {
     min-width: 200px;
     max-width: 400px;
     max-height: 400px;

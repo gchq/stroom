@@ -13,7 +13,7 @@
             <g:SimplePanel styleName="max">
                 <q:QueryHelp ui:field="queryHelp"/>
             </g:SimplePanel>
-            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="max overflow-hidden">
                 <ed:CodeEditor ui:field="editor"/>
             </g:SimplePanel>
         </split:SplitPane>

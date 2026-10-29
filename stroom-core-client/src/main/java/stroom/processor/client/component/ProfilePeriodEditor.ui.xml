@@ -6,7 +6,7 @@
              xmlns:datepicker="urn:import:stroom.widget.datepicker.client"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:days="urn:import:stroom.processor.client.component">
-    <g:FlowPanel styleName="credentials-details-dialog">
+    <g:FlowPanel styleName="form">
         <form:FormGroup identity="days"
                         label="Active Days"
                         helpText="The days of the week on which this period applies."

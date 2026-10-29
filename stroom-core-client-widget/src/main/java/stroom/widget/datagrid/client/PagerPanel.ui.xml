@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
-  A list's frame: the toolbar (hidden until a list asks for it) and anything after it, then the
+  A list's frame (pager-panel.css): the toolbar (hidden until a list asks for it) and anything after it, then the
   pager, above the list, which setDataWidget puts before the message.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
@@ -8,14 +8,14 @@
              xmlns:p="urn:import:stroom.data.pager.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <g:FlowPanel addStyleNames="max dock-container-vertical">
-        <g:FlowPanel ui:field="pagerContainer" styleName="pager dock-container-horizontal dock-min align-center">
-            <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-toolbar">
+    <g:FlowPanel addStyleNames="max dock-container-vertical pager-panel">
+        <g:FlowPanel ui:field="pagerContainer" styleName="pager-panel__bar dock-container-horizontal dock-min align-center">
+            <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-panel__toolbar">
                 <b:Toolbar ui:field="toolbar" name="List actions" visible="false"/>
             </g:FlowPanel>
             <p:Pager ui:field="pager" addStyleNames="dock-min"/>
         </g:FlowPanel>
-        <g:FlowPanel ui:field="listContainer" addStyleNames="list-container dock-max">
+        <g:FlowPanel ui:field="listContainer" addStyleNames="pager-panel__list dock-max">
             <dg:MessagePanel ui:field="messagePanel"/>
         </g:FlowPanel>
     </g:FlowPanel>

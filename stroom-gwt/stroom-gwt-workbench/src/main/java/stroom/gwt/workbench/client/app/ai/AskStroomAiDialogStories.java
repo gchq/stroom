@@ -183,7 +183,7 @@ public final class AskStroomAiDialogStories {
                     play.expect(grid.getByText("ALPHA")).toBeInTheDocument();
                     // The pager's range is separate labels (with no-break spaces), so its text is
                     // normalised
-                    final Value<String> pager = screen.querySelector(".pager").textContent();
+                    final Value<String> pager = screen.querySelector(".pager-panel__bar").textContent();
                     play.expect("the pager's text", () -> pager.get().replaceAll("[\\s\u00a0]+", " "))
                             .toMatch("1 to 3 of 3");
                     DocEditors.expectNoProblems(play);

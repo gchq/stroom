@@ -7,10 +7,10 @@
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                          names="Rules, Expression" addStyleNames="max">
-            <g:SimplePanel styleName="max dashboard-panel dock-container-vertical">
+            <g:SimplePanel styleName="max dock-container-vertical">
                 <r:RuleSetList ui:field="ruleList"/>
             </g:SimplePanel>
-            <g:SimplePanel styleName="max dashboard-panel dock-container-vertical">
+            <g:SimplePanel styleName="max dock-container-vertical">
                 <q:ExpressionTree ui:field="expressionTree"/>
             </g:SimplePanel>
         </split:SplitPane>

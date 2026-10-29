@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <form:FormGroup ui:field="heading" addStyleNames="max">
+    <form:FormGroup ui:field="heading" addStyleNames="form-group--inset-label max">
         <dg:PagerPanel ui:field="pager" toolbarName="Job node actions">
             <b:ToolbarToggleButton ui:field="showEnabled" svg="FILTER" title="Show Only Enabled Jobs"/>
             <b:ToolbarToggleButton ui:field="autoRefresh" svg="AUTO_REFRESH" title="Auto Refresh"/>

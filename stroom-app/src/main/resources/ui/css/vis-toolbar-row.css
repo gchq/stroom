@@ -16,10 +16,17 @@
 
 /*
    A visualisation's toolbar row (stroom.dashboard.client.vis.VisToolbarRow), named BEM style: above
-   the visualisation as a table's pager row is (it borrows PagerPanel's pager and pager-toolbar), the
-   buttons the visualisation asks for, then its pause and resume button. Padded as a table's pager.
+   the visualisation as a table's pager row is, the buttons the visualisation asks for
+   (vis-toolbar-row__actions), then its pause and resume button. Padded as a table's pager.
 */
 
 .vis-toolbar-row {
     padding: 0 5px;
+}
+
+/* The visualisation's buttons, in a row, taking the room the pause button doesn't */
+.vis-toolbar-row__actions {
+    display: flex;
+    flex-grow: 1;
+    gap: var(--control__gap--horizontal);
 }

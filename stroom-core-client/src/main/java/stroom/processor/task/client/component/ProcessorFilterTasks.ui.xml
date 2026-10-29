@@ -6,10 +6,10 @@
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Task summary, Tasks" addStyleNames="max">
-            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="max overflow-hidden">
                 <d:ProcessorTaskSummaryList ui:field="summary"/>
             </g:SimplePanel>
-            <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+            <g:SimplePanel styleName="max overflow-hidden">
                 <d:ProcessorTasksList ui:field="tasks"/>
             </g:SimplePanel>
         </split:SplitPane>

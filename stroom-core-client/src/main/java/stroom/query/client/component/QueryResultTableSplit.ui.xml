@@ -4,7 +4,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:q="urn:import:stroom.query.client.component"
              xmlns:l="urn:import:stroom.widget.layout.client">
-    <g:SimplePanel styleName="max dashboard-panel overflow-hidden">
+    <g:SimplePanel styleName="max overflow-hidden">
         <!-- Half each, the source no narrower than 100px -->
         <l:SplitPane ui:field="split" thin="true" sizes="*, 50%" minSizes="0px, 100px" names="Table, Source"
                      addStyleNames="max">

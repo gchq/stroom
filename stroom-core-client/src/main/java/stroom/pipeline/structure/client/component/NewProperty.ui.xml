@@ -11,17 +11,17 @@
         <form:FormGroup identity="newPropertyElementId"
                         label="Element"
                         helpText="The pipeline element that this property relates to.">
-            <tx:Label ui:field="element" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="element" addStyleNames="text-label--value"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertyName"
                         label="Name"
                         helpText="The name of the property on this pipeline element.">
-            <tx:Label ui:field="name" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="name" addStyleNames="text-label--value"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertyDescription"
                         label="Description"
                         helpText="The description of this property.">
-            <tx:Label ui:field="description" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="description" addStyleNames="text-label--value"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertySource"
                         label="Source"
@@ -74,14 +74,14 @@
                         identity="newPropertyDefaultValue"
                         label="Default Value"
                         helpText="The default value for this property on this pipeline element type.">
-            <tx:Label ui:field="defaultValue" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="defaultValue" addStyleNames="text-label--value"/>
         </form:FormGroup>
         <form:FormGroup ui:field="inheritedValueGroup"
                         visible="false"
                         identity="newPropertyInheritedValue"
                         label="Inherited Value"
                         helpText="The value inherited from the parent pipeline.">
-            <tx:Label ui:field="inheritedValue" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="inheritedValue" addStyleNames="text-label--value"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

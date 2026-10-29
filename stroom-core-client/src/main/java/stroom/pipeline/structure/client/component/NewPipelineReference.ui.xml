@@ -9,7 +9,7 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id"
                         helpText="The ID of the pipeline element that this reference data lookup belongs to.">
-            <tx:Label ui:field="element" addStyleNames="stroom-control-label"/>
+            <tx:Label ui:field="element" addStyleNames="text-label--value"/>
         </form:FormGroup>
         <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline"
                         helpText="The reference loader pipeline that loads the reference data. A Plan B store can also be chosen here for state lookups.">

@@ -92,7 +92,7 @@
                 <p>Use the toolbar to add or remove a mapping.</p>
             </form:HelpHTML>
             <!-- The toolbar and table in a control's box, as other forms' tables are -->
-            <g:FlowPanel styleName="stroom-control">
+            <g:FlowPanel styleName="control-box">
                 <b:Toolbar name="Field mapping actions">
                     <b:ToolbarButton ui:field="addMapping" svg="ADD" title="Add Field Mapping"/>
                     <b:ToolbarButton ui:field="removeMapping" svg="DELETE" title="Remove Field Mapping"

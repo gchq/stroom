@@ -20,8 +20,8 @@
    (drop-down__value), with the "…" icon at its end (drop-down__icon). A problem with the value is
    shown as a form shows what is wrong with a field: the picker is aria-invalid, and the message is in
    its form group's feedback, or a line of its own under it (drop-down__feedback).
-   It draws the field with the shared stroom-control classes, whose readonly and disabled classes
-   give it the read-only and disabled looks every field has.
+   It draws the field with the shared stroom-control class, whose disabled class gives it the
+   disabled look every field has; read only, its value is greyed (drop-down--read-only).
    The button and its feedback line are held by a wrapper (drop-down-box) with no box of its own,
    so they are laid out as their parent's children.
 */
@@ -42,6 +42,16 @@
 /* One that can't be used (disabled, or read only, which is aria-disabled too) */
 .drop-down[aria-disabled="true"] {
     cursor: default;
+}
+
+/* Read only (DropDownBox): the normal field with its value and icon greyed, as a read-only
+   field's are */
+.drop-down--read-only {
+    color: var(--control__text-color--readonly);
+}
+
+.drop-down--read-only svg {
+    opacity: var(--disabled-opacity);
 }
 
 /* The chosen value, on one line, ending in an ellipsis clear of the icon */

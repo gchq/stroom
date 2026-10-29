@@ -437,12 +437,12 @@ async function clickAffordance(label, timeout = 3000) {
  * menu instead — the seed maximises the pane first (`tab-menu` step).
  */
 /**
- * Where a seed's column menus live. The dashboard's need design mode and sit in `.dashboard-panel`;
+ * Where a seed's column menus live. The dashboard's need design mode and sit in `.tab-layout__content-outer`;
  * a Query document's result table (`QueryResultTablePresenter`) has `allowHeaderSelection` on by
  * default — MyDataGrid's default — so its header menu (Filter, Format, Conditional Formatting, …)
  * opens on any results table with no mode to enter.
  */
-let columnScope = { selector: '.dashboard-panel [role=columnheader]', design: true };
+let columnScope = { selector: '.tab-layout__content-outer [role=columnheader]', design: true };
 async function readDesignHeaders() {
   return page.evaluate(({ selector, design, designOn }) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
@@ -3183,7 +3183,7 @@ for (const seed of seeds) {
   const t0 = Date.now();
   // Where this seed's column headers are, BEFORE the route is driven: a route may itself click one.
   columnScope = typeof seed.columnMenus === 'object' ? seed.columnMenus
-    : seed.columnScope ?? { selector: '.dashboard-panel [role=columnheader]', design: true };
+    : seed.columnScope ?? { selector: '.tab-layout__content-outer [role=columnheader]', design: true };
   try {
     await resync(seed);
   } catch (e) {

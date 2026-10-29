@@ -19,28 +19,20 @@
                 </g:SimplePanel>
 
                 <!-- User Name -->
-                <form:FormGroup identity="userName" label="User Name" required="true"
+                <form:FormGroup ui:field="userNameGroup" identity="userName" label="User Name" required="true"
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
-                    <g:FlowPanel>
-                        <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
-                            <!-- The fields say what they hold, so that browsers and password managers
-                                 can fill them in -->
-                            <form:TextBox ui:field="userName" addStyleNames="sign-in-page__user-name"
-                                          placeholder="Enter User Name" autocomplete="username"/>
-                        </g:FlowPanel>
-
-                        <tx:Label ui:field="userNameFeedback" styleName="feedback"/>
+                    <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
+                        <!-- The fields say what they hold, so that browsers and password managers
+                             can fill them in -->
+                        <form:TextBox ui:field="userName" addStyleNames="sign-in-page__user-name"
+                                      placeholder="Enter User Name" autocomplete="username"/>
                     </g:FlowPanel>
                 </form:FormGroup>
 
                 <!-- Password -->
                 <form:FormGroup ui:field="passwordGroup" identity="password" label="Password" required="true">
-                    <g:FlowPanel>
-                        <form:PasswordBox ui:field="password" placeholder="Enter Password"
-                                          autocomplete="current-password"/>
-
-                        <tx:Label ui:field="passwordFeedback" styleName="feedback"/>
-                    </g:FlowPanel>
+                    <form:PasswordBox ui:field="password" placeholder="Enter Password"
+                                      autocomplete="current-password"/>
                 </form:FormGroup>
 
 

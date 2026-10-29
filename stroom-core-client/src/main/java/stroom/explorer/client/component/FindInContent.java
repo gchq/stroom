@@ -59,8 +59,8 @@ public class FindInContent extends Component {
     private static final String REGEX_HINT = "A regular expression, found anywhere in a document's content "
                                              + "(^ and $ are not supported). "
                                              + "Add tag:name to only search documents with that tag.";
-    // A pattern of more than one line is taller (find-panel.css)
-    private static final String MULTILINE = "find-panel__pattern--multiline";
+    // A pattern of more than one line is taller (find-in-content.css)
+    private static final String MULTILINE = "find-in-content__pattern--multiline";
 
     @UiField
     TextArea pattern;

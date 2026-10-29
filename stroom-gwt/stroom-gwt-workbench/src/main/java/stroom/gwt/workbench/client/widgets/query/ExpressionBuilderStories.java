@@ -614,14 +614,14 @@ public final class ExpressionBuilderStories {
                     play.click(selectTermFieldPicker(play, "UserId"));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager and the quick filter rather than omitting them
-                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager-panel__bar")).not().toBeVisible();
                     play.expect(play.screen().querySelector(".selection-list__filter")).not().toBeVisible();
                 })
                 // A field list served by a data source always offers its quick filter and pager
                 .story("DynamicFieldsAlwaysShowPickerChrome", context -> editor(context, populatedExpression(), true))
                 .withPlay(play -> {
                     play.click(selectTermFieldPicker(play, "UserId"));
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager-panel__bar"))
                             .toBeVisible());
                     play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();
                 })

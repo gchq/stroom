@@ -23,8 +23,8 @@ import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 
-/// The sort icon of a column's header, and the names and icons of its sort states, as the dashboard
-/// and query tables' column menus offer them.
+/// The sort icon of a column's header (the BEM block `sort-icon`, `sort-icon.css`), and the names
+/// and icons of its sort states, as the dashboard and query tables' column menus offer them.
 public final class SortIcon {
 
     public static final String SORT = "Sort";
@@ -70,8 +70,8 @@ public final class SortIcon {
             // Add icon.
             div.append(getSafeHtml(svgImage));
             // Add order.
-            div.div(c -> c.append(order), Attribute.className("column-header__sort-order"));
-        }, Attribute.className("column-header__sort"), Attribute.title(title));
+            div.div(c -> c.append(order), Attribute.className("sort-icon__order"));
+        }, Attribute.className("sort-icon"), Attribute.title(title));
     }
 
     private static SafeHtml getSafeHtml(final SvgImage svgImage) {

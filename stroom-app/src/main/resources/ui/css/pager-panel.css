@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-/* Search Result Stores: the stores above the details of the one chosen, filling the dialog */
-.stroom-control.search-result-stores {
-    padding: 0;
-    overflow: hidden;
+/*
+   A list's frame (stroom.widget.datagrid.client.PagerPanel): its bar (pager-panel__bar) of the
+   list's toolbar and anything after it (pager-panel__toolbar), then the pager; and below it the
+   list (pager-panel__list).
+*/
+
+/* The bar's toolbar and anything after it, in a row */
+.pager-panel__toolbar {
+    display: flex;
+    flex-grow: 1;
+    gap: var(--control__gap--horizontal);
+}
+
+/* The part that holds the list, scrolling */
+.pager-panel__list {
+    overflow: auto;
 }

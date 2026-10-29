@@ -13,70 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- .explorer-tree__grid {
+
+/* The explorer's tree (ExplorerTree): its grid, which fills it */
+.explorer-tree__grid {
     width: 100%;
- }
-
-.explorer-cell {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: var(--row__gap--horizontal);
 }
 
-.explorer-cell__expander {
-	display: flex;
-	/* Indented by its item's depth (ExplorerCell, DocumentAssetTree's cell) */
-	padding-left: calc(4px + var(--explorer-cell__depth, 0) * 17px);
-}
-
-.explorer-cell__expander svg {
-    width: .7rem;
-    height: .7rem;
-}
-
-.explorer-cell__icon {
-	display: flex;
-	color: var(--icon-colour__foreground);
-}
-
-.explorer-cell__icon svg {
-	width: var(--icon-width);
-	height: var(--icon-height)
-}
-
-.explorer-cell__alert-icon.icon-wrap {
-    left: 6px;
-    position: absolute;
-    display: block;
-    margin-top: -11px;
-	display: block;
-	color: var(--icon-colour__foreground);
-}
-
-.explorer-cell__alert-icon.icon-wrap.icon-wrap--small svg {
-    width: calc(var(--icon-width) * 0.8);
-    height: calc(var(--icon-height) * 0.8);
-}
-
-.explorer-cell__text {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
-	white-space: nowrap;
-}
-
-.explorer-cell__icon-wrapper {
-    position: relative;
-}
-
-.explorer-cell--filter-no-match .explorer-cell__text {
-    color: var(--navigation__text-color--no-match);
-}
-
-.explorer-cell--filter-no-match .explorer-cell__icon.svg-image {
-    opacity: 50%;
-}
-
-/* What holds an explorer tree (ExplorerTree, DocumentAssetTree), which its grid fills */
+/* What holds the explorer's tree, which its grid fills */
 .explorer-tree {
 	position: relative;
 }

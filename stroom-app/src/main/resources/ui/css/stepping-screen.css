@@ -65,23 +65,3 @@
     position: relative;
     min-height: 0;
 }
-
-/* The location (stroom.pipeline.stepping.client.component.StepLocationLink), the BEM block
-   step-location-link: a link that opens the Set Location dialog, disabled (aria-disabled) until a
-   stream is chosen. Was .stepLocationLink (components.css) */
-.step-location-link {
-    cursor: pointer;
-}
-
-.step-location-link:hover {
-    text-decoration: underline;
-}
-
-.step-location-link[aria-disabled="true"] {
-    cursor: default;
-    color: var(--text-color--disabled);
-}
-
-.step-location-link[aria-disabled="true"]:hover {
-    text-decoration: none;
-}

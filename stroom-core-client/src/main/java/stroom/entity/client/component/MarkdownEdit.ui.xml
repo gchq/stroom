@@ -4,8 +4,8 @@
              xmlns:c="urn:import:stroom.entity.client.component"
              xmlns:if="urn:import:stroom.iframe.client.component">
     <g:FlowPanel styleName="max">
-        <c:MarkdownPreview ui:field="editor" addStyleNames="dashboard-panel" visible="false"/>
-        <if:IFrame ui:field="preview" addStyleNames="dashboard-panel"
+        <c:MarkdownPreview ui:field="editor" visible="false"/>
+        <if:IFrame ui:field="preview"
                    accessibleName="Preview"/>
     </g:FlowPanel>
 </ui:UiBinder>

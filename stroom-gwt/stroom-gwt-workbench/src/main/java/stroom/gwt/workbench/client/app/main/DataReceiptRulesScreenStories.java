@@ -189,7 +189,7 @@ public final class DataReceiptRulesScreenStories {
                     final Query nameHeader = play.getByText("Name", StroomDom.GRID_HEADER_TEXT)
                             .closest(StroomDom.GRID_HEADER_CELL);
                     final Query grid = nameHeader.closest(".data-grid");
-                    play.expect(play.within(nameHeader).querySelector(".column-header__sort")).not().toBeNull();
+                    play.expect(play.within(nameHeader).querySelector(".sort-icon")).not().toBeNull();
                     play.expect("the field order", () -> fieldOrder(grid.element().get()))
                             .toBe("Feed,System");
                     play.click(nameHeader);

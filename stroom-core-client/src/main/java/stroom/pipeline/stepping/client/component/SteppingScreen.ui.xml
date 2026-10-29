@@ -29,7 +29,7 @@
                 <pp:StepControl ui:field="stepControl"/>
                 <b:Toolbar name="Stepping">
                     <b:ToolbarButton ui:field="terminate" svg="STOP" title="Terminate Stepping" enabled="false"
-                                     addStyleNames="query-buttons__button query-buttons__button--stop"/>
+                                     addStyleNames="toolbar-button--stop"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </g:FlowPanel>

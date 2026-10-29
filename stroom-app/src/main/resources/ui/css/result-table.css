@@ -19,7 +19,7 @@
    stroom.query.client.component.QueryResultTable), named BEM style. Its rules were in `dashboard.css`.
 */
 
-.result-table .pager {
+.result-table .pager-panel__bar {
     padding: 0 5px;
 }
 

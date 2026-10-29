@@ -29,7 +29,7 @@
             <g:SimplePanel addStyleNames="max">
                 <f:FloorMapCanvas ui:field="map"/>
             </g:SimplePanel>
-            <e:LinkTabPanel ui:field="dockPanel" addStyleNames="dashboard-panel overflow-hidden"/>
+            <e:LinkTabPanel ui:field="dockPanel" addStyleNames="overflow-hidden"/>
         </l:SplitPane>
         <!-- Timeline strip: a fixed height with no splitter, so it is not user-resizable -->
         <g:SimplePanel addStyleNames="max floormap-timeline-strip">

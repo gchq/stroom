@@ -34,7 +34,7 @@
                             the map: a shape (imageless) object is labelled on the map with its
                             key, and image objects carry no text label.</p>
                     </form:HelpHTML>
-                    <form:TextBox ui:field="nameBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextBox ui:field="nameBox" addStyleNames="stroom-control" />
                 </form:FormGroup>
 
                 <form:FormGroup label="Type" required="true" identity="floorMapObjectType">
@@ -46,7 +46,7 @@
                         <p><strong>Required</strong> — the object cannot be saved without a
                             type.</p>
                     </form:HelpHTML>
-                    <form:TextBox ui:field="typeBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextBox ui:field="typeBox" addStyleNames="stroom-control" />
                 </form:FormGroup>
 
                 <form:FormGroup label="Image">
@@ -55,7 +55,7 @@
                             drawn as that image (a background is simply an image fact); leave it
                             empty to draw the type's default shape instead.</p>
                     </form:HelpHTML>
-                    <a:AriaPanel role="group" ariaLabel="Image" addStyleNames="wide-control">
+                    <a:AriaPanel role="group" ariaLabel="Image">
                         <dd:DropDownBox ui:field="assetBox"/>
                     </a:AriaPanel>
                 </form:FormGroup>
@@ -83,7 +83,7 @@
                             (invisible) to <code>1</code> (opaque). Leave empty for the
                             default (<code>0.3</code>).</p>
                     </form:HelpHTML>
-                    <form:TextBox ui:field="opacityBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextBox ui:field="opacityBox" addStyleNames="stroom-control" />
                 </form:FormGroup>
 
                 <form:FormGroup ui:field="verticesGroup" label="Vertices" visible="false">
@@ -106,7 +106,7 @@
                             version to the new time or keep a <em>copy</em> at the old time.</p>
                     </form:HelpHTML>
                     <datetimebox:DateTimeBox ui:field="effectiveTimeBox" role="group" ariaLabel="Effective From Time"
-                                             addStyleNames="timeline-date-box wide-control"/>
+                                             addStyleNames="timeline-date-box"/>
                 </form:FormGroup>
 
                 <form:FormGroup label="Position (X, Y) in metres">

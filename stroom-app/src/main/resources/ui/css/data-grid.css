@@ -146,23 +146,14 @@
 
 /* What a grid sits on, when it isn't the page: a dialog's colour is painted by a layer behind its
    content (dialog__frame), and the elements between a popup and the grid are transparent, so
-   neither can be inherited. The nearest of these round the grid sets it. */
+   neither can be inherited. The nearest of these round the grid sets it (a control's box sets it
+   too, form-controls.css). */
 .dialog {
     --data-grid__head-background-color: var(--dialog__background-color);
 }
 
 .popup {
     --data-grid__head-background-color: var(--popup__background-color);
-}
-
-/* A grid in a control's box, e.g. a list in a form, sits on the box's colour */
-.stroom-control {
-    --data-grid__head-background-color: var(--control__background-color);
-}
-
-.stroom-control:disabled,
-.stroom-control.disabled {
-    --data-grid__head-background-color: var(--control__background-color--disabled);
 }
 
 .data-grid__header-row,

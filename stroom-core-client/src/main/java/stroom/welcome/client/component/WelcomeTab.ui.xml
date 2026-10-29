@@ -5,7 +5,7 @@
         <g:SimplePanel ui:field="html"/>
             <!-- Each row is a name and its value: the names are row headers, so a screen reader
                  reads the name with its value -->
-            <g:HTMLPanel tag="table" styleName="welcome-tab__build-info stroom-control-grid w-100">
+            <g:HTMLPanel tag="table" styleName="welcome-tab__build-info w-100">
                 <tbody>
                 <tr>
                     <th scope="row">User Unique Identity:</th>

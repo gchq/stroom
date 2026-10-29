@@ -94,7 +94,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 expanderIcon = SvgImage.ARROW_RIGHT;
             }
 
-            // Indented by its depth (explorer-tree.css's explorer-cell__expander)
+            // Indented by its depth (explorer-cell.css's explorer-cell__expander)
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
                     "--explorer-cell__depth", String.valueOf(node.getDepth()));
 

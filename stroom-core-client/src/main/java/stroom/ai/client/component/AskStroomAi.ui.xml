@@ -6,7 +6,7 @@
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <g:FlowPanel ui:field="root" styleName="ask-stroom-ai max default-min-sizes dock-container-vertical empty">
+    <g:FlowPanel ui:field="root" styleName="ask-stroom-ai max default-min-sizes dock-container-vertical ask-stroom-ai--empty">
         <g:FlowPanel styleName="dock-min ask-stroom-ai__top">
             <g:FlowPanel styleName="dock-max ask-stroom-ai__title">
                 <tx:Label ui:field="chatTitle" text="Agent"/>
@@ -35,10 +35,10 @@
                     <g:SimplePanel styleName="dock-max">
                         <dd:DropDownBox ui:field="modelRef"/>
                     </g:SimplePanel>
-                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+                    <spinner:SpinnerSmall ui:field="spinner"/>
                     <p:Toolbar name="Message" addStyleNames="toolbar--control">
                         <p:ToolbarButton ui:field="run" svg="PLAY" title="Send" enabled="false"
-                                         addStyleNames="play"/>
+                                         addStyleNames="toolbar-button--play"/>
                     </p:Toolbar>
                 </g:FlowPanel>
             </g:FlowPanel>

@@ -6,11 +6,11 @@
              xmlns:split="urn:import:stroom.widget.layout.client">
     <split:SplitPane thin="true" sizes="800px, *"
                      names="Editor, Preview" addStyleNames="max">
-        <g:SimplePanel styleName="max dashboard-panel">
+        <g:SimplePanel styleName="max">
             <ed:CodeEditor ui:field="editor"/>
         </g:SimplePanel>
-        <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
-            <g:SimplePanel styleName="max dashboard-panel">
+        <g:FlowPanel styleName="max dock-container-vertical">
+            <g:SimplePanel styleName="max">
                 <if:IFrame ui:field="preview" accessibleName="Preview"/>
             </g:SimplePanel>
         </g:FlowPanel>

@@ -287,12 +287,12 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.click(play.querySelector(OPENER));
                     // Stroom's popup is on the page's body, not in the canvas
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager-panel__bar"))
                             .toBeVisible());
                     play.expect(play.screen().querySelector(".selection-list__filter .quick-filter__input"))
                             .not().toBeNull();
                     // The pager is Stroom's PagerPanel, so it reads "N to M of T"
-                    play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))
+                    play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager-panel__bar *"))
                             .toBeInTheDocument();
                 })
                 // The default: a short list shows no pager
@@ -301,7 +301,7 @@ public final class SelectionBoxStories {
                     play.click(play.querySelector(OPENER));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager container rather than omitting it
-                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager-panel__bar")).not().toBeVisible();
                 })
                 // The popup's markup is GWT's (SelectionPopup > SimplePopupLayout > SelectionList)
                 .story("PopupUsesGwtMarkup", context -> namedBox(context, List.of("One", "Two")))
@@ -330,8 +330,8 @@ public final class SelectionBoxStories {
         play.expect(inList.querySelector(":scope > .selection-list__path")).not().toBeNull();
         play.expect(inList.querySelector(":scope > .selection-list__options")).not().toBeNull();
         // PagerPanel: the pager container above the list container
-        play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
-        play.expect(popup.querySelector(".list-container")).not().toBeNull();
+        play.expect(popup.querySelector(".selection-list__options .pager-panel__bar")).not().toBeNull();
+        play.expect(popup.querySelector(".pager-panel__list")).not().toBeNull();
         // The rows are the data grid's, as a list's: a listbox of options, each holding its cell
         play.expect(popup.querySelector(".data-grid.data-grid--list [role='listbox']")).not().toBeNull();
         final Query row = popup.querySelector("[role='option'].data-grid__row");

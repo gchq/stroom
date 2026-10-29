@@ -10,15 +10,15 @@
     <g:SimplePanel addStyleNames="max">
         <split:SplitPane vertical="true" thin="true" sizes="50%, *"
                          names="Processors, Settings" addStyleNames="max">
-            <g:SimplePanel addStyleNames="max dashboard-panel">
+            <g:SimplePanel addStyleNames="max">
                 <p:ProcessorList ui:field="processorList"/>
             </g:SimplePanel>
             <split:SplitPane thin="true" sizes="600px, *"
                              names="Info, Details" addStyleNames="max">
-                <split:ScrollPane addStyleNames="max dashboard-panel">
+                <split:ScrollPane addStyleNames="max">
                     <tx:Html ui:field="info"/>
                 </split:ScrollPane>
-                <split:ScrollPane addStyleNames="max dashboard-panel">
+                <split:ScrollPane addStyleNames="max">
                     <q:ExpressionTree ui:field="expressionTree"/>
                 </split:ScrollPane>
             </split:SplitPane>

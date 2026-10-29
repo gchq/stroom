@@ -273,12 +273,12 @@ public final class ProcessorTaskSummaryStories {
 
     // The summary grid's pane (the upper pane of the tab)
     private static Play summary(final Play play) {
-        return play.within(play.querySelectorAll(".dashboard-panel").nth(0));
+        return play.within(play.querySelectorAll(".split-pane__pane").nth(0));
     }
 
     // The task list's pane (the lower pane of the tab)
     private static Play tasks(final Play play) {
-        return play.within(play.querySelectorAll(".dashboard-panel").nth(1));
+        return play.within(play.querySelectorAll(".split-pane__pane").nth(1));
     }
 
     // Checks the summary row at index shows the values given, in its cells after the Info icon's

@@ -8,7 +8,7 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <split:SplitPane vertical="true" sizes="*, 120px"
                      names="Favourites, Selected query" addStyleNames="max default-min-sizes">
-        <g:FlowPanel styleName="dock-container-vertical max stroom-control">
+        <g:FlowPanel styleName="dock-container-vertical max control-box">
             <b:Toolbar name="Favourite query actions" addStyleNames="dock-min">
                 <b:ToolbarButton ui:field="createButton" svg="ADD" title="Create Favourite From Current Query"/>
                 <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Change Favourite Name" enabled="false"/>
@@ -19,7 +19,7 @@
                              accessibleName="Favourite queries"/>
             </g:SimplePanel>
         </g:FlowPanel>
-        <g:ScrollPanel styleName="max stroom-control">
+        <g:ScrollPanel styleName="max control-box">
             <q:ExpressionTree ui:field="expressionTree"/>
         </g:ScrollPanel>
     </split:SplitPane>
