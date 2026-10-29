@@ -33,7 +33,7 @@
             </form:FormGroup>
             <form:FormGroup identity="steppingConditions"
                             label="Stepping Conditions"
-                            addStyleNames="default-min-sizes flex-grow-1"
+                            addStyleNames="default-min-sizes dock-max"
                             helpText="XPath filters applied to the output of the selected element. Stepping stops at the next record where any filter matches. Use the toolbar buttons to add, edit or delete filters.">
                 <st:XPathList ui:field="xPathList" addStyleNames="dock-max stroom-control"/>
             </form:FormGroup>

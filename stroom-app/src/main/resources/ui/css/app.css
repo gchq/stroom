@@ -7,8 +7,7 @@
 @import url("layout.css");
 @import url("font.css");
 
-@import url("bootstrap/bootstrap.min.css");
-@import url("bootstrap/custom-bootstrap.css");
+@import url("allow-focus.css");
 
 /* The page's element defaults */
 @import url("base.css");
@@ -142,6 +141,7 @@
 @import url("button-group.css");
 @import url("key-binding-preferences.css");
 @import url("form-controls.css");
+@import url("table-builder-processing.css");
 @import url("info-table.css");
 @import url("query-help-detail.css");
 @import url("node-ping-bar.css");

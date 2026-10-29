@@ -138,7 +138,7 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    rules to the base sheet, layout helpers and shared patterns to theirs, old component classes to
    their components' sheets with BEM names, and the live GWT widgets' styling onto classes Stroom
    sets (so nothing relies on `gwt-*`).
-5. **Remove Bootstrap**: its few classes in the code replaced by layout helpers, `custom-bootstrap.css`'s
+5. **Remove Bootstrap** (done in wave 31, 29 October 2026; its element rules lead `base.css`): its few classes in the code replaced by layout helpers, `custom-bootstrap.css`'s
    rules moved to their components, the element defaults the app relies on written into the base
    sheet (found by diffing every screen with and without it), then `bootstrap.min.css` gone. The
    riskiest step, so on its own, with a full screenshot review.

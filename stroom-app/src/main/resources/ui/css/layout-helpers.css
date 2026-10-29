@@ -77,8 +77,9 @@
     align-items: center;
 }
 
+/* !important, as Bootstrap's overflow-hidden was, which outranked e.g. a form's overflow: auto */
 .overflow-hidden {
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
 /* A box that clips (e.g. a form, which scrolls) has room inside for the focus ring round a control

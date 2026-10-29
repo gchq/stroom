@@ -5,7 +5,7 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="scriptSettingsDependencies"
                         label="Dependencies"
-                        addStyleNames="default-min-sizes flex-grow-1"
+                        addStyleNames="default-min-sizes dock-max"
                         helpText="Other scripts that this script needs. They are loaded before this script, in the order listed.">
             <g:SimplePanel ui:field="dependencies" styleName="dock-max stroom-control"/>
         </form:FormGroup>

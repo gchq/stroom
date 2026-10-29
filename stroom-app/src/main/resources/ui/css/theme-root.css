@@ -330,6 +330,12 @@
     --feedback-rgb: var(--bootstrap-error-rgb);
 
     --primary: var(--blue-500);
+    /* A status's colour: a meter's level (the node ping bar, the percent bar cell) and the advanced
+       quick filter's warning. Bootstrap's primary, warning and danger, which they took before
+       Bootstrap went (Bootstrap's --primary outranked this sheet's, being loaded later) */
+    --status__color--ok: #007bff;
+    --status__color--warning: #ffc107;
+    --status__color--danger: #dc3545;
     --valid: var(--bootstrap-success);
     --invalid: var(--bootstrap-error);
     /* 4.5:1 on dialogs, including a translucent one over the sign-in page */

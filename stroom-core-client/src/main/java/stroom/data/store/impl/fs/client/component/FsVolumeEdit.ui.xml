@@ -80,7 +80,7 @@
 
         <form:FormGroup identity="fsVolumeConfig"
                         label="S3 Configuration"
-                        addStyleNames="default-min-sizes flex-grow-1"
+                        addStyleNames="default-min-sizes dock-max"
                         helpText="The S3 client settings for the volume as a JSON object, such as the bucket, region and credentials. Required for S3 volumes and must be empty for Standard volumes."
                         screenReaderText="JSON object. Required for S3 volumes only.">
             <g:ResizeLayoutPanel addStyleNames="dock-max form-control-border">

@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-/* Bootstrap's form-control class, as Stroom styles it, and the shared patterns of a form: a box
-   holding a control framed as one (form-control-border), filled as one (form-control-background),
-   and a form's heading (form-heading). */
-
-/* Its placeholder in the muted text colour, which is 4.5:1 on inputs */
-.form-control::placeholder {
-  color: var(--text-color--muted);
-  opacity: 1;
-}
+/* The shared patterns of a form: a box holding a control framed as one (form-control-border),
+   filled as one (form-control-background), and a form's heading (form-heading). */
 
 .form-control-border {
     border: solid 1px var(--control__border-color);
@@ -34,20 +27,6 @@
    filled as an input is, in either theme, so it stands apart from the dialog around it */
 .form-control-background {
   background-color: var(--control__background-color);
-}
-
-.form-control {
-  background-color: var(--control__background-color);
-  border-color: var(--control__border-color);
-  color: var(--control__text-color);
-  border-radius: .25rem;
-}
-
-.form-control:disabled,
-.form-control[readonly] {
-  background-color: var(--control__background-color--disabled);
-  border-color: var(--control__border-color--disabled);
-  color: var(--control__text-color--disabled);
 }
 
 .form-heading {

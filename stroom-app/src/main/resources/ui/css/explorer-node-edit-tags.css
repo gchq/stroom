@@ -16,6 +16,20 @@
 
 /* Edit Tags: a field tags are typed in above the known tags and the document's, with buttons that
    move tags between them */
+/* The field's row, and the lists' row with the move buttons between them (each a form, which is
+   a column) */
+.explorer-node-edit-tags__input-container,
+.explorer-node-edit-tags__input-panel,
+.explorer-node-edit-tags__lists {
+    flex-direction: row;
+}
+
+/* The buttons that move tags between the lists, one above the other, centred */
+.explorer-node-edit-tags__move {
+    flex-direction: column;
+    justify-content: center;
+}
+
 .explorer-node-edit-tags__all-tags,
 .explorer-node-edit-tags__node-tags {
     flex-basis: 200px;

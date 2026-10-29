@@ -20,7 +20,7 @@
 .advanced-quick-filter__message {
     padding: var(--control__padding--vertical) var(--control__padding--horizontal);
     margin-bottom: var(--control__padding--vertical);
-    color: var(--warning);
+    color: var(--status__color--warning);
     white-space: pre-wrap;
 }
 

@@ -17,6 +17,7 @@
 /* Remove Tags: the list's row takes the height left in the dialog, not the height of every tag, so
    that a long list scrolls within its border */
 .explorer-node-remove-tags__lists {
+    flex-direction: row;
     flex-basis: 0;
     min-height: 0;
 }

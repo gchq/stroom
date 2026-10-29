@@ -41,7 +41,7 @@
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info"
                         helpText="Shows the table builder's progress, such as the last run time, streams and events processed and any message. Select Refresh to update it.">
             <g:FlowPanel styleName="form">
-                <tx:Html ui:field="info" styleName="default-min-sizes form-control-border overflow-auto"/>
+                <tx:Html ui:field="info" styleName="default-min-sizes form-control-border table-builder-processing__info"/>
                 <b:Button ui:field="refresh" text="Refresh" icon="REFRESH"/>
             </g:FlowPanel>
         </form:FormGroup>

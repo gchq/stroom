@@ -124,7 +124,7 @@ final class PopupHarnesses {
         settingBlock.add(new Label("Setting: current"));
         // Shown again on each click, so owned by the story's popups until it renders again
         final StoryContent editor = popups.own(StoryContent.html(popups.getEventBus(),
-                "<div class=\"popover-body\">Editor body</div>"));
+                "<div class=\"harness-editor-body\">Editor body</div>"));
         settingBlock.addClickHandler(event -> {
             final Element element = settingBlock.getElement();
             final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,

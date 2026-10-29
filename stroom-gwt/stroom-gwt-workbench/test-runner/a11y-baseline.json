@@ -1,10 +1,4 @@
 {
-  "app-main-appshell--main-menu": [
-    "target-size"
-  ],
-  "app-main-appshell--main-menu-no-empty-group": [
-    "target-size"
-  ],
   "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
     "aria-hidden-focus"
   ]

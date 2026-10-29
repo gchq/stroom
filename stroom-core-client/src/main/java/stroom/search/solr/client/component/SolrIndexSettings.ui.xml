@@ -51,7 +51,7 @@
         <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
         <form:FormGroup identity="solrIndexSettingsDataRetention"
                         label="Data Retention Expression (matching data will be deleted)"
-                        addStyleNames="default-min-sizes flex-grow-1"
+                        addStyleNames="default-min-sizes dock-max"
                         helpText="Documents in this index that match this expression are deleted by the 'Solr Index Retention' job. If the expression has no terms, nothing is deleted.">
             <g:SimplePanel ui:field="retentionExpressionPanel"
                            styleName="dock-max"/>

@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:sl="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="explorer-node-edit-tags max form flex-column">
+    <g:FlowPanel styleName="explorer-node-edit-tags max form">
 
         <form:FormGroup identity="editNodeTagsAddTags"
                         label="Add/Filter Tag(s)"
@@ -20,10 +20,10 @@
                 <p><strong>Note</strong>: All users have visibility of all tags even if they do not have
                     visibility of the document the tag is used on.</p>
             </form:HelpHTML>
-            <g:FlowPanel styleName="explorer-node-edit-tags__input-container flex-row dock-min form">
-                <g:FlowPanel styleName="explorer-node-edit-tags__input-panel flex-row dock-max form">
+            <g:FlowPanel styleName="explorer-node-edit-tags__input-container dock-min form">
+                <g:FlowPanel styleName="explorer-node-edit-tags__input-panel dock-max form">
                     <form:TextBox ui:field="textBox"
-                                  addStyleNames="form-control lower-case-input dock-max"
+                                  addStyleNames="lower-case-input dock-max"
                                   title="Enter tags manually or filter 'All Known Tags'"/>
                     <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min">
                         <!-- Hidden while nothing is entered, never disabled -->
@@ -38,7 +38,7 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <g:FlowPanel styleName="explorer-node-edit-tags__lists form dock-max flex-row">
+        <g:FlowPanel styleName="explorer-node-edit-tags__lists form dock-max">
             <form:FormGroup identity="editNodeTagsAllTags"
                             ui:field="allTagsFormGroup"
                             addStyleNames="explorer-node-edit-tags__all-tags dock-max max"
@@ -54,7 +54,7 @@
             </form:FormGroup>
 
             <b:Toolbar name="Move tags"
-                       addStyleNames="form dock-min flex-column dock-min justify-content-center">
+                       addStyleNames="form dock-min explorer-node-edit-tags__move">
                 <b:ToolbarButton ui:field="addFromAllTagsButton" svg="ARROW_RIGHT"
                                  title="Add Selected Tags from All Known Tags" enabled="false"/>
                 <b:ToolbarButton ui:field="removeButton" svg="ARROW_LEFT" title="Remove Selected Tags"

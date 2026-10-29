@@ -1233,6 +1233,16 @@ after wave 29.
 > Ace's classes and GWT's `popupContent` aren't. `ElementUtil` matches whole class names, as a BEM
 > block's name starts its elements'. See `wave-30.md`.
 
+## 31. CSS step 5: Bootstrap removed
+
+Record: [`component-migration/wave-31.md`](component-migration/wave-31.md). Added 29 October 2026,
+after wave 30.
+
+> **Done, 29 October 2026**: Bootstrap's stylesheets are gone. Its element rules lead `base.css`
+> (with its MIT notice), the utilities the code used are the components' own rules or layout
+> helpers, `custom-bootstrap.css` is dissolved, and its colour variables are the theme's status
+> colours. Only Edit Tags' field changed look (a standard text field now). See `wave-31.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

@@ -113,8 +113,8 @@ public final class PopupContractStories {
                 .opener(".setting-block")
                 // The block and the label inside it
                 .partners(".setting-block", ".setting-block .text-label")
-                .panel(".popup--floating:has(.popover-body)")
-                .insideTarget(".popover-body"));
+                .panel(".popup--floating:has(.harness-editor-body)")
+                .insideTarget(".harness-editor-body"));
         cases.add(PopupCase.of("SelectionBox", PopupHarnesses::selectionBox)
                 .opener(".icon-box__icon")
                 // Both of GWT's partners (BaseSelectionBox: the text box and the icon box), each

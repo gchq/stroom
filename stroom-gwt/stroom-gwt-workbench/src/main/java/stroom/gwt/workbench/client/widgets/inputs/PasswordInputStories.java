@@ -78,12 +78,11 @@ public final class PasswordInputStories {
                 // With a badge beside the button (the change password screen's length badge)
                 .story("WithOverlayPrefix", context -> {
                     final PasswordBox password = passwordBox(context, "hunter2");
-                    // ChangePassword's length badge, a Bootstrap pill
-                    // ("badge badge-pill badge-danger") showing up to "9+" and hidden when empty.
-                    // The badge's colour depends on the password policy in Stroom, which isn't
-                    // part of this widget, so it stays badge-danger.
+                    // ChangePassword's length badge, a pill (password-length) showing up to "9+"
+                    // and hidden when empty. Its colour depends on the password policy in Stroom,
+                    // which isn't part of this widget, so it stays --short.
                     final SimplePanel badge = new SimplePanel();
-                    badge.setStyleName("badge badge-pill badge-danger");
+                    badge.setStyleName("password-length password-length--short");
                     updateBadge(badge, password.getValue());
                     password.addValueChangeHandler(event -> updateBadge(badge, password.getValue()));
                     password.setBadge(badge);

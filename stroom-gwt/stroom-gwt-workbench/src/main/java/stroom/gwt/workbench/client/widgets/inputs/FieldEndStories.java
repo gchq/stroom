@@ -97,7 +97,7 @@ public final class FieldEndStories {
         badged.setValue(LONG);
         badged.setShown(true);
         final SimplePanel badge = new SimplePanel();
-        badge.setStyleName("badge badge-pill badge-danger");
+        badge.setStyleName("password-length password-length--short");
         badge.getElement().setInnerText("9+");
         badged.setBadge(badge);
         panel.add(named(badged, "Password with a badge", "password-box--with-badge"));

@@ -16,13 +16,14 @@
 
 /*
    A form label (stroom.widget.form.client.FormLabel), as a form group and a tick box use, named BEM
-   style (block, block__element, block--modifier). Bootstrap also styles .form-label, so this is
-   imported after it.
+   style (block, block__element, block--modifier).
 */
 
 
 /* A form label (FormLabel), as a form group and a tick box use */
 .form-label {
+    margin-bottom: .25rem;
+    font-weight: 600;
     color: var(--form-group__label-color);
 }
 

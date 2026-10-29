@@ -35,15 +35,15 @@
 }
 
 .percent-bar-cell__bar.percent-bar-cell__bar--healthy {
-     background-color: var(--primary);
+     background-color: var(--status__color--ok);
 }
 
 .percent-bar-cell__bar.percent-bar-cell__bar--warning {
-     background-color: var(--warning);
+     background-color: var(--status__color--warning);
 }
 
 .percent-bar-cell__bar.percent-bar-cell__bar--danger {
-     background-color: var(--danger);
+     background-color: var(--status__color--danger);
 }
 
 .data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--healthy,

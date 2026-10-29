@@ -3,7 +3,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:form="urn:import:stroom.widget.form.client">
 
-  <g:FlowPanel styleName="max form flex-column">
+  <g:FlowPanel styleName="max form">
     <form:FormGroup ui:field="subjectIdGroup"
                     identity="subjectId"
                     label="Unique User Identity"
