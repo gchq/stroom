@@ -351,7 +351,7 @@ public class ContextAssembler {
             switch modes, so earlier answers may have been given in another mode.""";
 
     public static final String PART_SYSTEM_PROMPT = "System prompt";
-    public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    public static final String PART_TOOL_DEFINITIONS = AiContextUsage.PART_TOOL_DEFINITIONS;
     public static final String PART_SERVER_INSTRUCTIONS = "MCP server instructions";
     public static final String PART_MEMORY = "Memory";
     public static final String PART_EARLIER_TURNS = "Earlier turns (compacted)";
@@ -988,6 +988,13 @@ public class ContextAssembler {
                 NullSafe.string(earlierTurns(history, relevantHistory, compaction))));
 
         final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
+        final int latestTurn = history.stream().mapToInt(AiChatMessage::getTurnId).max().orElse(0);
+        // A question being answered has its calls sent in full; an answered one, as a one-line record of each.
+        final boolean latestAnswered = history.stream()
+                .anyMatch(m -> m.getTurnId() == latestTurn && m.getMessageType() == AiMessageType.AI_RESPONSE);
+        final int turnBeingAnswered = latestAnswered
+                ? 0
+                : latestTurn;
         long conversation = 0;
         long attachments = 0;
         for (final AiChatMessage message : relevantHistory) {
@@ -1000,7 +1007,10 @@ public class ContextAssembler {
                 attachments += size / 4;
             } else if (!compaction.covers(message.getTurnId())) {
                 conversation += tokens(message);
-                if (message.getMessageType() == AiMessageType.USER_MESSAGE) {
+                // The calls of the question being answered are counted in full below, not as the one-line record
+                // an answered question is sent with.
+                if (message.getMessageType() == AiMessageType.USER_MESSAGE
+                    && message.getTurnId() != turnBeingAnswered) {
                     conversation += ESTIMATOR.estimateTokenCountInText(
                             NullSafe.string(toolLog(toolMessagesByTurn.get(message.getTurnId()))));
                 }
@@ -1010,10 +1020,10 @@ public class ContextAssembler {
         parts.put(PART_ATTACHMENTS, attachments);
 
         // The tool calls of the latest turn are sent in full while a run works on it.
-        final int latestTurn = history.stream().mapToInt(AiChatMessage::getTurnId).max().orElse(0);
-        parts.put(PART_TOOL_RESULTS, NullSafe.list(toolMessagesByTurn.get(latestTurn)).stream()
+        final long storedToolResults = NullSafe.list(toolMessagesByTurn.get(turnBeingAnswered)).stream()
                 .mapToLong(ContextAssembler::tokens)
-                .sum());
+                .sum();
+        parts.put(PART_TOOL_RESULTS, storedToolResults);
 
         final long estimate = parts.values().stream().mapToLong(Long::longValue).sum();
         final Optional<Double> correction = usageTracker.getCorrection(chatId);
@@ -1028,17 +1038,28 @@ public class ContextAssembler {
         // steps to fit, so what the model reported for its latest call is the truer figure: that, and what has
         // been added since.
         final Optional<Long> measured = measuredForLatestTurn(chatId, history, toolMessagesByTurn.get(latestTurn));
+        final Map<String, Long> largestTools = usageTracker.getLargestTools(chatId);
         if (measured.isPresent()) {
             final long used = contextWindow > 0
                     ? Math.min(measured.get(), contextWindow)
                     : measured.get();
-            return new AiContextUsage(contextWindow, used, false, parts, compactAtPercent,
-                    usageTracker.getShortenedParts(chatId));
+            final int shortened = usageTracker.getShortenedParts(chatId);
+            // Once the run has shortened its steps, they are shown as it last sent them, with what they take as
+            // stored given separately.
+            final Optional<Long> sent = usageTracker.getSentStepTokens(chatId)
+                    .filter(tokens -> shortened > 0 && tokens < storedToolResults);
+            sent.ifPresent(tokens -> parts.put(PART_TOOL_RESULTS, tokens));
+            return new AiContextUsage(contextWindow, used, false, parts, compactAtPercent, shortened,
+                    sent.isPresent()
+                            ? storedToolResults
+                            : 0L,
+                    largestTools);
         }
         final long used = correction
                 .map(factor -> Math.round(estimate * factor))
                 .orElse(estimate);
-        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts, compactAtPercent, 0);
+        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts, compactAtPercent, 0, 0L,
+                largestTools);
     }
 
     /// @param history          All the chat's messages, in order.

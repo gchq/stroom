@@ -264,10 +264,11 @@ class TestAgentModeTools {
         final Set<String> offered = requests.getFirst().toolSpecifications().stream()
                 .map(ToolSpecification::name)
                 .collect(Collectors.toCollection(TreeSet::new));
-        final Set<String> expected = CHANGES_THINGS.entrySet().stream()
+        // A tool in a group is offered as the tool that turns its group on.
+        final Set<String> expected = OfferedToolNames.withNoGroupsOn(CHANGES_THINGS.entrySet().stream()
                 .filter(entry -> !mode.isReadOnly() || !entry.getValue())
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toCollection(TreeSet::new));
+                .toList());
         assertThat(offered).isEqualTo(expected);
     }
 }

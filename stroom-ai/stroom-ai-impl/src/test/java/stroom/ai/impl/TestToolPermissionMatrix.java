@@ -166,7 +166,8 @@ class TestToolPermissionMatrix {
             withNothing = offered(world);
         }
 
-        assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(all);
+        // A tool in a group is offered as the tool that turns its group on.
+        assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(OfferedToolNames.withNoGroupsOn(all));
         assertThat(withNothing).containsExactlyElementsOf(withEverything);
     }
 

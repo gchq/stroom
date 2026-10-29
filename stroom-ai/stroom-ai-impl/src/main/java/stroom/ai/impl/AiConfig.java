@@ -389,9 +389,11 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return allowApproveEverything;
     }
 
-    @JsonPropertyDescription("When the MCP tools offered to a model number more than this, they are offered as " +
-                             "groups instead, each with a tool that turns the group on, so the model's context is " +
-                             "not filled with tool definitions it does not need. 0 offers every tool at once.")
+    @JsonPropertyDescription("When the built-in tools, or the MCP tools, offered to a model number more than " +
+                             "this, those only some questions need are offered as groups instead, each with a tool " +
+                             "that turns the group on, so the model's context is not filled with tool definitions " +
+                             "it does not need. A group stays on while the chat's latest questions use it. 0 " +
+                             "offers every tool at once.")
     @JsonProperty("toolGroupThreshold")
     public int getToolGroupThreshold() {
         return toolGroupThreshold;
