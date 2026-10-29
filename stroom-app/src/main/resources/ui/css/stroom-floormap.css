@@ -229,7 +229,7 @@
 }
 
 /* The bar is a role="slider" with tabindex="0", so it takes a tab stop and must
-   show one. stroom.css sets `outline: none` on every div app-wide, so the UA
+   show one. base.css sets `outline: none` on every div app-wide, so the UA
    default focus ring is gone and this has to be drawn explicitly; a class
    selector out-specifies that element-list rule without needing !important.
    Matches the .toolbar-button:focus-visible treatment in toolbar-button.css so
@@ -491,7 +491,7 @@
 /* -----------------------------------------------------------------------
    Canvas keyboard focus
 
-   The map's FocusPanel is a div, so stroom.css's app-wide `outline: none`
+   The map's FocusPanel is a div, so base.css's app-wide `outline: none`
    strips its focus ring. Without this, tabbing into the map — where arrow
    keys pan, +/- zoom and Tab walks the entities — gives no indication that
    the map is now listening, which is the difference between "the keys do
@@ -934,7 +934,7 @@
     opacity: 1;
 }
 
-/* stroom.css removes the outline from every element, so the grip needs its own
+/* base.css removes the outline from every element, so the grip needs its own
    focus ring — and it needs it more than most, because "which layer will the
    arrow keys move?" is answerable only from where focus is. */
 .floormap-layer-grip:focus-visible {
@@ -966,7 +966,7 @@
     cursor: pointer;
 }
 
-/* stroom.css kills the outline on every element, so the swatch needs its own
+/* base.css kills the outline on every element, so the swatch needs its own
    focus ring — same treatment as .toolbar-button in toolbar-button.css. */
 .floormap-layer-swatch:focus-visible {
     box-shadow: var(--focus-shadow);

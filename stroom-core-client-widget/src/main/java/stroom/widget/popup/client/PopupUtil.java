@@ -31,6 +31,8 @@ public class PopupUtil {
     private static final String ALERT_DIALOG_ROLE = "alertdialog";
     private static final String ARIA_DESCRIBED_BY = "aria-describedby";
     private static final String ARIA_MODAL = "aria-modal";
+    // The glass behind a modal popup
+    private static final String GLASS_CLASS = "popup-glass";
     // The least room left between a dialog and each edge of the window
     private static final int WINDOW_MARGIN = 10;
 
@@ -115,6 +117,8 @@ public class PopupUtil {
 
         // Way to set popups to be modal using glass.
         if (isModal) {
+            // Stroom's glass (popup.css), not GWT's gwt-PopupPanelGlass
+            popupPanel.setGlassStyleName(GLASS_CLASS);
             popupPanel.setGlassEnabled(isModal);
         }
         // A dialog shown modal tells screen readers that the rest of the page can't be used

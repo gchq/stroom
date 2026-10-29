@@ -48,3 +48,24 @@
     opacity: 1;
 }
 
+/* The glass behind a modal popup (PopupUtil), and the glass over the page while a popup is
+   dragged or resized (AbstractPopupPanel), so the drag keeps its cursor (were GWT's
+   gwt-PopupPanelGlass and stroom.css's popupPanel-dragGlass) */
+.popup-glass {
+  background-color: #000;
+  opacity: 0.4;
+  z-index: 100;
+}
+
+.popup-drag-glass {
+    position: absolute;
+    left: 0;
+    top: 0;
+	background-color: transparent;
+	visibility: hidden;
+	z-index: 5;
+}
+
+.popup-drag-glass--visible {
+	visibility: visible;
+}

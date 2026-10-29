@@ -59,7 +59,7 @@
     width: 30px;
     height: 30px;
     padding: 0;
-    /* Centred both ways, so a day's fill and focus ring are round its number (stroom.css puts a
+    /* Centred both ways, so a day's fill and focus ring are round its number (base.css puts a
        table cell's content at its top) */
     text-align: center;
     vertical-align: middle;

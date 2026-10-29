@@ -1,0 +1,325 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The page's element defaults (no classes): the body's font and colours, headings, tables, form
+   controls with no block of their own yet, links, and the underline on links in running text. Was
+   GWT's standard theme (standard.css), Stroom's changes to it (standard-mod.css) and stroom.css's
+   element rules, in that order, so the later still win; GWT's rules for its own widgets, which
+   Stroom no longer shows, went with them. */
+
+body,
+table td,
+select {
+  font-family: var(--regular-font-family);
+  font-size: var(--font-size-11);
+}
+
+pre {
+  font-family: var(--monospace-font-family);
+  font-size: var(--font-size-11);
+}
+
+body {
+  color: black;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: #fff;
+  direction: ltr;
+}
+
+a,
+a:visited,
+a:hover {
+  color: var(--link__text-color);
+}
+
+/* Links in running text are underlined, so they are told from the text round them by more than
+   their colour (WCAG 1.4.1). Links that are part of the UI (toolbars, tabs, grids) are left as
+   they are. */
+.markdown a,
+.info-page a,
+.help-popup__content a,
+.welcome-tab__body a,
+.authentication-error__message-container a {
+  text-decoration: underline;
+}
+
+body,
+table td,
+select {
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
+	font-weight: 400;
+
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+textarea {
+	resize: none;
+	height: 80px;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: transparent;
+	color: var(--text-color);
+	direction: ltr;
+
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+html,
+body,
+div,
+span,
+table,
+tbody,
+tr,
+th,
+td,
+b,
+p,
+h1,
+h2,
+h3,
+h4 {
+	margin: 0px;
+	padding: 0px;
+	border: none;
+}
+
+html,
+body,
+div,
+span,
+table,
+tbody,
+tr,
+th,
+td,
+table th,
+table td,
+b,
+p,
+h1,
+h2,
+h3,
+h4,
+select,
+input,
+textarea,
+button,
+form {
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
+	font-weight: 400;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+	background-size: 100% 100%;
+	outline: none;
+}
+
+hr {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    border: 0;
+    border-top: 1px solid var(--text-color);
+}
+
+code {
+    color: var(--code-color);
+}
+
+select,
+input,
+textarea {
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+}
+
+table {
+	border-collapse: separate;
+	border-spacing: 0px;
+}
+
+/* A text area that isn't a text field (text-field.css styles those) */
+textarea:where(:not(.text-field)) {
+	display: block;
+	margin: 0px;
+	_margin-top: -1px;
+	border: solid 1px var(--control__border-color);
+	resize: none;
+	height: 80px;
+	/* To ensure we get a pointer for the scrollbar */
+	cursor: auto;
+}
+
+img {
+	vertical-align: top;
+}
+
+h1 {
+	font-size: var(--font-size-22);
+	font-weight: 500;
+	margin-bottom: 11px;
+}
+
+h2 {
+	font-size: var(--font-size-16);
+	font-weight: 500;
+}
+
+h3 {
+	font-size: var(--font-size-13);
+	font-weight: 500;
+}
+
+b {
+	font-weight: 500;
+}
+
+p {
+	margin-bottom: 11px;
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+}
+
+td {
+	vertical-align: top;
+	font-size: 1px;
+}
+
+select,
+textarea:where(:not(.text-field)),
+input:where(:not(.text-field)),
+input[type="text"]:where(:not(.text-field)),
+input[type="checkbox"],
+input[type="file"] {
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
+}
+
+/* Fix auto fill colours */
+input:where(:not(.text-field)):-webkit-autofill,
+input:where(:not(.text-field)):-webkit-autofill:hover,
+input:where(:not(.text-field)):-webkit-autofill:focus,
+input:where(:not(.text-field)):-webkit-autofill:active {
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
+	font-weight: 400;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+	background-size: 100% 100%;
+	outline: none;
+	background-color: var(--control__background-color) !important;
+	color: var(--control__text-color) !important;
+	-webkit-box-shadow: 0 0 0px 30px var(--control__background-color) inset;
+	-webkit-text-fill-color: var(--control__text-color) !important;
+	transition: background-color 5000s ease-in-out 0s;
+	transition: color 5000s ease-in-out 0s;
+}
+
+select:disabled,
+textarea:where(:not(.text-field)):disabled,
+input:where(:not(.text-field)):disabled,
+input[type="text"]:where(:not(.text-field)):disabled,
+input[type="checkbox"]:disabled,
+input[type="file"]:disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+select option {
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	padding: 5px;
+}
+
+select option:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+select option:checked {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+select option:disabled {
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+/*
+The one read-only look for every control: the normal field (its border and background) with its
+value greyed. Disabled controls use the --control__*--disabled look above instead: a filled field
+with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
+looking editable.)
+*/
+input:where(:not(.text-field))[readonly],
+textarea:where(:not(.text-field))[readonly] {
+  color: var(--control__text-color--readonly);
+}
+
+/* Placeholders in the muted text colour, which is 4.5:1 on inputs (the browser's and Bootstrap's
+   greys aren't); Firefox also fades them, which opacity: 1 stops */
+:where(:not(.text-field))::placeholder {
+  color: var(--text-color--muted);
+  opacity: 1;
+}
+
+/* Keyboard focus on a field that isn't a text field (text-field.css has those) */
+select:focus-visible,
+input:where(:not(.text-field)):focus-visible,
+textarea:where(:not(.text-field)):focus-visible {
+  border: thin solid var(--focus-border) !important;
+  box-shadow: var(--focus-shadow);
+}
+
+select[aria-invalid="true"]:focus-visible,
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
+  box-shadow: var(--focus-shadow--invalid);
+}
+
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+select[aria-invalid="true"],
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
+  border: thin solid var(--focus-border--invalid) !important;
+}

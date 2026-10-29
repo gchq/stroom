@@ -1,5 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A pane of HTML (info-page, stroom.css), scrolling when it is bigger than the pane -->
+<!-- A pane of HTML (info-page.css), scrolling when it is bigger than the pane -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:ScrollPanel styleName="max info-page">

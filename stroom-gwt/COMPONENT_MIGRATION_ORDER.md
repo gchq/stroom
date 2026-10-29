@@ -1213,6 +1213,16 @@ after wave 27.
 > and the dashboard's sheets split into a sheet per block. What isn't BEM is now only in the shared
 > sheets, for step 4. See `wave-28.md`.
 
+## 29. CSS step 4, part 1: standard.css, standard-mod.css and stroom.css dissolved
+
+Record: [`component-migration/wave-29.md`](component-migration/wave-29.md). Added 29 October 2026,
+after wave 28.
+
+> **Done, 29 October 2026**: a class census of every story (the test runner's `--class-census`)
+> showed what the three sheets could still style; 146 rules for GWT's widgets and old page classes
+> went, the element rules are `base.css`, the layout helpers `layout-helpers.css`, and the rest are
+> in their components' sheets. See `wave-29.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

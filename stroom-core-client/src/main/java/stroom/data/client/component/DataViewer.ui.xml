@@ -19,7 +19,7 @@
                         <g:SimplePanel ui:field="navigatorContainer"
                                        styleName="data-viewer__navigator-container"/>
                         <!-- A link drawn as text: a button that the keyboard can reach and press -->
-                        <div ui:field="sourceLink" class="data-viewer__source-link-label clickableLabel"
+                        <div ui:field="sourceLink" class="data-viewer__source-link-label"
                              role="button" tabindex="0">View Source</div>
                     </g:HTMLPanel>
                 </g:FlowPanel>

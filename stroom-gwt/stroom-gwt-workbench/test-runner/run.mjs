@@ -32,6 +32,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { CLASS_CENSUS_SCRIPT, addToCensus, collectClasses, writeCensus } from './lib/class-census.mjs';
 import { SharedBrowser } from './lib/browsers.mjs';
 import { TIMED_OUT, withDeadline } from './lib/deadline.mjs';
 import { selectStories } from './lib/filter.mjs';
@@ -100,6 +101,9 @@ const SEEDED_RANDOM_SCRIPT = `(() => {
   };
 })();`;
 
+// The class census (--class-census): class name -> the ids of the stories that set it
+const CLASS_CENSUS = new Map();
+
 // The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
 let cancelledBy = null;
 
@@ -148,6 +152,9 @@ Options:
                            a check for a story that doesn't exist is an error
   --update-a11y-baseline   Rewrite a11y-baseline.json with the rules the stories run break now,
                            rather than failing them (stories not run keep their entries)
+  --class-census <file>    Write every class name the stories put on an element (at any time while
+                           they run, in any frame) to the file as JSON, with the stories that set
+                           each: which stylesheet rules can still match something
   --headed                 Show the browser
   --list                   List the stories that would run, then exit
   -v, --verbose            Show every story, not just failed ones
@@ -205,6 +212,7 @@ function parseOptions() {
       'skip-a11y': { type: 'boolean', default: false },
       'skip-real-input': { type: 'boolean', default: false },
       'update-a11y-baseline': { type: 'boolean', default: false },
+      'class-census': { type: 'string' },
       headed: { type: 'boolean', default: false },
       list: { type: 'boolean', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
@@ -242,6 +250,7 @@ function parseOptions() {
     a11y: !values['skip-a11y'],
     realInput: !values['skip-real-input'],
     updateA11yBaseline: values['update-a11y-baseline'],
+    classCensus: values['class-census'] ? path.resolve(values['class-census']) : null,
     headed: values.headed,
     list: values.list,
     verbose: values.verbose,
@@ -359,6 +368,9 @@ async function runStoryOnce(browser, story, options, attempt) {
       forcedColors: options.forcedColours ? 'active' : 'none',
     });
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
+    if (options.classCensus) {
+      await context.addInitScript(CLASS_CENSUS_SCRIPT);
+    }
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);
       await context.addInitScript(SEEDED_RANDOM_SCRIPT);
@@ -395,6 +407,10 @@ async function runStoryOnce(browser, story, options, attempt) {
       consoleErrors: result.consoleErrors,
       failOnConsole: options.failOnConsole,
     }));
+    // Before the checks below, which don't add to what the story shows
+    if (options.classCensus && !unresponsive && !seen.crashed) {
+      addToCensus(CLASS_CENSUS, story.id, await collectClasses(page));
+    }
     if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
         && !unresponsive && !seen.crashed) {
       await checkRealInput(page, REAL_INPUT_CHECKS[story.id], options, result);
@@ -937,6 +953,10 @@ async function main() {
     }
     await reportA11y(options, results, runError);
     await writeReports(options, results, durationMs, runError, browsers.relaunches);
+    if (options.classCensus) {
+      await writeCensus(options.classCensus, CLASS_CENSUS);
+      console.log(`Class census: ${CLASS_CENSUS.size} class names, in ${options.classCensus}`);
+    }
     if (runError) {
       console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);
       return cancelledBy ? cancelledExitCode(cancelledBy) : EXIT_RUN_FAILED;

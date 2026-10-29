@@ -21,7 +21,7 @@
 
    Its states come from the element itself: :disabled, [readonly], :focus-visible and, for a
    rejected value, [aria-invalid="true"] (FieldValidity, which also explains it in the form group's
-   feedback). This is the only stylesheet for a text field: stroom.css's rules for bare input and
+   feedback). This is the only stylesheet for a text field: base.css's rules for bare input and
    textarea elements (for inputs with no block of their own yet, e.g. hand-built forms) leave text
    fields out. A field keeps this class when its template adds its own (addStyleNames, not
    styleName, which would replace it).

@@ -132,7 +132,9 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    map, conditional formatting, AI messages, sign-in and password, data grid's cells), and split
    the sheets that hold several blocks; move styling of one block from another's sheet to a
    modifier. As wave 17 did for the view-named classes.
-4. **Dissolve `components.css`, `stroom.css`, `standard.css` and `standard-mod.css`**: element
+4. **Dissolve `components.css`, `stroom.css`, `standard.css` and `standard-mod.css`** (the last three
+   done in wave 29, 29 October 2026, into `base.css`, `layout-helpers.css` and components' sheets;
+   `components.css` in wave 30): element
    rules to the base sheet, layout helpers and shared patterns to theirs, old component classes to
    their components' sheets with BEM names, and the live GWT widgets' styling onto classes Stroom
    sets (so nothing relies on `gwt-*`).

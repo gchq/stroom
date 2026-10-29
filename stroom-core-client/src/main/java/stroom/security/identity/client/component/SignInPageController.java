@@ -28,7 +28,7 @@ import com.google.web.bindery.event.shared.EventBus;
 public abstract class SignInPageController extends Controller {
 
     // Hides the host page's loading message, not just making it transparent, so screen readers
-    // stop reading "Loading..." (stroom.css)
+    // stop reading "Loading..." (app-page.css)
     private static final String LOADING_HIDDEN = "loading--hidden";
 
     /// @param eventBus The application's event bus.

@@ -36,7 +36,7 @@ const AWAY = { x: 4, y: 4 };
 //   Dialog:185-192      beginDragging:    getDragGlass().show(); dragging = true; …
 //   Dialog:203-218      continueDragging: left = max(0, min(clientWidth - 22, startLeft + dx))
 //   Dialog:232-236      endDragging:      dragging = false; getDragGlass().hide();
-//   AbstractPopupPanel:33  new Glass("popupPanel-dragGlass", "popupPanel-dragGlassVisible")
+//   AbstractPopupPanel:33  new Glass("popup-drag-glass", "popup-drag-glass--visible")
 //
 // `Glass.hide()` removes the element from its parent, so a glass still attached after the release
 // is a leak that would swallow every click on the page underneath.
@@ -60,7 +60,7 @@ export function readDialogBox(page) {
       x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
       at: c && c.width > 0 ? { x: Math.round(c.x + c.width / 2), y: Math.round(c.y + c.height / 2) } : null,
       se: se && se.width > 0 ? { x: Math.round(se.x + se.width / 2), y: Math.round(se.y + se.height / 2) } : null,
-      glass: !!document.querySelector('.popupPanel-dragGlass'),
+      glass: !!document.querySelector('.popup-drag-glass'),
       view: { w: window.innerWidth, h: window.innerHeight },
     };
   }).catch(() => null);

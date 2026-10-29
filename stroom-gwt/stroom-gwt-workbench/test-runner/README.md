@@ -262,6 +262,15 @@ in 284 stories). Both densities are set explicitly, as the workbench's own prefe
 (heights) or a pixel (widths) before they count as changed; `lib/grid-geometry.mjs` measures and
 compares them.
 
+## Class census
+
+`--class-census <file>` (from Gradle, `-PworkbenchTestArgs='--class-census <file>'`) writes every
+class name the stories put on an element to the file as JSON, with how many stories set each and a
+few of them. A script added to every frame (`lib/class-census.mjs`) records each element's classes
+when the page loads, when an element is added and when its class changes, so a popup opened and
+closed again counts. It tells which stylesheet rules can still match something: a class no story
+sets, and that the code doesn't build, can only be styled for a screen no story shows.
+
 ## Leak check
 
 `-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory

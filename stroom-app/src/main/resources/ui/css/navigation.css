@@ -45,3 +45,22 @@
 
 .navigation .navigation__name-filter-panel {
 }
+
+/* The current activity, below the explorer, as a button that changes it (was stroom.css's
+   activityOuter and activityButton) */
+.navigation__activity {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.navigation__activity-button {
+    padding: 10px;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    border: none;
+    border-top: solid 1px var(--navigation__splitter__background-color);
+    background-color: var(--navigation__background-color) !important;
+    color: var(--navigation__text-color);
+    border-radius: 0;
+}

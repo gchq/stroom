@@ -154,7 +154,7 @@ public class DataGridUtil {
     public static <T_ROW> Column<T_ROW, CellIcon> svgStatusColumn(
             final Function<T_ROW, CellIcon> cellValueExtractor) {
         final Column<T_ROW, CellIcon> column = column(cellValueExtractor, () -> new IconCell(false));
-        column.setCellStyleNames("statusIcon");
+        column.setCellStyleNames("status-icon");
         return column;
     }
 

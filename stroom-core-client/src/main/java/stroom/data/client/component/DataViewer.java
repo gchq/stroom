@@ -147,9 +147,9 @@ public class DataViewer extends Component {
         UIObject.setVisible(sourceLink, visible);
         sourceLinkEnabled = enabled;
         if (enabled) {
-            sourceLink.addClassName("enabled");
+            sourceLink.addClassName("data-viewer__source-link-label--enabled");
         } else {
-            sourceLink.removeClassName("enabled");
+            sourceLink.removeClassName("data-viewer__source-link-label--enabled");
         }
         DisabledState.set(sourceLink, !enabled);
     }

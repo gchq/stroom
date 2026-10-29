@@ -113,9 +113,9 @@ public final class ActivityChooserStories {
         final CurrentActivity currentActivity = injector.getCurrentActivity();
         final Button activityButton = new Button();
         activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        activityButton.setStyleName("activityButton dashboard-panel");
+        activityButton.setStyleName("navigation__activity-button dashboard-panel");
         final SimplePanel activityOuter = new SimplePanel(activityButton);
-        activityOuter.setStyleName("activityOuter");
+        activityOuter.setStyleName("navigation__activity");
         activityButton.setOnClick(currentActivity::showActivityChooser);
         harness.addRegistration(harness.getEventBus().addHandler(ActivityChangedEvent.getType(), event ->
                 activityButton.setContent(ActivitySummary.toHtml(event.getActivity()))));

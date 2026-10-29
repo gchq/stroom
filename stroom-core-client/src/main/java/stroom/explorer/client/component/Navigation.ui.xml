@@ -41,8 +41,8 @@
         </layout:ScrollPane>
         <!-- The current activity, when activities are used: pressing it chooses another -->
         <g:SimplePanel styleName="dock-min">
-            <g:SimplePanel ui:field="activityOuter" styleName="activityOuter" visible="false">
-                <b:Button ui:field="activityButton" styleName="activityButton dashboard-panel"/>
+            <g:SimplePanel ui:field="activityOuter" styleName="navigation__activity" visible="false">
+                <b:Button ui:field="activityButton" styleName="navigation__activity-button dashboard-panel"/>
             </g:SimplePanel>
         </g:SimplePanel>
     </g:FlowPanel>

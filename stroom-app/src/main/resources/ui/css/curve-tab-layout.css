@@ -33,3 +33,9 @@
     margin-right: 95px;
     flex-grow: 1;
 }
+
+/* A tab's content (was stroom.css's .stroom-main-content-container) */
+.stroom-main-content-container {
+	height: 100%;
+	padding: 0px;
+}

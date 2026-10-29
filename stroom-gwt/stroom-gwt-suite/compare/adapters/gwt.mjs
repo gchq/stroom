@@ -48,7 +48,7 @@ export const gwt = {
    * changed on a previous run). Throws if the popup appears but no new password was supplied.
    */
   async changePasswordIfPresent(page, { newPass }) {
-    // The change-password OK/Cancel dialog (`.dialog` inside `.gwt-PopupPanelGlass`). Scoping
+    // The change-password OK/Cancel dialog (`.dialog` inside `.popup-glass`). Scoping
     // to it disambiguates the new-password box from the login field of the same class sitting
     // behind the modal glass.
     const popup = page.locator('.dialog').filter({ has: page.locator(CONFIRM_PASSWORD) });

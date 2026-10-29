@@ -35,8 +35,8 @@ import java.util.function.Consumer;
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
     private final Glass dragGlass = new Glass(
-            "popupPanel-dragGlass",
-            "popupPanel-dragGlassVisible");
+            "popup-drag-glass",
+            "popup-drag-glass--visible");
     // While an auto-hide popup shows, the window's blur listener that closes it when the focus goes
     // into a frame
     private JavaScriptObject frameFocusListener;

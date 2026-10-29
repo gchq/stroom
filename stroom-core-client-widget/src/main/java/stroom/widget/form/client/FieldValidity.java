@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Shows whether a form field's value is valid, with `aria-invalid`, which both tells assistive
-/// technology and draws the field's invalid look (`text-field.css`, and `stroom.css` for an input
+/// technology and draws the field's invalid look (`text-field.css`, and `base.css` for an input
 /// with no block of its own), and `aria-describedby` linking the field to the feedback that says
 /// what is wrong.
 public final class FieldValidity {

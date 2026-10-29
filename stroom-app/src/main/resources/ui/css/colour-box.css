@@ -21,7 +21,7 @@
    swatch needs.
 */
 
-/* At an element and a class's weight, to outrank stroom.css's bare input rules */
+/* At an element and a class's weight, to outrank base.css's bare input rules */
 input.colour-box {
     -webkit-appearance: none;
     -moz-appearance: none;

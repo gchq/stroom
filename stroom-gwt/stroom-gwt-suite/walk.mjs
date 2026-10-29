@@ -2252,7 +2252,7 @@ async function probeMouse(node, id) {
       const check = { kind: 'mousedown', gesture: 'drag', ...dragVerdict(ev), evidence: ev };
       affordances.push({ node: id, label: 'drag by the caption', kind: 'mousedown',
         outcome: ev?.got && (ev.got.dx || ev.got.dy) ? 'moved' : 'nothing',
-        detail: 'Dialog:185-236 beginDragging/continueDragging/endDragging + popupPanel-dragGlass',
+        detail: 'Dialog:185-236 beginDragging/continueDragging/endDragging + popup-drag-glass',
         rows: [], blocked: [], clickMs: Date.now() - t, backMs: 0, check });
       if (check.verdict === 'fail') checkFails += 1;
       console.log(`      ⇄ drag "${box.caption}" → ${check.why}  {mousedown ${check.verdict}}`);

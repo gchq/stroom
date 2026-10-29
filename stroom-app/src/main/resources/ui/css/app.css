@@ -10,9 +10,8 @@
 @import url("bootstrap/bootstrap.min.css");
 @import url("bootstrap/custom-bootstrap.css");
 
-/* Standard GWT CSS plus Stroom modifications */
-@import url("standard.css");
-@import url("standard-mod.css");
+/* The page's element defaults */
+@import url("base.css");
 /* Stroom's text widgets, where GWT's rules for them were, so components' own rules win */
 @import url("text-label.css");
 @import url("frame.css");
@@ -20,13 +19,20 @@
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
 @import url("button.css");
-@import url("stroom.css");
+@import url("stroom-control.css");
+@import url("form-control.css");
+@import url("app-page.css");
+@import url("stepping-button.css");
+@import url("status-icon.css");
+@import url("info-page.css");
+@import url("layout-helpers.css");
+@import url("iframe.css");
+@import url("clipboard.css");
 @import url("query-data-pane.css");
-/* Straight after stroom.css, where the text box rules it replaces were, so later rules still win */
+/* Where stroom.css's text box rules it replaces were, so later rules still win */
 @import url("text-field.css");
 @import url("radio-button.css");
 @import url("radio-group.css");
-@import url("stroom-control.css");
 @import url("fab-button.css");
 @import url("toolbar-button.css");
 @import url("toolbar.css");

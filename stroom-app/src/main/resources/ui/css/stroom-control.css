@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-/* .page { */
-/* 	padding: 5px !important; */
-/* } */
+/* A Stroom control's field (stroom-control: selection boxes, date-time boxes, drop downs): its
+   border, colours and padding, greyed when disabled or read only (from stroom.css, where this
+   sheet is now imported, so the text field's rules that come later still win) */
 
-/* .row { */
+.stroom-control {
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
+}
 
-/* } */
+.stroom-control:disabled,
+.stroom-control.disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
 
-/* .label { */
-/* 	float: left; */
-/* 	margin-top: 2px; */
-/* 	vertical-align: top; */
-/* 	white-space: nowrap; */
-/* } */
+.stroom-control.readonly {
+  color: var(--control__text-color--readonly);
+}
 
-/* .stroom .stroom-control-grid { */
-
-/* } */
-
-/* .stroom .stroom-control-grid th,td { */
-/*   vertical-align: top; */
-/*   white-space: nowrap; */
-/*   padding: 2px; */
-/* } */
+/* A read-only or disabled control's icons are greyed with its value */
+.stroom-control.readonly svg,
+.stroom-control.disabled svg {
+  opacity: var(--disabled-opacity);
+}
 
 .stroom .stroom-control-grid {
 	vertical-align: top;
