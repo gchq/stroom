@@ -117,6 +117,10 @@ public class ElasticClientFactory {
         final CredentialsProvider proxyCredentialsProvider =
                 HttpAsyncClientUtil.createProxyCredentialsProvider(proxyConfiguration);
         restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
+            // The Apache client's default retry strategy resends a request (including a non-idempotent bulk
+            // POST) on a 429 or 503 response. Callers such as the indexing filter apply their own retry and
+            // back-off logic, so client retries would only multiply requests and risk duplicate documents.
+            httpClientBuilder.disableAutomaticRetries();
             if (routePlanner != null) {
                 httpClientBuilder.setRoutePlanner(routePlanner);
             }

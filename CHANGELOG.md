@@ -13,6 +13,37 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Dependency : Uplift AWS libs from 2.46.7 to 2.57.3.
+
+* Dependency : Uplift jackson from 3.1.2 to 3.2.4.
+
+* Dependency : Uplift com.fasterxml.jackson:jackson-bom from 2.21.2 to 2.21.8.
+
+* Dependency : Uplift org.apache.zookeeper:zookeeper from 3.9.4 to 3.9.6.
+
+* Dependency : Uplift jetty from 12.1.9 to 12.1.14.
+
+* Bug **#5929** : Revert base docker images back to alpine 3.23 as 3.24 is breaking LMDB use.
+
+* Dependency : Change docker images to force `brotli-libs>=1.2.1-r0`.
+
+* Dependency : Uplift `com.hubspot.jinjava` from 2.8.2 to 2.8.4.
+
+* Dependency : Uplift docker image base from `eclipse-temurin:25.0.3_9-jdk-alpine-3.23` to `eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24`.
+
+* Bug **#5835** : Stop logging an ERROR on every run of the Table Builder analytic job for each rule with an empty or broken query. A WARN is now only logged if such a rule is preventing an existing store from being deleted.
+
+* Bug **#5819** : Replace the Lucene 8.11.4 `lucene-analyzers-common` dependency with `lucene-analysis-common:10.3.2` so that it matches the version of Lucene core.
+
+* Build : Split up java CI build to reduce memory use and to make checkstyle fail fast.
+
+* Dependency : Add missing jackson annotation dependencies.
+
+* Bug : Fix pooled byte buffer resource closure.
+
+* Bug **#5597** : Fix `TypeError: Cannot read properties of null` error when an embedded query with a visualisation returns no rows.
+
+
 ## [v7.14-beta.8-parallel-pathways] - 2026-10-26
 
 * Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.

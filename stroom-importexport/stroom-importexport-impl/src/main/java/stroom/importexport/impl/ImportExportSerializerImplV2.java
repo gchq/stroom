@@ -1164,6 +1164,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 dir,
                 docRefs,
                 typesToIgnore,
+                null,
                 omitAuditFields,
                 ImportExportVersion.V2);
     }
@@ -1191,7 +1192,40 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                final Set<String> typesToIgnore,
                                final boolean omitAuditFields,
                                final ImportExportVersion version) {
-        LOGGER.debug("---- Exporting {} with refs {}", rootNodePath, docRefs);
+        return this.write(rootNodePath,
+                dir,
+                docRefs,
+                typesToIgnore,
+                null,
+                omitAuditFields,
+                version);
+    }
+
+    @Override
+    public ExportSummary write(@Nullable final List<ExplorerNode> rootNodePath,
+                               final Path dir,
+                               @Nullable final Set<DocRef> docRefs,
+                               final Set<String> typesToIgnore,
+                               @Nullable final Set<String> includedTypes,
+                               final boolean omitAuditFields) {
+        return this.write(rootNodePath,
+                dir,
+                docRefs,
+                typesToIgnore,
+                includedTypes,
+                omitAuditFields,
+                ImportExportVersion.V2);
+    }
+
+    @Override
+    public ExportSummary write(@Nullable final List<ExplorerNode> rootNodePath,
+                               final Path dir,
+                               @Nullable final Set<DocRef> docRefs,
+                               final Set<String> typesToIgnore,
+                               @Nullable final Set<String> includedTypes,
+                               final boolean omitAuditFields,
+                               final ImportExportVersion version) {
+        LOGGER.debug("---- Exporting {} with refs {}, includedTypes {}", rootNodePath, docRefs, includedTypes);
 
         if (version != ImportExportVersion.V2) {
             return this.importExportSerializerV1.write(
@@ -1199,6 +1233,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     dir,
                     docRefs,
                     typesToIgnore,
+                    includedTypes,
                     omitAuditFields);
         } else {
             try {
@@ -1212,7 +1247,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 final Set<DocRef> surrogateDocRefs = findSurrogateDocRefs(docRefs);
                 final Deque<ExplorerNode> pathToCurrentNode = new ArrayDeque<>();
                 final ExportInfo exportInfo =
-                        new ExportInfo(dir, docRefs, surrogateDocRefs, typesToIgnore, omitAuditFields);
+                        new ExportInfo(dir, docRefs, surrogateDocRefs, typesToIgnore, includedTypes, omitAuditFields);
 
                 LOGGER.debug("Searching for nodes to export below {}/{}", pathToCurrentNode, rootNode);
                 searchForNodesToExport(exportInfo, pathToCurrentNode, rootNode);
@@ -1349,8 +1384,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             LOGGER.debug("Exception checking document for View permission during export: {}", e.getMessage(), e);
         }
 
-        // Export this node and path to it
-        if (hasPermission) {
+        // Export this node and path to it. Nodes of types that are not included are
+        // skipped, but we still recurse into them so included descendants are exported.
+        if (hasPermission && exportInfo.shouldExportNode(currentNode)) {
             exportCurrentNode(exportInfo, pathToCurrentNode);
         }
 
@@ -1736,6 +1772,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         private final Set<String> typesToIgnore = new HashSet<>();
 
         /**
+         * Only export these types. If null then export all types.
+         */
+        @Nullable
+        private final Set<String> includedTypes;
+
+        /**
          * Whether to omit the audit fields
          */
         private final boolean omitAuditFields;
@@ -1775,12 +1817,15 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          * @param surrogateDocRefs DocRefs that act as a placeholder for docRefs that
          *                         aren't in the Explorer Tree.
          * @param typesToIgnore    Ignore these types. Defensively copied.
+         * @param includedTypes    Only export these types. If null then all types
+         *                         are exported. Defensively copied.
          * @param omitAuditFields  Whether to omit the audit fields.
          */
         public ExportInfo(final Path diskDirectory,
                           @Nullable final Set<DocRef> docRefsToExport,
                           final Set<DocRef> surrogateDocRefs,
                           final Set<String> typesToIgnore,
+                          @Nullable final Set<String> includedTypes,
                           final boolean omitAuditFields) {
             this.diskDirectory = diskDirectory;
             if (docRefsToExport == null) {
@@ -1791,6 +1836,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 //this.docRefsToExport.addAll(surrogateDocRefs);
             }
             this.typesToIgnore.addAll(typesToIgnore);
+            this.includedTypes = includedTypes == null
+                    ? null
+                    : new HashSet<>(includedTypes);
             this.omitAuditFields = omitAuditFields;
             this.surrogateDocRefs.addAll(surrogateDocRefs);
         }
@@ -1814,6 +1862,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             return docRefsToExport == null
                    || docRefsToExport.contains(docRef)
                    || surrogateDocRefs.contains(docRef);
+        }
+
+        /// Returns true if the given node is of an included type, or is
+        /// a surrogate for non-explorer docRefs, so should be exported.
+        /// Folders on the path to an exported node are always exported
+        /// regardless of this check.
+        ///
+        /// @param node The node to check.
+        /// @return true if the node should be exported, false if not.
+        public boolean shouldExportNode(final ExplorerNode node) {
+            return includedTypes == null
+                   || includedTypes.contains(node.getType())
+                   || surrogateDocRefs.contains(node.getDocRef());
         }
 
         /**

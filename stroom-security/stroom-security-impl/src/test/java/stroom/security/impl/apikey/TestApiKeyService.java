@@ -40,6 +40,7 @@ import stroom.security.shared.User;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.test.common.TestUtil;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -60,10 +61,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.type.TypeReference;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +76,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -82,6 +86,110 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestApiKeyService.class);
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final String TEST_DATA = """
+            [ {
+              "inputText" : "sak_81a7423a2c_Thfc29kDsawB74CGKLfFpaGdHD8PxFFKNn8cuCeSwZQkb9VHtLVkrnD4VSLsVCuVhFxv5BGrCK6GvqbeVp3ChhSbwj8eWBFwDFePMcoWLBDRYv5F4tGSrhVPa2TMsMD9",
+              "hash" : "AsQ3BehMa7k8oBvmB4QxpugU16a7bEznHPfqKpyW96ok",
+              "hashAlgorithm" : "SHA3_256"
+            }, {
+              "inputText" : "sak_ace86b8743_Hryzh5zA81CcqkMjht6UQvxkbcD8BgZBYx14AyWGoGxZUkGDngBJMGL7D3WgJ4qnMU6Mcu5CBJUueEwWXNrDKs1tzxgwK4DS2q2v5n6exkwNLTF8rBf1aSVjhvgEcK5G",
+              "hash" : "77xmimJsSwUR7qxJDZvb2w1QzrgDQHUV4mCT26CveckY",
+              "hashAlgorithm" : "SHA3_256"
+            }, {
+              "inputText" : "sak_be65214a11_KMZJ8zRhWMbU5BtS3rfvutAQqxQr3HB12mczyjbBN6uJh6Ge8eiCsteQmW28577u9PZDEEcYumNWCPoZDtdNKmgfhVYQkBwBeT3Z3b8ADWb8EdKFjsWF3TJxihj7rVDs",
+              "hash" : "CmSpBrFbeX4u8jNyKxjmDBMFCB5U1n9HJk47fVNd2m9Z",
+              "hashAlgorithm" : "SHA3_256"
+            }, {
+              "inputText" : "sak_6c2570ba5a_eiLsfzBZVrMvfPadYQ4kdSaUoyC8ZwifhZrfQRiwh4JdKygyCDp7JBG2DdUYaY4LdyoaghTrhuZsDxUJ6gefi9KJf6e5AvXr9MvcEFtehAihju4LNavC8f6vTBabUifv",
+              "hash" : "4C8dfyRTW5HA5qLnMzdkQyfwHfW9HuekJzq6Aeyg1Poi",
+              "hashAlgorithm" : "SHA3_256"
+            }, {
+              "inputText" : "sak_70affe60a9_8N6bocei5Axr3vXFoJF5MwwXvmQDs1B67cdRPBt7LP3D5xxxHbZ3T5GJDTg3rjaZDo4K1swbGuEpdJ9un9zGYByFNDo8thyjeLDqvB24rHiHNKxAYkQG6dKEkpBtE16s",
+              "hash" : "H7N2S71iNJmagnUyZFVugeN7LamQQbX9W6rWg9cfZHbJ",
+              "hashAlgorithm" : "SHA3_256"
+            }, {
+              "inputText" : "sak_89a95eea7e_Sx7Mp96NEeUoxSWnn9XpksDQiNGMXLoskiGMVp2bSHDSkf2fxfrxFCfAyKzi4ZSGHqB6LoGBf9ccP7LRmdXLQKgcJYPVAfPcgGHBmojD4a4P8gyeVuYdkR8VnhSh872j",
+              "hash" : "Dw8bviqg6W6WR3rFq4LvA4DjcJVvZghZyy741EZL2ahD",
+              "hashAlgorithm" : "SHA2_256"
+            }, {
+              "inputText" : "sak_056092233a_1wUhbWETbshh1RKPVS55UVLgDwM8UofjC2XA7fjiuA818usMyWkeP8sZF1yYsm33ke5Y8Hkn4VmKTmUxSJ7fxG8exXCLpWP2YCvaDwp2hWWos9Uw5Bdgf1yP5HpGvfXL",
+              "hash" : "5qD2JW5jyTmH6ADuFyrYmfvccVAorPjGkuhpFiSQHi3H",
+              "hashAlgorithm" : "SHA2_256"
+            }, {
+              "inputText" : "sak_cd33b6bcfe_K5q7NTRRx4CNWdLVnjbUb9um1cUf1LgNrpqURTYjmpKnAvYpFvNy4pnE4w6C2iiAtMAwtxuqETGfETVn3wyqARPomYND5wPVu6GDDynz6Gk6cXgAP68N9fUAn87kXtuy",
+              "hash" : "H3X15AUovfiSBQSwThMHhWoY3RbBH9H8k7i9XTJVQwUJ",
+              "hashAlgorithm" : "SHA2_256"
+            }, {
+              "inputText" : "sak_9c0c19e4f3_iMYUTrgndZKsfgVcdtjGxRv1Tnsfhs5eBZgrU5yVDvRxNspMUyYUt77QNvDpdbxNsq65BT6GS4rynQbwqRJbLbcLLkPLBZKRsMDHfJingXKtwGRJuWgPnRX5rqCVN36V",
+              "hash" : "CubLMHRx9bgDr9A3ahCDmGYwED5Dm5ErvQYWmfsieSLD",
+              "hashAlgorithm" : "SHA2_256"
+            }, {
+              "inputText" : "sak_b9f87c215c_6XRzikiVTKe1zNc1PKBe1pWwJ3bNiHzh3DzL8yHqrmZnTk6EEZofiNFzssXpuY289KkAr4WiW4fo1CmbSSsgT7URBKfyVbproSYzg2PqKWnEYtpw7eeBURiGbbxJxQrx",
+              "hash" : "B9phJrZR2sebpP8cpCGyb97pmxrv3aEcx5PcYcM9P6Fq",
+              "hashAlgorithm" : "SHA2_256"
+            }, {
+              "inputText" : "sak_fac2b43509_XmUEtkjRSPeRNeC1L9JjBRcCBN2TGCGre4WFDchX7AxGVAFv4Cm1kTHuzLgHFsZzwoFvznXQ2NsYFwjutHMMU5zEJSxUyHxK4ygXA1DkLdVQLUqiVutuxuvn2pJNcMGt",
+              "hash" : "$2a$10$prGGI/q95cCFYK5ppfk5CeBOyTH179w0.l1pfXQax97TR8ICQJIqe",
+              "hashAlgorithm" : "BCRYPT"
+            }, {
+              "inputText" : "sak_8cbc0e7da3_9x3smvNT9ecu4W2Eyd8n6uiDGVDS6rbDSZNUriBwyqmS8Pu4FRxnUGxiQBVAfTdufYCr5HYiTZTtQsg4Eh7zruMzZY5CbiLrKTfkdmWUuKsJ8Rx2QrZMNMAGnry6zSvB",
+              "hash" : "$2a$10$ZwiXUpJIiN0SQENIuQ04NOFaIWOd22RMGFUQ3BDHEPlYG6octsv7.",
+              "hashAlgorithm" : "BCRYPT"
+            }, {
+              "inputText" : "sak_0de20468fb_9pNR2K4aMRWJ5gNj2ZxbShEhhzdDR56TomqFL4MRVC4WXUZrYWUGTn1iCphiJAaL3DCGvFyFGw1yK6zSiESdXzA6dv5fxUqDXdp5EMQXyugAt54GKxLMCDdbQzku95XD",
+              "hash" : "$2a$10$l55kBOGn2UTb1NTBQYVoyuW78WA4rswioZNW7YOKUW31FWshFUteq",
+              "hashAlgorithm" : "BCRYPT"
+            }, {
+              "inputText" : "sak_f2270f2e46_QuAECHvWo6AJEjYmRPKMjfV7WZU5Jai3uScTyLKKGUdha1pjGGkLVKbkqymCE8Y81CKzkmfH2MVzEitB5y4y7Bw1KpXYPsu31pwUbNqjiAnsPG7MATEEyKPUnvwhDzai",
+              "hash" : "$2a$10$Bq1/peABFEaCoSWSGcE6NO5KBGw5rZrS.9qRjP9AhICV/78gmsNJm",
+              "hashAlgorithm" : "BCRYPT"
+            }, {
+              "inputText" : "sak_7f0c3afb78_XfmfRRyiGefSzVXaGr9LteWQbh81VDFiyte41zbcy9CLEMnUSLJP524Eq2LmrttzGrrv61jGzwuv9Wcf4UijLd66NCLQpCiiWaFEF96w4hfDMDpTLXv4AkcAqGRcGQvX",
+              "hash" : "$2a$10$Y/gNpZ92jMvND9VGMW5iF.A4qxvkM1WmEn7uWr5.KOD.8hTx5xD86",
+              "hashAlgorithm" : "BCRYPT"
+            }, {
+              "inputText" : "sak_15e0fa755a_YGj3as2f6ouxJLakxJR4GAVi4CXvdpapayJZxd2a2mcTcYpZfRDHd1JNm1v4qSUur7Swqenh2QUPdx76s28YecqCE8rJqNq8uSRQmBgEzEu6zRr7EKP1FzdLdqvsBnFb",
+              "hash" : "9hXPo4gjQx2AfghkEZ6ZiLYtFiJmyvQ7v12jFzt1cMdXLoAJbGvQdaaRVXsrAE1aRZ",
+              "hashAlgorithm" : "ARGON_2"
+            }, {
+              "inputText" : "sak_d068c1ece9_e1XELvtyCwqpZjGpR3Kbq38ewmKhz6BVPNWhpHPLd63vmiuxfwqfxwkUHjhrZNJNGwMWx6hqQ5VrizHTKSFuai67ouASKzz3qEjjmSbe6HuabExTqK49CYNEFkvco1CK",
+              "hash" : "4SBcLG1owpQZNeWHi1NtihLiEJTxJvWMHMaWxDyxj91Bn7R6oMAQSjYf5XUcAXX9Cq",
+              "hashAlgorithm" : "ARGON_2"
+            }, {
+              "inputText" : "sak_ece1c32b0f_b8stRond8xoCLHB2mxkeeFpizjB69AMagJYWXapCknfd9yJE3psEcfAHCCM54PrB1HpqDUNmWLS9VnrR9auaJpWkjgaAaeNAvegfxvd3s4QLAF3HFw4jFJQmxetHJFet",
+              "hash" : "5g8u5yym75bP37YVpMZnUrxNh7EFJ6Fa339T3nSxRXfEd6GhByR91VbrNRZDwpQnW3",
+              "hashAlgorithm" : "ARGON_2"
+            }, {
+              "inputText" : "sak_08b23ad75f_w21NEEuNyeudhrAYAYm9oP8zyWpdwyVRvEypdZPgJoYb3BfVFwNaAGzqUUkLbKYmF9RkesdZNC4WRGzdBacDAkprsTDBLC6Jk2dmGJEWtumQ238679LCZWZby1RCzgbk",
+              "hash" : "9dB6gijE2JKRttLePt8vJyXGeRQ7cMnjFg4rLMJzRA5iyJPhG7yaZiqReyGwUg238z",
+              "hashAlgorithm" : "ARGON_2"
+            }, {
+              "inputText" : "sak_fff5ca59bd_EJ7TtEpWM3Atin2NpZgtwD9nNwT8cuThMCxq3X7YbXckYnjEzhAkCVoKZxkGrLywqNY48eRh4UcRgFaipxjUJ8YJ5jzdEFgdnPfYmNaUgp6jSgFqVUbAN2H8X1vXp6tg",
+              "hash" : "4GPWW3m1SEa6MyS11m42ceaADSw3NDWFSC4jRxyNRGoGC7V4qnusFxoNqJpeC53AZm",
+              "hashAlgorithm" : "ARGON_2"
+            }, {
+              "inputText" : "sak_12b257d76c_zfb1gBo8etT7Ebr6ATpduRBhMkPVyD7cK5NNhMW4NoHAwAjdBtkon4Yu5QCBwU9fEdTqoBwHPkQsJ37nPLrabq4izgyNXquz4jBnvzpA2orRsdToM11xJoDzFeqtp8zc",
+              "hash" : "3bPQSXVTZTFkxbTnErWJ9M28c6KdkuMejzeFiTrdJ81gx2QWD8ArALrHRrh3ZjoxyHsviqXvnaVFE5zvxy7nohWB",
+              "hashAlgorithm" : "SHA2_512"
+            }, {
+              "inputText" : "sak_0f7d5c1b27_dHkNdSBqs8xdHhn9ruLwmytwFsi1pTnYT5jSMqdRmstqHHSTYjgAHx7qqmCa2Y1oo47VrZMQtWaMxMvaL9CJRoS1P7if7YQygLPnqyPWzVixnPbBb9ZKmMm7yxpKo8gD",
+              "hash" : "4HqdqibDvfNk1TcQJT3Vig3p5cRvUpGwtCivMuJzPH3fsG4TqVjyHGyDk4tgHAqMCRHatgf98a9zczhZCfXmV4F6",
+              "hashAlgorithm" : "SHA2_512"
+            }, {
+              "inputText" : "sak_c373897698_3CGd7PQd7WLFVh1U45hB3vVhhb4sHMjQsfAkRfC9mR5saynXzuu28Qj5sxERS6pTL6Q8nrDCniP25uuzux6uuVY6HoPhnPt5Dn8wv5JdKMFA2pj14gTZMKEy5gFaBtjw",
+              "hash" : "3EpAt5xd9mYV1ZGvJmfEaDetUz4gKhCZq1wFVqgDmUAD8tZ5UJafYP52LR9WL7xgb2LhpEixBnMfBgvVbbdtD21o",
+              "hashAlgorithm" : "SHA2_512"
+            }, {
+              "inputText" : "sak_1701aafbec_Xg1QMMWAAqFi7pcq4kdHPKsmaTM48M3CmsJCbG7cBrtJruGw4cNuYsmDuZmQa8sTYHuvMKhSxAcaoT6bxNnRma5vsounA3STgaM9sL76HrLtCeHtZJh4ohtzz4FJ6CzR",
+              "hash" : "5jp25Fs8JozPYUkYhqa94gwvQ8vKKji1WnqoXcXstwALybx6HF5H1noRrzgzLxr49zYMksf3bWWeYKrY9MPrxTwu",
+              "hashAlgorithm" : "SHA2_512"
+            }, {
+              "inputText" : "sak_227b6d7f41_EXveb9Gnif3dFECyzy885PAddWTA8Yuix4VJiVyJPFzBDwnCrLnCCEzUGgdQdy1aJL2vE2iFHLTikw4ydPsPTFrWFcfN2iTBvjHfi4faWMFZRDCw5HLeb7rButW5EGSC",
+              "hash" : "ZnyHRbwknVvqVZNc7L5NSq9sDZhew1wNipFxHmcg8WAM9o8vUbucu3TeGaXSNhb7sFb2hfZJdXUKeYUhZ2sFQ2g",
+              "hashAlgorithm" : "SHA2_512"
+            } ]""";
 
     private final SecurityContext securityContext = new MockSecurityContext();
     private final ApiKeyGenerator apiKeyGenerator = new ApiKeyGenerator();
@@ -766,6 +874,39 @@ class TestApiKeyService {
         return builder.build();
     }
 
+    /// Make sure that we can verify a fixed set of api keys and their hashes. This is to ensure that
+    /// any code change to the hashing functions doesn't break hashes that have already been computed.
+    @TestFactory
+    Stream<DynamicTest> testStaticHashes() {
+        final List<HashOutput> hashOutputs = JsonUtil.getMapper().readValue(
+                TEST_DATA,
+                new TypeReference<>() {
+                });
+
+        final Set<HashAlgorithm> algorithmsInData = hashOutputs.stream()
+                .map(HashOutput::hashAlgorithm)
+                .collect(Collectors.toSet());
+        Assertions.assertThat(algorithmsInData)
+                .withFailMessage("The test data is out of date, run createTestData() to update it.")
+                .containsExactlyInAnyOrder(HashAlgorithm.values());
+
+        final AtomicInteger counter = new AtomicInteger(0);
+        return hashOutputs.stream()
+                .map(hashOutput ->
+                        DynamicTest.dynamicTest(
+                                counter.incrementAndGet() + " - " + hashOutput.hashAlgorithm.name(),
+                                () -> {
+                                    final boolean isValidHash = apiKeyService.verifyApiKeyHash(
+                                            hashOutput.inputText,
+                                            hashOutput.hash,
+                                            hashOutput.hashAlgorithm);
+                                    Assertions.assertThat(isValidHash)
+                                            .isTrue();
+                                }
+                        )
+                );
+    }
+
     @Disabled // manual only, to see how many hash clashes we get for 10mil api keys (answer: 0 ish)
     @Test
     void testHashClash() {
@@ -816,4 +957,31 @@ class TestApiKeyService {
         LOGGER.info("clashCount: {}, prefixes: {}", clashCount, prefixes.size());
     }
 
+    @Disabled // Manual running only
+    @Test
+    void createTestData() {
+        final int iterations = 5;
+
+        final List<HashOutput> hashOutputs = new ArrayList<>(iterations * HashAlgorithm.values().length);
+        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
+            for (int i = 0; i < iterations; i++) {
+                final String inputText = apiKeyGenerator.generateRandomApiKey();
+                final String hash = apiKeyService.computeApiKeyHash(inputText, hashAlgorithm);
+                hashOutputs.add(new HashOutput(inputText, hash, hashAlgorithm));
+            }
+        }
+        final String json = JsonUtil.writeValueAsString(hashOutputs);
+        System.out.println(json);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record HashOutput(
+            String inputText,
+            String hash,
+            HashAlgorithm hashAlgorithm) {
+
+    }
 }

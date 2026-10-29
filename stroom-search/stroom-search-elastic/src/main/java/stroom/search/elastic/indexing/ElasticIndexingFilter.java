@@ -209,6 +209,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
                         }
                     }
+                } catch (final LoggedException e) {
+                    // Already logged, so propagate without logging again
+                    throw e;
                 } catch (final RuntimeException e) {
                     fatalError(e.getMessage(), e);
                 }
@@ -221,8 +224,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             // Cache config value to avoid Provider lookup on every element.
             maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
 
+        } catch (final LoggedException e) {
+            // Already logged, so propagate without logging again
+            throw e;
         } catch (final Exception e) {
-            fatalError("Failed to initialise JsonGenerator", e);
+            fatalError("Failed to initialise Elasticsearch indexing filter", e);
         } finally {
             super.startProcessing();
         }
@@ -286,7 +292,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (currentDepth == 1) {
                             enterDocumentRoot();
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid start of object", e);
                     }
                     break;
@@ -295,7 +301,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         incrementDepth();
                         writeFieldName();
                         jsonGenerator.writeStartArray();
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid start of array", e);
                     }
                     break;
@@ -343,6 +349,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
+                    } catch (final LoggedException e) {
+                        // Already logged, so propagate without logging again
+                        throw e;
                     } catch (final Exception e) {
                         fatalError("Invalid end of object", e);
                     }
@@ -366,7 +375,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid string value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -382,7 +391,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid boolean value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -395,7 +404,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             currentDocPropertyCount++;
                         }
                         storeIndexNameVariableValue("");
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid null value for property '" + currentDocFieldName + "'", e);
                     }
                     break;
@@ -410,7 +419,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid number value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -430,15 +439,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         return fieldName == null || !fieldName.startsWith("_");
     }
 
+    /// Record the value of an index name variable, if the current field is one. Variables are only taken from
+    /// fields that are direct children of the document root, so a field of the same name in a nested map or
+    /// array is ignored. A variable may only be given a value once per document.
     private void storeIndexNameVariableValue(final String value) {
-        try {
-            if (!value.isEmpty() && indexNameVariables.contains(currentDocFieldName)) {
-                currentDocIndexNameVariables.put(currentDocFieldName, value);
+        // Values are written within the document root map when the depth is 1
+        if (currentDepth == 1
+            && !value.isEmpty()
+            && indexNameVariables.contains(currentDocFieldName)) {
+            final String existingValue = currentDocIndexNameVariables.putIfAbsent(currentDocFieldName, value);
+            if (existingValue != null) {
+                fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document",
+                        new IllegalArgumentException());
             }
-        } catch (final IllegalArgumentException e) {
-            fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document", e);
-        } catch (final Exception e) {
-            fatalError("Unexpected error parsing index name variable value", e);
         }
     }
 
@@ -472,9 +485,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      */
     private void processDocument() {
         try {
-            if (currentDocPropertyCount > 0) {
-                jsonGenerator.flush();
+            // Always flush, even if the document is to be skipped, so that none of its buffered JSON is left
+            // in the generator to be prepended to the next document when the stream is reset
+            jsonGenerator.flush();
 
+            if (currentDocPropertyCount > 0) {
                 bulkOperations.add(BulkOperation.of(b -> b
                         .create(createOp -> {
                             createOp.index(formatIndexName());
@@ -497,6 +512,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             }
         } catch (final JacksonException e) {
             fatalError("Failed to flush JSON to stream", e);
+        } catch (final LoggedException e) {
+            // Already logged, e.g. by a failed bulk request, so propagate without logging again
+            throw e;
         } catch (final Exception e) {
             fatalError(e.getMessage(), e);
         } finally {

@@ -56,6 +56,7 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 
@@ -292,10 +293,7 @@ public class SteppingService {
             // whichever of us runs second sees the other's write (the same load-bearing ordering as
             // terminateSweep; reversed, a still-queued task could start against a deleted store).
             sweep.requestTerminate();
-            final TaskContext taskContext = sweep.getTaskContext();
-            if (taskContext != null) {
-                taskManager.terminate(taskContext.getTaskId());
-            }
+            terminateTask(sweep.getTaskContext());
             throw new RuntimeException("Timed out waiting for " + what + " of stream " + metaId);
         }
         if (sweep.getError() != null) {
@@ -464,9 +462,18 @@ public class SteppingService {
                         // gap is ever launched. (This is also what lets a windowed scan advance across
                         // polls: each poll recomputes its window from the frontier, the finished window is
                         // satisfied from the store, and the next one launches.)
+                        // An unfiltered step is satisfied by its OWN record alone. Its range is a prefetch
+                        // window widened past that record, and requiring the whole window to be held would
+                        // mean a step into the previous window - whose far edge is the only part not yet
+                        // materialised - always launched, so the window would never save a launch.
+                        final StepLocation target = demandPlanner.onDemandTargetFor(request, graph, decision,
+                                store, metaId, priorCompleteCapture);
+                        final RecordRange needed = target != null
+                                ? RecordRange.of(target)
+                                : range;
                         final StreamSweep satisfied =
                                 satisfiedFromStore(metaId, store, decision.startElementId(),
-                                        fingerprints, range);
+                                        fingerprints, needed);
                         if (satisfied != null) {
                             return applyStreamMetadata(satisfied, priorSweeps);
                         }
@@ -815,9 +822,18 @@ public class SteppingService {
         // task has not started yet has no context to terminate; the flag is what stops it, and this
         // ordering is the half of the handshake that guarantees the capture task sees it.
         sweep.requestTerminate();
-        final TaskContext taskContext = sweep.getTaskContext();
+        terminateTask(sweep.getTaskContext());
+    }
+
+    // Terminate a producer task this service launched. TaskManager.terminate() demands
+    // MANAGE_TASKS_PERMISSION, which an ordinary stepping user does not have, so this runs as the processing
+    // user. That is safe because the caller never names an arbitrary task: it is always a sweep owned by a
+    // session, and sessions are keyed by user. Run as the requesting user, a timed-out step, closing a
+    // session, or a step that reaps another user's idle session would fail with a permission error - and,
+    // in closeSession, before the session's store is deleted.
+    private void terminateTask(final TaskContext taskContext) {
         if (taskContext != null) {
-            taskManager.terminate(taskContext.getTaskId());
+            securityContext.asProcessingUser(() -> taskManager.terminate(taskContext.getTaskId()));
         }
     }
 
@@ -865,8 +881,21 @@ public class SteppingService {
             // The fingerprints are what this step is served under. If an element was edited they have
             // changed, so it is served under new keys while the untouched elements are still read from what
             // was already captured.
-            final SessionStepResult sessionResult = sessionStepResolver.resolve(
-                    session, request, fingerprints, request.getTimeout() == null ? 0L : request.getTimeout());
+            final SessionStepResult sessionResult;
+            try {
+                sessionResult = sessionStepResolver.resolve(
+                        session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
+            } catch (final RuntimeException e) {
+                if (!session.isClosed()) {
+                    throw e;
+                }
+                // The session was terminated (the user pressed Stop) while this step was waiting on it, so the
+                // step failed on a closed session or its deleted store. That is the termination, not an error:
+                // answer as an unfinished step, which a client that has stopped simply drops.
+                LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
+                        session.getSessionId(), LogUtil.exceptionMessage(e)));
+                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+            }
 
             sessionRegistry.reapIdle();
 
