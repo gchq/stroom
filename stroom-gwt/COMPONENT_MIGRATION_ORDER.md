@@ -1265,20 +1265,14 @@ after wave 32.
 
 ## Deferred: delete rather than convert
 
-The deletions still to do are wave 16's units 7 and 11.
-
-- ItemCell: no callers (fan-in 0). Delete it rather than convert it, after the in-flight worktrees land (removals wait for other work).
-- CustomCellList: no callers, and in flight in data_grid2. Delete it after data_grid2 lands.
-- SvgIconCell: no callers. Delete it after the in-flight work completes.
-- FindCellTable: no callers, and in flight in data_grid2. Delete it after data_grid2 lands.
-- FindResultWithPermissionsCell: no callers. Delete it after the in-flight work completes.
-- JobTypeCell: no callers. Delete it after the in-flight work completes.
-- HoverActionMenuCell: no direct callers, and in flight in both data_grid2 and copy_and_paste. Delete it, or fold it into ActionMenuCell, after both land.
-- LinkTabsPresenter: no callers. The settings presenters re-implement its tab switching. Delete it once the LinkTabsLayoutView users are on TabbedComponent (wave 13).
-- HoverActionMenuCell: deleted by the merge of master.
-- CustomCellList: deleted by the merge of master.
-- FindCellTable: deleted by the merge of master.
-- SelectionEventManager: deleted by the merge of master.
+**Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,
+`SvgIconCell`, `FindResultWithPermissionsCell`, `JobTypeCell`, `SvgStringCell`, `ToolTipCell` and
+`MyTreeLayout`; `30e3609241`: `LinkTabsPresenter`), and the merge of master deleted
+`HoverActionMenuCell`, `CustomCellList`, `FindCellTable` and `SelectionEventManager`. The rest of
+the dead code the reviewers found below (`CustomDateTimeFormat`, `ExpanderEvent`, `ResourceCache`,
+`KeyboardInterceptor`, `NameTokens`, `SteppingPipelineTreeBuilder` and `Templates.input()`, none of
+them used), and `button.css`'s unused variants, went on 29 October 2026 (wave 34). The other classes
+named below are gone already.
 
 ## What the reviewers saw across the code
 

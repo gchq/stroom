@@ -19,6 +19,12 @@ Each entry says how sure we are:
 Wrong or unhelpful help text isn't listed here: the help text review and its audit fixed that, and
 where help describes one of these bugs it says what happens today.
 
+**Structure, not behaviour:** the UI audit of 29 October 2026 (naming, packages, dead code, BEM CSS,
+and composition all the way up) has its own record, [UI_AUDIT.md](UI_AUDIT.md), with every finding
+in [ui-audit/findings.md](ui-audit/findings.md): 210 verified findings (about 190 distinct), nine
+themes and eleven proposed waves, waiting for approval. The one behaviour bug it found (the XSD
+browser's pattern heading) is under [Smaller oddities](#smaller-oddities) as well.
+
 ## Data not saved or not used
 
 ### A view's Meta Filter only applies to analytic rules
@@ -1523,7 +1529,8 @@ Left as they are, on purpose:
   `FocusPanel` round the main and full-screen views (and the floor map canvas, its keyboard
   surface), and `DockLayoutPanel` in six floor map views (the Layout panels row of `COMPONENTS.md`):
   layout, not controls.
-* `Templates.input()` and `ItemCell`'s `<select>`: unused, waiting for the removals.
+* ~~`Templates.input()` and `ItemCell`'s `<select>`: unused, waiting for the removals.~~ **Deleted**
+  (`ItemCell` on 28 October 2026, `Templates.input()` on 29 October 2026, wave 34).
 
 ### Dialogs larger than the window
 
@@ -1842,6 +1849,12 @@ force visualisations still differ under a full run's load (their baselines come 
 their own). The top bar's Keyboard story once showed the ⋮ button's tooltip in a full run and not
 alone (timing).
 
+**Leak check under load** (29 October 2026, wave 34): with the machine also running 17 audit agents,
+six of the Analytic Rule editor's stories failed the leak check at 8 workers (31 to 244 nodes kept
+a close, two on both attempts); all 22 of its stories passed it at 4 workers straight after. Its
+leak check is the one most sensitive to load (it failed once under load in waves 28 and 30 too); a
+leak failure there needs a rerun at 4 workers before it is believed.
+
 ### A grid whose columns are made afresh loses its sort
 
 **Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and
@@ -1877,19 +1890,29 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
+**Confirmed** (29 October 2026, in the UI audit, widgets-2-07): the XSD browser heads a type's
+pattern restrictions "Enumeration". `XSDConstraintDisplay` (`:47`, `:49`) asks `getList` for the
+enumeration list and, when there is none, for the pattern list, both with `enumeration = true`, so
+the "Pattern" heading (`:64`) is never used. Fix: pass `false` for the pattern list, with a story
+showing a pattern-restricted type. Master has it too (changelog entry when fixed).
+
 **Reported.**
 
 * A disabled link button still underlines on hover: a disabled step location link and a disabled
   `TimeRangeSelector` (found 24 October 2026, in wave 1's stylesheet review). `.link-button:hover`
   (`link-button.css`, once `.linkButton:hover` in `components.css`) wins over their disabled rules.
   Fix: `.link-button:hover:not(:disabled):not([aria-disabled="true"])`, with a story for each.
-* Unused CSS and classes met in wave 1's stylesheet renames (24 October 2026), renamed rather than
+* ~~Unused CSS and classes met in wave 1's stylesheet renames (24 October 2026), renamed rather than
   deleted (removals wait): in `button.css`, the default, outline and icon button variants, the
   `button--selected`, `.small` and `.large` rules, `button__container`, the empty `.button svg`
   and `.button:focus-visible` rules, and the unused `.stroom-theme-dark2` colours; in
   `SvgCell.css`, `svgCell-face` (in `icon-cell.css` since wave 5, under its old name); and the
   unused classes `SvgIconCell`, `SvgStringCell` (found in wave 5), `FindResultWithPermissionsCell`
-  and `ToolTipCell` (which never closes its `<div>`). Delete them once removals are allowed.
+  and `ToolTipCell` (which never closes its `<div>`). Delete them once removals are allowed.~~
+  **Deleted**: the classes on 28 October 2026 (`79d9ed716d`), `svgCell-face`, `.stroom-theme-dark2`
+  and the empty rules in the CSS plan (waves 30 and 32), and the button variants, `button--selected`,
+  `.small`, `.large`, `button__container` and the 38 custom properties only they read on 29 October
+  2026 (wave 34).
 * ~~Selecting a node in the XSD browser's diagram highlights the whole grid it is in, not its row:
   `XSDNodeLabel.setSelected` put `nodeLabelSelected` on the label's grandparent, the table row
   until the node grid became a CSS grid (`9dc39a1829`), since when it is the whole grid (found
