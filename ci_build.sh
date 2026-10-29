@@ -321,8 +321,8 @@ format_manifest_file() {
 }
 
 # args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
-releaseToDockerHub() {
-  # echo "releaseToDockerHub called with args [$@]"
+doDockerBuildAndRelease() {
+  # echo "doDockerBuildAndRelease called with args [$@]"
 
   if [ $# -lt 3 ]; then
     echo "Incorrect args, expecting at least 3"
@@ -336,6 +336,17 @@ releaseToDockerHub() {
 
   local allTagArgs=()
   local firstTag=""
+  local vexDir=""
+  if [[ ! ${dockerRepo} =~ ^gcqh/ ]]; then
+    echo -e "ERROR: Expecting '${BLUE}${dockerRepo}${NC}' to start" \
+      "with '${BLUE}gchq/${NC}'${NC}"
+    exit 1
+  fi
+  if [[ ! -d "${vexDir}" ]]; then
+    echo -e "ERROR: Expecting VEX directory '${BLUE}${vexDir}${NC}' to exist"
+    exit 1
+  fi
+  vexDir="vex/${dockerRepo#gchq/}"
 
   for tagVersionPart in "$@"; do
     if [[ -n "${tagVersionPart}" ]]; then
@@ -349,9 +360,11 @@ releaseToDockerHub() {
   done
 
   echo "::group::Docker build (${dockerRepo})"
-  echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
+  echo -e "Building a ${GREEN}${dockerRepo}${NC} docker image"
+  echo -e "Tags:        [${GREEN}${allTagArgs[*]}${NC}]"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
+  echo -e "vexDir:      [${GREEN}${vexDir}${NC}]"
   # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
@@ -368,7 +381,8 @@ releaseToDockerHub() {
     cves \
     "${firstTag}" \
     --only-unfixed \
-    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}" \
+    --vex-location "${vexDir}"
   echo "::endgroup::"
 
   # TODO add '--exit-code' arg back in once vulns are fixed and vex files are in place
@@ -381,7 +395,8 @@ releaseToDockerHub() {
     cves \
     "${firstTag}" \
     --only-fixed \
-    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}" \
+    --vex-location "${vexDir}"
   echo "::endgroup::"
 
   echo "::group::Docker release (${dockerRepo})"
@@ -666,13 +681,13 @@ if [ "$doDockerBuild" = true ]; then
   echo "::endgroup::"
 
   # build and release stroom image to dockerhub
-  releaseToDockerHub \
+  doDockerBuildAndRelease \
     "${STROOM_DOCKER_REPO}" \
     "${STROOM_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
 
   # build and release stroom-proxy image to dockerhub
-  releaseToDockerHub \
+  doDockerBuildAndRelease \
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
