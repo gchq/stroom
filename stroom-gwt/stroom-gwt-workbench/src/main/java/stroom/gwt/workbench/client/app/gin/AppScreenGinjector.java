@@ -42,17 +42,13 @@ import com.google.gwt.inject.client.GinModules;
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
 /// Its modules mirror Stroom's (`XxxScreenModule` for Stroom's `XxxModule`), without the plugins
-/// and app services, and [ScreenViewsModule] binds the shared widgets. Controllers are created as
-/// in Stroom, so they are bound (`onBind`) as soon as they are created.
+/// and app services. Controllers are created as in Stroom, so they are bound (`onBind`) as soon as they are created.
 ///
 /// To add a screen: add a getter for its controller here, under its area's comment, and, if GIN
 /// reports a missing binding, add the mirror of the Stroom module that binds it to the
 /// `@GinModules` list (one module per line, so that parallel work rarely touches the same lines).
 /// See WRITING-STORIES.md.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
 })
 public interface AppScreenGinjector extends ScreenGinjector {
 

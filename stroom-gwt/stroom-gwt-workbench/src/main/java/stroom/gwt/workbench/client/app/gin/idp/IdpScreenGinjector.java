@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.idp;
 
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.security.identity.client.component.AuthenticationErrorController;
 import stroom.security.identity.client.component.ChangePasswordController;
@@ -36,7 +35,6 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 @GinModules({
-        ScreenViewsModule.class,
 })
 public interface IdpScreenGinjector extends ScreenGinjector {
 

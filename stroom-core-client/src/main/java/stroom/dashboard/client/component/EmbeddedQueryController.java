@@ -49,7 +49,6 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
-import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.TableResult;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryClient;
@@ -773,11 +772,6 @@ public class EmbeddedQueryController
 
     public void removeSearchErrorListener(final SearchErrorListener listener) {
         queryModel.removeSearchErrorListener(listener);
-    }
-
-    @Override
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-//        queryModel.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override

@@ -46,8 +46,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
                 new SeparatorAppearance().render(this, context, (Separator) value, sb);
-            } else if (value instanceof GroupHeading) {
-                new GroupHeadingAppearance().render(this, context, (GroupHeading) value, sb);
             }
         }
     }
@@ -84,23 +82,6 @@ public class MenuItemCell extends AbstractCell<Item> {
         public void render(final MenuItemCell cell, final Context context, final Separator value,
                            final SafeHtmlBuilder sb) {
             sb.append(Templates.div("menu__separator"));
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class GroupHeadingAppearance implements Appearance<GroupHeading> {
-
-        public GroupHeadingAppearance() {
-        }
-
-        @Override
-        public void render(final MenuItemCell cell, final Context context, final GroupHeading value,
-                           final SafeHtmlBuilder sb) {
-            sb.append(Templates.div("menu__group-heading",
-                    SafeHtmlUtils.fromTrustedString(value.getGroupName())));
         }
     }
 

@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.component.LinkTabPanel;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
@@ -94,10 +93,6 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
         dashboardBody.setQueryOnOpen(queryOnOpen);
     }
 
-    /// @param resultStoreInfo The results of an earlier search to show, reopening it.
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        dashboardBody.setResultStoreInfo(resultStoreInfo);
-    }
 
     @Override
     protected void onRead(final DocRef docRef, final DashboardDoc doc) {

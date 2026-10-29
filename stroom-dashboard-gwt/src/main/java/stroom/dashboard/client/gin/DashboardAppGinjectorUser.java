@@ -17,15 +17,11 @@
 package stroom.dashboard.client.gin;
 
 import stroom.about.client.gin.AboutModule;
-import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.component.CoreController;
 import stroom.core.client.component.FullScreenController;
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
-import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
-import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
@@ -54,15 +50,11 @@ import com.google.web.bindery.event.shared.EventBus;
         EntityModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
-        DashboardModule.class,
-        VisModule.class,
-        EmbeddedQueryModule.class})
+        DashboardModule.class})
 public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
-        AlertGinjector,
         SecurityGinjector,
-        EntityGinjector,
         DashboardGinjector,
         UserPreferencesGinjector,
         ChangePasswordGinjector {

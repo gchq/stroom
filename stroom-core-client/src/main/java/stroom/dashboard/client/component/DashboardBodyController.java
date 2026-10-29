@@ -54,8 +54,6 @@ import stroom.entity.client.HasToolbar;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.query.api.ParamUtil;
-import stroom.query.api.ResultStoreInfo;
-import stroom.query.api.SearchRequestSource;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
 import stroom.query.client.component.QueryToolbarController;
@@ -86,7 +84,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,7 +135,6 @@ public class DashboardBodyController
     private MutableSize preferredSize = new MutableSize();
     private boolean designMode;
 
-    private ResultStoreInfo resultStoreInfo;
     private String externalLinkParameters;
 
     private final DashboardContextImpl dashboardContext;
@@ -391,10 +387,6 @@ public class DashboardBodyController
         this.embedded = embedded;
     }
 
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        this.resultStoreInfo = resultStoreInfo;
-    }
-
     public void setQueryOnOpen(final boolean queryOnOpen) {
         this.queryOnOpen = queryOnOpen;
     }
@@ -529,18 +521,9 @@ public class DashboardBodyController
             // Tell all queryable components whether we want them to query on open.
             for (final DashboardPane component : components) {
                 if (component instanceof Queryable) {
-                    if (resultStoreInfo != null) {
-                        final SearchRequestSource searchRequestSource = resultStoreInfo.getSearchRequestSource();
-                        if (searchRequestSource != null &&
-                            component.getId().equals(searchRequestSource.getComponentId())) {
-                            ((Queryable) component).setResultStoreInfo(resultStoreInfo);
-                        }
-                    }
-
                     ((Queryable) component).setQueryOnOpen(queryOnOpen);
                 }
             }
-            resultStoreInfo = null;
 
             // If we have been given some external link parameters then set those in the "Params" input component if we
             // can find one.

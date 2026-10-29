@@ -37,8 +37,7 @@ import java.util.Optional;
 /// What every Ace editor ([Editor]) in Stroom has from the user and the app: the user's theme, key
 /// bindings and live auto completion (and their changes), the app's global keys, and the completion
 /// providers registered for it with the shared completer, which it removes, and the editor itself
-/// destroyed, when it is disposed. [CodeEditorController] and [SingleLineCodeEditorController]
-/// each own one, attached to their editor.
+/// destroyed, when it is disposed. [CodeEditorController] owns one, attached to its editor.
 public class AceEditorController extends Controller {
 
     static final String VIM_KEY_BINDS_NAME = "VIM";

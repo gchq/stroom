@@ -31,8 +31,3 @@
     height: var(--layered-canvas__height, 100px);
     outline: none;
 }
-
-/* The top layer while the mouse is over an item of the tree drawn on it (TreeRenderer) */
-.layered-canvas__layer--pointer {
-    cursor: pointer;
-}

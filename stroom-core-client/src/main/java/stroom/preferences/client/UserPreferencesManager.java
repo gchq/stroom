@@ -21,7 +21,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
-import stroom.query.api.UserTimeZone.Use;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.ui.config.shared.Theme;
@@ -294,13 +293,6 @@ public class UserPreferencesManager {
                 ? AceEditorTheme.DEFAULT_LIGHT_THEME
                 : AceEditorTheme.DEFAULT_DARK_THEME;
         return aceEditorTheme.getName();
-    }
-
-    public boolean isUtc() {
-        final UserPreferences userPreferences = getCurrentUserPreferences();
-        return userPreferences.getTimeZone() == null
-               || userPreferences.getTimeZone().getUse() == null
-               || userPreferences.getTimeZone().getUse() == Use.UTC;
     }
 
     static void applyUserPreferences(final CurrentPreferences currentPreferences,

@@ -21,9 +21,6 @@ import stroom.analytics.client.component.AnalyticRuleEditor;
 import stroom.analytics.client.component.ReportEditor;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.data.client.DataDisplaySupport;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.component.IFrameContentController;
@@ -42,10 +39,6 @@ import com.google.gwt.inject.client.GinModules;
 /// visualisation), creating Stroom's controllers and components as Stroom's GIN modules do, as
 /// `AppScreenGinjector` does for the pilot's stories. Create one each time the story renders.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
-        AlertScreenModule.class,
 })
 public interface QueryScreenGinjector extends ScreenGinjector {
 

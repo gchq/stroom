@@ -68,11 +68,6 @@ public final class AskStroomAiChat {
         return chat;
     }
 
-    /// @return Whether the controller has been created, i.e. whether either event has been fired.
-    public boolean isCreated() {
-        return controller != null;
-    }
-
     /// Gets the chat's controller, creating it if no event has created it yet.
     ///
     /// @return The controller.

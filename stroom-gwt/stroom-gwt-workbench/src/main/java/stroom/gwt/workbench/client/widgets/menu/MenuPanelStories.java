@@ -50,8 +50,6 @@ import java.util.function.Function;
 /// `MenuController` per menu and submenu).
 public final class MenuPanelStories {
 
-    // Stroom's menu (`Menu`) has this class and `role="menu"`.
-    static final String MENU = ".menu";
     // The highlighted row is the menu's active row.
     private static final String ACTIVE_ROW = ".menu .menu__row--active";
     private static final String NO_ACTION = "(no action yet)";

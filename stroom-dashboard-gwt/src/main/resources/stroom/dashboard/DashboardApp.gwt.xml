@@ -33,7 +33,6 @@
     <inherits name="org.fusesource.restygwt.RestyGWT"/>
 
     <!-- Websocket -->
-    <inherits name="stroom.websocket.WebSocket" />
 
     <!-- Other module inherits -->
     <inherits name="stroom.dispatch.Dispatch"/>

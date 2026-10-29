@@ -15,10 +15,10 @@
  */
 
 /*
-   The code editor (stroom.editor.client.component.CodeEditor and SingleLineCodeEditor): Stroom's
+   The code editor (stroom.editor.client.component.CodeEditor): Stroom's
    parts around and on top of the Ace editor, named BEM style (block, block__element,
-   block--modifier). The block is the editor (code-editor), holding the Ace editor (code-editor__ace,
-   code-editor__ace--single-line for a single line editor) and the overview bar to its right
+   block--modifier). The block is the editor (code-editor), holding the Ace editor (code-editor__ace)
+   and the overview bar to its right
    (code-editor__overview), with its summary and markers. The highlight and error underline are Ace
    markers that Stroom adds. The indicator popup is a block of its own (code-editor-indicator.css),
    as it is shown outside the editor. Ace's own classes (ace_*, and the stroom_* annotation classes the Ace wrapper gives
@@ -100,18 +100,6 @@
     position: absolute;
     border-bottom: 1px solid red;
     border-radius: 0;
-}
-
-.stroom-font-size-small .code-editor__ace--single-line {
-    height: 16px;
-}
-
-.stroom-font-size-medium .code-editor__ace--single-line {
-    height: 18px;
-}
-
-.stroom-font-size-large .code-editor__ace--single-line {
-    height: 20px;
 }
 
 .code-editor__ace .ace_tooltip {

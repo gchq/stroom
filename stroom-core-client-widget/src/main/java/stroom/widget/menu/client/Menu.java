@@ -59,7 +59,7 @@ import java.util.Objects;
 /// holds `menu` (role `menu`),
 /// which holds a `menu__row` per item with the item's role (`menuitem`, `menuitemcheckbox`,
 /// `separator` or `none`) and `menu__row--active` on the active one. Each row holds what
-/// [MenuItemCell] draws (`menu__item`, `menu__separator` or `menu__group-heading`).
+/// [MenuItemCell] draws (`menu__item` or `menu__separator`).
 public class Menu extends Widget {
 
     private static final String ROW_CLASS = "menu__row";

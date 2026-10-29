@@ -125,10 +125,6 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
         fetch(requestedRange, isRedrawRequired);
     }
 
-    public TreeRowHandler<R> getTreeRowHandler() {
-        return treeRowHandler;
-    }
-
     public void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
         this.treeRowHandler = treeRowHandler;
     }

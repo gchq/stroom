@@ -16,8 +16,6 @@
 
 package stroom.widget.menu.client;
 
-import stroom.widget.menu.client.SimpleMenuItem.Builder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -68,45 +66,6 @@ public class MenuBuilder {
             final IconMenuItem.Builder builder = new IconMenuItem.Builder()
                     .priority(getNextPriority());
             iconMenuItemBuilder.accept(builder);
-            return withItem(builder.build());
-        } else {
-            return this;
-        }
-    }
-
-    public MenuBuilder withSimpleMenuItem(final Consumer<SimpleMenuItem.Builder> simpleMenuItemBuilder) {
-        return withSimpleMenuItemIf(true, simpleMenuItemBuilder);
-    }
-
-    /**
-     * @param condition Allows you to build conditionally in a fluent style, i.e. only add an item
-     *                  if a condition is met.
-     */
-    public MenuBuilder withSimpleMenuItemIf(final boolean condition,
-                                            final Consumer<SimpleMenuItem.Builder> simpleMenuItemBuilder) {
-        if (condition) {
-            final SimpleMenuItem.Builder builder = new Builder()
-                    .priority(getNextPriority());
-            simpleMenuItemBuilder.accept(builder);
-            return withItem(builder.build());
-        } else {
-            return this;
-        }
-    }
-
-    public MenuBuilder withInfoMenuItem(final Consumer<InfoMenuItem.Builder> infoMenuItemBuilder) {
-        return withInfoMenuItemIf(true, infoMenuItemBuilder);
-    }
-
-    /**
-     * @param condition Allows you to build conditionally in a fluent style, i.e. only add an item
-     *                  if a condition is met.
-     */
-    public MenuBuilder withInfoMenuItemIf(final boolean condition,
-                                          final Consumer<InfoMenuItem.Builder> infoMenuItemBuilder) {
-        if (condition) {
-            final InfoMenuItem.Builder builder = InfoMenuItem.builder();
-            infoMenuItemBuilder.accept(builder);
             return withItem(builder.build());
         } else {
             return this;

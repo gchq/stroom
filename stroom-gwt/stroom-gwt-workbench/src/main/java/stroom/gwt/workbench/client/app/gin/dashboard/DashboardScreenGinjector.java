@@ -29,10 +29,6 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.data.client.DataDisplaySupport;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.AlertScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 
@@ -53,10 +49,6 @@ import com.google.gwt.inject.client.GinModules;
 /// plugins (eager singletons in Stroom) fill: get every plugin before reading a dashboard
 /// (`DashboardStories.registerComponentTypes`).
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
-        AlertScreenModule.class,
         DashboardScreenModule.class,
 })
 public interface DashboardScreenGinjector extends ScreenGinjector {

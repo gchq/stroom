@@ -18,7 +18,6 @@ package stroom.app.client.gin;
 
 import stroom.about.client.gin.AboutModule;
 import stroom.ai.client.gin.AskStroomAIModule;
-import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.analytics.client.gin.ReportModule;
@@ -29,16 +28,13 @@ import stroom.contentstore.client.gin.ContentStoreModule;
 import stroom.core.client.component.CoreController;
 import stroom.core.client.component.FullScreenController;
 import stroom.credentials.client.gin.CredentialsModule;
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
-import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.data.client.gin.StreamStoreModule;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
 import stroom.documentation.client.gin.DocumentationModule;
-import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.feed.client.gin.FeedModule;
 import stroom.floormap.client.gin.FloorMapModule;
@@ -65,7 +61,6 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
 import stroom.security.identity.client.gin.ChangePasswordModule;
-import stroom.sqlstore.client.gin.SqlTemporalStoreGinjector;
 import stroom.sqlstore.client.gin.SqlTemporalStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskModule;
@@ -123,8 +118,6 @@ import com.google.web.bindery.event.shared.EventBus;
         StatisticsModule.class,
         StreamStoreModule.class,
         TaskModule.class,
-        VisModule.class,
-        EmbeddedQueryModule.class,
         VisualisationModule.class,
         ViewModule.class,
         WelcomeModule.class,
@@ -135,16 +128,13 @@ import com.google.web.bindery.event.shared.EventBus;
         GitRepoModule.class
 })
 public interface AppGinjectorUser extends
-        AlertGinjector,
         DashboardGinjector,
-        EntityGinjector,
         Ginjector,
         PluginsGinjector,
         PopupGinjector,
         UserPreferencesGinjector,
         SecurityGinjector,
-        ChangePasswordGinjector,
-        SqlTemporalStoreGinjector {
+        ChangePasswordGinjector {
 
     // Default implementation of standard resources
     @SuppressWarnings("unused")

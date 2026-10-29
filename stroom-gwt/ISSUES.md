@@ -1844,7 +1844,8 @@ stories' clock, so it isn't the time):
 
 **Still unsteady** (29 October 2026, waves 29 and 30): the tree visualisation's Keyboard story
 (`app-visualisations-tree--keyboard`): its tooltip is drawn 1px left or right from run to run, even
-run on its own (wave 29 took the right-hand one as its baseline; wave 30's runs drew the left). The
+run on its own (wave 29 took the right-hand one as its baseline; wave 30's runs drew the left), and
+its Show and Hide story's tooltip text likewise moved a pixel in wave 35's full run. The
 force visualisations still differ under a full run's load (their baselines come from runs of
 their own). The top bar's Keyboard story once showed the ⋮ button's tooltip in a full run and not
 alone (timing).

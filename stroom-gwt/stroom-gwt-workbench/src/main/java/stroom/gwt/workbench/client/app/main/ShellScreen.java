@@ -224,7 +224,6 @@ final class ShellScreen {
         injector.getSigningKeyPlugin();
         injector.getSignOutOtherSessionsPlugin();
         injector.getUserAccessPlugin();
-        injector.getUserPermissionsReportPlugin();
         injector.getUserPlugin();
         injector.getUsersAndGroupsPlugin();
         injector.getUsersPlugin();

@@ -132,16 +132,6 @@ public class CredentialsListController extends Controller {
         view.getSelectionModel().setSelected(new CredentialWithPerms(credential, true, true));
     }
 
-    /// @return The uuid of the selected credential, or `null` if none is selected.
-    public String getSelectedCredentialsId() {
-        final CredentialWithPerms selectedCwp = view.getSelectionModel().getSelected();
-        if (selectedCwp != null) {
-            return selectedCwp.getCredential().getUuid();
-        } else {
-            return null;
-        }
-    }
-
     /// @return The name of the selected credential, or `null` if none is selected.
     public String getSelectedCredentialsName() {
         final CredentialWithPerms selectedCwp = view.getSelectionModel().getSelected();

@@ -30,8 +30,6 @@ import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.component.GitRepoEditor;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.index.client.component.LuceneIndexEditor;
 import stroom.kafka.client.component.KafkaConfigEditor;
@@ -64,11 +62,6 @@ import com.google.gwt.inject.client.GinModules;
 /// The shared modules are the pilot's (`client/app/gin`); the others mirror Stroom's modules for
 /// the editors (`XxxScreenModule` for Stroom's `XxxModule`), without plugins and app services.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        AlertScreenModule.class,
-        ScheduleScreenModule.class,
-        SqlTemporalStoreScreenModule.class,
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
 

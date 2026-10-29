@@ -244,9 +244,6 @@ public class DataRetentionPolicyController extends Controller {
 
         final boolean isDefaultRule = isDefaultRule(rule);
         return MenuBuilder.builder()
-//                .withSimpleMenuItem(itemBuilder ->
-//                        itemBuilder.withText(rule.getRuleNumber() + ". " + rule.getName()))
-//                .withSeparator()
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)

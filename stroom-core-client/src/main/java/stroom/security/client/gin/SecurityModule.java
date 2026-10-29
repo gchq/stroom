@@ -52,7 +52,6 @@ public class SecurityModule extends PluginModule {
         bindPlugin(UsersPlugin.class);
         bindPlugin(UserTabPlugin.class);
         bindPlugin(UsersAndGroupsPlugin.class);
-//        bindPlugin(UserPermissionsReportPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindPlugin(UserAccessPlugin.class);
         bindPlugin(SigningKeyPlugin.class);

@@ -1263,6 +1263,15 @@ after wave 32.
 > the last camel-case names, classes nothing styled, an unloaded sheet and an unused rule went. The
 > CSS plan is done. See `wave-33.md`.
 
+## 35. UI audit wave 1: dead code, part 1
+
+Record: [`component-migration/wave-35.md`](component-migration/wave-35.md). Added 29 October 2026,
+after wave 34; the first of [`UI_AUDIT.md`](UI_AUDIT.md)'s waves.
+
+> **Done, 29 October 2026**: about 70 unused classes, events, GIN modules and ginjectors, GWT
+> modules and story-only widgets (with their stories) went. All 1,739 stories pass with the leak
+> check, and no screenshot changed but the visualisations' known unsteady ones. See `wave-35.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

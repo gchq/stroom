@@ -35,9 +35,6 @@ import stroom.entity.client.component.CreateDocumentController;
 import stroom.explorer.client.TabSessionManager;
 import stroom.explorer.client.component.FindController;
 import stroom.explorer.client.component.FindInContentController;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.importexport.client.component.DependenciesInfoController;
 import stroom.importexport.client.component.DependenciesTabController;
@@ -57,12 +54,8 @@ import com.google.gwt.inject.client.GinModules;
 /// modules do, as `AppScreenGinjector` does for the pilot's screens. Create one each time the
 /// story renders and give it to the harness with `ScreenHarness.Builder.injector(...)`.
 ///
-/// Its modules are the shared [ScreenViewsModule] (and other shared mirrors in `app.gin`) plus
-/// this package's mirrors of Stroom's modules.
+/// Its modules are the shared mirrors in `app.gin` plus this package's mirrors of Stroom's modules.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
         ContentAppScreenModule.class,
 })
 public interface ContentScreenGinjector extends ScreenGinjector {

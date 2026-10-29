@@ -17,7 +17,6 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryInfo;
-import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
 import stroom.util.shared.ErrorMessage;
@@ -47,6 +46,4 @@ public interface Queryable {
     void setQueryOnOpen(boolean queryOnOpen);
 
     void setDashboardContext(DashboardContext dashboardContext);
-
-    void setResultStoreInfo(ResultStoreInfo resultStoreInfo);
 }

@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableLong;
+import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StoryPanels;
@@ -276,11 +276,6 @@ public final class ViewStateStories {
                || widget instanceof TimeZoneBox;
     }
 
-    private static Widget named(final Widget widget, final String name) {
-        AccessibleName.set(widget, name);
-        return widget;
-    }
-
     private static Widget gridFrame(final Widget grid) {
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("width", "300px");
@@ -326,7 +321,7 @@ public final class ViewStateStories {
 
     // As a read-only screen gives it: an editable value whose editing is switched off
     private static Number maxTasks(final Job job, final boolean editable) {
-        final EditableLong value = new EditableLong(job.getMaxTasks());
+        final EditableInteger value = new EditableInteger(job.getMaxTasks());
         value.setEditable(editable);
         return value;
     }
@@ -549,9 +544,9 @@ public final class ViewStateStories {
 
         private final String name;
         private final boolean enabled;
-        private final long maxTasks;
+        private final int maxTasks;
 
-        private Job(final String name, final boolean enabled, final long maxTasks) {
+        private Job(final String name, final boolean enabled, final int maxTasks) {
             this.name = name;
             this.enabled = enabled;
             this.maxTasks = maxTasks;
@@ -565,7 +560,7 @@ public final class ViewStateStories {
             return enabled;
         }
 
-        private Long getMaxTasks() {
+        private Integer getMaxTasks() {
             return maxTasks;
         }
     }

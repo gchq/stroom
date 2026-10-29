@@ -22,7 +22,6 @@ import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
-import stroom.widget.htree.client.TreeRenderer;
 import stroom.widget.htree.client.TreeRenderer2;
 import stroom.widget.htree.client.treelayout.AbegoTreeLayout;
 import stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel;
@@ -131,7 +130,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         // setup the tree layout configuration.
         canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
-            final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
+            final Context2d arrowContext = canvas.getLayer(TreeRenderer2.ARROW_LAYER).getContext2d();
             // The faded layer is sized and cleared with the others, but drawn in the faded group
             final Canvas fadedLayer = canvas.getLayer(FADED_LAYER);
             fadedGroup.getElement().appendChild(fadedLayer.getElement());

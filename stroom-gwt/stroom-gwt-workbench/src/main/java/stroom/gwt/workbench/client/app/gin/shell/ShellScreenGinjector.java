@@ -36,10 +36,8 @@ import stroom.dictionary.client.DictionaryPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.DocumentDialogScreens;
-import stroom.entity.client.component.CopyDocumentController;
 import stroom.entity.client.component.CreateDocumentController;
 import stroom.entity.client.component.InfoDocumentController;
-import stroom.entity.client.component.MoveDocumentController;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.TabSessionManager;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
@@ -49,11 +47,7 @@ import stroom.feed.client.FeedPlugin;
 import stroom.folder.client.FolderFavouritesPlugin;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderRootPlugin;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentAppScreenModule;
-import stroom.gwt.workbench.client.app.gin.processing.AnalyticsScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.help.client.HelpPlugin;
 import stroom.importexport.client.DependenciesPlugin;
@@ -81,7 +75,6 @@ import stroom.security.client.LogoutPlugin;
 import stroom.security.client.SignOutOtherSessionsPlugin;
 import stroom.security.client.SigningKeyPlugin;
 import stroom.security.client.UserAccessPlugin;
-import stroom.security.client.UserPermissionsReportPlugin;
 import stroom.security.client.UserPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
@@ -96,17 +89,12 @@ import com.google.gwt.inject.client.GinModules;
 /// they open) as Stroom's GIN modules (`AppGinjectorUser`) do. Create one each time the story
 /// renders and give it to the harness with `ScreenHarness.Builder.injector(...)`.
 ///
-/// Its modules are the shared mirrors in `app.gin`, other batches' mirrors (used as they are) and
-/// [ShellAppScreenModule]. Stroom binds its plugins as eager singletons; here a plugin is created
+/// Its modules are the shared mirrors in `app.gin` and other batches' mirrors (used as they are).
+/// Stroom binds its plugins as eager singletons; here a plugin is created
 /// (and registers itself on the event bus) when the story gets it from the ginjector, once the
 /// harness has been built.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
         ContentAppScreenModule.class,
-        AnalyticsScreenModule.class,
-        ShellAppScreenModule.class,
 })
 public interface ShellScreenGinjector extends ScreenGinjector {
 
@@ -142,12 +130,6 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return The 'New ...' and 'Save As' dialog, shown for `ShowCreateDocumentDialogEvent`.
     CreateDocumentController getCreateDocumentController();
-
-    /// @return The 'Copy' dialog, shown for `ShowCopyDocumentDialogEvent`.
-    CopyDocumentController getCopyDocumentController();
-
-    /// @return The 'Move' dialog, shown for `ShowMoveDocumentDialogEvent`.
-    MoveDocumentController getMoveDocumentController();
 
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
@@ -274,9 +256,6 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return Stroom's `UserAccessPlugin`, registered as it is created.
     UserAccessPlugin getUserAccessPlugin();
-
-    /// @return Stroom's `UserPermissionsReportPlugin`, registered as it is created.
-    UserPermissionsReportPlugin getUserPermissionsReportPlugin();
 
     /// @return Stroom's `UserPlugin`, registered as it is created.
     UserPlugin getUserPlugin();

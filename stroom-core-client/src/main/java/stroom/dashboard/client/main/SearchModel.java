@@ -31,7 +31,6 @@ import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
-import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TimeRange;
@@ -581,10 +580,6 @@ public class SearchModel implements HasHandlers {
 
     public void removeSearchErrorListener(final SearchErrorListener listener) {
         errorListeners.remove(listener);
-    }
-
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-
     }
 
     /// Says what shows the progress of the requests this makes, e.g. the controller that uses it.

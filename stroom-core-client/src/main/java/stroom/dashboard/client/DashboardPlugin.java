@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.dashboard.client.component.DashboardEditor;
-import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
@@ -33,9 +32,6 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditorHost;
 import stroom.entity.client.component.MultiInstanceEditorHost;
 import stroom.hyperlink.client.ShowDashboardEvent;
-import stroom.query.api.ResultStoreInfo;
-import stroom.query.api.SearchRequestSource;
-import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -76,8 +72,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
         eventBus.addHandler(ShowDashboardEvent.getType(),
                 event -> openParameterisedDashboard(event.getContext(), event.getHref()));
-        eventBus.addHandler(ReopenResultStoreEvent.getType(),
-                event -> reopen(event.getResultStoreInfo()));
     }
 
     @Override
@@ -172,34 +166,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
         return out;
     }
-
-    private void reopen(final ResultStoreInfo resultStoreInfo) {
-        final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
-        if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
-            final DocRef docRef = source.getOwnerDocRef();
-            if (docRef != null) {
-                // If the item isn't already open but we are forcing it open then,
-                // create a new controller and register it as open.
-                final DashboardEditor editor = dashboardEditorProvider.get();
-                editor.setResultStoreInfo(resultStoreInfo);
-                final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
-
-                // Load the document and show the tab.
-                final CloseContentEvent.Handler closeHandler = event -> {
-                    // Tell the controller we are closing.
-                    controller.onClose();
-                    // Actually close the tab, which releases the dashboard and all its controllers
-                    event.getCallback().closeTab(true);
-                };
-                showDocument(docRef,
-                        controller,
-                        closeHandler,
-                        controller,
-                        new DefaultTaskMonitorFactory(this));
-            }
-        }
-    }
-
 
     @Override
     protected DocumentEditorHost<?> createEditor() {

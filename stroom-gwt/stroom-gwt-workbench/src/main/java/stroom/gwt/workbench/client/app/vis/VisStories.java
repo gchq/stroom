@@ -240,18 +240,6 @@ public final class VisStories {
         return drawn;
     }
 
-    /// Waits for a visualisation that is a grid of charts (its `gridSeries` set) to have drawn a
-    /// number of cells, each with something drawn in it, and its transitions to have finished.
-    ///
-    /// @param play     The play.
-    /// @param cells    How many cells it should draw, one for each grid series.
-    /// @param selector What each cell's chart draws, e.g. `path.vis-coloured-element`.
-    public static void drawnGrid(final Play play, final int cells, final String selector) {
-        drawn(play, selector);
-        play.expect(play.withinFrame(frame(play)).querySelectorAll("rect.vis-cellVisualisation-border"))
-                .toHaveLength(cells);
-    }
-
     /// The visualisation's frame, once the dashboard has opened.
     ///
     /// @param play The play.

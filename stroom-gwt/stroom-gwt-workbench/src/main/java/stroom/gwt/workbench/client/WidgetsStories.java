@@ -52,7 +52,6 @@ import stroom.gwt.workbench.client.widgets.dialogs.EscapeStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ExplorerDropdownPopupStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ModalStories;
 import stroom.gwt.workbench.client.widgets.dialogs.NameDialogStories;
-import stroom.gwt.workbench.client.widgets.dialogs.PromptDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.StaticDialogStories;
 import stroom.gwt.workbench.client.widgets.display.ClassificationLabelStories;
 import stroom.gwt.workbench.client.widgets.display.ClassificationWrapperStories;
@@ -83,7 +82,6 @@ import stroom.gwt.workbench.client.widgets.inputs.PasswordInputStories;
 import stroom.gwt.workbench.client.widgets.inputs.QuickFilterPanelStories;
 import stroom.gwt.workbench.client.widgets.inputs.QuickFilterStories;
 import stroom.gwt.workbench.client.widgets.inputs.RadioGroupStories;
-import stroom.gwt.workbench.client.widgets.inputs.SingleLineEditorStories;
 import stroom.gwt.workbench.client.widgets.inputs.SuggestionBoxStories;
 import stroom.gwt.workbench.client.widgets.inputs.TextInputStories;
 import stroom.gwt.workbench.client.widgets.inputs.TickBoxStories;
@@ -111,7 +109,6 @@ import stroom.gwt.workbench.client.widgets.selectors.UserRefSelectionBoxStories;
 import stroom.gwt.workbench.client.widgets.tabs.CurveTabBarStories;
 import stroom.gwt.workbench.client.widgets.tabs.LinkTabPanelStories;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerTreeStories;
-import stroom.gwt.workbench.client.widgets.tree.HTreeStories;
 import stroom.gwt.workbench.client.widgets.tree.TypeFilterStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
@@ -175,8 +172,6 @@ public final class WidgetsStories {
         EscapeStories.addTo(registry);
         // Widgets/Dialogs/ExplorerDropdownPopup
         ExplorerDropdownPopupStories.addTo(registry);
-        // Widgets/Dialogs/PromptDialog
-        PromptDialogStories.addTo(registry);
         // Widgets/Dialogs/StaticDialog
         StaticDialogStories.addTo(registry);
         // Widgets/Dialogs/NameDialog
@@ -266,8 +261,6 @@ public final class WidgetsStories {
         ExplorerTreeStories.addTo(registry);
         // Widgets/Tree/TypeFilter
         TypeFilterStories.addTo(registry);
-        // Widgets/Tree/HTree
-        HTreeStories.addTo(registry);
         // Widgets/EntityCheckTree
         EntityCheckTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
@@ -290,8 +283,6 @@ public final class WidgetsStories {
         QuickFilterPanelStories.addTo(registry);
         // Widgets/Inputs/RadioGroup
         RadioGroupStories.addTo(registry);
-        // Widgets/Inputs/SingleLineEditor
-        SingleLineEditorStories.addTo(registry);
         // Widgets/Inputs/SuggestionBox
         SuggestionBoxStories.addTo(registry);
         // Widgets/Inputs/TextInput

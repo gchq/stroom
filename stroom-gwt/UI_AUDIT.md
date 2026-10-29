@@ -7,7 +7,9 @@ children chosen at runtime). Read-only: eight agents each audited a slice of the
 the workbench in all five dimensions, a second agent per slice tried to refute each finding (one of
 211 was refuted, 29 adjusted), and a last agent merged, ranked and proposed waves. Each finding's
 evidence and its verifier's note are in [ui-audit/findings.md](ui-audit/findings.md). Nothing was
-changed; the waves below wait for approval.*
+changed by the audit itself; the waves below were approved on 29 October 2026 (Decisions).*
+
+**Progress.** Wave 1 done 29 October 2026 (order wave 35, `component-migration/wave-35.md`).
 
 ## Summary
 

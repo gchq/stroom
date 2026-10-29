@@ -28,14 +28,10 @@ public enum ControlType {
     RANGE("range", "number"),
     /// Radio buttons, one per line.
     RADIO("radio", "union"),
-    /// Radio buttons on one line.
-    INLINE_RADIO("inline-radio", "union"),
     /// A drop down list.
     SELECT("select", "union"),
     /// Check boxes, one per line, allowing several values.
     CHECK("check", "union"),
-    /// Check boxes on one line.
-    INLINE_CHECK("inline-check", "union"),
     /// A colour picker.
     COLOR("color", "string"),
     /// A date and time picker.
@@ -65,11 +61,11 @@ public enum ControlType {
 
     /// @return True if the control lets the user pick from a list of options.
     public boolean hasOptions() {
-        return this == RADIO || this == INLINE_RADIO || this == SELECT || this == CHECK || this == INLINE_CHECK;
+        return this == RADIO || this == SELECT || this == CHECK;
     }
 
     /// @return True if the control allows more than one value to be picked.
     public boolean isMulti() {
-        return this == CHECK || this == INLINE_CHECK;
+        return this == CHECK;
     }
 }

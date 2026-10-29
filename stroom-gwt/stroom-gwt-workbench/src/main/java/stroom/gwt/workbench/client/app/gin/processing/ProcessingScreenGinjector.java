@@ -27,9 +27,6 @@ import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.data.client.component.SourceTabController;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.component.ExplorerPopupController;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.node.client.component.NodeGroupEditController;
 import stroom.node.client.component.NodeGroupsController;
@@ -60,11 +57,7 @@ import com.google.gwt.inject.client.GinModules;
 /// It lists the shared base modules of `AppScreenGinjector` that these screens need, plus mirrors
 /// of Stroom's modules in this package.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        TaskScreenModule.class,
         ProcessingExtrasScreenModule.class,
-        AnalyticsScreenModule.class,
 })
 public interface ProcessingScreenGinjector extends ScreenGinjector {
 

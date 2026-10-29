@@ -17,8 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.security;
 
 import stroom.credentials.client.component.CredentialsController;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.security.client.component.ApiKeysController;
 import stroom.security.client.component.AppPermissionsController;
@@ -49,8 +47,6 @@ import com.google.gwt.inject.client.GinModules;
 /// It lists the shared base modules only (as `AppScreenGinjector` does): the screens are controllers,
 /// which need no bindings.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
 })
 public interface SecurityScreenGinjector extends ScreenGinjector {
 

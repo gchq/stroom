@@ -37,8 +37,6 @@ import stroom.explorer.client.event.ExplorerEndTaskEvent;
 import stroom.explorer.client.event.ExplorerStartTaskEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
-import stroom.explorer.client.event.FocusExplorerFilterEvent;
-import stroom.explorer.client.event.FocusExplorerTreeEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -86,9 +84,7 @@ import java.util.List;
 public class NavigationController extends Controller
         implements RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
-        ShowMainEvent.Handler,
-        FocusExplorerFilterEvent.Handler,
-        FocusExplorerTreeEvent.Handler {
+        ShowMainEvent.Handler {
 
     private final Navigation view;
 
@@ -175,10 +171,8 @@ public class NavigationController extends Controller
             }
         }, view.getTaskListener());
 
-        KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, () ->
-                FocusExplorerFilterEvent.fire(this));
-        KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
-                FocusExplorerTreeEvent.fire(this));
+        KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, view::focusQuickFilter);
+        KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () -> explorerTree.focus());
         // Binds for creating a document of a given type
         KeyBinding.addCommand(Action.CREATE_ANNOTATION, () ->
                 CreateAnnotationEvent.fire(this));
@@ -224,10 +218,6 @@ public class NavigationController extends Controller
         // Register for highlight events.
         listen(HighlightExplorerNodeEvent.getType(), this);
 
-        // Register for events to focus the explorer tree filter
-        listen(FocusExplorerFilterEvent.getType(), this);
-
-        listen(FocusExplorerTreeEvent.getType(), this);
 
         // Deal with task listeners.
         final TaskMonitor taskMonitor = view.getTaskListener().createTaskMonitor();
@@ -419,16 +409,6 @@ public class NavigationController extends Controller
     /// Fetches the tree again.
     public void refresh() {
         treeController.refresh();
-    }
-
-    @Override
-    public void onFocusExplorerFilter(final FocusExplorerFilterEvent event) {
-        view.focusQuickFilter();
-    }
-
-    @Override
-    public void onFocusExplorerTree(final FocusExplorerTreeEvent event) {
-        explorerTree.focus();
     }
 
 }

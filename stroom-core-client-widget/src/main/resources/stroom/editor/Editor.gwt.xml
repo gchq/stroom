@@ -6,5 +6,4 @@
   <inherits name='edu.ycp.cs.dh.acegwt.AceGWT'/>
 
   <source path="client" />
-  <source path="shared" />
 </module>

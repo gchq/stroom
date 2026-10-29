@@ -26,7 +26,7 @@
                            item the keyboard or the mouse is on
        menu__item          an item: --highlight for an item drawn bold, --info for an information row
          menu__icon, menu__text, menu__shortcut, menu__arrow (it has a sub menu)
-       menu__separator, menu__group-heading
+       menu__separator
 
    --fixed-width, --keyboard, --active, --highlight and --info are modifiers with no ARIA attribute.
 */
@@ -66,15 +66,6 @@
     border-top: 1px solid var(--menu-separator__color);
     cursor: default;
     margin: var(--row__padding--vertical) var(--row__padding--horizontal);
-}
-
-.menu__group-heading {
-    padding: 6px 0 3px 6px;
-    opacity: 0.8;
-    font-size: var(--font-size-13);
-    text-transform: uppercase;
-    display: block;
-    cursor: default;
 }
 
 .menu__item {

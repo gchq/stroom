@@ -261,9 +261,6 @@ public class ContentTemplateTabController extends ContentTabController
     private List<Item> buildActionMenuItems(final ContentTemplate contentTemplate) {
 
         return MenuBuilder.builder()
-//                .withSimpleMenuItem(itemBuilder ->
-//                        itemBuilder.withText(rule.getRuleNumber() + ". " + rule.getName()))
-//                .withSeparator()
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)

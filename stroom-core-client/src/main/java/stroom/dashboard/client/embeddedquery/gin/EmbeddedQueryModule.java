@@ -17,16 +17,13 @@
 package stroom.dashboard.client.embeddedquery.gin;
 
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
-import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.gwt.inject.client.AbstractGinModule;
-import com.google.inject.Singleton;
 
 public class EmbeddedQueryModule extends AbstractGinModule {
 
     @Override
     protected void configure() {
         bind(EmbeddedQueryPlugin.class).asEagerSingleton();
-        bind(VisFunctionCache.class).in(Singleton.class);
     }
 }

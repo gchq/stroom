@@ -20,11 +20,9 @@ import stroom.alert.client.component.CommonAlertController;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.event.PromptEvent;
 import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,8 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// Shows alerts and confirmations ([AlertEvent], [ConfirmEvent]), one at a time in the order they
-/// come, each in a dialog of its own ([CommonAlertController]), and asks for a value
-/// ([PromptEvent]) with the browser's prompt.
+/// come, each in a dialog of its own ([CommonAlertController]).
 public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
 
     private final EventBus eventBus;
@@ -53,8 +50,6 @@ public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
 
         getEventBus().addHandler(AlertEvent.getType(), this);
         getEventBus().addHandler(ConfirmEvent.getType(), this);
-        getEventBus().addHandler(PromptEvent.getType(), event ->
-                event.getCallback().onResult(Window.prompt(event.getMessage(), event.getInitialValue())));
     }
 
     protected final EventBus getEventBus() {

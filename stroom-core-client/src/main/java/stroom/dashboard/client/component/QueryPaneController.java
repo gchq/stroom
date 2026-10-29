@@ -49,7 +49,6 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.QueryKey;
-import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.DynamicFieldSelectionListModel;
 import stroom.query.client.ResultStoreModel;
@@ -300,11 +299,6 @@ public class QueryPaneController
 
     public void removeSearchErrorListener(final SearchErrorListener listener) {
         searchModel.removeSearchErrorListener(listener);
-    }
-
-    @Override
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        searchModel.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override
