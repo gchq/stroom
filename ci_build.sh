@@ -148,21 +148,24 @@ start_databases() {
 }
 
 generate_ddl_dump() {
-  echo "::group::DDL dump"
+  echo "::group::Prepare for DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
 
   # The service name is not prefixed with bounceit_ at this point
   start_databases stroom-all-dbs
+  echo "::endgroup::"
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
   # Assumes the app jar has been built already
-  echo -e "${GREEN}Running DB migration on empty DB${NC}"
+  #echo -e "${GREEN}Running DB migration on empty DB${NC}"
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" MIGRATE
 
-  echo -e "${GREEN}Dumping the database DDL${NC}"
+  echo "::group::Dump DDL to file"
+  echo -e "${GREEN}Dumping the database DDL to file ${BLUE}${DDL_DUMP_FILE}${NC}"
+
   # Produce the dump file
   docker exec \
     bounceit_stroom-all-dbs \
@@ -175,12 +178,9 @@ generate_ddl_dump() {
 }
 
 generate_entity_rel_diagram() {
-
-  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
-  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -478,12 +478,9 @@ copy_swagger_ui_content() {
 }
 
 check_for_out_of_date_puml_svgs() {
-
-  echo "::group::Converting .puml files to .svg"
-
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
-  echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
+  #echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
 
   # shellcheck disable=SC2068
   # Convert any .puml files into .puml.svg if the sha1 hash of the .puml file
@@ -497,6 +494,7 @@ check_for_out_of_date_puml_svgs() {
   # are up to date with their puml file.
   # This is different to stroom-docs which does not check in svg files.
 
+  echo "::group::Check for SVGs not up to date in Git"
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
