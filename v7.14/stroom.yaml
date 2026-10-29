@@ -5781,6 +5781,46 @@ paths:
       summary: Delete pathway
       tags:
       - Pathways
+  /pathways/v2/fetchPathway:
+    post:
+      operationId: fetchPathway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchPathwayRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pathway"
+          description: default response
+      summary: Fetch one learnt pathway in full
+      tags:
+      - Pathways
+  /pathways/v2/findMutations:
+    post:
+      operationId: findPathwayMutations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindPathwayMutationCriteria"
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathwayMutationResultPage"
+          description: default response
+      summary: Find the changes made to one learnt pathway
+      tags:
+      - Pathways
   /pathways/v2/findPathways:
     post:
       operationId: findPathways
@@ -5799,6 +5839,29 @@ paths:
                 $ref: "#/components/schemas/PathwayResultPage"
           description: default response
       summary: Find pathways
+      tags:
+      - Pathways
+  /pathways/v2/findUsage:
+    post:
+      operationId: findPathwayUsage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindPathwayMutationCriteria"
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PathwayUsage"
+          description: default response
+      summary: Find how much each node of one learnt pathway had been used at each
+        point in its history
       tags:
       - Pathways
   /pathways/v2/updatePathway:
@@ -10339,6 +10402,7 @@ components:
         mapping:
           histogram: "#/components/schemas/HistogramSettings"
           metric: "#/components/schemas/MetricSettings"
+          pathways: "#/components/schemas/PathwaysSettings"
           rangeState: "#/components/schemas/RangeStateSettings"
           session: "#/components/schemas/SessionSettings"
           state: "#/components/schemas/StateSettings"
@@ -12206,10 +12270,15 @@ components:
     Constraint:
       type: object
       properties:
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
         name:
           type: string
         optional:
           type: boolean
+        timesUsed:
+          type: integer
+          format: int64
         value:
           $ref: "#/components/schemas/ConstraintValue"
     ConstraintValue:
@@ -14797,6 +14866,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeStatusResult"
+    FetchPathwayRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        pathwaysDocRef:
+          $ref: "#/components/schemas/DocRef"
     FetchPipelineJsonResponse:
       type: object
       properties:
@@ -15183,6 +15259,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindPathwayMutationCriteria:
+      type: object
+      properties:
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        pathwayName:
+          type: string
+        pathwaysDocRef:
+          $ref: "#/components/schemas/DocRef"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
     FindProcessorProfileRequest:
       type: object
       properties:
@@ -15297,6 +15389,10 @@ components:
           $ref: "#/components/schemas/DocRef"
         filter:
           type: string
+        ignoredSpanNames:
+          type: array
+          items:
+            type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         pathway:
@@ -15490,6 +15586,7 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
+          - PATHWAYS
         type:
           type: string
         updateTimeMs:
@@ -17415,6 +17512,16 @@ components:
           type: boolean
         node:
           $ref: "#/components/schemas/Node"
+    NodeUsage:
+      type: object
+      properties:
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
+        nodeUuid:
+          type: string
+        timesUsed:
+          type: integer
+          format: int64
     NotificationConfig:
       type: object
       properties:
@@ -17624,33 +17731,81 @@ components:
     PathNode:
       type: object
       properties:
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathNode"
         constraints:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/Constraint"
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
         name:
           type: string
-        path:
+        nodePath:
           type: array
           items:
             type: string
-        targets:
-          type: array
-          items:
-            $ref: "#/components/schemas/PathNodeSequence"
+        retiredTime:
+          $ref: "#/components/schemas/NanoTime"
+        timesUsed:
+          type: integer
+          format: int64
         uuid:
           type: string
-    PathNodeSequence:
+    PathStep:
+      type: object
+      properties:
+        node:
+          type: integer
+          format: int32
+        steps:
+          type: array
+          items:
+            type: integer
+            format: int32
+    PathUse:
+      type: object
+      properties:
+        createdByTraceId:
+          type: string
+        firstUsedTime:
+          $ref: "#/components/schemas/NanoTime"
+        lastTraceTime:
+          $ref: "#/components/schemas/NanoTime"
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
+        root:
+          type: integer
+          format: int32
+        source:
+          type: integer
+          format: int32
+        timesUsed:
+          type: integer
+          format: int64
+        traceTime:
+          $ref: "#/components/schemas/NanoTime"
+    Paths:
       type: object
       properties:
         nodes:
           type: array
           items:
-            $ref: "#/components/schemas/PathNode"
-        pathKey:
-          $ref: "#/components/schemas/PathKey"
-        uuid:
-          type: string
+            type: string
+        paths:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathUse"
+        sources:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathStep"
     Pathway:
       type: object
       properties:
@@ -17662,10 +17817,79 @@ components:
           type: string
         pathKey:
           $ref: "#/components/schemas/PathKey"
+        paths:
+          $ref: "#/components/schemas/Paths"
         root:
           $ref: "#/components/schemas/PathNode"
+        timesUpdated:
+          type: integer
+          format: int64
+        timesUsed:
+          type: integer
+          format: int64
         updateTime:
           $ref: "#/components/schemas/NanoTime"
+    PathwayMutation:
+      type: object
+      properties:
+        constraint:
+          type: string
+        newValue:
+          $ref: "#/components/schemas/ConstraintValue"
+        nodePath:
+          type: array
+          items:
+            type: string
+        nodeUuid:
+          type: string
+        oldValue:
+          $ref: "#/components/schemas/ConstraintValue"
+        optional:
+          type: boolean
+        sequence:
+          type: integer
+          format: int64
+        source:
+          type: integer
+          format: int32
+        spanId:
+          type: string
+        time:
+          $ref: "#/components/schemas/NanoTime"
+        traceId:
+          type: string
+        traceTime:
+          $ref: "#/components/schemas/NanoTime"
+        type:
+          type: string
+          enum:
+          - PATHWAY_ADDED
+          - NODE_ADDED
+          - CONSTRAINT_ADDED
+          - CONSTRAINT_CHANGED
+          - CONSTRAINT_OPTIONAL
+          - CONSTRAINT_MIN_EXPANDED
+          - CONSTRAINT_MAX_EXPANDED
+          - CONSTRAINT_SET_EXPANDED
+          - CONSTRAINT_GENERALISED
+          - CONSTRAINT_RANGED
+          - CONSTRAINT_TYPE_CONFLICT
+          - CONSTRAINT_IGNORED
+          - NODE_ABSENT
+          - CONSTRAINT_BOUND_OPENED
+          - CONSTRAINT_NARROWED
+          - PATH_DROPPED
+          - NODE_RETIRED
+          - NODE_REVIVED
+    PathwayMutationResultPage:
+      type: object
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathwayMutation"
     PathwayResultPage:
       type: object
       properties:
@@ -17674,7 +17898,43 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/Pathway"
+            $ref: "#/components/schemas/PathwaySummary"
+    PathwaySummary:
+      type: object
+      properties:
+        createTime:
+          $ref: "#/components/schemas/NanoTime"
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
+        name:
+          type: string
+        nodes:
+          type: integer
+          format: int32
+        paths:
+          type: integer
+          format: int32
+        sizeBytes:
+          type: integer
+          format: int64
+        timesUpdated:
+          type: integer
+          format: int64
+        timesUsed:
+          type: integer
+          format: int64
+        updateTime:
+          $ref: "#/components/schemas/NanoTime"
+    PathwayUsage:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/NodeUsage"
+        sequence:
+          type: integer
+          format: int64
     PathwaysDoc:
       type: object
       properties:
@@ -17693,20 +17953,30 @@ components:
           type: string
         description:
           type: string
+        hasSharedFileStoreData:
+          type: boolean
+        ignoredAttributes:
+          type: array
+          items:
+            type: string
+        ignoredSpanNames:
+          type: array
+          items:
+            type: string
         infoFeed:
           $ref: "#/components/schemas/DocRef"
         name:
           type: string
+        narrowingWindow:
+          $ref: "#/components/schemas/SimpleDuration"
         pathways:
           type: array
           items:
             $ref: "#/components/schemas/Pathway"
-        processingNode:
-          type: string
+        sharedFileStore:
+          $ref: "#/components/schemas/SharedFileStoreSettings"
         temporalOrderingTolerance:
           $ref: "#/components/schemas/SimpleDuration"
-        tracesDocRef:
-          $ref: "#/components/schemas/DocRef"
         type:
           type: string
         updateTimeMs:
@@ -17718,6 +17988,14 @@ components:
           type: string
         version:
           type: string
+    PathwaysSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          sharedFileStore:
+            $ref: "#/components/schemas/SharedFileStoreSettings"
     PermissionChangeEvent:
       type: object
       properties:
@@ -18195,6 +18473,7 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
+          - PATHWAYS
         type:
           type: string
         updateTimeMs:
@@ -22592,6 +22871,8 @@ components:
           type: boolean
         name:
           type: string
+        pathwaysDocRef:
+          $ref: "#/components/schemas/DocRef"
         settings:
           $ref: "#/components/schemas/AbstractPlanBSettings"
         stateType:
@@ -22605,6 +22886,7 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
+          - PATHWAYS
         type:
           type: string
         updateTimeMs:
