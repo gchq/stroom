@@ -303,6 +303,11 @@ public class TableSummariserImpl implements TableSummariser {
                     .merge(summaries, notes);
         }
 
+        // The model was told, but a reader (e.g. a report's recipient) may never see the data, so say it here
+        // whatever the model wrote.
+        if (anyTruncated || anyCapped) {
+            notes.add("This answer covers only the first " + givenRows + " rows of a larger table");
+        }
         notes.coverage(summaries.size(), totalBatches, failedBatches,
                 unreadableSources, cancelled.getAsBoolean());
         return TableSummaryResult.summarised(notes.appendTo(merged));
