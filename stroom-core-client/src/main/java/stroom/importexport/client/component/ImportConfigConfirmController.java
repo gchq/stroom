@@ -415,7 +415,7 @@ public class ImportConfigConfirmController extends Controller {
                     for (final Message msg : action.getMessageList()) {
                         tb.row(msg.getSeverity().getDisplayValue(), msg.getMessage());
                     }
-                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+                    htmlBuilder.div(tb::write, Attribute.className("info-table"));
                 }
 
                 if (action.getUpdatedFieldList().size() > 0) {
@@ -426,7 +426,7 @@ public class ImportConfigConfirmController extends Controller {
                     final TableBuilder tb = new TableBuilder();
                     tb.row(TableCell.header("Fields Updated"));
                     action.getUpdatedFieldList().forEach(tb::row);
-                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+                    htmlBuilder.div(tb::write, Attribute.className("info-table"));
                 }
                 infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }

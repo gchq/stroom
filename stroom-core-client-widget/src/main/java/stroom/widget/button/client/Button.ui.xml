@@ -13,7 +13,7 @@
             <span class="button__spinner">
                 <span class="button__spinner-ring" aria-hidden="true"></span>
             </span>
-            <span ui:field="icon" class="button__icon svgIcon" aria-hidden="true" focusable="false"></span>
+            <span ui:field="icon" class="button__icon icon-wrap" aria-hidden="true" focusable="false"></span>
             <span ui:field="text" class="button__text">Close</span>
         </div>
         <span ui:field="ownContent" class="button__own-content"></span>

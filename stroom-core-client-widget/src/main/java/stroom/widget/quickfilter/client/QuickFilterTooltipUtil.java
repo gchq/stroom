@@ -151,7 +151,7 @@ public class QuickFilterTooltipUtil {
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 

@@ -55,9 +55,9 @@ public final class FeedRefCellStories {
     private static final String ON_COPY = "onCopy";
     private static final String ON_COPY_LINK = "onCopyLink";
     // The class of the cell's copy button
-    private static final String COPY_CLASS_NAME = "docRefLinkCopy";
+    private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
     // The class of the cell's open button
-    private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
+    private static final String OPEN_CLASS_NAME = "doc-ref-link__open";
     private static final String NO_FEED_TEXT = "(no feed)";
     private static final int CELL_WIDTH_PX = 280;
 

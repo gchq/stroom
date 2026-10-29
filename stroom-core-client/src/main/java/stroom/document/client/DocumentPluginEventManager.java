@@ -883,7 +883,7 @@ public class DocumentPluginEventManager extends Plugin {
                 // Detail: one icon + name row per item.
                 appendDocRefRows(builder, info.getChildItems());
                 if (info.isChildItemsTruncated()) {
-                    builder.div("…and more", Attribute.className("docRefLinkContainer"));
+                    builder.div("…and more", Attribute.className("doc-ref-link"));
                 }
             }
             if (info.isHasHiddenChildItems()) {
@@ -952,14 +952,14 @@ public class DocumentPluginEventManager extends Plugin {
                     hb.append(SvgImageUtil.toSafeHtml(
                             documentType.getDisplayType(),
                             documentType.getIcon(),
-                            "svgIcon",
+                            "icon-wrap",
                             "docRefLinkIcon"));
                 }
                 final String name = NullSafe.isBlankString(docRef.getName())
                         ? docRef.getUuid()
                         : docRef.getName();
                 hb.append(name);
-            }, Attribute.className("docRefLinkContainer"));
+            }, Attribute.className("doc-ref-link"));
         }
     }
 

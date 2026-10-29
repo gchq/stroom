@@ -36,7 +36,7 @@
                     label="Event Expiry"
                     controlNames="Amount, Unit"
                     helpText="How long an entity stays on the map after its last event. Measured from the position of the timeline scrubber rather than from now, so scrubbing back in time shows what was current then. This cannot be turned off - an entity that stopped emitting would otherwise be drawn for ever. It must not be longer than the data retention period below, because the data needed to show the entity would by then have been deleted.">
-                <g:FlowPanel styleName="durationSetting">
+                <g:FlowPanel styleName="duration-setting">
                     <valuespinner:ValueSpinner ui:field="expiryTime" minValue="1" maxValue="9999"/>
                     <i:SelectionBox ui:field="expiryTimeUnit" addStyleNames="allow-focus"/>
                 </g:FlowPanel>

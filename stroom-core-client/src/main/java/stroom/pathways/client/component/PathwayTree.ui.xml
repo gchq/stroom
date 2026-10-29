@@ -18,7 +18,7 @@
                 </b:Toolbar>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel addStyleNames="listContainer dock-max">
+        <g:FlowPanel addStyleNames="list-container dock-max">
             <tx:Html ui:field="tree" addStyleNames="max"/>
         </g:FlowPanel>
     </g:FlowPanel>

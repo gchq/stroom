@@ -62,14 +62,14 @@ public class NodeStatusList extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
-    private static final String CLASS_BASE = "nodePingBar";
-    private static final String PING_BAR_CLASS = CLASS_BASE + "-bar";
-    private static final String PING_TEXT_CLASS = CLASS_BASE + "-text";
-    private static final String PING_ERROR_TEXT_CLASS = CLASS_BASE + "-error-text";
-    private static final String PING_SEVERITY_CLASS_BASE = CLASS_BASE + "-severity";
-    private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "__healthy";
-    private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
-    private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
+    private static final String CLASS_BASE = "node-ping-bar";
+    private static final String PING_BAR_CLASS = CLASS_BASE + "__bar";
+    private static final String PING_TEXT_CLASS = CLASS_BASE + "__text";
+    private static final String PING_ERROR_TEXT_CLASS = CLASS_BASE + "__error-text";
+    private static final String PING_SEVERITY_CLASS_BASE = PING_BAR_CLASS + "--";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "healthy";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "warn";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "max";
 
     @UiField
     PagerPanel pager;
@@ -395,7 +395,7 @@ public class NodeStatusList extends Component {
         final Attribute barClass = Attribute.className(PING_BAR_CLASS + " " + severityClass);
         final Attribute barWrapperClass = Attribute.className(PING_BAR_CLASS + "-wrapper");
         final Attribute titleAttr = Attribute.title(title);
-        final Attribute outerClass = Attribute.className("nodePingBar-outer");
+        final Attribute outerClass = Attribute.className(CLASS_BASE);
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         if (isErrorMsg) {

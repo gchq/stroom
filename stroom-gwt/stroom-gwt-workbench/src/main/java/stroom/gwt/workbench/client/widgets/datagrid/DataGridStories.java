@@ -657,7 +657,7 @@ public final class DataGridStories {
                 .withPlay(play -> {
                     final Query row = InteractiveCellGrids.rowOf(play, "Carol Williams");
                     play.waitFor(() -> play.expect(row).toBeInTheDocument());
-                    play.click(play.within(row).querySelector(".commandLinkOpen"));
+                    play.click(play.within(row).querySelector(".command-link__open"));
                     play.waitFor(() -> play.expect(play.spy(InteractiveCellGrids.ON_OPEN))
                             .toHaveBeenCalledWith("Carol Williams"));
                     play.expect(row).toHaveAttribute("aria-selected", "false");

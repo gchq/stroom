@@ -1223,6 +1223,16 @@ after wave 28.
 > went, the element rules are `base.css`, the layout helpers `layout-helpers.css`, and the rest are
 > in their components' sheets. See `wave-29.md`.
 
+## 30. CSS step 4, part 2: components.css dissolved
+
+Record: [`component-migration/wave-30.md`](component-migration/wave-30.md). Added 29 October 2026,
+after wave 29.
+
+> **Done, 29 October 2026**: `components.css` is gone: 28 dead rules deleted, the rest in a sheet
+> per block (27 new) or their components' sheets, and its camel-case classes renamed BEM style; only
+> Ace's classes and GWT's `popupContent` aren't. `ElementUtil` matches whole class names, as a BEM
+> block's name starts its elements'. See `wave-30.md`.
+
 ## Deferred: delete rather than convert
 
 The deletions still to do are wave 16's units 7 and 11.

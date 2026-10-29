@@ -169,7 +169,7 @@ public class IndexShardListController extends Controller {
                 .row("Index Version", indexShard.getIndexVersion());
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
 
         infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }

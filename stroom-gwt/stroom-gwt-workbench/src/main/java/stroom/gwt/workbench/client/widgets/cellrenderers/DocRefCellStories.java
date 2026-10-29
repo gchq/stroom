@@ -58,7 +58,7 @@ public final class DocRefCellStories {
     private static final String ON_OPEN = "onOpen";
     private static final String ON_COPY = "onCopy";
     // The class of the cell's copy button
-    private static final String COPY_CLASS_NAME = "docRefLinkCopy";
+    private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
     private static final int CELL_WIDTH_PX = 280;
 
     private static final DocRef FEED_REF = new DocRef("Feed", "uuid-feed-1", "TEST_FEED");

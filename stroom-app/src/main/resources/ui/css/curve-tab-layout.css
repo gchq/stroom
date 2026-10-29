@@ -39,3 +39,16 @@
 	height: 100%;
 	padding: 0px;
 }
+
+/* The bar holding a tab layout's tabs (was components.css's tabBarContainer) */
+.tab-bar-container {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* The Hide Sidebar button's toolbar, with room before it for its focus ring, which the pane it is
+   in would otherwise cut off */
+.tab-bar-container > .toolbar {
+    margin: 0 2px 0 6px;
+}

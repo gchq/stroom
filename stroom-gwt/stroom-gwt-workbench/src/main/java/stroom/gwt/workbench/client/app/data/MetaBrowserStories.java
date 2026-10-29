@@ -140,7 +140,7 @@ public final class MetaBrowserStories {
                     // Rich cells: Pipeline and Feed are document links, Created and Type copy text.
                     // The feed is a document link (titled 'Open Feed ... in new tab') and the copy
                     // text cells have a 'Copy value' icon
-                    play.expect(play.getByText("Events Pipeline").closest(".docRefLinkContainer")).not().toBeNull();
+                    play.expect(play.getByText("Events Pipeline").closest(".doc-ref-link")).not().toBeNull();
                     play.expect(play.getAllByTitle("Open Feed EVENTS").count()).toBeGreaterThan(0);
                     play.expect(play.getAllByTitle("Copy value 'Raw Events' to clipboard").count())
                             .toBeGreaterThan(0);

@@ -16,7 +16,7 @@
 
 /* A list input's value with the dictionary it came from (ListInput), in its selection list. */
 
-.selectionItemCell-content .list-input-item {
+.selection-item-cell__content .list-input-item {
     display: flex;
     flex-direction: row;
     justify-content: space-between;

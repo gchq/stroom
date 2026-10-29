@@ -55,10 +55,10 @@ import java.util.function.Predicate;
 public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements EventCell {
 
-    private static final String ICON_CLASS_NAME = "svgIcon";
-    private static final String COPY_CLASS_NAME = "userRefLinkCopy";
-    private static final String OPEN_CLASS_NAME = "userRefLinkOpen";
-    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
+    private static final String ICON_CLASS_NAME = "icon-wrap";
+    private static final String COPY_CLASS_NAME = "user-ref-link__copy";
+    private static final String OPEN_CLASS_NAME = "user-ref-link__open";
+    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
 
     private final boolean showIcon;
@@ -165,7 +165,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                 final String containerClasses = String.join(
                         " ",
                         HOVER_ICON_CONTAINER_CLASS_NAME,
-                        "userRefLinkContainer");
+                        "user-ref-link");
                 sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
 
                 if (showIcon) {

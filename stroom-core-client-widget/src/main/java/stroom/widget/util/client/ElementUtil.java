@@ -37,7 +37,7 @@ public class ElementUtil {
     public static Element findChild(final Element element, final String className) {
         if (element != null) {
             final String elementClassName = ElementUtil.getClassName(element);
-            if (elementClassName != null && elementClassName.contains(className)) {
+            if (containsClassName(elementClassName, className)) {
                 return element;
             } else if (element.getChildNodes() != null) {
                 for (int i = 0; i < element.getChildNodes().getLength(); i++) {
@@ -97,7 +97,7 @@ public class ElementUtil {
          * To avoid this problem we get the class attribute of the element instead.
          */
         final String elementClassName = getClassName(element);
-        if (elementClassName.contains(className)) {
+        if (containsClassName(elementClassName, className)) {
             return element;
         }
 
@@ -131,6 +131,25 @@ public class ElementUtil {
         }
 
         return null;
+    }
+
+    /// Whether a class attribute's value names a class: one of its names separated by white space,
+    /// not just part of one (a BEM block's name starts its elements' names, so `doc-ref-link`
+    /// mustn't match `doc-ref-link__open`).
+    ///
+    /// @param classNames The class attribute's value, or null.
+    /// @param className  The class to look for.
+    /// @return True if one of the names is the class.
+    public static boolean containsClassName(final String classNames, final String className) {
+        if (classNames == null || className == null || className.isEmpty()) {
+            return false;
+        }
+        for (final String name : classNames.trim().split("\\s+")) {
+            if (name.equals(className)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static String getClassName(final Element el) {

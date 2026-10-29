@@ -227,7 +227,7 @@
     gap: 5px;
 }
 
-.ai-attachment-status .svgIcon {
+.ai-attachment-status .icon-wrap {
     width: 14px;
     height: 14px;
     flex-shrink: 0;

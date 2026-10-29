@@ -265,7 +265,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     // classes too
     private static Element createIcon(final SvgImage svgImage, final String className) {
         final Element holder = Document.get().createDivElement();
-        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(svgImage, "svgIcon", IMAGE_CLASS, className));
+        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(svgImage, "icon-wrap", IMAGE_CLASS, className));
         final Element icon = holder.getFirstChildElement();
         icon.removeFromParent();
         return icon;

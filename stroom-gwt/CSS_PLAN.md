@@ -134,7 +134,7 @@ Each step is checked by the screenshot diff of a full workbench run, so first:
    modifier. As wave 17 did for the view-named classes.
 4. **Dissolve `components.css`, `stroom.css`, `standard.css` and `standard-mod.css`** (the last three
    done in wave 29, 29 October 2026, into `base.css`, `layout-helpers.css` and components' sheets;
-   `components.css` in wave 30): element
+   `components.css` in wave 30, the same day: a sheet per block, and every class Stroom names BEM): element
    rules to the base sheet, layout helpers and shared patterns to theirs, old component classes to
    their components' sheets with BEM names, and the live GWT widgets' styling onto classes Stroom
    sets (so nothing relies on `gwt-*`).

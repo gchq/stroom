@@ -49,7 +49,7 @@
 
 /* The descriptions wrap, so the table fits in the popup (an info table doesn't wrap); the example
    inputs beside them stay on one line */
-.help-popup__content .infoTable td:last-child {
+.help-popup__content .info-table td:last-child {
     white-space: normal;
 }
 

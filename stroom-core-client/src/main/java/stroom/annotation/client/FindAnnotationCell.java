@@ -53,7 +53,7 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
                                 docRef.getType(),
                                 documentType.getIcon(),
                                 BLOCK + "__icon",
-                                "svgIcon"));
+                                "icon-wrap"));
                     }
 
                     // Add name

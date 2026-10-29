@@ -18,7 +18,7 @@
                         helpText="How often to check for data that has passed its retention period. Data may be kept for up to this long after it expires, so it must be shorter than Retain For. Enter 1 to 9999 and choose Minutes, Hours or Days. Default is 1 hour."
                         screenReaderText="Number and unit; must be shorter than Retain For. Default is 1 hour."
                         controlNames="Amount, Unit">
-            <g:FlowPanel styleName="durationSetting">
+            <g:FlowPanel styleName="duration-setting">
                 <valuespinner:ValueSpinner ui:field="retentionCheckInterval" minValue="1" maxValue="9999"/>
                 <i:SelectionBox ui:field="retentionCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
@@ -29,7 +29,7 @@
                         helpText="How long to keep data before it is deleted. Enter a number from 1 to 9999 and choose Days, Weeks, Months or Years. Default is 1 year. Only used when retention is enabled."
                         screenReaderText="Number from 1 to 9999 and a unit, days to years. Default is 1 year."
                         controlNames="Amount, Unit">
-            <g:FlowPanel styleName="durationSetting">
+            <g:FlowPanel styleName="duration-setting">
                 <valuespinner:ValueSpinner ui:field="retentionAge" minValue="1" maxValue="9999"/>
                 <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>

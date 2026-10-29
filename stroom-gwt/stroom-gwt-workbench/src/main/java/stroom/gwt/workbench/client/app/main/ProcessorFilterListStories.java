@@ -109,7 +109,7 @@ public final class ProcessorFilterListStories {
             "\"lastPollTaskCount\": 0, \"minMetaId\": 42}");
 
     // A stream link's open icon (OpenLinkUtil)
-    private static final String STREAM_LINK_OPEN = "[link-type=\"stream\"] .docRefLinkOpen";
+    private static final String STREAM_LINK_OPEN = "[link-type=\"stream\"] .doc-ref-link__open";
 
     // Told each time a stream is asked to be opened
     private static final String SHOW_DATA_SPY = "showData";

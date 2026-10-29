@@ -373,7 +373,7 @@ public final class AppShellStories {
                     final Query timeZone = dialog.querySelector("#userPreferencesTimeZone .selection-box__input");
                     play.waitFor(() -> play.expect(timeZone).toHaveAttribute("role", "combobox"));
                     play.click(timeZone);
-                    play.click(screen.findByText("Offset", ".selection-popup .selectionItemCell-text"));
+                    play.click(screen.findByText("Offset", ".selection-popup .selection-item-cell__text"));
                     play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Hours")).toBeVisible());
                     play.expect(dialog.queryByRole("spinbutton", "Minutes")).toBeNull();
                     expectNoProblems(play);
@@ -1461,7 +1461,7 @@ public final class AppShellStories {
         // Its options, the current theme's selected
         play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
                 .toBeGreaterThan(1));
-        play.click(play.screen().findByText(theme, ".selection-popup .selectionItemCell-text"));
+        play.click(play.screen().findByText(theme, ".selection-popup .selection-item-cell__text"));
         play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
         play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .selection-box__value"))
                 .toHaveTextContent(theme));
@@ -1473,11 +1473,11 @@ public final class AppShellStories {
         final Play screen = play.screen();
         play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
         play.click(dialog.querySelector("#userPreferencesEditorTheme .selection-box__input"));
-        final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
+        final Play list = screen.within(screen.findByText(themes[0], ".selection-item-cell__text")
                 .closest(".selection-popup"));
-        play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
+        play.expect(list.querySelector(".selection-item-cell__text")).toHaveTextContent(themes[0]);
         for (final String theme : themes) {
-            play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
+            play.expect(list.getByText(theme, ".selection-item-cell__text")).toBeInTheDocument();
         }
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());

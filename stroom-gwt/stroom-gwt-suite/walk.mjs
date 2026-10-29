@@ -1202,10 +1202,10 @@ async function driveStep(step) {
         // click there CHECKS the row (the batch selection — Process/Delete light up) without
         // SELECTING it, so the data preview never loaded and `View Source` had nothing to show.
         // And a cell that is PLAIN: the Search Result Stores' owner column is a UserRef link cell
-        // (`.userRefLinkContainer`, a copy icon), which CONSUMES the click, so the row was never
+        // (`.user-ref-link`, a copy icon), which CONSUMES the click, so the row was never
         // selected. Prefer a text cell with nothing interactive in it; fall back to any text cell.
         const tds = [...row.querySelectorAll('td, [role=gridcell]')];
-        const interactive = 'a, u[link], button, input, .svg-image, .hoverIconContainer, .userRefLinkContainer';
+        const interactive = 'a, u[link], button, input, .svg-image, .hoverIconContainer, .user-ref-link';
         const td = tds.find((c) => c.offsetWidth > 20 && c.textContent.trim() && !c.querySelector(interactive))
           ?? tds.find((c) => c.offsetWidth > 20 && c.textContent.trim()) ?? tds.find((c) => c.offsetWidth > 20) ?? row;
         const r = td.getBoundingClientRect();

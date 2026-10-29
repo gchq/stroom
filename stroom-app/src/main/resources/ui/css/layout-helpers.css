@@ -98,3 +98,17 @@
 .lower-case-input {
     text-transform: lowercase;
 }
+
+/* A dialog's least size, and a part of a form that does not apply (from components.css) */
+.default-min-sizes {
+    min-width: 200px;
+    min-height: 200px;
+}
+
+/* A part of a form that doesn't apply while another setting is off, set from Java with
+   setStyleName("section--disabled", ...). Its controls are disabled too, so show it themselves; its
+   labels are greyed (fading the whole part as well took them under 4.5:1) */
+.section--disabled,
+.section--disabled .form-group__label {
+    color: var(--text-color--disabled);
+}

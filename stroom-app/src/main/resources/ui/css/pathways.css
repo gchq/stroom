@@ -363,13 +363,13 @@
     gap: 4px;
 }
 
-.span-info-row .docRefLinkContainer,
-.span-info-attr .docRefLinkContainer {
+.span-info-row .doc-ref-link,
+.span-info-attr .doc-ref-link {
     min-width: 0;
     flex: 1;
 }
 
-.span-info-attr .docRefLinkText {
+.span-info-attr .doc-ref-link__text {
     white-space: pre-wrap;
     word-break: normal;
     overflow-wrap: anywhere;
@@ -446,12 +446,12 @@
     margin-right: 8px;
 }
 
-.operation-content .docRefLinkContainer {
+.operation-content .doc-ref-link {
     flex: 1;
     min-width: 0;
 }
 
-.operation-content .docRefLinkText {
+.operation-content .doc-ref-link__text {
     min-width: 0;
     overflow: hidden;
 }

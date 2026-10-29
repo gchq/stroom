@@ -31,7 +31,7 @@ import java.util.Objects;
 public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> {
 
     private String getCellClassName() {
-        return "selectionItemCell";
+        return "selection-item-cell";
     }
 
     @Override
@@ -50,11 +50,11 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
             }
             if (row.hasRenderedLabel()) {
                 content.append(Templates.div(
-                        getCellClassName() + "-content",
+                        getCellClassName() + "__content",
                         row.getRenderedLabel()));
             } else {
                 content.append(Templates.div(
-                        getCellClassName() + "-text",
+                        getCellClassName() + "__text",
                         SafeHtmlUtil.getSafeHtml(row.getLabel())));
             }
 
@@ -62,7 +62,7 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
             if (row.isHasChildren()) {
                 final SvgImage expanderIcon = SvgImage.ARROW_RIGHT;
                 final SafeHtml expanderIconSafeHtml;
-                String className = getCellClassName() + "-expander";
+                String className = getCellClassName() + "__expander";
                 className += " " + expanderIcon.getClassName();
                 expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
                 content.append(Templates.div(className, expanderIconSafeHtml));

@@ -99,7 +99,7 @@ public class InfoDocumentController extends Controller {
 
         // Add audit information
         if (auditEntryResultPage != null && !NullSafe.isEmptyCollection(auditEntryResultPage.getValues())) {
-            hb.div(d -> appendKey("Audit Info", d), Attribute.className("infoLine"));
+            hb.div(d -> appendKey("Audit Info", d), Attribute.className("info-line"));
             final TableBuilder tableBuilder = new TableBuilder();
             tableBuilder.row("Time", "User", "Action");
             for (final DocAuditEntry entry : auditEntryResultPage.getValues()) {
@@ -120,7 +120,7 @@ public class InfoDocumentController extends Controller {
         hb.div(d -> {
             appendKey(key, d);
             d.append(CopyTextUtil.render(value, false));
-        }, Attribute.className("infoLine"));
+        }, Attribute.className("info-line"));
     }
 
     private void appendKey(final String key, final HtmlBuilder hb) {

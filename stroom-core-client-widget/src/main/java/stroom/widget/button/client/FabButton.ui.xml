@@ -6,7 +6,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
     <div class="fab-button">
         <button ui:field="face" type="button" class="fab-button__face">
-            <div ui:field="icon" class="svgIcon" aria-hidden="true"></div>
+            <div ui:field="icon" class="icon-wrap" aria-hidden="true"></div>
         </button>
     </div>
 </ui:UiBinder>

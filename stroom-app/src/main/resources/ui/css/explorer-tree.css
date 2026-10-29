@@ -45,7 +45,7 @@
 	height: var(--icon-height)
 }
 
-.explorer-cell__alert-icon.svgIcon {
+.explorer-cell__alert-icon.icon-wrap {
     left: 6px;
     position: absolute;
     display: block;
@@ -54,7 +54,7 @@
 	color: var(--icon-colour__foreground);
 }
 
-.explorer-cell__alert-icon.svgIcon.small svg {
+.explorer-cell__alert-icon.icon-wrap.icon-wrap--small svg {
     width: calc(var(--icon-width) * 0.8);
     height: calc(var(--icon-height) * 0.8);
 }

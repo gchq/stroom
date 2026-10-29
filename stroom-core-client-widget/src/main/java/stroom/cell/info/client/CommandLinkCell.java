@@ -42,8 +42,8 @@ import com.google.gwt.view.client.CellPreviewEvent;
 /// or Space.
 public class CommandLinkCell extends AbstractCell<CommandLink> implements EventCell {
 
-    private static final String ICON_CLASS_NAME = "svgIcon";
-    private static final String OPEN_CLASS_NAME = "commandLinkOpen";
+    private static final String ICON_CLASS_NAME = "icon-wrap";
+    private static final String OPEN_CLASS_NAME = "command-link__open";
 
     public CommandLinkCell() {
         super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
@@ -89,7 +89,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
             final SafeHtml textSafeHtml = Templates
                     .div("commandLinkText", SafeHtmlUtils.fromString(text));
 
-            sb.appendHtmlConstant("<div class=\"commandLinkContainer\">");
+            sb.appendHtmlConstant("<div class=\"command-link\">");
             sb.append(textSafeHtml);
 
             final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME);

@@ -1,0 +1,57 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A table of information in a popup (a document's, a processor's, a task's info): names and values. */
+
+.info-table {
+    white-space: nowrap;
+    user-select: text;
+}
+
+.info-table code {
+    color: var(--code-color);
+}
+
+.info-table tr {
+    height: 10px;
+}
+
+.info-table th {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding-bottom: 0.3em;
+}
+
+.info-table td {
+    vertical-align: middle;
+}
+
+/* Make headers after the first add padding before */
+.info-table tr:not(:first-of-type) th {
+    padding-top: 1rem;
+}
+
+.info-table th,
+.info-table td {
+    padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
+}
+
+.info-table td:first-child {
+    line-height: 1.4em;
+    font-weight: 500;
+}

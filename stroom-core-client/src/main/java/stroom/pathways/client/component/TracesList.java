@@ -202,18 +202,18 @@ public class TracesList extends Component {
                 "<div class=\"traces-list__operation\">"));
         if (trace != null && trace.isError()) {
             sb.append(SvgImageUtil.toSafeHtml(
-                    "Trace contains one or more errored spans", SvgImage.ERROR, "svgIcon"));
+                    "Trace contains one or more errored spans", SvgImage.ERROR, "icon-wrap"));
         } else if (orphan) {
             sb.append(SvgImageUtil.toSafeHtml(
                     "No root span found for this trace ID (its root has aged out "
-                    + "or never arrived)", SvgImage.ERROR, "svgIcon"));
+                    + "or never arrived)", SvgImage.ERROR, "icon-wrap"));
         } else if (trace != null && trace.isTruncated()) {
             sb.append(SvgImageUtil.toSafeHtml(
                     "Truncated — this trace reached the store's per-trace span limit, so some of "
-                    + "its spans were not stored", SvgImage.WARNING, "svgIcon"));
+                    + "its spans were not stored", SvgImage.WARNING, "icon-wrap"));
         } else if (hasTrailingLeak(trace)) {
             sb.append(SvgImageUtil.toSafeHtml("Trailing spans — activity continued after the root span ended",
-                    SvgImage.WARNING, "svgIcon"));
+                    SvgImage.WARNING, "icon-wrap"));
         }
         sb.append(SafeHtmlUtil.getSafeHtml(name));
         sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString("</div>"));

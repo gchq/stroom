@@ -196,7 +196,7 @@ public final class QueryEditorStories {
     static final String ANNOTATION_CHANGE = "annotationChange";
 
     // The text of a query help item
-    private static final String HELP_ITEM = ".selectionItemCell-text";
+    private static final String HELP_ITEM = ".selection-item-cell__text";
 
     // The help detail of 'count' (as JSON string content), ending with the link to its
     // documentation that Stroom's server adds (Functions), which says it opens a new tab

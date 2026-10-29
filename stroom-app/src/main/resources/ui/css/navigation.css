@@ -64,3 +64,41 @@
     color: var(--navigation__text-color);
     border-radius: 0;
 }
+
+/* The navigation's title bar: the Main Menu button and the logo (from components.css) */
+.navigation-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* The Main Menu button's toolbar, with room after it for its focus ring, which the explorer would
+   otherwise cut off */
+.navigation-title-bar > .toolbar {
+    margin: 0 6px 0 0;
+}
+
+.navigation-logo {
+    flex-grow: 1;
+    padding: 6px 0 0 0;
+    background-color: transparent;
+    color: white;
+    border: 0;
+    text-align: left;
+    width: auto;
+}
+
+.navigation-logo-image svg {
+    width: 146px;
+    height: 35px;
+    color: var(--logo-color);
+}
+
+.navigation-toolbar {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin: 0.25rem;
+    margin-top: 0;
+}

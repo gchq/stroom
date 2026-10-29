@@ -37,11 +37,11 @@ import com.google.gwt.user.client.ui.Widget;
 public class OpenLinkUtil {
 
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
-    private static final String ICON_CLASS_NAME = "svgIcon";
-    private static final String LINK_CONTAINER_CLASS_NAME = "docRefLinkContainer";
-    private static final String LINK_OPEN_CLASS_NAME = "docRefLinkOpen";
-    private static final String LINK_TEXT_CLASS_NAME = "docRefLinkText";
+    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
+    private static final String ICON_CLASS_NAME = "icon-wrap";
+    private static final String LINK_CONTAINER_CLASS_NAME = "doc-ref-link";
+    private static final String LINK_OPEN_CLASS_NAME = "doc-ref-link__open";
+    private static final String LINK_TEXT_CLASS_NAME = "doc-ref-link__text";
     private static final String LINK_ID_ATTRIBUTE = "link-id";
     private static final String LINK_TYPE_ATTRIBUTE = "link-type";
 

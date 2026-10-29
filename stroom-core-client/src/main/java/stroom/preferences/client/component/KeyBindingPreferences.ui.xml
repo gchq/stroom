@@ -17,7 +17,7 @@
         <g:SimplePanel styleName="dock-min">
             <view:QuickFilter ui:field="quickFilter" accessibleName="Filter keyboard shortcuts"/>
         </g:SimplePanel>
-        <g:SimplePanel styleName="dock-max keyBindingPreferences-list">
+        <g:SimplePanel styleName="dock-max key-binding-preferences__list">
             <dg:PagerPanel ui:field="pager" toolbarName="Keyboard shortcut actions">
                 <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Shortcut" enabled="false"/>
                 <b:ToolbarButton ui:field="changeButton" svg="EDIT" title="Change Shortcut" enabled="false"/>

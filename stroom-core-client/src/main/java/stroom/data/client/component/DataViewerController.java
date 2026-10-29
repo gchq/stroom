@@ -1209,7 +1209,7 @@ public class DataViewerController
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tableBuilder::write, Attribute.className("info-table"));
         htmlPane.setHtml(htmlBuilder.toSafeHtml().asString());
     }
 

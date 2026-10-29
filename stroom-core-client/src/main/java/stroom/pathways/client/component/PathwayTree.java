@@ -183,7 +183,7 @@ public class PathwayTree extends Component {
         hb.div(nodeDiv -> {
             nodeDiv.div(icon ->
                             icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
-                    Attribute.className("pathway-tree__node-icon svgIcon " +
+                    Attribute.className("pathway-tree__node-icon icon-wrap " +
                                         SvgImage.PATHWAYS_NODE.getClassName()));
             nodeDiv.div(n -> n.append(node.getName()),
                     Attribute.className("pathway-tree__node-name"), new Attribute("uuid", node.getUuid()));
@@ -196,7 +196,7 @@ public class PathwayTree extends Component {
             appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
 
             // Add target set.
-            final String choiceCss = "pathway-tree__node-icon svgIcon " +
+            final String choiceCss = "pathway-tree__node-icon icon-wrap " +
                                      SvgImage.PATHWAYS_CHOICE.getClassName();
 
             hb.div(targetsOuterDiv -> {
@@ -238,7 +238,7 @@ public class PathwayTree extends Component {
             final int sourceRowNum = rowNum.get();
 
             // Add target set.
-            final String choiceCss = "pathway-tree__node-icon svgIcon " +
+            final String choiceCss = "pathway-tree__node-icon icon-wrap " +
                                      SvgImage.PATHWAYS_SEQUENCE.getClassName();
 
             hb.div(targetDiv -> {

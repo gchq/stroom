@@ -30,7 +30,7 @@ class TestContextChip {
                 .asString();
 
         assertThat(html)
-                .startsWith("<span class='svgIcon'>" + SvgImage.CLIPBOARD.getSvg() + "</span> ")
+                .startsWith("<span class='icon-wrap'>" + SvgImage.CLIPBOARD.getSvg() + "</span> ")
                 .endsWith("&lt;img src=x onerror=alert(1)&gt; &amp; co")
                 .doesNotContain("<img");
     }

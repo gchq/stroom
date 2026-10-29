@@ -10,7 +10,7 @@
                 <b:Toolbar ui:field="toolbar" name="List actions" addStyleNames="dock-max"/>
                 <p:Pager ui:field="pager" addStyleNames="dock-min"/>
             </g:FlowPanel>
-            <g:SimplePanel ui:field="listContainer" addStyleNames="listContainer dock-max"/>
+            <g:SimplePanel ui:field="listContainer" addStyleNames="list-container dock-max"/>
         </g:FlowPanel>
     </form:FormGroup>
 </ui:UiBinder>

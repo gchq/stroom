@@ -331,14 +331,14 @@ public final class SelectionBoxStories {
         play.expect(inList.querySelector(":scope > .selection-list__options")).not().toBeNull();
         // PagerPanel: the pager container above the list container
         play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
-        play.expect(popup.querySelector(".listContainer")).not().toBeNull();
+        play.expect(popup.querySelector(".list-container")).not().toBeNull();
         // The rows are the data grid's, as a list's: a listbox of options, each holding its cell
         play.expect(popup.querySelector(".data-grid.data-grid--list [role='listbox']")).not().toBeNull();
         final Query row = popup.querySelector("[role='option'].data-grid__row");
         play.expect(row).not().toBeNull();
         final Play inRow = play.screen().within(row);
         play.expect(inRow.querySelector(".data-grid__cell")).not().toBeNull();
-        play.expect(inRow.querySelector(".explorer-cell .selectionItemCell-text")).toHaveTextContent("One");
+        play.expect(inRow.querySelector(".explorer-cell .selection-item-cell__text")).toHaveTextContent("One");
     }
 
     private static void playEscape(final Play play) {

@@ -159,3 +159,11 @@
     width: 0.8rem !important;
     height: 0.8rem !important;
 }
+
+/* Keyboard focus on a comment's link or an entry's actions button (from components.css) */
+.annotation-history__link:focus-visible,
+.annotation-history__actions:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}

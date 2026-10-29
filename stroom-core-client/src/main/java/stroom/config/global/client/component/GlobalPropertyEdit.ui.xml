@@ -12,7 +12,7 @@
                 <tx:Label ui:field="name" addStyleNames="stroom-control-label"/>
                 <b:Toolbar name="Name actions" addStyleNames="global-property-edit__name-actions">
                     <b:ToolbarButton ui:field="copyNameButton" svg="COPY" title="Copy Property Name"
-                                     addStyleNames="svgIcon global-property-edit__copy-name"/>
+                                     addStyleNames="icon-wrap global-property-edit__copy-name"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>

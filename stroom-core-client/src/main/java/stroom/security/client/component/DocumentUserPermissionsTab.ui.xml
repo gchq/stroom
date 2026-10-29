@@ -44,7 +44,7 @@
         <form:FormGroup ui:field="detailsFormGroup"
                         addStyleNames="form-group--indented">
             <g:SimplePanel styleName="max form-padding document-user-permissions-tab__details">
-                <tx:Html ui:field="details" styleName="max permissionDetails"/>
+                <tx:Html ui:field="details" styleName="max permission-details"/>
             </g:SimplePanel>
         </form:FormGroup>
     </split:SplitPane>

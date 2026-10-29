@@ -138,7 +138,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         final List<ComponentState> componentStates = getComponentStates();
         printContext(tb, componentStates, showInsert);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 

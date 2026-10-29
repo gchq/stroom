@@ -77,7 +77,7 @@ public class ColumnHeaderHtmlUtil {
     }
 
     private static SafeHtml getSafeHtml(final SvgImage svgImage) {
-        return SvgImageUtil.toSafeHtml(svgImage, "svgIcon");
+        return SvgImageUtil.toSafeHtml(svgImage, "icon-wrap");
     }
 
     private static SafeHtml getColumnInfoString(final Column column) {

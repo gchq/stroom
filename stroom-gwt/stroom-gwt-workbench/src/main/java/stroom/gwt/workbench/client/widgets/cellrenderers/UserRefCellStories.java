@@ -47,7 +47,7 @@ public final class UserRefCellStories {
     private static final String ON_OPEN = "onOpen";
     private static final String ON_COPY = "onCopy";
     // The class of the cell's copy button
-    private static final String COPY_CLASS_NAME = "userRefLinkCopy";
+    private static final String COPY_CLASS_NAME = "user-ref-link__copy";
     private static final int CELL_WIDTH_PX = 260;
 
     private static final UserRef ALICE = UserRef.builder()

@@ -152,7 +152,7 @@
     overflow-wrap: anywhere;
 }
 
-.stroom .ace_tooltip.ace_doc-tooltip .queryHelpDetail {
+.stroom .ace_tooltip.ace_doc-tooltip .query-help-detail {
     background-color: var(--tooltip__background-color) !important;
 }
 

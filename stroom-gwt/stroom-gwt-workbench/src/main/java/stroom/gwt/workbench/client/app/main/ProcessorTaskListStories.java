@@ -126,7 +126,7 @@ public final class ProcessorTaskListStories {
                     expectInfoShows(play, 1, "102");
                     expectInfoShows(play, 2, "103");
                     final Play screen = play.screen();
-                    final Query feedLink = screen.querySelector(".infoTable .docRefLinkOpen");
+                    final Query feedLink = screen.querySelector(".info-table .doc-ref-link__open");
                     play.hover(feedLink);
                     play.click(feedLink);
                     play.expect(play.spy(OPEN_FEED_SPY)).toHaveBeenCalledTimes(1);

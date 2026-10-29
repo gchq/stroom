@@ -43,11 +43,11 @@ import java.util.function.Consumer;
 
 public class CopyTextUtil {
 
-    public static final String ICON_NAME = "svgIcon";
-    public static final String COPY_CLASS_NAME = "docRefLinkCopy";
-    public static final String INSERT_CLASS_NAME = "docRefLinkInsert";
+    public static final String ICON_NAME = "icon-wrap";
+    public static final String COPY_CLASS_NAME = "doc-ref-link__copy";
+    public static final String INSERT_CLASS_NAME = "doc-ref-link__insert";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
+    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
     private static final int TRUNCATE_THRESHOLD = 30;
 
     public static SafeHtml render(final String value,
@@ -77,10 +77,10 @@ public class CopyTextUtil {
             final String containerClasses = String.join(
                     " ",
                     HOVER_ICON_CONTAINER_CLASS_NAME,
-                    "docRefLinkContainer");
+                    "doc-ref-link");
             hb.div(div -> {
                 div.div(d -> d.append(safeHtml),
-                        Attribute.className("docRefLinkText"));
+                        Attribute.className("doc-ref-link__text"));
 
                 NullSafe.consumeNonBlankString(value, str -> {
                     final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -153,7 +153,7 @@ public class CopyTextUtil {
         if (BrowserEvents.MOUSEDOWN.equals(e.getType())) {
             final Element element = e.getEventTarget().cast();
             final Element container = ElementUtil.findParent(
-                    element, "docRefLinkContainer", 5);
+                    element, "doc-ref-link", 5);
             final String text = NullSafe.get(container, Element::getInnerText);
             if (NullSafe.isNonBlankString(text)) {
                 if (MouseUtil.isPrimary(e)) {

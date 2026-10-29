@@ -1,0 +1,65 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A results table's filter row (FilterCell): a filter box per column with its button, shown
+   while the table shows its value filters. */
+
+.data-grid .dashboard-table-filter-cell {
+    display: none;
+    position: relative;
+    width: 100%;
+}
+
+.data-grid.result-table__grid--value-filters .dashboard-table-filter-cell {
+    display: block;
+}
+
+.data-grid .dashboard-table-filter-cell-text {
+    padding-right: 25px;
+}
+
+.data-grid .dashboard-table-filter-cell-text-disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+.data-grid .dashboard-table-filter-cell-buttons {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    top: 0;
+    right: 0;
+    align-items: center;
+    padding: 5px;
+}
+
+.data-grid .dashboard-table-filter-cell-disable-button {
+    display: flex;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    align-items: center;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0;
+    border-radius: .25rem;
+}

@@ -107,7 +107,7 @@ public class SteppingFilterEditor extends Component {
                                 return null;
                             }
                         })
-                .withStyleName(BLOCK + "__icon-cell svgIcon")
+                .withStyleName(BLOCK + "__icon-cell icon-wrap")
                 .centerAligned()
                 .build();
         elementChooser.addColumn(iconColumn, "", ICON_COL_WIDTH);
@@ -127,7 +127,7 @@ public class SteppingFilterEditor extends Component {
                         false,
                         (PipelineElement pipelineElement) ->
                                 CellIcon.of(SvgImage.FILTER, "Has active filter(s)"))
-                .withStyleName(BLOCK + "__filter-icon-cell svgIcon icon-colour__green")
+                .withStyleName(BLOCK + "__filter-icon-cell icon-wrap icon-colour__green")
                 .withConditionalStyleName(filterActiveStyleFunc)
                 .centerAligned()
                 .build();

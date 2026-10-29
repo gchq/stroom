@@ -556,7 +556,7 @@ public class PipelinePathBar extends AbstractPipelineTree {
     // An icon for sight only: the chevron's name describes what it shows
     private static Element createIcon(final SvgImage icon, final String className) {
         final Element holder = Document.get().createSpanElement();
-        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(icon, "svgIcon", className));
+        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(icon, "icon-wrap", className));
         final Element iconElement = holder.getFirstChildElement();
         iconElement.setAttribute(ARIA_HIDDEN, "true");
         return iconElement;
@@ -951,13 +951,13 @@ public class PipelinePathBar extends AbstractPipelineTree {
         final SvgImage severityIcon = getSeverityIcon(severity);
         if (severityIcon != null) {
             builder.appendHtmlConstant("<span class=\"" + MENU_SEVERITY_CLASS + "\" aria-hidden=\"true\">");
-            builder.append(SvgImageUtil.toSafeHtml(severityIcon, "svgIcon"));
+            builder.append(SvgImageUtil.toSafeHtml(severityIcon, "icon-wrap"));
             builder.appendHtmlConstant("</span>");
             appendScreenReaderText(builder, has + severity.getSummaryValue().toLowerCase());
         }
         if (filters) {
             builder.appendHtmlConstant("<span class=\"" + MENU_FILTER_CLASS + "\" aria-hidden=\"true\">");
-            builder.append(SvgImageUtil.toSafeHtml(SvgImage.FILTER, "svgIcon"));
+            builder.append(SvgImageUtil.toSafeHtml(SvgImage.FILTER, "icon-wrap"));
             builder.appendHtmlConstant("</span>");
             appendScreenReaderText(builder, has + "stepping filters");
         }

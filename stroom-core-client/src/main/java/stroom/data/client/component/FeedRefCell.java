@@ -59,11 +59,11 @@ import java.util.function.Function;
 public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements EventCell, HasContextMenus<T_ROW> {
 
-    private static final String ICON_CLASS_NAME = "svgIcon";
-    private static final String COPY_CLASS_NAME = "docRefLinkCopy";
-    private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
+    private static final String ICON_CLASS_NAME = "icon-wrap";
+    private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
+    private static final String OPEN_CLASS_NAME = "doc-ref-link__open";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
+    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
 
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
@@ -195,7 +195,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         } else {
             final String name = NullSafe.get(value, nameFunction);
             final SafeHtml cellHtmlText = cellTextFunction.apply(value);
-            String cssClasses = "docRefLinkText";
+            String cssClasses = "doc-ref-link__text";
             final String additionalClasses = cssClassFunction.apply(value);
             if (additionalClasses != null) {
                 cssClasses += " " + additionalClasses;
@@ -205,7 +205,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
             final String containerClasses = String.join(
                     " ",
                     HOVER_ICON_CONTAINER_CLASS_NAME,
-                    "docRefLinkContainer");
+                    "doc-ref-link");
 
             sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
             if (name != null && showIcon) {

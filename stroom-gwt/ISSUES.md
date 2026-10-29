@@ -1835,6 +1835,13 @@ stories' clock, so it isn't the time):
 * **Random layouts**: every visualisation story (force, tree and the like lay out differently each
   run). To do: a fixed seed for their layouts, or leave them out of the screenshot diff.
 
+**Still unsteady** (29 October 2026, waves 29 and 30): the tree visualisation's Keyboard story
+(`app-visualisations-tree--keyboard`): its tooltip is drawn 1px left or right from run to run, even
+run on its own (wave 29 took the right-hand one as its baseline; wave 30's runs drew the left). The
+force visualisations still differ under a full run's load (their baselines come from runs of
+their own). The top bar's Keyboard story once showed the ⋮ button's tooltip in a full run and not
+alone (timing).
+
 ### A grid whose columns are made afresh loses its sort
 
 **Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and
@@ -2183,6 +2190,14 @@ this extends it to every handler. When counted (wave 13), the converted componen
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 30** (2026-10-29): `ElementUtil`'s `hasClassName`, `findParent` and `findChild` matched a
+  class by substring, so once the class names were BEM, a block matched its own elements: finding
+  a document link (`doc-ref-link`) from its open icon (`doc-ref-link__open`) stopped at the icon,
+  which has no link id, and the link didn't open (the processor filter list's details link, a
+  processor task's info feed link). They match whole class names now (`containsClassName`,
+  `TestElementUtil`, which failed before). Master's camel-case names didn't nest this way, so no
+  changelog entry.
 
 * **Wave 17** (2026-10-28), from the leftovers of waves 13 to 15: the names that still said
   presenter (fields, parameters, locals, comments and javadoc), the classes named after deleted

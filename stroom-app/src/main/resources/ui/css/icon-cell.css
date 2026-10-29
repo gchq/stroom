@@ -38,7 +38,7 @@
 
 /* A row's action button (ActionCell, ActionMenuCell, a RowActions button) is a 24px target
    (WCAG 2.5.8) round its icon; a negative margin takes the extra back, so the row is no taller */
-.icon-cell--button.rowAction {
+.icon-cell--button.row-action {
 	min-width: 24px;
 	min-height: 24px;
 	margin: -4px;
@@ -46,26 +46,8 @@
 
 /* ...which a grid cell's content (overflow-x hidden, so overflow-y auto) would otherwise scroll by.
    It has no text to cut short */
-.data-grid__cell > div:has(> .icon-cell--button.rowAction) {
+.data-grid__cell > div:has(> .icon-cell--button.row-action) {
 	overflow: visible;
-}
-
-.svgCell-face {
-	border: none;
-	outline: none;
-	background: none;
-	cursor: pointer;
-	text-decoration: none;
-	min-width: 16px;
-	min-height: 16px;
-	margin: auto;
-	padding: 0;
-	overflow: hidden;
-	position: relative;
-	color: #5398ff;
-	font-size: var(--font-size-16);
-	opacity: 1;
-	top: -2px;
 }
 
 .icon-cell--disabled {

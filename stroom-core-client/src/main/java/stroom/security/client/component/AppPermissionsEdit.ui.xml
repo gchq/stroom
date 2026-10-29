@@ -28,7 +28,7 @@
         <form:FormGroup ui:field="detailsFormGroup" label="Application Permission Details:"
                         helpText="Explains how the user/group has obtained the selected permission."
                         addStyleNames="form-group--indented">
-            <g:SimplePanel styleName="max form-padding permissionDetails">
+            <g:SimplePanel styleName="max form-padding permission-details">
                 <tx:Html ui:field="details" styleName="max"/>
             </g:SimplePanel>
         </form:FormGroup>

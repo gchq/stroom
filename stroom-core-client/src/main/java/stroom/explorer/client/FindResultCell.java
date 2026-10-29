@@ -46,7 +46,7 @@ public class FindResultCell extends AbstractCell<FindResult> {
                         docRef.getType(),
                         documentType.getIcon(),
                         BLOCK + "__icon",
-                        "svgIcon"));
+                        "icon-wrap"));
             }
 
             // Add name

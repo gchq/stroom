@@ -784,7 +784,7 @@ public class AskStroomAiController extends Controller
 
     private static void icon(final HtmlBuilder hb, final SvgImage icon) {
         hb.div(div -> div.appendTrustedString(icon.getSvg()),
-                Attribute.className("svgIcon " + icon.getClassName()));
+                Attribute.className("icon-wrap " + icon.getClassName()));
     }
 
     private static Attribute iconButtonClassName(final String className) {

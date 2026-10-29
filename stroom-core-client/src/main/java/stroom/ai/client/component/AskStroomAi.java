@@ -150,7 +150,7 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
 
     // The Copy button says Copied for a moment
     private void showCopied(final Element button) {
-        final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
+        final Element copyIcon = ElementUtil.findChild(button, "icon-wrap");
         final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
         if (copyIcon != null && copyLabel != null) {
             copyIcon.setInnerHTML(SvgImage.OK.getSvg());

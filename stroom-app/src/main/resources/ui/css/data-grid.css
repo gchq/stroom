@@ -734,10 +734,10 @@
     }
 }
 
-/* Not a row action (.rowAction, components.css), a button that looks as the icon it holds: this
+/* Not a row action (.row-action, row-action.css), a button that looks as the icon it holds: this
    look would make its rows 5px taller. :where() keeps the specificity as it was (from
    standard-mod.css) */
-.data-grid button:where(:not(.rowAction)) {
+.data-grid button:where(:not(.row-action)) {
 	margin: 0;
 	padding: 2px 4px;
 	text-decoration: none;

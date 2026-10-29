@@ -1,0 +1,98 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A node's ping, as a bar whose width is the time and whose colour is how healthy that is
+   (NodeStatusList), greyed for a node that is turned off. */
+
+.node-ping-bar {
+    padding-right: .25em;
+    display: flex;
+    flex-direction: row;
+    column-gap: 0.25em;
+}
+
+.node-ping-bar__bar-wrapper {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.node-ping-bar__bar {
+    color: white;
+    height: 70%;
+    /* Set on each bar, as a node's ping is known only at runtime */
+    width: var(--node-ping-bar__width);
+    /*padding-left: .25em;*/
+}
+
+.node-ping-bar__text {
+    padding-left: .25em;
+    width: 3em;
+    flex-grow: 0;
+    text-align: right;
+}
+
+.node-ping-bar__error-text {
+    padding-left: .25em;
+    width: 100%;
+    font-weight: 500;
+    color: var(--danger);
+}
+
+.data-grid__cell--disabled .node-ping-bar__error-text {
+    font-weight: 400;
+    color: var(--text-color--disabled);
+}
+
+.node-ping-bar__bar.node-ping-bar__bar--healthy {
+     background-color: var(--primary);
+}
+
+.node-ping-bar__bar.node-ping-bar__bar--warn {
+     background-color: var(--warning);
+}
+
+.node-ping-bar__bar.node-ping-bar__bar--max {
+     background-color: var(--danger);
+}
+
+.node-ping-bar__bar--healthy .node-ping-bar__text {
+     color: var(--white);
+}
+
+.node-ping-bar__bar--warn .node-ping-bar__text,
+.node-ping-bar__bar--max .node-ping-bar__text {
+     color: var(--black);
+}
+
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--healthy,
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--warn,
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--max {
+     background-color: var(--text-color--disabled);
+}
+
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--healthy .node-ping-bar__text {
+    color: var(--text-color--disabled) ;
+}
+
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--warn .node-ping-bar__text,
+.data-grid__cell--disabled .node-ping-bar__bar.node-ping-bar__bar--max .node-ping-bar__text {
+     color: var(--black);
+}
+
+.data-grid__cell--disabled span.node-ping-bar__text {
+    color: var(--text-color--disabled) ;
+}

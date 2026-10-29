@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-/* Bootstrap's form-control class, as Stroom styles it: its placeholder in the muted text
-   colour. */
+/* A list's pager toolbar (PagerPanel): its buttons in a row. */
 
-.form-control::placeholder {
-  color: var(--text-color--muted);
-  opacity: 1;
+.pager-toolbar {
+    display: flex;
+    flex-grow: 1;
+    gap: var(--control__gap--horizontal);
 }

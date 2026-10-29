@@ -101,7 +101,7 @@ public class ProcessorTaskSummaryListController extends Controller {
                 .row("Status", String.valueOf(row.getStatus()));
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 

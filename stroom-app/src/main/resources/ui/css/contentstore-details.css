@@ -1,0 +1,93 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A content pack's details (ContentStoreContentPackDetails). */
+
+/* ==== Content store CSS ==== */
+.contentstore-details {
+    display: flex;
+}
+
+/* Details title */
+.contentstore-details .contentstore-details-heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+
+.contentstore-details .contentstore-details-markdown {
+    height: 300px;
+}
+
+/* Set the SVG to 100x100px */
+.contentstore-details-icon {
+    padding: 15px;
+    width: 130px;
+}
+
+.contentstore-details-icon svg {
+    height: 100px;
+    width: 100px;
+}
+
+/* The details: each name, then its value beside it */
+.contentstore-details .contentstore-details-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+}
+
+.contentstore-details .contentstore-details-list > * {
+    padding: 5px;
+}
+
+/* Its links are underlined, so they are told apart from the URL beside them by more than colour
+   (WCAG 1.4.1) */
+.contentstore-details .contentstore-details-list a {
+    text-decoration: underline;
+}
+
+/* The URL shown after a link to it */
+.contentstore-details .contentstore-details-url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
+}
+
+/* Overall width of details table */
+.contentstore-details .contentstore-details-vertical {
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* The box that the markdown is displayed in, based on .form-control-border */
+.contentstore-details .markdown {
+    padding: 5px;
+    height: 300px;
+    overflow: auto;
+}
+
+/* contentstore Markdown - make it a bit smaller */
+.contentstore-details .markdown h1 {
+    font-size: 1.3em;
+}
+
+/* Buttons formatting */
+.contentstore-buttons {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+}

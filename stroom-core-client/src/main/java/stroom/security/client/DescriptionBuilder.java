@@ -48,13 +48,13 @@ public class DescriptionBuilder {
                         final SafeHtml text) {
         final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
         if (isInherited) {
-            classNameBuilder.addClassName("inherited");
+            classNameBuilder.addClassName("permission-details__line--inherited");
         }
         if (isBold) {
-            classNameBuilder.addClassName("bold");
+            classNameBuilder.addClassName("permission-details__line--bold");
         }
         if (isDelimiter) {
-            classNameBuilder.addClassName("delimiter");
+            classNameBuilder.addClassName("permission-details__line--delimiter");
         }
 
         if (classNameBuilder.isEmpty()) {

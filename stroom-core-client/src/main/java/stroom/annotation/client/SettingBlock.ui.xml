@@ -3,6 +3,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel ui:field="formGroupPanel" styleName="setting-block icon-colour__grey">
-        <g:SimplePanel ui:field="icon" styleName="setting-block__icon icon-colour__grey svgIcon"/>
+        <g:SimplePanel ui:field="icon" styleName="setting-block__icon icon-colour__grey icon-wrap"/>
     </g:FlowPanel>
 </ui:UiBinder>

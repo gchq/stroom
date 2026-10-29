@@ -115,17 +115,17 @@ public class AnnotationEditController extends Controller implements Focus {
     private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"setting-block__icon icon-colour__grey svgIcon\">" +
+            "<div class=\"setting-block__icon icon-colour__grey icon-wrap\">" +
             SvgImage.ELLIPSES_VERTICAL.getSvg() +
             "</div>");
     private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromTrustedString(
             "<div class=\"annotation-history__line\"></div>");
     private static final SafeHtml EXPAND = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotation-history__expander icon-colour__grey svgIcon\">" +
+            "<div class=\"annotation-history__expander icon-colour__grey icon-wrap\">" +
             SvgImage.ARROW_DOWN.getSvg() +
             "</div>");
     private static final SafeHtml COLLAPSE = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotation-history__expander icon-colour__grey svgIcon\">" +
+            "<div class=\"annotation-history__expander icon-colour__grey icon-wrap\">" +
             SvgImage.ARROW_UP.getSvg() +
             "</div>");
 
@@ -839,7 +839,7 @@ public class AnnotationEditController extends Controller implements Focus {
         }
         final String name = "Actions for history entry '" + entry.getEntryType().getDisplayValue()
                             + "' by " + getUserName(entry.getEntryUser());
-        final String startTag = "<div class=\"setting-block__icon icon-colour__grey svgIcon "
+        final String startTag = "<div class=\"setting-block__icon icon-colour__grey icon-wrap "
                                 + ENTRY_ACTIONS_CLASS + "\" role=\"button\" tabindex=\"0\" "
                                 + "aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"";
         return new SafeHtmlBuilder()

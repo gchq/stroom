@@ -4,7 +4,7 @@
              xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <tab:CurveTabLayoutPanel ui:field="layout" styleName="curve-tab-layout__layout">
-        <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">
+        <g:FlowPanel ui:field="tabBarContainer"  styleName="tab-bar-container">
             <b:Toolbar name="Sidebar" addStyleNames="toolbar--quiet">
                 <b:ToolbarButton ui:field="menu" svg="HIDE_MENU" title="Hide Sidebar"/>
             </b:Toolbar>

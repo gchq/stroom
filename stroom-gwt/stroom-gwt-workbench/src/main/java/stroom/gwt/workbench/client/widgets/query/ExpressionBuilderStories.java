@@ -695,7 +695,7 @@ public final class ExpressionBuilderStories {
         play.click(picker);
         play.waitFor(() -> play.expect(play.spy(FIELD_SOURCE)).toHaveBeenCalledWith("loadFields"));
         play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
-        play.waitFor(() -> play.expect(play.screen().getByText("EventTime", ".selectionItemCell-text"))
+        play.waitFor(() -> play.expect(play.screen().getByText("EventTime", ".selection-item-cell__text"))
                 .toBeInTheDocument());
         // A data source's list always has the quick filter
         play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();

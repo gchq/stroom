@@ -214,7 +214,7 @@ public class ExpressionItemBox extends Box<Item> {
     private static Element createRefusedIcon() {
         final Element holder = Document.get().createDivElement();
         holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.NOT_ALLOWED,
-                "svgIcon", REFUSED_ICON_CLASS));
+                "icon-wrap", REFUSED_ICON_CLASS));
         final Element icon = holder.getFirstChildElement();
         icon.removeFromParent();
         icon.setAttribute("aria-hidden", "true");

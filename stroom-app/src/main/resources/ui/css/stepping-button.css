@@ -28,7 +28,7 @@
 	z-index: 5;
 }
 
-.stepping-button .svgIcon svg {
+.stepping-button .icon-wrap svg {
     width: 46px;
     height: 46px;
     margin-left: 2px;

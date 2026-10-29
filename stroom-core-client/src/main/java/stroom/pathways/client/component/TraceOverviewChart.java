@@ -196,7 +196,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         panel.addMouseDownHandler(e -> {
 
             final Element element = e.getNativeEvent().getEventTarget().cast();
-            if (ElementUtil.findParent(element, "docRefLinkContainer", 5) != null) {
+            if (ElementUtil.findParent(element, "doc-ref-link", 5) != null) {
                 CopyTextUtil.onClick(e.getNativeEvent());
                 // Only the copy icon (or a right-click menu) consumes the event; a plain click on the value
                 // text still falls through, so clicking an operation name opens the Span Info panel.

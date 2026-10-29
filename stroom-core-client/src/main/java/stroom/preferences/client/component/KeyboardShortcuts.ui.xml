@@ -8,7 +8,7 @@
         <g:SimplePanel styleName="dock-min">
             <view:QuickFilter ui:field="quickFilter" accessibleName="Filter keyboard shortcuts"/>
         </g:SimplePanel>
-        <g:SimplePanel styleName="dock-max keyBindingPreferences-list">
+        <g:SimplePanel styleName="dock-max key-binding-preferences__list">
             <dg:DataGrid ui:field="dataGrid" tableName="Keyboard Shortcuts"/>
         </g:SimplePanel>
     </g:FlowPanel>

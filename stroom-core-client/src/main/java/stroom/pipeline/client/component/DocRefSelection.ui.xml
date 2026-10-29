@@ -20,10 +20,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel addStyleNames="max dock-container-vertical">
-        <g:HTMLPanel styleName="messageContainer">
+        <g:HTMLPanel styleName="message-container">
             <div>The following documents have changed. Please select the ones you want to save:</div>
         </g:HTMLPanel>
-        <g:FlowPanel addStyleNames="listContainer dock-max">
+        <g:FlowPanel addStyleNames="list-container dock-max">
             <dg:DataGrid ui:field="dataGrid" tableName="Document References" hasContextMenu="false"/>
         </g:FlowPanel>
     </g:FlowPanel>

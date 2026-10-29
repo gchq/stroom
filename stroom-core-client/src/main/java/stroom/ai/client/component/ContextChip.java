@@ -35,7 +35,7 @@ public final class ContextChip {
     /// @return The chip's content.
     public static SafeHtml toHtml(final SvgImage icon, final String description) {
         return new SafeHtmlBuilder()
-                .appendHtmlConstant("<span class='svgIcon'>" + icon.getSvg() + "</span> ")
+                .appendHtmlConstant("<span class='icon-wrap'>" + icon.getSvg() + "</span> ")
                 .appendEscaped(description)
                 .toSafeHtml();
     }

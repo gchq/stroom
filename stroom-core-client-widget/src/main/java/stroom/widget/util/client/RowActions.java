@@ -135,11 +135,11 @@ public final class RowActions {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+        @Template("<button type=\"button\" class=\"row-action {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\">{2}</button>")
         SafeHtml button(String className, String name, SafeHtml icon);
 
-        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+        @Template("<button type=\"button\" class=\"row-action {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\">{2}</button>")
         SafeHtml menuButton(String className, String name, SafeHtml icon);
     }

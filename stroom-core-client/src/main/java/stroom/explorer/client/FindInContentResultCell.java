@@ -48,7 +48,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
                         match.getDocRef().getType(),
                         documentType.getIcon(),
                         BLOCK + "__icon",
-                        "svgIcon"));
+                        "icon-wrap"));
             }
 
             // Add sample

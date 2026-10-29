@@ -139,7 +139,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         builder.append(SvgImageUtil.toSafeHtml(
                                 buildAlertText(node),
                                 SvgImage.ALERT_SIMPLE,
-                                "svgIcon", "small", getCellClassName() + "__alert-icon"));
+                                "icon-wrap", "icon-wrap--small", getCellClassName() + "__alert-icon"));
                     }
                 }
 
@@ -160,7 +160,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
                         SvgImage.FAVOURITES,
-                        "svgIcon", "small"));
+                        "icon-wrap", "icon-wrap--small"));
             }
 
             // We style the non-matches rather than the matches

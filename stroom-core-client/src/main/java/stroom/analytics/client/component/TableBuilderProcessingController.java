@@ -152,7 +152,7 @@ public class TableBuilderProcessingController extends Controller {
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 

@@ -233,8 +233,8 @@ public class NodeStatusListController extends Controller implements Refreshable 
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
-        htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb1::write, Attribute.className("info-table"));
+        htmlBuilder.div(tb2::write, Attribute.className("info-table"));
 
         infoTooltip.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }

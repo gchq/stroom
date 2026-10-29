@@ -290,7 +290,7 @@ public class ScheduledProcessList extends Component {
             builder.append(SvgImageUtil.toSafeHtml(
                     "Node '" + nodeName + "' no longer exists so this schedule will never run.",
                     SvgImage.ALERT_SIMPLE,
-                    "svgIcon", "small"));
+                    "icon-wrap", "small"));
         }
 
         return builder.toSafeHtml();

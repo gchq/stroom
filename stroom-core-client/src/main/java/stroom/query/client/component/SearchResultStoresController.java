@@ -118,7 +118,7 @@ public class SearchResultStoresController extends Controller {
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         view.setDetails(htmlBuilder.toSafeHtml());
     }
 

@@ -128,7 +128,7 @@ public class FabButton extends ButtonBase {
 
     public void setIcon(final SvgImage svgImage) {
         // The icon is decoration: the button is named by its aria-label
-        parts.icon.setClassName("svgIcon " + svgImage.getClassName());
+        parts.icon.setClassName("icon-wrap " + svgImage.getClassName());
         parts.icon.setInnerHTML(svgImage.getSvg());
     }
 
