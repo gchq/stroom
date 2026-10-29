@@ -90,10 +90,12 @@ class TestMcpToolNameClashes {
             final List<String> offered = looking.firstOffered();
             final Set<String> builtIns = new HashSet<>(world.toolNames());
             final List<String> mcpNames = offered.stream()
-                    .filter(name -> !builtIns.contains(name))
+                    .filter(name -> !builtIns.contains(name) && !OfferedToolNames.isBuiltInActivation(name))
                     .toList();
-            // Every built-in tool is still offered under its own name, ahead of the MCP tools.
-            assertThat(offered.subList(0, builtIns.size())).containsExactlyInAnyOrderElementsOf(builtIns);
+            // Every built-in tool is still offered under its own name (or its group's, for a group that is off),
+            // ahead of the MCP tools.
+            final Set<String> builtInsOffered = OfferedToolNames.withNoGroupsOn(builtIns);
+            assertThat(offered.subList(0, builtInsOffered.size())).containsExactlyInAnyOrderElementsOf(builtInsOffered);
             assertThat(offered).doesNotHaveDuplicates();
 
             // Then call every MCP name, and the clashed-with built-in names, and see what runs.

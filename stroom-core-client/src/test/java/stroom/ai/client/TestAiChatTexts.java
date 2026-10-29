@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
+import stroom.ai.shared.AiContextUsage;
 import stroom.svg.shared.SvgImage;
 
 import org.junit.jupiter.api.Test;
@@ -199,5 +200,25 @@ class TestAiChatTexts {
         assertThat(AiChatTexts.forClipboard("no line break")).isEqualTo("no line break");
         assertThat(AiChatTexts.forClipboard("\n\n")).isEmpty();
         assertThat(AiChatTexts.forClipboard(null)).isEmpty();
+    }
+
+    @Test
+    void testToolDefinitionsNote() {
+        final java.util.Map<String, Long> largest = new java.util.LinkedHashMap<>();
+        largest.put("propose_visualisation", 3_421L);
+        largest.put("table", 1_502L);
+        final AiContextUsage heavy = new AiContextUsage(131_072, 90_000L, false,
+                java.util.Map.of(AiContextUsage.PART_TOOL_DEFINITIONS, 51_387L), 80, 0, 0L, largest);
+
+        assertThat(AiChatTexts.toolDefinitionsNote(heavy))
+                .isEqualTo("The tool definitions alone take 39% of the context window, which compacting the chat "
+                           + "can't make smaller. The largest: propose_visualisation 3k, table 1k.");
+        // Under a quarter of the window, or a window that isn't known, says nothing.
+        assertThat(AiChatTexts.toolDefinitionsNote(new AiContextUsage(131_072, 90_000L, false,
+                java.util.Map.of(AiContextUsage.PART_TOOL_DEFINITIONS, 17_000L), 80, 0, 0L, largest))).isNull();
+        assertThat(AiChatTexts.toolDefinitionsNote(new AiContextUsage(0, 90_000L, false,
+                java.util.Map.of(AiContextUsage.PART_TOOL_DEFINITIONS, 51_387L), 80, 0, 0L, largest))).isNull();
+        assertThat(AiChatTexts.toolDefinitionsNote(new AiContextUsage(131_072, 90_000L, false,
+                java.util.Map.of(), 80, 0, 0L, null))).isNull();
     }
 }

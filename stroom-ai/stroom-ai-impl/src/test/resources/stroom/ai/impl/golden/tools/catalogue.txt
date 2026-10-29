@@ -4,17 +4,18 @@ Built-in tools: 52
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (52 tool(s))
+### AGENT (45 tool(s))
+activate_administration
+activate_dashboards
+activate_indexing
+activate_processing
 ask_user
-config_properties
 current_results
 delete_file
 describe_data_source
 document_documentation
 document_info
 document_links
-elastic_index_templates
-explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -26,27 +27,19 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
-list_visualisations
 ls
 memory
 pipeline
-preview_extraction
-processor_tasks
 propose_code_change
-propose_dashboard
-propose_dashboard_change
 propose_documentation_change
-propose_extraction_pipeline
 propose_query
 propose_query_change
-propose_visualisation
 read_document
 read_file
 read_turn
 run_stroomql
 search_events
 search_history
-server_tasks
 str_replace
 stream_meta
 summarise_column
@@ -58,16 +51,17 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (48 tool(s))
+### ASK (41 tool(s))
+activate_administration
+activate_dashboards
+activate_indexing
+activate_processing
 ask_user
-config_properties
 current_results
 describe_data_source
 document_documentation
 document_info
 document_links
-elastic_index_templates
-explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -79,26 +73,18 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
-list_visualisations
 ls
 pipeline
-preview_extraction
-processor_tasks
 propose_code_change
-propose_dashboard
-propose_dashboard_change
 propose_documentation_change
-propose_extraction_pipeline
 propose_query
 propose_query_change
-propose_visualisation
 read_document
 read_file
 read_turn
 run_stroomql
 search_events
 search_history
-server_tasks
 stream_meta
 summarise_column
 table
@@ -108,16 +94,17 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (48 tool(s))
+### PLAN (41 tool(s))
+activate_administration
+activate_dashboards
+activate_indexing
+activate_processing
 ask_user
-config_properties
 current_results
 describe_data_source
 document_documentation
 document_info
 document_links
-elastic_index_templates
-explain_processing
 fetch_events
 find_in_content
 folder_contents
@@ -129,26 +116,18 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
-list_visualisations
 ls
 pipeline
-preview_extraction
-processor_tasks
 propose_code_change
-propose_dashboard
-propose_dashboard_change
 propose_documentation_change
-propose_extraction_pipeline
 propose_query
 propose_query_change
-propose_visualisation
 read_document
 read_file
 read_turn
 run_stroomql
 search_events
 search_history
-server_tasks
 stream_meta
 summarise_column
 table
@@ -225,7 +204,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -504,7 +483,7 @@ readsUntrustedContent: true
 boundsItsOutput: false
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -531,7 +510,7 @@ readsUntrustedContent: true
 boundsItsOutput: false
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1007,7 +986,7 @@ readsUntrustedContent: false
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1152,7 +1131,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1210,7 +1189,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1368,7 +1347,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1412,7 +1391,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1665,7 +1644,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -1789,7 +1768,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 
@@ -2494,7 +2473,7 @@ readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
-offered in modes: AGENT, ASK, PLAN
+offered in modes: 
 
 ### Description
 

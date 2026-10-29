@@ -22,6 +22,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.data.message.AiMessage;
@@ -35,12 +36,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestChatCompactor {
 
@@ -48,7 +53,8 @@ class TestChatCompactor {
     private final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
     private final ContextAssembler assembler = new ContextAssembler(
             () -> null, AiConfig::new, null, aiService, null, null, tracker, null, null);
-    private final ChatCompactor compactor = new ChatCompactor(aiService, assembler, AiConfig::new, () -> null);
+    private final ChatCompactor compactor = new ChatCompactor(aiService, assembler, AiConfig::new, () -> null,
+            new ModelStreamer(aiService));
 
     {
         Mockito.when(tracker.getCorrection(Mockito.anyInt())).thenReturn(Optional.empty());
@@ -71,7 +77,7 @@ class TestChatCompactor {
         history(turns(3, 400));
 
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(100_000), null,
-                CompactionMode.AUTO, null);
+                CompactionMode.AUTO, null, () -> false);
 
         assertThat(messages).hasSize(1 + 3 * 2 + 1);
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
@@ -86,7 +92,7 @@ class TestChatCompactor {
         // A window the turns fill past the threshold, with room for the system prompt's tool guidance, so only the
         // older turns are digested rather than summarised too.
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(13_100), null,
-                CompactionMode.AUTO, null);
+                CompactionMode.AUTO, null, () -> false);
 
         final CompactionRecord stored = storedCompaction();
         // The last 2 finished turns (40 and 50) stay in full.
@@ -109,7 +115,7 @@ class TestChatCompactor {
         history(history);
 
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(100_000), null,
-                CompactionMode.AUTO, null);
+                CompactionMode.AUTO, null, () -> false);
 
         assertThat(messages).hasSize(1 + 2 + 2 * 2 + 1);
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
@@ -131,7 +137,7 @@ class TestChatCompactor {
         final SummaryModel model = new SummaryModel("The SUMMARY.");
 
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(8_000), model,
-                CompactionMode.AUTO, null);
+                CompactionMode.AUTO, null, () -> false);
 
         final CompactionRecord stored = storedCompaction();
         assertThat(stored.digestsUpToTurnId()).isEqualTo(380);
@@ -159,7 +165,7 @@ class TestChatCompactor {
             }
         };
 
-        compactor.assemble(request(), 1, Map.of(), model(8_000), failing, CompactionMode.AUTO, null);
+        compactor.assemble(request(), 1, Map.of(), model(8_000), failing, CompactionMode.AUTO, null, () -> false);
 
         final CompactionRecord stored = storedCompaction();
         assertThat(stored.summary()).isNull();
@@ -169,12 +175,49 @@ class TestChatCompactor {
     }
 
     @Test
+    void testStopWhileSummarisingEndsTheRun() {
+        // Seen: Stop pressed while earlier turns were being summarised didn't stop the run until the model answered.
+        history(turns(40, 2_000));
+        final CountDownLatch called = new CountDownLatch(1);
+        final ChatModel neverAnswers = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                called.countDown();
+                try {
+                    Thread.sleep(Duration.ofMinutes(5));
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return ChatResponse.builder().aiMessage(AiMessage.from("too late")).build();
+            }
+        };
+        final AtomicBoolean stop = new AtomicBoolean();
+        Thread.ofVirtual().start(() -> {
+            try {
+                called.await();
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            stop.set(true);
+        });
+
+        final long startMs = System.currentTimeMillis();
+        assertThatThrownBy(() -> compactor.assemble(request(), 1, Map.of(), model(8_000), neverAnswers,
+                CompactionMode.AUTO, null, stop::get))
+                .isInstanceOf(TaskTerminatedException.class);
+
+        assertThat(System.currentTimeMillis() - startMs).isLessThan(Duration.ofSeconds(30).toMillis());
+        // A stop isn't a failed summary: no turns are left out, and nothing is recorded.
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
     void testForce_compactsEveryFinishedTurnAndSummarisesWhenTheWindowIsUnknown() {
         history(turns(3, 100));
         final SummaryModel model = new SummaryModel("S");
 
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(0), model,
-                CompactionMode.FORCE, null);
+                CompactionMode.FORCE, null, () -> false);
 
         final CompactionRecord stored = storedCompaction();
         assertThat(stored.digestsUpToTurnId()).isEqualTo(30);
@@ -188,7 +231,8 @@ class TestChatCompactor {
         history(turns(4, 100));
         final SummaryModel model = new SummaryModel("S");
 
-        compactor.assemble(request(), 1, Map.of(), model(100_000), model, CompactionMode.MANUAL, "the firewalls");
+        compactor.assemble(request(), 1, Map.of(), model(100_000), model, CompactionMode.MANUAL, "the firewalls",
+                () -> false);
 
         assertThat(storedCompaction().manual()).isTrue();
         assertThat(storedCompaction().digestsUpToTurnId()).isEqualTo(20);
@@ -206,7 +250,7 @@ class TestChatCompactor {
         Mockito.when(aiService.getMessages(1)).thenReturn(history, history, afterwards);
         final SummaryModel model = new SummaryModel("S");
 
-        assertThat(compactor.compactNow(1, model(100_000), model, null)).isTrue();
+        assertThat(compactor.compactNow(1, model(100_000), model, null, () -> false)).isTrue();
 
         // The latest 2 answered turns are kept in full.
         assertThat(storedCompaction().digestsUpToTurnId()).isEqualTo(10);
@@ -219,7 +263,7 @@ class TestChatCompactor {
         history.removeLast();
         history(history);
 
-        assertThat(compactor.compactNow(1, model(100_000), new SummaryModel("S"), null)).isFalse();
+        assertThat(compactor.compactNow(1, model(100_000), new SummaryModel("S"), null, () -> false)).isFalse();
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
     }
 
@@ -227,7 +271,7 @@ class TestChatCompactor {
     void testOnlyOneTurnNothingToCompact() {
         history(turns(0, 100));
 
-        compactor.assemble(request(), 1, Map.of(), model(0), null, CompactionMode.FORCE, null);
+        compactor.assemble(request(), 1, Map.of(), model(0), null, CompactionMode.FORCE, null, () -> false);
 
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
     }

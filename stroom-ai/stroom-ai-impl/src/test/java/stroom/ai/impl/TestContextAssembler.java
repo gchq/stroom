@@ -194,6 +194,75 @@ class TestContextAssembler {
     }
 
     @Test
+    void testTheCallsOfTheQuestionBeingAnsweredAreCountedOnce() {
+        // Seen: a question's calls counted in full and again as the one-line record an answered question is sent
+        // with, so the breakdown's parts added up to more than was sent.
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final AiDao aiDao = Mockito.mock(AiDao.class);
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, aiService, aiDao, Mockito.mock(AiWorkspaceDao.class), tracker,
+                null, null);
+        final List<AiChatMessage> answering = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, 5),
+                new AiChatMessage(2, 1, 0L, AiMessageType.TOOL_CALL, null, JsonUtil.writeValueAsString(
+                        new ToolCallRecord("c1", "search", "{\"query\":\"" + "x".repeat(150) + "\"}", null),
+                        false), 1, 100),
+                new AiChatMessage(3, 1, 0L, AiMessageType.TOOL_RESULT, null, JsonUtil.writeValueAsString(
+                        new ToolResultRecord("c1", "search", false, "y".repeat(150), null, 150, 1, null), false),
+                        1, 200));
+        Mockito.when(aiService.getMessages(1)).thenReturn(answering);
+        Mockito.when(tracker.getCorrection(1)).thenReturn(java.util.Optional.empty());
+
+        final stroom.ai.shared.AiContextUsage usage = assembler.estimateUsage(1);
+
+        assertThat(usage.getParts())
+                .containsEntry(ContextAssembler.PART_CONVERSATION, 5L)
+                .containsEntry(ContextAssembler.PART_TOOL_RESULTS, 300L);
+
+        // Once answered, the next question is sent the calls as a one-line record each, not in full.
+        final List<AiChatMessage> answered = new java.util.ArrayList<>(answering);
+        answered.add(new AiChatMessage(4, 1, 0L, AiMessageType.AI_RESPONSE, null, "a", 1, 2));
+        Mockito.when(aiService.getMessages(1)).thenReturn(answered);
+
+        final stroom.ai.shared.AiContextUsage afterwards = assembler.estimateUsage(1);
+
+        assertThat(afterwards.getParts()).containsEntry(ContextAssembler.PART_TOOL_RESULTS, 0L);
+        assertThat(afterwards.getParts().get(ContextAssembler.PART_CONVERSATION)).isGreaterThan(5L + 2L);
+    }
+
+    @Test
+    void testStepsTheRunShortenedAreShownAsSentWithWhatTheyTakeAsStored() {
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final AiDao aiDao = Mockito.mock(AiDao.class);
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, aiService, aiDao, Mockito.mock(AiWorkspaceDao.class), tracker,
+                null, null);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(10, 1, 1_000L, AiMessageType.USER_MESSAGE, null, "onboard it", 10, 5),
+                new AiChatMessage(11, 1, 1_500L, AiMessageType.TOOL_RESULT, null, "{}", 10, 90_000)));
+        Mockito.when(tracker.getLastCall(1)).thenReturn(java.util.Optional.of(
+                new ContextUsageTracker.MeasuredCall(5_000, 2_000L)));
+        Mockito.when(tracker.getShortenedParts(1)).thenReturn(7);
+        Mockito.when(tracker.getSentStepTokens(1)).thenReturn(java.util.Optional.of(4_000L));
+        Mockito.when(tracker.getLargestTools(1)).thenReturn(java.util.Map.of("propose_visualisation", 3_421L));
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("m", 10_000, null, 0, 0));
+
+        final stroom.ai.shared.AiContextUsage usage = assembler.estimateUsage(1);
+
+        assertThat(usage.getParts()).containsEntry(ContextAssembler.PART_TOOL_RESULTS, 4_000L);
+        assertThat(usage.getStoredToolResultTokens()).isEqualTo(90_000L);
+        assertThat(usage.getLargestTools()).containsEntry("propose_visualisation", 3_421L);
+
+        // Nothing shortened: the steps are as stored.
+        Mockito.when(tracker.getShortenedParts(1)).thenReturn(0);
+        final stroom.ai.shared.AiContextUsage whole = assembler.estimateUsage(1);
+        assertThat(whole.getParts()).containsEntry(ContextAssembler.PART_TOOL_RESULTS, 90_000L);
+        assertThat(whole.getStoredToolResultTokens()).isZero();
+    }
+
+    @Test
     void testUnavailableAttachmentIsSaidToBeGone() {
         final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
         final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
