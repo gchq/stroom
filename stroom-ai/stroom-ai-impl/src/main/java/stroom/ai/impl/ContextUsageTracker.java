@@ -23,12 +23,16 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +45,9 @@ import java.util.regex.Pattern;
 /// estimate how much of the context window a chat uses between calls:
 ///
 /// - how far off the simple estimate (characters / 4) was for the chat's last call, used to correct estimates;
-/// - how many tokens the tool definitions offered in the last call took.
+/// - how many tokens the tool definitions offered in the last call took, and which tools took the most;
+/// - how many tokens the steps of the question being answered took as the last call sent them, which is fewer
+///   than they take as stored once the run has shortened them.
 ///
 /// The correction is kept in memory on the node that made the call; on another node estimates are uncorrected
 /// until a call is made there.
@@ -64,6 +70,8 @@ public class ContextUsageTracker {
             Pattern.compile("(\\d+) input tokens"),
             Pattern.compile("too long: (\\d+) tokens"),
             Pattern.compile("requested (\\d+) tokens"));
+    /// How many of the tools whose definitions take the most tokens are kept, for the context meter to name.
+    static final int LARGEST_TOOLS_KEPT = 5;
 
     private final AiDao aiDao;
     private final AiChatRunManager runManager;
@@ -72,6 +80,8 @@ public class ContextUsageTracker {
     private final Map<Integer, Integer> serverInstructionTokens = new ConcurrentHashMap<>();
     private final Map<Integer, MeasuredCall> lastCalls = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> shortenedParts = new ConcurrentHashMap<>();
+    private final Map<Integer, Map<String, Long>> largestTools = new ConcurrentHashMap<>();
+    private final Map<Integer, Long> sentStepTokens = new ConcurrentHashMap<>();
 
     @Inject
     ContextUsageTracker(final AiDao aiDao, final AiChatRunManager runManager) {
@@ -91,8 +101,13 @@ public class ContextUsageTracker {
                        final List<ChatMessage> sent,
                        final List<ToolSpecification> tools,
                        final ChatResponse response) {
-        final int toolTokens = estimateTools(tools);
+        final Map<String, Long> byTool = estimateEachTool(tools);
+        final int toolTokens = (int) byTool.values().stream().mapToLong(Long::longValue).sum();
         toolDefinitionTokens.put(chatId, toolTokens);
+        largestTools.put(chatId, largest(byTool, LARGEST_TOOLS_KEPT));
+        sentStepTokens.put(chatId, estimateSteps(sent));
+        LOGGER.debug(() -> "chatId=" + chatId + " offered " + byTool.size() + " tool(s) taking about " + toolTokens
+                           + " tokens: " + largest(byTool, byTool.size()));
         final long estimate = ESTIMATOR.estimateTokenCountInMessages(sent) + toolTokens;
         final TokenUsage usage = NullSafe.get(response, ChatResponse::tokenUsage);
         final Integer inputTokens = NullSafe.get(usage, TokenUsage::inputTokenCount);
@@ -238,6 +253,62 @@ public class ContextUsageTracker {
         return tokens;
     }
 
+    /// @param tools Tool definitions, or null.
+    /// @return An estimate of the tokens each takes, by tool name, in the order given.
+    static Map<String, Long> estimateEachTool(final List<ToolSpecification> tools) {
+        final Map<String, Long> byTool = new LinkedHashMap<>();
+        for (final ToolSpecification tool : NullSafe.list(tools)) {
+            byTool.merge(tool.name(), (long) ESTIMATOR.estimateTokenCountInText(tool.toJson()), Long::sum);
+        }
+        return byTool;
+    }
+
+    /// @param byTool Tokens by tool name.
+    /// @param count  How many to give.
+    /// @return The `count` tools that take the most tokens, largest first.
+    static Map<String, Long> largest(final Map<String, Long> byTool, final int count) {
+        final Map<String, Long> largest = new LinkedHashMap<>();
+        byTool.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(count)
+                .forEach(entry -> largest.put(entry.getKey(), entry.getValue()));
+        return largest;
+    }
+
+    /// @param sent The messages of a model call.
+    /// @return An estimate of the tokens the question's steps take in them: the model's tool calls, their
+    /// results, and the notes earlier steps were put in to save space.
+    static long estimateSteps(final List<ChatMessage> sent) {
+        final List<ChatMessage> steps = NullSafe.list(sent).stream()
+                .filter(message -> (message instanceof final AiMessage ai && ai.hasToolExecutionRequests())
+                                   || message instanceof ToolExecutionResultMessage
+                                   || isStepsNote(message))
+                .toList();
+        return steps.isEmpty()
+                ? 0
+                : ESTIMATOR.estimateTokenCountInMessages(steps);
+    }
+
+    private static boolean isStepsNote(final ChatMessage message) {
+        return message instanceof final UserMessage user
+               && user.hasSingleText()
+               && (user.singleText().startsWith(McpAgentChat.TURN_SUMMARY_NOTE)
+                   || user.singleText().startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+    }
+
+    /// @param chatId The chat.
+    /// @return The tools whose definitions took the most tokens in the chat's last call, largest first, with
+    /// their tokens.
+    public Map<String, Long> getLargestTools(final int chatId) {
+        return largestTools.getOrDefault(chatId, Map.of());
+    }
+
+    /// @param chatId The chat.
+    /// @return An estimate of the tokens the question's steps took in the chat's last call, if one was made.
+    public Optional<Long> getSentStepTokens(final int chatId) {
+        return Optional.ofNullable(sentStepTokens.get(chatId));
+    }
+
     /// @param chatId The chat.
     /// @return The chat's last model call on this node whose size the model reported, if there is one.
     public Optional<MeasuredCall> getLastCall(final int chatId) {
@@ -273,6 +344,8 @@ public class ContextUsageTracker {
         serverInstructionTokens.remove(chatId);
         lastCalls.remove(chatId);
         shortenedParts.remove(chatId);
+        largestTools.remove(chatId);
+        sentStepTokens.remove(chatId);
     }
 
 

@@ -450,7 +450,8 @@ public class AskStroomAIService {
                 ? getChatModel(modelDoc)
                 : null;
         runManager.start(chatId, run -> {
-            if (!chatCompactor.compactNow(chatId, modelDoc, chatModel, request.getInstructions())) {
+            if (!chatCompactor.compactNow(chatId, modelDoc, chatModel, request.getInstructions(),
+                    runManager.stopFlag(chatId)::get)) {
                 aiService.storeMessage(chatId, AiMessageType.WARNING, NOTHING_TO_COMPACT);
             }
         });
@@ -1288,7 +1289,8 @@ public class AskStroomAIService {
                         attempt == 1
                                 ? CompactionMode.AUTO
                                 : CompactionMode.FORCE,
-                        null));
+                        null,
+                        cancelled::get));
                 if (attempt > 1) {
                     // Without this, the model sees its steps so far and tends to sum them up and stop.
                     messages.add(UserMessage.from(RESUMED_AFTER_OVERFLOW_NOTE));

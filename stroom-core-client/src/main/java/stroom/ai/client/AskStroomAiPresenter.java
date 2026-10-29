@@ -2056,12 +2056,19 @@ public class AskStroomAiPresenter
             }, Attribute.className("ai-context-details-parts"));
         }
         if (usage.getShortenedParts() > 0) {
-            // The figure is what the model was last sent, which is less than the parts below, as stored.
+            // The figure is what the model was last sent, which is less than the chat holds.
+            final String stored = usage.getStoredToolResultTokens() > 0
+                    ? " Tool calls and results are shown as last sent; as stored, they take "
+                      + kilo(usage.getStoredToolResultTokens()) + "."
+                    : "";
             hb.div(note -> note.append("To fit, the agent has shortened " + usage.getShortenedParts()
                                        + " earlier step(s) or result(s) of this answer; they are still stored, "
-                                       + "and the agent can read them again. The parts above are as stored, "
-                                       + "before shortening."),
+                                       + "and the agent can read them again." + stored),
                     Attribute.className("ai-context-details-note"));
+        }
+        final String toolsNote = AiChatTexts.toolDefinitionsNote(usage);
+        if (toolsNote != null) {
+            hb.div(note -> note.append(toolsNote), Attribute.className("ai-context-details-note"));
         }
         hb.div(note -> note.append("Earlier messages are compacted automatically at " + compactAt + "%."),
                 Attribute.className("ai-context-details-note"));
@@ -2070,9 +2077,7 @@ public class AskStroomAiPresenter
     }
 
     private static String kilo(final long tokens) {
-        return tokens >= 1000
-                ? (tokens / 1000) + "k"
-                : String.valueOf(tokens);
+        return AiChatTexts.kilo(tokens);
     }
 
     @Override

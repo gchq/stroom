@@ -193,8 +193,7 @@ class TestAgentEndToEnd {
 
     @Test
     void aLongRunsEarlierStepsAreSummarisedThroughTheRealClientAndTheRunCarriesOn() throws Exception {
-        // The summary is asked for whole (not streamed into the chat as an answer), part way through the run, by
-        // the model client the chat's compaction uses.
+        // The summary is asked for part way through the run, and isn't shown in the chat as an answer.
         for (int n = 1; n <= 12; n++) {
             model.callTool("create_filter", "{\"feed\":\"FEED-" + n + "\"}");
         }
@@ -209,10 +208,10 @@ class TestAgentEndToEnd {
 
         assertThat(response.aiMessage().text()).isEqualTo("All twelve filters are ready.");
         final List<Map<String, Object>> requests = model.requests();
-        final List<Map<String, Object>> whole = requests.stream()
-                .filter(r -> !Boolean.TRUE.equals(r.get("stream")))
+        final List<Map<String, Object>> summaries = requests.stream()
+                .filter(FakeOpenAiServer::isSummaryRequest)
                 .toList();
-        assertThat(whole).singleElement().satisfies(summary -> {
+        assertThat(summaries).singleElement().satisfies(summary -> {
             final String sent = JsonUtil.writeValueAsString(summary.get("messages"), false);
             assertThat(sent)
                     .contains("summarising your own progress")
@@ -222,7 +221,7 @@ class TestAgentEndToEnd {
             assertThat(summary).doesNotContainKey("tools");
         });
         // Every call ran once, and the requests after the summary carry it in place of the earlier steps.
-        assertThat(requests.stream().filter(r -> Boolean.TRUE.equals(r.get("stream")))).hasSize(13);
+        assertThat(requests.stream().filter(r -> !FakeOpenAiServer.isSummaryRequest(r))).hasSize(13);
         final String last = JsonUtil.writeValueAsString(requests.getLast().get("messages"), false);
         assertThat(last)
                 .contains("Made filters for FEED-1 to FEED-7.")

@@ -23,6 +23,7 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,6 +34,8 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -40,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /// Keeps a chat within the model's context window, in three steps, each used only if the one before is not
 /// enough:
@@ -73,16 +77,19 @@ public class ChatCompactor {
     private final ContextAssembler contextAssembler;
     private final Provider<AiConfig> aiConfigProvider;
     private final Provider<AskStroomAiConfig> askConfigProvider;
+    private final ModelStreamer modelStreamer;
 
     @Inject
     ChatCompactor(final AiService aiService,
                   final ContextAssembler contextAssembler,
                   final Provider<AiConfig> aiConfigProvider,
-                  final Provider<AskStroomAiConfig> askConfigProvider) {
+                  final Provider<AskStroomAiConfig> askConfigProvider,
+                  final ModelStreamer modelStreamer) {
         this.aiService = aiService;
         this.contextAssembler = contextAssembler;
         this.aiConfigProvider = aiConfigProvider;
         this.askConfigProvider = askConfigProvider;
+        this.modelStreamer = modelStreamer;
     }
 
     /// @param modelDoc The model, or null.
@@ -107,14 +114,17 @@ public class ChatCompactor {
     /// @param chatModel     The model, used if a summary has to be written.
     /// @param mode          When to compact, and how far.
     /// @param instructions  What a summary should focus on, from the user, or null.
+    /// @param cancelled     Says if the user has stopped the run, which ends a summary being written.
     /// @return The messages, in order.
+    /// @throws TaskTerminatedException If the run was stopped while a summary was being written.
     public List<ChatMessage> assemble(final AskStroomAiRequest request,
                                       final int chatId,
                                       final Map<Integer, AiChatAttachment> attachmentMap,
                                       final OpenAIModelDoc modelDoc,
                                       final ChatModel chatModel,
                                       final CompactionMode mode,
-                                      final String instructions) {
+                                      final String instructions,
+                                      final BooleanSupplier cancelled) {
         final List<AiChatMessage> history = aiService.getMessages(chatId);
         final CompactionRecord current = ContextAssembler.currentCompaction(history);
         List<ChatMessage> messages = contextAssembler.assemble(request, chatId, attachmentMap, history, current,
@@ -149,7 +159,7 @@ public class ChatCompactor {
             case MANUAL -> true;
         };
         if (summarise && next.digestsUpToTurnId() > next.summaryUpToTurnId()) {
-            next = summarise(chatId, chatModel, history, finishedTurns, next, instructions);
+            next = summarise(chatId, modelDoc, chatModel, history, finishedTurns, next, instructions, cancelled);
             messages = contextAssembler.assemble(request, chatId, attachmentMap, history, next,
                     tablesAsProfiles(modelDoc));
         }
@@ -172,19 +182,25 @@ public class ChatCompactor {
     }
 
     private CompactionRecord summarise(final int chatId,
+                                       final OpenAIModelDoc modelDoc,
                                        final ChatModel chatModel,
                                        final List<AiChatMessage> history,
                                        final List<Integer> finishedTurns,
                                        final CompactionRecord compaction,
-                                       final String instructions) {
+                                       final String instructions,
+                                       final BooleanSupplier cancelled) {
         final Map<Integer, String> digests = TurnDigests.digests(history, config().getDigestMaxResultRows());
         final List<Integer> turns = finishedTurns.stream()
                 .filter(turnId -> turnId > compaction.summaryUpToTurnId()
                                   && turnId <= compaction.digestsUpToTurnId())
                 .toList();
         try {
-            final String summary = writeSummary(chatModel, compaction.summary(), turns, digests, instructions);
+            final String summary = writeSummary(chatId, modelDoc, chatModel, compaction.summary(), turns, digests,
+                    instructions, cancelled);
             return compaction.withSummary(summary, compaction.digestsUpToTurnId());
+        } catch (final TaskTerminatedException e) {
+            // A stop isn't a summary that couldn't be written, so nothing is left out for it.
+            throw e;
         } catch (final RuntimeException e) {
             // Drop the oldest half of the digests instead. They can still be found with search_history.
             LOGGER.warn(() -> "Unable to summarise earlier turns of chatId=" + chatId + ": " + e.getMessage(), e);
@@ -197,11 +213,14 @@ public class ChatCompactor {
         }
     }
 
-    private String writeSummary(final ChatModel chatModel,
+    private String writeSummary(final int chatId,
+                                final OpenAIModelDoc modelDoc,
+                                final ChatModel chatModel,
                                 final String existingSummary,
                                 final List<Integer> turns,
                                 final Map<Integer, String> digests,
-                                final String instructions) {
+                                final String instructions,
+                                final BooleanSupplier cancelled) {
         final StringBuilder input = new StringBuilder();
         if (NullSafe.isNonBlankString(existingSummary)) {
             input.append("Summary so far:\n").append(existingSummary).append("\n\n");
@@ -215,9 +234,13 @@ public class ChatCompactor {
                 askConfigProvider.get(),
                 AskStroomAiConfig::getHistorySummaryPrompt,
                 AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT) + SUMMARY_RULES;
-        final String summary = chatModel.chat(List.of(
-                        new SystemMessage(systemPrompt),
-                        new UserMessage(input.toString().strip())))
+        final ChatRequest request = ChatRequest.builder()
+                .messages(new SystemMessage(systemPrompt), new UserMessage(input.toString().strip()))
+                .build();
+        final StreamingChatModel streamingModel = modelDoc != null
+                ? aiService.getStreamingChatModel(modelDoc)
+                : null;
+        final String summary = modelStreamer.callUnseen(chatModel, streamingModel, request, chatId, cancelled)
                 .aiMessage()
                 .text();
         if (NullSafe.isBlankString(summary)) {
@@ -233,14 +256,17 @@ public class ChatCompactor {
     /// @param modelDoc     The model.
     /// @param chatModel    The model, to write the summary.
     /// @param instructions What the summary should focus on, or null.
+    /// @param cancelled    Says if the user has stopped the run, which ends the summary being written.
     /// @return True if anything was compacted, false if there was nothing to compact.
+    /// @throws TaskTerminatedException If the run was stopped while the summary was being written.
     public boolean compactNow(final int chatId,
                               final OpenAIModelDoc modelDoc,
                               final ChatModel chatModel,
-                              final String instructions) {
+                              final String instructions,
+                              final BooleanSupplier cancelled) {
         final CompactionRecord before = ContextAssembler.currentCompaction(aiService.getMessages(chatId));
         assemble(new AskStroomAiRequest(null, null, null, ""), chatId, Map.of(), modelDoc, chatModel,
-                CompactionMode.MANUAL, instructions);
+                CompactionMode.MANUAL, instructions, cancelled);
         return !ContextAssembler.currentCompaction(aiService.getMessages(chatId)).coversTheSameAs(before);
     }
 
