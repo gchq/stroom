@@ -19,6 +19,7 @@ package stroom.dashboard.client.input;
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.input.ListInputPresenter.WordItem;
 import stroom.docref.DocRef;
+import stroom.item.client.MultiSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -37,6 +38,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> implements ListInputView {
 
@@ -49,6 +52,8 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
     @UiField
     SelectionBox<WordItem> valueSelectionBox;
+    @UiField
+    MultiSelectionBox<WordItem> multiValueSelectionBox;
 
     private boolean allowTextEntry;
 
@@ -56,7 +61,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     public ListInputViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        valueSelectionBox.setRenderFunction(wordItem -> {
+        final Function<WordItem, SafeHtml> renderFunction = wordItem -> {
             final String word = wordItem.getWord();
 
             return wordItem.getSourceDocRef()
@@ -78,7 +83,15 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
                     })
                     .orElseGet(() ->
                             SafeHtmlUtils.fromString(word));
+        };
+        valueSelectionBox.setRenderFunction(renderFunction);
+        multiValueSelectionBox.setRenderFunction(renderFunction);
+        multiValueSelectionBox.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onSelectedValuesChanged(event.getValue());
+            }
         });
+        setMultiSelect(false);
     }
 
     private Attribute cssClass(final String suffix) {
@@ -99,6 +112,10 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
             valueSelectionBox.addItems(values);
         }
         valueSelectionBox.setValue(selected);
+        // Blank lines in the values become empty items, which can't usefully be ticked.
+        multiValueSelectionBox.setItems(NullSafe.stream(values)
+                .filter(wordItem -> NullSafe.isNonBlankString(wordItem.getWord()))
+                .collect(Collectors.toList()));
     }
 
     @Override
@@ -109,6 +126,25 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     @Override
     public String getSelectedValue() {
         return valueSelectionBox.getText();
+    }
+
+    @Override
+    public void setSelectedValues(final List<WordItem> selected) {
+        multiValueSelectionBox.setValue(selected);
+    }
+
+    @Override
+    public List<String> getSelectedValues() {
+        return multiValueSelectionBox.getValue()
+                .stream()
+                .map(WordItem::getWord)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void setMultiSelect(final boolean multiSelect) {
+        valueSelectionBox.setVisible(!multiSelect);
+        multiValueSelectionBox.setVisible(multiSelect);
     }
 
     @Override

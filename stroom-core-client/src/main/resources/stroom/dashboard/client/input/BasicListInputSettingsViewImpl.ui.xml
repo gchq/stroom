@@ -27,5 +27,9 @@
             <v:CustomCheckBox ui:field="allowTextEntry" identity="basicListInputSettingsAllowTextEntry"
                               label="Allow Text Entry"/>
         </form:FormGroup>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="multiSelect" identity="basicListInputSettingsMultiSelect"
+                              label="Multi-Select"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 
