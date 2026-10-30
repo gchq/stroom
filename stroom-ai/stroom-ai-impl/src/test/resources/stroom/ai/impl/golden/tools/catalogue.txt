@@ -2758,7 +2758,7 @@ Cast: toBoolean, toDouble, toFloat, toInteger, toLong, toString
 Date: ceilingDay, ceilingHour, ceilingMinute, ceilingMonth, ceilingSecond, ceilingTime, ceilingWeek, ceilingYear, day(), floorDay, floorHour, floorMinute, floorMonth, floorSecond, floorTime, floorWeek, floorYear, formatDate, formatDuration, formatISODuration, hour(), isWeekend, minute(), month(), now(), parseDate, parseDuration, parseISODuration, roundDay, roundHour, roundMinute, roundMonth, roundSecond, roundTime, roundWeek, roundYear, second(), week(), year()
 Logic: !=, <, <=, =, >, >=, and, case, if, inRange, not, or
 Mathematics: %, *, -, /, ^, add, ceiling, floor, negate, random(), round
-String: concat, contains, decode, decodeUrl, encodeUrl, exclude, hash, hostAddress, hostName, include, indexOf, jq, lastIndexOf, lowerCase, match, replace, stringLength, substring, substringAfter, substringBefore, upperCase, xpath
+String: concat, contains, decode, decodeUrl, encodeUrl, exclude, hash, hostAddress, hostName, include, indexOf, jq, lastIndexOf, lowerCase, match, replace, shannonEntropy, stringLength, substring, substringAfter, substringBefore, upperCase, xpath
 Type Checking: isBoolean, isDouble, isError, isInteger, isLong, isNull, isNumber, isString, isValue, typeOf
 URI: extractAuthorityFromUri, extractFragmentFromUri, extractHostFromUri, extractPathFromUri, extractPortFromUri, extractQueryFromUri, extractSchemeFromUri, extractSchemeSpecificPartFromUri, extractUserInfoFromUri
 Value: err(), false(), formatIECByteSize, formatMetricByteSize, null(), true()
