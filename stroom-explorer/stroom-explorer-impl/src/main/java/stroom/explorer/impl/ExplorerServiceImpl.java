@@ -1250,6 +1250,7 @@ class ExplorerServiceImpl
             DocRef result = null;
 
             try {
+                checkNotMovingIntoItself(explorerNode, folderRef);
                 checkPermsForMove(explorerNode, permissionInheritance);
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
@@ -1274,13 +1275,28 @@ class ExplorerServiceImpl
             // Create the explorer node
             if (result != null) {
                 explorerNodeService.moveNode(result, folderRef, permissionInheritance);
+                // Let the tree know it has changed. Nothing changed if the move failed, and firing with a
+                // null result would throw, losing the messages for the whole bulk move.
+                EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
+                EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE);
             }
-            // Let the tree know it has changed
-            EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
-            EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE);
         }
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
+    }
+
+    /// Moving a folder into itself or one of its own descendants would detach that part of the tree
+    /// from the root, so refuse it.
+    private void checkNotMovingIntoItself(final ExplorerNode node,
+                                          final DocRef destinationFolderRef) {
+        if (destinationFolderRef != null && ExplorerConstants.isFolder(node.getDocRef())) {
+            final boolean isDestinationInside = explorerNodeService.getDescendants(node.getDocRef())
+                    .stream()
+                    .anyMatch(descendant -> Objects.equals(descendant.getDocRef(), destinationFolderRef));
+            if (isDestinationInside) {
+                throw new IllegalArgumentException("into itself or one of its own sub-folders.");
+            }
+        }
     }
 
     private void checkPermsForMove(final ExplorerNode node,

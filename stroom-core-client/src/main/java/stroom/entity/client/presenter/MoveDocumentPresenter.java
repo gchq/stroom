@@ -66,17 +66,21 @@ public class MoveDocumentPresenter
 
         entityTreePresenter.setSelectedItem(null);
 
-        ExplorerNode firstChild = event.getExplorerNodeList().get(0);
+        // Select the requested destination (e.g. from a drag and drop) if there is one, otherwise the
+        // first item so that its parent folder becomes the default destination.
+        ExplorerNode initialSelection = event.getDestinationFolder() != null
+                ? event.getDestinationFolder()
+                : event.getExplorerNodeList().get(0);
         // Make sure we reference the main node rather than the favourites' node.
-        if (firstChild != null) {
-            firstChild = firstChild
+        if (initialSelection != null) {
+            initialSelection = initialSelection
                     .copy()
                     .rootNodeUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid())
                     .build();
         }
-        entityTreePresenter.setSelectedItem(firstChild);
+        entityTreePresenter.setSelectedItem(initialSelection);
         entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(firstChild);
+        entityTreePresenter.getModel().setEnsureVisible(initialSelection);
         entityTreePresenter.getModel().refresh();
 
         // We want to select the parent folder, so we have a default dest to move into.
