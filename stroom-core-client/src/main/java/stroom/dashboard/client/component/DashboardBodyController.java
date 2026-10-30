@@ -31,13 +31,11 @@ import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.Panes;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.RefreshablePane;
-import stroom.dashboard.client.main.UniqueUtil;
 import stroom.dashboard.client.model.MutableLayoutConfig;
 import stroom.dashboard.client.model.MutableSize;
 import stroom.dashboard.client.model.MutableSplitLayoutConfig;
 import stroom.dashboard.client.model.MutableTabConfig;
 import stroom.dashboard.client.model.MutableTabLayoutConfig;
-import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
@@ -56,6 +54,8 @@ import stroom.explorer.client.component.DocumentChooserController;
 import stroom.query.api.ParamUtil;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
+import stroom.query.client.UniqueUtil;
+import stroom.query.client.component.QueryInfo;
 import stroom.query.client.component.QueryToolbarController;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -980,7 +980,7 @@ public class DashboardBodyController
         }
 
         public ComponentId createUnique(final ComponentType type, final String currentName) {
-            final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+            final String id = UniqueUtil.createUniqueComponentId(type.getId(), currentIdSet);
             final String name = UniqueUtil.makeUniqueName(currentName, currentNameSet);
             currentIdSet.add(id);
             currentNameSet.add(name);

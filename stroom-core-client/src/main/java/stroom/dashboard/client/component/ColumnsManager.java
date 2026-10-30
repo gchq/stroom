@@ -17,15 +17,17 @@
 package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.main.UniqueUtil;
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
+import stroom.query.client.UniqueUtil;
 import stroom.query.client.cell.ColumnHeaderHtmlUtil;
+import stroom.query.client.result.component.ColumnFormatController;
+import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
+import stroom.query.client.result.table.FilterCellManager;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.Heading;

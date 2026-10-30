@@ -16,7 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -24,6 +23,7 @@ import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;

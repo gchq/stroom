@@ -22,8 +22,6 @@ import stroom.data.client.component.CreateProcessorsController;
 import stroom.data.client.component.DataPreviewTabController;
 import stroom.data.client.component.DataUploadController;
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.component.ProcessorTasksListController;
-import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.data.client.component.SourceTabController;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.component.DocumentChooserController;
@@ -42,7 +40,8 @@ import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.processor.client.component.ProcessorEditorController;
 import stroom.processor.client.component.ProcessorProfilesController;
 import stroom.processor.client.component.ProcessorsController;
-import stroom.processor.task.client.component.ProcessorFilterTasksController;
+import stroom.processor.task.client.component.ProcessorTaskListController;
+import stroom.processor.task.client.component.ProcessorTasksController;
 import stroom.receive.rules.client.component.DataRetentionController;
 import stroom.receive.rules.client.component.RuleSetTabController;
 
@@ -89,14 +88,12 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorLimitsController getProcessorLimitsController();
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
-    ProcessorTasksListController getProcessorTasksListController();
+    ProcessorTaskListController getProcessorTaskListController();
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
-    /// list), as `FolderTabs`, `FeedEditor` and `PipelineEditor` create it.
-    ProcessorTasksTabController getProcessorTasksTabController();
-
-    /// @return A processor filter's 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
-    ProcessorFilterTasksController getProcessorFilterTasksController();
+    /// list), as `FolderTabs`, `FeedEditor` and `PipelineEditor` create it, or a processor filter's
+    /// 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
+    ProcessorTasksController getProcessorTasksController();
 
     // Data
 

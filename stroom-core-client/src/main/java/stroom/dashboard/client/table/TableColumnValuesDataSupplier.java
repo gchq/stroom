@@ -34,6 +34,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableSettings;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 

@@ -18,8 +18,8 @@ package stroom.annotation.client.component;
 
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
-import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.query.api.ConditionalFormattingType;
+import stroom.query.client.result.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;

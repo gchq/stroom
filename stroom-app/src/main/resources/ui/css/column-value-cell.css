@@ -15,7 +15,7 @@
  */
 
 /*
-   A value in a dashboard table's column value filter (stroom.dashboard.client.table.ColumnValueCell),
+   A value in a dashboard table's column value filter (stroom.query.client.result.table.ColumnValueCell),
    named BEM style. Imported after components.css, where it was.
 */
 .column-value-cell {

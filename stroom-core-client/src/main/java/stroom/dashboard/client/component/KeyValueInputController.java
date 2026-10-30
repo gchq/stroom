@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.shared.ComponentConfig;
@@ -24,6 +23,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
+import stroom.query.client.result.table.HasParams;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

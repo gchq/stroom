@@ -23,9 +23,8 @@ import stroom.editor.client.component.CodeEditorController;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.query.client.result.TextHighlights;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.TextRange;
 import stroom.widget.component.client.Controller;
 import stroom.widget.hyperlink.client.HyperlinkEvent;
 import stroom.widget.hyperlink.client.LinkValue;
@@ -38,7 +37,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -133,7 +131,7 @@ public class QueryTextPaneController extends Controller {
 
                 if (highlightStrings != null && !highlightStrings.isEmpty()) {
                     editor.setFormattedHighlights(formattedText ->
-                            getHighlights(formattedText, highlightStrings));
+                            TextHighlights.find(formattedText, highlightStrings));
                 } else {
                     editor.setFormattedHighlights(null);
                 }
@@ -165,97 +163,6 @@ public class QueryTextPaneController extends Controller {
 
             editor.setErrorText(title, errorText);
         });
-    }
-
-    /**
-     * The ranges returned are line/col positions in the input text. Thus the input text should
-     * not be changed/formatted after the highlight ranges have been generated.
-     */
-    private List<TextRange> getHighlights(final String input, final Set<String> highlightStrings) {
-        final List<TextRange> highlights = new ArrayList<>();
-
-        // See if we are going to add highlights.
-        if (input != null && highlightStrings != null && highlightStrings.size() > 0) {
-            final char[] inputChars = input.toLowerCase().toCharArray();
-            final int inputLength = inputChars.length;
-
-            // Find out where the highlight elements need to be placed.
-            for (final String highlight : highlightStrings) {
-                if (highlight == null) {
-                    continue;
-                }
-
-                final char[] highlightChars = highlight.toLowerCase().toCharArray();
-                final int highlightLength = highlightChars.length;
-
-                boolean inElementTag = false;
-                boolean inEscapedElement = false;
-                int lineNo = 1;
-                int colNo = 1;
-                char lastInputChar = 0;
-                for (int i = 0; i < inputLength; i++) {
-                    final char inputChar = inputChars[i];
-
-                    if (lastInputChar == '\n') {
-                        lineNo++;
-                        colNo = 1;
-                    }
-                    lastInputChar = inputChar;
-
-                    if (!inElementTag && !inEscapedElement) {
-                        if (inputChar == '<') {
-                            inElementTag = true;
-                        } else if (inputChar == '&'
-                                   && i + 3 < inputLength
-                                   && inputChars[i + 1] == 'l'
-                                   && inputChars[i + 2] == 't'
-                                   && inputChars[i + 3] == ';') {
-                            inEscapedElement = true;
-                        } else {
-                            // If we aren't in an element or escaped element
-                            // then try to match.
-                            boolean found = false;
-                            for (int j = 0; j < highlightLength && i + j < inputLength; j++) {
-                                final char highlightChar = highlightChars[j];
-                                if (inputChars[i + j] != highlightChar) {
-                                    break;
-                                } else if (j == highlightLength - 1) {
-                                    found = true;
-                                }
-                            }
-
-                            if (found) {
-                                // All one based and inclusive
-                                final TextRange hl = new TextRange(
-                                        new DefaultLocation(lineNo, colNo),
-                                        new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
-                                highlights.add(hl);
-
-                                // Skip over the found highlight term
-                                i += highlightLength;
-                                colNo += highlightLength;
-                            }
-                        }
-                    } else if (inElementTag && inputChar == '>') {
-                        inElementTag = false;
-
-                    } else if (inEscapedElement
-                               && inputChar == '&'
-                               && i + 3 < inputLength
-                               && inputChars[i + 1] == 'g'
-                               && inputChars[i + 2] == 't'
-                               && inputChars[i + 3] == ';') {
-                        inEscapedElement = false;
-                    }
-
-                    colNo++;
-                }
-            }
-        }
-
-        Collections.sort(highlights);
-
-        return highlights;
     }
 
     /// Fetches a record's source and shows it, after a short delay in which later requests replace

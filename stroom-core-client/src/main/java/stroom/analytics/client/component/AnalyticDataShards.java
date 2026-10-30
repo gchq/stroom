@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.component;
 
-import stroom.query.client.component.QueryResultTable;
+import stroom.query.client.result.component.ResultTable;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
@@ -33,7 +33,7 @@ public class AnalyticDataShards extends Component {
     @UiField
     AnalyticDataShardList shardList;
     @UiField
-    QueryResultTable table;
+    ResultTable table;
 
     /// Makes the tab, with no shards or rows.
     public AnalyticDataShards() {
@@ -47,7 +47,7 @@ public class AnalyticDataShards extends Component {
 
     /// @return The rows of the shard selected, which its controller attaches the table's
     ///         controller to.
-    public QueryResultTable getTable() {
+    public ResultTable getTable() {
         return table;
     }
 

@@ -22,6 +22,7 @@ import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.result.component.ConditionalFormattingRulesController;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
@@ -36,11 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// A Table Filter's conditional formatting tab ([TableFilterConditionalFormatting]): a set of rules for each column it
+/// A Table Filter's conditional formatting tab ([TableFilterColumns]): a set of rules for each column it
 /// filters, told the columns by the Basic tab ([#setAllColumns], [#setSelectedColumns]).
 public class TableFilterConditionalFormattingController extends SettingsTabController {
 
-    private final TableFilterConditionalFormatting view;
+    private final TableFilterColumns view;
 
     private final Provider<ConditionalFormattingRulesController> rulesProvider;
     private Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules = new HashMap<>();
@@ -56,7 +57,7 @@ public class TableFilterConditionalFormattingController extends SettingsTabContr
     /// @param rulesProvider Makes a column's rules.
     @Inject
     public TableFilterConditionalFormattingController(final EventBus eventBus,
-                                final TableFilterConditionalFormatting view,
+                                final TableFilterColumns view,
                                 final Provider<ConditionalFormattingRulesController> rulesProvider) {
         super(eventBus);
         this.view = view;
@@ -84,7 +85,7 @@ public class TableFilterConditionalFormattingController extends SettingsTabContr
 
             final Column col = allColumns.get(column);
             if (col != null) {
-                final QueryField field = TableController.buildDsField(col);
+                final QueryField field = ConditionalFormattingRulesController.buildDsField(col);
 
                 final ConditionalFormattingRulesController columnRules = rulesByColumnId
                         .computeIfAbsent(column.getId(), k -> {

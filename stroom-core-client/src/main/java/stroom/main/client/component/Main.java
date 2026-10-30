@@ -18,8 +18,8 @@ package stroom.main.client.component;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.component.CurveTabLayout;
-import stroom.dashboard.client.table.cf.DynamicStyles;
 import stroom.explorer.client.component.Explorer;
+import stroom.query.client.result.table.cf.DynamicStyles;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;

@@ -33,7 +33,7 @@ import stroom.gwt.workbench.client.app.credentials.CredentialsScreenStories;
 import stroom.gwt.workbench.client.app.dashboard.PausePollingStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryInfoPromptStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryResultVisStories;
-import stroom.gwt.workbench.client.app.dashboard.QueryResultsTableDashboardStories;
+import stroom.gwt.workbench.client.app.dashboard.QueryResultsTableStories;
 import stroom.gwt.workbench.client.app.dashboard.TableFilterSettingsStories;
 import stroom.gwt.workbench.client.app.dashboard.VisSettingsStories;
 import stroom.gwt.workbench.client.app.dashboard.VisToolbarStories;
@@ -127,7 +127,6 @@ import stroom.gwt.workbench.client.app.processing.ProcessorLimitsDialogStories;
 import stroom.gwt.workbench.client.app.processing.ProcessorProfilesScreenStories;
 import stroom.gwt.workbench.client.app.processing.ProcessorTaskListStories;
 import stroom.gwt.workbench.client.app.processing.ProcessorTaskSummaryStories;
-import stroom.gwt.workbench.client.app.query.QueryResultsTableStories;
 import stroom.gwt.workbench.client.app.query.ResultStoresDialogStories;
 import stroom.gwt.workbench.client.app.security.AccountsScreenStories;
 import stroom.gwt.workbench.client.app.security.ApiKeysScreenStories;
@@ -419,7 +418,6 @@ public final class AppStories {
         FeedEditorStories.addTo(registry);
         // App/Query/QueryResultsTable
         QueryResultsTableStories.addTo(registry);
-        QueryResultsTableDashboardStories.addTo(registry);
         // App/Core/appPermissions
         AppPermissionsStories.addTo(registry);
         // App/Core/deleteConfirmation

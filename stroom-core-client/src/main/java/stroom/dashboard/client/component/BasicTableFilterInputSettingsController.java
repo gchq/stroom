@@ -16,12 +16,12 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableFilterComponentSettings;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.client.result.table.FilterableTable;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;

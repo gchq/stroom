@@ -512,7 +512,7 @@ disabled, give the focus to the dialog's next control (or its first tab stop). T
 check the focus until then.
 
 * `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/DialogButtonAction.java`
-  (`keepFocus`), used by `OkCancelContent.onDialogAction` and the other `*Content` classes
+  (`keepFocus`), used by `DialogFrame.onDialogAction`
 
 ### A trace's operation list can't be scrolled with the keyboard
 
@@ -1830,11 +1830,14 @@ checks which element has the focus after opening.
 
 ### Two story classes share a title
 
-**Open** (30 October 2026, wave 44): `QueryResultsTableStories` (`app.query`) and
+**Fixed** (30 October 2026, audit wave 11; found in wave 44): `QueryResultsTableStories` (`app.query`) and
 `QueryResultsTableDashboardStories` (`app.dashboard`) both register `App/Query/QueryResultsTable`,
 so their stories make one group. Titles can't change (they are the stories' ids and baselines), and
 merging the classes means making one area's helpers public (`DashboardPlays`, or the query's
 fixtures). To do with wave 11's query/dashboard merge, which brings the two together anyway.
+Wave 11 made the two tables one component (`ResultTable`), and the two classes one,
+`QueryResultsTableStories` in `app.dashboard` (where `DashboardPlays` is; the query's helpers were
+already public). The title and the stories' names and order are unchanged.
 
 ### Screenshots that differ in every run
 
@@ -2095,8 +2098,8 @@ to delete them by hand.
 * ~~`CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
   2026 in wave 3's audit): it is only ever hidden, and the code that would show it is commented
   out.~~ Gone in wave 4: the `CharacterNavigatorController` that replaces it has no progress bar.
-* A dialog's New button (`CreateOkCancelContent`) shows its busy spinner on Cancel, not on itself,
-  while the screen handles it (found 24 October 2026 in wave 3; as it was in
+* A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
+  its busy spinner on Cancel, not on itself, while the screen handles it (found 24 October 2026 in wave 3; as it was in
   `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
 * Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are

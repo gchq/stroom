@@ -1,8 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
-  A dialog (dialog.css) of a fixed size: its frame, then its title bar (an icon and its caption, set
-  by its caller, the busy spinner and the window options button) above its content, and the hint
-  shown while it is moved from the keyboard, said as it changes.
+  A dialog (dialog.css): its frame, then its title bar (an icon and its caption, set by its caller,
+  the busy spinner and the window options button) above its content, the hint shown while it is
+  moved or resized from the keyboard, said as it changes, and a resize handle on each edge and
+  corner. Only the handles for the ways it can be resized show (the dialog's resize-width and
+  resize-height modifiers), so a dialog of a fixed size shows none.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
@@ -13,7 +15,7 @@
     <g:HTMLPanel styleName="dialog__container">
         <g:SimplePanel styleName="dialog__frame"/>
         <g:FlowPanel styleName="dialog__layout">
-            <g:FlowPanel styleName="dialog__title-bar">
+            <g:FlowPanel ui:field="titleBar" styleName="dialog__title-bar">
                 <svg:Icon ui:field="icon" addStyleNames="dialog__icon"/>
                 <tx:Label ui:field="titleText" styleName="dialog__title">Caption</tx:Label>
                 <g:SimplePanel styleName="dialog__spinner">
@@ -27,5 +29,15 @@
             <g:SimplePanel ui:field="content" styleName="dialog__body"/>
         </g:FlowPanel>
         <div ui:field="hint" class="dialog__hint" role="status"></div>
+        <g:SimplePanel ui:field="resizeN" styleName="dialog__resize dialog__resize--n"/>
+        <g:SimplePanel ui:field="resizeE" styleName="dialog__resize dialog__resize--e"/>
+        <g:SimplePanel ui:field="resizeS" styleName="dialog__resize dialog__resize--s"/>
+        <g:SimplePanel ui:field="resizeW" styleName="dialog__resize dialog__resize--w"/>
+        <g:SimplePanel ui:field="resizeNE" styleName="dialog__resize dialog__resize--ne"/>
+        <g:SimplePanel ui:field="resizeNW" styleName="dialog__resize dialog__resize--nw"/>
+        <g:SimplePanel ui:field="resizeSE" styleName="dialog__resize dialog__resize--se">
+            <svg:Icon image="RESIZE_HANDLE"/>
+        </g:SimplePanel>
+        <g:SimplePanel ui:field="resizeSW" styleName="dialog__resize dialog__resize--sw"/>
     </g:HTMLPanel>
 </ui:UiBinder>

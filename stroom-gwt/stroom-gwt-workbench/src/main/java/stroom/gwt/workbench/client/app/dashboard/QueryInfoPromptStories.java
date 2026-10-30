@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
-import stroom.dashboard.client.component.QueryInfoPrompt;
-import stroom.dashboard.client.component.QueryInfoPromptController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
@@ -28,6 +26,8 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.query.client.component.QueryInfoPrompt;
+import stroom.query.client.component.QueryInfoPromptController;
 
 import com.google.gwt.user.client.ui.Widget;
 

@@ -24,19 +24,6 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.component.ColumnFilterEditorController;
-import stroom.dashboard.client.component.ColumnFormatController;
-import stroom.dashboard.client.component.ColumnValuesFilterController;
-import stroom.dashboard.client.component.ConditionalFormattingRulesController;
-import stroom.dashboard.client.component.DownloadSearchResultsController;
-import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.GroupLevelButtons;
-import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -55,11 +42,24 @@ import stroom.query.api.TableResult;
 import stroom.query.client.QueryModel;
 import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.QueryTableColumnValuesDataSupplier;
-import stroom.query.client.TableComponentSelection;
-import stroom.query.client.TableRow;
-import stroom.query.client.TableRow.Cell;
-import stroom.query.client.TableRowCell;
 import stroom.query.client.cell.ColumnHeader;
+import stroom.query.client.result.component.ColumnFilterEditorController;
+import stroom.query.client.result.component.ColumnFormatController;
+import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ConditionalFormattingRulesController;
+import stroom.query.client.result.component.DownloadSearchResultsController;
+import stroom.query.client.result.component.ResultTable;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.FilterCellManager;
+import stroom.query.client.result.table.FilterableTable;
+import stroom.query.client.result.table.GroupLevelButtons;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.table.TableComponentSelection;
+import stroom.query.client.result.table.TableRow;
+import stroom.query.client.result.table.TableRow.Cell;
+import stroom.query.client.result.table.TableRowCell;
+import stroom.query.client.result.table.TableRowStyles;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
@@ -103,7 +103,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-/// A query's results as a table ([QueryResultTable]): the rows of a query's search, grouped and
+/// A query's results as a table ([ResultTable]): the rows of a query's search, grouped and
 /// expandable, with the table's column menus and filters, its value filters, download, reset,
 /// annotation and Ask Stroom AI actions, and its row styles from conditional formatting.
 public class QueryResultTableController
@@ -118,7 +118,7 @@ public class QueryResultTableController
     private final RestFactory restFactory;
     private final LocationManager locationManager;
     private final ClientSecurityContext securityContext;
-    private QueryResultTable view;
+    private ResultTable view;
     private PagerPanel pagerView;
     private DataGrid<TableRow> dataGrid;
     private MultiSelectionModelImpl<TableRow> selectionModel;
@@ -149,7 +149,7 @@ public class QueryResultTableController
     private QueryResultVisController queryResultVis;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles rowStyles;
-    private DashboardContext dashboardContext;
+    private Object hyperlinkContext;
     private DocRef currentDataSource;
     private int maxDepth;
 
@@ -167,7 +167,7 @@ public class QueryResultTableController
     private Runnable onRefreshRequest = () -> {
     };
 
-    /// Made by GIN, with its dialogs; [#attach(QueryResultTable)] gives it its content.
+    /// Made by GIN, with its dialogs; [#attach(ResultTable)] gives it its content.
     ///
     /// @param eventBus                   The application's event bus.
     /// @param restFactory                Fetches the data source and the results' columns.
@@ -243,7 +243,7 @@ public class QueryResultTableController
     ///
     /// @param view The table.
     /// @return This, for its owner to keep.
-    public QueryResultTableController attach(final QueryResultTable view) {
+    public QueryResultTableController attach(final ResultTable view) {
         this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
@@ -289,7 +289,7 @@ public class QueryResultTableController
             }
         }));
         own(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
-                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), hyperlinkContext)));
 
         pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
@@ -305,12 +305,12 @@ public class QueryResultTableController
         return this;
     }
 
-    public DashboardContext getDashboardContext() {
-        return dashboardContext;
-    }
-
-    public void setDashboardContext(final DashboardContext dashboardContext) {
-        this.dashboardContext = dashboardContext;
+    /// Sets what the table's hyperlinks are opened in the context of, e.g. the dashboard an
+    /// Embedded Query is on, so a link's parameters can be filled from it.
+    ///
+    /// @param hyperlinkContext The context, or `null` for none.
+    public void setHyperlinkContext(final Object hyperlinkContext) {
+        this.hyperlinkContext = hyperlinkContext;
     }
 
     private void toggle(final TableRow row) {

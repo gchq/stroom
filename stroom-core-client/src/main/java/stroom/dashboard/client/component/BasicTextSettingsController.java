@@ -17,13 +17,13 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ColumnRef;
+import stroom.query.client.result.table.HasComponentSelection;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.inject.Inject;

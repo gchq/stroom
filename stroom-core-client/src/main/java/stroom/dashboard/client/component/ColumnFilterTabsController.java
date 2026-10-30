@@ -19,6 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.client.result.component.ColumnFilterEditorController;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerLayer;

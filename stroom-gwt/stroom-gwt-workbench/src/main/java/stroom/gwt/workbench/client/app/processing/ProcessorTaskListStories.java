@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.processing;
 
-import stroom.data.client.component.ProcessorTasksList;
-import stroom.data.client.component.ProcessorTasksListController;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.client.event.OpenFeedEvent;
@@ -31,11 +29,13 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.processor.task.client.component.ProcessorTaskList;
+import stroom.processor.task.client.component.ProcessorTaskListController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/ProcessorTaskList`, showing Stroom's real [ProcessorTasksListController]
+/// Stories of `App/Main/ProcessorTaskList`, showing Stroom's real [ProcessorTaskListController]
 /// (the task list in the lower pane of a folder's 'Active Tasks' tab) with fake REST replies.
 ///
 /// The rows come from `POST /processorTask/v1/find`. A row's Info icon looks up the task's stream
@@ -165,8 +165,8 @@ public final class ProcessorTaskListStories {
         final Spy openFeed = context.fn(OPEN_FEED_SPY);
         harness.getEventBus().addHandler(OpenFeedEvent.getType(), event -> openFeed.call(event.getName()));
         harness.afterStartUp(() -> {
-            final ProcessorTasksListController tasksList = injector.getProcessorTasksListController()
-                    .attach(new ProcessorTasksList());
+            final ProcessorTaskListController tasksList = injector.getProcessorTaskListController()
+                    .attach(new ProcessorTaskList());
             // As a folder's 'Active Tasks' tab reads it
             tasksList.read(FOLDER, null);
             harness.show(tasksList);

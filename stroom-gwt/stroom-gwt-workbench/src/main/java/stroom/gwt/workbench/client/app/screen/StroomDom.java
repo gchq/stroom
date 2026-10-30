@@ -29,7 +29,7 @@ import java.util.Objects;
 /// Java, so usable (and tested) on the JVM.
 public final class StroomDom {
 
-    /// A dialog of any popup type (Stroom's `Dialog` and `ResizableDialog`, which have no
+    /// A dialog of any popup type (Stroom's `Dialog`, resizable or not, which has no
     /// `role="dialog"`), e.g. `screen.within(screen.findByText("Caption").closest(StroomDom.DIALOG))`.
     public static final String DIALOG = ".dialog__container";
     /// A dialog's caption.

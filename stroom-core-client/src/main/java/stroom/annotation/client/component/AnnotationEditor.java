@@ -16,14 +16,11 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AssignYourself;
 import stroom.annotation.client.Lozenge;
-import stroom.annotation.client.component.SettingBlock;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
@@ -58,8 +55,6 @@ public class AnnotationEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private boolean assignYourselfEnabled;
-
     @UiField
     Label annotationId;
     @UiField
@@ -67,11 +62,9 @@ public class AnnotationEditor extends Component {
     @UiField
     TextBox subjectTextBox;
     @UiField
-    Label status;
+    AnnotationStatusSetting status;
     @UiField
-    Label assignedTo;
-    @UiField
-    LinkButton assignYourself;
+    AnnotationAssignedToSetting assignedTo;
     @UiField
     Html labels;
     @UiField
@@ -93,10 +86,6 @@ public class AnnotationEditor extends Component {
     @UiField
     Button delete;
 
-    @UiField
-    SettingBlock statusBlock;
-    @UiField
-    SettingBlock assignedToBlock;
     @UiField
     SettingBlock annotationLabelBlock;
     @UiField
@@ -124,19 +113,15 @@ public class AnnotationEditor extends Component {
         subjectTextBox.addKeyDownHandler(this::onSubjectReturn);
         titleBlock.addClickHandler(this::onTitleBlock);
         subjectBlock.addClickHandler(this::onSubjectBlock);
-        statusBlock.addClickHandler(this::onStatusBlock);
-        assignedToBlock.addClickHandler(this::onAssignedToBlock);
+        status.setOnChoose(element -> onAction.accept(AnnotationEditAction.STATUS, element));
+        assignedTo.setOnChoose(element -> onAction.accept(AnnotationEditAction.ASSIGNED_TO, element));
+        assignedTo.setOnAssignYourself(element -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF, element));
         annotationLabelBlock.addClickHandler(this::onAnnotationLabelBlock);
         annotationCollectionBlock.addClickHandler(this::onAnnotationCollectionBlock);
         annotationRetentionPeriodBlock.addClickHandler(this::onAnnotationRetentionPeriodBlock);
         create.setOnClick(this::onCreate);
         commentButton.setOnClick(this::onCommentButton);
         delete.setOnClick(this::onDelete);
-        // The setting around it opens its chooser on a click: this click (or Enter or Space) is the
-        // button's own
-        assignYourself.addClickHandler(ClickEvent::stopPropagation);
-        assignYourself.setOnClick(() -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF,
-                assignYourself.getElement()));
         copyHistory.setOnClick(() -> onAction.accept(AnnotationEditAction.COPY_HISTORY, copyHistory.getElement()));
 
         setAnnotationTitle(null);
@@ -184,24 +169,12 @@ public class AnnotationEditor extends Component {
 
     /// @param status The status, or `null` for none.
     public void setStatus(final AnnotationTag status) {
-        if (status == null) {
-            this.status.setText("None");
-            this.status.addStyleName(EMPTY_VALUE_STYLE);
-        } else {
-            this.status.setText(status.getName());
-            this.status.removeStyleName(EMPTY_VALUE_STYLE);
-        }
+        this.status.setStatus(status);
     }
 
     /// @param assignedTo Who it is assigned to, or `null` for nobody.
     public void setAssignedTo(final UserRef assignedTo) {
-        if (assignedTo == null) {
-            this.assignedTo.setText("Nobody");
-            this.assignedTo.addStyleName(EMPTY_VALUE_STYLE);
-        } else {
-            this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.removeStyleName(EMPTY_VALUE_STYLE);
-        }
+        this.assignedTo.setAssignedTo(assignedTo);
     }
 
     /// Enables 'Assign Yourself', or disables it, saying why, when the annotation is already
@@ -209,8 +182,7 @@ public class AnnotationEditor extends Component {
     ///
     /// @param enabled Whether it is enabled.
     public void setAssignYourselfEnabled(final boolean enabled) {
-        this.assignYourselfEnabled = enabled;
-        updateAssignYourself();
+        assignedTo.setAssignYourselfEnabled(enabled);
     }
 
     /// @param labels The labels, as lozenges, or none.
@@ -314,16 +286,11 @@ public class AnnotationEditor extends Component {
         commentButton.setEnabled(!readOnly);
         create.setEnabled(!readOnly);
         delete.setEnabled(!readOnly);
-        statusBlock.setReadOnly(readOnly);
-        assignedToBlock.setReadOnly(readOnly);
+        status.setReadOnly(readOnly);
+        assignedTo.setReadOnly(readOnly);
         annotationLabelBlock.setReadOnly(readOnly);
         annotationCollectionBlock.setReadOnly(readOnly);
         annotationRetentionPeriodBlock.setReadOnly(readOnly);
-        updateAssignYourself();
-    }
-
-    private void updateAssignYourself() {
-        AssignYourself.setState(assignYourself, !assignYourselfEnabled, isReadOnly());
     }
 
     private void finishTitleEdit() {
@@ -364,14 +331,6 @@ public class AnnotationEditor extends Component {
 
     private void onSubjectBlock(final ClickEvent e) {
         subjectTextBox.setFocus(true);
-    }
-
-    private void onStatusBlock(final ClickEvent e) {
-        onAction.accept(AnnotationEditAction.STATUS, statusBlock.getElement());
-    }
-
-    private void onAssignedToBlock(final ClickEvent e) {
-        onAction.accept(AnnotationEditAction.ASSIGNED_TO, assignedToBlock.getElement());
     }
 
     private void onAnnotationLabelBlock(final ClickEvent e) {

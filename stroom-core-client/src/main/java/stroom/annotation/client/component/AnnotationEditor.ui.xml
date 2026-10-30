@@ -53,25 +53,10 @@
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min dock-container-vertical annotation-editor__right">
                 <g:FlowPanel styleName="max form annotation-setting">
-                    <c:SettingBlock ui:field="statusBlock" title="Change Status">
-                        <form:FormGroup identity="annotationStatus" label="Status"
-                                        helpText="The current status of the annotation. Select it to choose a different status.">
-                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
-                                <tx:Label ui:field="status" styleName="annotation-setting__value"/>
-                            </g:FlowPanel>
-                        </form:FormGroup>
-                    </c:SettingBlock>
-                    <c:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
-                        <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
-                                        helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself.">
-                            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
-                                <tx:Label ui:field="assignedTo" styleName="annotation-setting__value"/>
-                                <b:LinkButton ui:field="assignYourself" text="Assign Yourself"
-                                  title="Assign this annotation to yourself"
-                                  addStyleNames="annotation-setting__assign-yourself"/>
-                            </g:FlowPanel>
-                        </form:FormGroup>
-                    </c:SettingBlock>
+                    <c:AnnotationStatusSetting ui:field="status"
+                                               helpText="The current status of the annotation. Select it to choose a different status."/>
+                    <c:AnnotationAssignedToSetting ui:field="assignedTo"
+                                                   helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself."/>
                     <c:SettingBlock ui:field="annotationLabelBlock" title="Change Labels">
                         <form:FormGroup identity="annotationLabel" label="Labels"
                                         helpText="The labels attached to the annotation. Select them to add or remove labels.">

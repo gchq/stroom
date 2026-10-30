@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -38,6 +36,9 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.SpecialColumns;
+import stroom.query.client.result.TextHighlights;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.DataRange;
@@ -59,7 +60,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -170,7 +170,7 @@ public class TextPaneController extends DashboardPaneController {
 
                 if (highlightStrings != null && !highlightStrings.isEmpty()) {
                     rawEditor.setFormattedHighlights(formattedText ->
-                            getHighlights(formattedText, highlightStrings));
+                            TextHighlights.find(formattedText, highlightStrings));
                 } else {
                     rawEditor.setFormattedHighlights(null);
                 }
@@ -230,95 +230,6 @@ public class TextPaneController extends DashboardPaneController {
                 }
             }, ClickEvent.getType()));
         }
-    }
-
-    // The ranges returned are line/col positions in the input text. Thus the input text should
-    // not be changed/formatted after the highlight ranges have been generated.
-    private List<TextRange> getHighlights(final String input, final Set<String> highlightStrings) {
-        final List<TextRange> highlights = new ArrayList<>();
-
-        // See if we are going to add highlights.
-        if (input != null && NullSafe.hasItems(highlightStrings)) {
-            final char[] inputChars = input.toLowerCase().toCharArray();
-            final int inputLength = inputChars.length;
-
-            // Find out where the highlight elements need to be placed.
-            for (final String highlight : highlightStrings) {
-                if (highlight == null) {
-                    continue;
-                }
-
-                final char[] highlightChars = highlight.toLowerCase().toCharArray();
-                final int highlightLength = highlightChars.length;
-
-                boolean inElementTag = false;
-                boolean inEscapedElement = false;
-                int lineNo = 1;
-                int colNo = 1;
-                char lastInputChar = 0;
-                for (int i = 0; i < inputLength; i++) {
-                    final char inputChar = inputChars[i];
-
-                    if (lastInputChar == '\n') {
-                        lineNo++;
-                        colNo = 1;
-                    }
-                    lastInputChar = inputChar;
-
-                    if (!inElementTag && !inEscapedElement) {
-                        if (inputChar == '<') {
-                            inElementTag = true;
-                        } else if (inputChar == '&'
-                                   && i + 3 < inputLength
-                                   && inputChars[i + 1] == 'l'
-                                   && inputChars[i + 2] == 't'
-                                   && inputChars[i + 3] == ';') {
-                            inEscapedElement = true;
-                        } else {
-                            // If we aren't in an element or escaped element
-                            // then try to match.
-                            boolean found = false;
-                            for (int j = 0; j < highlightLength && i + j < inputLength; j++) {
-                                final char highlightChar = highlightChars[j];
-                                if (inputChars[i + j] != highlightChar) {
-                                    break;
-                                } else if (j == highlightLength - 1) {
-                                    found = true;
-                                }
-                            }
-
-                            if (found) {
-                                // All one based and inclusive
-                                final TextRange hl = new TextRange(
-                                        new DefaultLocation(lineNo, colNo),
-                                        new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
-                                highlights.add(hl);
-
-                                // Skip over the found highlight term
-                                i += highlightLength;
-                                colNo += highlightLength;
-                            }
-                        }
-                    } else if (inElementTag && inputChar == '>') {
-                        inElementTag = false;
-
-                    } else if (inEscapedElement
-                               && inputChar == '&'
-                               && i + 3 < inputLength
-                               && inputChars[i + 1] == 'g'
-                               && inputChars[i + 2] == 't'
-                               && inputChars[i + 3] == ';') {
-                        inEscapedElement = false;
-                    }
-
-                    colNo++;
-                }
-            }
-        }
-
-        Collections.sort(highlights);
-
-        return highlights;
     }
 
     @Override

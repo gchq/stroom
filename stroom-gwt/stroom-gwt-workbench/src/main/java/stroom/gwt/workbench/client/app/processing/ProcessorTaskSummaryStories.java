@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.processing;
 
-import stroom.data.client.component.ProcessorTaskSummaryListController;
-import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.ExplorerConstants;
@@ -35,7 +33,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.task.client.component.ProcessorFilterTasksController;
+import stroom.processor.task.client.component.ProcessorTaskSummaryListController;
+import stroom.processor.task.client.component.ProcessorTasksController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /// Stories of `App/Main/ProcessorTaskSummary`, showing Stroom's real [ProcessorTaskSummaryListController]
-/// in the upper pane of a folder's 'Active Tasks' tab ([ProcessorTasksTabController], as
+/// in the upper pane of a folder's 'Active Tasks' tab ([ProcessorTasksController], as
 /// `FolderTabs` creates and reads it), with fake REST replies.
 ///
 /// | Request | Reply |
@@ -97,7 +96,7 @@ public final class ProcessorTaskSummaryStories {
                     "pipelineUuid": "pipe-events"}}],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
-    // The terms ProcessorTasksTabController gives the task list for the 'Events Pipeline', 'EVENTS',
+    // The terms ProcessorTasksController gives the task list for the 'Events Pipeline', 'EVENTS',
     // 'Processing' row
     private static final String EVENTS_PROCESSING_TASKS_EXPRESSION = """
             {"expression": {"children": [
@@ -115,7 +114,7 @@ public final class ProcessorTaskSummaryStories {
             {"expression": {"children": [
                 {"field": "Processor Filter Id", "condition": "EQUALS", "value": "1"}]}}""";
 
-    // The terms ProcessorFilterTasksController gives the task list for the 'Events Pipeline', 'EVENTS',
+    // The terms ProcessorTasksController gives the task list for the 'Events Pipeline', 'EVENTS',
     // 'Processing' row of a processor filter's tasks
     private static final String FILTER_PROCESSING_TASKS_EXPRESSION = """
             {"expression": {"children": [
@@ -252,7 +251,7 @@ public final class ProcessorTaskSummaryStories {
                     expectRow(play, 2, "Events Pipeline", "EVENTS", "10", "Processing", "3");
                     expectNoProblems(play);
                 })
-                // A processor filter's 'Tasks' tab (ProcessorFilterTasksController, as
+                // A processor filter's 'Tasks' tab (ProcessorTasksController, as
                 // ProcessorTaskPlugin opens it): the summary and the tasks of that filter only
                 .story("ProcessorFilterTasks", ProcessorTaskSummaryStories::renderFilterTasks)
                 .withPlay(play -> {
@@ -364,7 +363,7 @@ public final class ProcessorTaskSummaryStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            final ProcessorFilterTasksController tasks = harness.show(injector.getProcessorFilterTasksController());
+            final ProcessorTasksController tasks = harness.show(injector.getProcessorTasksController());
             tasks.setProcessorFilter(ProcessorFilter.builder().id(1).build());
         });
         return harness.asWidget();
@@ -394,7 +393,7 @@ public final class ProcessorTaskSummaryStories {
         harness.addRegistration(harness.getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 openFeed.call(event.getName())));
         harness.afterStartUp(() -> {
-            final ProcessorTasksTabController controller = injector.getProcessorTasksTabController();
+            final ProcessorTasksController controller = injector.getProcessorTasksController();
             // As a folder's 'Active Tasks' tab reads it (FolderTabs)
             controller.read(FOLDER, null);
             harness.show(controller);

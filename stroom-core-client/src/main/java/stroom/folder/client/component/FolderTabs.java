@@ -17,12 +17,12 @@
 package stroom.folder.client.component;
 
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.document.client.editor.LinkTabPanel;
 import stroom.document.client.editor.TabbedController;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.processor.client.component.ProcessorsController;
+import stroom.processor.task.client.component.ProcessorTasksController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
@@ -49,7 +49,7 @@ public class FolderTabs extends TabbedController<DocRef> {
     private final ClientSecurityContext securityContext;
     private final Provider<MetaBrowserController> metaControllerProvider;
     private final Provider<ProcessorsController> processorsProvider;
-    private final Provider<ProcessorTasksTabController> processorTaskControllerProvider;
+    private final Provider<ProcessorTasksController> processorTaskControllerProvider;
     private final Provider<DocumentUserPermissionsTabController> permissionsProvider;
     private boolean tabsAdded;
 
@@ -59,7 +59,7 @@ public class FolderTabs extends TabbedController<DocRef> {
                       final ClientSecurityContext securityContext,
                       final Provider<MetaBrowserController> metaControllerProvider,
                       final Provider<ProcessorsController> processorsProvider,
-                      final Provider<ProcessorTasksTabController> processorTaskControllerProvider,
+                      final Provider<ProcessorTasksController> processorTaskControllerProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;

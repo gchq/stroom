@@ -17,7 +17,6 @@
 package stroom.query.client.component;
 
 import stroom.core.client.event.WindowCloseEvent;
-import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.editor.HasToolbar;

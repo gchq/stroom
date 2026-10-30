@@ -16,15 +16,10 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AssignYourself;
-import stroom.annotation.client.component.SettingBlock;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,40 +31,18 @@ import java.util.Objects;
 public class ChangeAssignee extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // The value is shown faded when there is none (AnnotationEditor's)
-    private static final String EMPTY_VALUE = "annotation-setting__value--empty";
 
     @UiField
-    Label assignedTo;
-    @UiField
-    LinkButton assignYourself;
-    @UiField
-    SettingBlock assignedToBlock;
-
-    private Runnable onChooseAssignedTo = () -> {
-    };
-    private Runnable onAssignYourself = () -> {
-    };
+    AnnotationAssignedToSetting assignedTo;
 
     /// Makes empty content.
     public ChangeAssignee() {
         initWidget(BINDER.createAndBindUi(this));
-        assignedToBlock.addClickHandler(this::onAssignedToBlock);
-        // The setting around it opens its chooser on a click: this click (or Enter or Space) is the
-        // button's own
-        assignYourself.addClickHandler(ClickEvent::stopPropagation);
-        assignYourself.setOnClick(() -> onAssignYourself.run());
     }
 
     /// @param assignedTo Who to assign the annotations to, or null for nobody.
     public void setAssignedTo(final UserRef assignedTo) {
-        if (assignedTo == null) {
-            this.assignedTo.setText("Nobody");
-            this.assignedTo.addStyleName(EMPTY_VALUE);
-        } else {
-            this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.removeStyleName(EMPTY_VALUE);
-        }
+        this.assignedTo.setAssignedTo(assignedTo);
     }
 
     /// Enables Assign Yourself, or disables it, saying why, when the annotations are already to
@@ -77,21 +50,19 @@ public class ChangeAssignee extends Component {
     ///
     /// @param enabled Whether it is enabled.
     public void setAssignYourselfEnabled(final boolean enabled) {
-        AssignYourself.setState(assignYourself, !enabled, false);
+        assignedTo.setAssignYourselfEnabled(enabled);
     }
 
     /// @param onChooseAssignedTo Run when who to assign the annotations to is pressed.
     public void setOnChooseAssignedTo(final Runnable onChooseAssignedTo) {
-        this.onChooseAssignedTo = Objects.requireNonNull(onChooseAssignedTo, "onChooseAssignedTo");
+        Objects.requireNonNull(onChooseAssignedTo, "onChooseAssignedTo");
+        assignedTo.setOnChoose(element -> onChooseAssignedTo.run());
     }
 
     /// @param onAssignYourself Run when Assign Yourself is pressed.
     public void setOnAssignYourself(final Runnable onAssignYourself) {
-        this.onAssignYourself = Objects.requireNonNull(onAssignYourself, "onAssignYourself");
-    }
-
-    private void onAssignedToBlock(final ClickEvent e) {
-        onChooseAssignedTo.run();
+        Objects.requireNonNull(onAssignYourself, "onAssignYourself");
+        assignedTo.setOnAssignYourself(element -> onAssignYourself.run());
     }
 
 

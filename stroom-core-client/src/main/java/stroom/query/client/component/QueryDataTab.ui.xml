@@ -3,7 +3,7 @@
      Dashboard, any error in it, and the results table -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:r="urn:import:stroom.query.client.result.component"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
@@ -25,7 +25,7 @@
             <tx:Label ui:field="errorLabel" styleName="query-data-tab__error-label"/>
         </g:ScrollPanel>
         <g:SimplePanel styleName="max dock-max">
-            <q:QueryResultTable ui:field="table"/>
+            <r:ResultTable ui:field="table" tableName="Query Results"/>
         </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

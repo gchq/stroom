@@ -18,7 +18,6 @@ package stroom.pipeline.client.component;
 
 import stroom.data.client.ExpressionValidator;
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
@@ -34,6 +33,7 @@ import stroom.pipeline.structure.client.PipelineModelFactory;
 import stroom.pipeline.structure.client.component.PipelineStructureController;
 import stroom.processor.client.component.ProcessorsController;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.task.client.component.ProcessorTasksController;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -102,7 +102,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                           final Provider<MetaBrowserController> metaBrowserProvider,
                           final Provider<PipelineStructureController> structureProvider,
                           final ProcessorsController processors,
-                          final Provider<ProcessorTasksTabController> taskControllerProvider,
+                          final Provider<ProcessorTasksController> taskControllerProvider,
                           final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                           final ClientSecurityContext securityContext,

@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.model.WordItem;
@@ -26,6 +25,7 @@ import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.Param;
+import stroom.query.client.result.table.HasParams;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;

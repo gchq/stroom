@@ -23,9 +23,6 @@ import stroom.dashboard.client.main.DashboardResultPane;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -41,6 +38,12 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableSettings;
 import stroom.query.api.VisResult;
+import stroom.query.client.result.component.ResultVis;
+import stroom.query.client.result.component.VisFrame;
+import stroom.query.client.result.component.VisFrameController;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.vis.VisSelectionModel;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
@@ -79,7 +82,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/// A dashboard's Visualisation pane ([Vis]): draws a table's results with a visualisation (a script
+/// A dashboard's Visualisation pane ([ResultVis]): draws a table's results with a visualisation (a script
 /// in a frame laid over the pane), updating as the query runs unless paused, and selects in it.
 public class VisController
         extends DashboardPaneController
@@ -112,7 +115,7 @@ public class VisController
         EMPTY_DATA = dataObject.getJavaScriptObject();
     }
 
-    private final Vis view;
+    private final ResultVis view;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
@@ -149,7 +152,7 @@ public class VisController
     /// @param visFrameControllerProvider Makes what listens to the visualisation's frame.
     @Inject
     public VisController(final EventBus eventBus,
-                         final Vis view,
+                         final ResultVis view,
                          final Provider<VisSettingsController> settingsProvider,
                          final RestFactory restFactory,
                          final CurrentPreferences currentPreferences,

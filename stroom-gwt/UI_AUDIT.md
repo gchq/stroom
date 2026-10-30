@@ -19,7 +19,8 @@ wave 40, `component-migration/wave-40.md`); wave 7 done 29 October 2026 (order w
 `component-migration/wave-42.md`), which also puts back the layout changes waves 4 to 7 had taken.
 From wave 8 on, the layout must stay as it was before the audit, to within a pixel, unless a change
 has a reason of its own. Wave 9 done 30 October 2026 (order wave 43, `component-migration/wave-43.md`); wave 10 done 30
-October 2026 (order wave 44, `component-migration/wave-44.md`).
+October 2026 (order wave 44, `component-migration/wave-44.md`); wave 11 done 30 October 2026 (order
+wave 45, `component-migration/wave-45.md`). All eleven waves are done.
 
 ## Summary
 

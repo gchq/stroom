@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* A visualisation pane (Vis on a dashboard, QueryResultVis on a query): its toolbar row, then
+/* A visualisation pane (ResultVis, on a dashboard or a query): its toolbar row, then
    its body, where the visualisation's frame is laid. */
 
 /* Fills the component's tab content, below its tab bar. Not absolute, as the tab content isn't

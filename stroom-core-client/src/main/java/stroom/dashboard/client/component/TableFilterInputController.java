@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
@@ -26,6 +25,8 @@ import stroom.dashboard.shared.TableFilterComponentSettings;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.table.FilterableTable;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
@@ -45,7 +46,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// A dashboard's Table Filter pane ([TableFilterInput]): a value filter for each column chosen in
+/// A dashboard's Table Filter pane ([TableFilterColumns]): a value filter for each column chosen in
 /// its settings of the table it filters, kept up to date as the table's columns change.
 public class TableFilterInputController extends DashboardPaneController {
 
@@ -58,7 +59,7 @@ public class TableFilterInputController extends DashboardPaneController {
                     "Table Filter",
                     ComponentUse.INPUT);
 
-    private final TableFilterInput view;
+    private final TableFilterColumns view;
     private final Provider<ColumnValuesFilterController> columnValuesFilterProvider;
     private final List<HandlerRegistration> registrations = new ArrayList<>();
     private final Map<String, ColumnValuesFilterController> columnFilters = new HashMap<>();
@@ -72,7 +73,7 @@ public class TableFilterInputController extends DashboardPaneController {
     /// @param columnValuesFilterProvider Makes a column's value filter.
     @Inject
     public TableFilterInputController(final EventBus eventBus,
-                                      final TableFilterInput view,
+                                      final TableFilterColumns view,
                                       final Provider<TableFilterInputSettingsController> settingsProvider,
                                       final Provider<ColumnValuesFilterController> columnValuesFilterProvider) {
         super(eventBus, settingsProvider);

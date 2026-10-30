@@ -314,7 +314,7 @@ public class FloorMapObjectEditController extends Controller {
                     if (e.isOk()) {
                         // Every path that declines to close MUST call e.reset(). Clicking OK
                         // puts the dialog into its in-progress state - both buttons disabled
-                        // and OK showing a spinner (OkCancelContent.onDialogAction) - and only
+                        // and OK showing a spinner (DialogFrame.onDialogAction) - and only
                         // reset() or hide() releases it. Returning without either leaves the
                         // dialog open but dead: Escape is the only way out, and it discards
                         // everything the user typed. The three sibling dialogs

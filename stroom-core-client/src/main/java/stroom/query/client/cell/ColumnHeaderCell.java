@@ -16,9 +16,9 @@
 
 package stroom.query.client.cell;
 
-import stroom.dashboard.client.table.FilterCell;
-import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.Column;
+import stroom.query.client.result.table.FilterCell;
+import stroom.query.client.result.table.FilterCellManager;
 
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;

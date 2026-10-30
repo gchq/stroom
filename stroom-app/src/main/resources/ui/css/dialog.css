@@ -15,8 +15,8 @@
  */
 
 /*
-   The dialog (stroom.widget.popup.client.Dialog and ResizableDialog, with the content
-   templates holding their buttons). Named BEM style (block, block__element, block--modifier).
+   The dialog (stroom.widget.popup.client.Dialog, with the DialogFrame template holding its
+   buttons). Named BEM style (block, block__element, block--modifier).
 
    dialog                          the popup (role dialog or alertdialog)
      dialog__container             the template's root
@@ -24,10 +24,11 @@
        dialog__layout              the title bar above the body
          dialog__title-bar         dialog__icon, dialog__title (names the dialog), dialog__spinner,
                                    dialog__toolbar (window options)
-         dialog__body              the content template:
+         dialog__body              the content (DialogFrame, if it has buttons):
            dialog__content         the screen's own content
            dialog__buttons         OK, Cancel and so on (--end: at the end; --start: at the
-                                   start, with a dialog__button-group at the end)
+                                   start, with a dialog__button-group at the end; with
+                                   --end the group draws no box)
        dialog__resize--n … --sw    the resize handles (dialog--resizable)
        dialog__hint                what to do while moving or resizing (centred over the dialog)
 
@@ -193,6 +194,12 @@
     display: flex;
     gap: var(--dialog__padding--horizontal);
     justify-content: flex-end;
+}
+
+/* With nothing at the start of the row the group draws no box, so its buttons are the row's own
+   (laid out, and a press beside them dragging the dialog, as in a row with no group) */
+.dialog__buttons--end > .dialog__button-group {
+    display: contents;
 }
 
 /* Its size, from PopupUtil, its resize handles and its window options (custom properties, so that

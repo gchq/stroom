@@ -19,17 +19,10 @@ package stroom.dashboard.client.component;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.OwnedContentTabs;
-import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
-import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -57,10 +50,17 @@ import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
 import stroom.query.client.component.QueryDocEditor;
-import stroom.query.client.component.QueryResultTable;
+import stroom.query.client.component.QueryInfo;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.component.QueryResultVisController;
 import stroom.query.client.model.ResultStoreModel;
+import stroom.query.client.result.component.ResultTable;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.FilterCellManager;
+import stroom.query.client.result.table.FilterableTable;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.vis.VisSelectionModel;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
@@ -403,7 +403,7 @@ public class EmbeddedQueryController
                 }
 
                 if (currentTableController != null) {
-                    currentTableController.setDashboardContext(dashboardContext);
+                    currentTableController.setHyperlinkContext(dashboardContext);
                     final ExpressionOperator selectionFilter = resolveSelectionFilter();
                     if (!Objects.equals(currentTableController.getCurrentSelectionFilter(), selectionFilter)) {
                         currentTableController.setCurrentSelectionFilter(selectionFilter);
@@ -446,8 +446,10 @@ public class EmbeddedQueryController
 
     private void createNewTable() {
         if (currentTableController == null) {
-            currentTableController = make(tableControllerProvider).attach(new QueryResultTable());
-            currentTableController.setDashboardContext(getDashboardContext());
+            final ResultTable table = new ResultTable();
+            table.setTableName("Query Results");
+            currentTableController = make(tableControllerProvider).attach(table);
+            currentTableController.setHyperlinkContext(getDashboardContext());
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes
             currentTableController.setCurrentSelectionFilter(resolveSelectionFilter());

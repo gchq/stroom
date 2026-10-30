@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Results as a visualisation (a dashboard's Visualisation pane or a query's): its toolbar (the
+     visualisation's buttons, pause and resume), then the space the visualisation's frame is laid
+     over, and a message while it loads or fails -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.query.client.result.vis"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="vis-layout dock-container-vertical">
+        <v:VisToolbarRow ui:field="toolbarRow"/>
+        <g:FlowPanel styleName="dock-max vis-layout__body">
+            <g:SimplePanel ui:field="visContainer" styleName="vis-layout__inner"/>
+            <dg:MessagePanel ui:field="messagePanel"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

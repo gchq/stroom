@@ -16,6 +16,7 @@
 
 package stroom.query.client.component;
 
+import stroom.query.client.result.component.ResultTable;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
 
@@ -33,7 +34,7 @@ public class QueryResultTableSplit extends Component {
     @UiField
     SplitPane split;
     @UiField
-    QueryResultTable table;
+    ResultTable table;
     @UiField
     SimplePanel source;
     @UiField
@@ -46,7 +47,7 @@ public class QueryResultTableSplit extends Component {
     }
 
     /// @return The results table, which its controller attaches the table's controller to.
-    public QueryResultTable getTable() {
+    public ResultTable getTable() {
         return table;
     }
 

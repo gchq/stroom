@@ -16,6 +16,7 @@
 
 package stroom.query.client.component;
 
+import stroom.query.client.result.component.ResultTable;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
@@ -52,7 +53,7 @@ public class QueryDataTab extends Component {
     @UiField
     Label errorLabel;
     @UiField
-    QueryResultTable table;
+    ResultTable table;
 
     private Consumer<QueryDataAction> onAction = action -> {
     };
@@ -82,7 +83,7 @@ public class QueryDataTab extends Component {
     }
 
     /// @return The results table, which its controller attaches the table's controller to.
-    public QueryResultTable getTable() {
+    public ResultTable getTable() {
         return table;
     }
 

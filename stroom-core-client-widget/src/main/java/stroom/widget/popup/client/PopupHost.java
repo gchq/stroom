@@ -28,7 +28,6 @@ import stroom.widget.task.client.TaskMonitorFactory;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -192,41 +191,24 @@ public class PopupHost implements DialogActionHandler {
                 break;
             }
             case DIALOG: {
-                final AbstractPopupPanel dialog = createDialog(popupSize, dialogActionHandler);
+                final Dialog dialog = createDialog(popupSize, dialogActionHandler);
                 // (A fixed-size dialog with no buttons has never shown its tasks)
                 if (popupSize != null) {
-                    setTaskMonitor((TaskMonitorFactory) dialog);
+                    setTaskMonitor(dialog);
                 }
                 dialog.setContent(controller.asWidget());
                 popup = dialog;
                 break;
             }
-            case CLOSE_DIALOG: {
-                final CloseContent content = new CloseContent();
-                content.setOnHideRequest(onHideRequest);
-                content.setContent(controller.asWidget());
-                popup = createDialogWith(content, content, popupSize);
-                break;
-            }
-            case OK_CANCEL_DIALOG: {
-                final OkCancelContent content = new OkCancelContent();
-                content.setOnHideRequest(onHideRequest);
-                content.setContent(controller.asWidget());
-                popup = createDialogWith(content, content, popupSize);
-                break;
-            }
-            case CREATE_OK_CANCEL_DIALOG: {
-                final CreateOkCancelContent content = new CreateOkCancelContent();
-                content.setOnHideRequest(onHideRequest);
-                content.setContent(controller.asWidget());
-                popup = createDialogWith(content, content, popupSize);
-                break;
-            }
+            case CLOSE_DIALOG:
+            case OK_CANCEL_DIALOG:
+            case CREATE_OK_CANCEL_DIALOG:
             case ACCEPT_REJECT_DIALOG: {
-                final AcceptRejectContent content = new AcceptRejectContent();
-                content.setOnHideRequest(onHideRequest);
-                content.setContent(controller.asWidget());
-                popup = createDialogWith(content, content, popupSize);
+                final DialogFrame frame = new DialogFrame();
+                frame.setButtons(popupType);
+                frame.setOnHideRequest(onHideRequest);
+                frame.setContent(controller.asWidget());
+                popup = createDialogWith(frame, popupSize);
                 break;
             }
         }
@@ -243,23 +225,20 @@ public class PopupHost implements DialogActionHandler {
 
     // A dialog holding content with buttons below it, which are told what the user asks of the
     // dialog (Escape, Ctrl+Enter), as a click on them would be
-    private Popup createDialogWith(final Widget content,
-                                   final DialogButtons buttons,
+    private Popup createDialogWith(final DialogFrame frame,
                                    final PopupSize popupSize) {
-        dialogButtons = buttons;
-        dialogActionHandler = buttons;
-        final AbstractPopupPanel dialog = createDialog(popupSize, buttons);
-        setTaskMonitor((TaskMonitorFactory) dialog);
-        dialog.setContent(content);
+        dialogButtons = frame;
+        dialogActionHandler = frame;
+        final Dialog dialog = createDialog(popupSize, frame);
+        setTaskMonitor(dialog);
+        dialog.setContent(frame);
         return dialog;
     }
 
     // A dialog that can be resized as its size says, or one of a fixed size if it has none
-    private static AbstractPopupPanel createDialog(final PopupSize popupSize,
-                                                   final DialogActionHandler onAction) {
-        final AbstractPopupPanel dialog = popupSize != null
-                ? new ResizableDialog(popupSize)
-                : new Dialog();
+    private static Dialog createDialog(final PopupSize popupSize,
+                                       final DialogActionHandler onAction) {
+        final Dialog dialog = new Dialog(popupSize);
         dialog.setOnAction(onAction::onDialogAction);
         return dialog;
     }

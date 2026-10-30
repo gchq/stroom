@@ -17,7 +17,6 @@
 package stroom.query.client.model;
 
 import stroom.annotation.shared.AnnotationDecorationFields;
-import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.Column.Builder;
@@ -28,6 +27,7 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.ExactResultPageBuilder;
+import stroom.query.client.UniqueUtil;
 import stroom.query.client.model.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;

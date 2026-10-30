@@ -34,7 +34,7 @@ public class TableSettingsController extends PaneSettingsController {
     public TableSettingsController(final EventBus eventBus,
                                    final PaneSettings view,
                                    final BasicTableSettingsController basicSettings,
-                                   final ConditionalFormattingRulesController rules,
+                                   final ConditionalFormattingSettingsController rules,
                                    final SelectionHandlersController selectionFilter) {
         super(eventBus, view);
         own(basicSettings);

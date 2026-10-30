@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A dialog's content, then its buttons in the row below it (dialog.css): New at the start, if shown,
+  and the group at the end, with OK (or Accept, which is green, as on the splash screen) and Cancel
+  (or Reject), or Close. DialogFrame keeps only the buttons for its kind of dialog in the page, and
+  sets the row's start or end modifier; with no New the group draws no box of its own, so its
+  buttons sit in the row as if it weren't there.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:SimplePanel ui:field="content" styleName="dialog__content"/>
+        <g:FlowPanel ui:field="buttons" styleName="dialog__buttons dialog__buttons--end">
+            <b:Button ui:field="create" addStyleNames="allow-focus button--contained-green" text="New" icon="ADD"/>
+            <g:FlowPanel ui:field="group" styleName="dialog__button-group">
+                <b:Button ui:field="ok" addStyleNames="allow-focus button--contained-primary" text="OK" icon="OK"/>
+                <b:Button ui:field="accept" addStyleNames="allow-focus button--contained-green" text="Accept"
+                          icon="OK"/>
+                <b:Button ui:field="cancel" addStyleNames="allow-focus button--contained-secondary" text="Cancel"
+                          icon="CANCEL"/>
+                <b:Button ui:field="reject" addStyleNames="allow-focus button--contained-secondary" text="Reject"
+                          icon="CANCEL"/>
+                <b:Button ui:field="close" addStyleNames="allow-focus button--contained-primary" text="Close"
+                          icon="CANCEL"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

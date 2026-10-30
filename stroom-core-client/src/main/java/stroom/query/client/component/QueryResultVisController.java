@@ -16,11 +16,6 @@
 
 package stroom.query.client.component;
 
-import stroom.dashboard.client.component.VisFrame;
-import stroom.dashboard.client.component.VisFrameController;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
@@ -31,6 +26,12 @@ import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.client.QueryModel;
 import stroom.query.client.QueryResultConsumer;
+import stroom.query.client.result.component.ResultVis;
+import stroom.query.client.result.component.VisFrame;
+import stroom.query.client.result.component.VisFrameController;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.vis.VisSelectionModel;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
@@ -69,7 +70,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/// A query's results as a visualisation ([QueryResultVis]): draws them with the visualisation the
+/// A query's results as a visualisation ([ResultVis]): draws them with the visualisation the
 /// query names (a script in a frame laid over this), updating as the query runs unless paused, and
 /// selects in it.
 public class QueryResultVisController
@@ -84,7 +85,7 @@ public class QueryResultVisController
     // Built on first use rather than when the class loads, as parsing JSON needs a browser
     private static JavaScriptObject emptyData;
 
-    private final QueryResultVis view;
+    private final ResultVis view;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
@@ -121,7 +122,7 @@ public class QueryResultVisController
     /// @param visFrameControllerProvider Makes what listens to the visualisation's frame.
     @Inject
     public QueryResultVisController(final EventBus eventBus,
-                                    final QueryResultVis view,
+                                    final ResultVis view,
                                     final RestFactory restFactory,
                                     final CurrentPreferences currentPreferences,
                                     final DateTimeFormatter dateTimeFormatter,

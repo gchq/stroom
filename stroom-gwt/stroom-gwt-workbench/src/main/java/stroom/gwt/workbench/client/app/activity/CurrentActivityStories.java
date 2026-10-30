@@ -18,7 +18,6 @@
 package stroom.gwt.workbench.client.app.activity;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.dashboard.client.query.QueryInfo;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
@@ -27,6 +26,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.query.client.component.QueryInfo;
 import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.text.client.Html;
 

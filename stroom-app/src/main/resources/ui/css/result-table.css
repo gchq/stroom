@@ -15,8 +15,8 @@
  */
 
 /*
-   A query's results table, on a dashboard or a query (stroom.dashboard.client.component.Table,
-   stroom.query.client.component.QueryResultTable), named BEM style. Its rules were in `dashboard.css`.
+   A query's results table, on a dashboard or a query (stroom.query.client.result.component.ResultTable),
+   named BEM style. Its rules were in `dashboard.css`.
 */
 
 .result-table__grid th span,

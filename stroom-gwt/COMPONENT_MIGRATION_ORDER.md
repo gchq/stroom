@@ -1357,6 +1357,16 @@ after wave 43.
 > features; the monitoring plugins are in their features (D3), `entity` is merged into `document`,
 > and the widget module's grab-bag packages are split. See `wave-44.md`.
 
+## 45. UI audit wave 11: one component per thing
+
+Record: [`component-migration/wave-45.md`](component-migration/wave-45.md). Added 30 October 2026,
+after wave 44; the audit's last wave.
+
+> **Done, 30 October 2026**: the query/dashboard cycle is broken (`stroom.query.client.result`), the
+> twins' components are one each (their controllers stay apart where they behave differently), and
+> the processor task screens, annotation setting blocks and dialog frames are one each. See
+> `wave-45.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

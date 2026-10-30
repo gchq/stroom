@@ -1,22 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:c="urn:import:stroom.annotation.client.component"
-             xmlns:tx="urn:import:stroom.widget.text.client">
+             xmlns:c="urn:import:stroom.annotation.client.component">
     <g:FlowPanel addStyleNames="annotation-setting">
-        <c:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
-            <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
-                            helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned.">
-                <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
-                    <tx:Label ui:field="assignedTo" styleName="annotation-setting__value"/>
-                    <b:LinkButton ui:field="assignYourself" text="Assign Yourself"
-                                  title="Assign this annotation to yourself"
-                                  addStyleNames="annotation-setting__assign-yourself"/>
-                </g:FlowPanel>
-            </form:FormGroup>
-        </c:SettingBlock>
+        <c:AnnotationAssignedToSetting ui:field="assignedTo"
+                                       helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned."/>
     </g:FlowPanel>
 </ui:UiBinder>
-

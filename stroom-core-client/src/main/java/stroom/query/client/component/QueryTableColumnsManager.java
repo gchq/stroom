@@ -17,18 +17,18 @@
 package stroom.query.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.component.ColumnFilterEditorController;
-import stroom.dashboard.client.component.ColumnFormatController;
-import stroom.dashboard.client.component.ColumnValuesFilterController;
-import stroom.dashboard.client.component.ConditionalFormattingRulesController;
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.client.cell.ColumnHeaderHtmlUtil;
+import stroom.query.client.result.component.ColumnFilterEditorController;
+import stroom.query.client.result.component.ColumnFormatController;
+import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ConditionalFormattingRulesController;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
+import stroom.query.client.result.table.FilterCellManager;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;

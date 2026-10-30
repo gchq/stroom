@@ -15,7 +15,7 @@
  */
 
 /*
-   A visualisation's hover tooltip (stroom.dashboard.client.vis.VisTooltip), shown on the page
+   A visualisation's hover tooltip (stroom.query.client.result.vis.VisTooltip), shown on the page
    rather than inside the visualisation's frame so that it isn't cut off at the frame's edges.
    Its content is the visualisation's own HTML, usually made by vis.js's stroom.tooltipHtml: a
    title over a table of rows, each a key and its value. Named BEM style (block, block__element),

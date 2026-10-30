@@ -53,7 +53,7 @@ public class EmbeddedQuerySettingsController extends PaneSettingsController {
     public EmbeddedQuerySettingsController(final EventBus eventBus,
                                            final PaneSettings view,
                                            final BasicEmbeddedQuerySettingsController basicSettings,
-                                           final ConditionalFormattingRulesController rules,
+                                           final ConditionalFormattingSettingsController rules,
                                            final SelectionHandlersController selectionQuery,
                                            final SelectionHandlersController selectionFilter,
                                            final RestFactory restFactory) {

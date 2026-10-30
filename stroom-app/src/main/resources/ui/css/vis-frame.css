@@ -15,7 +15,7 @@
  */
 
 /*
-   A visualisation's frame (stroom.dashboard.client.component.VisFrame): vis-frame, the container
+   A visualisation's frame (stroom.query.client.result.component.VisFrame): vis-frame, the container
    that clips it, holding vis-frame__frame, the iframe. Each is placed by custom properties of its
    own (--vis-frame__container-* and --vis-frame__frame-*), as they inherit into the frame. Was
    dashboard.css's VisFrame-container and VisFrame-frame.

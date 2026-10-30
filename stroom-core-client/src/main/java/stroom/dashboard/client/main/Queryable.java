@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.query.QueryInfo;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
+import stroom.query.client.component.QueryInfo;
 import stroom.util.shared.ErrorMessage;
 
 import java.util.List;

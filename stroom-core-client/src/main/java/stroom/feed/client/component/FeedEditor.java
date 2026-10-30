@@ -17,11 +17,11 @@
 package stroom.feed.client.component;
 
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
 import stroom.feed.shared.FeedDoc;
+import stroom.processor.task.client.component.ProcessorTasksController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.security.shared.AppPermission;
@@ -59,7 +59,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                       final ClientSecurityContext securityContext,
                       final Provider<FeedSettingsController> settingsProvider,
                       final Provider<MetaBrowserController> metaBrowserProvider,
-                      final Provider<ProcessorTasksTabController> taskControllerProvider,
+                      final Provider<ProcessorTasksController> taskControllerProvider,
                       final Provider<DocumentationTabController> documentationTabProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);

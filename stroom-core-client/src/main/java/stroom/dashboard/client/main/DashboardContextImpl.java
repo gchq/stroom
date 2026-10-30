@@ -17,8 +17,6 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.component.TableController;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
@@ -32,6 +30,9 @@ import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
 import stroom.query.client.component.QueryToolbarController;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.table.HasParams;
 import stroom.util.shared.NullSafe;
 import stroom.visualisation.shared.VisColourList;
 import stroom.widget.component.client.Listeners;

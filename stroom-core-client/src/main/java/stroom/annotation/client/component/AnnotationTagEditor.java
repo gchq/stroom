@@ -16,9 +16,9 @@
 
 package stroom.annotation.client.component;
 
-import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
+import stroom.query.client.result.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;

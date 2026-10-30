@@ -24,7 +24,6 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.DashboardResultPane;
@@ -33,13 +32,7 @@ import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
-import stroom.dashboard.client.table.ColumnValuesDataSupplier;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.GroupLevelButtons;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableColumnValuesDataSupplier;
-import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -63,8 +56,6 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.Format;
-import stroom.query.api.Format.Type;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.OffsetRange;
@@ -77,18 +68,26 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
-import stroom.query.api.datasource.ConditionSet;
-import stroom.query.api.datasource.FieldType;
-import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
-import stroom.query.client.TableComponentSelection;
-import stroom.query.client.TableRow;
-import stroom.query.client.TableRowCell;
 import stroom.query.client.TimeZones;
 import stroom.query.client.cell.ColumnHeader;
 import stroom.query.client.component.AnnotationMenuController;
 import stroom.query.client.model.DynamicColumnSelectionListModel;
 import stroom.query.client.model.DynamicColumnSelectionListModel.ColumnSelectionItem;
+import stroom.query.client.result.component.ColumnFormatController;
+import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.DownloadSearchResultsController;
+import stroom.query.client.result.component.ResultTable;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.FilterCellManager;
+import stroom.query.client.result.table.FilterableTable;
+import stroom.query.client.result.table.GroupLevelButtons;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.table.TableComponentSelection;
+import stroom.query.client.result.table.TableRow;
+import stroom.query.client.result.table.TableRowCell;
+import stroom.query.client.result.table.TableRowStyles;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
@@ -136,7 +135,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-/// A dashboard's table pane ([Table]): the results of its query as rows, grouped and expandable,
+/// A dashboard's table pane ([ResultTable]): the results of its query as rows, grouped and expandable,
 /// with its columns' menus and filters, downloads, annotations and conditional formatting.
 public class TableController extends DashboardPaneController
         implements DashboardResultPane, HasComponentSelection, HasHandlers, FilterableTable {
@@ -216,7 +215,7 @@ public class TableController extends DashboardPaneController
     /// @param uiConfigCache                  The UI's configuration.
     @Inject
     public TableController(final EventBus eventBus,
-                           final Table view,
+                           final ResultTable view,
                            final ClientSecurityContext securityContext,
                            final LocationManager locationManager,
                            final Provider<RenameColumnController> renameColumnControllerProvider,
@@ -795,29 +794,6 @@ public class TableController extends DashboardPaneController
         }
 
         ignoreRangeChange = false;
-    }
-
-    public static QueryField buildDsField(final Column column) {
-        final Type colType = Optional.ofNullable(column.getFormat())
-                .map(Format::getType)
-                .orElse(Type.GENERAL);
-
-        try {
-            return switch (colType) {
-                case NUMBER -> QueryField.createLong(column.getName());
-                case DATE_TIME -> QueryField.createDate(column.getName());
-                default -> QueryField
-                        .builder()
-                        .fldName(column.getName())
-                        .fldType(FieldType.TEXT)
-                        .conditionSet(ConditionSet.ALL_UI_TEXT)
-                        .queryable(true)
-                        .build();
-            };
-        } catch (final Exception e) {
-            GWT.log(e.getMessage());
-            throw new RuntimeException(e);
-        }
     }
 
     private List<TableRow> processData(final List<Column> columns, final List<Row> values) {

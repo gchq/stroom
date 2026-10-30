@@ -23,13 +23,13 @@ import stroom.svg.shared.SvgImage;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// A processor filter's tasks ([ProcessorFilterTasksController]) in a main content tab of their own.
+/// A processor filter's tasks ([ProcessorTasksController]) in a main content tab of their own.
 public class ProcessorFilterTasksTabController extends ContentTabController {
 
     /// The tab's type.
     public static final String TAB_TYPE = "Tasks";
 
-    private final ProcessorFilterTasksController tasks;
+    private final ProcessorTasksController tasks;
 
     /// Made by GIN.
     ///
@@ -37,7 +37,7 @@ public class ProcessorFilterTasksTabController extends ContentTabController {
     /// @param tasks    The tasks.
     @Inject
     public ProcessorFilterTasksTabController(final EventBus eventBus,
-                                             final ProcessorFilterTasksController tasks) {
+                                             final ProcessorTasksController tasks) {
         super(eventBus);
         this.tasks = own(tasks);
         initWidget(tasks.asWidget());

@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.component;
 
-import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.otel.trace.AnyValue;
@@ -29,6 +28,7 @@ import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.query.api.GroupSelection;
+import stroom.query.client.result.table.GroupLevelButtons;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.StringUtil;
 import stroom.widget.button.client.Toolbar;

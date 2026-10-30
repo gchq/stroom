@@ -32,8 +32,8 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.query.client.component.QueryResultTable;
 import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.result.component.ResultTable;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
@@ -539,8 +539,9 @@ public final class AnalyticRuleEditorStories {
             DocumentEditors.open(harness, injector.getAnalyticRuleEditor(), DOC_REF,
                     resource, res -> res.fetch(DOC_REF.getUuid()));
             // Another query's table, not shown, as another open rule's Shards tab has
-            final QueryResultTableController table = injector.getQueryResultTable()
-                    .attach(new QueryResultTable());
+            final ResultTable resultTable = new ResultTable();
+            resultTable.setTableName("Query Results");
+            final QueryResultTableController table = injector.getQueryResultTable().attach(resultTable);
             harness.getComponentRoot().adopt(table.getControllerNode());
             otherTable = table;
         });

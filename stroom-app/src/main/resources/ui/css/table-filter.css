@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* A dashboard's table filter input (TableFilterInput), and its conditional formatting (TableFilterConditionalFormatting):
+/* A dashboard's table filter columns (TableFilterColumns: the input's value filters and its conditional formatting):
    its columns' panels (TableFilterColumn, table-filter-column.css). */
 
 .table-filter {
