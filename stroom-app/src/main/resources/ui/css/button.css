@@ -1,0 +1,514 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A button (stroom.widget.button.client.Button), named BEM style (block, block__element,
+   block--modifier), with its variants' colours for each theme (once a separate Button_Themes.css).
+*/
+:root {
+  --button__base-color: #24292e;
+  --button__base-background-color: #fafbfc;
+  --button__base-border-color: rgba(27, 31, 35, 0.15);
+  --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --button__base-background-color--hover: #f3f4f6;
+}
+
+.stroom-theme-dark {
+  --button__base-color: #fff;
+  --button__base-background-color: #454545;
+  --button__base-border-color: #2f2f2f;
+  --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --button__base-background-color--hover: #505050;
+}
+
+/*
+Inner elements
+*/
+.button__background-text {
+  opacity: 0;
+  padding-right: 0.2rem;
+}
+
+.button__icon {
+  display: none;
+}
+
+.button__icon--visible {
+  display: flex;
+}
+
+.button__text {
+  padding-top: 1px;
+  padding-right: 0.2rem;
+}
+
+.button svg {
+  /*z-index: 1;*/
+}
+
+/*
+Base for all buttons
+*/
+.button {
+  /* .jr0u89w */
+  color: inherit;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  outline: none;
+  padding: 0;
+  position: relative;
+  align-items: center;
+  user-select: none;
+  border-radius: 0;
+  vertical-align: middle;
+  justify-content: center;
+  -moz-appearance: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /*margin: $button-margin; */
+  height: 32px;
+}
+
+.button.button--disabled {
+  /* .jr0u89w.j1p4cocs */
+  /* Not pointer-events: none, which would also stop its tooltip showing; a disabled button
+     doesn't get clicks anyway */
+  cursor: default;
+}
+
+/*
+General button styles
+*/
+.button {
+  /* .j9la4jl */
+  /*color: rgba(0, 0, 0, 0.87); */
+  /*padding: .375rem 1rem; */
+  /*font-size: 0.875rem; */
+  min-width: 120px;
+  /*box-sizing: border-box; */
+  /*transition: background-color 250ms ease-in-out, box-shadow 250ms ease-in-out, border 250ms ease-in-out, color 250ms ease-in-out; */
+  /*line-height: 1.75; */
+  /* font-family: "Roboto", "Helvetica", "Arial", sans-serif; */
+  /*font-weight: 500; */
+  /*border-radius: .25rem; */
+  /*letter-spacing: 0.02857em; */
+  /*text-transform: uppercase; */
+  /* */
+  /*font-size: 0.7rem; */
+  /* background-position: center; */
+  /* transition: background 0.5s; */
+  /* */
+  /*position: relative; */
+  /*overflow: hidden; */
+  /* */
+  /*font-family: "Open Sans", "Roboto", "Helvetica", "Arial", sans-serif; */
+  /*font-weight: 600; */
+
+  position: relative;
+  display: inline-block;
+  padding: 5px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  border: 1px solid;
+  border-radius: 6px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  color: var(--button__base-color);
+  background-color: var(--button__base-background-color);
+  border-color: var(--button__base-border-color);
+  transition: .2s cubic-bezier(0.3, 0, 0.5, 1);
+  transition-property: color,background-color,border-color;
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
+/* In a form (one that acts on the whole document, e.g. Reset Data, needs no group) or in a form
+   group: as wide as its text, but at least as wide as the form's other controls (200px), rather
+   than stretched across the form (one that should fill it says so, e.g. w-100) (were form.css's
+   and form-group.css's) */
+.form > .button,
+.form-group > .button {
+    align-self: flex-start;
+    min-width: 200px;
+}
+
+.button:focus {
+  /*border-color: var(--button__base-focus-border-color); */
+  /*outline: none; */
+  /*box-shadow: var(--button__base-focus-shadow); */
+
+  /*border-color: var(--button__base-focus-border-color); */
+  /*outline: none; */
+  /*box-shadow: var(--button__base-focus-shadow); */
+
+  /*background-color: var(--control__background-color); */
+  /*color: var(-control__text-color); */
+  /*border-color: var(--control__border-color); */
+
+  /*border-color: var(--button--default__color); */
+  outline: 0;
+  /*-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button--default__color),.6); */
+  /*box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button--default__color),.6); */
+
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-shadow);/*inset 0 1px 1px var(--col1), 0 0 8px var(--col2); */
+}
+
+/*.button:focus { /** Some exciting button focus styles } */
+.button:focus:not(:focus-visible) {
+  /* Undo all the above focused button styles
+     if the button has focus but the browser wouldn't normally
+     show default focus styles */
+
+  /*border-color: var(--button__base-border-color); */
+  outline: 0;
+  box-shadow: none;
+  border-color: var(--button__base-border-color) !important;
+
+  /*border-color: #2196f3; */
+  /*outline: 0; */
+  /*box-shadow: inset 0 1px 1px rgb(0 0 0 // 8%), 0 0 8px rgb(33 150 243 // 60%); */
+
+  /*border-color: var(--button--default__color); */
+  /*outline: 0; */
+  /*-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button--default__color),.6); */
+  /*box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button--default__color),.6); */
+}
+.button:focus-visible {
+  /*border-color: var(--button__base-focus-border-color); */
+  /*outline: none; */
+  /*box-shadow: var(--button__base-focus-shadow); */
+}
+
+.button:hover {
+/*
+  text-decoration: none;
+    border-color: var(--button__base-border-color--hover);
+    */
+
+  background-color: var(--button__base-background-color--hover);
+  transition-duration: .1s;
+}
+
+.button.button--disabled {
+  /* .j9la4jl.j1p4cocs { */
+  color: rgba(0, 0, 0, 0.26);
+}
+
+.button.button--disabled:focus {
+  border-color: var(--button__base-border-color);
+  box-shadow: var(--button__base-shadow),var(--button__base-inset-shadow);
+}
+
+.button.button--loading {
+  opacity: 0.8;
+}
+
+.button .button__spinner {
+  transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  /*transition: width 500ms; */
+  width: 0;
+  height: 16px;
+  overflow: hidden;
+  opacity: 0;
+  display: flex;
+}
+
+.button.button--loading .button__spinner {
+  width: 16px;
+  opacity: 1;
+}
+
+/* The busy spinner's ring (Stroom's own, not Bootstrap's spinner-border). It spins only while the
+   button is loading or its spinner is shrinking away (button--spinning), so an idle button's hidden
+   spinner costs nothing. */
+.button__spinner-ring {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: text-bottom;
+  border: 0.2em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.button--spinning .button__spinner-ring {
+  animation: busy-spinner-spin .75s linear infinite;
+}
+
+.button__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button__base-shadow),var(--button__base-inset-shadow);
+  border-radius: 5px;
+  gap: 0.2rem;
+}
+
+.button.button--down .button__content {
+  box-shadow: none;
+}
+
+/*
+Contained buttons
+ */
+
+.button--contained {
+  color: var(--button--contained__color);
+  background-color: var(--button--contained__background-color);
+}
+
+.button--contained:hover {
+  background-color: var(--button--contained__background-color--hover);
+}
+
+.button--contained:active {
+  /* .jpyw0mp:active */
+  /*box-shadow: 0 .3rem .3rem -.18rem rgba(0, 0, 0, 0.2), 0 .5rem .625rem .06rem rgba(0, 0, 0, 0.14), 0 .18rem .875rem .125rem rgba(0, 0, 0, 0.12); */
+}
+
+.button--contained-primary {
+  color: var(--button--contained-primary__color);
+  background-color: var(--button--contained-primary__background-color);
+}
+
+.button--contained-primary:hover {
+  background-color: var(--button--contained-primary__background-color--hover);
+}
+
+.button--contained-primary:focus {
+  /*border-color: var(--focus-border--secondary); */
+  /*outline: 0; */
+  /*-webkit-box-shadow: var(--focus-shadow--secondary); */
+  /*box-shadow: var(--focus-shadow--secondary); */
+  /*box-shadow: var(--focus-shadow--secondary); */
+}
+
+.button--contained-secondary {
+  color: var(--button--contained-secondary__color);
+  background-color: var(--button--contained-secondary__background-color);
+}
+
+.button--contained-secondary:hover {
+  background-color: var(--button--contained-secondary__background-color--hover);
+}
+
+.button--contained-secondary:focus {
+  border-color: var(--focus-border--secondary);
+  outline: 0;
+  -webkit-box-shadow: var(--focus-shadow--secondary);
+  box-shadow: var(--focus-shadow--secondary);
+}
+
+.button--contained-green {
+  color: var(--button--contained-green__color);
+  background-color: var(--button--contained-green__background-color);
+}
+
+.button--contained-green:hover {
+  background-color: var(--button--contained-green__background-color--hover);
+}
+
+.button--contained.button--disabled {
+  box-shadow: none;
+  color: var(--button--contained__color--disabled);
+  background-color: var(--button--contained__background-color--disabled);
+}
+
+.button--contained.button--disabled:focus {
+  box-shadow: none;
+  border: none;
+}
+
+/*
+Ripple effect
+ */
+
+/*
+A button with content of its own (Button.setContent), e.g. the explorer's logo, which its own class
+styles: only that content shows, as the button's own text
+*/
+.button__own-content {
+  display: none;
+}
+
+.button--own-content > .button__background-text,
+.button--own-content > .button__ripple-container,
+.button--own-content > .button__content {
+  display: none;
+}
+
+.button--own-content > .button__own-content {
+  display: contents;
+}
+
+.button__ripple-container {
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.button__ripple {
+  position: absolute;
+  /* Where the button was pressed (Button.java) */
+  left: var(--button__ripple-left, 50%);
+  top: var(--button__ripple-top, 50%);
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+
+  width: 6.25rem;
+  height: 6.25rem;
+  margin-top: -3.125rem;
+  margin-left: -3.125rem;
+
+  animation: button-ripple 1s;
+  opacity: 0;
+  /*background-color: var(--button__ripple-background-color); */
+}
+
+@keyframes button-ripple {
+  from {
+    opacity: 1;
+    transform: scale(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(10);
+  }
+}
+
+/*
+   The variants' colours, for each theme
+*/
+:root {
+  /*
+  Default buttons
+  */
+
+  /* Primary accent is blue-800, not blue-500. On this theme's white background blue-500
+     is 3.12:1 — below the 4.5:1 that WCAG 1.4.3 requires of button text, and worse over
+     the accent tints below (2.52:1 on the 20% hover tint). blue-800 measures 5.75:1
+     resting, 5.15:1 on the 10% tint and 4.64:1 on the 20% tint. blue-700 is *not*
+     enough: it drops to 3.72:1 on the hover tint. Re-measure before changing. */
+  --button--default-primary__color: var(--blue-800); /* material blue 800 */
+
+  /*
+  Outline buttons
+  */
+
+  /*
+  Icon buttons
+   */
+
+  /*
+  Contained buttons
+   */
+  --button--contained__color: var(--grey-800); /* material grey 800 */
+  --button--contained__background-color: var(--grey-300); /* material grey 300 */
+  --button--contained__background-color--hover: var(--grey-200); /* material grey 200 */
+
+  --button--contained-primary__color: var(--white);
+  /* Contained buttons' colours give their white text at least 4.5:1 (WCAG 1.4.3), and hover
+     darkens rather than lightens, so the text stays readable under the pointer */
+  --button--contained-primary__background-color: var(--blue-700); /* material blue 700 */
+  --button--contained-primary__background-color--hover: var(--blue-800); /* material blue 800 */
+
+  --button--contained-secondary__color: var(--white);
+  /* The lightest pink with 4.5:1 for the white text (blue-700 already is the lightest blue) */
+  --button--contained-secondary__background-color: var(--pink-600); /* material pink 600 */
+  --button--contained-secondary__background-color--hover: var(--pink-700); /* material pink 700 */
+
+  --button--contained-green__color: var(--white);
+  --button--contained-green__background-color: var(--green-800); /* material green 800 */
+  --button--contained-green__background-color--hover: var(--green-900); /* material green 900 */
+
+  --button--contained__color--disabled: rgba(var(--black-rgb), 0.26);
+  --button--contained__background-color--disabled: rgba(var(--black-rgb), 0.12);
+
+  /*
+  Ripple effect
+   */
+  
+  
+  
+
+}
+
+.stroom-theme-dark {
+  /*
+  Default buttons
+   */
+
+  --button--default-primary__color: var(--blue-300); /* material blue 300 */
+
+  /*
+  Outline buttons
+   */
+
+  /*
+  Icon buttons
+   */
+
+  /*
+  Contained buttons
+   */
+  --button--contained__color: var(--grey-300); /* material grey 300 */
+  --button--contained__background-color: #3a3e47; /*var(--grey-800); /* material grey 800 */
+  --button--contained__background-color--hover: #434751; /*var(--grey-700); /* material grey 700 *//*var(--grey-900); /* material grey 900 */
+
+  --button--contained-primary__color: var(--white);
+  --button--contained-primary__background-color: var(--blue-700); /* material blue 700 */
+  --button--contained-primary__background-color--hover: var(--blue-800); /* material blue 800 */
+
+  --button--contained-secondary__color: var(--white);
+  --button--contained-secondary__background-color: var(--pink-800); /* material pink 800  */
+  --button--contained-secondary__background-color--hover: var(--pink-700); /* material pink 700  */
+
+  --button--contained__color--disabled: rgba(var(--white-rgb), 0.26);
+  --button--contained__background-color--disabled: rgba(var(--white-rgb), 0.12);
+
+  /*
+  Ripple effect
+   */
+}

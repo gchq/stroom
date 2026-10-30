@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The processor profiles: their actions and a pager above their grid -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Profile actions" addStyleNames="default-min-sizes">
+        <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Processor Profile"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor Profile" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processor Profiles"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Processor Profiles"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

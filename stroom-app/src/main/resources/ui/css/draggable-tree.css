@@ -15,7 +15,7 @@
  */
 
 /*
- * A tree whose items can be dragged (DraggableTreePanel, e.g. the pipeline structure and query
+ * A tree whose items can be dragged (DraggableTree, e.g. the pipeline structure and query
  * expression trees), named BEM style. Its live region (__status, TreeKeyboard), which tells screen
  * reader users what moving an item with the keyboard did, is only for them (sr-only), so it has no
  * look of its own here.
@@ -30,4 +30,18 @@
 body:has(.draggable-tree--panning),
 body:has(.draggable-tree--panning) * {
 	cursor: grabbing !important;
+}
+
+/* The copy of what is dragged, which follows the pointer (placed by DraggableTree): unseen
+   until it moves. Through the block, as it is a tree panel with a block of its own */
+.draggable-tree > .draggable-tree__dragged {
+	position: absolute;
+	z-index: 2;
+	opacity: 0;
+	left: var(--draggable-tree__drag-left, 0);
+	top: var(--draggable-tree__drag-top, 0);
+}
+
+.draggable-tree > .draggable-tree__dragged.draggable-tree__dragged--moving {
+	opacity: 0.5;
 }

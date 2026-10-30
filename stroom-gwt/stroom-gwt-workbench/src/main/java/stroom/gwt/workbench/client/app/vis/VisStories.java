@@ -28,8 +28,7 @@ import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryRenderer;
-
-import com.google.gwt.user.client.ui.HTML;
+import stroom.widget.text.client.Html;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -68,7 +67,7 @@ public final class VisStories {
     public static final String TITLE = "App/Visualisations/";
 
     /// The selector of the visualisation's frame.
-    public static final String FRAME = "iframe.VisFrame-frame";
+    public static final String FRAME = "iframe.vis-frame__frame";
 
     // How long a visualisation may take to load its scripts and draw. The first story to load
     // the larger scripts (e.g. D3) is the slowest
@@ -219,7 +218,7 @@ public final class VisStories {
     // The toolbar row (its pause button and any buttons it asked for) is above the visualisation,
     // not over what it draws
     private static void expectToolbarAbove(final Play play, final Query frame) {
-        final Query toolbarRow = play.screen().querySelector(".visToolbarRow");
+        final Query toolbarRow = play.screen().querySelector(".vis-toolbar-row");
         play.expect("the toolbar row's bottom less the visualisation's top",
                 () -> toolbarRow.bottom().get() - frame.top().get()).toBeLessThanOrEqual(0);
     }
@@ -239,18 +238,6 @@ public final class VisStories {
         play.expect(drawn).toHaveLength(count);
         expectToolbarAbove(play, frame);
         return drawn;
-    }
-
-    /// Waits for a visualisation that is a grid of charts (its `gridSeries` set) to have drawn a
-    /// number of cells, each with something drawn in it, and its transitions to have finished.
-    ///
-    /// @param play     The play.
-    /// @param cells    How many cells it should draw, one for each grid series.
-    /// @param selector What each cell's chart draws, e.g. `path.vis-coloured-element`.
-    public static void drawnGrid(final Play play, final int cells, final String selector) {
-        drawn(play, selector);
-        play.expect(play.withinFrame(frame(play)).querySelectorAll("rect.vis-cellVisualisation-border"))
-                .toHaveLength(cells);
     }
 
     /// The visualisation's frame, once the dashboard has opened.
@@ -459,8 +446,8 @@ public final class VisStories {
     }-*/;
 
     // Says why the story can't be shown
-    private static HTML missing(final String message) {
-        final HTML html = new HTML();
+    private static Html missing(final String message) {
+        final Html html = new Html();
         html.setText(message);
         html.getElement().getStyle().setProperty("padding", "16px");
         return html;

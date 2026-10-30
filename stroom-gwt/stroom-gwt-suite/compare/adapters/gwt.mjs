@@ -18,7 +18,7 @@ import { waitForMenu } from '../lib/settle.mjs';
 
 // GWT UI adapter — how to locate/drive the classic Stroom UI.
 //
-// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.userNameTextBox`, PasswordBox (its input
+// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.sign-in-page__user-name`, PasswordBox (its input
 // `.password-box__input`), "Sign In" button (`.LoginViewSignInButton`). On first login Stroom forces a
 // password change via an OK/Cancel popup (`ChangePasswordViewImpl.ui.xml`): two PasswordBoxes, told
 // apart by their placeholders (new password "Enter Password", confirm "Confirm Password"), then the
@@ -32,12 +32,12 @@ export const gwt = {
 
   /** Wait for the internal-IdP sign-in form (after the BFF redirects an unauth'd load). */
   async waitForSignIn(page) {
-    await page.waitForSelector('input.userNameTextBox, input[type=text]', { timeout: 45_000 });
+    await page.waitForSelector('input.sign-in-page__user-name, input[type=text]', { timeout: 45_000 });
   },
 
   async signIn(page, { user, pass }) {
     await this.waitForSignIn(page);
-    await page.locator('input.userNameTextBox, input[type=text]').first().fill(user);
+    await page.locator('input.sign-in-page__user-name, input[type=text]').first().fill(user);
     await page.locator('input.password-box__input, input[type=password]').first().fill(pass);
     await page.getByRole('button', { name: /sign in/i }).click();
   },
@@ -48,7 +48,7 @@ export const gwt = {
    * changed on a previous run). Throws if the popup appears but no new password was supplied.
    */
   async changePasswordIfPresent(page, { newPass }) {
-    // The change-password OK/Cancel dialog (`.dialog` inside `.gwt-PopupPanelGlass`). Scoping
+    // The change-password OK/Cancel dialog (`.dialog` inside `.popup__glass`). Scoping
     // to it disambiguates the new-password box from the login field of the same class sitting
     // behind the modal glass.
     const popup = page.locator('.dialog').filter({ has: page.locator(CONFIRM_PASSWORD) });
@@ -61,7 +61,7 @@ export const gwt = {
     if (!newPass) throw new Error('Password change is required but NEWPASS is not set.');
     await popup.locator(NEW_PASSWORD).fill(newPass);
     await popup.locator(CONFIRM_PASSWORD).fill(newPass);
-    // OK/Cancel are GWT div-buttons (`.Button__text`, no role) — click by text within the popup.
+    // OK/Cancel are GWT div-buttons (`.button__text`, no role) — click by text within the popup.
     await popup.getByText('OK', { exact: true }).first().click();
     return true;
   },
@@ -69,7 +69,7 @@ export const gwt = {
   /** Landing = the GWT app is up (explorer tree + a tab). Heuristic wait; screenshot-friendly. */
   async waitForApp(page) {
     await page.waitForLoadState('networkidle').catch(() => {});
-    await page.waitForSelector('.explorerCell, .navigationTree, [class*=explorer]', { timeout: 30_000 }).catch(() => {});
+    await page.waitForSelector('.explorer-cell, .navigationTree, [class*=explorer]', { timeout: 30_000 }).catch(() => {});
   },
 
   /** Full sign-in for the interactive journeys: sign in, handle a forced change, reach the app. */
@@ -81,7 +81,7 @@ export const gwt = {
     // timeout: on the happy path this selector lands in well under a second, and on the unhappy one
     // there is nothing to wait for — the sign-in form is already back on screen.
     const landed = await page
-      .waitForSelector('.explorerCell, .navigationTree, button[title="Main Menu"]', { timeout: 10_000 })
+      .waitForSelector('.explorer-cell, .navigationTree, button[title="Main Menu"]', { timeout: 10_000 })
       .then(() => true)
       .catch(() => false);
     if (!landed) await this.assertSignedIn(page, creds);
@@ -105,8 +105,8 @@ export const gwt = {
    */
   async assertSignedIn(page, creds = {}) {
     const seen = await page.evaluate(() => ({
-      signInForm: !!document.querySelector('input.userNameTextBox, input.password-box__input'),
-      app: !!document.querySelector('.explorerCell, .navigationTree, button[title="Main Menu"]'),
+      signInForm: !!document.querySelector('input.sign-in-page__user-name, input.password-box__input'),
+      app: !!document.querySelector('.explorer-cell, .navigationTree, button[title="Main Menu"]'),
       url: window.location.href,
     }));
     if (seen.signInForm || !seen.app) {
@@ -143,7 +143,7 @@ export const gwt = {
     await page.waitForTimeout(800); // debounced filter fetch/apply
   },
 
-  /** Open a document by its explorer label (double-click the `.explorerCell` row). */
+  /** Open a document by its explorer label (double-click the `.explorer-cell` row). */
   async openDocByName(page, name, type) {
     return openExplorerDoc(page, name, type);
   },

@@ -1,0 +1,24 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A Solr index's fields, with New, Edit, Remove and a pager, above its schema's synchronisation state -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="dock-container-vertical">
+        <g:SimplePanel styleName="dock-max">
+            <dg:PagerPanel ui:field="pager" toolbarName="Field actions">
+                <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Index Field"/>
+                <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Index Field" enabled="false"/>
+                <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Index Fields"
+                                 enabled="false"/>
+                <dg:DataGrid ui:field="dataGrid" tableName="Solr Index Fields"/>
+            </dg:PagerPanel>
+        </g:SimplePanel>
+        <g:ScrollPanel styleName="dock-min">
+            <g:HTMLPanel styleName="solr-index-field-list__sync-state">
+                <div ui:field="lastSynchronised"><b>Last synchronised:</b> <span ui:field="lastSynchronisedTime"/></div>
+                <div ui:field="messages"/>
+            </g:HTMLPanel>
+        </g:ScrollPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

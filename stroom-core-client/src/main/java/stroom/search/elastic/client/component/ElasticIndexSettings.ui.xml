@@ -1,0 +1,85 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <tx:Html>
+            <h2>General settings</h2>
+        </tx:Html>
+        <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration"
+                        helpText="Elasticsearch cluster document that holds the connection details for this index. Only clusters you have Use permission on are listed.">
+            <dd:DropDownBox ui:field="cluster"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern"
+                        helpText="Name of the Elasticsearch index to search, or a pattern matching several indices or a data stream, e.g. events-*"
+                        screenReaderText="Wildcards allowed, e.g. events-*.">
+            <form:TextBox ui:field="indexName" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field"
+                        helpText="Name of the date field used to apply the query time range. Usually @timestamp, especially for data streams. If left blank, @timestamp is used."
+                        screenReaderText="Default is @timestamp.">
+            <form:TextBox ui:field="timeField"
+                       title="Usually @timestamp, especially for data streams"/>
+        </form:FormGroup>
+        <tx:Html>
+            <h2>Search settings</h2>
+        </tx:Html>
+        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices"
+                        helpText="Number of slices to query at the same time when retrieving search results. Increasing this can speed up retrieval from large indices. 1 to 1000. Default is 1."
+                        screenReaderText="1 to 1000. Default is 1.">
+            <valuespinner:ValueSpinner ui:field="searchSlices" addStyleNames="value-spinner--narrow"
+                                       minValue="1" maxValue="1000"
+                                       title="Number of concurrent threads to use to retrieve search results.&#10;
+                                       Increasing this value can speed up retrieval for larger indices."/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size"
+                        helpText="Number of documents to retrieve in each scroll batch when searching. 1 to 1,000,000. Default is 1000."
+                        screenReaderText="Documents per batch, 1 to 1,000,000. Default is 1000.">
+            <valuespinner:ValueSpinner ui:field="searchScrollSize" addStyleNames="value-spinner--narrow"
+                                       minValue="1" maxValue="1000000"
+                                       title="How many results to retrieve each batch"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline"
+                        helpText="Pipeline used to extract field values from the original events at search time, when a dashboard or query does not specify its own extraction pipeline.">
+            <dd:DropDownBox ui:field="defaultExtractionPipeline"/>
+        </form:FormGroup>
+        <tx:Html>
+            <h2>Vector search</h2>
+        </tx:Html>
+        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model"
+                        helpText="AI model used to create vector embeddings from query terms, so that dense_vector fields can be searched. Required to search dense_vector fields.">
+            <dd:DropDownBox ui:field="vectorGenerationModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model"
+                        helpText="Optional AI model used to rerank vector search results by comparing each result's text with the search term. If left blank, results are not reranked.">
+            <dd:DropDownBox ui:field="rerankModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix"
+                        helpText="Suffix of the text field that holds the original text for each dense_vector field. The vector field suffix is replaced with this, e.g. Content.vector becomes Content.text. Default is .text."
+                        screenReaderText="E.g. Content.vector uses Content.text. Default is .text.">
+            <form:TextBox ui:field="rerankTextFieldSuffix"
+                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`).&#10;
+The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)."/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix"
+                        helpText="Suffix used to name the field that receives the rerank score. The vector field suffix is replaced with this, e.g. Content.vector gives Content.score, which can be used in dashboard expressions. Default is .score."
+                        screenReaderText="E.g. Content.vector gives Content.score. Default is .score.">
+            <form:TextBox ui:field="rerankScoreFieldSuffix"
+                       title="Suffix used to name the destination rerank score field, after removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix.&#10;
+This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
+This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score"
+                        helpText="Only results with a rerank score greater than or equal to this value are included. A number from 0.0 to 1.0. Default is 0.8. If above 0, the score field must be included in the query's fields."
+                        screenReaderText="0.0 to 1.0. Default is 0.8.">
+            <form:TextBox ui:field="rerankScoreMinimum" addStyleNames="text-field--narrow"
+                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder> 

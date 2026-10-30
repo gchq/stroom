@@ -19,10 +19,7 @@ package stroom.preferences.client;
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
-import stroom.query.api.UserTimeZone.Use;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
@@ -31,6 +28,8 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.TextContextMenu;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.datepicker.client.ClientTimeZone;
+import stroom.widget.preferences.client.CurrentPreferences;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.ClientStringUtil;
 import stroom.widget.util.client.KeyBinding;
 
@@ -70,10 +69,22 @@ public class UserPreferencesManager {
     }
 
     public void fetch(final Consumer<UserPreferences> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        fetch(consumer, null, taskMonitorFactory);
+    }
+
+    /// Fetches the user's saved preferences.
+    ///
+    /// @param consumer           Given the preferences.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void fetch(final Consumer<UserPreferences> consumer,
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -282,13 +293,6 @@ public class UserPreferencesManager {
                 ? AceEditorTheme.DEFAULT_LIGHT_THEME
                 : AceEditorTheme.DEFAULT_DARK_THEME;
         return aceEditorTheme.getName();
-    }
-
-    public boolean isUtc() {
-        final UserPreferences userPreferences = getCurrentUserPreferences();
-        return userPreferences.getTimeZone() == null
-               || userPreferences.getTimeZone().getUse() == null
-               || userPreferences.getTimeZone().getUse() == Use.UTC;
     }
 
     static void applyUserPreferences(final CurrentPreferences currentPreferences,

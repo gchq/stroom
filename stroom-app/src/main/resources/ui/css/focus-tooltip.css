@@ -21,7 +21,10 @@
 */
 
 .focus-tooltip {
+    display: none;
     position: fixed;
+    left: var(--focus-tooltip__left, 0);
+    top: var(--focus-tooltip__top, 0);
     z-index: 3000;
     max-width: 300px;
     padding: 2px 6px;
@@ -35,4 +38,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     pointer-events: none;
+}
+
+/* Shown while an icon button has the keyboard focus */
+.focus-tooltip--shown {
+    display: block;
 }

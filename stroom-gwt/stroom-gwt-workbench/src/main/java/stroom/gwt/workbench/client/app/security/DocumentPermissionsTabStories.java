@@ -27,16 +27,17 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.DocumentUserPermissionsContentTabController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/Security/DocumentPermissionsTab` stories, showing Stroom's real
-/// [DocumentUserPermissionsPresenter] (a document's 'Permissions' tab) with fake REST replies.
+/// [DocumentUserPermissionsContentTabController] (a document's 'Permissions' tab) with fake REST replies.
 ///
 /// | Stroom REST endpoint | Used for |
 /// |---|---|
@@ -48,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// The plays check the requests with the request spy. The tab is opened as
 /// `DocumentPermissionsPlugin` opens it for a `ShowDocumentPermissionsEvent` (`setDocRef`).
-/// Confirmations are Stroom's real dialogs. The presenter comes from GIN.
+/// Confirmations are Stroom's real dialogs. The controller comes from GIN.
 public final class DocumentPermissionsTabStories {
 
     private static final String EDIT_TITLE = "edit permissions";
@@ -116,12 +117,12 @@ public final class DocumentPermissionsTabStories {
                     expectCreateColumns(play);
                     play.waitFor(() -> play.expect(play.getByText("admin")).toBeInTheDocument());
                     // admin's explicit column shows type icons (Feed and Dictionary).
-                    // The type icons are in a 'create-document-types-container', each with the class
-                    // 'create-document-types-icon' and titled with its type
-                    play.expect(play.querySelectorAll(".create-document-types-container").count())
+                    // The type icons are in a 'create-document-types', each with the class
+                    // 'create-document-types__icon' and titled with its type
+                    play.expect(play.querySelectorAll(".create-document-types").count())
                             .toBeGreaterThanOrEqual(1);
-                    play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types-icon");
-                    play.expect(play.getByTitle("Dictionary")).toHaveClass("create-document-types-icon");
+                    play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types__icon");
+                    play.expect(play.getByTitle("Dictionary")).toHaveClass("create-document-types__icon");
                     // admin's effective column covers all three types: 'ALL'
                     play.expect(play.getByText("ALL")).toBeInTheDocument();
                     // The details of the selected user
@@ -181,6 +182,61 @@ public final class DocumentPermissionsTabStories {
                     play.expect(screen.getByText("Set Permissions")).toBeInTheDocument();
                     SecurityPlays.expectNoProblems(play);
                 })
+                // A failed change is reported and keeps Set Permissions open with the permission
+                // chosen (the dialog once closed when the error was dismissed)
+                .story("SetPermissionsFailureKeepsDialog", context -> render(context, DICTIONARY, false,
+                        RestReply.error(500, "Permission change refused")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Analysts"));
+                    final Query edit = play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE));
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play dialog = screen.within(screen.findByText("Set Permissions", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query permission = dialog.getByRole("combobox", "Permission");
+                    play.waitFor(() -> play.expect(permission).toHaveValue("Use"));
+                    play.click(permission);
+                    play.click(screen.findByText("Edit", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(permission).toHaveValue("Edit"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.expect(screen.findByText(TextMatch.containing("Permission change refused")))
+                            .toBeInTheDocument();
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing(
+                            "Permission change refused"))).toBeNull());
+                    play.expect(screen.getByText("Set Permissions", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(permission).toHaveValue("Edit");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            ValueMatcher.stringContaining("Permission change refused"));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A failed create permissions change is reported and keeps its dialog open with the
+                // types ticked (the dialog once closed when the error was dismissed)
+                .story("CreatePermissionsFailureKeepsDialog", context -> render(context, FOLDER, true,
+                        RestReply.error(500, "Permission change refused")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("admin"));
+                    final Query edit = play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE));
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play parent = screen.within(screen.findByText("Set Permissions").closest(StroomDom.DIALOG));
+                    play.click(parent.getByRole("button", StroomDom.button("Set Document Create Permissions")));
+                    final Play nested = screen.within(screen.findByText("Set Document Create Permissions",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(nested.getByText("Pipeline")).toBeInTheDocument());
+                    play.click(nested.getByRole("button", StroomDom.button("OK")));
+                    play.expect(screen.findByText(TextMatch.containing("Permission change refused")))
+                            .toBeInTheDocument();
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing(
+                            "Permission change refused"))).toBeNull());
+                    play.expect(screen.getByText("Set Document Create Permissions", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument();
+                    play.expect(nested.getByText("Pipeline")).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // A document (not a folder) has neither folder-only button
                 .story("NoDescendantsButtonOnDocument", context -> render(context, DICTIONARY, false))
                 .withPlay(play -> {
@@ -204,8 +260,9 @@ public final class DocumentPermissionsTabStories {
         play.expect(play.getByRole("columnheader", "Effective Create Document Types")).toBeInTheDocument();
     }
 
-    /// @param withCreate Whether admin has create permissions as well as the usual permissions.
-    private static RestFixtures fixtures(final boolean withCreate) {
+    /// @param withCreate  Whether admin has create permissions as well as the usual permissions.
+    /// @param changeReply The reply to a permission change.
+    private static RestFixtures fixtures(final boolean withCreate, final RestReply changeReply) {
         final String adminRow = withCreate
                 ? """
                 {"userRef": ADMIN, "permission": "OWNER", "documentCreatePermissions": ["Feed", "Dictionary"],
@@ -233,7 +290,7 @@ public final class DocumentPermissionsTabStories {
                         {"path": "System / Reports / Sub",
                          "docRef": {"type": "XSLT", "uuid": "x1", "name": "Transform"}}""",
                         3)))
-                .post(CHANGE_PATH, RestReply.json("true"));
+                .post(CHANGE_PATH, changeReply);
         if (withCreate) {
             builder.get(StartupFixtures.DOCUMENT_TYPES_PATH,
                     RestReply.json("{\"types\": " + TYPES + ", \"visibleTypes\": " + TYPES + "}"));
@@ -247,17 +304,24 @@ public final class DocumentPermissionsTabStories {
     }
 
     private static Widget render(final StoryContext context, final DocRef docRef, final boolean withCreate) {
+        return render(context, docRef, withCreate, RestReply.json("true"));
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final DocRef docRef,
+                                 final boolean withCreate,
+                                 final RestReply changeReply) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(withCreate))
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(withCreate, changeReply))
                 .injector(injector)
                 .realAlerts()
                 .build();
         // Opened as DocumentPermissionsPlugin opens it for a ShowDocumentPermissionsEvent, once
         // Stroom has started (the list reads the UI config)
         harness.afterStartUp(() -> {
-            final DocumentUserPermissionsPresenter presenter =
-                    harness.addContent(injector.getDocumentUserPermissionsPresenter());
-            presenter.setDocRef(docRef);
+            final DocumentUserPermissionsContentTabController controller =
+                    harness.show(injector.getDocumentUserPermissionsContentTabController());
+            controller.setDocRef(docRef);
         });
         return harness.asWidget();
     }

@@ -145,7 +145,7 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 const CHROME = new Set([
   'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
   'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New Document', 'Delete Selected Documents',
+  'New Document', 'Delete Selected Documents', 'Reload Explorer Tree',
   // The navigation logo and the tab bar's sidebar toggle (CurveTabLayoutViewImpl's `Hide Sidebar`)
   // are chrome; the names are listed in case either is given an `aria-label`. Walking the toggle
   // put a post-action state under every node.
@@ -391,10 +391,10 @@ async function clickAffordance(label, timeout = 3000) {
       const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
-      const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
+      const el = [...scope.querySelectorAll('button, [role=button], .button')].find((b) => b.offsetWidth > 0 && !b.disabled
         && b.getAttribute('aria-disabled') !== 'true'
         && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted)
-        && !b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
+        && !b.closest('.navigationTree, .explorer-tree__grid, [class*=navigation], [class*=explorer]'));
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -413,7 +413,7 @@ async function clickAffordance(label, timeout = 3000) {
       : []),
     root.locator(`button[title="${label}"]:not([disabled])`),
     root.locator(`button[aria-label="${label}"]:not([disabled])`),
-    root.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
+    root.locator('.button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
     ...(isColumnHeader(label) ? [] : [root.locator('[role=columnheader], th')
       .filter({ hasText: new RegExp(`^\\s*${esc}(\\s+\\d+)?\\s*$`) })]),
   ];
@@ -437,12 +437,12 @@ async function clickAffordance(label, timeout = 3000) {
  * menu instead — the seed maximises the pane first (`tab-menu` step).
  */
 /**
- * Where a seed's column menus live. The dashboard's need design mode and sit in `.dashboard-panel`;
+ * Where a seed's column menus live. The dashboard's need design mode and sit in `.tab-layout__content-outer`;
  * a Query document's result table (`QueryResultTablePresenter`) has `allowHeaderSelection` on by
  * default — MyDataGrid's default — so its header menu (Filter, Format, Conditional Formatting, …)
  * opens on any results table with no mode to enter.
  */
-let columnScope = { selector: '.dashboard-panel [role=columnheader]', design: true };
+let columnScope = { selector: '.tab-layout__content-outer [role=columnheader]', design: true };
 async function readDesignHeaders() {
   return page.evaluate(({ selector, design, designOn }) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
@@ -452,7 +452,7 @@ async function readDesignHeaders() {
       .map((th) => {
         const r = th.getBoundingClientRect();
         const hit = document.elementFromPoint(r.x + 20, r.y + r.height / 2);
-        return { name: norm(th.querySelector('.column-label')?.textContent ?? th.textContent), ok: th.contains(hit) };
+        return { name: norm(th.querySelector('.column-header__label')?.textContent ?? th.textContent), ok: th.contains(hit) };
       })
       .filter((h) => h.name && h.ok).map((h) => h.name);
   }, { ...columnScope, designOn: toggleOn('Design Mode') }).catch(() => []);
@@ -462,7 +462,7 @@ async function clickDesignHeader(name) {
   const box = await page.evaluate(([wanted, selector]) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const th = [...document.querySelectorAll(selector)]
-      .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
+      .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-header__label')?.textContent ?? e.textContent) === wanted);
     if (!th) return null;
     const r = th.getBoundingClientRect();
     const hit = document.elementFromPoint(r.x + 20, r.y + r.height / 2);
@@ -487,7 +487,7 @@ async function tabBarOf(tab) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const lab = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted);
-    const bar = lab?.closest('.tabLayout-barOuter');
+    const bar = lab?.closest('.tab-layout__bar-outer');
     if (!bar) return null;
     const r = bar.getBoundingClientRect();
     const settings = [...bar.querySelectorAll('button[title="Tab Actions"]')].find((b) => b.offsetWidth > 0);
@@ -525,9 +525,9 @@ async function survey() {
     }, scope).catch(() => []);
     for (const label of headers) if (!buttons.some((b) => b.label === label)) buttons.push({ kind: 'header', label, enabled: true, visible: true });
   }
-  // The data preview's item pager ("Part 1 of 1" → ItemSelectionPresenter), the source view's
-  // character pager (→ CharacterRangeSelectionPresenter) and the stepping toolbar's location
-  // (→ StepLocationPresenter) were GWT `Label`s with click handlers, which no markup advertised, so
+  // The data preview's item pager ("Part 1 of 1" → ItemSelectionController, once
+  // ItemSelectionPresenter), the source view's character pager (→ CharacterRangeSelectionController)
+  // and the stepping toolbar's location (→ StepLocationPickerController) were GWT `Label`s with click handlers, which no markup advertised, so
   // they were offered here as `selector:` affordances. They are buttons now (#5406), titled
   // `Select Part`/`Select Record`, `Set Source Range` and `Set Location`, so the button reader
   // finds them.
@@ -759,7 +759,7 @@ async function closeAllContentTabs() {
         const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
         return { caption: norm(t.textContent), w: Math.round(r.width), h: Math.round(r.height), vis: st.visibility, op: st.opacity, disp: st.display,
           root: root.className.toString().slice(0, 60),
-          buttons: [...root.querySelectorAll('button, [role=button], .Button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
+          buttons: [...root.querySelectorAll('button, [role=button], .button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
       });
     }).catch((e) => `threw: ${e.message.slice(0, 80)}`);
     console.log(`      (raw dialogs: ${JSON.stringify(raw)})`);
@@ -798,7 +798,7 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
       const t = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
       if (!t) return '';
       const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .Button').forEach((x) => x.remove());
+      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .button').forEach((x) => x.remove());
       return norm(c.textContent).slice(0, 160);
     })()`).catch(() => '');
     if (!confirmTexts.has(body)) { confirmTexts.add(body); console.log(`      (answered Confirm: "${body}")`); }
@@ -864,7 +864,7 @@ async function clickDialogButton(captionRe, labelRe) {
     const t = titles[titles.length - 1];
     if (!t) return null;
     const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-    const btn = [...root.querySelectorAll('button, [role=button], .Button')]
+    const btn = [...root.querySelectorAll('button, [role=button], .button')]
       .filter((b) => b.offsetWidth > 0 && b.offsetHeight > 0)
       .find((b) => lab.test(undouble(b.textContent || b.getAttribute('title') || '')));
     if (!btn) return null;
@@ -1052,7 +1052,7 @@ async function closeTop(childKind) {
       const t = titles[titles.length - 1];
       if (!t) return;
       const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-      const btn = [...root.querySelectorAll('button, [role=button], .Button')]
+      const btn = [...root.querySelectorAll('button, [role=button], .button')]
         .find((b) => /^(cancel|close)$/i.test(undouble(b.textContent || b.getAttribute('title') || '')));
       if (btn) btn.click();
     })()`).catch(() => {});
@@ -1126,8 +1126,8 @@ async function driveStep(step) {
     const found = await page.evaluate((type) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const rows = [...document.querySelectorAll('.explorerCell')].filter((e) => e.offsetWidth > 0)
-        .map((e) => ({ title: norm(e.querySelector('.explorerCell-icon')?.getAttribute('title')),
+      const rows = [...document.querySelectorAll('.explorer-cell')].filter((e) => e.offsetWidth > 0)
+        .map((e) => ({ title: norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title')),
           label: norm(e.textContent) }))
         .filter((r) => r.title);
       for (const [how, test] of [
@@ -1151,16 +1151,16 @@ async function driveStep(step) {
   } else if (step.via === 'context') {
     await expandExplorer();
     if (step.also?.length) {
-      if (!(await clickByText(page, '.explorerCell', step.target))) {
+      if (!(await clickByText(page, '.explorer-cell', step.target))) {
         throw new Error(`no explorer row "${step.target}" to select`);
       }
       for (const extra of step.also) {
-        if (!(await ctrlClickByText(page, '.explorerCell', extra))) {
+        if (!(await ctrlClickByText(page, '.explorer-cell', extra))) {
           throw new Error(`no explorer row "${extra}" to add to the selection`);
         }
       }
     }
-    if (!(await rightClickByText(page, '.explorerCell', step.target))) {
+    if (!(await rightClickByText(page, '.explorer-cell', step.target))) {
       throw new Error(`no explorer row "${step.target}" to right-click`);
     }
   } else if (step.via === 'right-click') {
@@ -1202,10 +1202,10 @@ async function driveStep(step) {
         // click there CHECKS the row (the batch selection — Process/Delete light up) without
         // SELECTING it, so the data preview never loaded and `View Source` had nothing to show.
         // And a cell that is PLAIN: the Search Result Stores' owner column is a UserRef link cell
-        // (`.userRefLinkContainer`, a copy icon), which CONSUMES the click, so the row was never
+        // (`.user-ref-link`, a copy icon), which CONSUMES the click, so the row was never
         // selected. Prefer a text cell with nothing interactive in it; fall back to any text cell.
         const tds = [...row.querySelectorAll('td, [role=gridcell]')];
-        const interactive = 'a, u[link], button, input, .svg-image, .hoverIconContainer, .userRefLinkContainer';
+        const interactive = 'a, u[link], button, input, .svg-image, .hoverIconContainer, .user-ref-link';
         const td = tds.find((c) => c.offsetWidth > 20 && c.textContent.trim() && !c.querySelector(interactive))
           ?? tds.find((c) => c.offsetWidth > 20 && c.textContent.trim()) ?? tds.find((c) => c.offsetWidth > 20) ?? row;
         const r = td.getBoundingClientRect();
@@ -1243,7 +1243,7 @@ async function driveStep(step) {
       [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'tick-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'row-action') {
-    // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.svgCell-button` in the row — opens
+    // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.icon-cell--button` in the row — opens
     // a per-row menu (Dependencies: Open / Properties / Delete / Locate; Users: Open user…). Not a
     // button the survey offers, so it is a seed.
     const box = await page.evaluate((nth) => {
@@ -1251,7 +1251,7 @@ async function driveStep(step) {
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const rows = [...scope.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
       const row = rows[nth ?? 0];
-      const cell = row && [...row.querySelectorAll('.svgCell-button')].find((c) => c.offsetWidth > 0);
+      const cell = row && [...row.querySelectorAll('.icon-cell--button')].find((c) => c.offsetWidth > 0);
       if (!cell) return null;
       const r = cell.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1261,7 +1261,7 @@ async function driveStep(step) {
     await waitForMenu(page, { budget: 1_500, label: 'row-action' }).catch(() => {});
   } else if (step.via === 'select-tree') {
     // The first item of a tree in scope — a real click. A GWT Tree's items are `.gwt-TreeItem` (a
-    // visualisation's asset tree); the explorer tree a document CHOOSER shows is `.explorerCell`
+    // visualisation's asset tree); the explorer tree a document CHOOSER shows is `.explorer-cell`
     // rows (`selector`), and `match` names what the wanted row must contain — the Pipeline icon,
     // because a chooser lists the folders above its documents too.
     const box = await page.evaluate(([selector, match]) => {
@@ -1292,7 +1292,7 @@ async function driveStep(step) {
     }, [step.selector ?? null, !!step.empty]);
     if (!box) throw new Error(step.empty ? 'no empty text box to fill' : `nothing to fill matching ${step.selector}`);
     const countRows = () => page.evaluate(() =>
-      [...document.querySelectorAll('.explorerCell, tr, [role=row]')].filter((e) => e.offsetWidth > 0).length);
+      [...document.querySelectorAll('.explorer-cell, tr, [role=row]')].filter((e) => e.offsetWidth > 0).length);
     const before = await countRows();
     await page.mouse.click(box.x, box.y);
     await page.keyboard.type(step.text, { delay: 30 });
@@ -1310,7 +1310,7 @@ async function driveStep(step) {
       const box = [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0);
       // The ICON, not the text box: a click on the text box calls showPopup() and then bubbles to
       // the box's own click handler, which calls it again — and the second call HIDES the popup.
-      const el = box?.querySelector('.svg-icon-box__icon') ?? box;
+      const el = box?.querySelector('.icon-box__icon') ?? box;
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1335,13 +1335,13 @@ async function driveStep(step) {
     const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.selection-box__value')?.textContent.trim(), step.selector);
     console.log(`      (set-select ${step.selector} = "${step.value}" → box reads "${shows}")`);
   } else if (step.via === 'click-in-header') {
-    // A child of a column HEADER — the `.column-valueFilterIcon` that opens ColumnValuesFilterPresenter.
+    // A child of a column HEADER — the `.column-header__value-filter-icon` that opens ColumnValuesFilterPresenter.
     // The same MyDataGrid mouseup path as the column menu, so the same move → press → release, but
     // aimed at the icon: `QueryTableColumnsManager.onShowMenu` looks at the event's target.
     const box = await page.evaluate(([wanted, child]) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const th = [...document.querySelectorAll('[role=columnheader]')]
-        .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
+        .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-header__label')?.textContent ?? e.textContent) === wanted);
       const el = th?.querySelector(child);
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -1368,7 +1368,7 @@ async function driveStep(step) {
     if (!(await setAce(page, step.text, step.index ?? 0))) throw new Error('no Ace editor to set');
     await page.waitForTimeout(300);
   } else if (step.via === 'select-element') {
-    // A pipeline element on the Structure canvas. Not a GWT Tree: `DraggableTreePanel` selects on
+    // A pipeline element on the Structure canvas. Not a GWT Tree: `DraggableTree` selects on
     // MOUSEUP when the target is the element the MOUSEDOWN landed on, and a drag between the two
     // moves the element — so press and release on one spot, no movement. The LAST box is the
     // deepest element (Source is first), which is the one whose Add/Edit/Remove all apply.
@@ -1377,7 +1377,7 @@ async function driveStep(step) {
       // `match` picks an element by name — the pipeline REFERENCE list is enabled only for an element
       // with a pipelineReference property, which is the XSLT filter, not the Reference Data Filter
       // (that one LOADS reference data; the XSLT filter CONSUMES it).
-      const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0);
+      const boxes = [...document.querySelectorAll('.pipeline-element-box__label')].filter((e) => e.offsetWidth > 0);
       const el = match ? boxes.find((e) => new RegExp(match, 'i').test(e.textContent)) : boxes[boxes.length - 1];
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -1749,10 +1749,10 @@ if (DIRECTED.includes('cf')) {
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId', 'Edit Conditional Formatting for Table', 'New Formatting Rule', 'after Formatting Type = Custom'],
       route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Edit Conditional Formatting for Table', opens: 'dialog' },
-        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
+        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditional-formatting-rule-editor__type', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],
-      route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-valueFilterIcon', opens: 'dialog' }] },
+      route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-header__value-filter-icon', opens: 'dialog' }] },
   );
   console.log('  + 2 directed conditional-formatting seed(s): Formatting Type = Custom, the value-filter icon');
 }
@@ -1783,7 +1783,7 @@ if (DIRECTED.includes('stepping')) {
   // scratch store under Stroom's TEMP dir, creates no meta and writes no stream, so it is allowed now
   // and the step controls (First/Backward/Forward/Last/Refresh) run for real.
   //
-  // Two doors: `Set Location` (StepLocationPresenter) opens from the toolbar's location button
+  // Two doors: `Set Location` (StepLocationPickerController) opens from the toolbar's location button
   // (titled `Set Location`; its text, `[<metaId>:<part>:<record>]`, is data); and ElementPresenter
   // is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
   // element is selected in the stepping tree — the same canvas as the Structure tab, so the same
@@ -1851,7 +1851,7 @@ if (DIRECTED.includes('settings')) {
 }
 if (DIRECTED.includes('gitrepo')) {
   // The Git repository `seed-data.mjs` gave a URL: its Settings tab shows `Push to Git` (hidden on
-  // every content-pack repo here), whose click opens the commit dialog (GitRepoCommitDialog-
+  // every content-pack repo here), whose click opens the commit dialog (GitRepoCommit-
   // Presenter) before any push — the push is the dialog's OK, which the guard blocks.
   seeds.push({ kind: 'editor-tab', presenter: 'GitRepoPresenter', seedDepth: 2,
     path: ['GitRepo (document, with a URL)', 'Settings'],
@@ -1888,7 +1888,7 @@ if (DIRECTED.includes('process')) {
     path: ['Dashboard (document)', 'Process', 'after filter', 'after select tree item (a pipeline)', 'OK'],
     route: [{ via: 'docType', type: 'Dashboard' }, { via: 'button', label: 'Process', opens: 'dialog' },
       { via: 'fill', selector: 'input.quick-filter__input', text: 'Example', post: true, opens: 'changed' },
-      { via: 'select-tree', selector: '.explorerCell', match: '.explorerCell-icon[title="Pipeline"]', post: true, opens: 'changed' },
+      { via: 'select-tree', selector: '.explorer-cell', match: '.explorer-cell__icon[title="Pipeline"]', post: true, opens: 'changed' },
       { via: 'button', label: 'OK', opens: 'dialog' }] });
   console.log('  + 1 directed process seed: a pipeline chosen for a dashboard\'s Process');
 }
@@ -2252,7 +2252,7 @@ async function probeMouse(node, id) {
       const check = { kind: 'mousedown', gesture: 'drag', ...dragVerdict(ev), evidence: ev };
       affordances.push({ node: id, label: 'drag by the caption', kind: 'mousedown',
         outcome: ev?.got && (ev.got.dx || ev.got.dy) ? 'moved' : 'nothing',
-        detail: 'Dialog:185-236 beginDragging/continueDragging/endDragging + popupPanel-dragGlass',
+        detail: 'Dialog:185-236 beginDragging/continueDragging/endDragging + popup__drag-glass',
         rows: [], blocked: [], clickMs: Date.now() - t, backMs: 0, check });
       if (check.verdict === 'fail') checkFails += 1;
       console.log(`      ⇄ drag "${box.caption}" → ${check.why}  {mousedown ${check.verdict}}`);
@@ -2563,7 +2563,7 @@ async function walk(node, state, arrivedAt) {
   // Documentation, Data Retention is Rules / Impact Summary, a dashboard component's Settings is
   // Basic / Conditional Formatting / Selection Filter. The survey reads the selected pane only, so a
   // tab never clicked is a surface never seen — `New Field` (FieldEditPresenter), the impact
-  // summary's `Filter` (EditExpressionPresenter) and Selection Filter's Add (SelectionHandler-
+  // summary's `Filter` (ExpressionEditorController) and Selection Filter's Add (SelectionHandler-
   // Presenter) all sat one tab across from where every walk had stood.
   if (['editor', 'screen', 'dialog'].includes(node.kind) && !rec.blockedByAlert) {
     const tabs = await readSubTabs({ inDialog: node.kind === 'dialog' }).catch(() => []);
@@ -2689,10 +2689,10 @@ async function walk(node, state, arrivedAt) {
     if (CHROME.has(label)) {
       const inExplorer = await page.evaluate((wanted) => {
         const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-        const els = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
+        const els = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0
           && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted || norm(b.textContent) === wanted));
         if (!els.length) return true;
-        return els.every((b) => !!b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
+        return els.every((b) => !!b.closest('.navigationTree, .explorer-tree__grid, [class*=navigation], [class*=explorer]'));
       }, label).catch(() => true);
       if (inExplorer) {
         if (chromeDone.has(label)) continue;
@@ -3183,7 +3183,7 @@ for (const seed of seeds) {
   const t0 = Date.now();
   // Where this seed's column headers are, BEFORE the route is driven: a route may itself click one.
   columnScope = typeof seed.columnMenus === 'object' ? seed.columnMenus
-    : seed.columnScope ?? { selector: '.dashboard-panel [role=columnheader]', design: true };
+    : seed.columnScope ?? { selector: '.tab-layout__content-outer [role=columnheader]', design: true };
   try {
     await resync(seed);
   } catch (e) {

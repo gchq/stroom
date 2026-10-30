@@ -17,8 +17,7 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -26,9 +25,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -40,13 +39,13 @@ import java.util.List;
 import java.util.Set;
 
 /// Stories for Stroom's [TickBoxCell], the tick box of its grids and trees (the form tick box,
-/// `CustomCheckBox`, is in `Widgets/Inputs/TickBox`).
+/// `TickBox`, is in `Widgets/Inputs/TickBox`).
 ///
 /// Each row's tick box is ticked or not, and the header's is half-ticked when some of the rows are
-/// ticked but not all, as `ColumnSelectionPresenter` builds them. Clicking the header ticks all the
+/// ticked but not all, as `ColumnSelection` builds them. Clicking the header ticks all the
 /// rows, or unticks them if they all are. A grid the user can't change has tick boxes with no border
 /// that can't be clicked, and no header tick box, as `DataGridUtil.updatableTickBoxColumnBuilder`
-/// and `DocumentCreatePermissionsListPresenter` build them.
+/// and `DocumentCreatePermissionsList` build them.
 public final class TickBoxCellStories {
 
     private static final String ON_CHANGE = "onChange";
@@ -126,14 +125,14 @@ public final class TickBoxCellStories {
         return play.within(play.getByText(name).closest("[role='row']")).querySelector(".tick-box");
     }
 
-    /// A grid of [#NAMES] with a tick box column, as Stroom's list presenters build them.
+    /// A grid of [#NAMES] with a tick box column, as Stroom's list controllers build them.
     ///
     /// @param updatable Whether the user can change the ticks: if so, the header has a tick box.
     /// @param ticked    The names that start ticked.
     private static Widget grid(final StoryContext context, final boolean updatable, final String... ticked) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Set<String> selected = new LinkedHashSet<>(List.of(ticked));
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
 

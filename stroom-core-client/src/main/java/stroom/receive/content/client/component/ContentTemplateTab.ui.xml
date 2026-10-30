@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:ct="urn:import:stroom.receive.content.client.component">
+    <split:SplitPane vertical="true" thin="true" sizes="50%, *"
+                     names="Templates, Template" addStyleNames="max">
+        <g:SimplePanel styleName="max">
+            <ct:ContentTemplateList ui:field="list"/>
+        </g:SimplePanel>
+        <g:FlowPanel styleName="max form form-padding">
+            <form:FormGroup
+                    ui:field="descriptionFormGroup"
+                    identity="contentTemplateTabDescription"
+                    label="Description"
+                    helpText="The description of the selected content template.">
+                <tx:Html ui:field="description" addStyleNames="w-100"/>
+            </form:FormGroup>
+
+            <form:FormGroup
+                    ui:field="expressionFormGroup"
+                    identity="contentTemplateTabExpression"
+                    label="Expression"
+                    addStyleNames="dock-max"
+                    helpText="When data arrives for a feed that does not exist yet, the first active template whose expression matches the data's header attributes is used. Attribute names are not case sensitive; an empty expression matches all data.">
+                <g:SimplePanel styleName="w-100">
+                    <q:ExpressionTree ui:field="expressionTree"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+        </g:FlowPanel>
+    </split:SplitPane>
+</ui:UiBinder>

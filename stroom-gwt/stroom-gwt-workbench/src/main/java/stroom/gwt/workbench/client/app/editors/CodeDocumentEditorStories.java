@@ -46,8 +46,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /// The `App/Editors/CodeDocumentEditor` stories, showing Stroom's real code document editors with
-/// fake REST replies: `XsltPresenter`, `TextConverterPresenter`, `ScriptPresenter`,
-/// `KafkaConfigPresenter`, `S3ConfigPresenter` and `XMLSchemaPresenter`.
+/// fake REST replies: `XsltEditor`, `TextConverterEditor`, `ScriptEditor`,
+/// `KafkaConfigEditor`, `S3ConfigEditor` and `XMLSchemaEditor`.
 ///
 /// As their plugins do, each story fetches its document (`GET /xslt/v1/{uuid}`,
 /// `/textConverter/v1/...`, `/script/v1/...`, `/kafkaConfig/v1/...`, `/s3/v1/...`,
@@ -60,7 +60,7 @@ public final class CodeDocumentEditorStories {
     private static final String ACE_INPUT = ".ace_text-input";
 
     // A FormGroup gives its control the group's identity as its id
-    // (XMLSchemaSettingsViewImpl.ui.xml)
+    // (XMLSchemaSettings.ui.xml)
     private static final String NAMESPACE_URI = "#xmlSchemaSettingsNamespaceURI";
 
     private static final String DOWNLOAD_REPLY = """
@@ -115,7 +115,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "XSLT", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("TextConverter", context -> textConverter(context, false))
@@ -131,7 +131,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Converter Type", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Conversion tab (the default), to compare with its read only partner
@@ -146,7 +146,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Conversion", "Settings", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("Script", context -> script(context, false))
@@ -162,7 +162,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Base Script")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Script (code) tab, the default, to compare with its read only partner
@@ -177,7 +177,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Script", "Settings", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Config (default), Documentation and Permissions, and a Download Kafka Config toolbar button
@@ -194,7 +194,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("S3Config", context -> s3(context, false))
@@ -210,7 +210,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("XmlSchema", context -> schema(context, false))
@@ -231,6 +231,22 @@ public final class CodeDocumentEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // The Graphical tab (the default) shows the schema's diagram, with its navigation, and
+                // shows it again after the Text tab. The schema is empty, so Home, Back and Forward
+                // have nowhere to go (they once threw, as nothing had been shown)
+                .story("XmlSchemaGraphical", context -> schema(context, false))
+                .withPlay(play -> {
+                    final Query navigation = play.findByRole("group", "Schema navigation");
+                    play.expect(play.within(navigation).getByRole("button", "Schema Home")).toBeVisible();
+                    play.click(play.within(navigation).getByRole("button", "Schema Home"));
+                    play.click(play.within(navigation).getByRole("button", "Back"));
+                    play.click(play.within(navigation).getByRole("button", "Forward"));
+                    openTab(play, "Text");
+                    play.waitFor(() -> play.expect(play.queryByRole("group", "Schema navigation")).toBeNull());
+                    openTab(play, "Graphical");
+                    play.waitFor(() -> play.expect(play.getByRole("group", "Schema navigation")).toBeVisible());
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Text tab, to compare with its read only partner
                 .story("XmlSchemaTextEditable", context -> schema(context, false))
                 .withPlay(play -> {
@@ -243,7 +259,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Text");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab, to compare with its read only partner
@@ -258,7 +274,7 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Namespace URI", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only (no EDIT permission): the code editor and settings are read only
@@ -281,7 +297,7 @@ public final class CodeDocumentEditorStories {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(".ace_content")).toBeInTheDocument());
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    // The menu opens on contextmenu (EditorViewImpl), its edit items above Format
+                    // The menu opens on contextmenu (CodeEditor), its edit items above Format
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
@@ -316,7 +332,7 @@ public final class CodeDocumentEditorStories {
         final XsltResource resource = GWT.create(XsltResource.class);
         final RestFixtures fixtures = fixtures("/xslt/v1/xslt-1", XSLT.replace("DATA", data)).build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXsltPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXsltEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -327,7 +343,7 @@ public final class CodeDocumentEditorStories {
         final DocRef docRef = new DocRef(TextConverterDoc.TYPE, "tc-1", "My TC");
         final TextConverterResource resource = GWT.create(TextConverterResource.class);
         return DocEditors.render(context, fixtures("/textConverter/v1/tc-1", TEXT_CONVERTER).build(), readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getTextConverterPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getTextConverterEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -338,7 +354,7 @@ public final class CodeDocumentEditorStories {
         final DocRef docRef = new DocRef(ScriptDoc.TYPE, "script-1", "My Script");
         final ScriptResource resource = GWT.create(ScriptResource.class);
         return DocEditors.render(context, fixtures("/script/v1/script-1", SCRIPT).build(), readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getScriptPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getScriptEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -353,7 +369,7 @@ public final class CodeDocumentEditorStories {
                         RestReply.json(DOWNLOAD_REPLY.replace("NAME", "my-kafka.properties")))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getKafkaConfigPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getKafkaConfigEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -367,7 +383,7 @@ public final class CodeDocumentEditorStories {
                 .post("/s3/v1/download", RestReply.json(DOWNLOAD_REPLY.replace("NAME", "my-s3.properties")))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getS3ConfigPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getS3ConfigEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
@@ -382,7 +398,7 @@ public final class CodeDocumentEditorStories {
                 .post("/xmlSchema/v1/validate", RestReply.json("{\"ok\": true}"))
                 .build();
         return DocEditors.render(context, fixtures, readOnly,
-                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXMLSchemaPresenter(),
+                (harness, injector) -> DocEditors.open(harness, docRef, injector.getXMLSchemaEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

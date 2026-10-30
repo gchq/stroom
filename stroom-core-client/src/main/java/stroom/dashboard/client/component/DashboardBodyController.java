@@ -1,0 +1,1005 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dashboard.client.component;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.UrlParameters;
+import stroom.dashboard.client.component.TabMenuController.TabActions;
+import stroom.dashboard.client.flexlayout.FlexLayout;
+import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
+import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.DashboardContextImpl;
+import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.MutableConfigUtil;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
+import stroom.dashboard.client.main.Panes;
+import stroom.dashboard.client.main.Queryable;
+import stroom.dashboard.client.main.RefreshablePane;
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableSize;
+import stroom.dashboard.client.model.MutableSplitLayoutConfig;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.Dimension;
+import stroom.dashboard.shared.KeyValueInputComponentSettings;
+import stroom.dashboard.shared.LayoutConstraints;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.docref.DocRef;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.document.client.editor.HasToolbar;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.component.DocumentChooserController;
+import stroom.query.api.ParamUtil;
+import stroom.query.client.SearchErrorListener;
+import stroom.query.client.SearchStateListener;
+import stroom.query.client.UniqueUtil;
+import stroom.query.client.component.QueryInfo;
+import stroom.query.client.component.QueryToolbarController;
+import stroom.security.shared.DocumentPermission;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.Version;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.menu.client.SimpleMenuItem;
+import stroom.widget.menu.client.SimpleParentMenuItem;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.SafeHtmlUtil;
+
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/// A dashboard's body ([DashboardBody]): its panes, laid out in tabs and splits, the query toolbar
+/// that runs its queries, and the Dashboard actions (Design Mode, Add Component, Set Layout
+/// Constraints, View Current Selection, Maximise and Restore) on the document's toolbar.
+public class DashboardBodyController
+        extends Controller
+        implements
+        TabActions,
+        FlexLayoutChangeHandler,
+        HasToolbar,
+        SearchStateListener,
+        SearchErrorListener {
+
+    private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
+    private static final String DEFAULT_PARAMS_INPUT = "Params";
+
+    private static final Logger logger = Logger.getLogger(DashboardBodyController.class.getName());
+    private final FlexLayout layoutController;
+    private final Panes components;
+    private final QueryToolbarController queryToolbar;
+    private final QueryInfo queryInfo;
+    private final Provider<LayoutConstraintController> layoutConstraintControllerProvider;
+    private final Provider<CurrentSelectionController> currentSelectionControllerProvider;
+    private final Provider<DocumentChooserController> dashboardSelection;
+    private CurrentSelectionController currentSelection;
+    // The Current Selection popup refreshes as the selection changes, while it is shown
+    private final ListenerWhileShown selectionListener = new ListenerWhileShown();
+    private boolean loaded;
+    private String customTitle;
+    private DocRef docRef;
+
+    private final DashboardBody view;
+    private boolean embedded;
+    private boolean readOnly;
+    private boolean queryOnOpen;
+
+    private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
+    private MutableSize preferredSize = new MutableSize();
+    private boolean designMode;
+
+    private String externalLinkParameters;
+
+    private final DashboardContextImpl dashboardContext;
+    private final ToolbarToggleButton editModeButton;
+    private final ToolbarButton addComponentButton;
+    private final ToolbarButton setConstraintsButton;
+    private final ToolbarButton selectionInfoButton;
+    private final ToolbarButton maximiseTabsButton;
+    private final ToolbarButton restoreTabsButton;
+    private final Toolbar editToolbar;
+
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                           The application's event bus.
+    /// @param view                               Its component.
+    /// @param components                         The components.
+    /// @param queryToolbar                       The query toolbar.
+    /// @param tabMenuProvider                    Makes the tab menu.
+    /// @param queryInfo                          The query info.
+    /// @param layoutConstraintControllerProvider Makes the layout constraint controller.
+    /// @param currentSelectionControllerProvider Makes the current selection controller.
+    /// @param urlParameters                      The page's URL parameters.
+    /// @param dashboardSelection                 The dashboard selection.
+    @Inject
+    public DashboardBodyController(final EventBus eventBus,
+                                   final DashboardBody view,
+                                   final Panes components,
+                                   final QueryToolbarController queryToolbar,
+                                   final Provider<TabMenuController> tabMenuProvider,
+                                   final QueryInfo queryInfo,
+                                   final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
+                                   final Provider<CurrentSelectionController> currentSelectionControllerProvider,
+                                   final UrlParameters urlParameters,
+                                   final Provider<DocumentChooserController> dashboardSelection) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        final FlexLayout flexLayout = view.getLayout();
+        own(queryToolbar);
+        this.queryToolbar = queryToolbar;
+        this.layoutController = flexLayout;
+        this.components = components;
+        components.setOwner(this);
+        this.queryInfo = queryInfo;
+        this.layoutConstraintControllerProvider = layoutConstraintControllerProvider;
+        this.currentSelectionControllerProvider = currentSelectionControllerProvider;
+        this.dashboardSelection = dashboardSelection;
+
+        dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbar);
+        queryToolbar.setParamValues(dashboardContext);
+
+        // Its rename dialog is this one's, made for one use
+        final TabMenuController tabMenu = make(tabMenuProvider);
+        tabMenu.setDashboard(components, this);
+        flexLayout.setOnShowTabMenu(tabMenu::showMenu);
+        flexLayout.setOnShowMenu(this::fireEvent);
+
+        flexLayout.setChangeHandler(this);
+        flexLayout.setComponents(components);
+
+        editToolbar = new Toolbar("Dashboard actions");
+        editModeButton = editToolbar.toggle(SvgImage.EDIT, "Design Mode", pressed -> onDesign());
+
+        addComponentButton = editToolbar.button(SvgImage.ADD, "Add Component", this::onAdd);
+        addComponentButton.setVisible(false);
+        addComponentButton.setOpensMenu(true);
+
+        setConstraintsButton = editToolbar.button(SvgImage.RESIZE, "Set Layout Constraints", this::onConstraints);
+        setConstraintsButton.setVisible(false);
+
+        selectionInfoButton = editToolbar.button(SvgImage.SELECTION, "View Current Selection",
+                this::onSelectionInfo);
+        selectionInfoButton.setVisible(false);
+
+        maximiseTabsButton = editToolbar.button(SvgImage.MAXIMISE, "Maximise All Panes", this::onMaximiseTabs);
+
+        restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore Pane Layout", this::onRestoreTabs);
+        restoreTabsButton.setVisible(false);
+
+
+        NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
+        setParamsFromLink(urlParameters.getParams());
+        setEmbedded(urlParameters.isEmbedded());
+        setQueryOnOpen(urlParameters.isQueryOnOpen());
+
+        queryToolbar.setOnStart(this::toggleStart);
+        queryToolbar.setOnTimeRangeChange(() -> {
+            onChange();
+            dashboardContext.fireContextChangeEvent();
+            start();
+        });
+        // Its components go with it (closing it should have removed them already)
+        onDispose(components::removeAll);
+        watch(Contexts.READ_ONLY, readOnly -> {
+            this.readOnly = readOnly;
+            enableEditButtons();
+        });
+    }
+
+    public void setParentContext(final DashboardContext parent) {
+        dashboardContext.setParent(parent);
+    }
+
+    @Override
+    public List<Widget> getDocumentButtons() {
+        return Collections.singletonList(editToolbar);
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return Collections.singletonList(queryToolbar.asWidget());
+    }
+
+    private void onMaximiseTabs() {
+        maximiseTabs(null);
+        // The button swaps for Restore, so focus goes with it rather than being lost
+        restoreTabsButton.setFocus(true);
+    }
+
+    private void onRestoreTabs() {
+        restoreTabs();
+        maximiseTabsButton.setFocus(true);
+    }
+
+    private void onConstraints() {
+        restoreTabs();
+
+        layoutConstraintControllerProvider.get().edit(this, layoutConstraints, constraints -> {
+            if (!Objects.equals(constraints, layoutConstraints)) {
+                layoutConstraints = constraints;
+                layoutController.setLayoutConstraints(layoutConstraints);
+                onChange();
+            }
+        });
+    }
+
+    private void onSelectionInfo() {
+        // Kept between showings, as it shows the selection as it changes
+        if (currentSelection == null) {
+            currentSelection = make(currentSelectionControllerProvider).attach(new CurrentSelection());
+        }
+
+        // Showing it again while it is shown hides it, so it listens only from its first showing
+        if (selectionListener.start(() -> dashboardContext.addContextChangeListener(() ->
+                currentSelection.refresh(dashboardContext, false)))) {
+            currentSelection.refresh(dashboardContext, false);
+        }
+        ControllerDialog.show(currentSelection)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(PopupSize.resizable(600, 800))
+                .caption("Current Selection")
+                .modal(false)
+                .onHide(e -> selectionListener.stop())
+                .fire();
+    }
+
+    private void onDesign() {
+        setDesignMode(!designMode);
+        // Design mode is stored on the document, so switching it is a change to the document like any
+        // other. Without this the toggle would leave nothing dirty, and a dashboard saved in design
+        // mode could never be taken out of it — there would be nothing for Save to write.
+        //
+        // Only the user-driven toggle does this. setDesignMode() is also called from onRead(), where
+        // marking the document dirty just for opening it would be wrong.
+        onChange();
+    }
+
+    private void setDesignMode(final boolean designMode) {
+        this.designMode = designMode;
+        addComponentButton.setVisible(designMode);
+        setConstraintsButton.setVisible(designMode);
+        selectionInfoButton.setVisible(designMode);
+        layoutController.setDesignMode(designMode);
+
+        editModeButton.setPressed(designMode);
+    }
+
+    private void onAdd() {
+        restoreTabs();
+
+        // The menu opens below the button
+        final Element target = addComponentButton.getElement();
+
+        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
+                target.getAbsoluteTop() + target.getClientHeight() + 1);
+
+        final List<Item> inputs = new ArrayList<>();
+        final List<Item> panels = new ArrayList<>();
+        for (final ComponentType type : components.getComponentTypes()) {
+            final SimpleMenuItem item = new SimpleMenuItem.Builder()
+                    .text(type.getName())
+                    .command(() -> addNewComponent(type))
+                    .build();
+            if (ComponentUse.INPUT.equals(type.getUse())) {
+                inputs.add(item);
+            } else {
+                panels.add(item);
+            }
+        }
+
+        final List<Item> menuItems = new ArrayList<>();
+        menuItems.add(new SimpleParentMenuItem(
+                1,
+                SafeHtmlUtil.from("Input"),
+                null,
+                inputs));
+        menuItems.addAll(panels);
+
+        ShowMenuEvent
+                .builder()
+                .name("Add Component")
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .opener(target)
+                .fire(this);
+    }
+
+    public void setParamsFromLink(final String params) {
+        logger.log(Level.INFO, "Dashboard setParamsFromLink " + params);
+        this.externalLinkParameters = params;
+        dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
+    }
+
+    /// @param embedded Whether the dashboard is shown on its own, embedded in another page.
+    public void setEmbedded(final boolean embedded) {
+        this.embedded = embedded;
+    }
+
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen = queryOnOpen;
+    }
+
+    /// Shows a dashboard: its panes, layout, time range and design mode.
+    ///
+    /// @param docRef    The dashboard.
+    /// @param dashboard The dashboard.
+    public void read(final DocRef docRef, final DashboardDoc dashboard) {
+        this.docRef = docRef;
+        if (!loaded) {
+            loaded = true;
+
+            dashboardContext.setDashboardDocRef(docRef);
+            components.clear();
+            MutableLayoutConfig layoutConfig = null;
+
+            DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
+            if (dashboardConfig != null) {
+                queryToolbar.setTimeRange(dashboardConfig.getTimeRange());
+
+                layoutConfig = MutableConfigUtil.fromLayoutConfig(dashboardConfig.getLayout());
+                layoutConstraints = dashboardConfig.getLayoutConstraints();
+                if (layoutConstraints == null) {
+                    layoutConstraints = new LayoutConstraints(true, true);
+                }
+                preferredSize = MutableConfigUtil.fromSize(dashboardConfig.getPreferredSize());
+                if (preferredSize == null) {
+                    preferredSize = new MutableSize();
+                }
+
+                List<ComponentConfig> componentConfigList = dashboardConfig.getComponents();
+
+                // ADD A KEY/VALUE PARAMETER INPUT BOX FOR BACKWARD COMPATIBILITY.
+                if (dashboardConfig.getModelVersion() == null) {
+                    if (componentConfigList == null) {
+                        componentConfigList = new ArrayList<>();
+                        dashboardConfig = dashboardConfig.copy().components(componentConfigList).build();
+                    }
+
+                    final String params = NullSafe.string(dashboardConfig.getParameters());
+
+                    componentConfigList
+                            .add(new ComponentConfig(
+                                    KeyValueInputController.TYPE.getId(),
+                                    DEFAULT_PARAMS_INPUT,
+                                    DEFAULT_PARAMS_INPUT,
+                                    new KeyValueInputComponentSettings(params)));
+                    final MutableTabConfig tabConfig = new MutableTabConfig(DEFAULT_PARAMS_INPUT, true);
+                    final MutableTabLayoutConfig tabLayoutConfig =
+                            new MutableTabLayoutConfig(new MutableSize(200, 76), null);
+                    tabLayoutConfig.add(tabConfig);
+
+                    final MutableSplitLayoutConfig splitLayoutConfig = new MutableSplitLayoutConfig(new MutableSize(200,
+                            76), Dimension.Y);
+                    splitLayoutConfig.add(tabLayoutConfig);
+                    splitLayoutConfig.add(layoutConfig);
+                    layoutConfig = splitLayoutConfig;
+                }
+
+                if (componentConfigList != null) {
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        addComponent(componentConfig.getType(), componentConfig);
+                    }
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        final DashboardPane component = components.get(componentConfig.getId());
+                        if (component != null) {
+                            component.link();
+                        }
+                    }
+                }
+            }
+
+            layoutController.configure(layoutConfig, layoutConstraints, preferredSize);
+
+            // Tell all queryable components whether we want them to query on open.
+            for (final DashboardPane component : components) {
+                if (component instanceof Queryable) {
+                    ((Queryable) component).setQueryOnOpen(queryOnOpen);
+                }
+            }
+
+            // If we have been given some external link parameters then set those in the "Params" input component if we
+            // can find one.
+            if (externalLinkParameters != null) {
+                // Try to find a Key/Value component to put the params in called "Params".
+                for (final DashboardPane component : components.getComponents()) {
+                    if (component instanceof final KeyValueInputController keyValueInput) {
+                        if (keyValueInput.getLabel().equals(DEFAULT_PARAMS_INPUT)) {
+                            keyValueInput.setValue(externalLinkParameters);
+                            // If we found one then we don't need to treat external parameters as a special case.
+                            this.externalLinkParameters = null;
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // Design mode is a stored toggle, entered only when the flag is explicitly true.
+        //
+        // A NEW dashboard already arrives with it set: DashboardStoreImpl.getTemplate() applies
+        // designMode(true) to the template every new document is created from. So a null flag does
+        // NOT mean "new" — it means a dashboard saved before the flag existed, and those must open
+        // normally rather than being dragged into edit layout.
+        //
+        // The same rule is applied on a re-read after a save or save as, rather than forcing design
+        // mode on: onWrite now persists the mode the user was working in, so re-reading restores it.
+        // Forcing it on there also fired for an ordinary second read, which made this check
+        // unreachable in practice and put every dashboard into design mode.
+        final DashboardConfig config = dashboard.getDashboardConfig();
+        final boolean enterDesignMode = config != null && Boolean.TRUE.equals(config.getDesignMode());
+        setDesignMode(enterDesignMode);
+
+        enableEditButtons();
+    }
+
+    private void enableEditButtons() {
+        addComponentButton.setEnabled(!readOnly && !embedded);
+        setConstraintsButton.setEnabled(!readOnly && !embedded);
+        selectionInfoButton.setEnabled(!readOnly && !embedded);
+    }
+
+    private DashboardPane addComponent(final String type, final ComponentConfig componentConfig) {
+        final DashboardPane component = components.add(type, componentConfig.getId());
+        if (component != null) {
+            component.setDashboardContext(dashboardContext);
+
+            component.setOnChange(this::onChange);
+
+            // Set params on the component if it needs them.
+            if (component instanceof final Queryable queryable) {
+                queryable.addSearchStateListener(this);
+                queryable.addSearchErrorListener(this);
+                queryable.setQueryInfo(queryInfo);
+            }
+
+            component.read(componentConfig);
+            dashboardContext.fireContextChangeEvent();
+        }
+
+        enableQueryButtons();
+
+        return component;
+    }
+
+    private void enableQueryButtons() {
+        queryToolbar.setEnabled(!getQueryableComponents().isEmpty());
+        queryToolbar.onSearching(getCombinedSearchState());
+    }
+
+    private boolean getCombinedSearchState() {
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        boolean combinedMode = false;
+        for (final Queryable queryable : queryableComponents) {
+            if (queryable.getSearchState()) {
+                combinedMode = true;
+            }
+        }
+        return combinedMode;
+    }
+
+    private List<ErrorMessage> getCombinedErrors() {
+        final List<ErrorMessage> errors = new ArrayList<>();
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        for (final Queryable queryable : queryableComponents) {
+            if (queryable.getCurrentErrors() != null) {
+                errors.addAll(queryable.getCurrentErrors());
+            }
+        }
+        return errors;
+    }
+
+    /// @param dashboard The dashboard.
+    /// @return A copy of it with the panes, layout, time range and design mode shown.
+    public DashboardDoc write(final DashboardDoc dashboard) {
+        final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
+        for (final DashboardPane component : components) {
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
+        }
+
+        final DashboardConfig dashboardConfig = DashboardConfig
+                .builder()
+                .timeRange(queryToolbar.getTimeRange())
+                .components(componentDataList)
+                .layout(MutableConfigUtil.toLayoutConfig(layoutController.getLayoutConfig()))
+                .layoutConstraints(layoutConstraints)
+                .preferredSize(MutableConfigUtil.toSize(preferredSize))
+                // Persist the mode the user is working in, so saving in design mode is remembered.
+                .designMode(designMode)
+                .modelVersion(VERSION_7_2_0)
+                .build();
+        return dashboard.copy().dashboardConfig(dashboardConfig).build();
+    }
+
+    /// Closes the dashboard's panes, e.g. destroying their searches, as its tab is closed.
+    public void onClose() {
+        // Remove all components.
+        components.onClose();
+    }
+
+    /// Tells the document the dashboard has changed.
+    @Override
+    public void onChange() {
+        markChanged();
+    }
+
+    public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
+        final DocumentChooserController chooser = dashboardSelection.get();
+        chooser.setIncludeNullSelection(false);
+        chooser.setCaption("Choose Dashboard");
+        chooser.setIncludedTypes(DashboardDoc.TYPE);
+        chooser.setRequiredPermissions(DocumentPermission.EDIT);
+
+        chooser.showOnce(this, dashDocRef -> {
+            if (dashDocRef != null) {
+                OpenDocumentEvent.builder(this, dashDocRef)
+                        .forceOpen(true)
+                        .callbackOnOpen(controller -> {
+                            if (controller instanceof final DocumentEditorHost<?> host
+                                && host.getEditor() instanceof final DashboardEditor dashboardEditor) {
+                                dashboardEditor.getDashboardBody()
+                                        .duplicateTab(tabLayoutConfig, tabConfig, components);
+                            }
+                        }).fire();
+            }
+        });
+    }
+
+    public void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
+        duplicateTabs(tabLayoutConfig, Collections.singletonList(tab), components);
+    }
+
+    public void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig,
+                             final Panes components) {
+        duplicateTabs(tabLayoutConfig, Collections.singletonList(tabConfig), components);
+    }
+
+    public void duplicateTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
+        duplicateTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()), components);
+    }
+
+    public void duplicateTabs(final MutableTabLayoutConfig tabLayoutConfig, final List<MutableTabConfig> tabs,
+                              final Panes orginalComponents) {
+        // Get sets of unique component ids and names.
+        final ComponentNameSet componentNameSet = new ComponentNameSet(this.components);
+        final Map<String, String> idMapping = new HashMap<>();
+        final List<ComponentConfig> newComponents = new ArrayList<>();
+        final Map<String, MutableTabConfig> newTabConfigMap = new HashMap<>();
+        if (tabs != null) {
+            for (final MutableTabConfig tabConfig : tabs) {
+                // Duplicate the referenced component.
+                final DashboardPane originalComponent = orginalComponents.get(tabConfig.getId());
+                originalComponent.write();
+                final ComponentType type = originalComponent.getComponentType();
+
+                final ComponentId componentId = componentNameSet.createUnique(type, originalComponent.getLabel());
+                final ComponentConfig componentConfig = originalComponent.getComponentConfig()
+                        .copy()
+                        .id(componentId.id)
+                        .name(componentId.name)
+                        .build();
+
+                idMapping.put(tabConfig.getId(), componentId.id);
+                newComponents.add(componentConfig);
+
+                final MutableTabConfig newTabConfig = new MutableTabConfig(componentId.id, tabConfig.isVisible());
+                newTabConfigMap.put(componentId.id, newTabConfig);
+            }
+        }
+
+        // Now try and repoint the id references so that all new copied items reference each other rather than their
+        // originals.
+        final List<ComponentConfig> modifiedComponents = new ArrayList<>();
+        for (final ComponentConfig componentConfig : newComponents) {
+            ComponentSettings settings = componentConfig.getSettings();
+            if (settings instanceof final TableComponentSettings tableComponentSettings) {
+                if (tableComponentSettings.getQueryId() != null
+                    && idMapping.containsKey(tableComponentSettings.getQueryId())) {
+                    settings = tableComponentSettings.copy()
+                            .queryId(idMapping.get(tableComponentSettings.getQueryId()))
+                            .build();
+                }
+            } else if (settings instanceof final VisComponentSettings visComponentSettings) {
+                if (visComponentSettings.getTableId() != null
+                    && idMapping.containsKey(visComponentSettings.getTableId())) {
+                    settings = visComponentSettings.copy()
+                            .tableId(idMapping.get(visComponentSettings.getTableId()))
+                            .build();
+                }
+            } else if (settings instanceof final TextComponentSettings textComponentSettings) {
+                if (textComponentSettings.getTableId() != null
+                    && idMapping.containsKey(textComponentSettings.getTableId())) {
+                    settings = textComponentSettings.copy()
+                            .tableId(idMapping.get(textComponentSettings.getTableId()))
+                            .build();
+                }
+            }
+            modifiedComponents.add(componentConfig.copy()
+                    .settings(settings)
+                    .build());
+        }
+
+        // Now try and add all the duplicated components.
+        final List<DashboardPane> duplicatedComponents = new ArrayList<>();
+        for (final ComponentConfig componentConfig : modifiedComponents) {
+            final DashboardPane component = addComponent(componentConfig.getType(), componentConfig);
+            if (component != null) {
+                final MutableTabConfig newTabConfig = newTabConfigMap.get(component.getId());
+                component.setTabConfig(newTabConfig);
+                duplicatedComponents.add(component);
+            }
+        }
+
+        // Now link all the components.
+        for (final DashboardPane component : duplicatedComponents) {
+            component.link();
+        }
+
+        if (!duplicatedComponents.isEmpty()) {
+            final MutableTabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
+            final Element selectedComponent = getFirstComponentElement(firstTabConfig);
+            final Rect rect = ElementUtil.getClientRect(selectedComponent);
+            layoutController.enterNewComponentDestinationMode(
+                    null,
+                    duplicatedComponents,
+                    rect.getLeft() + (rect.getWidth() / 2),
+                    rect.getTop() + (rect.getHeight() / 2));
+        }
+    }
+
+    /// Removes components that were made to be placed (a duplicate, or an added component) when
+    /// placing them is cancelled, as removing their tabs would.
+    ///
+    /// @param unplaced The components that were not placed.
+    @Override
+    public void cancelNewComponents(final List<DashboardPane> unplaced) {
+        for (final DashboardPane component : unplaced) {
+            if (component instanceof final Queryable queryable) {
+                queryable.removeSearchStateListener(this);
+                queryable.removeSearchErrorListener(this);
+            }
+            components.remove(component.getId());
+        }
+        dashboardContext.fireContextChangeEvent();
+        enableQueryButtons();
+    }
+
+    @Override
+    public void removeTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
+        removeTabs(tabLayoutConfig, Collections.singletonList(tab));
+    }
+
+    @Override
+    public void removeTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
+        removeTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()));
+    }
+
+    private void removeTabs(final MutableTabLayoutConfig tabLayoutConfig, final List<MutableTabConfig> tabs) {
+        // Figure out what tabs would remain after removal.
+        int hiddenCount = 0;
+        int totalCount = 0;
+        for (final MutableTabConfig tab : tabLayoutConfig.getTabs()) {
+            if (!tabs.contains(tab)) {
+                if (!tab.isVisible()) {
+                    hiddenCount++;
+                }
+                totalCount++;
+            }
+        }
+
+        // If all remaining tabs are hidden then we can't allow removal.
+        if (totalCount > 0 && totalCount == hiddenCount) {
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
+        } else {
+            String message = "Are you sure you want to remove this tab?";
+            if (tabs.size() > 1) {
+                message = "Are you sure you want to remove these tabs?";
+            }
+
+            ConfirmEvent.fire(this, message, ok -> {
+                if (ok) {
+                    for (final MutableTabConfig tab : tabs) {
+                        layoutController.closeTab(tab);
+                        final DashboardPane component = components.get(tab.getId());
+                        if (component != null) {
+                            if (component instanceof final Queryable queryable) {
+                                queryable.removeSearchStateListener(this);
+                                queryable.removeSearchErrorListener(this);
+                            }
+                            components.remove(tab.getId());
+                            dashboardContext.fireContextChangeEvent();
+                        }
+                    }
+                    enableQueryButtons();
+                }
+            });
+        }
+    }
+
+    public void maximiseTabs(final MutableTabConfig tabConfig) {
+        maximiseTabsButton.setVisible(false);
+        restoreTabsButton.setVisible(true);
+        layoutController.maximiseTabs(tabConfig);
+    }
+
+    public void restoreTabs() {
+        maximiseTabsButton.setVisible(true);
+        restoreTabsButton.setVisible(false);
+        layoutController.restoreTabs();
+    }
+
+    public boolean isMaximised() {
+        return layoutController.isMaximised();
+    }
+
+
+    void toggleStart() {
+        final boolean searching = getCombinedSearchState();
+        if (searching) {
+            stop();
+        } else {
+            start();
+        }
+    }
+
+    /// Runs the dashboard's queries, asking for their purpose first if Stroom is set to.
+    public void start() {
+        // If we have some queryable components then make sure we get query info for them.
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        if (!queryableComponents.isEmpty()) {
+            queryInfo.prompt(() -> {
+                // Not once the dashboard has gone
+                if (isDisposed()) {
+                    return;
+                }
+                for (final Queryable queryable : queryableComponents) {
+                    queryable.setDashboardContext(dashboardContext);
+                    queryable.start();
+                }
+            }, taskMonitor());
+        }
+    }
+
+    /// Stops the dashboard's queries.
+    public void stop() {
+        for (final Queryable queryable : getQueryableComponents()) {
+            queryable.stop();
+        }
+    }
+
+    private List<Queryable> getQueryableComponents() {
+        // Get a sub list of components that can be queried.
+        final List<Queryable> queryableComponents = new ArrayList<>();
+        for (final DashboardPane component : components) {
+            if (component instanceof Queryable) {
+                queryableComponents.add((Queryable) component);
+            }
+        }
+        return queryableComponents;
+    }
+
+    /// @return The dashboard's title: its name, or its custom title with `${name}` replaced by it.
+    public String getTitle() {
+        String title = "";
+        if (docRef != null) {
+            title = docRef.getName();
+        }
+        if (NullSafe.isNonEmptyString(customTitle)) {
+            title = customTitle.replaceAll("\\$\\{name\\}", title);
+        }
+        return title;
+    }
+
+    /// @param customTitle The dashboard's title, in which `${name}` is its name, or null for its name.
+    public void setCustomTitle(final String customTitle) {
+        this.customTitle = customTitle;
+    }
+
+    private void addNewComponent(final ComponentType type) {
+        if (type != null) {
+
+            // Get sets of unique component ids and names.
+            // Get sets of unique component ids and names.
+            final ComponentId componentId = new ComponentNameSet(components)
+                    .createUnique(type, type.getName());
+            final ComponentConfig componentConfig = ComponentConfig
+                    .builder()
+                    .type(type.getId())
+                    .id(componentId.id)
+                    .name(componentId.name)
+                    .build();
+
+            final DashboardPane componentController = addComponent(componentConfig.getType(), componentConfig);
+            if (componentController != null) {
+                componentController.link();
+                final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
+                componentController.setTabConfig(tabConfig);
+
+                final MutableTabConfig firstTabConfig = getFirstTabConfig(layoutController.getLayoutConfig());
+                if (firstTabConfig == null) {
+                    // Add the panel directly.
+                    // Note that as we don't have any panels then size it to fit the visible area.
+                    final MutableSize visibleSize = layoutController.getVisibleSize();
+                    preferredSize = visibleSize.copy();
+
+                    final MutableTabLayoutConfig tabLayoutConfig =
+                            new MutableTabLayoutConfig(visibleSize, 0);
+                    tabLayoutConfig.add(tabConfig);
+
+                    layoutController.configure(tabLayoutConfig, layoutConstraints, preferredSize);
+                    onChange();
+
+                    // Show the component settings.
+                    componentController.showSettings();
+
+                } else {
+                    final Element element = getFirstComponentElement(firstTabConfig);
+                    final Rect rect = ElementUtil.getClientRect(element);
+                    layoutController.enterNewComponentDestinationMode(
+                            componentController,
+                            Collections.singletonList(componentController),
+                            rect.getLeft() + (rect.getWidth() / 2),
+                            rect.getTop() + (rect.getHeight() / 2));
+                }
+            }
+        }
+    }
+
+    private Element getFirstComponentElement(final MutableTabConfig firstTabConfig) {
+        if (firstTabConfig != null) {
+            final DashboardPane component = components.get(firstTabConfig.getId());
+            if (component != null) {
+                return component.asWidget().getElement();
+            }
+        }
+        return asWidget().getElement();
+    }
+
+    private MutableTabConfig getFirstTabConfig(final MutableLayoutConfig layoutConfig) {
+        if (layoutConfig != null) {
+            if (layoutConfig instanceof final MutableSplitLayoutConfig splitLayoutConfig) {
+                final List<MutableLayoutConfig> list = splitLayoutConfig.getChildren();
+                if (list != null) {
+                    for (final MutableLayoutConfig child : list) {
+                        final MutableTabConfig tabConfig = getFirstTabConfig(child);
+                        if (tabConfig != null) {
+                            return tabConfig;
+                        }
+                    }
+                }
+
+            } else if (layoutConfig instanceof final MutableTabLayoutConfig tabLayoutConfig) {
+                if (!tabLayoutConfig.getTabs().isEmpty()) {
+                    if (tabLayoutConfig.getSelected() >= 0 &&
+                        tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
+                        return tabLayoutConfig.get(tabLayoutConfig.getSelected());
+                    } else {
+                        return tabLayoutConfig.get(0);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void onSearching(final boolean searching) {
+        queryToolbar.onSearching(getCombinedSearchState());
+    }
+
+    @Override
+    public void onError(final List<ErrorMessage> errors) {
+        queryToolbar.onError(getCombinedErrors());
+    }
+
+    /// @return The dashboard.
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public void onContentTabVisible(final boolean visible) {
+        components.getComponents().stream()
+                .filter(component -> component instanceof RefreshablePane)
+                .map(component -> (RefreshablePane) component)
+                .forEach(refreshable -> {
+                    refreshable.setAllowRefresh(visible);
+                    if (visible && refreshable.isRefreshScheduled()) {
+                        refreshable.cancelRefresh();
+                        if (!refreshable.isSearching()) {
+                            refreshable.run(false, false);
+                        }
+                    }
+                });
+
+        components.getComponents().forEach(component -> component.onContentTabVisible(visible));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ComponentNameSet {
+
+        private final Set<String> currentIdSet = new HashSet<>();
+        private final Set<String> currentNameSet = new HashSet<>();
+
+        public ComponentNameSet(final Panes components) {
+            for (final DashboardPane component : components.getComponents()) {
+                currentIdSet.add(component.getId());
+                currentNameSet.add(component.getLabel());
+            }
+        }
+
+        public ComponentId createUnique(final ComponentType type, final String currentName) {
+            final String id = UniqueUtil.createUniqueComponentId(type.getId(), currentIdSet);
+            final String name = UniqueUtil.makeUniqueName(currentName, currentNameSet);
+            currentIdSet.add(id);
+            currentNameSet.add(name);
+            return new ComponentId(id, name);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ComponentId {
+
+        private final String id;
+        private final String name;
+
+        private ComponentId(final String id, final String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+}

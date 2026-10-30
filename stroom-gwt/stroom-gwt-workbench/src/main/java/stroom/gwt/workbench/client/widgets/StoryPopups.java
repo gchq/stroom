@@ -17,23 +17,29 @@
 package stroom.gwt.workbench.client.widgets;
 
 import stroom.alert.client.AlertPlugin;
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.view.CommonAlertViewImpl;
+import stroom.alert.client.component.CommonAlert;
+import stroom.alert.client.component.CommonAlertController;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.contextmenu.client.ContextMenuManager;
-import stroom.widget.help.client.presenter.HelpManager;
-import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
+import stroom.widget.datagrid.client.AskStroomAiTableRequest;
+import stroom.widget.help.client.HelpManager;
+import stroom.widget.hyperlink.client.OpenHyperlinkRequest;
+import stroom.widget.menu.client.MenuManager;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.component.Menu;
+import stroom.widget.menu.client.component.MenuController;
+import stroom.widget.popup.client.PopupManager;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupManager;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,19 +49,21 @@ import java.util.List;
 ///
 /// It creates an event bus with Stroom's [PopupManager], so popups shown with `ShowPopupEvent`
 /// appear on the page's body as in Stroom, and hides those still open with Stroom's
-/// `HidePopupEvent` when the story renders again (which unbinds their presenters and restores
+/// `HidePopupEvent` when the story renders again (which disposes those shown once and restores
 /// the focus). Create it in `render`, each time the story renders.
-public final class StoryPopups {
+public final class StoryPopups implements HasControllerNode {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<PresenterWidget<?>> openPopups = new ArrayList<>();
+    // Owns the story's dialogs: those shown once until hidden, and those shown again and again
+    private final ControllerNode root = ControllerNode.root("StoryPopups");
+    private final List<Controller> openPopups = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private boolean disposed;
 
     private StoryPopups(final StoryContext context) {
         context.addCleanUp(this::dispose);
         eventBus.addHandler(ShowPopupEvent.getType(), this::onShow);
-        eventBus.addHandler(HidePopupEvent.getType(), event -> openPopups.remove(event.getPresenterWidget()));
+        eventBus.addHandler(HidePopupEvent.getType(), event -> openPopups.remove(event.getController()));
         new PopupManager(eventBus);
     }
 
@@ -65,6 +73,21 @@ public final class StoryPopups {
     /// @return The popup plumbing.
     public static StoryPopups create(final StoryContext context) {
         return new StoryPopups(context);
+    }
+
+    @Override
+    public ControllerNode getControllerNode() {
+        return root;
+    }
+
+    /// Owns a popup the story shows again and again, until the story renders again.
+    ///
+    /// @param popup The popup's controller.
+    /// @param <C>   Its type.
+    /// @return It.
+    public <C extends Controller> C own(final C popup) {
+        root.adopt(popup.getControllerNode());
+        return popup;
     }
 
     /// @return The event bus that popups are shown with.
@@ -83,43 +106,49 @@ public final class StoryPopups {
     }
 
     /// Shows menus as Stroom does: Stroom's [Menu] handles `ShowMenuEvent`, creating a
-    /// [MenuPresenter] for each menu and submenu.
+    /// [MenuController] for each menu and submenu.
     ///
     /// @return This, for chaining.
     public StoryPopups withMenus() {
-        new MenuManager(eventBus, this::createMenuPresenter);
+        // Its menus are owned until hidden, as by Stroom's app root
+        new MenuManager(eventBus, this::createMenuController, new AppRoot());
         // and the edit menu on text fields, in place of the browser's
         cleanUps.add(ContextMenuManager.install(eventBus::fireEvent));
         return this;
     }
 
-    /// Shows the menus that widgets with no event bus ask for (e.g. a split pane's splitter, with
-    /// `MenuRequest`), as Stroom's main presenter does, with [#withMenus]'s menus.
+    /// Passes on what widgets with no event bus ask of the app, as Stroom's core controller does:
+    /// the menus they ask for (e.g. a split pane's splitter's, or a data grid's context menu, with
+    /// `MenuRequest`), shown with [#withMenus]'s menus, and the links they open
+    /// (`OpenHyperlinkRequest`) and the tables they ask Stroom AI about (`AskStroomAiTableRequest`),
+    /// fired as events on [#getEventBus()].
     ///
     /// @return This, for chaining.
-    public StoryPopups withMenuRequests() {
+    public StoryPopups withPageRequests() {
         withMenus();
-        cleanUps.add(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
+        final HasHandlers handlers = event -> eventBus.fireEvent(event);
+        cleanUps.add(MenuRequest.relay(handlers)::removeHandler);
+        cleanUps.add(OpenHyperlinkRequest.relay(handlers)::removeHandler);
+        cleanUps.add(AskStroomAiTableRequest.relay(handlers)::removeHandler);
         return this;
     }
 
     /// Shows alerts and confirmations (`AlertEvent`, `ConfirmEvent`) as Stroom does, with
-    /// Stroom's [AlertPlugin] and `CommonAlertPresenter`.
+    /// Stroom's [AlertPlugin] and `CommonAlertController`.
     ///
     /// @return This, for chaining.
     public StoryPopups withAlerts() {
         final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
-                new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()));
-        alertPlugin.bind();
-        cleanUps.add(alertPlugin::unbind);
+                () -> new CommonAlertController(eventBus, new CommonAlert()),
+                new AppRoot());
         return this;
     }
 
-    /// Creates a menu presenter as Stroom's GIN module would.
+    /// Creates a menu's controller as Stroom's GIN injector would.
     ///
-    /// @return A new menu presenter, using this event bus.
-    public MenuPresenter createMenuPresenter() {
-        return new MenuPresenter(eventBus, new MenuViewImpl(), this::createMenuPresenter);
+    /// @return A new menu controller, using this event bus.
+    public MenuController createMenuController() {
+        return new MenuController(eventBus, new Menu(), this::createMenuController);
     }
 
     /// Registers something to undo when the story renders again.
@@ -135,10 +164,10 @@ public final class StoryPopups {
     }
 
     private void onShow(final ShowPopupEvent event) {
-        final PresenterWidget<?> presenter = event.getPresenterWidget();
+        final Controller popup = event.getController();
         // PopupManager toggles a popup that is shown twice
-        if (!openPopups.remove(presenter)) {
-            openPopups.add(presenter);
+        if (!openPopups.remove(popup)) {
+            openPopups.add(popup);
         }
     }
 
@@ -148,7 +177,7 @@ public final class StoryPopups {
         }
         disposed = true;
         // Hide the popups as Stroom would, most recently shown first
-        final List<PresenterWidget<?>> popups = new ArrayList<>(openPopups);
+        final List<Controller> popups = new ArrayList<>(openPopups);
         for (int i = popups.size() - 1; i >= 0; i--) {
             HidePopupEvent.builder(popups.get(i)).autoClose(true).ok(false).fire();
         }
@@ -156,5 +185,6 @@ public final class StoryPopups {
             cleanUps.get(i).run();
         }
         cleanUps.clear();
+        root.dispose();
     }
 }

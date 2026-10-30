@@ -86,7 +86,6 @@ guice-extension = { module = "name.falgout.jeffrey.testing.junit5:guice-extensio
 guice-grapher = { module = "com.google.inject.extensions:guice-grapher", version.ref = "guice" }
 gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
 gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
-gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" }
 hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }

@@ -31,7 +31,7 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 /// ```
 ///
 /// This class holds no GWT or DOM types so it can be unit-tested on the JVM.
-/// The presenter is responsible for pulling coordinates out of native mouse
+/// The controller is responsible for pulling coordinates out of native mouse
 /// events and pushing the resulting state into the view; all the arithmetic
 /// lives here. See `FloorMapNotes.md` section 3.
 public final class FloorMapViewport {
@@ -49,7 +49,7 @@ public final class FloorMapViewport {
     /// larger ones pull it along.
     ///
     /// Callers wanting to hard-centre pass 0.5 instead, which collapses the dead
-    /// zone to the centre point; `FloorMapCanvasPresenter` does this for the
+    /// zone to the centre point; `FloorMapCanvasController` does this for the
     /// first follow after tracking is switched on.
     public static final double DEFAULT_FOLLOW_MARGIN = 0.35;
 

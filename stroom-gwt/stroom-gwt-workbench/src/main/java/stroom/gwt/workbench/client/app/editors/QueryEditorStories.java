@@ -16,12 +16,11 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.annotation.client.AnnotationChangeEvent;
-import stroom.annotation.client.CreateAnnotationEvent;
-import stroom.annotation.client.EditAnnotationEvent;
-import stroom.annotation.client.FindAnnotationPresenter;
-import stroom.annotation.client.ShowFindAnnotationEvent;
-import stroom.data.client.presenter.ShowDataEvent;
+import stroom.annotation.client.event.AnnotationChangeEvent;
+import stroom.annotation.client.event.CreateAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
+import stroom.annotation.client.event.ShowFindAnnotationEvent;
+import stroom.data.client.event.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -36,7 +35,6 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -48,20 +46,19 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.security.shared.DocumentPermission;
+import stroom.widget.button.client.Button;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/// The `App/Editors/QueryEditor` stories, showing Stroom's real `QueryDocPresenter` (a Query's
+/// The `App/Editors/QueryEditor` stories, showing Stroom's real `QueryDocEditor` (a Query's
 /// editor tab: Query, Documentation and Permissions, the Query tab being the query help, the
 /// StroomQL editor and the results table) with fake REST replies.
 ///
@@ -96,9 +93,6 @@ public final class QueryEditorStories {
               "description": "# Query docs"
             }""";
 
-    // FindAnnotationPresenter's warning for OK with no annotation selected
-    private static final String NOTHING_SELECTED = "No annotation has been selected";
-
     // One table result with four columns and two rows, the second annotated
     static final String TABLE = QueryFixtures.tableResult("table", """
                     [{"id": "f-name", "name": "Name", "visible": true},
@@ -118,7 +112,7 @@ public final class QueryEditorStories {
 
     // The FetchDataResult of a row's source
     private static final String SOURCE_RESULT = """
-            {"type": "FetchDataResult", "feedName": "TEST_FEED", "streamTypeName": "Events",
+            {"type": "data", "feedName": "TEST_FEED", "streamTypeName": "Events",
               "sourceLocation": {"metaId": 1001, "partIndex": 0, "recordIndex": 4},
               "itemRange": {"offset": 0, "length": 1}, "totalItemCount": {"count": 1, "exact": true},
               "totalCharacterCount": {"count": 18, "exact": true}, "data": "sample source data",
@@ -151,6 +145,12 @@ public final class QueryEditorStories {
     private static final RestFixtures NULL_COMPLETION_FIXTURES = fixtures(RestFixtures.builder(),
             RestReply.json(QueryFixtures.response(false, TABLE)),
             RestReply.json("null"));
+
+    // SearchWarnings: the search completes with a warning from a node
+    private static final RestFixtures WARNING_FIXTURES = fixtures(RestFixtures.builder(), RestReply.json(
+            COMPLETE.replace("\"errorMessages\": []",
+                    "\"errorMessages\": [{\"severity\": \"WARNING\", \"message\": \"Shard 3 is corrupt\","
+                    + " \"node\": \"node1\"}]")));
 
     // Download: the download's resource
     private static final RestFixtures DOWNLOAD_FIXTURES = fixtures(RestFixtures.builder()
@@ -192,7 +192,7 @@ public final class QueryEditorStories {
     static final String ANNOTATION_CHANGE = "annotationChange";
 
     // The text of a query help item
-    private static final String HELP_ITEM = ".selectionItemCell-text";
+    private static final String HELP_ITEM = ".selection-item-cell__text";
 
     // The help detail of 'count' (as JSON string content), ending with the link to its
     // documentation that Stroom's server adds (Functions), which says it opens a new tab
@@ -401,6 +401,19 @@ public final class QueryEditorStories {
                     play.expect(screen.getByRole("button", "Time range: All time")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A quick setting fills in both times, and OK puts the range in the selector
+                .story("TimeRangeQuickSetting", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByRole("button", "Time range: All time"));
+                    final Play dialog = screen.within(screen.findByRole("dialog", "Time Range"));
+                    play.click(dialog.within(dialog.getByRole("group", "Present")).getByRole("button", "Today"));
+                    play.expect(dialog.getByRole("textbox", "After Time (inclusive)")).toHaveValue("day()");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Time Range")).toBeNull());
+                    play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query help: the root rows load, expanding one loads its children and
                 // selecting a row shows its documentation and enables Insert into Query. The
                 // documentation's link says what it is for and that it opens a new tab, and the
@@ -437,6 +450,21 @@ public final class QueryEditorStories {
                     play.expect(play.within(breadcrumb).queryByRole("button", "Help Contents")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Insert into Query puts the selected item's insert text into the query's editor, at
+                // its cursor (the start)
+                .story("QueryHelpInsert", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Functions", HELP_ITEM)).toBeInTheDocument());
+                    play.click(play.getByText("Functions", HELP_ITEM));
+                    play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
+                    play.click(play.getByText("count", HELP_ITEM));
+                    final Query insert = play.getByRole("button", "Insert into Query");
+                    play.waitFor(() -> play.expect(insert).not().toHaveAttribute("aria-disabled"));
+                    play.click(insert);
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_content").textContent())
+                            .toMatch("countfrom index"));
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query help pages each level: a full page (100 rows) offers the next page
                 .story("QueryHelpPaging", context -> render(context, PAGING_FIXTURES))
                 .withPlay(play -> {
@@ -446,7 +474,7 @@ public final class QueryEditorStories {
                     // Stroom pages the level with its pager ('1 to 100 of 105'), replacing the page; there
                     // is no 'Show more' to append rows
                     play.expect(play.queryByText(TextMatch.startingWith("Show more"))).toBeNull();
-                    play.expect(play.querySelectorAll(".pager-paging").nth(0).textContent())
+                    play.expect(play.querySelectorAll(".paging-bar").nth(0).textContent())
                             .toSatisfy("shows '1 to 100 of 105'", text ->
                                     String.valueOf(text).replace('\u00a0', ' ').contains("1 to 100 of 105"));
                     play.click(play.getAllByRole("button", "Forward").nth(0));
@@ -465,6 +493,16 @@ public final class QueryEditorStories {
                                     "{\"sourceLocation\": {\"metaId\": 1001, \"recordIndex\": 4}}").toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // The source pane opens beside the results for the selected row; Close closes it
+                .story("SourcePreviewCloses", context -> render(context, SOURCE_FIXTURES))
+                .withPlay(play -> {
+                    execute(play);
+                    play.click(play.findByText("alpha"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Close Text Pane")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Close Text Pane"));
+                    play.waitFor(() -> play.expect(play.queryByRole("button", "Close Text Pane")).toBeNull());
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // A null search reply ends the search without an error
                 .story("NullCompletion", context -> render(context, NULL_COMPLETION_FIXTURES))
                 .withPlay(play -> {
@@ -475,6 +513,19 @@ public final class QueryEditorStories {
                     // is hidden: it can't be seen, reached or read (it was once only transparent)
                     play.expect(play.queryByRole("button", "Show Errors")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
+                })
+                // A search with a warning shows the toolbar's button as Show Warnings, which shows
+                // the warning in an alert
+                .story("SearchWarnings", context -> render(context, WARNING_FIXTURES))
+                .withPlay(play -> {
+                    execute(play);
+                    play.findByText("alpha");
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Show Warnings")).toBeVisible());
+                    play.expect(play.queryByRole("button", "Show Errors")).toBeNull();
+                    play.click(play.getByRole("button", "Show Warnings"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            "WARN: The following message has been created while running this search:"));
+                    DocEditors.expectNoUnhandledRequests(play);
                 })
                 // Download: the Download Options dialog asks for the current search's results
                 .story("Download", context -> render(context, DOWNLOAD_FIXTURES))
@@ -504,7 +555,7 @@ public final class QueryEditorStories {
                     play.click(play.screen().findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
                     // Stroom hides the column at once, without searching again; the preference is
                     // kept on the document, which is now dirty, and is sent with the next search
-                    play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
+                    play.waitFor(() -> play.expect(play.queryByText("Count", ".column-header__label")).toBeNull());
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
@@ -547,6 +598,27 @@ public final class QueryEditorStories {
                                            + "{}, {}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Cancel closes the column filter without changing the column, so the query isn't
+                // changed (each opening is a dialog of its own, made for it)
+                .story("ColumnFilterCancel", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Filter 'Count'");
+                    final Query input = dialog.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    // As ColumnFilterMenu: the query's editor takes the focus half a second after
+                    // it opens, so wait for that to pass
+                    play.sleep(600);
+                    play.keyboard("foo");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
+                            .toMatch(TextMatch.containing("foo")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeNull());
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query's column filter has no Include/Exclude tab (unlike a dashboard's)
                 .story("QuerySideFilterHasNoIncludeExcludeTab", context -> render(context, FIXTURES))
                 .withPlay(play -> {
@@ -565,8 +637,8 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     // The values filter is opened by the filter icon of the column's header
-                    clickHeader(play, play.within(header(play, "Count").closest("th, [data-hcol]"))
-                            .querySelector(".column-valueFilterIcon"));
+                    StroomDom.clickHeader(play, play.within(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL))
+                            .querySelector(".column-header__value-filter-icon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD)
                                     .toSpyMatcher()));
@@ -595,6 +667,35 @@ public final class QueryEditorStories {
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{\"name\": \"Name\", \"format\": {\"type\": \"NUMBER\"}}, "
                                            + "{}, {}, {}]}}");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A date's format and time zone are enabled only while Use Preferences is unticked;
+                // they stayed enabled when it was ticked, although the server then ignores them
+                .story("FormatDateTimeFollowsUsePreferences", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Name");
+                    play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Format 'Name'");
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Date Time", ".selection-popup *"));
+                    final Query usePreferences = dialog.findByRole("checkbox", "Use Preferences");
+                    final Query format = dialog.getByLabelText("Format");
+                    final Query custom = dialog.getByRole("checkbox", "Custom");
+                    final Query timeZone = dialog.getByLabelText("Time Zone");
+                    // A column with no format uses the preferences
+                    play.expect(usePreferences).toBeChecked();
+                    play.expect(format).toBeDisabled();
+                    play.expect(custom).toBeDisabled();
+                    play.expect(timeZone).toBeDisabled();
+                    play.click(usePreferences);
+                    play.expect(format).toBeEnabled();
+                    play.expect(custom).toBeEnabled();
+                    play.expect(timeZone).toBeEnabled();
+                    play.click(usePreferences);
+                    play.expect(format).toBeDisabled();
+                    play.expect(timeZone).toBeDisabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Conditional formatting: the rules list, a new rule, then OK
@@ -637,7 +738,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("North");
                     // The ExpanderCell icon has no title
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     expectSearchWith(play, "{\"groupSelection\": {\"openGroups\": [\"g-north\"]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -788,10 +889,29 @@ public final class QueryEditorStories {
                     play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
                     // The statuses are a chooser in the 'Change Status' dialog
                     final Play dialog = dialog(screen, "Change Status");
-                    play.click(dialog.querySelector(".annotationSettingHeading"));
+                    play.click(dialog.querySelector(".annotation-setting__heading"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_TAGS_PATH).toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.getByText("Open")).toBeInTheDocument());
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Change Status with no status chosen says one is needed and keeps the dialog, rather
+                // than sending an empty status, which the server fails on
+                .story("ChangeStatusNeedsAStatus", context -> render(context, ANNOTATION_FIXTURES, null,
+                        false, QueryEditorStories::annotationSpies))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.click(play.findByText("beta"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Change Status");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(dialog.getByText("Choose a status to set")).toBeInTheDocument());
+                    play.expect(dialog.getByRole("button", "Change Status")).toHaveFocus();
+                    play.expect(screen.getByText("Change Status", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(BATCH_CHANGE_PATH).toSpyMatcher());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Assigning the selected row's annotation to the user changes it in a batch
@@ -829,20 +949,9 @@ public final class QueryEditorStories {
                     play.click(play.getByRole("button", "Annotate Selected Rows"));
                     play.click(screen.findByText("Add to Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
-                    // Stroom doesn't select the first annotation (the list only selects it when the
-                    // filter changes), so OK with none selected warns and keeps the chooser open;
-                    // the play then selects it
-                    play.expect(dialog.findByText("Existing incident").closest("[role='option']"))
-                            .toHaveAttribute("aria-selected", "false");
-                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
-                    play.click(warning.getByRole("button", StroomDom.button("Close")));
-                    play.waitFor(() -> play.expect(screen.queryByText(NOTHING_SELECTED)).toBeNull());
-                    play.expect(screen.getByText("Choose Annotation", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
-                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
-                            RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
-                    play.click(dialog.getByText("Existing incident"));
+                    // The first annotation found is selected when the chooser opens, so OK straight
+                    // away chooses it (it was once selected only when the filter changed, and OK
+                    // warned "No annotation has been selected")
                     play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("[role='option']"))
                             .toHaveAttribute("aria-selected", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -852,8 +961,7 @@ public final class QueryEditorStories {
                                     + "\"linkEvents\", \"events\": [{\"streamId\": 1001, \"eventId\": 5}]}}")
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(play.spy(EDIT_ANNOTATION)).toHaveBeenCalledWith("77"));
-                    // The warning is the only alert
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // A STEPPING link begins stepping at the 0 based part and record
@@ -1050,7 +1158,7 @@ public final class QueryEditorStories {
 
     // The header of a column of the results table
     private static Query header(final Play play, final String name) {
-        return play.getByText(name, ".column-top .column-label");
+        return play.getByText(name, ".column-header__label");
     }
 
     private static Play dialog(final Play screen, final String caption) {
@@ -1062,31 +1170,12 @@ public final class QueryEditorStories {
     }
 
     // Runs the query and opens the menu of a column.
-    // Stroom opens a column's menu when its header is clicked (MyDataGrid's
+    // Stroom opens a column's menu when its header is clicked (the grid's
     // HeadingListener.onShowMenu), not on a context menu
     private static void executeAndOpenColumnMenu(final Play play, final String column) {
         execute(play);
         play.findByText("alpha");
-        clickHeader(play, header(play, column));
-    }
-
-    /// Clicks a part of a results table's column header. MyDataGrid only handles a header's mouse
-    /// buttons once the mouse has moved over it (it attaches a native preview handler after the
-    /// move, and drops it when the mouse leaves), so the play moves the mouse over the header,
-    /// waits, then presses and releases the button there without moving again (user-event's
-    /// click would move the mouse in from the page's body). Pointer events go before the mouse
-    /// events, as a browser sends them: the new grid (DataGrid) reads the pointer events.
-    ///
-    /// @param play   The play.
-    /// @param target The part of the header to click, e.g. its label or value filter icon.
-    static void clickHeader(final Play play, final Query target) {
-        play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
-        play.sleep(200);
-        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().click(target, EventInit.create().atCentreOf(target));
+        StroomDom.clickHeader(play, header(play, column));
     }
 
     // Checks the request for a new document that ShowCreateDocumentDialogEvent makes
@@ -1196,7 +1285,7 @@ public final class QueryEditorStories {
         setup.accept(harness, injector);
         final QueryResource resource = GWT.create(QueryResource.class);
         // Opened once Stroom has started, as QueryPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getQueryDocPresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getQueryDocEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }
@@ -1220,7 +1309,8 @@ public final class QueryEditorStories {
             type.setText(event.getDocType());
             title.setText(event.getDialogCaption());
             name.setText(event.getInitialDocName());
-            final Button seed = new Button("run-seed", (ClickHandler) click -> event.getNewDocConsumer().accept(
+            final Button seed = new Button("run-seed");
+            seed.setOnClick(() -> event.getNewDocConsumer().accept(
                     ExplorerNode.builder()
                             .docRef(new DocRef(event.getDocType(), "new-1", "New"))
                             .build()));
@@ -1252,15 +1342,18 @@ public final class QueryEditorStories {
     // As annotationSpies, with the 'Choose Annotation' dialog shown by ShowFindAnnotationEvent
     private static void findAnnotation(final ScreenHarness harness, final QueryScreenGinjector injector) {
         annotationSpies(harness, injector);
-        final FindAnnotationPresenter presenter = injector.getFindAnnotationPresenter();
-        harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(), presenter);
+        // Made when asked for, so that the story's root, which owns it, is made once the screen is
+        // open (the leak probe's close disposes only what its opening registered)
+        harness.addRegistration(harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(),
+                event -> harness.own(injector.getFindAnnotationController())
+                        .show(event.getAnnotationConsumer())));
     }
 
     // Stroom's handler of a table's links, with spies on the events it fires
     private static void hyperlinks(final ScreenHarness harness, final QueryScreenGinjector injector) {
         harness.fn(STEPPING);
         harness.fn(SHOW_DATA);
-        injector.getHyperlinkEventHandler();
+        injector.getHyperlinkOpener();
         harness.getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), event ->
                 harness.spy(STEPPING, event.getStepLocation().getMetaId() + ":"
                                       + event.getStepLocation().getPartIndex() + ":"
@@ -1279,7 +1372,7 @@ public final class QueryEditorStories {
 
     // As the app does: Stroom's chat handles the table's AskStroomAiEvent
     private static void askAi(final ScreenHarness harness, final QueryScreenGinjector injector) {
-        AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter);
+        AskStroomAiChat.register(harness, injector::getAskStroomAiController);
     }
 
     // The number of searches made

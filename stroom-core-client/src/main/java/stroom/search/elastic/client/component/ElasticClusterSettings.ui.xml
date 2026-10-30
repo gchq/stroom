@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <!-- An Elasticsearch cluster's Settings tab -->
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs"
+                        helpText="URLs of the Elasticsearch nodes to connect to, one per line, in the form scheme://host:port, e.g. https://elastic.example.com:9200. If the port is left out it defaults to 80 for http and 443 for https."
+                        screenReaderText="One URL per line, e.g. https://host:9200.">
+            <form:TextArea ui:field="connectionUrls" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticClusterSettingsAPIKey"
+                        label="API Key (optional)"
+                        helpText="The stored access token credential to send as the cluster's API key. It must hold the base64 encoded key, the 'encoded' value Elasticsearch gives when the key is created. Leave blank if the cluster does not need authentication."
+                        screenReaderText="Access token credential holding the encoded key. Leave blank if not needed.">
+            <l:SelectionBox ui:field="apiKey"/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set HTTP Client Config" addStyleNames="allow-focus"/>
+        <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

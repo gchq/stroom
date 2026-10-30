@@ -1,0 +1,95 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:a="urn:import:stroom.widget.component.client"
+             xmlns:h="urn:import:stroom.widget.histogram.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+
+    <!-- Grid layout: columns are [left controls | bar | right controls]; the histogram and
+         date-label rows live in the middle column so they always stay in line with the bar,
+         however wide the flanking control groups are (e.g. when the help button is shown). -->
+    <g:HTMLPanel styleName="floor-map-timeline max">
+
+        <!-- Histogram canvas sits above the bar, in the same grid column -->
+        <g:SimplePanel addStyleNames="floor-map-timeline__histogram">
+            <h:Histogram ui:field="histogram"/>
+        </g:SimplePanel>
+
+        <!-- Left controls: step-back, play/pause, step-forward -->
+        <b:Toolbar name="Playback controls" addStyleNames="floor-map-timeline__left-controls">
+            <b:ToolbarButton ui:field="stepBack" svg="STEP_BACKWARD" title="Step Back"
+                             addStyleNames="floor-map-timeline__step-button"/>
+            <b:ToolbarButton ui:field="playPause" svg="PLAY" title="Play"
+                             addStyleNames="floor-map-timeline__play-button"/>
+            <b:ToolbarButton ui:field="stepForward" svg="STEP_FORWARD" title="Step Forward"
+                             addStyleNames="floor-map-timeline__step-button"/>
+        </b:Toolbar>
+
+        <!-- Centre section: the timeline scrubber bar, a slider from 0 to 100 (%) -->
+        <div class="floor-map-timeline__centre">
+            <a:AriaPanel ui:field="outerBar" addStyleNames="floor-map-timeline__bar"
+                         role="slider" tabIndex="0" ariaValueMin="0" ariaValueMax="100" ariaValueNow="0">
+                <g:FlowPanel addStyleNames="floor-map-timeline__progress"/>
+                <g:FlowPanel addStyleNames="floor-map-timeline__handle"/>
+                <tx:Label ui:field="scrubTooltip" addStyleNames="floor-map-timeline__scrub-tooltip"/>
+            </a:AriaPanel>
+        </div>
+
+        <!-- Right controls: speed badge (a button that opens the speed menu), settings gear, and
+             help, shown only where it is given (the Editor tab) -->
+        <div class="floor-map-timeline__right-controls">
+            <a:AriaPanel ui:field="speedBadge" addStyleNames="floor-map-timeline__speed-badge"
+                         role="button" tabIndex="0" title="Playback Speed"/>
+            <b:Toolbar name="Playback settings">
+                <b:ToolbarButton ui:field="settings" svg="SETTINGS" title="Playback Settings"
+                                 addStyleNames="floor-map-timeline__settings-button"/>
+            </b:Toolbar>
+            <b:Toolbar ui:field="helpToolbar" name="Timeline help" visible="false"/>
+        </div>
+
+        <!-- Date labels sit below the playback row, inset to align with the bar ends. The
+             out-of-range chevrons are decoration (guillemets a screen reader reads as punctuation
+             or skips); the status below says the same in words. -->
+        <div class="floor-map-timeline__date-labels">
+            <div class="floor-map-timeline__date-labels-left">
+                <div ui:field="outOfRangeLeft"
+                     class="floor-map-timeline__out-of-range floor-map-timeline__out-of-range--left"
+                     title="Object out of range. Extend timeline range to view object."
+                     aria-hidden="true">&#171;</div>
+                <tx:Label ui:field="startDateLabel" addStyleNames="floor-map-timeline__date-label"/>
+            </div>
+            <div class="floor-map-timeline__date-labels-right">
+                <tx:Label ui:field="endDateLabel"
+                         addStyleNames="floor-map-timeline__date-label floor-map-timeline__date-label--end"/>
+                <div ui:field="outOfRangeRight"
+                     class="floor-map-timeline__out-of-range floor-map-timeline__out-of-range--right"
+                     title="Object out of range. Extend timeline range to view object."
+                     aria-hidden="true">&#187;</div>
+            </div>
+        </div>
+
+        <!-- Announces the out-of-range state, which is otherwise conveyed only by a pulsing orange
+             chevron appearing. role="status" implies aria-live="polite"; both are set because some
+             screen readers honour only one. Absolutely positioned by sr-only, so
+             grid auto-placement does not apply to it and it cannot disturb the layout above. -->
+        <div ui:field="timelineStatus" class="sr-only"
+             role="status" aria-live="polite" aria-atomic="true"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

@@ -1,0 +1,109 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:sel="urn:import:stroom.widget.selection.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!-- A Git repository's Settings tab (git-repo-settings.css) -->
+    <g:FlowPanel styleName="max form-padding form git-repo-settings">
+
+        <!-- Content Store stuff -->
+        <form:FormGroup identity="contentStore"
+                        label="Content Store"
+                        helpText="Content store that this content pack came from. Read-only."
+                        ui:field="contentStoreGroup">
+            <tx:Label title="The name of the Content Store that specified this Content Pack"
+                     ui:field="contentStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="contentPack"
+                        label="Content Pack Name"
+                        helpText="Name of this content pack. Read-only."
+                        ui:field="contentPackGroup">
+            <tx:Label title="The name of this Content Pack"
+                     ui:field="contentPack"/>
+        </form:FormGroup>
+
+        <!-- Git basic settings -->
+        <form:FormGroup identity="gitUrl"
+                        label="Git repository URL"
+                        helpText="URL of the Git repository, using HTTPS or SSH, e.g. https://github.com/org/repo.git. Read-only for content packs."
+                        screenReaderText="HTTPS or SSH URL. Read-only for content packs.">
+            <form:TextBox title="The URL of the GIT repository"
+                       ui:field="urlBox"
+                       addStyleNames="git-repo-settings__field"/>
+        </form:FormGroup>
+        <form:FormGroup identity="gitBranch"
+                        label="Git branch"
+                        helpText="Branch of the Git repository to pull from and push to, e.g. main. Read-only for content packs."
+                        screenReaderText="Branch to pull from and push to. Read-only for content packs.">
+            <form:TextBox title="The branch of the GIT repository"
+                       ui:field="branchBox"
+                       addStyleNames="git-repo-settings__field"/>
+        </form:FormGroup>
+        <form:FormGroup identity="gitPath"
+                        label="Git path"
+                        helpText="Folder within the Git repository that holds the Stroom content, e.g. stroom/content. Leave blank to use the root of the repository. Read-only for content packs."
+                        screenReaderText="Leave blank for the repository root. Read-only for content packs.">
+            <form:TextBox title="The path within the GIT repository"
+                       ui:field="pathBox"
+                       addStyleNames="git-repo-settings__field"/>
+        </form:FormGroup>
+
+        <!-- Specify the commit hash to pull from Git => readonly; cannot push -->
+        <form:FormGroup identity="gitCommitToPull"
+                        label="Git commit"
+                        helpText="Hash of a Git commit to pull instead of the latest commit on the branch. While it is set, Push to Git and Automatically push are not available. Leave blank to pull the latest commit. Read-only for content packs."
+                        screenReaderText="While set, pushing is not available.">
+            <form:TextBox title="The commit you want to pull from Git"
+                       ui:field="commitToPullBox"
+                       addStyleNames="git-repo-settings__field"/>
+        </form:FormGroup>
+
+        <!-- Whether to automatically push to Git whenever something changes -->
+        <form:FormGroup identity="gitAutoPush"
+                        helpText="Tick to push any changes to Git automatically. The Git Repo Push job does this, every minute by default, with a generic commit message. Not available while a commit hash is set."
+                        ui:field="autoPushGroup"
+                        screenReaderText="Pushed by the Git Repo Push job, every minute by default.">
+            <tickbox:TickBox title="Automatically push changes to the Git repository"
+                                    ui:field="autoPushBox" label="Automatically push" />
+        </form:FormGroup>
+
+        <!-- Button to set credentials -->
+        <form:FormGroup identity="credentials-group"
+                        label="Credentials"
+                        helpText="Stored credential used to access the Git repository: an SSH key, a user name and password, or an access token."
+                        screenReaderText="SSH key, user name and password, or access token.">
+            <g:FlowPanel styleName="dock-container-horizontal git-repo-settings__credentials">
+                <sel:SelectionBox ui:field="credentialSelectionBox"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+
+        <!-- Button to configure how Stroom talks to the remote over HTTP(S), including which key stores
+             to trust. Needed for servers presenting a certificate from a private CA. -->
+        <b:Button ui:field="setHttpClientConfig"
+                  text="Set HTTP Client Config"
+                  addStyleNames="allow-focus git-repo-settings__button"
+                  title="Configure the HTTP client used to talk to the Git repository"/>
+
+        <!-- Button to push into Git -->
+        <b:Button ui:field="pushButton"
+                  text="Push to Git"
+                  addStyleNames="allow-focus git-repo-settings__button"
+                  title="Push any changes into the Git repository"/>
+
+        <!-- Button to check whether updates are available -->
+        <b:Button ui:field="checkForUpdatesButton"
+                  text="Check for updates"
+                  addStyleNames="allow-focus git-repo-settings__button"
+                  title="Check if there are updates that could be pulled"/>
+
+        <!-- Button to pull from Git -->
+        <b:Button ui:field="pullButton"
+                  text="Pull from Git"
+                  addStyleNames="allow-focus git-repo-settings__button"
+                  title="Pull remote changes into Stroom"/>
+
+    </g:FlowPanel>
+</ui:UiBinder>

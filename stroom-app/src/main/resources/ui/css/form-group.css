@@ -1,0 +1,208 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A form group (stroom.widget.form.client.FormGroup and FormGroupHelpButton), named BEM style
+   (block, block__element, block--modifier). Bootstrap also styles .form-group, so this is imported
+   after it.
+*/
+
+
+/* A form group (FormGroup): a label row (the label and its help button), the control, a
+   description and a validation message */
+.form-group {
+    display: flex;
+    margin-bottom: 0;
+    flex-direction: column;
+}
+
+.form-group > div:has(> label) {
+    display: flex;
+}
+
+.form-group:not(:first-child) {
+    margin-top: 0.3em;
+}
+
+/* The group's validation message, under its control. It keeps no space for itself while empty. */
+.form-group__feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0;
+    font-size: 80%;
+    color: var(--feedback);
+}
+
+/* A group that keeps a line under its control for its message whether or not there is one, so the
+   form doesn't move as messages come and go (the sign-in pages and the name dialog): the message's
+   own line, or an empty one of the same height while there is none */
+.form-group--reserve-feedback > .form-group__feedback {
+    margin-top: .25rem;
+    min-height: 16px;
+}
+
+.form-group--reserve-feedback:not(:has(> .form-group__feedback))::after {
+    content: "";
+    display: block;
+    margin-top: .25rem;
+    height: 16px;
+}
+
+.form-group__label-row .form-group__label {
+    margin-bottom: 0;
+}
+
+.form-group__label-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+/* A tick box that carries its own label: its help goes on the same line, right after that label,
+   and anything else in the group (description, feedback, help text) goes on the lines below */
+.form-group--inline-tick {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--control__gap--horizontal);
+}
+
+.form-group--inline-tick > * {
+    flex-basis: 100%;
+    order: 2;
+}
+
+.form-group--inline-tick > .form-group__tick {
+    flex-basis: auto;
+    order: 0;
+}
+
+.form-group--inline-tick > .form-group__label-row {
+    flex-basis: auto;
+    order: 1;
+    margin-bottom: 0;
+}
+
+.form-group__label-row:has(> label.form-group__label:empty) {
+    margin-bottom: 0em;
+}
+
+.form-group__description-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.form-group__description {
+    font-size: 92%;
+    opacity: 80%;
+}
+
+.form-group__description p {
+    /* Reduce the default <p> margin down from 11px */
+    margin-bottom: 4px;
+}
+
+/* A form group's help button (FormGroupHelpButton), after its label: an icon button, out of the tab
+   order (F1 in the group's field shows the same help). Its hover and focus fill and border are
+   drawn by ::before, under its icon. */
+.form-group__help {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: .25rem;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.form-group__help::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: .25rem;
+}
+
+.form-group__help:hover::before {
+    background-color: var(--icon-button__background-color--hover);
+    border: thin solid var(--icon-button__border-color--hover);
+}
+
+.form-group__help:focus-visible {
+    box-shadow: var(--focus-shadow);
+}
+
+.form-group__help:focus-visible::before {
+    border: thin solid var(--focus-border);
+}
+
+/* The help icon, above the fill. Its colour is the same wherever the group is, so the rule is two
+   classes deep to outweigh an icon colour that a container gives its icons (e.g. the annotation
+   editor's .icon-colour__grey setting blocks). */
+.form-group__help .form-group__help-icon {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    color: var(--navigation-icon-button__color);
+}
+
+/* The help button is a little taller than the label text. Let it overlap the label row rather than
+   make the row taller, so that adding help to a field doesn't make every form longer. Equal negative
+   margins keep it centred on the label without counting towards the row's height. */
+.form-group__label-row > .form-group__help {
+    margin-block: -50px;
+}
+
+/* The label row moves down, not the label and help button, so the help button keeps its own margins
+   (it overlaps the row) and stays beside the label */
+.form-group--indented .form-group__label-row {
+    margin-top: var(--control__gap--vertical);
+}
+
+.form-group--indented .form-group__label {
+    margin-left: var(--control__gap--horizontal);
+}
+
+/* A list's heading, nudged in from a pane's edge (the job's node list; was the dashboard-panel's rule
+   for its direct form groups) */
+.form-group--inset-label label.form-group__label:not(:empty) {
+    margin-top: 0.3em;
+    margin-left: 0.2em;
+}
+
+.form-group__description-row--disabled {
+    color: var(--text-color--disabled);
+}
+
+/* Already greyed, so not faded as well (that took it under 4.5:1) */
+.form-group__description-row--disabled .form-group__description {
+    opacity: 1;
+}
+
+.form-group__description-row--disabled code {
+    color: var(--code-color--disabled);
+}

@@ -17,12 +17,11 @@
 package stroom.widget.datagrid.client;
 
 import stroom.widget.datagrid.client.model.ScrollThumb;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +42,8 @@ final class OverlayScrollbars {
     private static final int MIN_THUMB_LENGTH = 28;
     private static final String ACTIVE_CLASS_NAME = "data-grid__thumb--active";
     private static final String SCROLL_TIMELINE_CLASS_NAME = "data-grid--scroll-timeline";
+    // A track with nothing to scroll
+    private static final String TRACK_HIDDEN_CLASS_NAME = "data-grid__track--hidden";
     private static final boolean SCROLL_TIMELINE = supportsScrollTimeline();
 
     private final Element root;
@@ -61,25 +62,30 @@ final class OverlayScrollbars {
     private double dragStartPointer;
     private double dragStartPosition;
 
-    /// Create the tracks and thumbs and add them to the grid.
+    /// Works the grid's tracks and thumbs (its template's).
     ///
-    /// @param root         The grid's root element, which the tracks are added to.
+    /// @param root         The grid's root element.
     /// @param scroller     The grid's scroller.
+    /// @param vTrack       The vertical scrollbar's track.
+    /// @param vThumb       Its thumb.
+    /// @param hTrack       The horizontal scrollbar's track.
+    /// @param hThumb       Its thumb.
     /// @param headerHeight Supplies the height in pixels of the sticky header.
-    OverlayScrollbars(final Element root, final Element scroller, final IntSupplier headerHeight) {
+    OverlayScrollbars(final Element root,
+                      final Element scroller,
+                      final Element vTrack,
+                      final Element vThumb,
+                      final Element hTrack,
+                      final Element hThumb,
+                      final IntSupplier headerHeight) {
         this.root = root;
         this.scroller = scroller;
+        this.vTrack = vTrack;
+        this.vThumb = vThumb;
+        this.hTrack = hTrack;
+        this.hThumb = hThumb;
         this.headerHeight = headerHeight;
 
-        final Document doc = Document.get();
-        vTrack = div(doc, "data-grid__track data-grid__track--vertical");
-        vThumb = div(doc, "data-grid__thumb");
-        vTrack.appendChild(vThumb);
-        hTrack = div(doc, "data-grid__track data-grid__track--horizontal");
-        hThumb = div(doc, "data-grid__thumb");
-        hTrack.appendChild(hThumb);
-        root.appendChild(vTrack);
-        root.appendChild(hTrack);
         if (SCROLL_TIMELINE) {
             root.addClassName(SCROLL_TIMELINE_CLASS_NAME);
         }
@@ -89,12 +95,6 @@ final class OverlayScrollbars {
     /// as the grid scrolls.
     boolean followsScroll() {
         return SCROLL_TIMELINE;
-    }
-
-    private static Element div(final Document doc, final String className) {
-        final Element element = doc.createDivElement();
-        element.setClassName(className);
-        return element;
     }
 
     /// Start listening for pointer events. Call when the grid is attached.
@@ -127,26 +127,30 @@ final class OverlayScrollbars {
         final ScrollThumb v = verticalThumb();
         final ScrollThumb h = horizontalThumb();
 
-        vTrack.getStyle().setTop(headerHeight.getAsInt(), Unit.PX);
-        vTrack.getStyle().setProperty("display", v.isVisible()
-                ? ""
-                : "none");
-        vThumb.getStyle().setHeight(v.getLength(), Unit.PX);
+        CssProperties.set(vTrack, "--data-grid__v-track-top", headerHeight.getAsInt() + "px");
+        setHidden(vTrack, !v.isVisible());
+        CssProperties.set(vThumb, "--data-grid__v-thumb-length", v.getLength() + "px");
 
-        hTrack.getStyle().setProperty("display", h.isVisible()
-                ? ""
-                : "none");
-        hThumb.getStyle().setWidth(h.getLength(), Unit.PX);
+        setHidden(hTrack, !h.isVisible());
+        CssProperties.set(hThumb, "--data-grid__h-thumb-length", h.getLength() + "px");
 
         if (SCROLL_TIMELINE) {
             // The scroll-driven animations move the thumbs from 0 to their travel.
-            DataGridDom.setCssVariable(root, "--data-grid__v-travel", v.getTravel() + "px");
-            DataGridDom.setCssVariable(root, "--data-grid__h-travel", h.getTravel() + "px");
+            CssProperties.set(root, "--data-grid__v-travel", v.getTravel() + "px");
+            CssProperties.set(root, "--data-grid__h-travel", h.getTravel() + "px");
         }
         // Also place the thumbs directly. A running scroll-driven animation overrides this, but
         // where animations are turned off (e.g. the test runner's screenshots) it is what shows.
-        vThumb.getStyle().setProperty("transform", "translateY(" + v.getPosition() + "px)");
-        hThumb.getStyle().setProperty("transform", "translateX(" + h.getPosition() + "px)");
+        CssProperties.set(vThumb, "--data-grid__v-thumb-position", v.getPosition() + "px");
+        CssProperties.set(hThumb, "--data-grid__h-thumb-position", h.getPosition() + "px");
+    }
+
+    private static void setHidden(final Element track, final boolean hidden) {
+        if (hidden) {
+            track.addClassName(TRACK_HIDDEN_CLASS_NAME);
+        } else {
+            track.removeClassName(TRACK_HIDDEN_CLASS_NAME);
+        }
     }
 
     private ScrollThumb verticalThumb() {

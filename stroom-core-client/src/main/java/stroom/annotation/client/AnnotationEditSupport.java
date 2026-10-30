@@ -17,42 +17,50 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.annotation.client.component.AnnotationTabs;
+import stroom.annotation.client.component.FindAnnotationController;
+import stroom.annotation.client.event.AnnotationChangeEvent;
+import stroom.annotation.client.event.CreateAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
+import stroom.annotation.client.event.ShowFindAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.content.client.event.CloseContentTabEvent;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.ContentManager;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.widget.util.client.PresenterScope;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class AnnotationEditSupport implements HasHandlers {
 
     private final EventBus eventBus;
     private final ContentManager contentManager;
     private final ClientSecurityContext securityContext;
+    private FindAnnotationController findAnnotation;
 
     @Inject
     public AnnotationEditSupport(final EventBus eventBus,
-                                 final Provider<AnnotationPresenter> presenterProvider,
+                                 final Provider<AnnotationTabs> tabsProvider,
                                  final ContentManager contentManager,
                                  final AnnotationResourceClient annotationResourceClient,
-                                 final ClientSecurityContext securityContext) {
+                                 final ClientSecurityContext securityContext,
+                                 final Provider<FindAnnotationController> findAnnotationProvider,
+                                 final AppRoot appRoot) {
         this.eventBus = eventBus;
         this.contentManager = contentManager;
         this.securityContext = securityContext;
 
         eventBus.addHandler(CreateAnnotationEvent.getType(), e -> {
-            // In a scope that releases it, and all its presenters, when its tab is closed
-            final AnnotationPresenter presenter = new PresenterScope().capture(presenterProvider::get);
-            presenter.setInitialComment(e.getComment());
             final CreateAnnotationRequest request = new CreateAnnotationRequest(
                     e.getTitle(),
                     e.getSubject(),
@@ -63,43 +71,58 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getLinkedEvents(),
                     e.getLinkedAnnotations());
             annotationResourceClient.createAnnotation(request, annotation -> {
-                show(presenter, annotation);
+                // Made once there is something to show, and released, with all its controllers, when
+                // its tab is closed
+                final AnnotationTabs tabs = tabsProvider.get();
+                tabs.setInitialComment(e.getComment());
+                show(tabs, annotation);
                 AnnotationChangeEvent.fireDeferred(this, annotation.asDocRef());
             }, new DefaultTaskMonitorFactory(this));
         });
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
-            // In a scope that releases it, and all its presenters, when its tab is closed
-            final AnnotationPresenter presenter = new PresenterScope().capture(presenterProvider::get);
             annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
-                    show(presenter, annotation), new DefaultTaskMonitorFactory(this));
+                    // Made once there is something to show, and released, with all its controllers,
+                    // when its tab is closed
+                    show(tabsProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
+        });
+
+        // The screens it opens, made when first asked for and kept by the app, so they keep
+        // their filters
+        eventBus.addHandler(ShowFindAnnotationEvent.getType(), event -> {
+            if (findAnnotation == null) {
+                findAnnotation = appRoot.make(findAnnotationProvider);
+            }
+            findAnnotation.show(event.getAnnotationConsumer());
         });
     }
 
-    private void show(final AnnotationPresenter presenter,
+    private void show(final AnnotationTabs tabs,
                       final Annotation annotation) {
+        // The tab Stroom shows the annotation in, which owns its tabs
+        final DocumentEditorHost<Annotation> tab = new DocumentEditorHost<>(eventBus, tabs, Annotation.TYPE);
+        tabs.setOnTitleChange(() -> RefreshContentTabEvent.fire(this, tab));
+        tabs.setOnDelete(() -> CloseContentTabEvent.fire(this, tab));
         if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             // Check document permissions and read.
             securityContext.hasDocumentPermission(
                     annotation.asDocRef(),
                     DocumentPermission.EDIT,
                     allowUpdate -> {
-                        presenter.read(annotation, !allowUpdate);
-                        contentManager.open(e2 -> {
-                            e2.getCallback().closeTab(true);
-                            // Closed for good, so release the annotation's presenters
-                            PresenterScope.disposeScopeOf(presenter);
-                        }, presenter, presenter);
+                        tab.setReadOnly(!allowUpdate);
+                        tab.read(annotation.asDocRef(), annotation);
+                        // Closing the tab releases the annotation's tabs
+                        contentManager.open(e2 -> e2.getCallback().closeTab(true), tab, tab);
                     },
                     throwable -> {
                         // Never shown, so released now
-                        PresenterScope.disposeScopeOf(presenter);
+                        tab.dispose();
                         AlertEvent.fireErrorFromException(this, throwable, null);
                     },
                     new DefaultTaskMonitorFactory(this));
         } else {
             // Never shown, so released now
-            PresenterScope.disposeScopeOf(presenter);
+            tab.dispose();
         }
     }
 

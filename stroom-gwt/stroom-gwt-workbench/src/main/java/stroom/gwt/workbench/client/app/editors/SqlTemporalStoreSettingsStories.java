@@ -27,15 +27,17 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter;
+import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Editors/SqlTemporalStoreSettings`, showing Stroom's real
-/// [SqlTemporalStoreSettingsPresenter] (a SQL temporal store's 'Settings' tab: its entry count and
+/// [SqlTemporalStoreSettingsController] (a SQL temporal store's 'Settings' tab: its entry count and
 /// Reset Store) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -103,10 +105,12 @@ public final class SqlTemporalStoreSettingsStories {
         frame.getElement().getStyle().setProperty("height", "200px");
         harness.add(frame);
         harness.afterStartUp(() -> {
-            final SqlTemporalStoreSettingsPresenter presenter = harness.unbindOnCleanUp(
-                    injector.getSqlTemporalStoreSettingsPresenter());
-            frame.setWidget(presenter.getWidget());
-            presenter.read(docRef, doc, readOnly);
+            // As its document's opener says, which its tabs follow
+            harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(readOnly));
+            final SqlTemporalStoreSettingsController controller = harness.own(
+                    injector.getSqlTemporalStoreSettingsController());
+            frame.setWidget(controller.asWidget());
+            controller.read(docRef, doc);
         });
         return harness.asWidget();
     }

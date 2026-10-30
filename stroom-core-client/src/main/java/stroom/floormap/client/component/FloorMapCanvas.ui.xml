@@ -1,0 +1,82 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!-- The FocusPanel is the map's keyboard host: GWT gives it tabindex="0", and
+         the controller binds pan/zoom/traversal keys to it. It therefore needs a
+         focus ring of its own, which floor-map-canvas.css draws off its class. -->
+    <g:FocusPanel ui:field="focusPanel" styleName="max"
+                  addStyleNames="floor-map-canvas">
+        <g:HTMLPanel styleName="max floor-map-canvas__container">
+            <!-- The map is a picture of its data, so it is named and summarised as one image
+                 rather than exposed as a tree of shapes. The role and name go on this container,
+                 not on the <svg>: each frame replaces the SVG, whereas the container lasts as long
+                 as the canvas. role="img" also makes what it holds presentational, which is the
+                 point: the SVG's <text> captions are positioned for the eye, and read in DOM
+                 (paint) order they are a stream of disconnected names and numbers. The summary and
+                 the Tracking grid say the same thing usefully -->
+            <div ui:field="svgContainer" class="max" role="img" aria-label="Floor map"></div>
+            <tx:Label ui:field="areaDrawHint" addStyleNames="floor-map-canvas__area-draw-hint"/>
+            <!-- Follows the cursor during a move or resize, reporting the
+                 position or size being dragged out in real-world units. -->
+            <tx:Label ui:field="gestureReadout" addStyleNames="floor-map-canvas__gesture-readout"/>
+            <!-- Describes the glyph under the pointer: the members of a cluster,
+                 or one entity's details. Anchored to the glyph rather than the
+                 cursor: a panel that slid about while the pointer moved across a
+                 single glyph would read as unstable, and a fixed anchor lets the
+                 contents be rebuilt only when the hovered glyph changes. -->
+            <g:FlowPanel ui:field="hoverTooltip"
+                         addStyleNames="floor-map-canvas__hover-tooltip">
+                <tx:Label ui:field="hoverCaption" addStyleNames="floor-map-canvas__hover-caption"/>
+                <g:FlowPanel ui:field="hoverLines"/>
+            </g:FlowPanel>
+            <!-- Always-on scale bar: the origin indicator only helps while (0,0)
+                 is on screen, which is not the normal state of a map being read. -->
+            <g:FlowPanel ui:field="scaleBar" addStyleNames="floor-map-canvas__scale-bar">
+                <tx:Label ui:field="scaleBarLabel"
+                         addStyleNames="floor-map-canvas__scale-bar-label"/>
+                <g:SimplePanel ui:field="scaleBarLine"
+                               addStyleNames="floor-map-canvas__scale-bar-line"/>
+            </g:FlowPanel>
+            <!-- Says why the map is empty, when it is persistently empty for a
+                 reason worth naming. A DOM element rather than text painted into
+                 the SVG: painted text cannot be selected, copied, or reached by a
+                 screen reader, and this is the one thing on the canvas whose
+                 whole purpose is to be read. Top-centre, which it shares with the
+                 area-draw hint without ever colliding: that hint belongs to modes
+                 that exist only on the Editor tab, and this line is only ever set
+                 by the Map tab. -->
+            <tx:Label ui:field="emptyStatus"
+                     addStyleNames="floor-map-canvas__empty-status"/>
+            <!-- The map's spoken commentary: selection, tracking, time changes and
+                 entities leaving the timeline range. Everything the canvas says
+                 visually is otherwise invisible to a screen reader, because the SVG
+                 is marked aria-hidden (its text captions are laid out for the eye
+                 and read as noise in DOM order).
+
+                 Visually hidden rather than display:none — a hidden live region is
+                 removed from the accessibility tree and never announces. -->
+            <div ui:field="statusRegion"
+                 class="sr-only"
+                 role="status"
+                 aria-live="polite"
+                 aria-atomic="true"></div>
+        </g:HTMLPanel>
+    </g:FocusPanel>
+</ui:UiBinder>

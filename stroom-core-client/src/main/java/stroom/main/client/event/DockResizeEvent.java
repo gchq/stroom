@@ -24,7 +24,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Event fired when the user drags the dock splitter to resize a docked panel.
- * Allows presenters to persist the new dock size to user preferences.
+ * Allows controllers to persist the new dock size to user preferences.
  */
 public class DockResizeEvent extends GwtEvent<DockResizeEvent.Handler> {
 

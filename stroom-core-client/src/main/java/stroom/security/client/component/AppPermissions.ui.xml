@@ -1,0 +1,48 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:sec="urn:import:stroom.security.client.component">
+    <!-- The permissions below the rest (addStyleNames, as styleName would replace the
+         split pane's own class) -->
+    <split:SplitPane vertical="true" thin="true" sizes="*, 600px" names="Users and groups, Permissions"
+                     addStyleNames="max default-min-sizes">
+        <g:FlowPanel>
+            <form:FormGroup label="Permission Visibility"
+                            addStyleNames="form-padding"
+                            screenReaderText="Filters the users and groups list: explicit, effective or all.">
+                <form:HelpHTML>
+                    <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
+                        pane below.</p>
+                    <ul>
+                        <li><strong>Show Explicit</strong> - Show only those users/groups that have an explicit
+                            application permission, i.e. one that has been directly assigned to them.</li>
+                        <li><strong>Show Effective</strong> - Show only those users/groups that have an explicit
+                            or inherited application permission. The permission may be inherited from
+                            a group they are a member of or from an ancestor of a group they are a member of.</li>
+                        <li><strong>Show All</strong> - Shows all users/groups regardless of permissions held.
+                            Select this to grant new permissions to users/groups.</li>
+                    </ul>
+                </form:HelpHTML>
+                <l:SelectionBox ui:field="permissionVisibility"/>
+            </form:FormGroup>
+            <form:FormGroup label="Users and Groups"
+                            addStyleNames="form-group--indented max"
+                            screenReaderText="Filtered by Permission Visibility. Select one to edit its permissions.">
+                <form:HelpHTML>
+                    <p>Shows users/groups, optionally filtered based on the value of the
+                        <em>Permission Visibility</em> dropdown.</p>
+                </form:HelpHTML>
+                <g:SimplePanel styleName="max">
+                    <sec:AppUserPermissionsList ui:field="appUserPermissionsList"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <!-- The pane that lists all the app perms with check boxes to set them -->
+        <g:SimplePanel styleName="max">
+            <sec:AppPermissionsEditor ui:field="appPermissionsEdit"/>
+        </g:SimplePanel>
+    </split:SplitPane>
+</ui:UiBinder>

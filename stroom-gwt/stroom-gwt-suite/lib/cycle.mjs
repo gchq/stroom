@@ -93,7 +93,7 @@ export async function clickButton(page, label) {
       return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const matches = [...scope.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0 && !b.disabled
+    const matches = [...scope.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0 && !b.disabled
       && !b.classList.contains('disabled')
       // A toolbar button (ToolbarButton, 2026-10-12) disables with aria-disabled and stays focusable.
       && b.getAttribute('aria-disabled') !== 'true'
@@ -101,7 +101,7 @@ export async function clickButton(page, label) {
     // The screen's button before the explorer's: the explorer's New and Delete come first on the page
     // and are enabled whenever something is selected in the tree, which an earlier cycle leaves so.
     // Pressing its New opened the explorer's menu where Annotation Labels' New was meant.
-    const el = matches.find((b) => !b.closest('.navigation')) ?? matches[0];
+    const el = matches.find((b) => !b.closest('.explorer')) ?? matches[0];
     if (!el) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -142,9 +142,9 @@ export async function fillField(page, label, text) {
 
 /**
  * Click the tick box labelled `label`: the one inside the FormGroup of that label, or a
- * `CustomCheckBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
+ * `TickBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
  * FormGroup with none, as Node Group's "Enabled" is). GWT renders a tick box as a div, not as a
- * bare checkbox (the CustomCheckBox's input is hidden), so the click has to land on the div.
+ * bare checkbox (the TickBox's input is hidden), so the click has to land on the div.
  */
 export async function clickTickBox(page, label) {
   const box = await page.evaluate(([wanted]) => {
@@ -168,7 +168,7 @@ export async function clickTickBox(page, label) {
 
 /**
  * Is the tick box labelled `label` ticked? Found as `clickTickBox` finds it; null when there is none.
- * A `CustomCheckBox` keeps its state on a hidden input, a `TickBoxCell` in its class names.
+ * A `TickBox` keeps its state on a hidden input, a `TickBoxCell` in its class names.
  */
 export async function readTick(page, label) {
   return page.evaluate(([wanted]) => {
@@ -726,7 +726,7 @@ export function gridFilter(page) {
 export function morePages(page) {
   return page.evaluate(() => {
     const un = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0);
+    const btns = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0);
     return btns.some((b) => /^(Forward|Next|Last)$/i.test(un(b.getAttribute('title')) || un(b.textContent))
       && !b.disabled && !b.classList.contains('disabled') && b.getAttribute('aria-disabled') !== 'true');
   }).catch(() => false);
@@ -753,9 +753,9 @@ export async function filterGrid(page, text, settle) {
  */
 export function gridTotal(page) {
   return page.evaluate(() => {
-    const pager = [...document.querySelectorAll('.pager-paging')].find((p) => p.offsetWidth > 0);
+    const pager = [...document.querySelectorAll('.paging-bar')].find((p) => p.offsetWidth > 0);
     if (!pager) return null;
-    const labels = [...pager.querySelectorAll('.pager-label')].filter((e) => e.offsetWidth > 0);
+    const labels = [...pager.querySelectorAll('.paging-bar__label')].filter((e) => e.offsetWidth > 0);
     const last = labels[labels.length - 1];
     const m = /(-?[\d,]+)/.exec(String(last?.textContent ?? ''));
     return m ? Number(m[1].replace(/,/g, '')) : null;
@@ -797,10 +797,10 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
   // The tree's rows as `type|label`: the icon's title is the document type.
   const tree = () => page.evaluate(() => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.explorerCell')]
+    return [...document.querySelectorAll('.explorer-cell')]
       // The name without the icon's own text: an inline SVG's <style> or <title> is in textContent
       // (Elastic Index's `.st0{fill:…}`, OpenAI Model's "OpenAI icon"), so a name never matched.
-      .map((c) => `${n(c.querySelector('.explorerCell-icon')?.getAttribute('title'))}|${n([...c.querySelectorAll('*:not(svg):not(svg *)')]
+      .map((c) => `${n(c.querySelector('.explorer-cell__icon')?.getAttribute('title'))}|${n([...c.querySelectorAll('*:not(svg):not(svg *)')]
         .filter((e) => !e.children.length).map((e) => e.textContent).join(' '))}`);
   }).catch(() => []);
   // By name alone: the icon's title is not always the menu's name for the type (XSL Translation),
@@ -813,7 +813,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
   };
   const menuPath = async (target, items) => {
     await dismissMenus(page).catch(() => {});
-    if (!(await rightClickByText(page, '.explorerCell', target))) throw new Error(`no explorer row "${target}"`);
+    if (!(await rightClickByText(page, '.explorer-cell', target))) throw new Error(`no explorer row "${target}"`);
     for (const item of items) {
       if (!(await clickMenuItem(page, item))) throw new Error(`no "${item}" in the menu (after ${items.slice(0, items.indexOf(item)).join(' › ') || 'the right-click'})`);
       await settle(600);
@@ -950,7 +950,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
 export async function chooseInSelectionBox(page, label, item, settle) {
   const scope = page.locator('.dialog').last();
   const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
-  await group.locator('.selection-box .svg-icon-box__icon').first().click({ timeout: 5_000 });
+  await group.locator('.selection-box .icon-box__icon').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
@@ -1205,13 +1205,13 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     if (!await phase(`change it to ${spec.status} (Change Status)`, async () => {
       await annotate('Change Status');
       const dlg = page.locator('.dialog').last();
-      await dlg.locator('.annotationSettingHeading').first().click({ timeout: 5_000 });
+      await dlg.locator('.annotation-setting__heading').first().click({ timeout: 5_000 });
       await settle(1000);
       // The chooser is a popup of its own, not inside the dialog.
       await page.locator('.popupContent').filter({ hasNotText: 'Change Status' })
         .getByText(spec.status, { exact: true }).first().click({ timeout: 5_000 });
       await settle(600);
-      const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
+      const shown = (await dlg.locator('.annotation-setting__value').first().textContent()).trim();
       if (shown !== spec.status) throw new Error(`the dialog shows "${shown}" after choosing "${spec.status}"`);
       await okAndCheck('Change Status');
       const row = await rowOf();
@@ -1222,9 +1222,9 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     await phase('change it to assigned to me (Change Assignee)', async () => {
       await annotate('Change Assignee');
       const dlg = page.locator('.dialog').last();
-      await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
+      await dlg.locator('.assign-yourself-link').first().click({ timeout: 5_000 });
       await settle(600);
-      const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
+      const shown = (await dlg.locator('.annotation-setting__value').first().textContent()).trim();
       if (!shown || shown === 'Nobody') throw new Error(`the dialog still shows "${shown}" after Assign Yourself`);
       await okAndCheck('Change Assigned To');
       const row = await rowOf();
@@ -1245,7 +1245,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await annotate('Edit Annotation');
       await toTab(new RegExp(`#${id} `));
       // The history as shown (it has no hidden copy of its text since gchq/stroom#5897)
-      return page.locator('.annotationHistoryContainer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
+      return page.locator('.annotation-editor__history-outer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
     };
     if (spec.comment && await phase('add a comment', async () => {
       if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {
@@ -1368,7 +1368,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   const press = async (title) => {
     const box = await page.evaluate((t) => {
       const b = [...document.querySelectorAll('button')].find((e) => e.offsetWidth > 0 && e.title === t
-        && !e.closest('.navigation') && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
+        && !e.closest('.explorer') && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
       if (!b) return null;
       const r = b.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1409,7 +1409,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   const tick = async () => {
     const box = await page.evaluate((text) => {
       const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
-        .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
+        .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.explorer'));
       const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
       t.scrollIntoView({ block: 'center' });

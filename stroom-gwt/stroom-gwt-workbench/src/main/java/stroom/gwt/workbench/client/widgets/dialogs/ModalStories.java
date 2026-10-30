@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -26,21 +26,22 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's modal OK/Cancel dialog.
 ///
-/// Each story shows a presenter with `ShowPopupEvent` as a modal `OK_CANCEL_DIALOG`, with
+/// Each story shows a controller with `ShowPopupEvent` as a modal `OK_CANCEL_DIALOG`, with
 /// `onHideRequest` telling OK from Cancel.
 public final class ModalStories {
 
@@ -82,13 +83,13 @@ public final class ModalStories {
                     panel.add(DialogWidgets.button("Open editor", DialogWidgets.PRIMARY, event -> {
                         // Stroom's OK_CANCEL_DIALOG has no label option, so the OK button says OK, not the
                         // "Save" the text describes.
-                        final ContentPresenter presenter = show(spies, popups, "Editor", null,
+                        final StoryContent controller = show(spies, popups, "Editor", null,
                                 "A modal with a \"Save\" OK button and a dynamic title override.",
                                 ok -> {
                                     // Nothing to show
                                 });
                         // GWT's dynamic caption: a screen renames its dialog once it is shown
-                        RenamePopupEvent.builder(presenter).caption("Edit XPath Filter").fire();
+                        RenamePopupEvent.builder(controller).caption("Edit XPath Filter").fire();
                     }));
                     return panel;
                 })
@@ -194,7 +195,7 @@ public final class ModalStories {
                 pending[0] = null;
             }
         }));
-        ShowPopupEvent.builder(new ContentPresenter(popups.getEventBus(), content))
+        ControllerDialog.showOnce(popups, new StoryContent(popups.getEventBus(), content))
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Save")
                 .modal()
@@ -217,13 +218,13 @@ public final class ModalStories {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
         final FlowPanel content = new FlowPanel();
-        final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), content);
+        final StoryContent controller = new StoryContent(popups.getEventBus(), content);
         content.add(new InlineLabel("OK is allowed only while the form is valid."));
         content.add(DialogWidgets.button(DISABLE_OK, DialogWidgets.SECONDARY, event ->
-                DisablePopupEvent.builder(presenter).action(DialogAction.OK).fire()));
+                DisablePopupEvent.builder(controller).action(DialogAction.OK).fire()));
         content.add(DialogWidgets.button(ENABLE_OK, DialogWidgets.SECONDARY, event ->
-                EnablePopupEvent.builder(presenter).action(DialogAction.OK).fire()));
-        ShowPopupEvent.builder(presenter)
+                EnablePopupEvent.builder(controller).action(DialogAction.OK).fire()));
+        ControllerDialog.showOnce(popups, controller)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Edit")
                 .modal()
@@ -231,7 +232,7 @@ public final class ModalStories {
                     if (event.isOk()) {
                         onOk.call();
                         if (okDisablesOk) {
-                            DisablePopupEvent.builder(presenter).action(DialogAction.OK).fire();
+                            DisablePopupEvent.builder(controller).action(DialogAction.OK).fire();
                             event.reset();
                         } else {
                             event.hide();
@@ -244,7 +245,7 @@ public final class ModalStories {
                 .fire();
     }
 
-    private static ContentPresenter show(final Spy[] spies,
+    private static StoryContent show(final Spy[] spies,
                                          final StoryPopups popups,
                                          final String caption,
                                          final SvgImage icon,
@@ -252,8 +253,8 @@ public final class ModalStories {
                                          final ResultHandler onResult) {
         final Spy onOk = spies[0];
         final Spy onCancel = spies[1];
-        final ContentPresenter presenter = ContentPresenter.html(popups.getEventBus(), "<p>" + text + "</p>");
-        ShowPopupEvent.builder(presenter)
+        final StoryContent controller = StoryContent.html(popups.getEventBus(), "<p>" + text + "</p>");
+        ControllerDialog.showOnce(popups, controller)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .icon(icon)
                 .caption(caption)
@@ -268,7 +269,7 @@ public final class ModalStories {
                     event.hide();
                 })
                 .fire();
-        return presenter;
+        return controller;
     }
 
 

@@ -272,19 +272,9 @@ public final class KeyStroke {
         return ctrl;
     }
 
-    /// @return Whether the Alt key is held down.
-    public boolean isAlt() {
-        return alt;
-    }
-
     /// @return Whether the Shift key is held down.
     public boolean isShift() {
         return shift;
-    }
-
-    /// @return Whether the Meta (Command or Windows) key is held down.
-    public boolean isMeta() {
-        return meta;
     }
 
     /// @return Whether any of the modifier keys Ctrl, Alt or Meta are held down. Shift on its own

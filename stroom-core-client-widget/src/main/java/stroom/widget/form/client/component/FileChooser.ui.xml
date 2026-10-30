@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <!-- BEM block file-chooser (file-chooser.css). The button opens the browser's file dialog
+         through the hidden file input; the chosen file's name, announced as it changes, describes
+         the button -->
+    <g:HTMLPanel styleName="file-chooser">
+        <!-- A picker (role="button" with a popup), which a form group names by its label and
+             its own text -->
+        <b:Button ui:field="chooseFile" text="Choose File" role="button" opensDialog="true"
+                  addStyleNames="allow-focus button--contained-primary file-chooser__button"/>
+        <span ui:field="fileName" class="file-chooser__name file-chooser__name--empty"
+              aria-live="polite">No file chosen</span>
+        <input ui:field="fileInput" type="file" name="fileUpload" class="file-chooser__input" hidden="hidden"/>
+    </g:HTMLPanel>
+</ui:UiBinder>

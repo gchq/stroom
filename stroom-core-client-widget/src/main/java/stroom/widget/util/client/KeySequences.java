@@ -75,7 +75,6 @@ public class KeySequences {
             final KeyRec keyRec3 = currentKeySequence.get(0);
             final KeyRec keyRec2 = currentKeySequence.get(1);
             final KeyRec keyRec1 = currentKeySequence.get(2);
-//            GWT.log("onKeyDown: " + keyRec3 + ", " + keyRec2 + ", " + keyRec1);
             if (!keyRec2.down && keyRec1.down && keyRec2.keycode == keyRec1.keycode) {
 
                 // Check elapsed time from start to end of sequence.
@@ -117,7 +116,6 @@ public class KeySequences {
             final KeyRec keyRec3 = currentKeySequence.get(1);
             final KeyRec keyRec2 = currentKeySequence.get(2);
             final KeyRec keyRec1 = currentKeySequence.get(3);
-//            GWT.log("onKeyUp: " + keyRec4 + ", " + keyRec3 + ", " + keyRec2 + ", " + keyRec1);
 
             // Check down, up, down, up sequence.
             if ((!keyRec4.down && keyRec3.down && keyRec4.keycode == keyRec3.keycode) &&

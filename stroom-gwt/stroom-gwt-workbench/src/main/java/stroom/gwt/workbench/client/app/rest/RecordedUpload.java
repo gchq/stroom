@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.rest;
 
 import java.util.Objects;
 
-/// A file upload a screen made (Stroom's `CustomFileUpload.submit()`), as the harness records it:
+/// A file upload a screen made (Stroom's `FileChooserController.upload(...)`), as the harness records it:
 /// the URL it was posted to, the chosen file's name and, for a small text file, its content.
 public final class RecordedUpload {
 

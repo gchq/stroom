@@ -17,7 +17,7 @@
 package stroom.datagen.client;
 
 import stroom.core.client.ContentManager;
-import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.datagen.client.component.DataGenEditor;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenResource;
 import stroom.dispatch.client.RestErrorHandler;
@@ -26,9 +26,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -47,24 +47,26 @@ public class DataGenPlugin extends DocumentPlugin<DataGenDoc> {
 
     private static final DataGenResource DATA_GEN_RESOURCE = GWT.create(DataGenResource.class);
 
-    private final Provider<DataGenPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<DataGenEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public DataGenPlugin(final EventBus eventBus,
-                         final Provider<DataGenPresenter> editorProvider,
+                         final Provider<DataGenEditor> editorProvider,
                          final RestFactory restFactory,
                          final ContentManager contentManager,
                          final DocumentPluginEventManager entityPluginEventManager,
                          final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), DataGenDoc.TYPE);
     }
 
     @Override

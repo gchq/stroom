@@ -20,7 +20,7 @@ import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
-import stroom.widget.customdatebox.client.MomentJs;
+import stroom.widget.datepicker.client.MomentJs;
 
 import java.util.ArrayList;
 import java.util.List;

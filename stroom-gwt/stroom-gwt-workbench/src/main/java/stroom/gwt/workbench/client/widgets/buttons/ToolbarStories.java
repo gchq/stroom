@@ -233,10 +233,13 @@ public final class ToolbarStories {
                 .withPlay(ToolbarStories::playRow)
                 // The same row declared in a UiBinder template (ToolbarTemplate.ui.xml), its icons set
                 // by the svg attribute
-                .story("Template", context -> region(new ToolbarTemplate(
-                        context.fn(ON_SAVE)::call,
-                        context.fn(ON_FILTER)::call,
-                        context.fn(ON_FIRST)::call)))
+                .story("Template", context -> {
+                    final ToolbarTemplate template = new ToolbarTemplate();
+                    template.setOnSave(context.fn(ON_SAVE)::call);
+                    template.setOnFilter(context.fn(ON_FILTER)::call);
+                    template.setOnFirst(context.fn(ON_FIRST)::call);
+                    return region(template);
+                })
                 .withPlay(play -> {
                     // svg="SAVE" set the icon, and the template's separator is in the first toolbar
                     play.expect(play.within(play.getByRole("button", "Save")).querySelector("svg")).toBeInTheDocument();

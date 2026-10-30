@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+>
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="ruleExpression"
+                        label="Expression"
+                        helpText="Selects the received data this rule applies to, using its header attributes. The first matching rule's action is used; data that matches no rule is rejected."
+                        addStyleNames="dock-max">
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+
+        <form:FormGroup identity="ruleRuleName"
+                        label="Rule Name (optional)"
+                        helpText="An optional name to help you tell rules apart. It does not affect which data the rule matches."
+                        screenReaderText="For your reference only.">
+            <form:TextBox ui:field="name"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="ruleAction"
+                        label="Action"
+                        helpText="What to do with matching data. Receive accepts it, Reject returns an error to the sender, and Drop discards it silently while still reporting success."
+                        screenReaderText="Receive, Reject (sender gets an error) or Drop (silently discarded).">
+            <i:SelectionBox ui:field="action"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

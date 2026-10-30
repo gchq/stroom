@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's Key/Value Input pane: one text box of parameters, key=value and space separated -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:SimplePanel styleName="max dock-container-horizontal">
+        <g:SimplePanel styleName="dashboard-input dock-max">
+            <form:TextBox ui:field="params" addStyleNames="w-100 allow-focus"/>
+        </g:SimplePanel>
+    </g:SimplePanel>
+</ui:UiBinder>

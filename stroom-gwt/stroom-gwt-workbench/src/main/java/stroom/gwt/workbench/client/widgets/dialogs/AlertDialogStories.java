@@ -18,9 +18,6 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.event.PromptEvent;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.view.PromptViewImpl;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
@@ -31,19 +28,18 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's alert, confirmation and prompt dialogs.
+/// Stories for Stroom's alert and confirmation dialogs.
 ///
-/// A Stroom screen shows these by firing `AlertEvent`, `ConfirmEvent` or `PromptEvent`, which
-/// Stroom's `AlertPlugin` (with `CommonAlertPresenter`) and `PromptPresenter` handle. The stories
-/// fire the same events.
+/// A Stroom screen shows these by firing `AlertEvent` or `ConfirmEvent`, which Stroom's
+/// `AlertPlugin` (with `CommonAlertController`) handles. The stories fire the same events.
 public final class AlertDialogStories {
 
     private static final String DETAIL = "java.lang.RuntimeException: boom\n"
@@ -109,9 +105,7 @@ public final class AlertDialogStories {
                                 AlertEvent.fireWarn(handlers, "Second alert (warning).", null);
                                 AlertEvent.fireError(handlers, "Third alert (error).", null);
                             }));
-                })
-                // Prompt dialog — text input with OK / Cancel
-                .story("Prompt", AlertDialogStories::prompt);
+                });
     }
 
     private static Widget alertsStory(final StoryContext context) {
@@ -139,31 +133,6 @@ public final class AlertDialogStories {
                         "This will overwrite existing data. Continue?",
                         ok -> showResult(result, ok))));
         return StoryPanels.column(12, buttons, result);
-    }
-
-    /// The prompt, shared with `Widgets/Dialogs/PromptDialog`.
-    ///
-    /// @param context The story's context.
-    /// @return The story's widget.
-    static Widget prompt(final StoryContext context) {
-        final StoryPopups popups = StoryPopups.create(context);
-        // As GWTP's proxy would register Stroom's PromptPresenter for the event
-        final PromptPresenter promptPresenter = new PromptPresenter(popups.getEventBus(), new PromptViewImpl(),
-                null);
-        popups.addCleanUp(popups.getEventBus().addHandler(PromptEvent.getType(), promptPresenter)::removeHandler);
-        final HasHandlers handlers = DialogWidgets.handlers(popups.getEventBus());
-
-        final InlineLabel result = DialogWidgets.result();
-        // Stroom's PromptViewImpl uses the browser's own prompt
-        // (Window.prompt), not a styled dialog, and so accepts blank input.
-        final Widget button = DialogWidgets.button("Show prompt", DialogWidgets.PRIMARY, event -> PromptEvent.fire(
-                handlers,
-                "Enter a name for the new item:",
-                "Untitled",
-                value -> DialogWidgets.setResult(result, value == null
-                        ? "Cancelled"
-                        : "Got: " + value)));
-        return StoryPanels.column(12, button, result);
     }
 
     private static native int historyLength() /*-{

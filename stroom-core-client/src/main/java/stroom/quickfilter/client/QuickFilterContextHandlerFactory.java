@@ -18,21 +18,22 @@ package stroom.quickfilter.client;
 
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
-import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
+import stroom.quickfilter.client.component.AdvancedQuickFilterController;
 import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.quickfilter.shared.QuickFilterHistoryKey;
 import stroom.quickfilter.shared.QuickFilterHistoryResource;
 import stroom.quickfilter.shared.RecordQuickFilterUseRequest;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.InfoMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.InfoMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.Separator;
+import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -67,20 +68,24 @@ public class QuickFilterContextHandlerFactory {
     private static final int MENU_PADDING = 1;
 
     private final RestFactory restFactory;
-    private final Provider<AdvancedQuickFilterPresenter> advancedQuickFilterPresenterProvider;
+    private final Provider<AdvancedQuickFilterController> advancedQuickFilterProvider;
+
+    private final AppRoot appRoot;
 
     @Inject
     public QuickFilterContextHandlerFactory(final RestFactory restFactory,
-                                            final Provider<AdvancedQuickFilterPresenter>
-                                                    advancedQuickFilterPresenterProvider) {
+                                            final Provider<AdvancedQuickFilterController>
+                                                    advancedQuickFilterProvider,
+                                            final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.restFactory = restFactory;
-        this.advancedQuickFilterPresenterProvider = advancedQuickFilterPresenterProvider;
+        this.advancedQuickFilterProvider = advancedQuickFilterProvider;
     }
 
     /**
      * @param context            which quick filter this is - see {@link QuickFilterContext}
-     * @param hasHandlers        where to fire the drop-down menu from; normally the presenter
-     * @param taskMonitorFactory what to show busy while the history loads; normally the presenter
+     * @param hasHandlers        where to fire the drop-down menu from; normally the controller
+     * @param taskMonitorFactory what to show busy while the history loads; normally the controller
      */
     public QuickFilterContextHandler create(final QuickFilterContext context,
                                             final HasHandlers hasHandlers,
@@ -156,13 +161,15 @@ public class QuickFilterContextHandlerFactory {
                         .priority(items.size())
                         .text("Advanced Query...")
                         .tooltip("Build this filter as an expression tree")
-                        .command(() -> advancedQuickFilterPresenterProvider.get().show(
-                                context,
-                                quickFilter.getText(),
-                                // OK writes the text back through the same path as picking a
-                                // recent filter: set it, fire the change, record the use.
-                                onSelect,
-                                taskMonitorFactory))
+                        // Made for one use, and disposed once it is closed
+                        .command(() -> advancedQuickFilterProvider.get()
+                                .show(appRoot,
+                                        context,
+                                        quickFilter.getText(),
+                                        // OK writes the text back through the same path as picking
+                                        // a recent filter: set it, fire the change, record the use.
+                                        onSelect,
+                                        taskMonitorFactory))
                         .build());
             }
 

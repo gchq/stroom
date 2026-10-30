@@ -15,7 +15,7 @@
  */
 
 /*
-   The information tooltip (stroom.widget.tooltip.client.view.TooltipViewImpl): the content of the
+   The information tooltip (stroom.widget.tooltip.client.component.InfoTooltip): the content of the
    popup a grid's information column opens (a dialog named "Information"). Named BEM style. It is a
    tab stop, given the focus when it opens, so that the keyboard can scroll it; the tables in it are
    the content's own (HtmlBuilder), so are styled by element.
@@ -47,7 +47,7 @@
     table-layout: fixed;
 }
 
-.info-tooltip table .wrap {
+.info-tooltip table .info-tooltip__wrap {
     white-space: normal;
 }
 

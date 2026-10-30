@@ -1,5 +1,5 @@
 /*
- * Stroom's calendar (CustomDatePicker): its year and month rows above a grid of the month's days
+ * Stroom's calendar (Calendar): its year and month rows above a grid of the month's days
  * (CalendarGrid, role="grid"). A day's states come from its ARIA attributes: the chosen day is
  * [aria-selected="true"], today is [aria-current="date"]. A day of the month before or after,
  * shown to fill the weeks, is calendar__day--outside, a modifier as it has no ARIA meaning.
@@ -21,31 +21,27 @@
     padding: 0 2px;
 }
 
-/* The row's box shares it with the Previous and Next toolbar */
-.calendar__row .selection-box {
+/* The row's box (a selection box) shares it with the Previous and Next toolbar. Under the row, to
+   outrank selection-box.css's width, which comes later */
+.calendar__row .calendar__select {
     flex-grow: 1;
     width: 5px;
 }
 
-.calendar__row .selection-box input {
+.calendar__row .calendar__select input {
     min-width: 5px;
 }
 
 /* The Previous and Next buttons, a toolbar beside each box, spaced as the row is */
-.calendar__row > .toolbar {
+.calendar__row > .calendar__toolbar {
     margin: 0;
     gap: 4px;
 }
 
-.calendar__row .toolbar-button {
+/* Each a small arrow (toolbar-button--arrow) */
+.calendar__row .calendar__button {
     width: 26px;
     height: 26px;
-}
-
-.calendar__row .toolbar-button__icon {
-    color: var(--navigation__text-color);
-    width: 10px;
-    height: 10px;
 }
 
 .calendar__grid {
@@ -59,7 +55,7 @@
     width: 30px;
     height: 30px;
     padding: 0;
-    /* Centred both ways, so a day's fill and focus ring are round its number (stroom.css puts a
+    /* Centred both ways, so a day's fill and focus ring are round its number (base.css puts a
        table cell's content at its top) */
     text-align: center;
     vertical-align: middle;

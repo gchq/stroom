@@ -16,24 +16,27 @@
 
 package stroom.widget.valuespinner.client;
 
-import stroom.svg.shared.SvgImage;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Label;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// A field for a whole number, with arrows inside the end of its border that step the value down and
 /// up while pressed (held, they keep stepping, faster and faster). It is a WAI-ARIA spin button: from
@@ -44,22 +47,34 @@ import com.google.gwt.user.client.ui.Widget;
 /// (in the form group's feedback, if the spinner is in a [FormGroup]) and announced, until a value is
 /// accepted.
 ///
-/// Styled by value-spinner.css: `value-spinner`, `value-spinner__field`, `value-spinner__input`,
-/// `value-spinner__steps`, `value-spinner__step`, `value-spinner__icon`, `value-spinner__feedback`
-/// and `value-spinner__status`.
+/// Its markup is `ValueSpinner.ui.xml`, styled by value-spinner.css: `value-spinner`,
+/// `value-spinner__field`, `value-spinner__input`, `value-spinner__steps`, `value-spinner__step`,
+/// `value-spinner__icon`, `value-spinner__feedback` and `value-spinner__status`.
 /// (`ValueSpinnerCell`, the data grid's spinner, renders the same markup with `value-spinner--cell`.)
 public class ValueSpinner
         extends Composite
         implements Focus, HasValue<Long> {
 
-    private static final String BLOCK = "value-spinner";
+    private static final Binder BINDER = GWT.create(Binder.class);
     // The steps Page Up and Page Down take
     private static final int PAGE_STEPS = 10;
 
-    private final Spinner spinner;
-    private final TextBox valueBox = new TextBox();
-    private final Label feedback = new Label();
-    private final Label status = new Label();
+    private final ValueSpinnerModel spinner;
+    @UiField
+    TextBox valueBox;
+    @UiField
+    DivElement decrease;
+    @UiField
+    DivElement increase;
+    // Why a typed value was rejected, shown under the field when it isn't in a form group (one
+    // in a form group shows it in the group's feedback, as the group's other controls do)
+    @UiField
+    Label feedback;
+    // Says why a value was rejected, as it happens: the focus has usually left the field (the
+    // field's description says it again when it is focused)
+    @UiField
+    DivElement status;
+    private Consumer<Long> onChange;
     // The form group showing why a value was rejected, or null if none is
     private FormGroup rejectingFormGroup;
     // Whether the field's own feedback is showing why a value was rejected
@@ -70,17 +85,17 @@ public class ValueSpinner
     private boolean readOnly;
 
     public ValueSpinner() {
-        spinner = new Spinner();
+        initWidget(BINDER.createAndBindUi(this));
+        spinner = new ValueSpinnerModel();
         spinner.addValueChangeHandler(event -> {
             showValue(event.getValue());
             // A value accepted, so any rejection no longer applies
             clearRejection();
+            if (onChange != null) {
+                onChange.accept(event.getValue());
+            }
         });
 
-        valueBox.addStyleName("allow-focus");
-        valueBox.addStyleName(BLOCK + "__input");
-        // A spin button (WAI-ARIA), so screen readers say what it is, its value and its bounds
-        valueBox.getElement().setAttribute("role", "spinbutton");
         valueBox.addBlurHandler(event -> updateSpinner());
         valueBox.addKeyDownHandler(event -> {
             if (readOnly) {
@@ -102,55 +117,35 @@ public class ValueSpinner
         updateBounds();
 
         // The arrows, inside the end of the field's border, as a drop-down's arrow is
-        final FlowPanel steps = new FlowPanel();
-        steps.setStyleName(BLOCK + "__steps");
-        steps.add(stepArrow(SvgImage.ARROW_DOWN, "Decrease value", false));
-        steps.add(stepArrow(SvgImage.ARROW_UP, "Increase value", true));
-
-        // Why a typed value was rejected, shown under the field when it isn't in a form group (one
-        // in a form group shows it in the group's feedback, as the group's other controls do)
-        feedback.setStyleName(BLOCK + "__feedback");
-        // Says why a value was rejected, as it happens: the focus has usually left the field (the
-        // field's description says it again when it is focused)
-        status.setStyleName(BLOCK + "__status");
-        status.getElement().setAttribute("aria-live", "polite");
-
-        // The field and its arrows, which are placed on the field alone (not on its feedback)
-        final FlowPanel field = new FlowPanel();
-        field.setStyleName(BLOCK + "__field");
-        field.add(valueBox);
-        field.add(steps);
-
-        final FlowPanel layout = new FlowPanel();
-        layout.setStyleName(BLOCK);
-        layout.add(field);
-        layout.add(feedback);
-        layout.add(status);
-
-        initWidget(layout);
+        listenForPresses(decrease, false);
+        listenForPresses(increase, true);
     }
 
-    // An arrow that steps the value while it is pressed (with the mouse, a finger or a pen): it steps
+    /// @param onChange Told the new value when the user changes it (or `setValue(value, true)`
+    ///                 does), or null for nothing.
+    public void setOnChange(final Consumer<Long> onChange) {
+        this.onChange = onChange;
+    }
+
+    /// Names the field for screen readers where no label names it. Bound to the `ariaLabel`
+    /// attribute in ui.xml.
+    ///
+    /// @param ariaLabel The name, or null or blank for none.
+    public void setAriaLabel(final String ariaLabel) {
+        valueBox.setAriaLabel(ariaLabel);
+    }
+
+    // Makes an arrow step the value while it is pressed (with the mouse, a finger or a pen): it steps
     // at once, then keeps stepping, faster and faster, while it is held. It isn't a button: the keys
     // in the field do what it does, so (as the WAI-ARIA spin button pattern allows) it is no tab stop
-    // and is hidden from screen readers, its title naming it for the mouse
-    private Widget stepArrow(final SvgImage icon, final String name, final boolean increment) {
-        final SimplePanel arrow = new SimplePanel();
-        arrow.setStyleName(BLOCK + "__step");
-        arrow.setTitle(name);
-        arrow.getElement().setInnerHTML(icon.getSvg());
-        // An SVG element's className isn't a string, so set the class attribute itself
-        arrow.getElement().getFirstChildElement().setAttribute("class", BLOCK + "__icon");
-        arrow.getElement().setAttribute("aria-hidden", "true");
-        // A press neither takes the focus from the field nor starts selecting text
-        arrow.addDomHandler(event -> event.preventDefault(), MouseDownEvent.getType());
-        listenForPresses(arrow.getElement(), increment);
-        return arrow;
-    }
-
+    // and is hidden from screen readers (ValueSpinner.ui.xml), its title naming it for the mouse.
     // Pointer events, so that a press with a finger or a pen steps and repeats as the mouse's does
     private native void listenForPresses(Element arrow, boolean increment) /*-{
         var self = this;
+        // A press neither takes the focus from the field nor starts selecting text
+        arrow.addEventListener('mousedown', function (event) {
+            event.preventDefault();
+        });
         arrow.addEventListener('pointerdown', function (event) {
             if (event.button === 0) {
                 self.@stroom.widget.valuespinner.client.ValueSpinner::onArrowPressed(ZZ)(
@@ -287,7 +282,7 @@ public class ValueSpinner
             FieldValidity.setInvalid(valueBox, feedback, message);
             showingFeedback = true;
         }
-        status.setText(message);
+        status.setInnerText(message);
     }
 
     // Clears what reject said, if anything
@@ -300,7 +295,7 @@ public class ValueSpinner
             FieldValidity.setValid(valueBox, feedback);
             showingFeedback = false;
         }
-        status.setText("");
+        status.setInnerText("");
     }
 
     private String rejectionMessage(final String rejectedText) {
@@ -336,8 +331,6 @@ public class ValueSpinner
         }
         return (FormGroup) parent;
     }
-
-
 
     /**
      * @return whether this widget is enabled.
@@ -397,6 +390,29 @@ public class ValueSpinner
     public void setMax(final long max) {
         spinner.setMax(max);
         updateBounds();
+    }
+
+    /// The largest value it can have, from a template (`maxValue="59"`): UiBinder can't parse the
+    /// `long` [#setMax(long)] takes.
+    ///
+    /// @param max The largest value it can have.
+    public void setMaxValue(final int max) {
+        setMax(max);
+    }
+
+    /// The smallest value it can have, from a template (`minValue="0"`): UiBinder can't parse the
+    /// `long` [#setMin(long)] takes.
+    ///
+    /// @param min The smallest value it can have.
+    public void setMinValue(final int min) {
+        setMin(min);
+    }
+
+    /// Names its text box for assistive technology, where no label is for it (see [AccessibleName]).
+    ///
+    /// @param name The name, e.g. `Character count`.
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(this, name);
     }
 
     public void setMaxStep(final int maxStep) {
@@ -466,5 +482,13 @@ public class ValueSpinner
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         spinner.fireEvent(event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ValueSpinner> {
+
     }
 }

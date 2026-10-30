@@ -16,6 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
+import stroom.data.client.component.ClassificationLabel;
+import stroom.data.client.component.ClassificationLabelController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -34,7 +36,7 @@ final class DisplayWidgets {
     }
 
     /// Creates a harness whose UI config has a theme with the given label colours, which Stroom's
-    /// `ClassificationLabel` reads from the `UiConfigCache`.
+    /// `ClassificationLabelController` reads from the `UiConfigCache`.
     ///
     /// @param context         The story's context.
     /// @param labelColoursCsv The label colours, e.g. `OFFICIAL=green,SECRET=#ff9800`, or null for
@@ -49,13 +51,23 @@ final class DisplayWidgets {
                 .build();
     }
 
+    /// Gives a label the harness's label colours, as Stroom's screens do: a
+    /// [ClassificationLabelController] attached to it, owned by the story's root.
+    ///
+    /// @param harness The harness.
+    /// @param label   The label.
+    /// @return The label.
+    static ClassificationLabel withColours(final ScreenHarness harness, final ClassificationLabel label) {
+        harness.own(new ClassificationLabelController(harness.getUiConfigCache())).attach(label);
+        return label;
+    }
+
     private static String jsonEscape(final String text) {
         return text.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     /// Runs an action once the harness's UI config has been fetched, so that a
-    /// `ClassificationLabel` created by the action reads the label colours at once (it reads them
-    /// from the cache when it is created, and ignores a later change).
+    /// `ClassificationLabel` created by the action has its colours from the start.
     ///
     /// @param harness The harness.
     /// @param action  What to do once the UI config is in the cache.

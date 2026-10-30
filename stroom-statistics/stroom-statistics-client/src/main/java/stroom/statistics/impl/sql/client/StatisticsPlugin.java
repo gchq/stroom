@@ -25,9 +25,9 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
+import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticResource;
@@ -35,8 +35,8 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -54,17 +54,19 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
 
-    private final Provider<StatisticsDataSourcePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<StatisticsDataSourceEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public StatisticsPlugin(final EventBus eventBus,
-                            final Provider<StatisticsDataSourcePresenter> editorProvider,
+                            final Provider<StatisticsDataSourceEditor> editorProvider,
                             final RestFactory restFactory,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager,
                             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
@@ -81,31 +83,31 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), StatisticStoreDoc.TYPE);
     }
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocPresenter<?, ?>) {
-            final DocPresenter<?, StatisticStoreDoc> presenter =
-                    (DocPresenter<?, StatisticStoreDoc>) tabData;
-            if (presenter.isDirty()) {
-                final StatisticStoreDoc entity = presenter.getEntity();
+        if (tabData instanceof DocumentEditorHost<?>) {
+            final DocumentEditorHost<StatisticStoreDoc> controller =
+                    (DocumentEditorHost<StatisticStoreDoc>) tabData;
+            if (controller.isDirty()) {
+                final StatisticStoreDoc entity = controller.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
                 load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, presenter),
+                        entityFromDb -> doConfirmSave(controller, entity, entityFromDb, controller),
                         throwable -> {
                         },
-                        presenter);
+                        controller);
             }
         }
     }
 
-    private void doConfirmSave(final DocPresenter<?, StatisticStoreDoc> presenter,
+    private void doConfirmSave(final DocumentEditorHost<StatisticStoreDoc> controller,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -120,7 +122,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         final List<StatisticField> prevFieldList = dbConfig.getFields();
         final Set<CustomRollUpMask> prevMaskSet = dbConfig.getCustomRollUpMasks();
 
-        final StatisticStoreDoc writtenEntity = presenter.write(entity);
+        final StatisticStoreDoc writtenEntity = controller.write(entity);
         final StatisticsDataSourceData writtenConfig = NullSafe.getOrElse(
                 writtenEntity,
                 StatisticStoreDoc::getConfig,
@@ -146,23 +148,22 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                                                     "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, writtenEntity, taskMonitorFactory);
+                            doSave(controller, writtenEntity, taskMonitorFactory);
                         } else {
                             // Re-enable popup buttons.
                         }
                     });
         } else {
             // user has changed some attributes we don't care about so just do the save
-            doSave(presenter, writtenEntity, taskMonitorFactory);
+            doSave(controller, writtenEntity, taskMonitorFactory);
         }
     }
 
-    private void doSave(final DocPresenter<?, StatisticStoreDoc> presenter,
+    private void doSave(final DocumentEditorHost<StatisticStoreDoc> controller,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
-                        presenter.read(DocRefUtil.create(doc), doc,
-                                presenter.isReadOnly()),
+                        controller.read(DocRefUtil.create(doc), doc),
                 throwable -> {
                 },
                 taskMonitorFactory);

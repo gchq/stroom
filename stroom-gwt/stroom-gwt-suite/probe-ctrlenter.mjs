@@ -15,7 +15,7 @@
  */
 // Why does Ctrl+Enter do nothing on some dialogs whose OK button works?
 //
-// `ResizableOkCancelContent`'s OK button calls `onDialogAction(DialogAction.OK)` — the very method
+// `ResizableOkCancelContent`'s OK button (now `OkCancelContent`'s) calls `onDialogAction(DialogAction.OK)` — the very method
 // `AbstractPopupPanel` calls for `Action.OK` (Ctrl+Enter, KeyBinding:79). The two are the same path,
 // so a dialog where the button works and the key does not means the key never arrived as Action.OK.
 // This opens `Edit Property` on a Pipeline's Structure tab and reports, at the moment of the press,

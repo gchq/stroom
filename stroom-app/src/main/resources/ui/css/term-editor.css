@@ -1,0 +1,119 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.term-editor {
+	display: flex;
+	gap: 5px;
+}
+
+.term-editor__fields {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+    min-width: 50px;
+    min-height: 24px;
+    height: 24px;
+}
+
+.term-editor__item {
+	display: inline-block;
+	margin: 0px;
+	overflow: hidden;
+	background-color: transparent !important;
+	border: none !important;
+	vertical-align: top;
+	background-position: right;
+	background-origin: border-box;
+    min-width: 50px;
+    min-height: 24px;
+    height: 24px;
+	flex-shrink: 0;
+}
+
+/* Keyboard focus on a field (or in it, e.g. a selection box's input): the focus border, inside the
+   field, as the fields have no border of their own and clip anything drawn outside them. 3:1 (3.9
+   and 3.5) on the selected row's colour, which a term being edited has */
+.term-editor__item:is(:focus-visible, :has(:focus-visible)) {
+	outline: 2px solid var(--focus-border);
+	outline-offset: -2px;
+}
+
+.term-editor__fields input {
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    padding: 3px 5px;
+    min-width: auto;
+}
+
+.term-editor__item.term-editor__item--wide {
+	width: 400px;
+	min-width: 300px;
+}
+
+.term-editor__item.term-editor__item--narrow {
+	width: 175px;
+    min-width: 175px;
+}
+
+
+
+/* An expression's operator (OperatorEditor): AND, OR or NOT */
+.term-editor__item.term-editor__item--operator {
+	width: 55px;
+}
+
+.term-editor__item.term-editor__item--condition {
+    /* Need room for 'matches regex (case sensitive)' */
+	width: 160px;
+	padding-right: 25px;
+}
+
+.term-editor__item.term-editor__item--condition-wide {
+	width: 230px;
+}
+
+.term-editor__item.term-editor__item--picker {
+	width: 200px;
+	min-width: 200px;
+	margin-top: 1px;
+}
+
+/* The document picker sits level with the other boxes, as its inline margin once put it */
+.term-editor__item.term-editor__item--doc {
+	margin: 0;
+}
+
+.term-editor__label {
+    display: flex;
+    margin: 0px;
+    padding: 0 5px;
+    height: 23px;
+    align-items: center;
+}
+
+.term-editor__label.term-editor__label--field-type {
+	background-color: rgb(32 148 243 / 60%);
+	border-radius: 10px;
+	font-weight: bold;
+	border: solid 1px rgb(33 150 243);
+}
+
+.expression-item--disabled .term-editor__label.term-editor__label--field-type {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}

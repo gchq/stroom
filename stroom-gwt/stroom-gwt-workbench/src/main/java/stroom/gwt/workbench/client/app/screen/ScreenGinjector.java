@@ -19,11 +19,11 @@ package stroom.gwt.workbench.client.app.screen;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.preferences.client.CurrentPreferences;
 
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
@@ -41,11 +41,11 @@ import com.google.web.bindery.event.shared.EventBus;
 /// * [LocationManager] → [StoryLocationManager] (downloads are recorded, not navigated to);
 /// * `GlobalKeyHandler` → [StoryGlobalKeyHandler] (no app keyboard shortcuts).
 ///
-/// Every getter returns a singleton of the injector, so e.g. a story's presenter and the harness
-/// share one [UiConfigCache]. Screens (presenters and views) are not added here: a story creates
+/// Every getter returns a singleton of the injector, so e.g. a story's controller and the harness
+/// share one [UiConfigCache]. Screens (controllers and components) are not added here: a story creates
 /// a simple one with `new`, passing in what it gets from here, or gets it from
 /// `stroom.gwt.workbench.client.app.gin.AppScreenGinjector`, which extends this with Stroom's
-/// presenter bindings (see `ScreenHarness.Builder.injector`).
+/// controller bindings (see `ScreenHarness.Builder.injector`).
 @GinModules(ScreenGinModule.class)
 public interface ScreenGinjector extends Ginjector {
 

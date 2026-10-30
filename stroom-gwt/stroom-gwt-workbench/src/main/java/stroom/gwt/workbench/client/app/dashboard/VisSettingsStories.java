@@ -25,7 +25,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// The settings of a dashboard's visualisation (`BasicVisSettingsPresenter`, `DynamicSettingsPane`)
+/// The settings of a dashboard's visualisation (`BasicVisSettingsController`, `DynamicSettingsPane`)
 /// for a visualisation that declares typed inputs: the content pack's BarChart, whose Y axis takes
 /// numbers and is required. A field control offers only the table's columns of a type its input
 /// takes, says what the input is for, and says what is wrong when the column chosen isn't one it

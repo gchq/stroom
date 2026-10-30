@@ -28,26 +28,27 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
+import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.datagrid.client.model.ColumnSizing;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -167,6 +168,16 @@ public final class DataGridStories {
                 .story("Pager", DataGridStories::pager)
                 .withPlay(play -> play.waitFor(() -> play.expect(play.querySelectorAll(ROW))
                         .toHaveLength(PAGER_PAGE_SIZE)))
+                // The pager panel's message over the list, as a table shows a search's errors: each
+                // line on a line of its own, none wrapped (the screenshot shows it). It is centred on
+                // its nearest positioned container: in Stroom a component's layer, here the canvas
+                .story("PagerMessage", DataGridStories::pagerMessage)
+                .withPlay(play -> {
+                    final Query message = play.querySelector(".message-panel__message");
+                    play.waitFor(() -> play.expect(message).toBeVisible());
+                    play.expect(message).toHaveStyle("white-space", "nowrap");
+                    play.expect(message).toHaveTextContent(TextMatch.containing("could not be reached"));
+                })
                 // Empty state: no rows, blank as MyDataGrid's
                 .story("EmptyState", context -> {
                     final DataGrid<Person> grid = personGrid();
@@ -272,6 +283,13 @@ public final class DataGridStories {
                 // Right-click a row: the grid's own menu (Copy, Export Table, Ask Stroom AI About)
                 .story("ContextMenu", ColumnInteractionGrids::contextMenu)
                 .withPlay(ColumnInteractionGrids::contextMenuPlay)
+                // A link's menu items go where a click on it goes: to what handles the grid's links
+                // (as a dashboard's table, which adds its dashboard; they skipped it, so a dashboard
+                // opened from the menu had no parent), or, with nothing handling them, to the app
+                .story("LinkMenuThroughTheGrid", context -> ColumnInteractionGrids.linkMenuGrid(context, true))
+                .withPlay(play -> ColumnInteractionGrids.linkMenuPlay(play, true))
+                .story("LinkMenuToTheApp", context -> ColumnInteractionGrids.linkMenuGrid(context, false))
+                .withPlay(play -> ColumnInteractionGrids.linkMenuPlay(play, false))
 
                 // Row height and virtualisation
 
@@ -330,6 +348,35 @@ public final class DataGridStories {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(4));
                     play.expect(play.querySelector(".data-grid__head")).toHaveStyle("display", "none");
                 })
+                // The header hidden and shown again after the grid is drawn: it went only once the
+                // grid's structure changed, as only drawing the header set its display
+                .story("HeaderHiddenAfterRender", context -> {
+                    final DataGrid<Person> grid = plainGrid();
+                    final Button toggle = new Button("Hide header");
+                    toggle.addClickHandler(event -> {
+                        final boolean hide = "Hide header".equals(toggle.getText());
+                        grid.setHideHeader(hide);
+                        toggle.setText(hide
+                                ? "Show header"
+                                : "Hide header");
+                    });
+                    final FlowPanel frame = new FlowPanel();
+                    frame.add(toggle);
+                    frame.add(sized(paged(grid), "320px", "900px"));
+                    return frame;
+                })
+                .withPlay(play -> {
+                    final Query head = play.querySelector(".data-grid__head");
+                    play.waitFor(() -> play.expect(play.querySelectorAll(ROW).nth(0)).toBeVisible());
+                    play.expect(head).toBeVisible();
+                    final Value<Double> height = play.capture("the header's height", head.height());
+                    play.click(play.getByRole("button", "Hide header"));
+                    play.waitFor(() -> play.expect(head).toHaveStyle("display", "none"));
+                    play.click(play.getByRole("button", "Show header"));
+                    play.waitFor(() -> play.expect(head).toBeVisible());
+                    play.expect("the header's height again, less its height before",
+                            () -> head.height().get() - height.get()).toBe(0.0);
+                })
                 // The fill columns share the surplus width by weight
                 .story("ColumnFillWeights", context -> sized(paged(noteGrid(true)), "320px", "900px"))
                 .withPlay(play -> expectHeaderWidths(play, 300L, 260L, 340L))
@@ -356,7 +403,7 @@ public final class DataGridStories {
                     play.expect(play.querySelector(GRID)).toHaveClass("data-grid--multiline");
                     play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                 })
-                // Row column spans: as MarkerListPresenter spans its summary rows
+                // Row column spans: as MarkerList spans its summary rows
                 .story("RowColumnSpans", DataGridStories::rowColumnSpans)
                 .withPlay(play -> {
                     final Query rows = play.querySelectorAll(ROW);
@@ -511,6 +558,9 @@ public final class DataGridStories {
                     play.expect(input).toHaveAccessibleDescription(
                             "\"0\" isn't allowed. Enter a whole number from 1 to 9999.");
                     play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1);
+                    // The same screenshot every run, however many polls the play took
+                    play.run("stop polling", InteractiveCellGrids::stopPolling);
+                    play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
                 })
                 // ExpanderCell: the expander opens and closes the tree without selecting the row
                 // A right-click on a cell's text field shows the field's edit items (Cut, Copy, Paste
@@ -547,12 +597,12 @@ public final class DataGridStories {
                     final Query rows = play.querySelectorAll(ROW);
                     play.waitFor(() -> play.expect(rows).toHaveLength(2));
                     final Query engineering = InteractiveCellGrids.rowOf(play, "Engineering");
-                    play.click(play.within(engineering).querySelector(".expanderIcon"));
+                    play.click(play.within(engineering).querySelector(".expander-cell__icon"));
                     play.waitFor(() -> play.expect(rows).toHaveLength(4));
                     play.expect(play.getByText("Alice Johnson")).toBeInTheDocument();
                     play.expect(engineering).toHaveAttribute("aria-selected", "false");
 
-                    play.click(play.within(engineering).querySelector(".expanderIcon"));
+                    play.click(play.within(engineering).querySelector(".expander-cell__icon"));
                     play.waitFor(() -> play.expect(rows).toHaveLength(2));
                 })
                 // A grid with an expander column is a treegrid: its rows say their level and whether
@@ -568,7 +618,7 @@ public final class DataGridStories {
                     play.expect(engineering).toHaveAttribute("aria-expanded", "false");
                     // The expander says what a press does, to the mouse; the row tells assistive
                     // technology (aria-expanded), so the expander is hidden from it
-                    final Query expander = play.within(engineering).querySelector(".expanderCell");
+                    final Query expander = play.within(engineering).querySelector(".expander-cell");
                     play.expect(expander).toHaveAttribute("title", "Expand");
                     play.expect(expander).toHaveAttribute("aria-hidden", "true");
 
@@ -577,7 +627,7 @@ public final class DataGridStories {
                     play.waitFor(() -> play.expect(rows).toHaveLength(4));
                     play.expect(engineering).toHaveAttribute("aria-expanded", "true");
                     play.expect(engineering).toHaveFocus();
-                    play.expect(play.within(engineering).querySelector(".expanderCell"))
+                    play.expect(play.within(engineering).querySelector(".expander-cell"))
                             .toHaveAttribute("title", "Collapse");
 
                     play.keyboard("{ArrowDown}");
@@ -608,7 +658,7 @@ public final class DataGridStories {
                 .withPlay(play -> {
                     final Query row = InteractiveCellGrids.rowOf(play, "Carol Williams");
                     play.waitFor(() -> play.expect(row).toBeInTheDocument());
-                    play.click(play.within(row).querySelector(".commandLinkOpen"));
+                    play.click(play.within(row).querySelector(".command-link__open"));
                     play.waitFor(() -> play.expect(play.spy(InteractiveCellGrids.ON_OPEN))
                             .toHaveBeenCalledWith("Carol Williams"));
                     play.expect(row).toHaveAttribute("aria-selected", "false");
@@ -644,7 +694,7 @@ public final class DataGridStories {
         final List<Person> original = DataGridRows.people();
         addSortableColumns(grid);
         final Spy onSortChange = context.fn(ON_SORT_CHANGE);
-        // As Stroom's client-sorted list presenters: the data model sorts on the grid's sort list
+        // As Stroom's client-sorted list controllers: the data model sorts on the grid's sort list
         grid.addColumnSortHandler(event -> {
             final List<Person> rows = new ArrayList<>(original);
             final Comparator<Person> comparator = comparator(grid.getColumnSortList());
@@ -683,11 +733,11 @@ public final class DataGridStories {
     }
 
     private static Widget pager(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), PAGER_PAGE_SIZE);
+        final DataGrid<Person> grid = new DataGrid<>(PAGER_PAGE_SIZE);
         grid.setWidth("100%");
         grid.setHeight("100%");
         addPlainColumns(grid);
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         final ListDataProvider<Person> dataProvider = new ListDataProvider<>(DataGridRows.people());
         dataProvider.addDataDisplay(grid);
@@ -696,14 +746,22 @@ public final class DataGridStories {
         return sized(pagerView.asWidget(), "260px", null);
     }
 
+    private static Widget pagerMessage(final StoryContext context) {
+        final DataGrid<Person> grid = plainGrid();
+        final PagerPanel pagerView = new PagerPanel();
+        pagerView.setDataWidget(grid);
+        pagerView.getMessagePanel().showMessage(List.of(
+                new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
+        return sized(pagerView.asWidget(), "260px", "600px");
+    }
+
     private static Widget manyRows(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(),
-                DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        final DataGrid<Person> grid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
         addPlainColumns(grid);
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         final ListDataProvider<Person> dataProvider = new ListDataProvider<>(DataGridRows.generatedPeople(MANY_ROWS));
         dataProvider.addDataDisplay(grid);
@@ -763,7 +821,7 @@ public final class DataGridStories {
         return column(buttons, sized(paged(grid), "300px", null), label);
     }
 
-    /// As Stroom's views put a grid in a filling form group, e.g. `DataRetentionRuleViewImpl`'s
+    /// As Stroom's views put a grid in a filling form group, e.g. `DataRetentionRuleEditor`'s
     /// `<form:FormGroup addStyleNames="dock-max"><g:SimplePanel styleName="max"/>`.
     private static Widget fillingFormGroup(final StoryContext context) {
         final DataGrid<Person> grid = personGrid();
@@ -812,7 +870,7 @@ public final class DataGridStories {
 
     private static Widget rowColumnSpans(final StoryContext context) {
         final DataGrid<Note> grid = noteGrid(false);
-        // As MarkerListPresenter.setData: span the first row's first cell across all three columns
+        // As MarkerList.setData: span the first row's first cell across all three columns
         grid.setRowSpans((row, absIndex) -> absIndex == 0
                 ? Collections.singletonMap(0, 3)
                 : Collections.emptyMap());
@@ -820,7 +878,7 @@ public final class DataGridStories {
     }
 
     private static Widget toggleKeepsPosition(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), TOGGLE_ROWS);
+        final DataGrid<Person> grid = new DataGrid<>(TOGGLE_ROWS);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
@@ -829,7 +887,7 @@ public final class DataGridStories {
         return toggleFrame(grid, sized(paged(grid), "280px", null));
     }
 
-    /// As SteppingFilterPresenter's element chooser, but as a [DataGrid] with the header
+    /// As SteppingFilterEditor's element chooser, but as a [DataGrid] with the header
     /// hidden rather than a cell table.
     private static Widget headerless(final StoryContext context) {
         final DataGrid<Note> grid = noteGrid(false);
@@ -848,11 +906,15 @@ public final class DataGridStories {
     }
 
     private static Widget percentColumns(final StoryContext context) {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
-        grid.addPercentColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", 25);
-        grid.addPercentColumn(DataGridUtil.textColumnBuilder(Note::getDescription).build(), "Description", 50);
+        grid.addColumn(DataGridUtil.textColumnBuilder(Note::getName).build(),
+                DataGridUtil.headingBuilder("Name").build(),
+                ColumnSizing.percent(25));
+        grid.addColumn(DataGridUtil.textColumnBuilder(Note::getDescription).build(),
+                DataGridUtil.headingBuilder("Description").build(),
+                ColumnSizing.percent(50));
         grid.addAutoResizableColumn(DataGridUtil.textColumnBuilder(DataGridStories::noteValue).build(),
                 "Value", 100);
         grid.setRowData(DataGridRows.notes());
@@ -864,7 +926,7 @@ public final class DataGridStories {
     // Grids and columns
 
     private static DataGrid<Person> personGrid() {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         return grid;
@@ -956,9 +1018,9 @@ public final class DataGridStories {
     }
 
     /// The notes grid: Name fixed at 300, then Value and Description filling 30/70 with a minimum
-    /// of 200, as `PropertyListPresenter`'s.
+    /// of 200, as `PropertyList`'s.
     private static DataGrid<Note> noteGrid(final boolean multiLine) {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", NOTE_COLUMN_WIDTH);
@@ -972,7 +1034,7 @@ public final class DataGridStories {
     }
 
     private static DataGrid<Note> noteGridWithoutFill() {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", NOTE_COLUMN_WIDTH);
@@ -992,9 +1054,9 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Layout
 
-    /// The grid in Stroom's [PagerViewImpl], as Stroom's list presenters show their grids.
+    /// The grid in Stroom's [PagerPanel], as Stroom's list controllers show their grids.
     private static Widget paged(final DataGrid<?> grid) {
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         return pagerView.asWidget();
     }

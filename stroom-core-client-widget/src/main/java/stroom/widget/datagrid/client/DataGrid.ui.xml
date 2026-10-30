@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The data grid's parts (data-grid.css). The scroller is the grid as far as ARIA is concerned
+  (its role changes with the grid's profile, or to treegrid for a tree), and takes the keyboard
+  focus, so a grid can always be scrolled from the keyboard; key events bubble from it to the root,
+  where they are handled. The header and rows are drawn into headerRow and body from the columns
+  and data. Over them float the scrollbars (OverlayScrollbars) and, in the header and over the
+  grid, the parts that resize and move columns (ColumnInteractions), each hidden until needed.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="data-grid data-grid--header-selection">
+        <div ui:field="scroller" class="data-grid__scroller" role="grid" tabindex="0">
+            <div ui:field="head" class="data-grid__head">
+                <div ui:field="headerRow" class="data-grid__header-row" role="row"></div>
+                <div ui:field="resizeHandle" class="data-grid__resize-handle"></div>
+            </div>
+            <div ui:field="content" class="data-grid__content">
+                <div ui:field="body" class="data-grid__body" role="rowgroup"></div>
+                <div ui:field="empty" class="data-grid__empty"></div>
+            </div>
+        </div>
+        <div ui:field="verticalTrack" class="data-grid__track data-grid__track--vertical">
+            <div ui:field="verticalThumb" class="data-grid__thumb"></div>
+        </div>
+        <div ui:field="horizontalTrack" class="data-grid__track data-grid__track--horizontal">
+            <div ui:field="horizontalThumb" class="data-grid__thumb"></div>
+        </div>
+        <div ui:field="resizeLine" class="data-grid__resize-line"></div>
+        <div ui:field="moveGhost" class="data-grid__move-ghost"></div>
+        <div ui:field="moveLine" class="data-grid__move-line"></div>
+    </div>
+</ui:UiBinder>

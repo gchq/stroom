@@ -29,26 +29,26 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/IdP/ChangePassword` stories, showing Stroom's real 'Change Password' dialog
-/// (`ChangePasswordPresenter` with `ChangePasswordViewImpl`) as the sign in page shows it when the
-/// server requires a new password (`LoginPresenter.changePassword`), for the user `alice` who
+/// (`ChangePasswordController` with `ChangePassword`) as the sign in page shows it when the
+/// server requires a new password (`LoginController.changePassword`), for the user `alice` who
 /// signed in with `correct-horse`.
 ///
 /// The password policy is `GET /authentication/v1/fetchPasswordPolicy` (replying after 100ms) and
 /// the change `POST /authentication/v1/changePassword` (after 250ms). Cancel hides the dialog, as
-/// `LoginPresenter` does.
+/// `LoginController` does.
 ///
-/// The dialog's OK handler is `LoginPresenter.changePassword`'s (a private method), copied here
+/// The dialog's OK handler is `LoginController.changePassword`'s (a private method), copied here
 /// with its `afterLogin()` (a navigation) replaced by an echo of the change, recorded by the
 /// `onChanged` spy.
 public final class ChangePasswordStories {
@@ -105,11 +105,11 @@ public final class ChangePasswordStories {
                     final Query password = dialog.getByLabelText("Password");
                     play.type(password, "ab");
                     play.expect(password).toHaveFocus();
-                    play.expect(dialog.querySelector(".password-length")).toHaveTextContent("2");
+                    play.expect(dialog.querySelector(".change-password__length")).toHaveTextContent("2");
                     play.type(password, "c1Tr0ub4dour&3xtra");
                     play.expect(password).toHaveFocus();
                     IdpPlays.waitForStrengthScored(play, dialog, "2-5");
-                    play.expect(dialog.querySelector(".password-length")).toHaveTextContent("9+");
+                    play.expect(dialog.querySelector(".change-password__length")).toHaveTextContent("9+");
                     // The strength meter is a meter to screen readers, saying how strong the password is
                     final Query meter = dialog.getByRole("meter", "Password strength");
                     play.expect(meter).toHaveAttribute("aria-valuemax", "5");
@@ -205,41 +205,34 @@ public final class ChangePasswordStories {
         harness.add(column);
 
         final AuthenticationResource resource = GWT.create(AuthenticationResource.class);
-        final ChangePasswordPresenter presenter = injector.getChangePasswordPresenter();
-        // As LoginPresenter.changePassword, with afterLogin() replaced by the onChanged spy
-        presenter.show(CAPTION, e -> {
-            if (e.isOk()) {
-                if (presenter.validate()) {
-                    final ChangePasswordRequest request = new ChangePasswordRequest(
-                            "alice",
-                            "correct-horse",
-                            presenter.getPassword(),
-                            presenter.getConfirmPassword());
-                    harness.getRestFactory()
-                            .create(resource)
-                            .method(res -> res.changePassword(request))
-                            .onSuccess(response -> {
-                                if (response.isChangeSucceeded()) {
-                                    final String changed = response.isForceSignIn()
-                                            ? "changed ✓ — forceSignIn: redirect to login"
-                                            : "changed ✓";
-                                    result.setText("onChanged: " + changed);
-                                    harness.spy(ON_CHANGED, changed);
-                                } else {
-                                    AlertEvent.fireError(presenter, response.getMessage(), e::reset);
-                                }
-                            })
-                            .onFailure(RestErrorHandler.forPopup(presenter, e))
-                            .taskMonitorFactory(new DefaultTaskMonitorFactory(presenter))
-                            .exec();
-                } else {
-                    e.reset();
-                }
-            } else {
-                e.hide();
-                result.setText("onChanged: cancelled");
-                harness.spy(ON_CANCEL, null);
-            }
+        final ChangePasswordController dialog = injector.getChangePasswordController();
+        // As LoginController.changePassword, with afterLogin() replaced by the onChanged spy
+        dialog.show(harness.getAppRoot(), CAPTION, (password, confirmPassword, e) -> {
+            final ChangePasswordRequest request = new ChangePasswordRequest(
+                    "alice",
+                    "correct-horse",
+                    password,
+                    confirmPassword);
+            harness.getRestFactory()
+                    .create(resource)
+                    .method(res -> res.changePassword(request))
+                    .onSuccess(response -> {
+                        if (response.isChangeSucceeded()) {
+                            final String changed = response.isForceSignIn()
+                                    ? "changed ✓ — forceSignIn: redirect to login"
+                                    : "changed ✓";
+                            result.setText("onChanged: " + changed);
+                            harness.spy(ON_CHANGED, changed);
+                        } else {
+                            AlertEvent.fireError(dialog, response.getMessage(), e::reset);
+                        }
+                    })
+                    .onFailure(RestErrorHandler.forPopup(dialog, e))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(dialog))
+                    .exec();
+        }, () -> {
+            result.setText("onChanged: cancelled");
+            harness.spy(ON_CANCEL, null);
         });
         return harness.asWidget();
     }

@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Annotation tags of one type, with New, Edit, Delete and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Tag actions" addStyleNames="default-min-sizes">
+        <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Annotation Tag"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Annotation Tag" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Annotation Tag"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Annotation Tags"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

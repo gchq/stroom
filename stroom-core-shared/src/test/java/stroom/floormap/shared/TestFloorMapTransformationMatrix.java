@@ -356,7 +356,7 @@ class TestFloorMapTransformationMatrix {
     // -----------------------------------------------------------------------
 
     /// Applies the affine transform to a point, mirroring the rendering maths
-    /// in FloorMapCanvasPresenter:
+    /// in FloorMapCanvasController:
     ///
     /// ```
     /// x' = a * x + c * y + e

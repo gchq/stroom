@@ -18,13 +18,6 @@ package stroom.statistics.impl.sql.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.statistics.impl.sql.client.StatisticsPlugin;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter;
-import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
-import stroom.statistics.impl.sql.client.presenter.StatisticsFieldEditPresenter;
-import stroom.statistics.impl.sql.client.presenter.StatisticsFieldEditPresenter.StatisticsFieldEditView;
-import stroom.statistics.impl.sql.client.view.StatisticsDataSourceSettingsViewImpl;
-import stroom.statistics.impl.sql.client.view.StatisticsFieldEditViewImpl;
 
 public class StatisticsModule extends PluginModule {
 
@@ -32,14 +25,6 @@ public class StatisticsModule extends PluginModule {
     protected void configure() {
         // Statistics
         bindPlugin(StatisticsPlugin.class);
-
-        bind(StatisticsDataSourcePresenter.class);
-
-        bindPresenterWidget(StatisticsDataSourceSettingsPresenter.class, StatisticsDataSourceSettingsView.class,
-                StatisticsDataSourceSettingsViewImpl.class);
-
-        bindPresenterWidget(StatisticsFieldEditPresenter.class, StatisticsFieldEditView.class,
-                StatisticsFieldEditViewImpl.class);
 
     }
 }

@@ -15,7 +15,7 @@
  */
 
 /*
-   The menu (stroom.widget.menu.client.presenter.Menu, its items drawn by MenuItemCell).
+   The menu (stroom.widget.menu.client.component.Menu, its items drawn by MenuItemCell).
    Named BEM style (block, block__element, block--modifier).
 
    menu__viewport          the scrolling box holding the menu, with room for a focus ring
@@ -26,7 +26,7 @@
                            item the keyboard or the mouse is on
        menu__item          an item: --highlight for an item drawn bold, --info for an information row
          menu__icon, menu__text, menu__shortcut, menu__arrow (it has a sub menu)
-       menu__separator, menu__group-heading
+       menu__separator
 
    --fixed-width, --keyboard, --active, --highlight and --info are modifiers with no ARIA attribute.
 */
@@ -40,6 +40,21 @@
    The popup holding a menu has no padding of its own, so its items sit 6px in (with its border) */
 .menu__viewport {
     padding: 5px;
+    overflow: auto;
+    min-width: 50px;
+    max-width: 400px;
+    max-height: 500px;
+}
+
+/* A menu given a width (ShowMenuEvent.Builder#width), rather than fitted to its items */
+.menu__viewport--fixed-width {
+    width: var(--menu__width);
+    min-width: var(--menu__width);
+    max-width: var(--menu__width);
+}
+
+.menu {
+    min-width: 50px;
 }
 
 .popup:has(> .popupContent > .menu__viewport) {
@@ -51,15 +66,6 @@
     border-top: 1px solid var(--menu-separator__color);
     cursor: default;
     margin: var(--row__padding--vertical) var(--row__padding--horizontal);
-}
-
-.menu__group-heading {
-    padding: 6px 0 3px 6px;
-    opacity: 0.8;
-    font-size: var(--font-size-13);
-    text-transform: uppercase;
-    display: block;
-    cursor: default;
 }
 
 .menu__item {
@@ -150,7 +156,7 @@
     white-space: nowrap;
     text-align: right;
     flex-grow: 1;
-    /* Stolen from editor.css */
+    /* Stolen from code-editor.css */
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
     font-size: 94%;
     font-weight: 300;

@@ -91,29 +91,6 @@ public class CalendarUtil {
     }
 
     /**
-     * Returns the number of days between the two dates. Time is ignored.
-     *
-     * @param start starting date
-     * @param finish ending date
-     * @return the different
-     */
-    public static int getDaysBetween(UTCDate start, UTCDate finish) {
-        // Convert the dates to the same time
-        start = copyDate(start);
-        resetTime(start);
-        finish = copyDate(finish);
-        resetTime(finish);
-
-        final double aTime = start.getTime();
-        final double bTime = finish.getTime();
-
-        long adjust = 60 * 60 * 1000;
-        adjust = (bTime > aTime) ? adjust : -adjust;
-
-        return (int) ((bTime - aTime + adjust) / (24 * 60 * 60 * 1000));
-    }
-
-    /**
      * Returns the day of the week on which week starts in the current locale. The
      * range between 0 for Sunday and 6 for Saturday.
      *
@@ -140,17 +117,6 @@ public class CalendarUtil {
     }
 
     /**
-     * Sets a date object to be at the beginning of the month and no time
-     * specified.
-     *
-     * @param date the date
-     */
-    public static void setToFirstDayOfMonth(final UTCDate date) {
-        resetTime(date);
-        date.setDate(1);
-    }
-
-    /**
      * Is a day in the week a weekend?
      *
      * @param dayOfWeek day of week
@@ -158,18 +124,5 @@ public class CalendarUtil {
      */
     static boolean isWeekend(final int dayOfWeek) {
         return dayOfWeek == firstDayOfWeekend || dayOfWeek == lastDayOfWeekend;
-    }
-
-    /**
-     * Resets the date to have no time modifiers. Note that the hour might not be zero if the time
-     * hits a DST transition date.
-     *
-     * @param date the date
-     */
-    public static void resetTime(final UTCDate date) {
-        date.setHours(0);
-        date.setMinutes(0);
-        date.setSeconds(0);
-        date.setMilliseconds(0);
     }
 }

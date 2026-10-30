@@ -16,9 +16,10 @@
 
 package stroom.gwt.workbench.client.widgets.layout;
 
+import stroom.widget.text.client.Html;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The panes and frame shared by the `Widgets/Layout/SplitPane` stories.
@@ -81,7 +82,7 @@ final class SplitPanes {
     }
 
     private static Widget pane(final String title, final String hint) {
-        final HTML pane = new HTML("<p style=\"margin: 0 0 8px; font-weight: 600; font-size: 0.85rem\">"
+        final Html pane = new Html("<p style=\"margin: 0 0 8px; font-weight: 600; font-size: 0.85rem\">"
                                    + title
                                    + "</p><p style=\"margin: 0; font-size: 0.8rem; color: var(--text-color,#aaa)\">"
                                    + hint

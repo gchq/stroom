@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.kafka.client.presenter.KafkaConfigPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.kafka.client.component.KafkaConfigEditor;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,25 +43,27 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
 
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
 
-    private final Provider<KafkaConfigPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<KafkaConfigEditor> editorProvider;
 
     private final RestFactory restFactory;
 
     @Inject
     public KafkaConfigPlugin(final EventBus eventBus,
-                             final Provider<KafkaConfigPresenter> editorProvider,
+                             final Provider<KafkaConfigEditor> editorProvider,
                              final RestFactory restFactory,
                              final ContentManager contentManager,
                              final DocumentPluginEventManager entityPluginEventManager,
                              final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), KafkaConfigDoc.TYPE);
     }
 
     @Override

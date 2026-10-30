@@ -17,22 +17,25 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.text.client.Label;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -95,6 +98,8 @@ public class FormGroup extends Composite implements HasWidgets {
             STYLE_FORM_GROUP_DESCRIPTION_ROW + "--disabled";
     // A group with no label of its own whose tick box has one: the help goes beside that label
     public static final String STYLE_FORM_GROUP_INLINE_TICK = "form-group--inline-tick";
+    // Its tick box, in such a group
+    private static final String STYLE_FORM_GROUP_TICK = "form-group__tick";
 
     // The elements that are form controls a label can name
     private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
@@ -115,15 +120,26 @@ public class FormGroup extends Composite implements HasWidgets {
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
             "hidden", "button", "submit", "reset", "image");
 
-    private final FlowPanel formGroupPanel = new FlowPanel();
-    private final FormLabel formLabel = new FormLabel();
-    private final FormGroupHelpButton helpButton = new FormGroupHelpButton();
-    private final FlowPanel labelPanel = new FlowPanel();
-    private final FlowPanel descriptionPanel = new FlowPanel();
-    private final Label feedbackLabel = new Label();
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    // The parts, declared in FormGroup.ui.xml
+    @UiField
+    FlowPanel formGroupPanel;
+    @UiField
+    FormLabel formLabel;
+    // Made in the constructor, as it is private to the package
+    @UiField(provided = true)
+    final FormGroupHelpButton helpButton;
+    @UiField
+    FlowPanel labelPanel;
+    @UiField
+    FlowPanel descriptionPanel;
+    @UiField
+    Label feedbackLabel;
     // The short screen reader description (or else the plain help text), hidden, as the description
     // of the control the label is for, so that a screen reader reads it when the control is focused
-    private final Label helpDescription = new Label();
+    @UiField
+    Label helpDescription;
     // The short description a screen reader reads, or null to use the plain help text
     private String screenReaderText;
     // Whether the control must have a value, so assistive technology says it is required
@@ -132,6 +148,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element requiredControl;
     // What is wrong with the control's value, or null if nothing is
     private String feedback;
+    // The feedback last set by the control's own check of its input, or null (setInvalidReason)
+    private String invalidReason;
     // The full form of the feedback, the tooltip and what screen readers read, or null if the shown
     // feedback says it all
     private String fullFeedback;
@@ -165,20 +183,14 @@ public class FormGroup extends Composite implements HasWidgets {
     private boolean disabled = false;
 
     public FormGroup() {
-        feedbackLabel.setStyleName("form-group__feedback");
+        helpButton = new FormGroupHelpButton();
+        initWidget(BINDER.createAndBindUi(this));
+        // Only the parts in use are shown, arranged once there is something to show (add)
+        formGroupPanel.clear();
         helpDescription.getElement().setId(DOM.createUniqueId());
         // So that a group of several controls can be labelled by it
         formLabel.getElement().setId(DOM.createUniqueId());
-        // Read by screen readers as the control's description, but not seen
-        helpDescription.setStyleName("form-group__help-text");
-        helpDescription.setVisible(false);
-        formGroupPanel.addStyleName("form-group");
-        labelPanel.addStyleName("form-group__label-row");
-        formLabel.addStyleName("form-group__label");
-        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_ROW);
         updateLabelPanel();
-
-        initWidget(formGroupPanel);
 
         formGroupPanel.addDomHandler(
                 event ->
@@ -437,7 +449,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private static boolean isHidden(final Element element, final Element root) {
         Element current = element;
         while (current != null && current != root) {
-            if ("none".equals(current.getStyle().getDisplay())) {
+            // Hidden inline, or with the hidden attribute (e.g. a file chooser's file input)
+            if ("none".equals(current.getStyle().getDisplay()) || current.hasAttribute("hidden")) {
                 return true;
             }
             current = current.getParentElement();
@@ -470,7 +483,7 @@ public class FormGroup extends Composite implements HasWidgets {
         return FORM_CONTROL_TAGS.contains(element.getTagName().toLowerCase(Locale.ROOT));
     }
 
-    // A control that opens a dialog to choose a value, e.g. a document picker (DropDownViewImpl)
+    // A control that opens a dialog to choose a value, e.g. a document picker (DropDownBox)
     private static boolean isPicker(final Element element) {
         return BUTTON_ROLE.equals(element.getAttribute(ROLE))
                && !NullSafe.isBlankString(element.getAttribute(ARIA_HAS_POPUP));
@@ -488,6 +501,15 @@ public class FormGroup extends Composite implements HasWidgets {
             updateLabelPanel();
             updateInlineTick();
         }
+    }
+
+    /// Gives the group's label a class of the component that declares the group, for a look of its
+    /// own, e.g. `labelStyleName="authentication-error__title"` for a larger heading. It is added to
+    /// the label's own classes.
+    ///
+    /// @param styleName The class.
+    public void setLabelStyleName(final String styleName) {
+        formLabel.addStyleName(styleName);
     }
 
     // The help is for the group's label or, if it has none, the label beside its tick box
@@ -509,7 +531,7 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     private String getTickBoxLabel() {
-        return childWidget instanceof final CustomCheckBox tickBox
+        return childWidget instanceof final TickBox tickBox
                 ? tickBox.getLabel()
                 : null;
     }
@@ -520,6 +542,10 @@ public class FormGroup extends Composite implements HasWidgets {
         final boolean inline = NullSafe.isBlankString(getLabel())
                                && NullSafe.isNonBlankString(getTickBoxLabel());
         formGroupPanel.setStyleName(STYLE_FORM_GROUP_INLINE_TICK, inline);
+        // The tick box, first on that line
+        if (childWidget != null) {
+            childWidget.setStyleName(STYLE_FORM_GROUP_TICK, inline);
+        }
     }
 
     public String getLabel() {
@@ -580,6 +606,23 @@ public class FormGroup extends Composite implements HasWidgets {
         setFeedback(null);
     }
 
+    /// Says why the control's input can't be kept, as [#setFeedback(String)] does, or clears that
+    /// once it can, leaving feedback set otherwise (e.g. by a controller) alone. A field that checks
+    /// its own input calls it (see [InvalidInputs#showReason(HasInvalidInput)]).
+    ///
+    /// @param reason Why the input can't be kept, or null if it can.
+    public void setInvalidReason(final String reason) {
+        if (reason != null) {
+            invalidReason = reason;
+            setFeedback(reason);
+        } else if (invalidReason != null) {
+            if (invalidReason.equals(feedback)) {
+                clearFeedback();
+            }
+            invalidReason = null;
+        }
+    }
+
     /// @return What is wrong with the control's value, or null if nothing is.
     public String getFeedback() {
         return feedback;
@@ -625,12 +668,6 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setHelpText(final String helpText) {
         this.helpText = helpText;
 
-//        // This allows us to have hard coded help in the ui.xml but override it
-//        // using helpText, or set helpText back to null to use the hardcoded
-//        // ui.xml content
-//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
-//            this.helpText = helpHTML.getHTML();
-//        }
         updateHelpButton();
     }
 
@@ -657,58 +694,28 @@ public class FormGroup extends Composite implements HasWidgets {
         final HelpHTML helpHTML = getHelpHTML();
 
         final SafeHtml effectiveHelpText;
-//        final boolean haveHelpText;
 
         if (helpTextOverride != null) {
-//            haveHelpText = true;
             effectiveHelpText = helpTextOverride;
         } else if (NullSafe.isNonBlankString(plainHelpText)) {
-//            haveHelpText = true;
             // Escape any html in there, wrap it in a para so styling is consistent
             effectiveHelpText = HtmlBuilder.builder()
                     .para(paraBuilder -> paraBuilder.append(SafeHtmlUtils.fromString(plainHelpText)))
                     .toSafeHtml();
         } else if (helpHTML != null) {
-//            haveHelpText = true;
             effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
         } else {
-//            haveHelpText = false;
             effectiveHelpText = null;
         }
 
         helpButton.setHelpContent(effectiveHelpText);
         updateHelpDescription();
 
-//        if (haveHelpText) {
-//            helpButton.setHelpContent(effectiveHelpText);
-//        } else {
-//            helpButton.setHelpContent(null);
-//        }
         updateLabelPanel();
-
-//        if (NullSafe.isNonBlankString(plainHelpText)) {
-//            haveHelpText = true;
-//            // Escape any html in there
-//            effectiveHelpText = SafeHtmlUtils.fromString(plainHelpText);
-//        }
-//
-//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
-//            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
-//            haveHelpText = true;
-//        } else {
-//
-//        }
-//        if (!NullSafe.isBlankString(getHelpText())) {
-//            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
-//        } else {
-//            helpButton.setHelpContent(null);
-//        }
-//        updateLabelPanel();
     }
 
     @Override
     public void add(final Widget widget) {
-//        GWT.log("Adding widget " + widget.getClass().getName());
 
         if (widget instanceof HelpHTML) {
             addHelpHtml((HelpHTML) widget);
@@ -728,12 +735,6 @@ public class FormGroup extends Composite implements HasWidgets {
             updateLabelTarget();
         }
         updateFormGroupPanel();
-//
-//        formGroupPanel.clear();
-//        formGroupPanel.add(labelPanel);
-//        formGroupPanel.add(descriptionPanel);
-//        formGroupPanel.add(widget);
-//        formGroupPanel.add(feedback);
     }
 
 
@@ -755,10 +756,6 @@ public class FormGroup extends Composite implements HasWidgets {
         this.helpHTML = helpHTML;
 
         updateHelpButton();
-//        // helpText trumps helpHTML
-//        if (NullSafe.isBlankString(helpText)) {
-//            this.helpText = this.helpHTML.getHTML();
-//        }
     }
 
     @Override
@@ -771,10 +768,6 @@ public class FormGroup extends Composite implements HasWidgets {
         updateLabelPanel();
         updateDescriptionPanel();
         updateFormGroupPanel();
-//        formGroupPanel.clear();
-//        formGroupPanel.add(labelPanel);
-//        formGroupPanel.add(descriptionPanel);
-//        formGroupPanel.add(feedback);
     }
 
     private void updateFormGroupPanel() {
@@ -823,5 +816,13 @@ public class FormGroup extends Composite implements HasWidgets {
         } else {
             return false;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<FlowPanel, FormGroup> {
+
     }
 }

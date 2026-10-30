@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
 /// The event bus of a screen story's harness: a [SimpleEventBus] that can be switched off when
-/// the story renders again, so that whatever the old rendering's presenters still do (e.g. a timer
+/// the story renders again, so that whatever the old rendering's controllers still do (e.g. a timer
 /// that shows a popup, or a reply that fires an alert) has no effect on the page.
 public class StoryEventBus extends SimpleEventBus {
 

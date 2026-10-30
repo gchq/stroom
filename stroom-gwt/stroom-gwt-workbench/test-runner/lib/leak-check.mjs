@@ -21,7 +21,7 @@
 //
 // Only stories that open their screen with ScreenHarness.afterStartUp can be checked: with
 // probe=1 in the address, the harness exposes window.__leakProbe {close(dispose), open(), shown(),
-// pending()} (see the workbench's MemoryProbe).
+// pending(), unowned(), unownedNames()} (see the workbench's LeakProbe).
 
 // The most each close may keep, on average, before the story fails. A little growth isn't a leak,
 // e.g. the browser's own bookkeeping, or a cache that fills once; a leaking screen keeps hundreds
@@ -81,15 +81,53 @@ async function measureCycles(page, cdp, cycles, closeSettleMillis) {
     await reopen(page);
   }
   const samples = [];
+  let firstUnowned = null;
+  let lastUnowned = null;
   for (let i = 0; i < cycles; i++) {
     await page.evaluate(() => window.__leakProbe.close(true));
     if (closeSettleMillis > 0) {
       await page.waitForTimeout(closeSettleMillis);
     }
     samples.push(await measure(cdp));
+    lastUnowned = await unownedNames(page);
+    firstUnowned ??= lastUnowned;
     await reopen(page);
   }
-  return { checked: true, cycles, ...growthPerCycle(samples) };
+  return {
+    checked: true,
+    cycles,
+    ...growthPerCycle(samples),
+    unownedGrowth: unownedGrowth(firstUnowned, lastUnowned, cycles - 1),
+  };
+}
+
+// The names of the live components (presenters) that nothing owns, or null if the probe can't
+// tell (an older workbench)
+async function unownedNames(page) {
+  const names = await page.evaluate(() => window.__leakProbe.unownedNames?.() ?? null);
+  return names === null
+    ? null
+    : names.split(',').filter((name) => name !== '');
+}
+
+// The components that more of are left unowned after the later close than the first, as
+// 'Name xN per close', most first; null if none or unknown
+export function unownedGrowth(first, last, closes) {
+  if (first === null || last === null || closes < 1) {
+    return null;
+  }
+  const counts = new Map();
+  for (const name of last) {
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  for (const name of first) {
+    counts.set(name, (counts.get(name) ?? 0) - 1);
+  }
+  const grown = [...counts.entries()]
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, count]) => `${name} x${Math.round(count / closes * 10) / 10}`);
+  return grown.length === 0 ? null : grown.join(', ');
 }
 
 // Opens the screen again and waits until it is shown and, for a while, until its REST requests
@@ -151,5 +189,6 @@ export function judgeLeak(leak, thresholds = LEAK_THRESHOLDS) {
   }
   return `Leak: each close of the screen keeps ${leak.nodes} DOM nodes and ${leak.listeners} `
     + `event listeners (${leak.heapKB} KB of heap), over ${leak.cycles} closes; at most `
-    + `${thresholds.nodes} nodes and ${thresholds.listeners} listeners are allowed`;
+    + `${thresholds.nodes} nodes and ${thresholds.listeners} listeners are allowed`
+    + (leak.unownedGrowth ? `. Left unowned per close: ${leak.unownedGrowth}` : '');
 }

@@ -1,0 +1,47 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:p="urn:import:stroom.widget.button.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel ui:field="root" styleName="ask-stroom-ai max default-min-sizes dock-container-vertical ask-stroom-ai--empty">
+        <g:FlowPanel styleName="dock-min ask-stroom-ai__top">
+            <g:FlowPanel styleName="dock-max ask-stroom-ai__title">
+                <tx:Label ui:field="chatTitle" text="Agent"/>
+            </g:FlowPanel>
+            <p:Toolbar name="Conversation" addStyleNames="dock-min ask-stroom-ai__buttons toolbar--quiet">
+                <p:ToolbarButton ui:field="newChat" svg="ADD" title="New Conversation"/>
+                <p:ToolbarButton ui:field="chatHistory" svg="HISTORY" title="Conversation History"/>
+                <p:ToolbarButton ui:field="download" svg="DOWN" title="Download" enabled="false"/>
+                <p:ToolbarButton ui:field="deleteAll" svg="DELETE" title="Delete All Messages" enabled="false"/>
+                <p:ToolbarButton ui:field="configure" svg="SETTINGS" title="Configure"/>
+            </p:Toolbar>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="conversation" styleName="dock-max ask-stroom-ai__middle markdown-container"/>
+        <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom">
+            <tx:Label styleName="ask-stroom-ai__empty-prompt" text="How can I help?"/>
+            <g:FlowPanel styleName="dock-container-vertical dock-min ask-stroom-ai__bottom-inner">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__message-pane">
+                    <tx:Label ui:field="contextIndicator"
+                             styleName="ask-stroom-ai__context-chip"
+                             visible="false"/>
+                    <!-- Named for screen readers, as the placeholder is only a hint, lost once something is typed -->
+                    <form:TextArea ui:field="message" addStyleNames="dock-max w-100"
+                                   placeholder="How can I help?" ariaLabel="Message"/>
+                </g:FlowPanel>
+                <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__model-pane">
+                    <g:SimplePanel styleName="dock-max">
+                        <dd:DropDownBox ui:field="modelRef" addStyleNames="ask-stroom-ai__model drop-down--icon-raised"/>
+                    </g:SimplePanel>
+                    <spinner:SmallBusySpinner ui:field="spinner"/>
+                    <p:Toolbar name="Message" addStyleNames="toolbar--control">
+                        <p:ToolbarButton ui:field="run" svg="PLAY" title="Send" enabled="false"
+                                         addStyleNames="toolbar-button--play"/>
+                    </p:Toolbar>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

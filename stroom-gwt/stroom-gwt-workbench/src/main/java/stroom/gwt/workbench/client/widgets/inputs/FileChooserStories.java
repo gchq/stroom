@@ -17,22 +17,21 @@
 package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.component.FileChooser;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for [CustomFileUpload]: a "Choose File" button that clicks a hidden file input, and a
+/// Stories for [FileChooser]: a "Choose File" button that clicks a hidden file input, and a
 /// label showing the chosen file's name.
 public final class FileChooserStories {
 
@@ -54,42 +53,44 @@ public final class FileChooserStories {
                     final Style style = hint.getElement().getStyle();
                     style.setProperty("color", "var(--text-color--disabled)");
                     style.setProperty("fontSize", "var(--font-size-13)");
-                    return padded(hint, fileUpload());
+                    return padded(hint, new FileChooser());
                 })
                 .withPlay(play -> {
                     // A button described by the chosen file, which says none is chosen yet
                     final Query button = play.getByRole("button", "Choose File");
                     play.expect(button).toHaveAccessibleDescription("No file chosen");
                     play.expect(button).toHaveAttribute("aria-haspopup", "dialog");
-                    // BEM (file-upload.css)
-                    play.expect(button).toHaveClass("file-upload__button");
-                    play.expect(play.getByText("No file chosen")).toHaveClass("file-upload__name--empty");
-                    play.expect(play.querySelector("input[type='file']")).toHaveClass("file-upload__input");
-                    play.expect(play.querySelectorAll(".customFileUpload, .gwt-FileUpload, .gwt-Label"))
-                            .toHaveLength(1);
+                    // BEM (file-chooser.css)
+                    play.expect(button).toHaveClass("file-chooser__button");
+                    play.expect(play.getByText("No file chosen")).toHaveClass("file-chooser__name--empty");
+                    play.expect(play.querySelector(StroomDom.FILE_INPUT)).toHaveClass("file-chooser__input");
+                    play.expect(play.querySelector(StroomDom.FILE_INPUT)).not().toBeVisible();
+                    // It is Stroom's markup throughout, no GWT widget's
+                    play.expect(play.querySelectorAll(".file-chooser [class*='gwt-']")).toHaveLength(0);
                 })
-                // With an accept filter and a callback reporting the chosen file name
+                // A callback reporting the chosen file name
                 .story("WithCallback", context -> {
-                    // CustomFileUpload has no accept filter or button label, so the button says
+                    // FileChooser has no accept filter or button label, so the button says
                     // "Choose File" and any file can be chosen.
-                    final CustomFileUpload fileUpload = fileUpload();
+                    final FileChooser fileChooser = new FileChooser();
                     final InlineLabel selected = StoryPanels.note("Selected: —", "#dce4e5", "12px");
-                    // GWT has no onFile callback: Stroom's dialogs read getFilename() when they
-                    // submit. The hidden input's change event bubbles to the widget, so it is
-                    // read here when it changes.
                     final Spy onFile = context.fn(ON_FILE);
-                    fileUpload.addDomHandler(event -> {
-                        final String name = fileUpload.getFilename();
+                    fileChooser.setOnChange(() -> {
+                        final String name = fileChooser.getFilename();
                         selected.setText("Selected: " + name);
                         onFile.call(name);
-                    }, ChangeEvent.getType());
-                    return padded(fileUpload, selected);
+                    });
+                    return padded(fileChooser, selected);
+                })
+                .withPlay(play -> {
+                    // Choosing a file names it (without the browser's fake path), and tells the owner
+                    play.upload(play.querySelector(StroomDom.FILE_INPUT), "stream.txt", "data", "text/plain");
+                    play.waitFor(() -> play.expect(play.spy(ON_FILE)).toHaveBeenCalledWith("stream.txt"));
+                    final Query button = play.getByRole("button", "Choose File");
+                    play.expect(button).toHaveAccessibleDescription("stream.txt");
+                    play.expect(play.querySelector(".file-chooser__name"))
+                            .not().toHaveClass("file-chooser__name--empty");
                 });
-    }
-
-    private static CustomFileUpload fileUpload() {
-        // Its constructor is private, as Stroom only creates it with UiBinder (GWT.create)
-        return GWT.create(CustomFileUpload.class);
     }
 
     /// Equivalent of `<div style={{padding: 16, display: 'flex', flexDirection: 'column', gap: 16}}>`.

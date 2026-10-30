@@ -16,9 +16,9 @@
 
 package stroom.core.client;
 
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
-import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuKey;
+import stroom.widget.menu.client.KeyedParentMenuItem;
+import stroom.widget.menu.client.MenuItems;
+import stroom.widget.menu.client.MenuKey;
 
 public class MenuKeys {
 

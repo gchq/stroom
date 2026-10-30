@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An analytic's notification: where it goes, and whether and how often it is sent -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:d="urn:import:stroom.widget.duration.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="analyticDestinationType"
+                        label="Destination Type"
+                        helpText="Where notifications are sent. Stream writes them to a feed in Stroom; Email sends them to the recipients you enter."
+                        screenReaderText="Stream writes to a feed; Email sends to recipients.">
+            <l:SelectionBox ui:field="destinationType"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="destination" styleName="form-group"/>
+        <form:FormGroup identity="analyticNotificationEnabled"
+                        helpText="Whether this notification is sent. Untick it to stop sending without losing its settings. Default is ticked."
+                        screenReaderText="Untick to stop sending this notification.">
+            <tickbox:TickBox ui:field="enabled" label="Enabled" value="true"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticNotificationLimitNotifications"
+                        helpText="Stop sending once Maximum Notifications have been sent. Sending starts again after the Resume Notifications After period, or when Stroom restarts. Default is unticked."
+                        screenReaderText="Stops sending after Maximum Notifications is reached.">
+            <tickbox:TickBox ui:field="limitNotifications" label="Limit Notifications"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticNotificationMaxNotifications"
+                        label="Maximum Notifications"
+                        helpText="Number of notifications to send before sending stops, from 1 to 1000. Only used when Limit Notifications is ticked. Default is 1."
+                        screenReaderText="1 to 1000. Used only when Limit Notifications is ticked.">
+            <v:ValueSpinner ui:field="maxNotifications" minValue="1" maxValue="1000"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticNotificationResumeAfter"
+                        label="Resume Notifications After"
+                        helpText="How long to wait after the last notification before sending starts again, once the limit has been reached. Never keeps sending stopped until Stroom restarts. Only used when Limit Notifications is ticked. Default is 1 Days."
+                        screenReaderText="Wait before sending resumes. Used only when Limit Notifications is ticked.">
+            <d:DurationPicker ui:field="resumeAfter" noneText="Never"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

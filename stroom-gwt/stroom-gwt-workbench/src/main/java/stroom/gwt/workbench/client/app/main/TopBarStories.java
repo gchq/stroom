@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.gwt.workbench.client.a11y.FocusRingClipping;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -32,8 +33,8 @@ import java.util.List;
 /// Stories of `App/Main/TopBar`: the controls along the top of Stroom's app shell (put together by
 /// [ShellScreen], as in `App/Main/AppShell`) and their keyboard focus rings:
 ///
-/// * Main Menu, beside the Stroom logo at the top of the explorer (`NavigationViewImpl`).
-/// * Hide Sidebar, to the left of the document tabs (`CurveTabLayoutViewImpl`).
+/// * Main Menu, beside the Stroom logo at the top of the explorer (`Explorer`).
+/// * Hide Sidebar, to the left of the document tabs (`CurveTabLayout`).
 /// * Ask Stroom AI and Show Main Menu, the application's toolbar at the top right (`MainToolbar`).
 ///
 /// A focus ring shows only with `:focus-visible`, which a script can't put an element in. So, as
@@ -106,7 +107,7 @@ public final class TopBarStories {
     }
 
     // Where each control's ring is cut off, each cut named by its control, e.g.
-    // 'Main Menu: top 4px by .navigation'
+    // 'Main Menu: top 4px by .explorer'
     private static List<String> cuts(final List<Query> controls) {
         final List<String> cuts = new ArrayList<>();
         for (final Query control : controls) {

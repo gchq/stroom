@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A name dialog's content (form.css): the name, which must be given, and why it isn't valid
+     (the form group's feedback) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="nameGroup" identity="textBoxFieldName" label="Name"
+                        helpText="The name to save this under. A name is required."
+                        screenReaderText="The name to save this under."
+                        required="true">
+            <form:TextBox ui:field="textBox"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

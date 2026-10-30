@@ -12,6 +12,13 @@
     border: 1px solid rgba(0,0,0,.2);
 }
 
+/* A rule's own colours (the Edit Custom Row Style dialog's examples); one not given leaves the
+   example's */
+.cf-colour-swatch--custom {
+    background-color: var(--cf-swatch__background-color);
+    color: var(--cf-swatch__color);
+}
+
 .data-grid__cell .cf-colour-swatch {
     min-width: 100px;
     padding: 2px;
@@ -463,10 +470,12 @@
 }
 
 .cf-light-example {
+    width: 200px;
     background-color: rgb(255, 255, 255);
     color: #151515;
 }
 .cf-dark-example {
+    width: 200px;
     background-color: rgb(34, 37, 44);
     color: #dce4e5;
 }
@@ -484,7 +493,7 @@
 
 
 
-.conditionalFormatStyleSelection .cf-colour-swatch {
+.selection-box--swatches .cf-colour-swatch {
     border: none;
     width: 100%;
     height: 100%;

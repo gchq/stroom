@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
+    <!--
+      The explorer's chooser: a quick filter above the explorer's tree, which its controller fills,
+      and a live region that tells screen reader users which document is chosen
+    -->
+    <g:HTMLPanel styleName="max default-min-sizes dock-container-vertical quick-filter-layout overflow-hidden focus-ring-room">
+        <v:QuickFilter ui:field="nameFilter" accessibleName="Filter documents" addStyleNames="dock-min"/>
+        <g:ScrollPanel addStyleNames="dock-max control-box control-box--padded">
+            <ex:ExplorerTree ui:field="tree" accessibleName="Documents"/>
+        </g:ScrollPanel>
+        <div ui:field="status" class="sr-only" aria-live="polite"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

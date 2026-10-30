@@ -17,7 +17,7 @@
 /*
  * An item of a query expression tree (ExpressionItemBox), a term or an operator, named BEM style:
  * its row (__row), which its looks are drawn on, is its label (__label) or the row of its editor's
- * fields (TermEditor.css), with the "not allowed" icon at its start while it refuses what is moved
+ * fields (term-editor.css), with the "not allowed" icon at its start while it refuses what is moved
  * to it (__refused-icon).
  * Its states come from its ARIA attributes where it has them (aria-selected, which only the items
  * of a tree that can be changed have, and the focus), and from modifiers: --disabled for an item
@@ -26,10 +26,10 @@
  */
 
 .expression-item {
-	/* Placed by the tree */
+	/* Placed by the tree (ExpressionItemRenderer), off screen until it is */
 	position: absolute;
-	left: -100000px;
-	top: -100000px;
+	left: var(--expression-item__left, -100000px);
+	top: var(--expression-item__top, -100000px);
 	/* Scrolled into view with room for its focus ring */
 	scroll-margin: 8px;
 	outline: none;
@@ -93,11 +93,11 @@
 
 /* A tree with the read-only look (expression-tree.css): its items greyed, as a read-only field's
    value is (a disabled item keeps its own look) */
-.expression-tree-view--read-only .expression-item__label {
+.expression-tree--read-only .expression-item__label {
 	color: var(--control__text-color--readonly);
 }
 
-.expression-tree-view--read-only .expression-item--disabled .expression-item__label {
+.expression-tree--read-only .expression-item--disabled .expression-item__label {
 	color: var(--expression-item__text-color--disabled);
 }
 
@@ -131,7 +131,7 @@
 
 .expression-item__refused-icon {
 	flex-shrink: 0;
-	/* Its drawing's size (svg-icon.css), as well as its own, so that the drawing is centred in the
+	/* Its drawing's size (icon-wrap.css), as well as its own, so that the drawing is centred in the
 	   row */
 	--icon-width: 14px;
 	--icon-height: 14px;

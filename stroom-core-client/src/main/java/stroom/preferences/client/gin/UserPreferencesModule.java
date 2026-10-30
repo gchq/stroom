@@ -17,61 +17,12 @@
 package stroom.preferences.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.preferences.client.EditorPreferencesPresenter;
-import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
-import stroom.preferences.client.EditorPreferencesViewImpl;
-import stroom.preferences.client.KeyBindingPreferencesPresenter;
-import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPreferencesView;
-import stroom.preferences.client.KeyBindingPreferencesViewImpl;
-import stroom.preferences.client.KeyShortcutRecorderPresenter;
-import stroom.preferences.client.KeyShortcutRecorderPresenter.KeyShortcutRecorderView;
-import stroom.preferences.client.KeyShortcutRecorderViewImpl;
-import stroom.preferences.client.KeyboardShortcutsPresenter;
-import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
-import stroom.preferences.client.KeyboardShortcutsViewImpl;
-import stroom.preferences.client.ThemePreferencesPresenter;
-import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
-import stroom.preferences.client.ThemePreferencesViewImpl;
-import stroom.preferences.client.TimePreferencesPresenter;
-import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
-import stroom.preferences.client.TimePreferencesViewImpl;
 import stroom.preferences.client.UserPreferencesPlugin;
-import stroom.preferences.client.UserPreferencesPresenter;
-import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
-import stroom.preferences.client.UserPreferencesViewImpl;
 
 public class UserPreferencesModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPresenterWidget(
-                UserPreferencesPresenter.class,
-                UserPreferencesView.class,
-                UserPreferencesViewImpl.class);
-        bindPresenterWidget(
-                ThemePreferencesPresenter.class,
-                ThemePreferencesView.class,
-                ThemePreferencesViewImpl.class);
-        bindPresenterWidget(
-                EditorPreferencesPresenter.class,
-                EditorPreferencesView.class,
-                EditorPreferencesViewImpl.class);
-        bindPresenterWidget(
-                TimePreferencesPresenter.class,
-                TimePreferencesView.class,
-                TimePreferencesViewImpl.class);
-        bindPresenterWidget(
-                KeyBindingPreferencesPresenter.class,
-                KeyBindingPreferencesView.class,
-                KeyBindingPreferencesViewImpl.class);
-        bindPresenterWidget(
-                KeyShortcutRecorderPresenter.class,
-                KeyShortcutRecorderView.class,
-                KeyShortcutRecorderViewImpl.class);
-        bindPresenterWidget(
-                KeyboardShortcutsPresenter.class,
-                KeyboardShortcutsView.class,
-                KeyboardShortcutsViewImpl.class);
 
         bindPlugin(UserPreferencesPlugin.class);
     }

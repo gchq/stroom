@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The documents whose permissions can be changed: a striped list of a page of them, with a pager
+     and their actions -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Document permission actions">
+        <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Documents to Apply Permission Changes To"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Permissions For Selected Document"
+                         enabled="false"/>
+        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Permissions For Filtered Documents"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="resultList" pageSize="100" profile="LISTBOX" accessibleName="Documents"
+                     striped="true"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

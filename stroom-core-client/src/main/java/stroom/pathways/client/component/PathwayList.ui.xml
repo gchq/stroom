@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A Pathways document's pathways: a quick filter above a page of them, with New, Edit, Delete and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <v:QuickFilterPage ui:field="page" accessibleName="Filter pathways">
+        <dg:PagerPanel ui:field="pager" toolbarName="Pathway actions">
+            <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Pathway"/>
+            <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Pathway" enabled="false"/>
+            <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Pathways" enabled="false"/>
+            <dg:DataGrid ui:field="dataGrid" tableName="Pathways"/>
+        </dg:PagerPanel>
+    </v:QuickFilterPage>
+</ui:UiBinder>

@@ -15,8 +15,8 @@
  */
 
 /*
-   The dialog (stroom.widget.popup.client.view.Dialog and ResizableDialog, with the content
-   templates holding their buttons). Named BEM style (block, block__element, block--modifier).
+   The dialog (stroom.widget.popup.client.Dialog, with the DialogFrame template holding its
+   buttons). Named BEM style (block, block__element, block--modifier).
 
    dialog                          the popup (role dialog or alertdialog)
      dialog__container             the template's root
@@ -24,15 +24,16 @@
        dialog__layout              the title bar above the body
          dialog__title-bar         dialog__icon, dialog__title (names the dialog), dialog__spinner,
                                    dialog__toolbar (window options)
-         dialog__body              the content template:
+         dialog__body              the content (DialogFrame, if it has buttons):
            dialog__content         the screen's own content
            dialog__buttons         OK, Cancel and so on (--end: at the end; --start: at the
-                                   start, with a dialog__button-group at the end)
+                                   start, with a dialog__button-group at the end; with
+                                   --end the group draws no box)
        dialog__resize--n … --sw    the resize handles (dialog--resizable)
        dialog__hint                what to do while moving or resizing (centred over the dialog)
 
-   --resizable, --moving, --resizing and the buttons' --start and --end are modifiers with no ARIA
-   attribute.
+   --resizable, --resize-width, --resize-height, --moving, --resizing and the buttons' --start and
+   --end are modifiers with no ARIA attribute.
 */
 
 .dialog {
@@ -131,14 +132,10 @@
     background-color: var(--popup__background-color);
 }
 
-/* The window options button (Move, Resize, Maximise, Restore Size) */
+/* The window options button (Move, Resize, Maximise, Restore Size), its icon in the title's colour
+   (toolbar--text-colour), as part of the window rather than an action of the dialog */
 .dialog__toolbar {
     align-self: center;
-}
-
-/* Its icon in the title's colour, as part of the window rather than an action of the dialog */
-.dialog__toolbar .toolbar-button__icon {
-    color: var(--text-color);
 }
 
 /* Being moved or resized from the keyboard (modifiers with no ARIA attribute): the focus border and
@@ -177,6 +174,11 @@
     justify-content: space-between;
 }
 
+/* One of a pair of buttons side by side in a dialog's content, e.g. Run Now's */
+.dialog__button-cell {
+    width: 45%;
+}
+
 .dialog__buttons--start {
     justify-content: flex-start;
 }
@@ -194,7 +196,28 @@
     justify-content: flex-end;
 }
 
-/* Resize handles */
+/* With nothing at the start of the row the group draws no box, so its buttons are the row's own
+   (laid out, and a press beside them dragging the dialog, as in a row with no group) */
+.dialog__buttons--end > .dialog__button-group {
+    display: contents;
+}
+
+/* Its size, from PopupUtil, its resize handles and its window options (custom properties, so that
+   its element's style holds nothing else) */
+.dialog__container {
+    width: var(--dialog__width, auto);
+    height: var(--dialog__height, auto);
+}
+
+/* Resize handles: only those for the ways the dialog can be resized are there (--resize-width,
+   --resize-height), and a corner, which resizes both ways, only if both can be */
+.dialog:not(.dialog--resize-width) :is(.dialog__resize--e, .dialog__resize--w),
+.dialog:not(.dialog--resize-height) :is(.dialog__resize--n, .dialog__resize--s),
+.dialog:not(.dialog--resize-width.dialog--resize-height) :is(.dialog__resize--ne, .dialog__resize--nw,
+.dialog__resize--se, .dialog__resize--sw) {
+    display: none;
+}
+
 .dialog__resize {
     position: absolute;
     opacity: .4;
@@ -278,4 +301,10 @@
         outline: 2px solid Highlight;
         outline-offset: 2px;
     }
+}
+
+/* The colour a grid's header takes in it (data-grid.css): a layer behind its content (dialog__frame) paints its colour, so the grid can't
+   inherit it */
+.dialog {
+    --data-grid__head-background-color: var(--dialog__background-color);
 }

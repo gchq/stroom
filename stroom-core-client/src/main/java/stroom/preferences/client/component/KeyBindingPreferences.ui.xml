@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The Keyboard Shortcuts tab of the user preferences: whether character key shortcuts are on, a
+     filter, and the actions' shortcuts, a row each, with their actions -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:view="urn:import:stroom.widget.quickfilter.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="max dock-container-vertical form">
+        <form:FormGroup identity="userPreferencesEnableCharacterKeyShortcuts" addStyleNames="dock-min"
+                        helpText="Tick to use shortcuts made only of character keys, such as W and K to move up a list, or G then U to go to the user preferences. Untick to turn them off, e.g. if you use speech input and say them by accident. Shortcuts with Ctrl, Alt or Meta, and the arrow keys, still work. Default is ticked unless an administrator has changed the defaults."
+                        screenReaderText="Shortcuts made only of letter, number or punctuation keys, such as W or G then U.">
+            <tickbox:TickBox ui:field="enableCharacterKeyShortcuts" label="Enable Character Key Shortcuts"/>
+        </form:FormGroup>
+        <g:SimplePanel styleName="dock-min">
+            <view:QuickFilter ui:field="quickFilter" accessibleName="Filter keyboard shortcuts"/>
+        </g:SimplePanel>
+        <g:SimplePanel styleName="dock-max key-binding-preferences__list">
+            <dg:PagerPanel toolbarName="Keyboard shortcut actions">
+                <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Shortcut" enabled="false"/>
+                <b:ToolbarButton ui:field="changeButton" svg="EDIT" title="Change Shortcut" enabled="false"/>
+                <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Shortcut" enabled="false"/>
+                <b:ToolbarButton ui:field="resetButton" svg="UNDO" title="Reset Action to Default Shortcuts"
+                                 enabled="false"/>
+                <b:ToolbarButton ui:field="resetAllButton" svg="HISTORY" title="Reset All Shortcuts to Defaults"
+                                 enabled="false"/>
+                <dg:DataGrid ui:field="dataGrid" tableName="Keyboard Shortcuts"/>
+            </dg:PagerPanel>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

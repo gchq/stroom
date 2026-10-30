@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A line and column box (a text field, with no rules of its own): its text box, which takes only digits and a colon -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="line-col-input">
+        <form:TextBox ui:field="valueBox" addStyleNames="line-col-input__field allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

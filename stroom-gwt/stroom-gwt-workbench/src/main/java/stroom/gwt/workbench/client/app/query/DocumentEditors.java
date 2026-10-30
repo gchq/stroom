@@ -18,7 +18,10 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.gwt.workbench.client.app.editors.DocEditors;
+import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -27,10 +30,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
-import stroom.security.shared.DocumentPermission;
-import stroom.widget.tab.client.presenter.TabData;
 
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Map;
@@ -73,7 +73,7 @@ public final class DocumentEditors {
     }
 
     /// Adds routes of `POST /explorer/v2/decorate` and `POST /explorer/v2/getFromDocRef` for each
-    /// document given, which a document picker (`DocSelectionBoxPresenter`) sends when a document is
+    /// document given, which a document picker (`DocSelectionController`) sends when a document is
     /// selected, replying with the document as it is (it exists and the user may use it; an
     /// `ExplorerNode` has the same `type`, `uuid` and `name` members as a `DocRef`).
     ///
@@ -94,43 +94,48 @@ public final class DocumentEditors {
         return builder;
     }
 
-    /// Opens a document's editor as Stroom's `DocumentPlugin` does: fetches the document, checks
-    /// whether the user may edit it, reads it into the editor (read only if not), shows the
-    /// editor as the harness's content and tells it that its tab is selected
-    /// (`ContentTabSelectionChangeEvent`).
+    /// Opens a document in its editor, in a [DocumentEditorHost] as its plugin opens it, and shows
+    /// it (see [#open(ScreenHarness, DocumentEditorHost, DocRef, DirectRestService, Function)]).
     ///
-    /// @param harness   The story's harness.
-    /// @param presenter The editor, e.g. from the batch's ginjector.
-    /// @param docRef    The document.
-    /// @param resource  The document's REST resource, e.g. `GWT.create(ViewResource.class)`.
-    /// @param fetch     Fetches the document with the resource, e.g. `res -> res.fetch(uuid)`.
-    /// @param <T>       The type of the resource.
-    /// @param <D>       The type of the document.
-    /// @param <P>       The type of the editor.
-    public static <T extends DirectRestService, D, P extends MyPresenterWidget<?> & HasDocumentRead<D>> void open(
+    /// @param harness  The story's harness.
+    /// @param editor   The document's editor, from the story's injector.
+    /// @param docRef   The document to open.
+    /// @param resource The document's resource.
+    /// @param fetch    Fetches the document with the resource.
+    /// @param <T>      The resource's type.
+    /// @param <D>      The document's type.
+    /// @return The host the editor is shown in.
+    public static <T extends DirectRestService, D> DocumentEditorHost<D> open(final ScreenHarness harness,
+                                                                              final DocumentEditor<D> editor,
+                                                                              final DocRef docRef,
+                                                                              final T resource,
+                                                                              final Function<T, D> fetch) {
+        final DocumentEditorHost<D> host = new DocumentEditorHost<>(harness.getEventBus(), editor, docRef.getType());
+        open(harness, host, docRef, resource, fetch);
+        return host;
+    }
+
+    /// Opens a document's editor as Stroom's `DocumentPlugin` does, as
+    /// [DocEditors#open(ScreenHarness, DocRef, DocumentEditorHost, DocEditors.DocResource)] does for a
+    /// story that doesn't save the document: fetches it, checks whether the user may edit it, reads it
+    /// into the editor (read only if not), shows the editor as the harness's content and tells it
+    /// that its tab is selected (`ContentTabSelectionChangeEvent`).
+    ///
+    /// @param harness    The story's harness.
+    /// @param controller The editor, e.g. from the batch's ginjector.
+    /// @param docRef     The document.
+    /// @param resource   The document's REST resource, e.g. `GWT.create(ViewResource.class)`.
+    /// @param fetch      Fetches the document with the resource, e.g. `res -> res.fetch(uuid)`.
+    /// @param <T>        The type of the resource.
+    /// @param <D>        The type of the document.
+    public static <T extends DirectRestService, D> void open(
             final ScreenHarness harness,
-            final P presenter,
+            final DocumentEditorHost<D> controller,
             final DocRef docRef,
             final T resource,
             final Function<T, D> fetch) {
-        harness.getRestFactory()
-                .create(resource)
-                .method(fetch)
-                .onSuccess(doc -> harness.getSecurityContext().hasDocumentPermission(
-                        docRef,
-                        DocumentPermission.EDIT,
-                        allowUpdate -> {
-                            presenter.read(docRef, doc, !allowUpdate);
-                            harness.addContent(presenter);
-                            // As Stroom's content pane does when it selects the editor's tab
-                            if (presenter instanceof TabData) {
-                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), (TabData) presenter);
-                            }
-                        },
-                        error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
-                        presenter))
-                .taskMonitorFactory(presenter)
-                .exec();
+        DocEditors.open(harness, docRef, controller,
+                DocResource.fetchOnly(restFactory -> restFactory.create(resource).method(fetch)));
     }
 
     /// Finds a sub-tab of a document editor by its label.

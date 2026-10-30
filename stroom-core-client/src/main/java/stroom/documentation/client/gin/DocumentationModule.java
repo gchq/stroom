@@ -18,16 +18,11 @@ package stroom.documentation.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.documentation.client.DocumentationPlugin;
-import stroom.documentation.client.presenter.DocumentationPresenter;
 
 public class DocumentationModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(DocumentationPlugin.class);
-        bind(DocumentationPresenter.class);
-//        bindPresenterWidget(DictionarySettingsPresenter.class,
-//                DictionarySettingsView.class,
-//                DictionarySettingsViewImpl.class);
     }
 }

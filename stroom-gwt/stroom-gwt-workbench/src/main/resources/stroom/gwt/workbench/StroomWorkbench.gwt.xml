@@ -31,10 +31,14 @@
     <inherits name='stroom.util.Util'/>
     <inherits name='stroom.svg.SVG'/>
     <inherits name='stroom.task.Task'/>
+    <inherits name='stroom.widget.task.Task'/>
     <inherits name="stroom.widget.util.Util"/>
+    <inherits name="stroom.widget.component.Component"/>
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.form.Form"/>
+    <inherits name="stroom.widget.text.Text"/>
     <inherits name="stroom.widget.help.Help"/>
+    <inherits name="stroom.widget.preferences.Preferences"/>
     <inherits name="stroom.widget.tooltip.Tooltip"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.cell.tickbox.TickBox"/>
@@ -43,13 +47,15 @@
     <inherits name="stroom.pipeline.Pipeline"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
 
+    <!-- Ownership misuse fails and unowned components are counted (see ControllerChecks) -->
+    <set-property name="stroom.controllerChecks" value="ENABLED"/>
+
     <!--
-      Screens (App/* stories): real presenters and views that call the server, shown with fake
+      Screens (App/* stories): real controllers and components that call the server, shown with fake
       REST replies (see stroom.gwt.workbench.client.app). These are the libraries and Stroom
       modules that the screens' code is in, as inherited by stroom.app.App.
     -->
     <inherits name="com.google.gwt.inject.Inject"/>
-    <inherits name="com.gwtplatform.mvp.Mvp"/>
     <inherits name="org.fusesource.restygwt.RestyGWT"/>
     <inherits name='javax.xml.bind.annotation.Adapters'/>
     <inherits name='io.swagger.Swagger'/>
@@ -69,16 +75,17 @@
     <inherits name='stroom.editor.Editor'/>
     <inherits name='stroom.data.Data'/>
     <inherits name='stroom.widget.datagrid.DataGrid'/>
-    <inherits name='stroom.data.table.Table'/>
-    <inherits name='stroom.data.pager.Pager'/>
     <inherits name='stroom.cell.Cell'/>
-    <inherits name='stroom.item.Item'/>
+    <inherits name='stroom.widget.selection.Selection'/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
+    <!-- The quick filter box (the widget library) -->
+    <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
     <inherits name="stroom.widget.progress.Progress"/>
     <inherits name='stroom.entity.Entity'/>
     <inherits name='stroom.query.Query'/>
+    <!-- The advanced quick filter, which builds on the box (the app) -->
     <inherits name='stroom.quickfilter.QuickFilter'/>
     <!-- As App.gwt.xml: the SQL temporal store (whose document the pipeline's references use) and
          the floor map, with its histogram -->
@@ -89,7 +96,7 @@
     <inherits name='stroom.receive.rules.RuleSet'/>
     <inherits name='stroom.annotation.Annotation'/>
     <inherits name="stroom.widget.datepicker.DatePicker"/>
-    <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.duration.Duration"/>
     <inherits name="stroom.widget.tab.Tab"/>
     <inherits name="stroom.widget.layout.Layout"/>
     <inherits name="stroom.widget.htree.HTree"/>
@@ -100,27 +107,26 @@
     <inherits name='stroom.welcome.Welcome'/>
     <!-- App/Main screens (screen pilot) -->
     <inherits name='stroom.credentials.Credentials'/>
-    <!-- Credentials: KeyStoreSecretPresenter uploads with ImportUtil -->
+    <!-- Credentials: KeyStoreSecretFormController uploads with ImportUtil -->
     <inherits name='stroom.importexport.ImportExport'/>
     <inherits name='stroom.dictionary.Dictionary'/>
     <inherits name='stroom.job.Job'/>
     <inherits name='stroom.node.Node'/>
     <inherits name='stroom.schedule.Schedule'/>
     <inherits name='stroom.processor.Processor'/>
-    <inherits name='stroom.monitoring.Monitoring'/>
     <!-- Widgets/Editors & Viewers -->
     <inherits name='com.google.gwt.xml.XML'/>
-    <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
     <inherits name="stroom.widget.menu.Menu"/>
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.iframe.IFrame"/>
     <inherits name="stroom.meta.Meta"/>
-    <!-- DataPresenter's links (OpenLinkUtil) and SourceTabPlugin -->
+    <!-- DataViewerController's links (OpenLinkUtil) and SourceTabPlugin -->
     <inherits name="stroom.feed.Feed"/>
     <inherits name="stroom.menubar.Menubar"/>
 
     <!-- Widgets/Data Grid: MyDataGrid's hyperlink context menu items -->
     <inherits name="stroom.hyperlink.Hyperlink"/>
+    <inherits name="stroom.widget.hyperlink.Hyperlink"/>
 
     <!-- The query batch (App/Editors/QueryEditor, ViewEditor, PlanBEditor, ...) -->
     <inherits name="stroom.view.View"/>
@@ -149,8 +155,9 @@
     <inherits name="stroom.kafka.KafkaConfig"/>
     <inherits name="stroom.aws.s3.S3Config"/>
 
-    <!-- The security batch: CurrentPasswordPresenter needs Stroom's CurrentUser (CurrentActivity) -->
+    <!-- The security batch: CurrentPasswordController needs Stroom's CurrentUser (CurrentActivity) -->
     <inherits name="stroom.activity.Activity"/>
+    <inherits name="stroom.splash.Splash"/>
 
     <!-- The processing batch (node groups, processors, pipelines, data retention, ...) -->
     <inherits name="stroom.data.retention.DataRetention"/>

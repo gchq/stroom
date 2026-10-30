@@ -22,23 +22,25 @@ import stroom.content.client.event.OpenContentTabEvent;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
-import stroom.security.client.api.event.LogoutEvent;
-import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.event.RequestLogoutEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Layer;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
-import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +49,9 @@ import java.util.function.Consumer;
 public class ContentManager implements HasHandlers {
 
     private final Map<TabData, CloseContentEvent.Handler> handlerMap = new HashMap<>();
+    // A root in the ownership tree for each open tab, owning its content (unless something else
+    // owns it), disposed when the tab is closed
+    private final Map<TabData, ControllerNode> roots = new HashMap<>();
     private final EventBus eventBus;
 
     @Inject
@@ -152,6 +157,11 @@ public class ContentManager implements HasHandlers {
     public void forceClose(final TabData tabData, final boolean resizeTabBar) {
         CloseContentTabEvent.fire(ContentManager.this, tabData, resizeTabBar);
         handlerMap.remove(tabData);
+        // Closed for good, so release its content and everything that owns
+        final ControllerNode root = roots.remove(tabData);
+        if (root != null) {
+            root.dispose();
+        }
     }
 
     public void open(final CloseContentEvent.Handler closeHandler,
@@ -163,10 +173,24 @@ public class ContentManager implements HasHandlers {
     public void open(final CloseContentEvent.Handler closeHandler,
                      final TabData tabData,
                      final Layer layer,
-                     final MyPresenterWidget<?> presenter,
-                     final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+                     final Controller controller,
+                     final Consumer<Controller> callbackOnOpen) {
         handlerMap.put(tabData, closeHandler);
-        OpenContentTabEvent.fire(this, tabData, layer, presenter, callbackOnOpen);
+        // Opening a tab that is open again keeps its root
+        final ControllerNode root = roots.computeIfAbsent(tabData, k -> ControllerNode.root("ContentTab"));
+        ownIfUnowned(root, controller);
+        ownIfUnowned(root, layer);
+        ownIfUnowned(root, tabData);
+        OpenContentTabEvent.fire(this, tabData, layer, controller, callbackOnOpen);
+    }
+
+    private static void ownIfUnowned(final ControllerNode root, final Object content) {
+        if (content instanceof final HasControllerNode hasComponentNode) {
+            final ControllerNode node = hasComponentNode.getControllerNode();
+            if (node != null && node.parent() == null && !node.isShared() && !node.isDisposed()) {
+                root.adopt(node);
+            }
+        }
     }
 
     @Override

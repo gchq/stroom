@@ -31,7 +31,7 @@ import java.util.Objects;
 ///         .post("/search/v1", RestReply.json(PENDING), RestReply.json(COMPLETE))
 ///         .route(RequestMatcher.post("/explorer/v2/find").withBodyContaining("Events"),
 ///                 RestReply.json(EVENTS))
-///         // File uploads (Stroom's CustomFileUpload), a sequence as above
+///         // File uploads (Stroom's FileChooser), a sequence as above
 ///         .upload(UploadReply.success("res-1", "import.zip"))
 ///         .build();
 /// ```
@@ -281,7 +281,7 @@ public final class RestFixtures {
             return this;
         }
 
-        /// Replies to the file uploads a screen makes (Stroom's `CustomFileUpload.submit()`, which
+        /// Replies to the file uploads a screen makes (Stroom's `FileChooserController.upload(...)`, which
         /// posts the chosen file to the import file servlet), whatever the file, e.g.
         /// `upload(UploadReply.success("res-1", "import.zip"))`.
         ///

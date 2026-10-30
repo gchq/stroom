@@ -11,7 +11,7 @@ To check the version, look for `exports.version = ` in `ace.js`.
 
 `ace.js` is unaltered. Stroom shows four different annotation icons in the left hand gutter by giving each annotation
 a `className` (`stroom_info`, `stroom_warning`, `stroom_error` or `stroom_fatal_error`, see `AceAnnotationType`), which
-Ace adds to the row's gutter cell, and `editor.css` draws the icons. Ace labels a gutter annotation for screen readers
+Ace adds to the row's gutter cell, and `code-editor.css` draws the icons. Ace labels a gutter annotation for screen readers
 only when its class is one of Ace's own, so `AceEditor.startEditor` labels Stroom's after each render of the gutter.
 
 To upgrade Ace:

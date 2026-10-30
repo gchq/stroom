@@ -30,8 +30,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// The `App/IdP/Login` stories, showing Stroom's real sign in page (`LoginPresenter` with
-/// `LoginViewImpl`) with fake REST replies.
+/// The `App/IdP/Login` stories, showing Stroom's real sign in page (`LoginController` with
+/// `Login`) with fake REST replies.
 ///
 /// | Stroom | Used for |
 /// |---|---|
@@ -147,6 +147,8 @@ public final class LoginStories {
         play.expect(play.findByPlaceholderText("Enter User Name")).toHaveFocus();
         play.expect(play.getByPlaceholderText("Enter Password")).toHaveValue("");
         play.expect(play.getByRole("button", IdpPlays.SIGN_IN)).toBeEnabled();
+        // The host page's loading message is hidden once the page is shown
+        play.expect(play.screen().querySelector("#loading")).toHaveClass("app-page__loading--hidden");
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 IdpPlays.FETCH_POLICY.toSpyMatcher()));
         IdpPage.expectNoProblems(play);
@@ -170,6 +172,6 @@ public final class LoginStories {
                 .post(IdpPlays.RESET_EMAIL_PATH, RestReply.json("true"))
                 .build();
         return SignInPages.render(context, fixtures, null, Map.of(), IdpPage::redirectedMessage, true,
-                (injector, harness) -> injector.getLoginPresenter());
+                (injector, harness) -> injector.getLoginController());
     }
 }

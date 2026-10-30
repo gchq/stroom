@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:d="urn:import:stroom.dictionary.client.component">
+    <!-- A dictionary's Imports tab (imports-tab.css) -->
+    <g:FlowPanel styleName="max form-padding form imports-tab">
+        <split:SplitPane vertical="true" sizes="300px, *"
+                         names="Imports, Effective words" addStyleNames="max">
+            <form:FormGroup identity="dictionarySettingsImports"
+                            label="Imports"
+                            helpText="Other dictionaries whose words, and the words of their own imports, are added to this dictionary. Imported words come before this dictionary's own words."
+                            addStyleNames="default-min-sizes">
+                <g:SimplePanel addStyleNames="dock-max control-box control-box--padded">
+                    <d:ImportList ui:field="imports"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+            <form:FormGroup identity="dictionarySettingsWords"
+                            label="Effective Words"
+                            helpText="The words in the selected import, including words from any dictionaries it imports. Read-only."
+                            addStyleNames="default-min-sizes dock-max imports-tab__words">
+                <g:SimplePanel addStyleNames="dock-max control-box control-box--padded">
+                    <d:EffectiveWordsList ui:field="words"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+        </split:SplitPane>
+    </g:FlowPanel>
+</ui:UiBinder>

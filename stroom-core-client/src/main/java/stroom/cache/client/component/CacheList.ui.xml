@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The caches: a pager above their grid -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager">
+        <dg:DataGrid ui:field="dataGrid" tableName="Caches"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

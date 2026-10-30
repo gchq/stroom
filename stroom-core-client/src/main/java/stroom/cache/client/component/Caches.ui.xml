@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:c="urn:import:stroom.cache.client.component">
+  <split:SplitPane vertical="true" thin="true" sizes="400px, *"
+                   names="Caches, Cache nodes" addStyleNames="max">
+    <g:SimplePanel styleName="max">
+      <c:CacheList ui:field="cacheList"/>
+    </g:SimplePanel>
+    <g:SimplePanel styleName="max">
+      <c:CacheNodeList ui:field="cacheNodeList"/>
+    </g:SimplePanel>
+  </split:SplitPane>
+</ui:UiBinder>

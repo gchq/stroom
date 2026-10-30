@@ -16,16 +16,19 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.datagen.client.component.DataGenEditor;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenResource;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -33,7 +36,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/DataGenEditor` stories, showing Stroom's real [DataGenPresenter] (a Data
+/// The `App/Editors/DataGenEditor` stories, showing Stroom's real [DataGenEditor] (a Data
 /// Generator's tab: Settings, Execution, Documentation and Permissions) with fake REST replies.
 ///
 /// As `DataGenPlugin` does, the story fetches the document (`GET /datagen/v1/{uuid}`) and reads it
@@ -102,11 +105,23 @@ public final class DataGenEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
+                // Typing in the template makes the document changed, so Save is enabled
+                .story("EditEnablesSave", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveFocus());
+                    play.keyboard("x");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Settings, read only: the partner of Default
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     waitForSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Execution tab lists the document's schedules; Add opens the Create dialog
@@ -152,9 +167,39 @@ public final class DataGenEditorStories {
                 .story("ExecutionReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     showExecution(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The document is unlocked while it is open, without being read again: New
+                // Execution Schedule opens its dialog (the pane once kept the read-only state of the
+                // last read, so the enabled button did nothing), and locked again it is disabled
+                .story("ExecutionLockChangeWhileOpen", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    showExecution(play);
+                    final String add = "New Execution Schedule";
+                    play.expect(play.getByRole("button", add)).toHaveAttribute("aria-disabled", "true");
+
+                    play.run("unlock the document", () -> host().setReadOnly(false));
+                    play.expect(play.getByRole("button", add)).not().toHaveAttribute("aria-disabled");
+                    play.click(play.getByRole("button", add));
+                    play.waitFor(() -> play.expect(screen.getByText("Create Schedule", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument());
+                    final Play dialog = screen.within(
+                            screen.getByText("Create Schedule", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Create Schedule", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+
+                    play.run("lock the document", () -> host().setReadOnly(true));
+                    play.expect(play.getByRole("button", add)).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // The editor's host the story shows, which is told when the document's lock changes
+    private static DocumentEditorHost<DataGenDoc> host() {
+        return ScreenHarness.shownComponent();
     }
 
     // Waits for the Settings tab: the destination feed (selected) and the template's Ace editor
@@ -181,7 +226,7 @@ public final class DataGenEditorStories {
                                             + StartupFixtures.DEFAULT_UI_CONFIG.trim().substring(1)),
                 (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getDataGenPresenter(),
+                injector.getDataGenEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

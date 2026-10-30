@@ -65,7 +65,7 @@ final class IdpPlays {
                + ", \"passwordPolicyMessage\": \"" + message + "\"}";
     }
 
-    /// Waits for the change password dialog (`ChangePasswordPresenter`, shown once the policy has
+    /// Waits for the change password dialog (`ChangePasswordController`, shown once the policy has
     /// loaded) and types the new password and its confirmation.
     ///
     /// The dialog is on the page's body, and is found by its caption; its 'Enter Password' field is
@@ -79,7 +79,7 @@ final class IdpPlays {
     static Play fillPasswords(final Play play, final String caption, final String password, final String confirm) {
         final Play dialog = passwordDialog(play, caption);
         // The dialog shows the policy's message
-        play.expect(dialog.querySelector(".passwordPolicyMessage")).not().toHaveTextContent("");
+        play.expect(dialog.querySelector(".change-password__policy")).not().toHaveTextContent("");
         play.type(dialog.getByPlaceholderText("Enter Password"), password);
         play.type(dialog.getByPlaceholderText("Confirm Password"), confirm);
         return dialog;
@@ -94,15 +94,15 @@ final class IdpPlays {
     }
 
     /// Waits for the strength meter to rate the password. Stroom's meter has no `meter` role; its
-    /// bar's class is `password-strength__bar--<score + 1>`, set as the password is typed (and when the
+    /// bar's class is `change-password__strength-bar--<score + 1>`, set as the password is typed (and when the
     /// field changes), with zxcvbn loaded by the page, so there is nothing to wait for but the class.
     ///
     /// @param play   The play.
     /// @param dialog The change password dialog.
     /// @param levels The bar's levels to wait for, as a character class, e.g. `1-5`.
     static void waitForStrengthScored(final Play play, final Play dialog, final String levels) {
-        play.waitFor(8000, () -> play.expect(dialog.querySelector(".password-strength__bar").className())
-                .toMatch(TextMatch.regex("password-strength__bar--[" + levels + "]")));
+        play.waitFor(8000, () -> play.expect(dialog.querySelector(".change-password__strength-bar").className())
+                .toMatch(TextMatch.regex("change-password__strength-bar--[" + levels + "]")));
     }
 
     /// Clicks a dialog's OK button with the focus away from the field, as a user who clicks it after

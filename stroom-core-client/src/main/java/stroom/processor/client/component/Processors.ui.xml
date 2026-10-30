@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A pipeline's or analytic rule's Processors tab: the processors and their filters above, and
+     the selected one's details and filter expression below -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:p="urn:import:stroom.processor.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:SimplePanel addStyleNames="max">
+        <split:SplitPane vertical="true" thin="true" sizes="50%, *"
+                         names="Processors, Settings" addStyleNames="max">
+            <g:SimplePanel addStyleNames="max">
+                <p:ProcessorList ui:field="processorList"/>
+            </g:SimplePanel>
+            <split:SplitPane thin="true" sizes="600px, *"
+                             names="Info, Details" addStyleNames="max">
+                <split:ScrollPane addStyleNames="max">
+                    <tx:Html ui:field="info"/>
+                </split:ScrollPane>
+                <split:ScrollPane addStyleNames="max">
+                    <q:ExpressionTree ui:field="expressionTree"/>
+                </split:ScrollPane>
+            </split:SplitPane>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder>

@@ -547,26 +547,27 @@ const mouseProven = new Map();
  * calls `hidePopup()` -> `popup.hide()` -> `SelectionPopup.hide()` -> `popupPanel.hide()`, and a GWT
  * `PopupPanel.hide()` fires CloseEvent. So the handlers registered on that popup ran:
  *
- *   BaseSelectionBox:163  handlerRegistrations.add(popup.addCloseHandler(...))
- *   SelectionPopup:47     registerHandler(popupPanel.addCloseHandler(event -> hide()))
- *   SelectionPopup:135    addCloseHandler(...) — the method BaseSelectionBox:163 calls
+ *   SelectionPopup        popupPanel.addCloseHandler(...) in its constructor, which runs the box's
+ *                         close callback (BaseSelectionBox's setOnClose, since wave 5: no handler
+ *                         of the box's own to credit)
+ *   SelectionPopup        registerHandler(popupPanel.addCloseHandler(event -> hide()))
  *
- * `SelectionPopup:48` watches the selectionList's OWN close event, which is a different thing, and is
- * deliberately NOT credited — hence matching the receiver and not just the class. `MyDateBox`'s
- * receiver also reduces to "popup", which is why the class has to match too.
+ * The selection list's own close (`selectionList.setOnClose`, a callback since wave 5, once a close
+ * event) is a different thing, and is deliberately NOT credited — hence matching the receiver and
+ * not just the class. `MyDateBox`'s receiver also reduces to "popup", which is why the class has to
+ * match too.
  */
 /**
  * What a completed SELECTION also proves beyond the popup closing: the CLICK that opened it.
  *
  * `BaseSelectionBox:44` registers a click handler on `svgIconBox`, and that icon is exactly what the
- * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.svg-icon-box__icon`,
+ * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.icon-box__icon`,
  * because a SelectionBox does not open from its text box). So a selection that completed went through
  * this handler. `ScheduleBox`, `DateTimeBox` and `TimeBox` have an `svgIconBox` too and are NOT
  * credited: nothing opens those.
  */
 const CLICK_BY_SELECTION = new Map([['BaseSelectionBox', new Set(['svgicon'])]]);
 const CLOSE_BY_SELECTION = new Map([
-  ['BaseSelectionBox', new Set(['popup'])],
   ['SelectionPopup', new Set(['popuppanel'])],
 ]);
 /** Did any completed selection happen anywhere in the walk? */
@@ -850,7 +851,8 @@ const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists i
 // `needs-key`, which is what B3 still owes. Joining one is `hit`'s business, not this list's.
 // The screens the data viewer's item navigator is on, the way any handler's owners are worked out.
 const navigatorOwners = (() => {
-  const owners = closureOf('ItemNavigatorViewImpl');
+  // ItemNavigatorViewImpl until wave 4 of the component migration
+  const owners = closureOf('ItemNavigator');
   for (const o of [...owners]) { const p = partnerOf(o); if (p) for (const c of closureOf(p)) owners.add(c); }
   for (const o of [...owners]) for (const parent of embeddedBy.get(o) ?? []) owners.add(parent);
   return owners;
@@ -887,7 +889,7 @@ for (const h of handlers) {
   let hit = null;
   // `Pager`'s range editor, driven as one gesture: its click, key and focus/blur handlers all ride on
   // it, so they join by the receiver the gesture reached rather than by a label or a node.
-  if (h.kind === 'click' && PAGING_LABELS.has(h.label) && ['Pager', 'ItemNavigatorViewImpl'].includes(h.class)) {
+  if (h.kind === 'click' && PAGING_LABELS.has(h.label) && ['Pager', 'ItemNavigator'].includes(h.class)) {
     // Paging buttons by SCREEN. A grid's Pager and the data viewer's item navigator both say First,
     // Backward, Forward and Last, so a label cannot say which was pressed. The screen can: a press
     // on a screen with a grid and no navigator is the Pager's, one on the navigator's screen with no

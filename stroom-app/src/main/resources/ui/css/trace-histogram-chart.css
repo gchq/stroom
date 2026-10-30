@@ -1,0 +1,106 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The trace histogram (stroom.pathways.client.component.TraceHistogramChart), named BEM style: the
+   counts of traces in each part of the time range, as bars on a plot between a y axis (the highest
+   count and 0) and an x axis (the range's start and end), or a hint when there is none. Every bar
+   is as wide as the others (--trace-histogram-chart__bar-width, on the plot), placed by its index
+   (--trace-histogram-chart__bar-index) and as tall as its count (--trace-histogram-chart__bar-height).
+*/
+
+.trace-histogram-chart {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: 1fr 14px;
+    column-gap: 4px;
+    height: 88px;
+    box-sizing: border-box;
+    padding: 4px var(--control__gap--horizontal) 2px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 8px;
+}
+
+.trace-histogram-chart__y-axis {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: #888;
+    pointer-events: none;
+}
+
+.trace-histogram-chart__plot {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    border-left: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.trace-histogram-chart__x-axis {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #888;
+    pointer-events: none;
+}
+
+.trace-histogram-chart__y-label,
+.trace-histogram-chart__x-label {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.trace-histogram-chart__bar {
+    position: absolute;
+    bottom: 0;
+    left: calc(var(--trace-histogram-chart__bar-index) * var(--trace-histogram-chart__bar-width));
+    width: var(--trace-histogram-chart__bar-width);
+    height: var(--trace-histogram-chart__bar-height);
+    box-sizing: border-box;
+    border-right: 1px solid transparent;
+    background-clip: padding-box;
+    background-color: rgba(100, 181, 246, 0.85);
+    cursor: pointer;
+}
+
+/* A bar with any traces can be seen however few it has */
+.trace-histogram-chart__bar--filled {
+    min-height: 3px;
+}
+
+.trace-histogram-chart__bar:hover {
+    background-color: rgba(144, 202, 249, 1);
+}
+
+.trace-histogram-chart__plot--min .trace-histogram-chart__bar {
+    cursor: default;
+}
+
+.trace-histogram-chart__hint {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color--muted);
+    font-size: 13px;
+}

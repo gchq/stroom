@@ -609,11 +609,6 @@ public final class FloorMapClusterOverlay {
         return clusters.isEmpty();
     }
 
-    /// How many entities are hidden inside clusters, across the whole frame.
-    public int getClusteredEntityCount() {
-        return byMemberId.size();
-    }
-
     /// Two overlays are equal when they describe the same merging. Lets callers
     /// skip work when a frame changed nothing.
     @Override

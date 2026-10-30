@@ -17,18 +17,77 @@
 package stroom.widget.datagrid.client;
 
 import stroom.util.shared.ErrorMessage;
+import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Html;
+import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-public interface MessagePanel {
+/// A message shown over the middle of what it is put in, e.g. a list's or a visualisation's
+/// errors; hidden until there is one to show.
+public class MessagePanel extends Component {
 
-    void showMessage(List<ErrorMessage> errors);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    void showMessage(SafeHtml message);
+    @UiField
+    Html message;
 
-    void showMessage(String message);
+    /// Makes a hidden message panel, e.g. one a template declares.
+    public MessagePanel() {
+        initWidget(BINDER.createAndBindUi(this));
+    }
 
-    void hideMessage();
+    /// Shows errors, one line for each line of their messages, unless a message is showing.
+    ///
+    /// @param errors The errors, or null or empty for none (which shows nothing).
+    public void showMessage(final List<ErrorMessage> errors) {
+        if (errors != null && !errors.isEmpty()) {
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            for (final ErrorMessage error : errors) {
+                final String[] lines = error.getMessage().split("\n");
+                for (final String line : lines) {
+                    sb.appendEscaped(line);
+                    sb.appendHtmlConstant("<br />");
+                }
+            }
+            showMessage(sb.toSafeHtml());
+        }
+    }
+
+    /// Shows a message as text, unless a message is showing.
+    ///
+    /// @param message The message.
+    public void showMessage(final String message) {
+        showMessage(SafeHtmlUtil.from(message));
+    }
+
+    /// Shows a message, unless a message is showing.
+    ///
+    /// @param msg The message.
+    public void showMessage(final SafeHtml msg) {
+        if (!isVisible()) {
+            message.setHTML(msg);
+            setVisible(true);
+        }
+    }
+
+    /// Hides the message.
+    public void hideMessage() {
+        setVisible(false);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, MessagePanel> {
+
+    }
 }

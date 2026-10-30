@@ -16,26 +16,23 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
-import stroom.cell.info.client.CellIcon;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableLong;
-import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.cell.client.CellIcon;
+import stroom.cell.tickbox.client.TickBoxState;
+import stroom.cell.valuespinner.client.EditableInteger;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
-import stroom.gwt.workbench.client.widgets.query.ExpressionBuilderStories;
+import stroom.gwt.workbench.client.widgets.query.ExpressionEditorStories;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBox;
-import stroom.processor.client.view.DaysWidget;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeRangeSelector;
-import stroom.query.client.view.TimeZoneWidget;
-import stroom.schedule.client.ScheduleBox;
+import stroom.query.client.component.TimeRangeSelector;
+import stroom.schedule.client.component.ScheduleBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.scheduler.Schedule;
@@ -48,32 +45,30 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeModel;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
-import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.datepicker.client.DaysOfWeek;
+import stroom.widget.datepicker.client.TimeZoneBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
+import stroom.widget.datepicker.client.component.TimeBox;
+import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.duration.client.DurationPicker;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.RadioGroup;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.text.client.Label;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
@@ -91,7 +86,7 @@ public final class ViewStateStories {
     private static final String NOT_APPLICABLE = "Not applicable: read-only documents hide or disable it";
     private static final String FILTER_NOTE = "Not applicable: it chooses what is shown, so read-only "
                                               + "documents leave it usable";
-    private static final String NO_RADIOS = "No read-only state: Stroom has no radio buttons in use";
+    private static final String NO_RADIOS = "No read-only state: its one caller turns it off instead";
     private static final long DATE_TIME = 1_700_000_000_000L;
 
     private ViewStateStories() {
@@ -158,10 +153,10 @@ public final class ViewStateStories {
                 new Row("List (selection box)", ViewStateStories::selectionBox,
                         w -> selectionBoxOf(w).setReadOnly(true),
                         w -> selectionBoxOf(w).setEnabled(false)),
-                new Row("Tick box", ViewStateStories::tickBox, w -> ((CustomCheckBox) w).setReadOnly(true),
-                        w -> ((CustomCheckBox) w).setEnabled(false)),
-                new Row("Document picker", PickerField::new, w -> ((PickerField) w).view.setReadOnly(true),
-                        w -> ((PickerField) w).view.setEnabled(false)),
+                new Row("Tick box", ViewStateStories::tickBox, w -> ((TickBox) w).setReadOnly(true),
+                        w -> ((TickBox) w).setEnabled(false)),
+                new Row("Document picker", PickerField::new, w -> ((PickerField) w).box.setReadOnly(true),
+                        w -> ((PickerField) w).box.setEnabled(false)),
                 new Row("Date and time", () -> dateTimeBox(harness), w -> ((DateTimeBox) w).setReadOnly(true),
                         w -> ((DateTimeBox) w).setEnabled(false)),
                 new Row("Time", ViewStateStories::timeBox, w -> ((TimeBox) w).setReadOnly(true),
@@ -172,10 +167,10 @@ public final class ViewStateStories {
                         w -> ((ScheduleBox) w).setEnabled(false)),
                 new Row("Line and column", ViewStateStories::lineCol, w -> ((LineColInput) w).setReadOnly(true),
                         w -> ((LineColInput) w).setEnabled(false)),
-                new Row("Time zone", ViewStateStories::timeZone, w -> ((TimeZoneWidget) w).setReadOnly(true),
-                        w -> ((TimeZoneWidget) w).setEnabled(false)),
-                new Row("Active days", ViewStateStories::days, w -> ((DaysWidget) w).setReadOnly(true),
-                        w -> ((DaysWidget) w).setEnabled(false)),
+                new Row("Time zone", ViewStateStories::timeZone, w -> ((TimeZoneBox) w).setReadOnly(true),
+                        w -> ((TimeZoneBox) w).setEnabled(false)),
+                new Row("Active days", ViewStateStories::days, w -> ((DaysOfWeek) w).setReadOnly(true),
+                        w -> ((DaysOfWeek) w).setEnabled(false)),
                 new Row("Quick filter", QuickFilter::new, null, w -> ((QuickFilter) w).setEnabled(false), FILTER_NOTE),
                 new Row("Time range", TimeRangeSelector::new, w -> ((TimeRangeSelector) w).setReadOnly(true),
                         w -> ((TimeRangeSelector) w).setEnabled(false)),
@@ -246,9 +241,9 @@ public final class ViewStateStories {
 
         table.setWidget(row, 0, label("Expression", true));
         // The expression editor draws its own border, as a field does
-        table.setWidget(row, 1, frame(ExpressionBuilderStories.expressionEditor(harness, false), "300px", "170px",
+        table.setWidget(row, 1, frame(ExpressionEditorStories.expressionEditor(harness, false), "300px", "170px",
                 false));
-        table.setWidget(row, 2, frame(ExpressionBuilderStories.expressionEditor(harness, true), "300px", "170px",
+        table.setWidget(row, 2, frame(ExpressionEditorStories.expressionEditor(harness, true), "300px", "170px",
                 false));
         table.setWidget(row, 3, note("No disabled state"));
         row++;
@@ -259,13 +254,7 @@ public final class ViewStateStories {
         table.setWidget(row, 3, note("No disabled state"));
         row++;
 
-        table.setWidget(row, 0, label("Native list", true));
-        table.setWidget(row, 1, sized(named(listBox(true), "Native list")));
-        table.setWidget(row, 2, note("No read-only state: only used in dialogs, not documents"));
-        table.setWidget(row, 3, sized(named(listBox(false), "Native list")));
-        row++;
-
-        table.setWidget(row, 0, label("Radio buttons", true));
+        table.setWidget(row, 0, label("Radio group", true));
         table.setWidget(row, 1, radios("normal", true));
         table.setWidget(row, 2, note(NO_RADIOS));
         table.setWidget(row, 3, radios("disabled", false));
@@ -281,15 +270,10 @@ public final class ViewStateStories {
     // Controls that name themselves (their own label, or names for their parts)
     private static boolean hasOwnName(final Widget widget) {
         return widget instanceof LabelledField
-               || widget instanceof CustomCheckBox
-               || widget instanceof DaysWidget
+               || widget instanceof TickBox
+               || widget instanceof DaysOfWeek
                || widget instanceof DurationPicker
-               || widget instanceof TimeZoneWidget;
-    }
-
-    private static Widget named(final Widget widget, final String name) {
-        AccessibleName.set(widget, name);
-        return widget;
+               || widget instanceof TimeZoneBox;
     }
 
     private static Widget gridFrame(final Widget grid) {
@@ -305,7 +289,7 @@ public final class ViewStateStories {
     // A grid of jobs: enabled, name, maximum tasks and an action, editable or as read-only screens
     // draw it (a borderless tick, a plain number and a disabled action)
     private static Widget grid(final ScreenHarness harness, final boolean editable) {
-        final DataGrid<Job> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Job> grid = new DataGrid<>();
         grid.addColumn(DataGridUtil.updatableTickBoxColumnBuilder(
                                 TickBoxState.createTickBoxFunc(Job::isEnabled), editable)
                         .enabledWhen(Job::isEnabled)
@@ -337,18 +321,18 @@ public final class ViewStateStories {
 
     // As a read-only screen gives it: an editable value whose editing is switched off
     private static Number maxTasks(final Job job, final boolean editable) {
-        final EditableLong value = new EditableLong(job.getMaxTasks());
+        final EditableInteger value = new EditableInteger(job.getMaxTasks());
         value.setEditable(editable);
         return value;
     }
 
     private static Widget codeEditor(final ScreenHarness harness, final boolean readOnly) {
-        final EditorPresenter editor = EditorWidgets.editorPresenter(harness.getEventBus());
+        final CodeEditorController editor = EditorWidgets.codeEditor(harness.getEventBus());
         editor.setMode(AceEditorMode.XML);
         editor.setReadOnly(readOnly);
-        editor.getLineNumbersOption().setOn(true);
+        editor.getOptions().getLineNumbersOption().setOn(true);
         editor.setText("<feed>\n  <name>MY_FEED</name>\n</feed>");
-        return editor.getWidget();
+        return editor.asWidget();
     }
 
     private static Widget frame(final Widget widget,
@@ -373,28 +357,22 @@ public final class ViewStateStories {
         return frame;
     }
 
-    private static Widget listBox(final boolean enabled) {
-        final ListBox listBox = new ListBox();
-        listBox.addItem("Excel");
-        listBox.addItem("CSV");
-        listBox.setEnabled(enabled);
-        return listBox;
-    }
-
+    // Stroom's radio group; the group's name is only its accessible name's
     private static Widget radios(final String group, final boolean enabled) {
-        final RadioButton first = new RadioButton(group, "Ascending");
-        final RadioButton second = new RadioButton(group, "Descending");
-        first.setValue(true);
-        first.setEnabled(enabled);
-        second.setEnabled(enabled);
-        return StoryPanels.row(8, first, second);
+        final RadioGroup<String> radios = new RadioGroup<>();
+        radios.addItem("Ascending", "Ascending");
+        radios.addItem("Descending", "Descending");
+        radios.setValue("Ascending");
+        radios.setEnabled(enabled);
+        radios.setAccessibleName("Sort order (" + group + ")");
+        return radios;
     }
 
     private static Widget toggle(final boolean on, final boolean enabled) {
         final ToolbarToggleButton button = new ToolbarToggleButton();
         button.setSvg(SvgImage.FILTER);
         button.setTitle(on ? "Filter on" : "Filter off");
-        button.setState(on);
+        button.setPressed(on);
         button.setEnabled(enabled);
         return button;
     }
@@ -424,7 +402,7 @@ public final class ViewStateStories {
     }
 
     private static Widget sized(final Widget widget) {
-        widget.getElement().getStyle().setProperty("width", "240px");
+        widget.setWidth("240px");
         widget.getElement().getStyle().setProperty("boxSizing", "border-box");
         return widget;
     }
@@ -469,18 +447,15 @@ public final class ViewStateStories {
     }
 
     private static Widget tickBox() {
-        final CustomCheckBox tickBox = new CustomCheckBox();
+        final TickBox tickBox = new TickBox();
         tickBox.setLabel("Send Empty Reports");
         tickBox.setValue(true);
         return tickBox;
     }
 
     private static Widget dateTimeBox(final ScreenHarness harness) {
-        final DateTimeBox box = new DateTimeBox();
-        // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
-        box.setPopupProvider(() -> new DateTimePopup(harness.getEventBus(),
-                new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),
-                new DateTimeModel()));
+        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditorController
+        final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         box.setValue(DATE_TIME);
         return box;
     }
@@ -504,7 +479,7 @@ public final class ViewStateStories {
     }
 
     private static Widget timeZone() {
-        final TimeZoneWidget widget = new TimeZoneWidget(GWT.create(TimeZoneWidget.Binder.class));
+        final TimeZoneBox widget = new TimeZoneBox();
         widget.setTimeZoneUse(UserTimeZone.Use.ID);
         widget.setTimeZoneId("Europe/London");
         widget.changeVisible();
@@ -512,7 +487,7 @@ public final class ViewStateStories {
     }
 
     private static Widget days() {
-        final DaysWidget widget = new DaysWidget();
+        final DaysOfWeek widget = new DaysOfWeek();
         widget.setValue(Days.create(Set.of(Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY)));
         return widget;
     }
@@ -540,14 +515,20 @@ public final class ViewStateStories {
     // --------------------------------------------------------------------------------
 
 
-    // A document picker's view (as DocSelectionBoxPresenter uses it), as a widget
+    // A document picker (as DocSelectionController shows it), as a widget
     private static final class PickerField extends Composite {
 
-        private final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
+        private final DropDownBox box = new DropDownBox();
 
         private PickerField() {
-            view.setText("My Pipeline");
-            initWidget(view.asWidget());
+            box.setText("My Pipeline");
+            initWidget(box);
+        }
+
+        // The picker's button takes the width (its root is a wrapper with no box of its own)
+        @Override
+        public void setWidth(final String width) {
+            box.setWidth(width);
         }
     }
 
@@ -569,9 +550,9 @@ public final class ViewStateStories {
 
         private final String name;
         private final boolean enabled;
-        private final long maxTasks;
+        private final int maxTasks;
 
-        private Job(final String name, final boolean enabled, final long maxTasks) {
+        private Job(final String name, final boolean enabled, final int maxTasks) {
             this.name = name;
             this.enabled = enabled;
             this.maxTasks = maxTasks;
@@ -585,7 +566,7 @@ public final class ViewStateStories {
             return enabled;
         }
 
-        private Long getMaxTasks() {
+        private Integer getMaxTasks() {
             return maxTasks;
         }
     }

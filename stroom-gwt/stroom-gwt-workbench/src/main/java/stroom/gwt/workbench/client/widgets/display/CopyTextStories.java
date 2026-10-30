@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.data.client.presenter.CopyTextUtil;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -24,14 +23,15 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
+import stroom.widget.datagrid.client.CopyTextUtil;
+import stroom.widget.menu.client.MenuManager;
+import stroom.widget.menu.client.component.Menu;
+import stroom.widget.menu.client.component.MenuController;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 /// Stories for Stroom's copyable text ([CopyTextUtil], as rendered by `CopyTextCell` and in
 /// e.g. the dashboard's current selection panel).
 ///
-/// There is no copy text widget in GWT: Stroom's `CurrentSelectionPresenter` renders
+/// There is no copy text widget in GWT: Stroom's `CurrentSelectionController` renders
 /// [CopyTextUtil#render] into an `HTML` widget and passes its mouse downs to
 /// [CopyTextUtil#onClick], as the stories do. A left click on the copy icon copies the value,
 /// on the insert icon inserts it, and a right click shows Stroom's menu (Copy, and Insert into
@@ -100,20 +100,20 @@ public final class CopyTextStories {
     private static ScreenHarness harness(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
         // Shows ShowMenuEvent's menu, as Stroom's MenuManager singleton does
-        new MenuManager(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()));
+        new MenuManager(harness.getEventBus(), () -> menuController(harness.getEventBus()), harness.getAppRoot());
         return harness;
     }
 
-    private static MenuPresenter menuPresenter(final EventBus eventBus) {
-        return new MenuPresenter(eventBus, new MenuViewImpl(), () -> menuPresenter(eventBus));
+    private static MenuController menuController(final EventBus eventBus) {
+        return new MenuController(eventBus, new Menu(), () -> menuController(eventBus));
     }
 
-    /// The copyable text, as `CurrentSelectionPresenter` shows it.
+    /// The copyable text, as `CurrentSelectionController` shows it.
     private static Widget copyText(final ScreenHarness harness,
                                    final String value,
                                    final boolean showInsert,
                                    final Consumer<String> insertHandler) {
-        final HTML html = new HTML(CopyTextUtil.render(value, showInsert));
+        final Html html = new Html(CopyTextUtil.render(value, showInsert));
         html.addDomHandler(event -> CopyTextUtil.onClick(event.getNativeEvent(), harness.getHasHandlers(),
                 insertHandler), MouseDownEvent.getType());
         return html;

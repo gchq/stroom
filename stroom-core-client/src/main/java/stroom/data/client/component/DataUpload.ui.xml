@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Data to upload to a feed: its meta data, type, effective date and file -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:compon="urn:import:stroom.widget.form.client.component">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max"
+                        helpText="Extra meta data to attach to the uploaded data, one 'Key:Value' entry per line. Example: System:Example."
+                        screenReaderText="One Key:Value entry per line.">
+            <form:TextArea ui:field="metaData" addStyleNames="max"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min"
+                        helpText="The stream type to give the uploaded data, for example Raw Events or Raw Reference. Defaults to the feed's stream type."
+                        screenReaderText="Stream type for the uploaded data. Defaults to the feed's type.">
+            <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min"
+                        helpText="The date and time from which the data applies, mainly for reference data. Optional. Use ISO 8601 format; add Z for UTC, for example 2026-01-31T00:00:00.000Z."
+                        screenReaderText="ISO 8601 date, e.g. 2026-01-31T00:00:00.000Z.">
+            <datetimebox:DateTimeBox ui:field="effective" optional="true" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadFile" label="File" addStyleNames="dock-min"
+                        helpText="The file to upload. A .zip file is unpacked as a Stroom zip; .gz and .gzip files are treated as gzip compressed. Other files are stored as they are."
+                        screenReaderText=".zip and .gz files are handled as compressed data."
+                        required="true">
+            <compon:FileChooser ui:field="fileChooser"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

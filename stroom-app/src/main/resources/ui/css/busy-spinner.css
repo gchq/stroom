@@ -1,0 +1,128 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Busy spinners, named BEM style (block, block__element, block--modifier), all in the block
+   busy-spinner (not spinner, the value spinner's class):
+
+   * busy-spinner--small (SmallBusySpinner): shown while tasks run, e.g. on a tab or the explorer's bar.
+     It fades in and out (--active). Once faded out it is hidden, so screen readers skip it: its
+     visibility changes when the fade has finished (delayed by the fade's length), but at once when
+     it is shown. It spins only while SmallBusySpinner says so (--spinning), until it has faded out, so
+     an idle one costs nothing (#5299).
+   * busy-spinner--large (LargeBusySpinner): a ring that spins while a dialog or pane loads. It fades in
+     (--active), slower when soft (--soft), and may be centred over what is loading (--centred).
+   * busy-spinner--page: the ring shown while the app itself loads (app.html).
+*/
+@keyframes busy-spinner-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.busy-spinner--small {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    opacity: 0;
+    visibility: hidden;
+    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+    color: var(--navigation-icon-button__color);
+}
+
+.busy-spinner--small.busy-spinner--active {
+    opacity: 1;
+    visibility: visible;
+    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0s;
+}
+
+.busy-spinner__outer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.busy-spinner__inner {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* The small spinner's picture (an svg:Icon), holding its drawing with no line box around it */
+.busy-spinner__icon {
+    display: flex;
+}
+
+.busy-spinner__inner svg {
+    width: 18px;
+    height: 18px;
+}
+
+.busy-spinner--spinning .busy-spinner__inner svg {
+    animation: busy-spinner-spin .75s linear infinite;
+}
+
+.busy-spinner__ring {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    vertical-align: text-bottom;
+    border: 3px solid var(--navigation-icon-button__color);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: busy-spinner-spin .75s linear infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.busy-spinner--large.busy-spinner--active .busy-spinner__ring {
+    opacity: 1;
+}
+
+.busy-spinner--large.busy-spinner--soft .busy-spinner__ring {
+    transition: opacity 1s ease-in-out;
+}
+
+.busy-spinner--centred {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -11px;
+    margin-top: -11px;
+    opacity: 0.5;
+    z-index: 10;
+}
+
+.busy-spinner--page {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    vertical-align: text-bottom;
+    border: 3px solid #2196f3;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: busy-spinner-spin .75s linear infinite;
+}

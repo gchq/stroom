@@ -20,13 +20,18 @@ package stroom.gwt.workbench.client.widgets.dateandtime;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.widget.datepicker.client.component.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimePicker;
+import stroom.widget.datepicker.client.component.DateTimePickerController;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 
-/// Helpers shared by the `Widgets/Date & Time/*` stories.
-final class DateTimeWidgets {
+/// Helpers shared by the `Widgets/Date & Time/*` stories, and by others that show a date-time box.
+public final class DateTimeWidgets {
 
     /// The name of the spy for the widgets' value changes.
     static final String ON_CHANGE = "onChange";
@@ -58,8 +63,29 @@ final class DateTimeWidgets {
         return panel;
     }
 
+    /// Gives a date-time box its dialog, as Stroom's screens do: a [DateTimeBoxController]
+    /// attached to it, owned by the story's root.
+    ///
+    /// @param harness The harness, whose event bus shows the dialog.
+    /// @param box     The box.
+    /// @return The box.
+    public static DateTimeBox withPicker(final ScreenHarness harness, final DateTimeBox box) {
+        harness.own(dateTimeBoxControllers(harness).get()).attach(box);
+        return box;
+    }
+
+    /// Makes date-time box controllers as GIN does for Stroom's screens, e.g. for a view that makes
+    /// its own date-time boxes (the query expression editor's).
+    ///
+    /// @param harness The harness, whose event bus shows the dialog.
+    /// @return The provider.
+    public static Provider<DateTimeBoxController> dateTimeBoxControllers(final ScreenHarness harness) {
+        return () -> new DateTimeBoxController(() ->
+                new DateTimePickerController(harness.getEventBus(), new DateTimePicker()));
+    }
+
     /// Creates a harness for a widget whose popup is a Stroom dialog (shown with
-    /// `ShowPopupEvent`, e.g. `DateTimePopup`), which needs the harness's event bus and popup
+    /// `ShowPopupEvent`, e.g. the date-time picker), which needs the harness's event bus and popup
     /// manager. The widgets make no REST requests.
     ///
     /// @param context The story's context.

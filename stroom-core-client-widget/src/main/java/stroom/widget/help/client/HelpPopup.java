@@ -17,19 +17,23 @@
 package stroom.widget.help.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.AbstractPopupPanel;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.popup.client.view.Popup;
-import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.popup.client.AbstractPopupPanel;
+import stroom.widget.popup.client.DialogAction;
+import stroom.widget.popup.client.Popup;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupType;
+import stroom.widget.popup.client.PopupUtil;
+import stroom.widget.text.client.Html;
 import stroom.widget.util.client.InputModality;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// A popup of help, shown beside the button that opens it: a form group's help and a quick
 /// filter's syntax help. It is a dialog that isn't modal, named for what it helps with, and closes
@@ -43,52 +47,62 @@ import com.google.gwt.user.client.ui.Widget;
 /// The BEM block `help-popup` (`help-popup.css`), its content `help-popup__content`.
 public final class HelpPopup extends AbstractPopupPanel implements Popup {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "help-popup";
     private static final String ARIA_EXPANDED = "aria-expanded";
 
+    @UiField
+    Html content;
     private Element opener;
+    private Runnable onClose;
 
-    private HelpPopup(final SafeHtml content,
-                      final String name,
-                      final boolean markdown,
-                      final CloseActionHandler closeActionHandler) {
-        // Auto-hides: closes itself when the user clicks outside it
-        super(closeActionHandler, true, false);
-        // Escape (the close action) closes it
-        closeActionHandler.popup = this;
-
-        final HTMLPanel contentPanel = new HTMLPanel(content);
-        contentPanel.setStyleName(BLOCK + "__content");
-        setWidget(contentPanel);
+    /// Makes an empty help popup, which closes itself when the user clicks outside it, presses
+    /// Escape or the browser's history changes (e.g. Back). Give it its content with
+    /// [#setContent(SafeHtml)] and its name with [#setAccessibleName(String)] before showing it. Its
+    /// content's markup is `HelpPopup.ui.xml`.
+    public HelpPopup() {
+        setAutoHideEnabled(true);
+        setAutoHideOnHistoryEventsEnabled(true);
+        super.setWidget(BINDER.createAndBindUi(this));
         setStyleName(BLOCK);
-        if (markdown) {
-            // Styled as rendered markdown is elsewhere (the shared `markdown` block)
-            addStyleName(BLOCK + "--markdown");
-            contentPanel.addStyleName("markdown");
-        }
         // A dialog that isn't modal, for screen readers
         getElement().setAttribute("role", "dialog");
+        super.setOnAction(action -> {
+            if (action == DialogAction.CLOSE) {
+                hide();
+            }
+        });
+        addCloseHandler(event -> {
+            setOpenerExpanded(false);
+            if (onClose != null) {
+                onClose.run();
+            }
+        });
+    }
+
+    /// @param onClose Called when the popup has closed, however it was closed.
+    public void setOnClose(final Runnable onClose) {
+        this.onClose = onClose;
+    }
+
+    /// @param html The help, as HTML.
+    public void setContent(final SafeHtml html) {
+        content.setHTML(html);
+    }
+
+    /// Styles the content as rendered markdown is elsewhere (the shared `markdown` block), e.g. a
+    /// form group's help, rather than as HTML as it is (e.g. a quick filter's syntax help, with its
+    /// own tables).
+    ///
+    /// @param markdown Whether the content is rendered markdown.
+    public void setMarkdown(final boolean markdown) {
+        setStyleName(BLOCK + "--markdown", markdown);
+        content.setStyleName("markdown", markdown);
+    }
+
+    /// @param name The popup's name for screen readers, e.g. `Help`.
+    public void setAccessibleName(final String name) {
         getElement().setAttribute("aria-label", name);
-        addCloseHandler(event -> setOpenerExpanded(false));
-    }
-
-    /// Creates a help popup showing rendered markdown (a form group's help).
-    ///
-    /// @param content The rendered markdown.
-    /// @param name    The popup's accessible name, e.g. `Help`.
-    /// @return The popup, not yet shown.
-    public static HelpPopup markdown(final SafeHtml content, final String name) {
-        return new HelpPopup(content, name, true, new CloseActionHandler());
-    }
-
-    /// Creates a help popup showing HTML as it is (e.g. a quick filter's syntax help, with its own
-    /// tables).
-    ///
-    /// @param content The HTML.
-    /// @param name    The popup's accessible name, e.g. `Quick Filter Syntax Help`.
-    /// @return The popup, not yet shown.
-    public static HelpPopup html(final SafeHtml content, final String name) {
-        return new HelpPopup(content, name, false, new CloseActionHandler());
     }
 
     /// Marks a button as opening a help popup (`aria-haspopup="dialog"`), with the popup closed
@@ -142,9 +156,29 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
         }
     }
 
+    /// Not supported: the popup's content is its help, set with [#setContent(SafeHtml)].
+    ///
+    /// @throws UnsupportedOperationException Always.
     @Override
     public void setContent(final Widget widget) {
-        setWidget(widget);
+        throw new UnsupportedOperationException("A help popup's content is set as HTML");
+    }
+
+    /// Not supported: the popup's content is its help, set with [#setContent(SafeHtml)].
+    ///
+    /// @throws UnsupportedOperationException Always.
+    @Override
+    public void setWidget(final Widget widget) {
+        throw new UnsupportedOperationException("A help popup's content is set as HTML");
+    }
+
+    /// Not supported: the popup closes itself (on Escape, a click outside it or a change of
+    /// history); [#setOnClose(Runnable)] says when it has.
+    ///
+    /// @throws UnsupportedOperationException Always.
+    @Override
+    public void setOnAction(final Consumer<DialogAction> onAction) {
+        throw new UnsupportedOperationException("A help popup handles its own actions");
     }
 
     @Override
@@ -166,15 +200,7 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
     // --------------------------------------------------------------------------------
 
 
-    private static class CloseActionHandler implements DialogActionUiHandlers {
+    interface Binder extends UiBinder<Widget, HelpPopup> {
 
-        private HelpPopup popup;
-
-        @Override
-        public void onDialogAction(final DialogAction action) {
-            if (action == DialogAction.CLOSE && popup != null) {
-                popup.hide();
-            }
-        }
     }
 }

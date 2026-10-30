@@ -1,0 +1,111 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.gwt.workbench.client.app.processing;
+
+import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.gwt.workbench.framework.client.story.StoryLayout;
+import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
+
+/// Stories of `App/Main/ProcessorLimitsDialog`, showing Stroom's real [ProcessorLimitsController]
+/// (the 'Process Search Results' dialog), shown as `QueryPaneController.setProcessorLimits` shows it,
+/// with the UI config's process limits.
+///
+/// In Stroom the pipeline is chosen first, in its own 'Choose Pipeline To Process Results With'
+/// popup, so this dialog only has the limits. Creating the filter (which `QueryPaneController` does
+/// after OK, as `POST /processorFilter/v1`) isn't reached by the story.
+public final class ProcessorLimitsDialogStories {
+
+    /// The name of the spy given the limits on OK.
+    static final String ON_OK = "onOk";
+
+    private ProcessorLimitsDialogStories() {
+        // Static utility
+    }
+
+    /// Adds the stories to the registry.
+    ///
+    /// @param registry The registry to add to.
+    public static void addTo(final StoryRegistry registry) {
+        registry.component("App/Main/ProcessorLimitsDialog", ProcessorLimitsDialogStories.class)
+                .layout(StoryLayout.FULLSCREEN)
+                // The dialog renders the limits
+                .story("Render", ProcessorLimitsDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByText("Process Search Results")).toBeInTheDocument());
+                    // The dialog has no pipeline picker (the pipeline is chosen before it, in a 'Choose
+                    // Pipeline To Process Results With' popup), so OK is enabled; the dialog holds the
+                    // record and time limits, from the UI config
+                    play.expect(screen.queryByText("Pipeline", "label")).toBeNull();
+                    play.expect(screen.getByText("Record Limit", "label")).toBeInTheDocument();
+                    play.expect(screen.querySelector("#processorLimitsRecordLimit input")).toHaveValue("1000000");
+                    play.expect(screen.querySelector("#processorLimitsTimeLimit input")).toHaveValue("30");
+                    play.expect(screen.getByRole("button", StroomDom.button("OK"))).toBeEnabled();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // OK gives the limits entered
+                .story("Ok", ProcessorLimitsDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query timeLimit = screen.findByLabelText("Time Limit (mins)");
+                    play.clear(timeLimit);
+                    play.type(timeLimit, "45");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_OK)).toHaveBeenCalledWith(1000000L, 45L));
+                    play.waitFor(() -> play.expect(screen.queryByText("Process Search Results")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Cancel gives nothing
+                .story("Cancel", ProcessorLimitsDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Process Search Results");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Process Search Results")).toBeNull());
+                    play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
+                });
+    }
+
+    private static Widget render(final StoryContext context) {
+        final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
+                .injector(injector)
+                .build();
+        final Spy onOk = harness.fn(ON_OK);
+        // As QueryPaneController shows it
+        harness.afterStartUp(() -> harness.getUiConfigCache().get(result -> {
+            if (result != null) {
+                injector.getProcessorLimitsController().show(harness.getAppRoot(),
+                        result.getProcess().getDefaultRecordLimit(),
+                        result.getProcess().getDefaultTimeLimit(),
+                        (recordLimit, timeLimitMins) -> onOk.call(recordLimit, timeLimitMins));
+            }
+        }));
+        return harness.asWidget();
+    }
+}

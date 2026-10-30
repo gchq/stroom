@@ -17,10 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.tabs;
 
-import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.HasToolbar;
-import stroom.entity.client.presenter.LinkTabPanelPresenter;
-import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.document.client.editor.HasToolbar;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.TabbedController;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
@@ -29,28 +28,26 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.component.client.Controller;
+import stroom.widget.tab.client.TabData;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
-/// Stories for Stroom's [LinkTabPanelPresenter] (with its [LinkTabPanelViewImpl]): a link tab bar,
-/// an optional toolbar and the selected tab's content.
+/// Stories for Stroom's link tab panel ([LinkTabPanel]): a link tab bar, an optional
+/// toolbar and the selected tab's content.
 ///
-/// The presenter is abstract (Stroom's document and data screens extend it), so the stories
-/// extend it with tabs showing fixed content. The toolbars are handled as Stroom's
-/// `DocTabPresenter` does: its own toolbar, then any toolbars of a content presenter that
-/// [HasToolbar].
+/// The panel is driven by a [TabbedController] (Stroom's document editors and a folder's tabs extend
+/// it), so the stories extend it with tabs showing fixed content. The toolbars are its own: its
+/// toolbar, then any toolbars of a tab's content that [HasToolbar].
 public final class LinkTabPanelStories {
 
     private static final String PANE_PADDING = "16px";
@@ -118,38 +115,32 @@ public final class LinkTabPanelStories {
     /// @param labels The tab labels.
     /// @param extraToolbarTab The label of the tab with its own toolbar (a Save query button), or
     ///                        null for none.
-    /// @param toolbar The panel's toolbar, or null for none.
+    /// @param toolbar The panel's toolbar's buttons, or null for none.
     /// @param narrow Whether the panel is in a narrow (320px) bordered box.
     private static Widget panel(final StoryContext context,
                                 final List<String> labels,
                                 final String extraToolbarTab,
-                                final Toolbar toolbar,
+                                final List<SvgImage> toolbar,
                                 final boolean narrow) {
         final ScreenHarness harness = TabWidgets.menuHarness(context);
         final EventBus eventBus = harness.getEventBus();
-        final Map<TabData, PresenterWidget<?>> contents = new HashMap<>();
+        final Map<TabData, Supplier<Controller>> contents = new HashMap<>();
         final List<TabData> tabs = new ArrayList<>();
         for (final String label : labels) {
             final TabData tab = new StoryTab(label, label, null, null, false);
             tabs.add(tab);
             final Widget pane = TabWidgets.pane(text(label, extraToolbarTab != null), PANE_PADDING, PANE_FONT_SIZE);
             if (label.equals(extraToolbarTab)) {
-                contents.put(tab, new ToolbarContentPresenter(eventBus, pane));
+                contents.put(tab, () -> new ToolbarContent(eventBus, pane));
             } else {
-                contents.put(tab, TabWidgets.content(eventBus, pane));
+                contents.put(tab, () -> TabWidgets.content(eventBus, pane));
             }
         }
 
-        final StoryLinkTabPanelPresenter presenter = new StoryLinkTabPanelPresenter(eventBus,
-                new LinkTabPanelViewImpl(GWT.create(LinkTabPanelViewImpl.Binder.class)), contents, toolbar);
-        harness.unbindOnCleanUp(presenter);
-        presenter.bind();
-        harness.addRegistration(presenter.getView().getTabBar()
-                .addShowMenuHandler(event -> eventBus.fireEvent(event)));
-        for (final TabData tab : tabs) {
-            presenter.addTab(tab);
-        }
-        presenter.selectTab(tabs.get(0));
+        final LinkTabPanel view = new LinkTabPanel();
+        final StoryTabs panel = new StoryTabs(eventBus, view, tabs, contents, toolbar);
+        harness.own(panel);
+        harness.addRegistration(view.getTabBar().addShowMenuHandler(event -> eventBus.fireEvent(event)));
 
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
@@ -158,21 +149,16 @@ public final class LinkTabPanelStories {
             style.setProperty("width", "320px");
             style.setProperty("border", "1px solid var(--border-color)");
         }
-        frame.add(presenter.getWidget());
+        frame.add(panel.asWidget());
         harness.add(frame);
         return harness.asWidget();
     }
 
-    // A document's toolbar, with its Save button and optionally Save As; pressing them does nothing
-    private static Toolbar documentActions(final boolean withSaveAs) {
-        final Toolbar toolbar = new Toolbar("Document actions");
-        toolbar.button(SvgImage.SAVE, "Save", () -> {
-        });
-        if (withSaveAs) {
-            toolbar.button(SvgImage.SAVEAS, "Save As", () -> {
-            });
-        }
-        return toolbar;
+    // A document's toolbar's buttons, Save and optionally Save As; pressing them does nothing
+    private static List<SvgImage> documentActions(final boolean withSaveAs) {
+        return withSaveAs
+                ? List.of(SvgImage.SAVE, SvgImage.SAVEAS)
+                : List.of(SvgImage.SAVE);
     }
 
 
@@ -180,43 +166,28 @@ public final class LinkTabPanelStories {
 
 
     /// A link tab panel with fixed content for each tab.
-    private static final class StoryLinkTabPanelPresenter extends LinkTabPanelPresenter {
+    private static final class StoryTabs extends TabbedController<String> {
 
-        private final Map<TabData, PresenterWidget<?>> contents;
-        private final Toolbar toolbar;
-
-        private StoryLinkTabPanelPresenter(final EventBus eventBus,
-                                           final LinkTabPanelViewImpl view,
-                                           final Map<TabData, PresenterWidget<?>> contents,
-                                           final Toolbar toolbar) {
+        private StoryTabs(final EventBus eventBus,
+                          final LinkTabPanel view,
+                          final List<TabData> tabs,
+                          final Map<TabData, Supplier<Controller>> contents,
+                          final List<SvgImage> toolbar) {
             super(eventBus, view);
-            this.contents = contents;
-            this.toolbar = toolbar;
-        }
-
-        @Override
-        protected void getContent(final TabData tab, final ContentCallback callback) {
-            callback.onReady(contents.get(tab));
-        }
-
-        @Override
-        protected TabData getPermissionsTab() {
-            // No permissions tab
-            return null;
-        }
-
-        @Override
-        protected void afterSelectTab(final PresenterWidget<?> content) {
-            // As DocTabPresenter updates the toolbar for the selected content
-            getView().clearToolbar();
             if (toolbar != null) {
-                getView().addToolbar(toolbar);
-            }
-            if (content instanceof HasToolbar) {
-                for (final Widget widget : ((HasToolbar) content).getToolbars()) {
-                    getView().addToolbar(widget);
+                for (final SvgImage icon : toolbar) {
+                    final String name = SvgImage.SAVE.equals(icon)
+                            ? "Save"
+                            : "Save As";
+                    getToolbar().button(icon, name, () -> {
+                    });
                 }
             }
+            for (final TabData tab : tabs) {
+                addTab(tab, contents.get(tab), (content, docRef, text) -> {
+                });
+            }
+            selectTab(tabs.get(0));
         }
     }
 
@@ -225,14 +196,13 @@ public final class LinkTabPanelStories {
 
 
     /// Tab content with its own toolbar.
-    private static final class ToolbarContentPresenter
-            extends MyPresenterWidget<TabWidgets.ContentView>
-            implements HasToolbar {
+    private static final class ToolbarContent extends Controller implements HasToolbar {
 
         private final Toolbar extraToolbar;
 
-        private ToolbarContentPresenter(final EventBus eventBus, final Widget pane) {
-            super(eventBus, TabWidgets.content(eventBus, pane).getView());
+        private ToolbarContent(final EventBus eventBus, final Widget pane) {
+            super(eventBus);
+            initWidget(pane);
             extraToolbar = new Toolbar("Query actions");
             extraToolbar.button(SvgImage.SAVE, "Save query", () -> {
             });

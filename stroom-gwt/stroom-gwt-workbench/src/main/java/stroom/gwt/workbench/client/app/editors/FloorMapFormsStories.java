@@ -16,12 +16,12 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
-import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView.GraphicMode;
-import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
-import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
-import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
-import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
+import stroom.floormap.client.component.FloorMapGroupEdit;
+import stroom.floormap.client.component.FloorMapLayerStyle;
+import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
+import stroom.floormap.client.component.FloorMapObjectEdit;
+import stroom.floormap.client.component.FloorMapSetScale;
+import stroom.floormap.client.model.MemberCandidate;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -29,8 +29,8 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,9 +54,7 @@ public final class FloorMapFormsStories {
                 // A layer's style: what to draw (Shape, Icon or Image) is a radio group, and the rows
                 // the chosen graphic doesn't use are disabled
                 .story("LayerStyle", context -> {
-                    final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
-                    view.setMode(GraphicMode.SHAPE);
-                    return view.asWidget();
+                    return layerStyle(GraphicMode.SHAPE);
                 })
                 .withPlay(play -> {
                     final Query group = play.getByRole("radiogroup", "Graphic");
@@ -73,9 +71,7 @@ public final class FloorMapFormsStories {
                 // The icons are a radio group too, named by their row: one tab stop, the arrow keys
                 // choosing (they were clickable cells the keyboard couldn't reach)
                 .story("IconPicker", context -> {
-                    final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
-                    view.setMode(GraphicMode.ICON);
-                    return view.asWidget();
+                    return layerStyle(GraphicMode.ICON);
                 })
                 .withPlay(play -> {
                     final Query icons = play.getByRole("radiogroup", "Icon");
@@ -97,9 +93,7 @@ public final class FloorMapFormsStories {
                 // Up and Down choose the icon above or below in the grid as it is laid out (Left and
                 // Right the one before or after); at the top row Up keeps the choice
                 .story("IconPickerRows", context -> {
-                    final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
-                    view.setMode(GraphicMode.ICON);
-                    return view.asWidget();
+                    return layerStyle(GraphicMode.ICON);
                 })
                 .withPlay(play -> {
                     final Query icons = play.getByRole("radiogroup", "Icon");
@@ -121,7 +115,7 @@ public final class FloorMapFormsStories {
                 // The set scale dialog: the distance's unit is a selection box of the metric units,
                 // named for what it is
                 .story("SetScale", context -> {
-                    final FloorMapSetScaleViewImpl view = new FloorMapSetScaleViewImpl();
+                    final FloorMapSetScale view = new FloorMapSetScale();
                     view.setCurrentReading("3.2 m");
                     view.setDistance("2.4");
                     view.setUnit(Unit.CENTIMETRE);
@@ -134,7 +128,7 @@ public final class FloorMapFormsStories {
                 })
                 // A group's members: a tick box for each one seen on the map, named by its name
                 .story("GroupMembers", context -> {
-                    final FloorMapGroupEditViewImpl view = new FloorMapGroupEditViewImpl();
+                    final FloorMapGroupEdit view = new FloorMapGroupEdit();
                     view.setName("Meeting rooms");
                     view.setCandidates(Arrays.asList(
                                     new MemberCandidate("room-1", "Room 1", "room", true),
@@ -152,11 +146,11 @@ public final class FloorMapFormsStories {
                 })
                 // An area's fill: 'Default' is a tick box, ticked to use its type's colour
                 .story("AreaFill", context -> {
-                    final FloorMapObjectEditViewImpl view = new FloorMapObjectEditViewImpl(
-                            GWT.create(FloorMapObjectEditViewImpl.Binder.class),
-                            () -> null);
+                    final FloorMapObjectEdit view = new FloorMapObjectEdit();
                     view.setAreaFieldsVisible(true);
                     view.setDefaultFill("#336699");
+                    // No image chosen, as its controller shows it
+                    view.getAssetBox().setText("None");
                     return view.asWidget();
                 })
                 .withPlay(play -> {
@@ -172,6 +166,15 @@ public final class FloorMapFormsStories {
                             .toHaveAttribute("aria-label", "Area fill colour");
                     play.expect(play.querySelectorAll(".gwt-CheckBox")).toHaveLength(0);
                 });
+    }
+
+    // The layer style dialog's content, drawing a graphic, with no image chosen, as its controller
+    // shows it
+    private static Widget layerStyle(final GraphicMode mode) {
+        final FloorMapLayerStyle view = new FloorMapLayerStyle();
+        view.setMode(mode);
+        view.getAssetBox().setText("None");
+        return view.asWidget();
     }
 
     private static native Element focusedElement() /*-{

@@ -1,0 +1,48 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A button in a table cell (RowActions), without the browser's button look, so it looks as the
+   icon it holds, with a focus ring on keyboard focus. */
+
+/* A button in a table cell (RowActions), without the browser's button look, so it looks as the
+   icon it holds. :where() leaves the cell's own styles in charge */
+:where(.row-action) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* A row action's icon (RowActions.ICON_CLASS_NAME) also shows while it has the focus, an icon shown
+   only on a hover too (user-ref-link.css and doc-ref-link.css, imported before this) */
+.row-action:focus .row-action__icon {
+    opacity: .8;
+    color: var(--text-color);
+}
+
+/* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
+   reference, or an annotation history entry's actions button */
+[data-row-action]:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}

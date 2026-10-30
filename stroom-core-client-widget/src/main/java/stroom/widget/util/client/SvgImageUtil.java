@@ -16,7 +16,7 @@
 
 package stroom.widget.util.client;
 
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.CellIcon;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
@@ -50,7 +50,6 @@ public class SvgImageUtil {
                                      + NullSafe.join(" ", classNames);
         final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgImage.getSvg());
 
-        //        GWT.log("safeHtml: " + safeHtml.asString());
         return NullSafe.isBlankString(title)
                 ? Templates.div(allClassNames, svgHtml)
                 : Templates.div(allClassNames, title, svgHtml);

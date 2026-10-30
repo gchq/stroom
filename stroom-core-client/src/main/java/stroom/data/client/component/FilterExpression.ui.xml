@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:SimplePanel styleName="max default-min-sizes">
+        <q:ExpressionEditor ui:field="expressionEditor"/>
+    </g:SimplePanel>
+</ui:UiBinder>

@@ -1,0 +1,41 @@
+/*
+ * The About dialog's content (About): Stroom's logo, the About text and the build it is running.
+ */
+
+.about {
+    width: 500px;
+    height: 288px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.about__logo {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.about__logo svg {
+    width: 150px;
+    height: 40px;
+    color: var(--logo-color);
+}
+
+/* The details, framed as a control */
+.about__body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+}
+
+.about__build-info {
+    white-space: nowrap;
+    display: flex;
+    justify-content: flex-end;
+}

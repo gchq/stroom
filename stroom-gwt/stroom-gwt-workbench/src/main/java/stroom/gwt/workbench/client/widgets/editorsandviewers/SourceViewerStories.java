@@ -16,16 +16,14 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.ItemNavigatorPresenter;
-import stroom.data.client.presenter.ItemSelectionPresenter;
-import stroom.data.client.presenter.MarkerListPresenter;
-import stroom.data.client.view.ClassificationLabel;
-import stroom.data.client.view.ClassificationWrapperViewImpl;
-import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.ItemNavigatorViewImpl;
-import stroom.data.client.view.ItemSelectionViewImpl;
-import stroom.editor.client.presenter.HtmlPresenter;
+import stroom.data.client.component.ClassificationLabelController;
+import stroom.data.client.component.DataViewer;
+import stroom.data.client.component.DataViewerController;
+import stroom.data.client.component.ItemNavigatorController;
+import stroom.data.client.component.ItemSelection;
+import stroom.data.client.component.ItemSelectionController;
+import stroom.data.client.component.MarkerList;
+import stroom.data.client.component.MarkerListController;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
@@ -43,11 +41,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.text.client.HtmlPane;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -55,15 +50,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/// Stories for Stroom's [DataPresenter] (the data preview of a stream: its Info, Error, Data
+/// Stories for Stroom's [DataViewerController] (the data preview of a stream: its Info, Error, Data
 /// Preview, Meta and Context tabs, the item navigator and the marker list).
 ///
-/// Fixtures answer the requests [DataPresenter] makes:
+/// Fixtures answer the requests [DataViewerController] makes:
 /// the stream's meta (`GET /meta/v1/{id}`), its child stream types
 /// (`GET /data/v1/{id}/parts/{part}/child-types`) and the data (`POST /data/v1/fetch`).
 ///
 /// The data preview pages by part or record (the 'View Source' link opens the
-/// source view, see `SourcePresenterStories`), and shows markers in its Error tab, for streams of
+/// source view, see `SourceStories`), and shows markers in its Error tab, for streams of
 /// the `Error` type.
 public final class SourceViewerStories {
 
@@ -128,7 +123,7 @@ public final class SourceViewerStories {
                 // The navigation's icon buttons, and the tab stops they cost
                 .withPlay(play -> play.waitFor(() -> play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                         "First part, Previous part, Next part, Last part, Refresh: 1 tab stop"))))
-                // The marker list (MarkerListPresenter) of an Error stream
+                // The marker list (MarkerListController) of an Error stream
                 .story("Markers", context -> render(context, MARKERS_FIXTURES, location(1001)))
                 .withPlay(play -> {
                     // An Error stream's markers are shown in its Error tab
@@ -161,15 +156,15 @@ public final class SourceViewerStories {
                     final Supplier<Object> lastFetch = lastFetch(play);
                     play.click(play.findByText(ERROR, TAB_LABEL));
                     play.waitFor(() -> play.expect(play.getByText("Errors (1 item)")).toBeInTheDocument());
-                    // MarkerListPresenter starts with every severity expanded
+                    // MarkerListController starts with every severity expanded
                     // (resetExpandedSeverities), so the error shows to begin with
                     // and the first click collapses the group
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     play.waitFor(() -> play.expect(play.queryByText("Split records {SplitFilter}")).toBeNull());
                     // Clicking the expander again fetches with ERROR expanded, and the server returns
                     // the group's rows (they aren't filtered by the client)
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     play.waitFor(() -> play.expect(play.getByText("Split records {SplitFilter}"))
                             .toBeInTheDocument());
                     play.expect("the last fetch", lastFetch)
@@ -193,8 +188,9 @@ public final class SourceViewerStories {
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"childType\":\"Context\""));
                     waitForEditorText(play, "<context>ctx</context>");
 
-                    // View as Hex is an option of the editor's context menu
+                    // View as Hex is an option of the editor's context menu, in its Editor Options
                     play.rightClick(play.querySelector(".ace_content"));
+                    play.click(play.screen().findByText(TextMatch.containing("Editor Options")));
                     play.click(play.screen().findByText(TextMatch.containing("View as Hex")));
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"displayMode\":\"HEX\""));
                     waitForEditorText(play, "|<event>|");
@@ -205,7 +201,7 @@ public final class SourceViewerStories {
                 .withPlay(play -> {
                     waitForEditorText(play, "line six  TARGET word");
                     // The range is highlighted (an Ace marker). It once never was for a data stream:
-                    // DataPresenter.refreshHighlights compared the stream's type with the location's
+                    // DataViewerController.refreshHighlights compared the stream's type with the location's
                     // child type
                     play.waitFor(() -> play.expect(
                                     play.querySelectorAll(".ace_marker-layer .code-editor__highlight").count())
@@ -213,9 +209,9 @@ public final class SourceViewerStories {
                     // The data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line
                     play.expect(play.querySelector(".ace_gutter")).not().toBeVisible();
-                    // A range has nothing to navigate, so there is no item navigator (it was once
+                    // A range has nothing to navigate, so the item navigator is hidden (it was once
                     // shown again when the data arrived)
-                    play.expect(play.querySelector(".itemNavigator")).toBeNull();
+                    play.expect(play.querySelector(".item-navigator")).not().toBeVisible();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // No location: nothing is fetched
@@ -227,44 +223,35 @@ public final class SourceViewerStories {
                                  final SourceLocation sourceLocation) {
         // Stroom's MenuManager (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
-        final DataPresenter presenter = dataPresenter(harness);
-        // As GWTP does when the presenter is revealed
-        presenter.bind();
-        harness.unbindOnCleanUp(presenter);
+        final DataViewerController controller = dataController(harness);
+        harness.own(controller);
         if (sourceLocation != null) {
-            presenter.fetchData(sourceLocation);
+            controller.fetchData(sourceLocation);
         }
 
         // A 460px high frame
-        harness.add(EditorWidgets.frame(presenter.getWidget(), "auto", "460px"));
+        harness.add(EditorWidgets.frame(controller.asWidget(), "auto", "460px"));
         return harness.asWidget();
     }
 
-    /// Creates the presenter and its views, as GIN would.
-    private static DataPresenter dataPresenter(final ScreenHarness harness) {
+    /// Creates the controller and its components, as GIN would.
+    private static DataViewerController dataController(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
-        final ItemNavigatorPresenter itemNavigatorPresenter = new ItemNavigatorPresenter(
+        final ItemNavigatorController itemNavigator = new ItemNavigatorController(
+                () -> new ItemSelectionController(eventBus, new ItemSelection()));
+        return new DataViewerController(
                 eventBus,
-                new ItemNavigatorViewImpl(eventBus, GWT.create(ItemNavigatorViewImpl.Binder.class)),
-                () -> new ItemSelectionPresenter(
-                        eventBus,
-                        new ItemSelectionViewImpl(eventBus, GWT.create(ItemSelectionViewImpl.Binder.class))));
-        return new DataPresenter(
-                eventBus,
-                new HtmlPresenter(eventBus),
-                itemNavigatorPresenter,
-                new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
-                new ClassificationWrapperViewImpl(
-                        GWT.create(ClassificationWrapperViewImpl.Binder.class),
-                        new ClassificationLabel(harness.getUiConfigCache())),
-                EditorWidgets.textPresenter(eventBus),
-                new ProgressPresenter(eventBus, new ProgressViewImpl(GWT.create(ProgressViewImpl.Binder.class))),
-                new MarkerListPresenter(eventBus, new WrapperViewImpl()),
+                new HtmlPane(),
+                itemNavigator,
+                new ClassificationLabelController(harness.getUiConfigCache()),
+                EditorWidgets.dataTextPane(eventBus),
+                new MarkerListController(eventBus, new MarkerList()),
                 // Only used to open the source in a new tab, which the workbench doesn't have
                 null,
                 harness.getUiConfigCache(),
                 harness.getInjector().getClientSecurityContext(),
-                harness.getRestFactory());
+                harness.getRestFactory())
+                .attach(new DataViewer());
     }
 
     private static SourceLocation location(final long metaId) {

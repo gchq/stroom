@@ -1,5 +1,9 @@
 # Full coverage of the GWT UI — the branching plan
 
+> **Note (30 October 2026):** the presenters this plan names and counts (414, and those listed by
+> name) predate the component migration (waves 1 to 46): no presenter remains, as every screen and
+> dialog is now a controller, and many were renamed or merged. The plan is kept as it was written.
+
 [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) planned *destinations* — places you can navigate to. That layer
 is done: 184 recorded targets, 167 pixel-identical, 0 corpus misses. It then said "dialogs are the
 long tail" and stopped, which was an admission rather than a plan.
@@ -149,7 +153,7 @@ actions**.
 99 self-shown + 40 edges. Each dialog is itself a node with its own affordances, so this layer
 recurses; the graph gives the parent for every one.
 
-### Layer 4 — config-gated features · BLOCKED, needs a decision
+### Layer 4 — config-gated features · decided 30 October 2026: walk them (BEHAVIOUR-PLAN.md § B6)
 **A whole category that no amount of crawling reaches, because it does not exist in this deployment.**
 Four found, and the set was never enumerated before:
 
@@ -295,7 +299,7 @@ of closing it.
 ### Layer 4f — data variety · measurable, not yet measured
 The plan has said from the start that "a grid with three rows recorded proves the grid, not the paging"
 and then never returned to it. It is measurable: the pager renders its state inline as
-`&nbsp; 1 &nbsp;to&nbsp; 45 <input class="pager-textBox">`, so current page, page size and total are
+`&nbsp; 1 &nbsp;to&nbsp; 45 <input class="paging-bar__text-box">`, so current page, page size and total are
 all recoverable per screen — with an entity-aware parse, which is why a first attempt with a naive
 regex found nothing.
 

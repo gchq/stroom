@@ -30,9 +30,6 @@ package stroom.gwt.workbench.framework.client.preview;
 ///   to render or a step of its play function fails.
 public final class RunnerHooks {
 
-    /// The attribute of the `<html>` element holding the play status.
-    public static final String PLAY_STATUS_ATTRIBUTE = "data-play-status";
-
     private RunnerHooks() {
         // Static utility
     }

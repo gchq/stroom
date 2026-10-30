@@ -17,24 +17,24 @@
 
 package stroom.gwt.workbench.client.widgets.dialogs;
 
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.popup.client.PopupType;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 
 /// Stories for the dialogs of Stroom's identity provider screens (change password, current
 /// password, reset password).
 ///
-/// Stroom shows these screens (`ChangePasswordPresenter`, `CurrentPasswordPresenter`,
-/// `EmailResetPasswordPresenter`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
+/// Stroom shows these screens (`ChangePasswordController`, `CurrentPasswordController`,
+/// `EmailResetPasswordController`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
 /// icon, which is what this story does.
 public final class StaticDialogStories {
 
@@ -62,10 +62,10 @@ public final class StaticDialogStories {
                     final Style style = body.getElement().getStyle();
                     style.setProperty("padding", "12px");
                     style.setProperty("color", "var(--text-color)");
-                    final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), body);
+                    final StoryContent controller = new StoryContent(popups.getEventBus(), body);
 
-                    // As the IdP presenters show themselves
-                    ShowPopupEvent.builder(presenter)
+                    // As the IdP controllers show themselves
+                    ControllerDialog.showOnce(popups, controller)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .icon(SvgImage.PASSWORD)
                             .caption("Change Password")

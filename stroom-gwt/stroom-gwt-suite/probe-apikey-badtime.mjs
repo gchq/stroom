@@ -46,7 +46,7 @@ const un = (t) => { const x = String(t ?? '').replace(/\s+/g, ' ').trim(); retur
 const press = async (want) => {
   const at = await page.evaluate(([w, dedupe]) => {
     const u = (t) => { const x = String(t ?? '').replace(/\s+/g, ' ').trim(); return new RegExp(dedupe).test(x) ? x.split(' ')[0] : x; };
-    const b = [...document.querySelectorAll('button, [role=button], .Button')].filter((e) => e.offsetWidth > 0)
+    const b = [...document.querySelectorAll('button, [role=button], .button')].filter((e) => e.offsetWidth > 0)
       .find((e) => u(e.getAttribute('title')) === w || u(e.textContent) === w);
     if (!b || b.disabled || b.classList.contains('disabled')) return null;
     const r = b.getBoundingClientRect();
@@ -102,7 +102,7 @@ if (!(await press('OK'))) { console.log('OK would not take a click'); await brow
 const now = await caps();
 const feed = await readFeedback(page);
 const alertText = await page.evaluate(() => {
-  const a = [...document.querySelectorAll('.alert-message')].filter((e) => e.offsetWidth > 0).pop();
+  const a = [...document.querySelectorAll('.common-alert__message')].filter((e) => e.offsetWidth > 0).pop();
   return a ? String(a.textContent ?? '').replace(/\s+/g, ' ').trim() : null;
 });
 const blocked = guard.violations.slice(vBefore).map((v) => `${v.method} ${v.path}`);

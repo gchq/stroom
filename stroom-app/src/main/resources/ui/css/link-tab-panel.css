@@ -1,0 +1,84 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A link tab panel (stroom.document.client.editor.LinkTabPanel), named BEM style. Its rules were in `components.css`.
+*/
+
+.link-tab-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 25px;
+    padding: 0 5px;
+}
+
+/* Flush with the panel's edge (LinkTabPanel.setFlush): the tab bar alone sets the row's height, as
+   it does a column's that holds it directly (the status is placed absolutely) */
+.link-tab-panel--flush {
+    display: block;
+    min-height: 0;
+    padding: 0;
+}
+
+.link-tab-panel__middle {
+    flex-grow: 1;
+}
+
+.link-tab-panel__toolbar {
+    display: flex;
+}
+
+/* The "Read only" status at the far right of a read-only document's tab bar (LinkTabPanel) */
+.link-tab-panel__read-only-status {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+/* Empty, it is out of the layout (no gap either) but stays in the page, so screen readers announce
+   it when it is filled */
+.link-tab-panel__read-only-status:empty {
+    position: absolute;
+}
+
+.link-tab-panel__read-only-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    border-radius: .25rem;
+    font-size: var(--font-size-12);
+    line-height: 18px;
+    color: var(--text-color);
+    border: 1px solid var(--control__border-color);
+    white-space: nowrap;
+}
+
+.link-tab-panel__read-only-icon {
+    display: flex;
+}
+
+.link-tab-panel__read-only-icon svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* In the chip's colour rather than the lock's usual orange, which would read as a warning */
+.link-tab-panel__read-only-icon svg path {
+    fill: currentColor !important;
+}

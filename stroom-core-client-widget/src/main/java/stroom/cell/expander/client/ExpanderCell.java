@@ -105,7 +105,9 @@ public class ExpanderCell extends AbstractCell<Expander> {
         if (value != null) {
             final int depth = value.getDepth();
             final int padding = (depth * ICON_WIDTH) + initialOffset;
-            final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
+            // The indent of the row's depth, which expander-cell.css's padding uses
+            final SafeStyles style = SafeStylesUtils.fromTrustedString(
+                    "--expander-cell__indent:" + padding + "px;");
             String className = "";
             // What a press does, for the mouse. Assistive technology hears the row's own state
             // (the grid gives a tree row aria-expanded), so the expander is hidden from it
@@ -116,21 +118,21 @@ public class ExpanderCell extends AbstractCell<Expander> {
                 title = "";
             } else if (value.isExpanded()) {
                 expanderIcon = SvgImage.ARROW_DOWN;
-                className += " active";
+                className += " expander-cell__icon--active";
                 title = "Collapse";
             } else {
                 expanderIcon = SvgImage.ARROW_RIGHT;
-                className += " active";
+                className += " expander-cell__icon--active";
                 title = "Expand";
             }
 
             final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                     expanderIcon,
-                    "expanderIcon" + className);
+                    "expander-cell__icon" + className);
             if (title.isEmpty()) {
-                sb.append(template.leaf("expanderCell", style, iconSafeHtml));
+                sb.append(template.leaf("expander-cell", style, iconSafeHtml));
             } else {
-                sb.append(template.expander("expanderCell", style, title, iconSafeHtml));
+                sb.append(template.expander("expander-cell", style, title, iconSafeHtml));
             }
 
         } else {

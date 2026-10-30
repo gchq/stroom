@@ -40,6 +40,8 @@ public final class RowActions {
 
     /// The attribute that marks a button or link in a cell as a row action.
     public static final String ATTRIBUTE = "data-row-action";
+    /// The class of a row action's icon, which shows while its button has the focus (row-action.css).
+    public static final String ICON_CLASS_NAME = "row-action__icon";
 
     private static Template template;
 
@@ -78,13 +80,13 @@ public final class RowActions {
 
     /// @param element An element, or null.
     /// @return Whether the element is a row action.
-    public static boolean isRowAction(final Element element) {
+    private static boolean isRowAction(final Element element) {
         return element != null && element.hasAttribute(ATTRIBUTE);
     }
 
     /// @param event An event.
     /// @return Whether the event's target is a row action.
-    public static boolean isRowActionEvent(final NativeEvent event) {
+    private static boolean isRowActionEvent(final NativeEvent event) {
         final EventTarget target = event.getEventTarget();
         return Element.is(target) && isRowAction(Element.as(target));
     }
@@ -135,11 +137,11 @@ public final class RowActions {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+        @Template("<button type=\"button\" class=\"row-action {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\">{2}</button>")
         SafeHtml button(String className, String name, SafeHtml icon);
 
-        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+        @Template("<button type=\"button\" class=\"row-action {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\">{2}</button>")
         SafeHtml menuButton(String className, String name, SafeHtml icon);
     }

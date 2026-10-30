@@ -20,23 +20,21 @@ import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Value;
-import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -51,7 +49,7 @@ import java.util.function.IntSupplier;
 /// the same play. The behaviour was measured on the old grid (`MyDataGrid`, since removed) first;
 /// the plays record it, so the grid is still held to it.
 ///
-/// The buttons send data as a presenter does: the same rows again (a poll with no change), every
+/// The buttons send data as a controller does: the same rows again (a poll with no change), every
 /// row's values changed (new row objects, so new keys), the first three rows only, and back.
 /// Rebuild columns removes and re-adds every column, as the dashboard's `updateColumns` does.
 public final class BehaviourStories {
@@ -423,7 +421,7 @@ public final class BehaviourStories {
 
     private static final class NewGrid implements GridAdapter {
 
-        private final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), ROWS);
+        private final DataGrid<Person> grid = new DataGrid<>(ROWS);
 
         private NewGrid(final boolean virtual, final boolean padded) {
             grid.setWidth("100%");

@@ -21,14 +21,14 @@
        for things drawn as icons (fields use the --control__*--disabled colours instead) */
     --disabled-opacity: 0.4;
 
-    /* Some bootstrap defaults */
-    --bootstrap-error-rgb: 220, 53, 69;
-    --bootstrap-warning-rgb: 255, 193, 7;
-    --bootstrap-success-rgb: 40, 167, 69;
+    /* The status colours: danger, warning and success (Bootstrap's, which Stroom kept) */
+    --status__color--danger-rgb: 220, 53, 69;
+    --status__color--warning-rgb: 255, 193, 7;
+    --status__color--success-rgb: 40, 167, 69;
 
-    --bootstrap-error: rgb(var(--bootstrap-error-rgb));
-    --bootstrap-warning: rgb(var(--bootstrap-warning-rgb));
-    --bootstrap-success: rgb(var(--bootstrap-success-rgb));
+    --status__color--danger: rgb(var(--status__color--danger-rgb));
+    --status__color--warning: rgb(var(--status__color--warning-rgb));
+    --status__color--success: rgb(var(--status__color--success-rgb));
 
     /* Keyboard focus: the control's border in a dark colour (at least 3:1 on white) and a crisp 4px
        band of it at 30% around the control, so focus changes the control's shape as well as its colour */
@@ -78,7 +78,6 @@
     /* Lines are a blue-grey: borders and splitters are subtle, a control's outline is 3:1 */
     --border-color: #d0d4da;
 
-    --header__border-color: var(--border-color);
     /* Stripes are overlays, so a table looks right on whatever it sits on (page, dialog or box) */
     --row__background-color--even: rgba(0, 0, 0, 0.027);
     --row__background-color--odd: transparent;
@@ -89,7 +88,6 @@
     --row__background-color--selected--hovered: rgb(129, 212, 250);
     --row__background-color--focussed: rgb(179, 229, 252);
     --row__background-color--selected--focussed: rgb(154, 221, 251);
-    --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
     --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: #000;
     --row__text-color--red--selected: var(--text-color--red--selected);
@@ -115,7 +113,6 @@
 
     --icon-button__background-color--on: var(--blue-500);
     --icon-button__border-color--on: rgba(0, 0, 0, 0.2);
-    --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgba(0,0,0,.05);
     /* Pressed with the mouse; and still pressed with the pointer moved off (letting go cancels it) */
     --icon-button__background-color--active: rgba(0, 0, 0, .15);
@@ -140,40 +137,39 @@
     --expression-item__drop-target: var(--icon-colour__dark-green);
     --expression-item__drop-refused: var(--icon-colour__red);
 
-    /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
-       screen's pipeline bar (pipeline-path.css) */
+    /* Pipeline elements, in the pipeline structure tree (pipeline-element-box.css) and the stepping
+       screen's pipeline bar (pipeline-path-bar.css) */
     --pipeline-element__background-color: #f5f9fd;
     --pipeline-element__text-color: #444;
-    /* The names of pipeline elements held down with the mouse (pipeline-element.css,
-       pipeline-path.css), at least 4.5:1 against the pressed fill */
+    /* The names of pipeline elements held down with the mouse (pipeline-element-box.css,
+       pipeline-path-bar.css), at least 4.5:1 against the pressed fill */
     --pipeline-element__text-color--pressed: var(--pipeline-element__text-color);
     --pipeline-element__border-color: #918e8c;
-    /* The pipeline bar's borders for a warning and an error (pipeline-path.css), at least 3:1
+    /* The pipeline bar's borders for a warning and an error (pipeline-path-bar.css), at least 3:1
        against the page for a meaningful graphic (WCAG 1.4.11): the error icon's red, and for a
        warning orange, as the warning icon's yellow is 1.5:1 */
-    --pipeline-path__warn: var(--orange-900);
-    --pipeline-path__error: var(--icon-colour__red);
+    --pipeline-path-bar__warn: var(--orange-900);
+    --pipeline-path-bar__error: var(--icon-colour__red);
     /* The pipeline tree's connectors (PipelineConnectorRenderer), by what flows along them, each
        at least 3:1 against the page */
     --pipeline-connector__raw: var(--orange-900);
     --pipeline-connector__xml: var(--purple-600);
     --pipeline-connector__bytes: var(--blue-700);
-    /* The pipeline tree's drop target's border (pipeline-element.css), and that of an element
+    /* The pipeline tree's drop target's border (pipeline-element-box.css), and that of an element
        that refuses what is dropped, at least 3:1 against the page as the bar's */
     --pipeline-element__drop-target: var(--icon-colour__dark-green);
     --pipeline-element__drop-refused: var(--icon-colour__red);
-    /* A selected pipeline element (pipeline-element.css, pipeline-path.css), as a selected row */
+    /* A selected pipeline element (pipeline-element-box.css, pipeline-path-bar.css), as a selected row */
     --pipeline-element__background-color--selected: var(--row__background-color--selected);
     --pipeline-element__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element__text-color--selected: var(--text-color--selected);
     /* The pipeline bar's filter icons: a darker green than the usual, which is under 3:1 against
        white for a meaningful graphic (WCAG 1.4.11) */
-    --pipeline-path__filter: var(--icon-colour__dark-green);
+    --pipeline-path-bar__filter: var(--icon-colour__dark-green);
 
     --link__text-color: #0000AA;
 
     --link-tab__text-color: #222;
-    --link-tab__text-color--focussed: #000;
 
     /* The Stroom Light editor theme (editor-themes.css) */
     --code-editor__background-color: var(--control__background-color);
@@ -201,11 +197,11 @@
     --code-editor__background-color--fatal: #000000;
     --code-editor__background-color--highlight: yellow;
 
-    --xsdbrowser-box__background-color: white;
-    --xsdbrowser-box__border-color: #404e60;
+    --xsd-browser__box-background-color: white;
+    --xsd-browser__box-border-color: #404e60;
     /* Dark enough for the titles' white text to be 4.5:1 */
-    --xsdbrowser-title__background-color: #6b6b6b;
-    --xsdbrowser-title__background-color--selected: var(--blue-700);
+    --xsd-browser__title-background-color: #6b6b6b;
+    --xsd-browser__title-background-color--selected: var(--blue-700);
 
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;
@@ -248,10 +244,8 @@
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid rgb(200 200 200);
-    --curve-tab__background-color--selected: #fff;
     /* The neutral hover of toolbar buttons, leaving blue to the selected bar and the focus ring */
     --curve-tab__background-color--hover: var(--icon-button__background-color--hover);
-    --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
     --curve-tab__border-radius: .2rem;
 
     /* Controls */
@@ -276,62 +270,22 @@
     --dashboard-panel__grid-background-color: #fbfbfb;
 
     /* ExpanderCell */
-    --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
-    --expander-cell-icon__background-color--active: rgba(0, 0, 0, 0.6);
+    --expander-cell__icon-background-color--hover: rgba(0, 0, 0, 0.2);
+    --expander-cell__icon-background-color--active: rgba(0, 0, 0, 0.6);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
-    --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);
-    --item__text-color--focus--highlighted: rgba(0, 0, 0, 0.9);
-    --item__background-color--focus--highlighted--hover: rgba(144, 202, 249, 0.4); /* rgba(24,94,144,0.4); */
-    --item__text-color--focus--highlighted--hover: rgba(0, 0, 0, 0.9);
-    --item__background-color--focus--selected: rgba(144, 202, 249, 0.9);
-    --item__text-color--focus--selected: #000;
-    --item__background-color--focus--highlighted--selected: rgba(144, 202, 249, 1); /* #cae1f1; */
-    --item__text-color--focus--highlighted--selected: #000;
-    --item__background-color--hover: rgba(0, 0, 0, 0.1); /* rgba(24,94,144,0.3); */
-    --item__text-color--hover: rgba(0, 0, 0, 0.8);
-    --item__background-color--selected: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.6); */
-    --item__text-color--selected: #000; /* rgba(0, 0, 0, 0.8); #fff */
-    --item__background-color--selected--hover: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.7); */
-    --item__text-color--selected--hover: #000; /* rgba(0, 0, 0, 0.8); #fff; */
 
     /* Pipeline editor */
-    --raised-low__background-color: #e4e4e4;
-    --raised-low__text-color: rgba(0, 0, 0, 0.8);
-    --raised-high__background-color: #2185d0;
-    --raised-high__text-color: rgba(0, 0, 0, 0.8);
-    --raised-high__selected-background-color: red;
-    --raised-high__selected-focus-background-color: #1c70b1;
-    --raised-element__border: thin solid #fff;
 
     /* Menu */
-    --menu-item__text-color: rgba(1, 1, 1, 0.8);
     --menu-item__text-color--highlighted: rgba(1, 1, 1, 0.9);
-    --menu-item__background-color--focus--highlighted: rgba(2, 136, 209, 0.3);
-    --menu-item__text-color--focus--highlighted: var(--white);
-    --menu-item__background-color--focus--highlighted--hover: rgba(2, 136, 209, 0.3); /* rgba(24,94,144,0.4); */
-    --menu-item__text-color--focus--highlighted--hover: var(--white);
-    --menu-item__background-color--focus--selected: rgba(2, 136, 209, 0.9);
-    --menu-item__text-color--focus--selected: var(--white);
-    --menu-item__background-color--focus--highlighted--selected: rgba(2, 136, 209, 1); /* material light blue 700 */
-    --menu-item__text-color--focus--highlighted--selected: var(--white);
-    --menu-item__background-color--hover: rgba(2, 136, 209, .2); /* rgba(24,94,144,0.3); */
-    --menu-item__text-color--hover: var(--white);
-    --menu-item__background-color--selected: rgba(2, 136, 209, .5); /* rgba(24,94,144,0.6); */
-    --menu-item__text-color--selected: var(--white);
-    --menu-item__background-color--selected--hover: rgba(2, 136, 209, .6); /* rgba(24,94,144,0.7); */
-    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
     --navigation__splitter__background-color: var(--border-color);
     --navigation__splitter__line-color: var(--splitter__line-color);
     /* A faint grey, so the explorer sits just below the white page */
     --navigation__background-color: #fbfbfb;
-    --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: var(--row__background-color--selected);
-    --navigation__background-color--selected-hovered: var(--row__background-color--selected--hovered);
-    --navigation__background-color--focussed: var(--row__background-color--focussed);
-    --navigation__background-color--selected--focussed: var(--row__background-color--selected--focussed);
 
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--row__text-color--selected);
@@ -339,10 +293,8 @@
     --logo-color: var(--icon-colour__dirty-amber);
 
     /* Specific */
-    --header__icon-color: #2185d0;
 
     /* React table */
-    --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
     --dialog__background-color-rgb: var(--page__background-color-rgb);
@@ -367,19 +319,22 @@
 
     /* Status */
     --ok: var(--blue-500);
-    --warn: var(--bootstrap-warning);
-    --error: var(--bootstrap-error);
+    --warn: var(--status__color--warning);
+    --error: var(--status__color--danger);
     --fatal: var(--black);
 
     /* Form fields */
     --primary-rgb: var(--blue-500-rgb);
-    --valid-rgb: var(--bootstrap-success-rgb);
-    --invalid-rgb: var(--bootstrap-error-rgb);
-    --feedback-rgb: var(--bootstrap-error-rgb);
+    --valid-rgb: var(--status__color--success-rgb);
+    --invalid-rgb: var(--status__color--danger-rgb);
+    --feedback-rgb: var(--status__color--danger-rgb);
 
     --primary: var(--blue-500);
-    --valid: var(--bootstrap-success);
-    --invalid: var(--bootstrap-error);
+    /* A meter's healthy level (the node ping bar, the percent bar cell): Bootstrap's primary, which
+       they took before Bootstrap went (it outranked this sheet's --primary, being loaded later) */
+    --status__color--ok: #007bff;
+    --valid: var(--status__color--success);
+    --invalid: var(--status__color--danger);
     /* 4.5:1 on dialogs, including a translucent one over the sign-in page */
     --feedback: var(--red-800);
 
@@ -396,5 +351,4 @@
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
 
-    --iframe__border-color: #c5cde2;
 }

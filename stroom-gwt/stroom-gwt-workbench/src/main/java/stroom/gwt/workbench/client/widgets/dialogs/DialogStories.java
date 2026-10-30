@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -28,9 +28,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.popup.client.PopupSize;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -38,11 +39,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's dialogs.
 ///
-/// Stroom has no dialog widget that a screen creates itself: a presenter is shown in a dialog
-/// with `ShowPopupEvent`, whose `PopupType` picks the buttons (`CloseContent`, `OkCancelContent`,
-/// `AcceptRejectContent`, ...) and whose `PopupSize` makes it a `ResizableDialog` rather than a
-/// `Dialog`. Each story shows a stand-in presenter holding some text in a kind of dialog, with
-/// Stroom's `PopupManager`.
+/// Stroom has no dialog widget that a screen creates itself: a controller is shown in a dialog
+/// with `ShowPopupEvent`, whose `PopupType` picks the buttons (`DialogFrame`: Close, OK and
+/// Cancel, Accept and Reject, ...) and whose `PopupSize` makes it a resizable `Dialog` rather than
+/// one of a fixed size. Each story shows a stand-in controller holding some text in a kind of
+/// dialog, with Stroom's `PopupManager`. (The text two stories show still names the button frames
+/// `CloseContent` and `OkCancelContent` were, as it is drawn and checked against screenshots.)
 public final class DialogStories {
 
     private DialogStories() {
@@ -80,7 +82,7 @@ public final class DialogStories {
                             PopupType.OK_CANCEL_DIALOG, "Edit Settings")
                             .size(600, 400)
                             .text("A resizable dialog with OK and Cancel buttons.",
-                                    "Mirrors GWT ResizableOkCancelContent.")))
+                                    "Mirrors GWT OkCancelContent.")))
                 // Resizable both ways: a handle on each side and corner
                 .withPlay(play -> {
                     play.click(play.getByRole("button", StroomDom.button("Open resizable OK/Cancel dialog")));
@@ -118,6 +120,16 @@ public final class DialogStories {
                             .size(550, 350)
                             .text("Review the following changes before accepting or rejecting.",
                                     "Accept = green (GWT pattern), Reject = secondary.")))
+                // Regression: merging the button bars lost the splash screen's green Accept
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open Accept/Reject dialog")));
+                    final Query dialog = play.screen().findByRole("dialog", "Review Changes");
+                    play.expect(play.within(dialog).getByRole("button", StroomDom.button("Accept")))
+                            .toHaveClass("button--contained-green");
+                    play.expect(play.within(dialog).getByRole("button", StroomDom.button("Reject")))
+                            .toHaveClass("button--contained-secondary");
+                    play.keyboard("{Escape}");
+                })
                 // Resizable Dialog — Save / Cancel
                 .story("SaveCancel", "Resizable Dialog — Save / Cancel",
                         context -> trigger(context, "Open Save/Cancel dialog", dialog(
@@ -259,7 +271,7 @@ public final class DialogStories {
     /// A primary button that opens the dialog.
     private static Widget trigger(final StoryContext context, final String label, final DialogSpec spec) {
         // With menus, for the dialog's window options
-        final StoryPopups popups = StoryPopups.create(context).withMenuRequests();
+        final StoryPopups popups = StoryPopups.create(context).withPageRequests();
         final FlowPanel panel = new FlowPanel();
         panel.add(DialogWidgets.button(label, DialogWidgets.PRIMARY, event -> spec.show(popups)));
         return panel;
@@ -311,10 +323,10 @@ public final class DialogStories {
         }
 
         private void show(final StoryPopups popups) {
-            // A new presenter each time, as Stroom's presenters are, since PopupManager toggles a
-            // presenter that is shown twice
-            final ContentPresenter presenter = ContentPresenter.html(popups.getEventBus(), html);
-            ShowPopupEvent.builder(presenter)
+            // A new controller each time, as Stroom's controllers are, since PopupManager toggles a
+            // controller that is shown twice
+            final StoryContent controller = StoryContent.html(popups.getEventBus(), html);
+            ControllerDialog.showOnce(popups, controller)
                     .popupType(popupType)
                     .popupSize(popupSize)
                     .icon(icon)

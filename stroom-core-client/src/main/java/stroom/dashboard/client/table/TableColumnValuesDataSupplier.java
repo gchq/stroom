@@ -34,6 +34,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableSettings;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 
@@ -110,10 +111,10 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
     }
 
     @Override
-    protected void exec(final Range range,
-                        final Consumer<ColumnValues> dataConsumer,
-                        final RestErrorHandler errorHandler,
-                        final Map<String, ColumnValueSelection> selections) {
+    public void exec(final Range range,
+                     final Consumer<ColumnValues> dataConsumer,
+                     final RestErrorHandler errorHandler,
+                     final Map<String, ColumnValueSelection> selections) {
         if (searchRequest == null) {
             clear(dataConsumer);
 

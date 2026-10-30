@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
+import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -132,6 +133,27 @@ public final class DashboardSearchStories {
                             RequestMatcher.post("/dataSource/v1/findFields").toSpyMatcher());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Enter in a term's value runs the query, which gives the table its result
+                .story("EnterInTermRunsQuery", DashboardSupport.story(DashboardDocs.QUERY_FIELDS_DASHBOARD,
+                        // The data source's fields, for the term's field list: its Name
+                        routes -> routes.route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                "{\"values\": [{\"fldName\": \"Name\", \"fldType\": \"TEXT\"}], "
+                                + "\"pageResponse\": {\"offset\": 0, \"length\": 1, \"total\": 1, "
+                                + "\"exact\": true}}"))
+                                // The value's suggestions: none
+                                .route(RequestMatcher.post("/suggest/v1"),
+                                        RestReply.json("{\"list\": [], \"cacheable\": false}"))))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    play.click(play.findByText("Name = alpha"));
+                    final Query value = play.querySelector(".term-editor__item [aria-label='Value']");
+                    play.waitFor(() -> play.expect(value).toBeVisible());
+                    play.click(value);
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.getByText("alpha", StroomDom.GRID_CELL_TEXT))
+                            .toBeInTheDocument());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The dashboard toolbar's Execute Query runs every query
                 .story("RunAllQueries", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))
@@ -214,8 +236,8 @@ public final class DashboardSearchStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("param name = alpha")).toBeInTheDocument());
                     // A plain parameter change applies to the next search
-                    play.clear(play.querySelector(".TextInputView input"));
-                    play.type(play.querySelector(".TextInputView input"), "omega");
+                    play.clear(play.querySelector(".dashboard-input input"));
+                    play.type(play.querySelector(".dashboard-input input"), "omega");
                     // The text box reports its value when it loses the focus
                     play.tab();
                     DashboardPlays.runQuery(play, 0);
@@ -269,13 +291,14 @@ public final class DashboardSearchStories {
                     DashboardPlays.opened(play);
                     final Play screen = play.screen();
                     // The Table Filter is a list of the column's values to tick
-                    // (ColumnValuesFilterPresenter), so the play chooses 'red' and 'green' there;
+                    // (ColumnValuesFilterController), so the play chooses 'red' and 'green' there;
                     // the values are the table's, so the query is run first. Each step waits for the
                     // one before to take effect (under load a click could land while the list was
                     // still being refreshed by the first query's results)
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("blue")).toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+                    play.waitFor(() -> play.expect(play.querySelectorAll(
+                        DashboardPlays.QUERY_RUN_BUTTON + "." + DashboardPlays.QUERY_RUN_BUTTON_RUNNING))
                             .toHaveLength(0));
                     play.click(play.getByText("Select None"));
                     play.waitFor(() -> play.expect(valueTick(play, "red")).toHaveAttribute("aria-checked", "false"));
@@ -298,9 +321,36 @@ public final class DashboardSearchStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
                     // A selection box that allows free text opens with its drop down button
-                    play.click(play.querySelector(".ListInputView .svg-icon-box__icon"));
+                    play.click(play.querySelector(".dashboard-input .icon-box__icon"));
                     screen.findByText("red", ".selection-popup *");
                     play.expect(screen.getByText("blue", ".selection-popup *")).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A List Input's Dictionary picker is enabled only while Use Dictionary is ticked; it
+                // stayed enabled when it wasn't, although the dictionary was then unused
+                .story("ListInputSettingsDictionaryFollowsUseDictionary", DashboardSupport.story(
+                        DashboardDocs.LIST_INPUT_DASHBOARD,
+                        routes -> {
+                            wordListRoutes(routes);
+                            DocEditors.docSelectionRoutes(routes);
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "Colour");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    final Query useDictionary = settings.findByRole("checkbox", "Use Dictionary");
+                    final Query picker = settings.within(settings.getByText("Dictionary", "label")
+                            .closest(".form-group")).querySelector(".drop-down");
+                    // The dashboard's list input uses its dictionary
+                    play.expect(useDictionary).toBeChecked();
+                    play.expect(picker).not().toHaveAttribute("aria-disabled", "true");
+                    play.click(useDictionary);
+                    play.expect(picker).toHaveAttribute("aria-disabled", "true");
+                    play.click(useDictionary);
+                    play.expect(picker).not().toHaveAttribute("aria-disabled", "true");
+                    play.click(settings.getByRole("button", StroomDom.button("Cancel")));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A List Input's value that isn't one of its dictionary's words is cleared, but
@@ -311,10 +361,10 @@ public final class DashboardSearchStories {
                     DashboardPlays.opened(play);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
-                    play.waitFor(() -> play.expect(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX))
+                    play.waitFor(() -> play.expect(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX))
                             .toHaveValue(""));
-                    play.type(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX), "teal");
-                    play.waitFor(() -> play.expect(play.querySelector(".ListInputView " + StroomDom.SELECTION_BOX))
+                    play.type(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX), "teal");
+                    play.waitFor(() -> play.expect(play.querySelector(".dashboard-input " + StroomDom.SELECTION_BOX))
                             .toHaveValue("teal"));
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -347,7 +397,7 @@ public final class DashboardSearchStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     // Only the table has a pager here (the Query has none)
-                    play.click(play.within(play.querySelector(".TableViewImpl")).getByTitle("Forward"));
+                    play.click(play.within(play.querySelector(".result-table")).getByTitle("Forward"));
                     play.waitFor(() -> play.expect("a request for a later page of t1",
                             () -> offsets(requests).stream().anyMatch(offset -> offset > 0)).toBe(true));
                     final Value<Integer> before = play.capture("before", requests.callCount());
@@ -365,8 +415,8 @@ public final class DashboardSearchStories {
     }
 
     // Runs only the master query (q1), while the detail query (q2) hasn't searched, and checks that
-    // its search completes. DashboardPresenter.getCombinedErrors asks every Query for its errors as
-    // any search reports them, and QueryPresenter.getCurrentErrors once threw for a Query that
+    // its search completes. DashboardBodyController.getCombinedErrors asks every Query for its errors as
+    // any search reports them, and QueryPaneController.getCurrentErrors once threw for a Query that
     // hadn't searched, which SearchModel.update swallowed before it marked the search complete, so
     // the master search polled forever
     private static void runMaster(final Play play) {
@@ -383,7 +433,8 @@ public final class DashboardSearchStories {
     // No Query is still searching: each Query's own button is back to 'Execute Query' (it is
     // 'Stop Query', with the 'stop' class, while its search polls)
     private static void expectSearchesComplete(final Play play) {
-        play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+        play.waitFor(() -> play.expect(play.querySelectorAll(
+                DashboardPlays.QUERY_RUN_BUTTON + "." + DashboardPlays.QUERY_RUN_BUTTON_RUNNING))
                 .toHaveLength(0));
         play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + "[aria-label='Execute Query']"))
                 .toHaveLength(2);

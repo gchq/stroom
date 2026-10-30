@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
+<!--
+  The component model: dumb components (templates and their Java), and the controllers that wire
+  them, own the controllers they show and provide context that descendants look up (see
+  stroom-gwt/COMPONENT_MODEL_DESIGN.md).
+-->
+<module>
+    <inherits name="com.google.gwt.user.User"/>
+    <inherits name="stroom.Stroom"/>
+    <inherits name="stroom.widget.task.Task"/>
+    <inherits name="com.google.gwt.inject.Inject"/>
+    <!-- Dialogs (ControllerDialog) -->
+    <inherits name="stroom.widget.popup.Popup"/>
+    <inherits name="stroom.widget.util.Util"/>
+
+    <!--
+      Development checks (ControllerChecks): misuse of ownership fails loudly and controllers left
+      with no owner are counted. Off in the application; development modules (e.g. the workbench)
+      set it to ENABLED.
+    -->
+    <define-property name="stroom.controllerChecks" values="ENABLED,DISABLED"/>
+    <set-property name="stroom.controllerChecks" value="DISABLED"/>
+
+    <source path="client"/>
+</module>

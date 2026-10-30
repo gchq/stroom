@@ -16,11 +16,7 @@
 
 /*
    Radio buttons. Every radio input looks like this, including those in the forms an activity's
-   HTML describes, which have no classes of their own.
-
-   A radio group (stroom.widget.form.client.RadioGroup), named BEM style: the block radio-group
-   (role="radiogroup"), its options (radio-group__option, a label), each holding its radio button
-   (radio-group__input) and its text (radio-group__label).
+   HTML describes, which have no classes of their own. A group of them is radio-group.css.
 */
 
 input[type="radio"] {
@@ -58,30 +54,4 @@ input[type="radio"]:disabled {
 input[type="radio"]:disabled:checked {
     background: radial-gradient(circle, var(--control__text-color--disabled) 0 3.5px, transparent 4px),
                 var(--control__background-color--disabled);
-}
-
-/* The options in a row */
-.radio-group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 16px;
-}
-
-/* An option: its radio button and its text, both of which choose it */
-.radio-group__option {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0;
-    cursor: pointer;
-}
-
-.radio-group__label {
-    font-weight: normal;
-}
-
-.radio-group__option:has(.radio-group__input:disabled) {
-    color: var(--control__text-color--disabled);
-    cursor: default;
 }

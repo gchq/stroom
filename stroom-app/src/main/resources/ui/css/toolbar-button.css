@@ -1,0 +1,188 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A toolbar's icon button (stroom.widget.button.client.ToolbarButton, ToolbarToggleButton), named
+   BEM style (block, block__element, block--modifier); states come from ARIA attributes, not
+   modifiers. The looks a toolbar's modifiers (e.g. toolbar--quiet) give its buttons are at the
+   end, with the toolbar as their context.
+*/
+
+
+/* A toolbar's icon button (ToolbarButton, ToolbarToggleButton). Its hover, pressed and focus fill
+   and border are drawn by ::before, under its icon; its states come from aria-pressed and
+   aria-disabled. It uses the icon button colours of the theme. It is 24px, the smallest target
+   WCAG 2.5.8 (Target Size, Minimum) allows. */
+.toolbar-button {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: .25rem;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.toolbar-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: .25rem;
+}
+
+.toolbar-button:hover::before {
+    background-color: var(--icon-button__background-color--hover);
+    border: thin solid var(--icon-button__border-color--hover);
+}
+
+.toolbar-button[aria-pressed="true"]::before {
+    background-color: var(--icon-button__background-color--on);
+    border: thin solid var(--icon-button__border-color--on);
+}
+
+/* Pressed with the mouse (:active), and still held with the pointer moved off it, when letting go
+   won't click it; a button that is on darkens its fill instead */
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active::before {
+    background-color: var(--icon-button__background-color--active);
+    border: none;
+}
+
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active:not(:hover)::before {
+    background-color: var(--icon-button__background-color--active-outside);
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .2), rgba(0, 0, 0, .2));
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active:not(:hover)::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .1), rgba(0, 0, 0, .1));
+}
+
+.toolbar-button[aria-disabled="true"] {
+    opacity: var(--disabled-opacity);
+    cursor: default;
+}
+
+.toolbar-button[aria-disabled="true"]::before {
+    background-color: transparent;
+    border: none;
+}
+
+/* A disabled button that is pressed still shows that it is pressed (the whole button is dimmed) */
+.toolbar-button[aria-pressed="true"][aria-disabled="true"]::before {
+    background-color: var(--icon-button__background-color--on);
+    border: thin solid var(--icon-button__border-color--on);
+}
+
+/* Keyboard focus, but not the focus a mouse press gives (ToolbarButton marks it data-pointer-focus,
+   as it focuses itself from code, which the browser treats as keyboard focus) */
+.toolbar-button:focus-visible:not([data-pointer-focus]) {
+    box-shadow: var(--focus-shadow);
+}
+
+.toolbar-button:focus-visible:not([data-pointer-focus])::before {
+    border: thin solid var(--focus-border) !important;
+}
+
+/* Out of sight but keeping its place, so the toolbar doesn't shift; visibility also takes it out of
+   the tab order and away from screen readers (e.g. a query's errors button while it has none) */
+.toolbar-button--invisible {
+    visibility: hidden;
+}
+
+/* The icon, above the fill */
+.toolbar-button__icon {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    color: var(--icon-button__color);
+}
+
+/* In the explorer (explorer.css), the icons are in the explorer's colours, a quiet toolbar's too
+   (so three classes, to outweigh toolbar.css's toolbar--quiet), but not a pressed button's (after
+   this) */
+.explorer .toolbar-button .toolbar-button__icon {
+    color: var(--navigation-icon-button__color);
+}
+
+/* A pressed button's icon has its colours flipped */
+.toolbar-button[aria-pressed="true"] .toolbar-button__icon {
+    --icon-colour__black: var(--icon-colour__black__on);
+    --icon-colour__white: var(--icon-colour__white__on);
+    color: var(--page__background-color);
+}
+
+/* A button that starts or stops something (a query's Execute Query, a pipeline's Terminate, Ask
+   Stroom AI's Send): green to start (--play), red to stop (--stop). Two classes, to outweigh the
+   icon's own colour. */
+.toolbar-button.toolbar-button--play svg {
+    color: #4caf50;
+}
+
+.toolbar-button.toolbar-button--stop svg {
+    color: #d32f2f;
+}
+
+/* In a quieter toolbar (toolbar--quiet), e.g. the application's toolbar and Ask Stroom AI's: in the
+   text colour, and faded until disabled (which fades them in its own way) (were toolbar.css's) */
+.toolbar--quiet .toolbar-button:not([aria-disabled="true"]) {
+    opacity: 0.6;
+}
+
+.toolbar--quiet .toolbar-button__icon {
+    color: var(--button__text-color);
+}
+
+/* In a toolbar inside a form control (toolbar--control, e.g. a search box's options): its icons in
+   the control's text colour */
+.toolbar--control .toolbar-button__icon {
+    color: var(--control__text-color);
+}
+
+/* In a toolbar that is part of what it sits in rather than actions of its own (toolbar--text-colour,
+   e.g. a dialog's window options and a password box's Show Password): its icons in the text colour
+   (were dialog.css's and password-box.css's, after the rules above, as these are) */
+.toolbar--text-colour .toolbar-button__icon {
+    color: var(--text-color);
+}
+
+/* An arrow that steps a field's value, e.g. the calendar's Previous and Next Year and Month: a small
+   arrow in the navigation's text colour (was calendar.css's) */
+.toolbar-button--arrow .toolbar-button__icon {
+    color: var(--navigation__text-color);
+    width: 10px;
+    height: 10px;
+}
+
+/* In the explorer (explorer.css), the hover and pressed fills are the explorer's: last, so that its
+   hover outweighs a press (:active, above), and shows over a pressed button's fill too */
+.explorer .toolbar-button:not([aria-disabled="true"]):hover::before {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.explorer .toolbar-button[aria-pressed="true"]::before {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
+}

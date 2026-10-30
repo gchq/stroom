@@ -24,16 +24,18 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.explorer.client.component.DocumentChooserController;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
+import stroom.pipeline.client.component.PipelineEditor;
+import stroom.pipeline.client.component.SaveChangedDocumentsController;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
-import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
@@ -44,11 +46,10 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.processor.shared.Processor;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.popup.client.PopupType;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -67,86 +68,73 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final Provider<DocSelectionPopup> pipelineSelection;
-    private final Provider<PipelinePresenter> editorProvider;
+    private final Provider<DocumentChooserController> pipelineSelection;
+    private final AppRoot appRoot;
+    private final EventBus eventBus;
+    private final Provider<PipelineEditor> editorProvider;
     private final RestFactory restFactory;
-    private final DocRefSelectionPresenter docRefSelectionPresenter;
+    private final Provider<SaveChangedDocumentsController> saveChangedDocumentsProvider;
 
     @Inject
     public PipelinePlugin(final EventBus eventBus,
-                          final Provider<PipelinePresenter> editorProvider,
+                          final Provider<PipelineEditor> editorProvider,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<DocSelectionPopup> pipelineSelection,
-                          final DocRefSelectionPresenter docRefSelectionPresenter) {
+                          final Provider<DocumentChooserController> pipelineSelection,
+                          final Provider<SaveChangedDocumentsController> saveChangedDocumentsProvider,
+                          final AppRoot appRoot) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
-        this.docRefSelectionPresenter = docRefSelectionPresenter;
-    }
+        this.saveChangedDocumentsProvider = saveChangedDocumentsProvider;
+        this.appRoot = appRoot;
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
+        getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
             final Processor processor = event.getProcessorFilter().getProcessor();
             final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid);
             // Open the item in the content pane.
-            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef,
+            final DocumentEditorHost<?> host = open(docRef,
                     true,
                     false,
                     new DefaultTaskMonitorFactory(this));
-            // Highlight the item in the explorer tree.
-            //            highlight(docRef);
 
-            pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
-        }));
+            final PipelineEditor pipelineEditor = getEditor(host);
+            if (pipelineEditor != null) {
+                pipelineEditor.showProcessorFilter(event.getProcessorFilter());
+            }
+        });
 
-        registerHandler(getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping));
+        getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping);
     }
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof final PipelinePresenter pipelinePresenter) {
-            final List<DocRef> dirtyDocs = pipelinePresenter.getDirtyDocs();
-            final DocRef pipeline = pipelinePresenter.getDocRef();
+        final PipelineEditor pipelineEditor = getEditor(tabData);
+        if (pipelineEditor != null) {
+            final List<DocRef> dirtyDocs = pipelineEditor.getDirtyDocs();
+            final DocRef pipeline = pipelineEditor.getDocRef();
 
             if (!(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
-                docRefSelectionPresenter.setMessageText(
-                        "The following documents have changed. Please select the ones you want to save:");
-                docRefSelectionPresenter.setDocRefs(dirtyDocs);
-
-                final int popupHeight = 200 + dirtyDocs.size() * 23;
-                final PopupSize popupSize = PopupSize.resizable(650, popupHeight);
-                ShowPopupEvent.builder(docRefSelectionPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .modal()
-                        .popupSize(popupSize)
-                        .caption("Save Pipeline: " + pipeline.getName())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                final AtomicInteger completedSaves = new AtomicInteger(0);
-                                final Runnable onSaved = () -> {
-                                    if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
-                                        pipelinePresenter.onChange();
-                                    }
-                                };
-                                pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
-                                if (selectedDocRefs.contains(pipeline)) {
-                                    super.save(tabData, onSaved);
+                saveChangedDocumentsProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
+                        selectedDocRefs -> {
+                            final AtomicInteger completedSaves = new AtomicInteger(0);
+                            final Runnable onSaved = () -> {
+                                if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
+                                    pipelineEditor.refreshDirty();
                                 }
+                            };
+                            pipelineEditor.saveDocs(selectedDocRefs, onSaved);
+                            if (selectedDocRefs.contains(pipeline)) {
+                                super.save(tabData, onSaved);
                             }
-                            e.hide();
-                        })
-                        .fire();
+                        });
             } else {
                 super.save(tabData);
             }
@@ -154,8 +142,16 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), PipelineDoc.TYPE);
+    }
+
+    // The pipeline editor a pipeline's tab shows, or null for another tab
+    private static PipelineEditor getEditor(final Object tab) {
+        return tab instanceof final DocumentEditorHost<?> host
+               && host.getEditor() instanceof final PipelineEditor pipelineEditor
+                ? pipelineEditor
+                : null;
     }
 
     @Override
@@ -197,19 +193,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         return DocRefUtil.create(document);
     }
 
-    public void onBeginStepping(final BeginPipelineSteppingEvent event) {
-        final DocSelectionPopup chooser = pipelineSelection.get();
-        chooser.setCaption("Choose Pipeline To Step With");
-        chooser.setIncludedTypes(PipelineDoc.TYPE);
-        chooser.setRequiredPermissions(DocumentPermission.VIEW);
-
-        final Runnable showChooser = () -> choosePipeline(chooser,
-                event.getStepType(),
-                event.getStepLocation(),
-                event.getChildStreamType());
-
+    void onBeginStepping(final BeginPipelineSteppingEvent event) {
         if (event.getPipelineRef() != null) {
-            chooser.setSelectedEntityReference(event.getPipelineRef(), showChooser);
+            findPipeline(event, event.getPipelineRef());
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
@@ -218,19 +204,40 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                     .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
-                    .onSuccess(docRef ->
-                            chooser.setSelectedEntityReference(docRef, showChooser))
-                    .taskMonitorFactory(chooser)
+                    .onSuccess(docRef -> findPipeline(event, docRef))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         }
     }
 
-    private void choosePipeline(final DocSelectionPopup docRefChooserPopup,
-                                final StepType stepType,
-                                final StepLocation stepLocation,
-                                final String childStreamType) {
+    // Looks the pipeline to choose first up in the explorer, then makes the chooser to show it, so a
+    // failed lookup leaves no chooser behind (the app owns it only once it is shown)
+    private void findPipeline(final BeginPipelineSteppingEvent event, final DocRef pipelineRef) {
+        if (pipelineRef == null) {
+            choosePipeline(event, null);
+        } else {
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.getFromDocRef(pipelineRef))
+                    .onSuccess(explorerNode -> choosePipeline(event, explorerNode))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
+                    .exec();
+        }
+    }
 
-        docRefChooserPopup.show(pipeDocRef -> {
+    private void choosePipeline(final BeginPipelineSteppingEvent event, final ExplorerNode pipelineNode) {
+        final DocumentChooserController chooser = pipelineSelection.get();
+        chooser.setIncludeNullSelection(false);
+        chooser.setCaption("Choose Pipeline To Step With");
+        chooser.setIncludedTypes(PipelineDoc.TYPE);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
+        chooser.setSelectedNode(pipelineNode);
+
+        final StepType stepType = event.getStepType();
+        final StepLocation stepLocation = event.getStepLocation();
+        final String childStreamType = event.getChildStreamType();
+        // The app owns the chooser while it is shown, as a plugin owns nothing
+        chooser.showOnce(appRoot, pipeDocRef -> {
             if (pipeDocRef != null) {
                 step(stepType, stepLocation, childStreamType, pipeDocRef);
             }
@@ -268,25 +275,28 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                   final Meta meta,
                                   final String childStreamType) {
         open(pipeline, true, false,
-                false, presenter -> {
-                    final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
+                false, controller -> {
+                    final PipelineEditor pipelineEditor = getEditor(controller);
+                    if (pipelineEditor == null) {
+                        return;
+                    }
 
-                    if (pipelinePresenter.isSteppingInit()) {
-                        pipelinePresenter.showSteppingMode(true);
-                        pipelinePresenter.setMetaListExpression(
+                    if (pipelineEditor.isSteppingInit()) {
+                        pipelineEditor.showSteppingMode(true);
+                        pipelineEditor.setMetaListExpression(
                                 MetaExpressionUtil.createDataIdExpression(meta.getId()),
-                                () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
+                                () -> pipelineEditor.beginStepping(stepType, stepLocation, meta, childStreamType));
                     } else {
-                        pipelinePresenter.setSteppingMetaExpression(
+                        pipelineEditor.setSteppingMetaExpression(
                                 MetaExpressionUtil.createDataIdExpression(meta.getId()));
-                        pipelinePresenter.showSteppingMode(true);
+                        pipelineEditor.showSteppingMode(true);
                         // Only begin stepping when the pipeline model has been loaded.
                         // Then remove the handler because we dont want it to run again
                         final HandlerRegistration[] registration = new HandlerRegistration[1];
-                        registration[0] = pipelinePresenter.addDataLoadedHandler(event -> {
+                        registration[0] = pipelineEditor.addDataLoadedListener(model -> {
                             registration[0].removeHandler();
-                            pipelinePresenter.refreshSteppingMeta(
-                                    () -> pipelinePresenter.beginStepping(stepType,
+                            pipelineEditor.refreshSteppingMeta(
+                                    () -> pipelineEditor.beginStepping(stepType,
                                             stepLocation,
                                             meta,
                                             childStreamType));

@@ -16,6 +16,8 @@
 
 package stroom.gwt.workbench.client.app.screen;
 
+import stroom.widget.component.client.ControllerChecks;
+
 import com.google.gwt.user.client.Window;
 
 /// The leak check's probe (see the test runner's `--leak-check`).
@@ -25,11 +27,14 @@ import com.google.gwt.user.client.Window;
 /// the screen many times and measure what each close leaves behind:
 ///
 /// * `close(dispose)` closes the screen as closing a Stroom tab does: its popups are hidden, its
-///   widgets removed, and, if `dispose` is true, the presenters made while opening it are disposed
+///   widgets removed, and, if `dispose` is true, the controllers made while opening it are disposed
 ///   (as `DocumentPlugin` does) and the clean ups its opening registered are run.
-/// * `open()` opens the screen again, as the story did (usually with new presenters).
+/// * `open()` opens the screen again, as the story did (usually with new controllers).
 /// * `shown()` is the number of widgets the opening has shown, and of popups shown.
 /// * `pending()` is the number of REST requests not yet answered.
+/// * `unowned()` is the number of live components that nothing owns (see [ControllerChecks]),
+///   which should be none once the screen is closed and disposed; `unownedNames()` their names,
+///   comma separated, each as often as it is unowned.
 final class LeakProbe {
 
     private final ScreenHarness harness;
@@ -69,19 +74,36 @@ final class LeakProbe {
         return harness.probePendingCount();
     }
 
+    private int unowned() {
+        return ControllerChecks.unownedCount();
+    }
+
+    private String unownedNames() {
+        return String.join(",", ControllerChecks.unownedNames());
+    }
+
+    // Close and open run as GWT entry points ($entry), as a browser event's handlers do, so that the
+    // commands they schedule to run when the event is done (Scheduler.scheduleFinally, e.g. a data
+    // grid's redraw) run, rather than waiting, keeping the closed screen, for the next GWT event
     private static native void export(LeakProbe probe) /*-{
         $wnd.__leakProbe = {
-            close: function (dispose) {
+            close: $entry(function (dispose) {
                 probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::close(Z)(!!dispose);
-            },
-            open: function () {
+            }),
+            open: $entry(function () {
                 probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::open()();
-            },
+            }),
             shown: function () {
                 return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::shown()();
             },
             pending: function () {
                 return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::pending()();
+            },
+            unowned: function () {
+                return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::unowned()();
+            },
+            unownedNames: function () {
+                return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::unownedNames()();
             }
         };
     }-*/;

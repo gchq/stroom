@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.selectors;
 
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -24,19 +24,19 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.BaseSelectionBox;
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.BaseSelectionBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -123,6 +123,25 @@ public final class SelectionBoxStories {
                         play.expect(box).toHaveFocus();
                     }
                     play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // A right-click on an option shows no menu: the list's options are to choose, not a
+                // table. The grid under them had a private bus, which hid its menu (Copy, Export
+                // Table, Ask Stroom AI About); since the grid asks the page for it, the list turns it
+                // off
+                .story("NoMenuOnTheOptions", context -> {
+                    StoryPopups.create(context).withPageRequests();
+                    return named(selectionBox(context, NAMES));
+                })
+                .withPlay(play -> {
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    final Query option = play.screen().getByRole("option", "Alpha");
+                    play.waitFor(() -> play.expect(option).toHaveFocus());
+                    play.rightClick(option);
+                    // A menu would be shown straight away
+                    play.sleep(300);
+                    play.expect(play.screen().queryByRole("menu")).toBeNull();
+                    play.expect(option).toBeInTheDocument();
                 })
                 // In the list, Alt+Up chooses the option with the focus and closes the list
                 .story("AltUpChoosesTheOption", context -> named(selectionBox(context, NAMES)))
@@ -268,12 +287,12 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.click(play.querySelector(OPENER));
                     // Stroom's popup is on the page's body, not in the canvas
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager-panel__bar"))
                             .toBeVisible());
                     play.expect(play.screen().querySelector(".selection-list__filter .quick-filter__input"))
                             .not().toBeNull();
-                    // The pager is Stroom's PagerViewImpl, so it reads "N to M of T"
-                    play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))
+                    // The pager is Stroom's PagerPanel, so it reads "N to M of T"
+                    play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager-panel__bar *"))
                             .toBeInTheDocument();
                 })
                 // The default: a short list shows no pager
@@ -282,7 +301,7 @@ public final class SelectionBoxStories {
                     play.click(play.querySelector(OPENER));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager container rather than omitting it
-                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager-panel__bar")).not().toBeVisible();
                 })
                 // The popup's markup is GWT's (SelectionPopup > SimplePopupLayout > SelectionList)
                 .story("PopupUsesGwtMarkup", context -> namedBox(context, List.of("One", "Two")))
@@ -310,16 +329,16 @@ public final class SelectionBoxStories {
         play.expect(inList.querySelector(":scope > .selection-list__filter")).not().toBeNull();
         play.expect(inList.querySelector(":scope > .selection-list__path")).not().toBeNull();
         play.expect(inList.querySelector(":scope > .selection-list__options")).not().toBeNull();
-        // PagerViewImpl: the pager container above the list container
-        play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
-        play.expect(popup.querySelector(".listContainer")).not().toBeNull();
+        // PagerPanel: the pager container above the list container
+        play.expect(popup.querySelector(".selection-list__options .pager-panel__bar")).not().toBeNull();
+        play.expect(popup.querySelector(".pager-panel__list")).not().toBeNull();
         // The rows are the data grid's, as a list's: a listbox of options, each holding its cell
         play.expect(popup.querySelector(".data-grid.data-grid--list [role='listbox']")).not().toBeNull();
         final Query row = popup.querySelector("[role='option'].data-grid__row");
         play.expect(row).not().toBeNull();
         final Play inRow = play.screen().within(row);
         play.expect(inRow.querySelector(".data-grid__cell")).not().toBeNull();
-        play.expect(inRow.querySelector(".explorerCell .selectionItemCell-text")).toHaveTextContent("One");
+        play.expect(inRow.querySelector(".explorer-cell .selection-item-cell__text")).toHaveTextContent("One");
     }
 
     private static void playEscape(final Play play) {
@@ -377,7 +396,7 @@ public final class SelectionBoxStories {
 
     /// The box, at least 220px wide, with a `Selected: ...` echo below.
     private static Widget withEcho(final SelectionBox<String> box) {
-        final HTML echo = new HTML();
+        final Html echo = new Html();
         echo.getElement().getStyle().setProperty("marginTop", "8px");
         echo.getElement().getStyle().setProperty("fontSize", "12px");
         echo.setText("Selected: none");

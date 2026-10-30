@@ -1,0 +1,124 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A result of Find, Find In Content or Recent Items (stroom.explorer.client.FindResultCell,
+   FindInContentResultCell), named BEM style (block, block__element, block--modifier). Imported
+   after components.css, where it was.
+*/
+.find-result-cell {
+	display: flex;
+	flex-direction: column;
+}
+
+.find-result-cell__main {
+    display: flex;
+    gap: .7rem;
+    padding: .2rem;
+    align-items: center;
+}
+
+.find-result-cell__icon {
+    display: flex;
+    flex-grow: 0;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+.find-result-cell__sample {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+    white-space: pre;
+    letter-spacing: -0.6px;
+    font-size: 95%;
+    /* Fade out the long lines */
+    mask-image: linear-gradient(to right, #000000 0%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+    overflow: hidden;
+    /* Padding to make room for the highlight outline */
+    padding: 2px;
+}
+
+/* if the sample does not start at the beginning of the line fade the text out on the left and the right */
+.find-result-cell__sample.find-result-cell__sample--truncated {
+    mask-image: linear-gradient(to right, rgb(128 0 52 / 0%) 0%, #000000 10%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+}
+
+.find-result-cell__sample div {
+    font-family: var(--monospace-font-family);
+}
+
+.find-result-cell__highlight {
+    background-color: var(--highlight__background-color);
+    border-radius: 2px;
+    color: black;
+    /*
+    outline-color: var(--highlight__background-color);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
+}
+
+.data-grid__row--selected .find-result-cell__highlight {
+	background-color: var(--highlight__background-color--selected);
+}
+
+.find-result-cell__name {
+    display: flex;
+    flex-grow: 0;
+    align-items: end;
+    white-space: pre;
+    color: var(--navigation__text-color);
+    user-select: text;
+}
+
+/* find-result-cell__name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.find-result-cell__sample + .find-result-cell__name {
+    margin-left: 6rem;
+}
+
+.find-result-cell__sub {
+    display: flex;
+    gap: 6rem;
+    padding: .1rem;
+}
+
+.find-result-cell__tags,
+.find-result-cell__path {
+    display: flex;
+    font-size: .7rem;
+    flex-grow: 1;
+    color: var(--text-color--muted);
+    user-select: text;
+}
+
+.find-result-cell__uuid {
+    display: flex;
+    font-size: .6rem;
+    font-family: monospace;
+    flex-grow: 0;
+    color: var(--text-color--muted);
+    user-select: text;
+}
+
+/* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
+.data-grid__row--selected .find-result-cell__tags,
+.data-grid__row--selected .find-result-cell__path,
+.data-grid__row--selected .find-result-cell__uuid {
+    color: inherit;
+}

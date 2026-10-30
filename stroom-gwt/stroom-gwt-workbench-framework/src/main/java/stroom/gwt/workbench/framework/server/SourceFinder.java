@@ -59,11 +59,6 @@ public class SourceFinder {
                 .toList();
     }
 
-    /// @return The source roots.
-    public List<Path> getSourceRoots() {
-        return sourceRoots;
-    }
-
     /// @param className A fully qualified class name, e.g. `stroom.widget.button.client.Button`.
     /// @return The source file of the class, if it is in one of the source roots. Nested classes
     /// are found in their outer class's file.

@@ -39,7 +39,7 @@ export function readSave(page) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const un = (t) => { const s = norm(t); return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     // The document's toolbar, NOT a dialog's — a dirty check is about the tab underneath.
-    const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
+    const btns = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0
       && !b.closest('.dialog'));
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');
@@ -86,7 +86,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       return `${t.length}:${t.slice(0, 120)}`;
     };
     /**
-     * A `CustomCheckBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
+     * A `TickBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
      * `checked` is the state. Reading only `input[type=checkbox]` found the hidden input, which has
      * no size, so all 56 of its value handlers were `needs-value`. Disabled or read-only ones can't be
      * driven. It is named by its own label ("Enabled"), or by its input's `aria-label` when it stands
@@ -124,13 +124,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // trying to opened nothing, so the Escape meant for its list closed the dialog instead.
       if (select && select.offsetWidth > 0 && /\bdisabled\b/.test(select.className)) continue;
       if (select && select.offsetWidth > 0) {
-        const icon = select.querySelector('.svg-icon-box__icon') ?? select;
+        const icon = select.querySelector('.icon-box__icon') ?? select;
         out.push({ label, kind: 'select', value: norm(select.querySelector('.selection-box__value')?.textContent
           ?? select.querySelector('input')?.value), ...at(icon) });
         continue;
       }
       // A tick box is usually a div whose CLASS carries the state (TickBoxCell), but a form's own
-      // checkbox is a real `input.checkbox` (CustomCheckBox) whose class never changes and whose
+      // checkbox is a real `input.checkbox` (TickBox) whose class never changes and whose
       // `checked` does. Reading the class for both made every form checkbox look like a control
       // that refused to move, while its document went dirty — so read whichever actually varies.
       if (ownTick) {
@@ -167,7 +167,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
           && !e.classList.contains('quick-filter__input')
           && !e.classList.contains('ace_text-input') && !e.closest('.ace_editor'));
       if (box) { out.push({ label, kind: 'text', value: String(box.value ?? ''), ...at(box) }); continue; }
-      // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownViewImpl`, rendered as
+      // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownBox`, rendered as
       // `.drop-down`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
       // MouseDownEvent.getType())`), and picking a document fires `addDataSelectionHandler`, which
       // the presenter turns into onChange -> setDirty (`DataGenSettingsPresenter:61`). DataGen's
@@ -228,7 +228,7 @@ export async function nudge(page, f) {
     return 'typed';
   }
   if (f.kind === 'spinner') {
-    // One short press: `Spinner` starts a repeating timer at 30ms, so a long hold would run the
+    // One short press: `ValueSpinnerModel` starts a repeating timer at 30ms, so a long hold would run the
     // value away. The value is NOT put back — the document is dirty either way, exactly as for a
     // tick or a selection, and the walker's tab-close machinery answers the discard prompt.
     await page.mouse.move(f.x, f.y);
@@ -243,7 +243,7 @@ export async function nudge(page, f) {
   }
   if (f.kind === 'chooser') {
     // A DOCUMENT CHOOSER (`DocSelectionBoxPresenter`): MOUSEDOWN opens `Choose item`
-    // (`DropDownViewImpl` registers MouseDownEvent, not ClickEvent). Choose a DOCUMENT row other than
+    // (`DropDownBox` registers MouseDownEvent, not ClickEvent). Choose a DOCUMENT row other than
     // the current one, then OK. The earlier attempt picked a branch: a folder, System or a Git Repo
     // holding feeds can't be chosen, so OK left the box as it was and the driver was set aside. The
     // documents the chooser accepts are listed at the top level as well as in their folders.
@@ -261,8 +261,8 @@ export async function nudge(page, f) {
         .filter((e) => e.textContent.trim() === 'Choose item').pop();
       const dialog = title?.closest('.dialog__container, .dialog');
       const branch = new Set(['Folder', 'System', 'Favourites', 'Git Repo', null]);
-      const row = [...(dialog?.querySelectorAll('.explorerCell') ?? [])].find((e) => e.offsetWidth > 0
-        && !branch.has(e.querySelector('.explorerCell-icon')?.getAttribute('title') ?? null)
+      const row = [...(dialog?.querySelectorAll('.explorer-cell') ?? [])].find((e) => e.offsetWidth > 0
+        && !branch.has(e.querySelector('.explorer-cell__icon')?.getAttribute('title') ?? null)
         && norm(e.textContent) && norm(e.textContent) !== 'None' && norm(e.textContent) !== norm(current));
       if (!row) return null;
       const r = row.getBoundingClientRect();
@@ -280,7 +280,7 @@ export async function nudge(page, f) {
     // and a click at that point left the box as it was.
     const dialog = page.locator('.dialog__title', { hasText: /^Choose item$/ })
       .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]');
-    await dialog.locator('.explorerCell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
+    await dialog.locator('.explorer-cell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
     await page.waitForTimeout(400);
     await button('OK').click({ timeout: 2_000 }).catch(() => {});
     return `chose "${pick.text}"`;

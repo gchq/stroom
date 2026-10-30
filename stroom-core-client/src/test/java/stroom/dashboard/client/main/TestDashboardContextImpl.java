@@ -21,7 +21,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
-import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.component.QueryToolbarController;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -42,11 +42,11 @@ class TestDashboardContextImpl {
     void setUp() {
         // The query toolbar's widgets are made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
-        final QueryToolbarPresenter queryToolbarPresenter = Mockito.mock(QueryToolbarPresenter.class);
-        Mockito.when(queryToolbarPresenter.getTimeRange()).thenReturn(new TimeRange("All", null, null));
-        final Components components = Mockito.mock(Components.class);
+        final QueryToolbarController queryToolbar = Mockito.mock(QueryToolbarController.class);
+        Mockito.when(queryToolbar.getTimeRange()).thenReturn(new TimeRange("All", null, null));
+        final Panes components = Mockito.mock(Panes.class);
         Mockito.when(components.getComponents()).thenReturn(List.of());
-        dashboardContext = new DashboardContextImpl(new SimpleEventBus(), components, queryToolbarPresenter);
+        dashboardContext = new DashboardContextImpl(new SimpleEventBus(), components, queryToolbar);
     }
 
     @AfterEach

@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:sl="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="explorer-node-remove-tags max form">
+        <g:FlowPanel styleName="explorer-node-remove-tags__lists form dock-max">
+            <form:FormGroup identity="removeNodeTagsNodeTags"
+                            addStyleNames="dock-max"
+                            label="Existing Tags"
+                            screenReaderText="Space selects tags to remove.">
+                <form:HelpHTML>
+                    Select the tag(s) to remove from the documents.
+                </form:HelpHTML>
+                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max" multiSelect="true"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

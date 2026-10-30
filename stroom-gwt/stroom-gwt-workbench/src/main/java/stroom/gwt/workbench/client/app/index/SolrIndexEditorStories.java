@@ -31,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.search.solr.client.component.SolrIndexEditor;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// The `App/Index/SolrIndexEditor` stories, showing Stroom's real [SolrIndexPresenter] (a Solr
+/// The `App/Index/SolrIndexEditor` stories, showing Stroom's real [SolrIndexEditor] (a Solr
 /// index's tab: Fields, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `SolrIndexPlugin` does, the story fetches the document (`GET /solrIndex/v1/{uuid}`) and
@@ -74,7 +74,7 @@ public final class SolrIndexEditorStories {
     private static final String UPDATE = "/solrIndex/v1/solr-events";
 
     // A FormGroup gives its control the group's identity as its id
-    // (SolrIndexFieldEditViewImpl.ui.xml)
+    // (SolrIndexFieldEditor.ui.xml)
     private static final String FIELD_NAME = "#solrIndexFieldName";
 
     private SolrIndexEditorStories() {
@@ -185,7 +185,33 @@ public final class SolrIndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, FIELDS, true))
                 .withPlay(play -> {
                     waitForFields(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The ZooKeeper fields are enabled only for a Solr Cloud with Use ZK ticked; they
+                // stayed enabled for a single node or with Use ZK unticked, although then unused
+                .story("ZooKeeperFieldsFollowUseZk", context -> render(context, FIELDS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openSettings(play);
+                    final Query zkHosts = play.getByLabelText("ZooKeeper Hosts");
+                    final Query zkPath = play.getByLabelText("ZooKeeper Path");
+                    final Query useZk = play.getByRole("checkbox", "Use ZK");
+                    // A single node, Use ZK unticked
+                    play.expect(zkHosts).toBeDisabled();
+                    play.expect(zkPath).toBeDisabled();
+                    // Use ZK alone is not enough: a single node has no ZooKeeper
+                    play.click(useZk);
+                    play.expect(zkHosts).toBeDisabled();
+                    // A Solr Cloud with Use ZK ticked
+                    play.click(play.getByLabelText("Instance Type"));
+                    play.click(screen.findByRole("option", "Solr Cloud"));
+                    play.waitFor(() -> play.expect(zkHosts).toBeEnabled());
+                    play.expect(zkPath).toBeEnabled();
+                    // Unticked again
+                    play.click(useZk);
+                    play.expect(zkHosts).toBeDisabled();
+                    play.expect(zkPath).toBeDisabled();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab as an editable partner for SettingsReadOnly
@@ -198,7 +224,7 @@ public final class SolrIndexEditorStories {
                 .story("SettingsReadOnly", context -> render(context, FIELDS, true))
                 .withPlay(play -> {
                     openSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -261,7 +287,7 @@ public final class SolrIndexEditorStories {
         final SolrIndexResource resource = GWT.create(SolrIndexResource.class);
         return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getSolrIndexPresenter(),
+                injector.getSolrIndexEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

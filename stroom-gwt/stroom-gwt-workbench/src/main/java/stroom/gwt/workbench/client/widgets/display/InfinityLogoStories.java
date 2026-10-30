@@ -22,6 +22,7 @@ import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.svg.client.Icon;
 import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -29,9 +30,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for the Stroom infinity logo, shown at the top of the login form.
 ///
-/// There is no logo widget in GWT: the stories build it as Stroom's `LoginViewImpl` does, an
-/// [SvgImage#INFINITY_LOGO] in a `LoginViewUserImage` panel inside a
-/// `LoginViewUserImageContainer` panel.
+/// The stories build it as Stroom's `Login` template declares it: an [Icon] showing
+/// [SvgImage#INFINITY_LOGO], styled `sign-in-page__user-image`, inside a
+/// `sign-in-page__user-image-container` panel.
 public final class InfinityLogoStories {
 
     // Arg names
@@ -59,11 +60,10 @@ public final class InfinityLogoStories {
 
     /// A logo made entirely from the story's args, so the Controls addon changes it.
     private static Widget fromArgs(final StoryContext context) {
-        // As LoginViewImpl's UiBinder template and constructor build it
-        final SimplePanel userImage = new SimplePanel();
-        userImage.setStyleName("LoginViewUserImage");
-        userImage.getElement().setInnerHTML(SvgImage.INFINITY_LOGO.getSvg());
-        userImage.addStyleName(SvgImage.INFINITY_LOGO.getClassName());
+        // As Login's UiBinder template declares it
+        final Icon userImage = new Icon();
+        userImage.setImage(SvgImage.INFINITY_LOGO);
+        userImage.addStyleName("sign-in-page__user-image");
         final String size = context.getArgs().getString(SIZE, "");
         if (!size.isEmpty()) {
             userImage.getElement().getStyle().setProperty("width", size);
@@ -71,7 +71,7 @@ public final class InfinityLogoStories {
         }
 
         final SimplePanel container = new SimplePanel(userImage);
-        container.setStyleName("LoginViewUserImageContainer");
+        container.setStyleName("sign-in-page__user-image-container");
         return container;
     }
 }

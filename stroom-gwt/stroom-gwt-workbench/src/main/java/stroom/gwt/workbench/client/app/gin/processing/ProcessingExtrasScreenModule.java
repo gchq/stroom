@@ -16,39 +16,19 @@
 
 package stroom.gwt.workbench.client.app.gin.processing;
 
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.core.client.ContentManager;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter.ProcessorLimitsView;
-import stroom.dashboard.client.query.ProcessorLimitsViewImpl;
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.DataUploadViewImpl;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's modules that the processing screens need without the rest of
-/// their module: `AlertModule`'s alert dialog (the data browser's selection summary shows one),
-/// `FeedModule`'s data upload dialog (opened from the data browser), `QueryModule`'s processor
-/// limits dialog and `AppModule`'s content manager (a singleton, which the document plugins share,
+/// their module: `AppModule`'s content manager (a singleton, which the document plugins share,
 /// as in Stroom).
-public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
+public class ProcessingExtrasScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
-        bindPresenterWidget(CommonAlertPresenter.class,
-                CommonAlertView.class,
-                CommonAlertViewImpl.class);
-        bindPresenterWidget(DataUploadPresenter.class,
-                DataUploadView.class,
-                DataUploadViewImpl.class);
-        bindPresenterWidget(ProcessorLimitsPresenter.class,
-                ProcessorLimitsView.class,
-                ProcessorLimitsViewImpl.class);
         bind(ContentManager.class).in(Singleton.class);
     }
 }

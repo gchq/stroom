@@ -1,0 +1,29 @@
+.colour-swatch-cell {
+
+}
+
+.colour-swatch-cell {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.2em;
+}
+
+.colour-swatch-cell__swatch {
+    /* The colour shown (ColourSwatchCell.java) */
+    background-color: var(--colour-swatch-cell__colour, transparent);
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+    width: 14px;
+    height: 14px;
+    margin: 0.1em;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--text-color);
+}
+
+.data-grid__cell--disabled .colour-swatch-cell__swatch {
+    opacity: var(--disabled-opacity);
+}

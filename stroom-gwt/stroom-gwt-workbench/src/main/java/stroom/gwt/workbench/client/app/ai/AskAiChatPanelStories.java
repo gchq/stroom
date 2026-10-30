@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.ai;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -35,10 +35,10 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/AI/AskAiChatPanel` stories, showing the chat panel of Stroom's real
-/// [AskStroomAiPresenter] (its view, which Stroom shows docked or in the 'Ask Stroom AI' dialog) in
+/// [AskStroomAiController] (its view, which Stroom shows docked or in the 'Ask Stroom AI' dialog) in
 /// a 480 by 560 pixel box, with fake REST replies ([AiFixtures]).
 ///
-/// Viewing an attachment opens Stroom's attachment data dialog, which the presenter opens itself;
+/// Viewing an attachment opens Stroom's attachment data dialog, which the controller opens itself;
 /// the play checks the data it asks for.
 public final class AskAiChatPanelStories {
 
@@ -183,13 +183,13 @@ public final class AskAiChatPanelStories {
 
     // The chat's view in a panel box: 480 by 560 pixels, with a border
     private static void showPanel(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
-        final SimplePanel box = new SimplePanel(presenter.getWidget());
+        final AskStroomAiController controller = injector.getAskStroomAiController();
+        final SimplePanel box = new SimplePanel(controller.asWidget());
         box.getElement().getStyle().setProperty("width", "480px");
         box.getElement().getStyle().setProperty("height", "560px");
         box.getElement().getStyle().setProperty("display", "flex");
         box.getElement().getStyle().setProperty("border", "1px solid var(--border-color)");
         harness.add(box);
-        harness.unbindOnCleanUp(presenter);
+        harness.own(controller);
     }
 }

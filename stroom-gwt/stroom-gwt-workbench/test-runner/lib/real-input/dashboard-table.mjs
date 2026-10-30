@@ -21,8 +21,8 @@
 
 import assert from 'node:assert/strict';
 
-const BOX = '.dashboard-table-filter-cell-text';
-const BUTTON = '.dashboard-table-filter-cell-disable-button';
+const BOX = '.filter-cell .text-field';
+const BUTTON = '.filter-cell__disable-button';
 
 // Waits (up to two seconds) for a condition the page reaches a moment after a key or click
 async function waitFor(page, condition, message) {

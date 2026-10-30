@@ -26,17 +26,17 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.time.Time;
-import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.datepicker.client.TimePopup;
-import stroom.widget.datepicker.client.TimeViewImpl;
+import stroom.widget.datepicker.client.component.TimeBox;
+import stroom.widget.datepicker.client.component.TimeBoxController;
+import stroom.widget.datepicker.client.component.TimePicker;
+import stroom.widget.datepicker.client.component.TimePickerController;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [TimeBox] (a text box for a time, whose clock icon opens the "Set Time"
-/// dialog, [TimePopup], used by e.g. the processing profile period dialog).
+/// dialog, [TimePickerController], used by e.g. the processing profile period dialog).
 ///
 /// The dialog is shown with Stroom's `ShowPopupEvent`, so the stories use a [ScreenHarness] for
 /// its event bus and popup manager (no REST requests are made).
@@ -56,32 +56,59 @@ public final class TimePickerStories {
         registry.component("Widgets/Date & Time/TimePicker", TimePickerStories.class)
                 .layout(StoryLayout.CENTERED)
                 // A full HH:MM:SS time
-                .story("Basic", context -> timePicker(context, new Time(14, 30, 0), true))
+                .story("Basic", context -> timePicker(context, new Time(14, 30, 0), true, false))
                 // Hours and minutes only (no seconds spinner in the dialog)
-                .story("HourMinute", context -> timePicker(context, new Time(9, 0, 0), false))
+                .story("HourMinute", context -> timePicker(context, new Time(9, 0, 0), false, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.click(play.querySelector(".svg-icon-box__icon"));
+                    play.click(play.querySelector(".icon-box__icon"));
                     final Play dialog = screen.within(screen.findByText("Set Time").closest(StroomDom.DIALOG));
                     play.expect(dialog.getByText("Minute")).toBeVisible();
                     // The seconds spinner was once still shown (TimeViewImpl.setSecondVisible did
                     // nothing)
                     play.expect(dialog.getByText("Second")).not().toBeVisible();
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Time")).toBeNull());
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // OK puts the time chosen in the box: Reset on the hour zeroes the whole time
+                .story("ChooseTime", context -> timePicker(context, new Time(14, 30, 15), true, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.querySelector(".icon-box__icon"));
+                    final Play dialog = screen.within(screen.findByText("Set Time").closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("button", "Reset hour"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith("Time: 00:00:00"));
+                    play.expect(play.getByDisplayValue("00:00:00")).toBeInTheDocument();
+                })
+                // Read only: the clock is dimmed and Enter doesn't open the dialog
+                .story("ReadOnly", context -> timePicker(context, new Time(14, 30, 0), true, true))
+                .withPlay(play -> {
+                    play.expect(play.querySelector(".icon-box")).toHaveClass("icon-box--read-only");
+                    play.click(play.getByDisplayValue("14:30:00"));
+                    play.keyboard("{Enter}");
+                    play.sleep(200);
+                    play.expect(play.screen().queryByText("Set Time")).toBeNull();
                 });
     }
 
     /// The box with `<p>Time: HH:MM:SS</p>` below it, in a column with a gap of 8.
-    private static Widget timePicker(final StoryContext context, final Time time, final boolean showSecond) {
+    private static Widget timePicker(final StoryContext context,
+                                     final Time time,
+                                     final boolean showSecond,
+                                     final boolean readOnly) {
         final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
         final TimeBox box = new TimeBox();
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Time");
-        // As Stroom's presenters give it the dialog, e.g. ProfilePeriodEditPresenter
-        box.setPopupProvider(() -> new TimePopup(harness.getEventBus(),
-                new TimeViewImpl(GWT.create(TimeViewImpl.Binder.class))));
-        box.setSecondVisible(showSecond);
+        // As Stroom's controllers attach one, e.g. ProfilePeriodEditorController
+        final TimeBoxController controller = harness.own(new TimeBoxController(() ->
+                new TimePickerController(harness.getEventBus(), new TimePicker())));
+        controller.attach(box);
+        controller.setSecondVisible(showSecond);
         box.setValue(time);
+        box.setReadOnly(readOnly);
 
         final Label label = DateTimeWidgets.valueLabel(timeText(box.getValue()));
         final Spy onChange = context.fn(ON_CHANGE);

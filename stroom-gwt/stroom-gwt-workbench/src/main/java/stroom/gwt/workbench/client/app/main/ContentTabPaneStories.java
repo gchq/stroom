@@ -17,18 +17,21 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.content.client.component.ContentTabController;
+import stroom.content.client.component.ContentTabPaneController;
+import stroom.content.client.component.CurveTabLayout;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.docref.DocRef;
 import stroom.document.client.HasMultipleInstances;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -37,23 +40,22 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
-/// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPanePresenter] (the
+/// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPaneController] (the
 /// document tabs) and its tab menu, built by Stroom's real `DocumentPluginEventManager` for a tab's
 /// `ShowTabMenuEvent`.
 ///
 /// The tabs hold stand-in editors (`DocumentTab`, showing the document's type and name) opened
 /// through Stroom's `ContentManager`; a Dashboard tab is `HasMultipleInstances`, as Stroom's
-/// `DashboardPresenter` is. 'Duplicate Tab' fires `OpenDocumentEvent` with `duplicate` set (for the
-/// document's plugin to open another instance), which the `onOpenDocument` spy records. No requests
-/// are made.
+/// dashboard tab (`MultiInstanceEditorHost`) is. 'Duplicate Tab' fires `OpenDocumentEvent` with
+/// `duplicate` set (for the document's plugin to open another instance), which the
+/// `onOpenDocument` spy records. No requests are made.
 public final class ContentTabPaneStories {
 
     /// The name of the spy recording the documents asked to be opened (Stroom's `OpenDocumentEvent`).
@@ -107,14 +109,15 @@ public final class ContentTabPaneStories {
         return play.getAllByText(TextMatch.startingWith(name), ".tab-bar--curved .tab-bar__label");
     }
 
-    private static void open(final ContentManager contentManager,
-                             final EventBus eventBus,
-                             final DocRef docRef,
-                             final int instance) {
+    private static DocumentTab open(final ContentManager contentManager,
+                                    final EventBus eventBus,
+                                    final DocRef docRef,
+                                    final int instance) {
         final DocumentTab tab = "Dashboard".equals(docRef.getType())
                 ? new MultiInstanceDocumentTab(eventBus, docRef, instance)
                 : new DocumentTab(eventBus, docRef);
         contentManager.open(event -> event.getCallback().closeTab(true), tab, tab);
+        return tab;
     }
 
     private static Widget render(final StoryContext context, final DocRef docRef) {
@@ -123,27 +126,37 @@ public final class ContentTabPaneStories {
                 .injector(injector)
                 .build();
         final EventBus eventBus = harness.getEventBus();
-        // The tab pane, registered for the content events as its GWTP proxy would be
-        final ContentTabPanePresenter pane = injector.getContentTabPanePresenter();
+        // The tab pane, registered for the content events as MainScreens registers it
+        // Shown on its own, so attached to a layout of its own, as Stroom's main view declares one
+        final ContentTabPaneController pane = injector.getContentTabPaneController()
+                .attach(new CurveTabLayout());
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), pane));
-        // The tab menu
-        harness.addCleanUp(injector.getDocumentPluginEventManager()::unbind);
+        // The tab menu (getting the event manager makes it, and it registers for its events)
+        injector.getDocumentPluginEventManager();
         final ContentManager contentManager = injector.getContentManager();
         harness.fn(ON_OPEN_DOCUMENT);
         harness.addRegistration(eventBus.addHandler(OpenDocumentEvent.getType(), event ->
                 harness.spy(ON_OPEN_DOCUMENT, event.getDocRef().getType() + " " + event.getDocRef().getUuid()
                         + " duplicate=" + event.isDuplicate())));
-        harness.addContent(pane);
-        harness.afterStartUp(() -> open(contentManager, eventBus, docRef, 0));
+        // The pane lasts for the story, as Stroom's main view keeps it, and is the screen each
+        // opening shows (as the leak check opens it again), with the document's tab, which is
+        // closed when the screen is
+        final ControllerNode paneOwner = ControllerNode.root("ContentTabPaneStories");
+        paneOwner.adopt(pane.getControllerNode());
+        harness.addCleanUp(paneOwner::dispose);
+        harness.afterStartUp(() -> {
+            harness.show(pane);
+            StoryDocumentPlugins.closeTabOnCleanUp(harness, open(contentManager, eventBus, docRef, 0));
+        });
         return harness.asWidget();
     }
 
     // --------------------------------------------------------------------------------
 
     /// A stand-in document editor tab.
-    private static class DocumentTab extends ContentTabPresenter<View> {
+    private static class DocumentTab extends ContentTabController {
 
         private final DocRef docRef;
 
@@ -152,8 +165,9 @@ public final class ContentTabPaneStories {
         }
 
         DocumentTab(final EventBus eventBus, final DocRef docRef, final String text) {
-            super(eventBus, new TextView(text));
+            super(eventBus);
             this.docRef = docRef;
+            initWidget(new Label(text));
         }
 
         @Override
@@ -204,23 +218,6 @@ public final class ContentTabPaneStories {
         @Override
         public void setInstance(final int instance) {
             this.instance = instance;
-        }
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /// A view showing some text.
-    private static final class TextView extends ViewImpl {
-
-        private final Label label;
-
-        TextView(final String text) {
-            label = new Label(text);
-        }
-
-        @Override
-        public Widget asWidget() {
-            return label;
         }
     }
 }

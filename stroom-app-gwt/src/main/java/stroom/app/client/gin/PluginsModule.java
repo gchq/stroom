@@ -18,8 +18,8 @@ package stroom.app.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.TabSessionManager;
+import stroom.explorer.client.ExplorerPlugin;
+import stroom.explorer.client.TabSessionManager;
 import stroom.help.client.HelpPlugin;
 
 public class PluginsModule extends PluginModule {
@@ -29,7 +29,7 @@ public class PluginsModule extends PluginModule {
         bindPlugin(DocumentPluginEventManager.class);
 
         bindPlugin(HelpPlugin.class);
-        bindPlugin(NavigationPlugin.class);
+        bindPlugin(ExplorerPlugin.class);
         bindPlugin(TabSessionManager.class);
     }
 }

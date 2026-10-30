@@ -30,9 +30,9 @@
 /**
  * The topmost dialog's caption, body, hidden detail and icon, or null.
  *
- * GWT's `CommonAlertViewImpl` lays an alert out as `.alert-icon` (the SVG says which of
- * question / info / warning / error the presenter fired), `.alert-message`, an `.alert-showHide`
- * button (`Show Detail`, `aria-expanded` when the detail is shown) and `.alert-detail` — the detail pane is in the DOM, hidden, whether or not `Show Detail`
+ * GWT's `CommonAlertViewImpl` lays an alert out as `.common-alert__icon` (the SVG says which of
+ * question / info / warning / error the presenter fired), `.common-alert__message`, an `.common-alert__show-hide`
+ * button (`Show Detail`, `aria-expanded` when the detail is shown) and `.common-alert__detail` — the detail pane is in the DOM, hidden, whether or not `Show Detail`
  * was pressed, and it is where the exception class and the failing request live. A non-alert
  * dialog has none of these; its `.dialog__content` text is kept instead (the first 400 characters).
  */
@@ -43,21 +43,21 @@ export function readTopDialogBody(page) {
     const top = popups[popups.length - 1];
     if (!top) return null;
     const caption = norm(top.querySelector('.dialog__title')?.textContent);
-    const message = top.querySelector('.alert-message');
+    const message = top.querySelector('.common-alert__message');
     if (message) {
-      const svg = top.querySelector('.alert-icon .svg-image, .alert-icon svg, .alert-icon');
+      const svg = top.querySelector('.common-alert__icon .svg-image, .common-alert__icon svg, .common-alert__icon');
       const icon = /svg-image__([a-z-]+)/.exec(String(svg?.className?.baseVal ?? svg?.className ?? ''))?.[1]
-        ?? /svg-image__([a-z-]+)/.exec(top.querySelector('.alert-icon')?.innerHTML ?? '')?.[1] ?? null;
+        ?? /svg-image__([a-z-]+)/.exec(top.querySelector('.common-alert__icon')?.innerHTML ?? '')?.[1] ?? null;
       // The alert presenter is ONE instance reused for every alert, and its detail pane keeps the
       // LAST detail it was given: a validation warning read straight after a failed request
       // carried that request's exception and classed as `environment`. The `Show Detail` button is
       // shown only when this alert has a detail, so the pane counts only when the button does.
-      const showHide = top.querySelector('.alert-showHide');
+      const showHide = top.querySelector('.common-alert__show-hide');
       const hasDetail = !!showHide && showHide.offsetWidth > 0 && showHide.offsetHeight > 0;
       return {
         caption, icon, isAlert: true,
         text: norm(message.textContent).slice(0, 400),
-        detail: hasDetail ? norm(top.querySelector('.alert-detail')?.textContent).slice(0, 600) || undefined : undefined,
+        detail: hasDetail ? norm(top.querySelector('.common-alert__detail')?.textContent).slice(0, 600) || undefined : undefined,
       };
     }
     const content = top.querySelector('.dialog__content') ?? top;

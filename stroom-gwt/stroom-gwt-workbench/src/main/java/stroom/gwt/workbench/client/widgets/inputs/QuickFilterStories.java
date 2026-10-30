@@ -24,20 +24,19 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.filter.FilterFieldDefinition;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
+import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
+import stroom.widget.text.client.Frame;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
+import stroom.widget.util.client.HtmlTableCell;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -167,15 +166,14 @@ public final class QuickFilterStories {
                     final FlowPanel column = StoryPanels.column(8, quickFilter, value);
                     return InputWidgets.maxWidth(column, MAX_WIDTH);
                 })
-                // QuickFilter wrapped with a label (GWT QuickFilterPageViewImpl.setLabel)
+                // QuickFilter wrapped with a label (QuickFilterPage.setLabel)
                 .story("WithLabel", context -> {
-                    final QuickFilterPageViewImpl view = new QuickFilterPageViewImpl(
-                            GWT.create(QuickFilterPageViewImpl.Binder.class));
+                    final QuickFilterPage page = new QuickFilterPage();
                     final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
-                    view.setUiHandlers(text -> onChange.call(text));
-                    view.setLabel("User Groups:");
-                    view.setHelpText(SafeHtmlUtils.fromString("Filter the list of user groups."));
-                    return InputWidgets.maxWidth(view.asWidget(), MAX_WIDTH);
+                    page.setOnFilterChange(text -> onChange.call(text));
+                    page.setLabel("User Groups:");
+                    page.setHelpText(SafeHtmlUtils.fromString("Filter the list of user groups."));
+                    return InputWidgets.maxWidth(page, MAX_WIDTH);
                 })
                 // A quick filter with a context: its arrow (or Alt+Down) asks the screen for the
                 // recent filters, and the one picked is put in the box, applied and remembered.
@@ -277,14 +275,14 @@ public final class QuickFilterStories {
     }-*/;
 
     // A quick filter with the syntax help popup populated, as Stroom's screens register it, e.g.
-    // TaskManagerPresenter
+    // ServerTasksController
     private static QuickFilter quickFilterWithHelp(final StoryContext context) {
         final QuickFilter quickFilter = quickFilter(context);
         quickFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                 "Server Tasks Quick Filter",
                 tableBuilder -> tableBuilder
-                        .row(TableCell.data("Matched tasks are shown in black.", 2))
-                        .row(TableCell.data("Related tasks are shown in grey.", 2))
+                        .row(HtmlTableCell.data("Matched tasks are shown in black.", 2))
+                        .row(HtmlTableCell.data("Related tasks are shown in grey.", 2))
                         .row(),
                 Arrays.asList(
                         FilterFieldDefinition.defaultField("Name", "name"),
@@ -295,7 +293,7 @@ public final class QuickFilterStories {
     }
 
     // Gives the quick filter a context, with a stand-in for the server that accepts or rejects
-    // each filter applied, as Stroom's list presenters report the server's answer
+    // each filter applied, as Stroom's list controllers report the server's answer
     private static Widget withContext(final StoryContext context, final QuickFilter quickFilter) {
         quickFilter.setContextHandler(new RecentFiltersHandler(
                 context.fn(ON_SHOW_RECENT_FILTERS), context.fn(ON_RECORD_USE)));

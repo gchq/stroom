@@ -21,9 +21,9 @@
 //
 //   NavigationPresenter:337        explorerTree.addContextMenuHandler(…)   the explorer tree
 //   EditorPresenter               view's context menu                     an ACE editor
-//   ExpressionTreePresenter       getView()                               an expression term
-//   PipelineTreePresenter         getView()                               a pipeline element
-//   QueryPresenter / EditExpressionPresenter / SteppingPresenter / PipelineStructurePresenter
+//   ExpressionTreeController      addContextMenuHandler(…)                an expression term
+//   PipelineTree                  addContextMenuHandler(…)                a pipeline element
+//   QueryPresenter / ExpressionEditorController / SteppingPresenter / PipelineStructurePresenter
 //
 // The oracle is the same for all of them and needs no source reading beyond the registration: a
 // context handler that runs puts a MENU on the screen. GWT's menus are `.menu__item` (the same
@@ -35,17 +35,17 @@
 
 /**
  * The things worth right-clicking. EVERY kind present is tried, not just the first: the explorer is on
- * screen on every screen, so a first-match rule meant `.explorerCell` always won and the editor, the
+ * screen on every screen, so a first-match rule meant `.explorer-cell` always won and the editor, the
  * pipeline elements and the grid rows were never reached at all.
  *
  * `skip` names rows that are explorer CHROME rather than documents. "Favourites" is the first
- * `.explorerCell` on the page and has no context menu, which is how three of this driver's four first
+ * `.explorer-cell` on the page and has no context menu, which is how three of this driver's four first
  * attempts came back `unchecked` against a feature that works perfectly.
  */
 export const TARGETS = [
-  { sel: '.explorerCell', what: 'an explorer row', skip: /^(Favourites|System)$/ },
-  { sel: '.ExpressionTreeViewImpl-layoutPanel .expressionItem, .expressionItem', what: 'an expression term' },
-  { sel: '.pipeline-element', what: 'a pipeline element' },
+  { sel: '.explorer-cell', what: 'an explorer row', skip: /^(Favourites|System)$/ },
+  { sel: '.expression-item', what: 'an expression term' },
+  { sel: '.pipeline-element-box', what: 'a pipeline element' },
   { sel: '.ace_content', what: 'the editor' },
   { sel: '.data-grid [role=row][data-row]', what: 'a grid row' },
 ];

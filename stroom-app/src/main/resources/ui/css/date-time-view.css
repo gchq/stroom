@@ -1,5 +1,5 @@
 /*
- * The Set Date And Time dialog (DateTimeViewImpl) and the time dialog (TimeViewImpl): a date column
+ * The Set Date And Time dialog (DateTimePicker) and the time dialog (TimePicker): a date column
  * (a heading, the date, its shortcuts and the calendar) beside a time column (a heading, the time,
  * its shortcuts and a spinner for each part, each with its Reset button). The shortcuts and Reset
  * are LinkButtons, drawn in the link colour.
@@ -44,7 +44,7 @@
 }
 
 /* The spinner fills the field beside its button */
-.date-time-view__field .value-spinner {
+.date-time-view__field .date-time-view__spinner {
     flex: 1 1 auto;
     min-width: 0;
 }

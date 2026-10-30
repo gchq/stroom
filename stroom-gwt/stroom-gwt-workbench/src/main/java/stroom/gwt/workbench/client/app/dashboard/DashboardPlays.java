@@ -21,7 +21,6 @@ import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -37,16 +36,19 @@ import java.util.Map;
 final class DashboardPlays {
 
     /// The label of a component's tab (a Stroom link tab).
-    static final String COMPONENT_TAB = ".tabLayout-tabBar .tab-bar__label";
+    static final String COMPONENT_TAB = ".tab-layout__tab-bar .tab-bar__label";
 
     /// A tab layout (a panel).
-    static final String PANEL = ".tabLayout";
+    static final String PANEL = ".tab-layout";
 
     /// A splitter between panels.
     static final String SPLITTER = ".flex-layout__splitter";
 
     /// A Query component's own Execute Query button.
-    static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
+    static final String QUERY_RUN_BUTTON = ".query-pane .run-query-button__button";
+    // The run button's modifiers while its query is idle and while it runs (toolbar-button.css)
+    static final String QUERY_RUN_BUTTON_IDLE = "toolbar-button--play";
+    static final String QUERY_RUN_BUTTON_RUNNING = "toolbar-button--stop";
 
     /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
     static final String DESIGN_MODE = "Design Mode";
@@ -84,7 +86,7 @@ final class DashboardPlays {
     ///              `Execute Query`.
     /// @return A button of the dashboard's own query toolbar.
     static Query toolbarButton(final Play play, final String title) {
-        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByRole("button", title);
+        return play.within(play.querySelector(".query-toolbar__inner")).getByRole("button", title);
     }
 
     /// Clicks a Query component's own Execute Query button.
@@ -94,7 +96,8 @@ final class DashboardPlays {
     static void runQuery(final Play play, final int index) {
         // Waits until it is a run button: while a query is still running it is a stop button, so
         // under load a second run (e.g. after changing a filter) could stop the first instead
-        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index)).toHaveClass("play"));
+        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index))
+                .toHaveClass(QUERY_RUN_BUTTON_IDLE));
         play.click(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index));
     }
 
@@ -171,36 +174,18 @@ final class DashboardPlays {
         return screen.within(screen.findByText(caption, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
-    /// Clicks a part of a results table's column header, as the query batch's
-    /// `QueryEditorStories.clickHeader` does: `MyDataGrid` only handles a header's mouse buttons
-    /// once the mouse has moved over it.
-    ///
-    /// @param play   The play.
-    /// @param target The part of the header to click.
-    static void clickHeader(final Play play, final Query target) {
-        play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
-        play.sleep(200);
-        // Pointer events before mouse events, as a browser sends them: the new grid
-        // (DataGrid) reads the pointer events, MyDataGrid the mouse events
-        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
-        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
-        play.fireEvent().click(target, EventInit.create().atCentreOf(target));
-    }
-
     /// @param play The play.
     /// @param name The column's name.
     /// @return The label of a results table's column header.
     static Query header(final Play play, final String name) {
-        return play.getByText(name, ".column-top .column-label");
+        return play.getByText(name, ".column-header__label");
     }
 
     /// @param play The play.
     /// @param name The column's name.
     /// @return A results table's column header cell, with its filter box and button.
     static Query headerCell(final Play play, final String name) {
-        return header(play, name).closest("th, [data-hcol]");
+        return header(play, name).closest(StroomDom.GRID_HEADER_CELL);
     }
 
     /// Drags with the mouse, as Stroom's `FlexLayout` reads it (mouse events, the move and release

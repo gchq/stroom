@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A tree whose items can be dragged (draggable-tree.css): the tree, which the declaring template's
+  <pv:tree> child puts in place of treeSlot (addTree), then the live region that tells screen
+  reader users what moving an item with the keyboard did (TreeKeyboard). The copy of what is
+  dragged is added while dragging.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel ui:field="layoutPanel" styleName="draggable-tree">
+        <div ui:field="treeSlot"></div>
+        <div ui:field="status" class="sr-only draggable-tree__status" role="status" aria-live="polite"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

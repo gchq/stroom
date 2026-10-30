@@ -115,7 +115,7 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 const CHROME = new Set([
   'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
   'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New Document', 'Delete Selected Documents',
+  'New Document', 'Delete Selected Documents', 'Reload Explorer Tree',
 ]);
 const chromeDone = new Set();
 /** Types whose loose explorer-title match has already been reported. */
@@ -124,7 +124,7 @@ const looseReported = new Set();
 /**
  * Collapse a label GWT has emitted twice.
  *
- * Dialog buttons are `.Button` divs, not `<button title=…>`, so `readButtons` falls back to
+ * Dialog buttons are `.button` divs, not `<button title=…>`, so `readButtons` falls back to
  * textContent — and GWT renders the caption in both a visible span and a second copy, giving
  * "Close Close", "OK OK" and "Set As Default For All UsersSet As Default For All Users". The first
  * crawl then looked for `button[title="Close Close"]`, found nothing, and recorded 17 affordances as
@@ -139,7 +139,7 @@ const looseReported = new Set();
  * `readButtons` picks headers up because they are clickable — that is how you sort — and GWT appends
  * the sort-order index to the text, giving "Display Name 1". They are genuine affordances (clicking
  * one sorts the grid, the case the screen profiles derive) but they are not `<button title=…>` or
- * `.Button`, so the click locator missed all five and recorded them as `vanished`.
+ * `.button`, so the click locator missed all five and recorded them as `vanished`.
  */
 const SORT_INDEX = /\s+\d+$/;
 const isColumnHeader = (label) => SORT_INDEX.test(label);
@@ -156,7 +156,7 @@ function undouble(label) {
 }
 
 /**
- * Click an affordance however it is built. GWT dialogs use `.Button` divs with no title attribute,
+ * Click an affordance however it is built. GWT dialogs use `.button` divs with no title attribute,
  * screens use real `<button title=…>`; a locator that knows only one of those misses half the UI.
  */
 async function clickAffordance(label, timeout = 3000) {
@@ -176,7 +176,7 @@ async function clickAffordance(label, timeout = 3000) {
       : []),
     page.locator(`button[title="${label}"]:not([disabled])`),
     page.locator(`button[aria-label="${label}"]:not([disabled])`),
-    page.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${label})(\\s*\\1)?\\s*$`) }),
+    page.locator('.button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${label})(\\s*\\1)?\\s*$`) }),
   ];
   for (const c of candidates) {
     if (await c.count().then((n) => n > 0).catch(() => false)) {
@@ -250,8 +250,8 @@ async function reset() {
  * Open a document from the explorer.
  *
  * Expands the tree FIRST. `reset()` leaves the explorer as the app opens it, with every folder shut,
- * and `openExplorerDoc` matches only VISIBLE `.explorerCell` rows — so the first `DOC=` run died on
- * `no visible .explorerCell matching "Test Dashboard"` when the document was there all along, one
+ * and `openExplorerDoc` matches only VISIBLE `.explorer-cell` rows — so the first `DOC=` run died on
+ * `no visible .explorer-cell matching "Test Dashboard"` when the document was there all along, one
  * closed folder away. `record.mjs` expands before every open for exactly this reason.
  */
 async function openDoc(name, type) {
@@ -367,8 +367,8 @@ async function navigate(node) {
       const found = await page.evaluate((type) => {
         const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
         const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const rows = [...document.querySelectorAll('.explorerCell')].filter((e) => e.offsetWidth > 0)
-          .map((e) => ({ el: e, title: norm(e.querySelector('.explorerCell-icon')?.getAttribute('title')),
+        const rows = [...document.querySelectorAll('.explorer-cell')].filter((e) => e.offsetWidth > 0)
+          .map((e) => ({ el: e, title: norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title')),
             label: norm(e.textContent) }))
           .filter((r) => r.title);
         for (const [how, test] of [
@@ -404,16 +404,16 @@ async function navigate(node) {
       // target. It reported 14 items and no `Remove Tags`: the single-selection menu wearing a
       // multi-selection label, which is worse than not covering the shape at all.
       if (step.also?.length) {
-        if (!(await clickByText(page, '.explorerCell', step.target))) {
+        if (!(await clickByText(page, '.explorer-cell', step.target))) {
           throw new Error(`no explorer row "${step.target}" to select`);
         }
         for (const extra of step.also) {
-          if (!(await ctrlClickByText(page, '.explorerCell', extra))) {
+          if (!(await ctrlClickByText(page, '.explorer-cell', extra))) {
             throw new Error(`no explorer row "${extra}" to add to the selection`);
           }
         }
       }
-      if (!(await rightClickByText(page, '.explorerCell', step.target))) {
+      if (!(await rightClickByText(page, '.explorer-cell', step.target))) {
         throw new Error(`no explorer row "${step.target}" to right-click`);
       }
       await page.waitForTimeout(600);

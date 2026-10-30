@@ -14,50 +14,28 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.document.client.event.ShowCopyDocumentDialogEvent;
-import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.document.client.event.ShowRenameDocumentDialogEvent;
-import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentPresenter;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
-import stroom.explorer.client.event.ShowFindEvent;
-import stroom.explorer.client.event.ShowFindInContentEvent;
-import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter;
+import stroom.explorer.client.component.ExplorerController;
 import stroom.gwt.workbench.client.app.gin.shell.ShellScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.importexport.client.event.ExportConfigEvent;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
+import stroom.main.client.component.Main;
+import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
-import stroom.main.client.presenter.MainPresenter;
-import stroom.widget.help.client.presenter.HelpManager;
-import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.help.client.HelpManager;
+import stroom.widget.menu.client.MenuItems;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.GWT;
@@ -65,28 +43,27 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stroom's app shell, put together for the `App/Main/AppShell` stories as Stroom's GIN modules and
-/// start-up put it together: the main view ([MainPresenter], with the main menu button), the
-/// explorer ([NavigationPresenter]) in its explorer slot and the document tabs
-/// ([ContentTabPanePresenter]) in its content slot, every plugin that adds to the main menu (and
-/// binds keyboard shortcuts), the Dictionary, Feed and Folder document plugins, the
+/// start-up put it together: the main view ([MainController], with the main menu button), the
+/// explorer ([ExplorerController]) and the document tabs ([ContentTabPaneController]) in it, every
+/// plugin that adds to the main menu (and binds keyboard shortcuts), the Dictionary, Feed and Folder
+/// document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
-/// the dialogs that GWTP's proxies would show for their events (Find, Recent Items, New, Copy, Move,
+/// the dialogs that the listeners would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
 ///
-/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CorePresenter` do once the harness has
+/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `AppPageController` do once the harness has
 /// loaded the UI config and preferences: the splash screen (if enabled), the initial activity
 /// chooser (if enabled), then `ShowMainEvent`, which shows the explorer and opens the initial
 /// document, if any.
 ///
-/// Stroom's `MainPresenter` adds its keyboard handlers to the page's body and never removes them;
-/// the story gives it a key handler that passes keys to Stroom's `GlobalKeyHandlerImpl` only until
-/// the story renders again. Its 30 second refresh timer is cancelled on re-render.
+/// Stroom's `MainController` adds its keyboard handlers to the page's body, and starts its 30 second
+/// refresh timer, until it is disposed (when the story renders again); the story gives it a key
+/// handler that passes keys to Stroom's `GlobalKeyHandlerImpl` only until then.
 final class ShellScreen {
 
     private final ShellScreenGinjector injector;
@@ -126,9 +103,8 @@ final class ShellScreen {
     void start(final DocRef initialDocRef) {
         harness.afterStartUp(() -> {
             registerPlugins();
-            registerDialogs();
             createMain();
-            injector.getSplashPresenter().show(ok -> {
+            injector.getSplashScreen().show(harness.getHasHandlers(), ok -> {
                 if (ok) {
                     injector.getCurrentActivity().showInitialActivityChooser(activity ->
                             ShowMainEvent.fire(harness.getHasHandlers(), initialDocRef));
@@ -137,63 +113,53 @@ final class ShellScreen {
         });
     }
 
-    /// Opens a document in a full screen view, as Stroom's `CorePresenter` does for a URL naming a
+    /// Opens a document in a full screen view, as Stroom's `AppPageController` does for a URL naming a
     /// document without the `open-doc` action (Stroom's embedded view), instead of showing the
     /// shell.
     ///
     /// @param docRef The document.
     void startFullScreen(final DocRef docRef) {
         harness.addRegistration(harness.getEventBus().addHandler(ShowFullScreenEvent.getType(), event ->
-                harness.addContent(event.getPresenterWidget())));
+                harness.show(event.getController())));
         harness.afterStartUp(() -> {
             registerPlugins();
-            registerDialogs();
             OpenDocumentEvent.fire(harness.getHasHandlers(), docRef, true, true);
         });
     }
 
-    // The main view, with the explorer and the document tabs in its slots. Stroom shows it (and the
-    // explorer) for ShowMainEvent, once the user has logged in
+    // The main view, with the explorer and the document tabs. Stroom shows it (and the explorer) for
+    // ShowMainEvent, once the user has logged in
     private void createMain() {
         final EventBus eventBus = harness.getEventBus();
 
-        // The document tabs, registered for the content events as their GWTP proxy would be
-        final ContentTabPanePresenter tabPane = injector.getContentTabPanePresenter();
+        // The document tabs, registered for the content events as their listener would be
+        final ContentTabPaneController tabPane = injector.getContentTabPaneController();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(MoveContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(RefreshContentTabEvent.getType(), tabPane));
-        harness.unbindOnCleanUp(tabPane);
 
-        // The main view, with the app's keyboard shortcuts
+        final ExplorerController explorer = injector.getExplorerController();
+
+        // The main view, with the app's keyboard shortcuts, which owns the tabs and the explorer
         final StoryKeyHandler keyHandler = new StoryKeyHandler(injector.getGlobalKeyHandlerImpl());
         harness.addCleanUp(keyHandler::stop);
-        final MainPresenter main = new MainPresenter(eventBus,
-                injector.getMainView(),
-                null,
+        final MainController main = new MainController(eventBus,
+                new Main(),
                 new MenuItems(),
                 harness.getUiConfigCache(),
-                keyHandler);
-        main.bind();
-        harness.unbindOnCleanUp(main);
-        harness.addCleanUp(() -> cancelRefreshTimer(main));
+                keyHandler,
+                explorer,
+                tabPane);
+        harness.own(main);
 
-        // As Stroom shows them for ShowMainEvent, once the user has logged in: the main view (made
-        // visible as GWTP's root presenter would make it) with the tab pane in its content slot,
-        // then the explorer, which shows itself (NavigationPresenter.onShowMain, registered as its
-        // GWTP proxy would be), and is put in the main view's explorer slot as the main view's
-        // proxy would do for the explorer's RevealContentEvent
-        final NavigationPresenter navigation = injector.getNavigationPresenter();
-        harness.unbindOnCleanUp(navigation);
+        // As Stroom shows it for ShowMainEvent, once the user has logged in: MainScreens puts it in the
+        // page (here, the story's), then it shows the explorer
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event -> {
-            main.setInSlot(MainPresenter.CONTENT, tabPane);
-            harness.addContent(main);
-            reveal(main);
+            harness.show(main);
+            main.onShowMain(event);
         }));
-        harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), navigation));
-        harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event ->
-                main.setInSlot(MainPresenter.EXPLORER, navigation)));
     }
 
     /// @return The shell's injector.
@@ -211,126 +177,71 @@ final class ShellScreen {
         return harness.asWidget();
     }
 
-    // Stroom binds the plugins as eager singletons; getting them from the injector creates and
-    // registers them
+    // Stroom makes the plugins as eager singletons; getting them from the injector makes them, and
+    // they register for their events then, for the injector's life (opening the screen again, as
+    // the leak check does, gets the same ones)
     private void registerPlugins() {
-        unbindOnCleanUp(injector.getDocumentPluginEventManager());
-        unbindOnCleanUp(injector.getTabSessionManager());
+        injector.getDocumentPluginEventManager();
+        injector.getTabSessionManager();
+        // The document dialogs (create, copy, move, rename, info), which the area's GIN module makes
+        // eagerly in Stroom (the explorer's and import/export's dialogs are their plugins')
+        injector.getDocumentDialogScreens();
 
-        unbindOnCleanUp(injector.getAboutPlugin());
-        unbindOnCleanUp(injector.getAnnotationBrowsePlugin());
-        unbindOnCleanUp(injector.getAnnotationCreatePlugin());
-        unbindOnCleanUp(injector.getAnnotationCollectionPlugin());
-        unbindOnCleanUp(injector.getAnnotationCommentPlugin());
-        unbindOnCleanUp(injector.getAnnotationLabelPlugin());
-        unbindOnCleanUp(injector.getAnnotationStatusPlugin());
-        unbindOnCleanUp(injector.getCacheMonitoringPlugin());
-        unbindOnCleanUp(injector.getContentStorePlugin());
-        unbindOnCleanUp(injector.getCredentialsPlugin());
-        unbindOnCleanUp(injector.getManageFsVolumesPlugin());
-        unbindOnCleanUp(injector.getNavigationPlugin());
-        unbindOnCleanUp(injector.getHelpPlugin());
-        unbindOnCleanUp(injector.getDependenciesPlugin());
-        unbindOnCleanUp(injector.getExportConfigPlugin());
-        unbindOnCleanUp(injector.getImportConfigPlugin());
-        unbindOnCleanUp(injector.getManageIndexVolumesPlugin());
-        unbindOnCleanUp(injector.getDatabaseTablesMonitoringPlugin());
-        unbindOnCleanUp(injector.getExecutionScheduleManagerPlugin());
-        unbindOnCleanUp(injector.getJobListPlugin());
-        unbindOnCleanUp(injector.getNodeGroupsPlugin());
-        unbindOnCleanUp(injector.getNodeMonitoringPlugin());
-        unbindOnCleanUp(injector.getProcessorProfilePlugin());
-        unbindOnCleanUp(injector.getManageGlobalPropertiesPlugin());
-        unbindOnCleanUp(injector.getTracesPlugin());
-        unbindOnCleanUp(injector.getUserPreferencesPlugin());
-        unbindOnCleanUp(injector.getResultStorePlugin());
-        unbindOnCleanUp(injector.getContentTemplatePlugin());
-        unbindOnCleanUp(injector.getDataRetentionPlugin());
-        unbindOnCleanUp(injector.getReceiveDataRuleSetPlugin());
-        unbindOnCleanUp(injector.getApiKeysPlugin());
-        unbindOnCleanUp(injector.getAppPermissionsPlugin());
-        unbindOnCleanUp(injector.getDocumentPermissionsPlugin());
-        unbindOnCleanUp(injector.getLogoutPlugin());
-        unbindOnCleanUp(injector.getSigningKeyPlugin());
-        unbindOnCleanUp(injector.getSignOutOtherSessionsPlugin());
-        unbindOnCleanUp(injector.getUserAccessPlugin());
-        unbindOnCleanUp(injector.getUserPermissionsReportPlugin());
-        unbindOnCleanUp(injector.getUserPlugin());
-        unbindOnCleanUp(injector.getUsersAndGroupsPlugin());
-        unbindOnCleanUp(injector.getUsersPlugin());
-        unbindOnCleanUp(injector.getAccountsPlugin());
-        unbindOnCleanUp(injector.getChangePasswordPlugin());
-        unbindOnCleanUp(injector.getTaskManagerPlugin());
+        injector.getAboutPlugin();
+        injector.getAnnotationBrowsePlugin();
+        injector.getAnnotationCreatePlugin();
+        injector.getAnnotationCollectionPlugin();
+        injector.getAnnotationCommentPlugin();
+        injector.getAnnotationLabelPlugin();
+        injector.getAnnotationStatusPlugin();
+        injector.getCachesPlugin();
+        injector.getContentStorePlugin();
+        injector.getCredentialsPlugin();
+        injector.getManageFsVolumesPlugin();
+        injector.getExplorerPlugin();
+        injector.getHelpPlugin();
+        injector.getDependenciesPlugin();
+        injector.getExportConfigPlugin();
+        injector.getImportConfigPlugin();
+        injector.getManageIndexVolumesPlugin();
+        injector.getDatabaseTablesMonitoringPlugin();
+        injector.getExecutionSchedulesPlugin();
+        injector.getJobsPlugin();
+        injector.getNodeGroupsPlugin();
+        injector.getNodesPlugin();
+        injector.getProcessorProfilesPlugin();
+        injector.getManageGlobalPropertiesPlugin();
+        injector.getTracesPlugin();
+        injector.getUserPreferencesPlugin();
+        injector.getResultStorePlugin();
+        injector.getContentTemplatePlugin();
+        injector.getDataRetentionPlugin();
+        injector.getReceiveDataRuleSetPlugin();
+        injector.getApiKeysPlugin();
+        injector.getAppPermissionsPlugin();
+        injector.getDocumentPermissionsPlugin();
+        injector.getLogoutPlugin();
+        injector.getSigningKeyPlugin();
+        injector.getSignOutOtherSessionsPlugin();
+        injector.getUserAccessPlugin();
+        injector.getUserPlugin();
+        injector.getUsersAndGroupsPlugin();
+        injector.getUsersPlugin();
+        injector.getAccountsPlugin();
+        injector.getChangePasswordPlugin();
+        injector.getServerTasksPlugin();
 
-        unbindOnCleanUp(injector.getDictionaryPlugin());
-        unbindOnCleanUp(injector.getFeedPlugin());
-        unbindOnCleanUp(injector.getFolderPlugin());
-        unbindOnCleanUp(injector.getFolderFavouritesPlugin());
-        unbindOnCleanUp(injector.getFolderRootPlugin());
+        injector.getDictionaryPlugin();
+        injector.getFeedPlugin();
+        injector.getFolderPlugin();
+        injector.getFolderFavouritesPlugin();
+        injector.getFolderRootPlugin();
     }
-
-    private void unbindOnCleanUp(final HandlerContainerImpl plugin) {
-        harness.addCleanUp(plugin::unbind);
-    }
-
-    // The dialogs that Stroom's GWTP proxies create and show for their events
-    private void registerDialogs() {
-        final Lazy<FindPresenter> findPresenter = new Lazy<>(injector::getFindPresenter);
-        final Lazy<FindInContentPresenter> findInContentPresenter = new Lazy<>(injector::getFindInContentPresenter);
-        final Lazy<RecentItemsPresenter> recentItemsPresenter = new Lazy<>(injector::getRecentItemsPresenter);
-        final Lazy<CreateDocumentPresenter> createDocumentPresenter = new Lazy<>(injector::getCreateDocumentPresenter);
-        final Lazy<CopyDocumentPresenter> copyDocumentPresenter = new Lazy<>(injector::getCopyDocumentPresenter);
-        final Lazy<MoveDocumentPresenter> moveDocumentPresenter = new Lazy<>(injector::getMoveDocumentPresenter);
-        final Lazy<NameDocumentPresenter> nameDocumentPresenter = new Lazy<>(injector::getNameDocumentPresenter);
-        final Lazy<InfoDocumentPresenter> infoDocumentPresenter = new Lazy<>(injector::getInfoDocumentPresenter);
-        final Lazy<ExportConfigPresenter> exportConfigPresenter = new Lazy<>(injector::getExportConfigPresenter);
-        final Lazy<ExplorerNodeEditTagsPresenter> explorerNodeEditTagsPresenter = new Lazy<>(
-                injector::getExplorerNodeEditTagsPresenter);
-        final Lazy<ExplorerNodeRemoveTagsPresenter> explorerNodeRemoveTagsPresenter = new Lazy<>(
-                injector::getExplorerNodeRemoveTagsPresenter);
-        final EventBus eventBus = harness.getEventBus();
-        harness.addRegistration(eventBus.addHandler(ShowFindEvent.getType(), event ->
-                findPresenter.get().onShow(event)));
-        harness.addRegistration(eventBus.addHandler(ShowFindInContentEvent.getType(), event ->
-                findInContentPresenter.get().onShow(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRecentItemsEvent.getType(), event ->
-                recentItemsPresenter.get().onShowRecentItems(event)));
-        harness.addRegistration(eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event ->
-                createDocumentPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event ->
-                copyDocumentPresenter.get().onCopy(event)));
-        harness.addRegistration(eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event ->
-                moveDocumentPresenter.get().onMove(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event ->
-                nameDocumentPresenter.get().onRename(event)));
-        harness.addRegistration(eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event ->
-                infoDocumentPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ExportConfigEvent.getType(), event ->
-                exportConfigPresenter.get().onExport(event)));
-        harness.addRegistration(eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
-                explorerNodeEditTagsPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
-                explorerNodeRemoveTagsPresenter.get().onCreate(event)));
-    }
-
-    // Makes a presenter visible (calling its onReveal and its children's), as GWTP does when it
-    // reveals a presenter in its parent's slot (here the root, which the story has no presenter for).
-    // A visible tab pane keeps its tabs when it is asked to reveal itself for each new tab
-    private static native void reveal(MainPresenter presenter) /*-{
-        presenter.@com.gwtplatform.mvp.client.PresenterWidget::internalReveal()();
-    }-*/;
-
-    // MainPresenter's refresh timer (it fires RefreshCurrentContentTabEvent every 30 seconds) is
-    // never cancelled by Stroom, which has one main presenter for the page's life
-    private static native void cancelRefreshTimer(MainPresenter main) /*-{
-        main.@stroom.main.client.presenter.MainPresenter::refreshTimer.@com.google.gwt.user.client.Timer::cancel()();
-    }-*/;
 
     // --------------------------------------------------------------------------------
 
-
     /// Passes keys to Stroom's app-wide key handler until stopped (when the story renders again),
-    /// as the main presenter's handlers on the page's body are never removed.
+    /// as the main controller's handlers on the page's body are never removed.
     private static final class StoryKeyHandler implements GlobalKeyHandler {
 
         private final GlobalKeyHandler delegate;
@@ -361,8 +272,7 @@ final class ShellScreen {
 
     // --------------------------------------------------------------------------------
 
-
-    /// Creates a value when it is first asked for, as a GWTP proxy creates its presenter when its
+    /// Creates a value when it is first asked for, as a plugin creates a screen when its
     /// event first fires, and gives the same one after that.
     private static final class Lazy<T> implements Supplier<T> {
 

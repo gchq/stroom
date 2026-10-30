@@ -1,0 +1,360 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * A schema's browser (XsdBrowser): its diagram of boxes (XsdDiagram, XsdDiagramBox), the selected
+ * node's documentation and its constraints (XsdConstraints).
+ */
+
+.xsd-browser * {
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+}
+
+.xsd-browser__link {
+	display: inline-block;
+	cursor: pointer;
+	padding: 2px 5px;
+	text-decoration: underline;
+}
+
+.xsd-browser__documentation {
+	overflow: auto;
+	padding: 5px;
+}
+
+.xsd-browser__constraints {
+	overflow: auto;
+}
+
+.xsd-browser__diagram {
+	padding: 20px;
+	overflow: auto;
+}
+
+/* A box: its title, then its content below it, centred */
+.xsd-browser__box {
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--xsd-browser__box-border-color);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.xsd-browser__box-content {
+	flex: 1 1 auto;
+	max-width: 100%;
+}
+
+/* A box title's image, then its text beside it */
+.xsd-browser__box-title-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.xsd-browser__box-title-text {
+	color: white;
+	white-space: nowrap;
+}
+
+/* The title of a box whose node can be selected */
+.xsd-browser__box-title--selectable {
+	cursor: pointer;
+}
+
+.xsd-browser__box-title {
+	width: 100%;
+	background: var(--xsd-browser__title-background-color);
+	padding: 2px;
+	border: 1px solid var(--xsd-browser__title-background-color);
+}
+
+.xsd-browser__box-title--selected {
+	background: var(--xsd-browser__title-background-color--selected);
+	border-color: var(--xsd-browser__title-background-color--selected);
+}
+
+.xsd-browser__outer-box {
+	display: flex;
+	flex-direction: column;
+	width: fit-content;
+	background-color: var(--xsd-browser__box-background-color);
+	border: 1px solid var(--control__background-color);
+	border-radius: .25rem;
+}
+
+.xsd-browser__restriction-type {
+	font-weight: 500;
+}
+
+.xsd-browser__padded {
+	padding: 5px;
+}
+
+/* The schema's boxes (its elements and its types) side by side */
+.xsd-browser__mid-panel {
+	display: flex;
+	align-items: flex-start;
+	gap: 5px;
+	padding: 5px;
+}
+
+/* An element or a type's boxes, in two columns side by side */
+.xsd-browser__columns {
+	display: flex;
+	align-items: flex-start;
+	gap: 40px;
+}
+
+.xsd-browser__column {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.xsd-browser__column--centred {
+	align-items: center;
+}
+
+/* The rows of a node's children, as wide as they need, each cell's content in its middle */
+.xsd-browser__node-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--xsd-browser__node-grid-columns), auto);
+	width: max-content;
+}
+
+.xsd-browser__node-grid-cell {
+	display: flex;
+	align-items: center;
+}
+
+/* An empty cell holds a space, as the table this grid replaced did, so that a column left empty
+   (e.g. the occurrences, when they aren't shown) still spaces out the columns either side of it */
+.xsd-browser__node-grid-cell:empty::before {
+	content: "\00a0";
+}
+
+/* Space around the rows: before the first column, after the last, above the first row and below
+   the last */
+.xsd-browser__node-grid-cell--start {
+	padding-left: 5px;
+}
+
+.xsd-browser__node-grid-cell--end {
+	padding-right: 5px;
+}
+
+.xsd-browser__node-grid-cell--top {
+	padding-top: 3px;
+}
+
+.xsd-browser__node-grid-cell--bottom {
+	padding-bottom: 3px;
+}
+
+/* A line under the last row of a group, e.g. the attributes */
+.xsd-browser__node-grid-cell--separator {
+	border-bottom: 1px solid black;
+}
+
+.xsd-browser__type-box {
+	margin-bottom: 20px;
+}
+
+.xsd-browser__icon {
+	margin-right: 5px;
+}
+
+.xsd-browser__type-name {
+	margin-left: 5px;
+}
+
+/* A label kept on one line, e.g. an occurrence or a constraint's value */
+.xsd-browser__one-line {
+	white-space: nowrap;
+}
+
+.xsd-browser__node-label {
+	margin-right: 5px;
+	cursor: pointer;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.xsd-browser__node-label--selected {
+  background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
+  color: var(--row__text-color--selected) !important;
+}
+
+/* A node's image with its occurrences (e.g. 0..1) over it */
+.xsd-browser__occurrence {
+	position: relative;
+}
+
+.xsd-browser__occurrence-label {
+	position: absolute;
+	left: 16px;
+	top: 9px;
+	font-size: var(--font-size-8);
+	color: var(--link__text-color);
+}
+
+.xsd-browser__super-arrow {
+  background-image: url("../images/xsdbrowser/superArrow.png");
+  width: 13px;
+  height: 60px;
+}
+
+.xsd-browser__super-arrow-select {
+  background-image: url("../images/xsdbrowser/superArrowSelect.png");
+  width: 13px;
+  height: 60px;
+}
+
+.stroom-theme-dark .xsd-browser__super-arrow-select {
+  background-image: url("../images/xsdbrowser/superArrowSelect-dark.png");
+  width: 13px;
+  height: 60px;
+}
+
+.xsd-browser__node-all {
+  background-image: url("../images/xsdbrowser/xsdAll.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__node-any {
+  background-image: url("../images/xsdbrowser/xsdAny.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__node-attribute {
+  background-image: url("../images/xsdbrowser/xsdAttribute.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__node-choice {
+  background-image: url("../images/xsdbrowser/xsdChoice.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__node-complex-type {
+  background-image: url("../images/xsdbrowser/xsdComplexType.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__node-element {
+  background-image: url("../images/xsdbrowser/xsdElement.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__node-element-ref {
+  background-image: url("../images/xsdbrowser/xsdElementRef.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__node-sequence {
+  background-image: url("../images/xsdbrowser/xsdSequence.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__node-simple-type {
+  background-image: url("../images/xsdbrowser/xsdSimpleType.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsd-browser__title-complex-type {
+  background-image: url("../images/xsdbrowser/xsdTitleComplexType.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__title-element {
+  background-image: url("../images/xsdbrowser/xsdTitleElement.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__title-elements {
+  background-image: url("../images/xsdbrowser/xsdTitleElements.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__title-schema {
+  background-image: url("../images/xsdbrowser/xsdTitleSchema.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__title-simple-type {
+  background-image: url("../images/xsdbrowser/xsdTitleSimpleType.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__title-types {
+  background-image: url("../images/xsdbrowser/xsdTitleTypes.png");
+  width: var(--icon-width);
+  height: var(--icon-height);
+}
+
+.xsd-browser__tree-02 {
+  background-image: url("../images/xsdbrowser/xsdTree02.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__tree-03 {
+  background-image: url("../images/xsdbrowser/xsdTree03.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__tree-05 {
+  background-image: url("../images/xsdbrowser/xsdTree05.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__tree-06 {
+  background-image: url("../images/xsdbrowser/xsdTree06.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsd-browser__tree-09 {
+  background-image: url("../images/xsdbrowser/xsdTree09.png");
+  width: 15px;
+  height: 20px;
+}

@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
+import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.function.Supplier;
 
 /// The `App/Editors/GitRepoEditor` stories, showing Stroom's real
-/// [GitRepoPresenter] (a Git Repository's tab: Settings, Documentation and Permissions) with fake
+/// [GitRepoEditor] (a Git Repository's tab: Settings, Documentation and Permissions) with fake
 /// REST replies.
 ///
 /// As `GitRepoPlugin` does, the story fetches the document (`GET /gitRepo/v1/{uuid}`) and reads it
@@ -102,8 +102,8 @@ public final class GitRepoEditorStories {
     private static final String UPDATE = "/gitRepo/v1/git-1";
 
     // A FormGroup gives its control the group's identity as its id
-    // (GitRepoSettingsViewImpl.ui.xml)
-    private static final String URL_INPUT = "#txtGitUrl";
+    // (GitRepoSettings.ui.xml)
+    private static final String URL_INPUT = "#gitUrl";
     private static final String COMMIT_MESSAGE = "#commitMessage";
 
     private GitRepoEditorStories() {
@@ -168,6 +168,26 @@ public final class GitRepoEditorStories {
                             RequestMatcher.post("/gitRepo/v1/pushToGit")
                                     .withJsonBodyContaining("{\"commitMessage\": \"Initial commit\"}")
                                     .toSpyMatcher());
+                    DocEditors.expectNoUnhandledRequests(play);
+                })
+                // A commit message of only spaces is refused as none is (it was accepted); Cancel
+                // then pushes nothing
+                .story("PushBlankMessageAndCancel", context -> render(context, new Fixtures()
+                        .reply("/gitRepo/v1/pushToGit", "{\"ok\": true, \"message\": \"Pushed 5 files.\"}")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", StroomDom.button("Push to Git")));
+                    screen.findByText("Git Push", StroomDom.DIALOG_TITLE);
+                    play.type(screen.querySelector(COMMIT_MESSAGE), "   ");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Please enter a commit message"))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Git Push", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/gitRepo/v1/pushToGit").toSpyMatcher());
                     DocEditors.expectNoUnhandledRequests(play);
                 })
                 // Pull shows the result, and closing the alert refreshes the explorer tree
@@ -310,7 +330,7 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Git repository URL", "label")).toBeInTheDocument());
                     play.waitFor(() -> play.expect(play.querySelector(URL_INPUT))
                             .toHaveValue("https://github.com/example/repo.git"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -335,7 +355,7 @@ public final class GitRepoEditorStories {
                     event -> harness.spy(REFRESH_EXPLORER, "refresh")));
             DocEditors.open(harness,
                     DOC_REF,
-                    injector.getGitRepoPresenter(),
+                    injector.getGitRepoEditor(),
                     DocResource.of(
                             restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                             (restFactory, doc) -> restFactory.create(resource)

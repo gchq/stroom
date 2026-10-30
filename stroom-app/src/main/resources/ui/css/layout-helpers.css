@@ -1,0 +1,128 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Layout helpers, set beside a component's own classes: max (fill the parent), the dock
+   containers and their parts, w-100 and h-100, align-center, overflow-hidden, input-row,
+   focus-ring-room (room for a focus ring inside a box that clips, as a form has), the borders
+   stroom-border-top and -bottom, lower-case-input, quick-filter-layout, and sr-only (text for
+   screen readers only). */
+
+.stroom-border-top {
+	border-top: 1px solid var(--border-color);
+}
+
+.stroom-border-bottom {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.max {
+    width: 100%;
+    height: 100%;
+}
+
+/* Text for screen readers only, so it must not be display: none (which hides it from them too) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.dock-container-horizontal {
+    display: flex;
+}
+
+.dock-container-vertical {
+    display: flex;
+    flex-direction: column;
+}
+
+/* dock-min, the part of a dock container that keeps its size, has no rule of its own */
+.dock-max {
+    flex-grow: 1;
+}
+
+.input-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.w-100 {
+    width: 100% !important;
+}
+
+.h-100 {
+    height: 100% !important;
+}
+
+.align-center {
+    align-items: center;
+}
+
+/* !important, as Bootstrap's overflow-hidden was, which outranked e.g. a form's overflow: auto */
+.overflow-hidden {
+    overflow: hidden !important;
+}
+
+/* A box that clips (e.g. a form, which scrolls) has room inside for the focus ring round a control
+   at its edge, and reaches as far outside to keep its contents where they were */
+.focus-ring-room,
+.form:not(.form-padding) {
+    padding: var(--focus-ring__room);
+    margin: calc(-1 * var(--focus-ring__room));
+}
+
+.focus-ring-room.max,
+.form.max:not(.form-padding) {
+    width: calc(100% + 2 * var(--focus-ring__room));
+    height: calc(100% + 2 * var(--focus-ring__room));
+}
+
+/* A form's padding, inset from the edges of its panel, as a form's controls are, on a form or
+   anything laid out as one (e.g. a lone form group, a row of controls); after focus-ring-room, which
+   it outranks (was form.css's, and nothing loaded between the two pads these boxes) */
+.form-padding {
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
+}
+
+.lower-case-input {
+    text-transform: lowercase;
+}
+
+/* A dialog's least size, and a part of a form that does not apply (from components.css) */
+.default-min-sizes {
+    min-width: 200px;
+    min-height: 200px;
+}
+
+/* A part of a form that doesn't apply while another setting is off, set from Java with
+   setStyleName("section--disabled", ...). Its controls are disabled too, so show it themselves; its
+   labels are greyed (fading the whole part as well took them under 4.5:1) */
+.section--disabled,
+.section--disabled .form-group__label {
+    color: var(--text-color--disabled);
+}
+
+/* A panel holding a quick filter above what it filters (was quick-filter.css's) */
+.quick-filter-layout {
+    gap: var(--control__padding--vertical);
+}

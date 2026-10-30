@@ -16,20 +16,23 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
-import stroom.data.client.presenter.DocRefCell;
 import stroom.docref.DocRef;
-import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.util.client.cell.DocRefCell;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.menu.client.presenter.HasChildren;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.HasChildren;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.Separator;
+import stroom.widget.text.client.Html;
+import stroom.widget.text.client.InlineLabel;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.Style;
@@ -37,13 +40,8 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +49,8 @@ import java.util.List;
 /// Stories for Stroom's [DocRefCell]. Each cell is a `CellWidget` in a box (see
 /// [CellRendererWidgets]).
 ///
-/// The `onOpen` spy reports Stroom's [OpenDocumentEvent], which the cell fires on its event bus.
+/// The `onOpen` spy reports the cell's `onOpen` callback, which `RefCellsController` sets in Stroom
+/// (to fire an `OpenDocumentEvent`).
 /// The cell copies the name to the clipboard itself, so the story reports a mouse down on the copy
 /// button (as the cell sees it) to the `onCopy` spy.
 public final class DocRefCellStories {
@@ -59,7 +58,7 @@ public final class DocRefCellStories {
     private static final String ON_OPEN = "onOpen";
     private static final String ON_COPY = "onCopy";
     // The class of the cell's copy button
-    private static final String COPY_CLASS_NAME = "docRefLinkCopy";
+    private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
     private static final int CELL_WIDTH_PX = 280;
 
     private static final DocRef FEED_REF = new DocRef("Feed", "uuid-feed-1", "TEST_FEED");
@@ -115,19 +114,43 @@ public final class DocRefCellStories {
                 // No type icon, and the hasOpenAndCopy(false) variant (plain text, no buttons)
                 .story("IconAndButtonToggles", context -> StoryPanels.column(8,
                         cellBox(new DocRefCell.Builder<DocRef>()
-                                .eventBus(new SimpleEventBus())
+                                .onOpen(docRef -> {
+                                })
                                 .showIcon(false)
                                 .docRefFunction(docRef -> docRef)
                                 .build(), FEED_REF),
                         cellBox(new DocRefCell.Builder<DocRef>()
-                                .eventBus(new SimpleEventBus())
+                                .onOpen(docRef -> {
+                                })
                                 .showIcon(true)
                                 .hasOpenAndCopy(false)
                                 .docRefFunction(docRef -> docRef)
                                 .build(), PIPELINE_REF)))
                 // The labels of the menu items that DocRefCell.getContextMenuItems gives the grid's
                 // context menu
-                .story("ContextMenuItems", context -> contextMenuItems());
+                .story("ContextMenuItems", context -> contextMenuItems(new DocRefCell.Builder<DocRef>()
+                        .onOpen(docRef -> {
+                        })
+                        .docRefFunction(docRef -> docRef)
+                        .build()))
+                .withPlay(play -> play.expect(play.getByText(TextMatch.startingWith("Open Feed")))
+                        .toBeInTheDocument())
+                // With no onOpen (no owner to open documents) the cell offers no way to open one:
+                // no open button, and its menu has only 'Copy Feed Details'
+                .story("NoOpen", context -> StoryPanels.column(8,
+                        cellBox(new DocRefCell.Builder<DocRef>()
+                                .showIcon(true)
+                                .docRefFunction(docRef -> docRef)
+                                .build(), FEED_REF),
+                        contextMenuItems(new DocRefCell.Builder<DocRef>()
+                                .docRefFunction(docRef -> docRef)
+                                .build())))
+                .withPlay(play -> {
+                    play.expect(play.getByTitle("Copy name 'TEST_FEED' to clipboard")).toBeInTheDocument();
+                    play.expect(play.queryByTitle("Open Feed TEST_FEED")).toBeNull();
+                    play.expect(play.getByText(TextMatch.startingWith("Copy Feed Details"))).toBeInTheDocument();
+                    play.expect(play.queryByText(TextMatch.startingWith("Open Feed"))).toBeNull();
+                });
     }
 
     private static Widget basic(final StoryContext context) {
@@ -135,14 +158,11 @@ public final class DocRefCellStories {
         final Spy onOpen = context.fn(ON_OPEN);
         final Spy onCopy = context.fn(ON_COPY);
 
-        final EventBus eventBus = new SimpleEventBus();
-        eventBus.addHandler(OpenDocumentEvent.getType(), event -> {
-            final DocRef docRef = event.getDocRef();
-            onOpen.call(docRef.getType() + " " + docRef.getName());
-            lastAction.setText("Last action: open " + docRef.getType() + " \"" + docRef.getName() + "\"");
-        });
         final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
-                .eventBus(eventBus)
+                .onOpen(docRef -> {
+                    onOpen.call(docRef.getType() + " " + docRef.getName());
+                    lastAction.setText("Last action: open " + docRef.getType() + " \"" + docRef.getName() + "\"");
+                })
                 .showIcon(true)
                 .docRefFunction(docRef -> docRef)
                 .build();
@@ -167,17 +187,13 @@ public final class DocRefCellStories {
     /// The cell in a grid with a selection model, as Stroom's lists use it.
     private static Widget grid(final StoryContext context) {
         final Spy onOpen = context.fn(ON_OPEN);
-        final EventBus eventBus = new SimpleEventBus();
-        eventBus.addHandler(OpenDocumentEvent.getType(), event ->
-                onOpen.call(event.getDocRef().getType() + " " + event.getDocRef().getName()));
         final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
-                .eventBus(eventBus)
+                .onOpen(docRef -> onOpen.call(docRef.getType() + " " + docRef.getName()))
                 .showIcon(true)
                 .docRefFunction(docRef -> docRef)
                 .build();
 
-        // The grid takes a GWT event bus, not the cell's web bindery one
-        final DataGrid<DocRef> grid = new DataGrid<>(new com.google.gwt.event.shared.SimpleEventBus());
+        final DataGrid<DocRef> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
@@ -200,17 +216,13 @@ public final class DocRefCellStories {
     }
 
     /// A monospace list of the context menu items of `FEED_REF`.
-    private static Widget contextMenuItems() {
-        final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
-                .eventBus(new SimpleEventBus())
-                .docRefFunction(docRef -> docRef)
-                .build();
+    private static Widget contextMenuItems(final DocRefCell<DocRef> cell) {
         final FlowPanel panel = new FlowPanel();
         final Style style = panel.getElement().getStyle();
         style.setProperty("fontSize", "13px");
         style.setProperty("fontFamily", "monospace");
         panel.add(new Label("DocRefCell.getContextMenuItems(FEED_REF):"));
-        final HTML list = new HTML();
+        final Html list = new Html();
         // Stroom's CSS gives list items their own font, so the list is set to monospace too
         final StringBuilder html = new StringBuilder("<ul style=\"font-family: monospace\">");
         final List<Item> items = cell.getContextMenuItems(null, FEED_REF);

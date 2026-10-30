@@ -389,8 +389,8 @@ explorer's context menu already had). That alone moved the existing corpus 118 �
 **What the run says about the preconditions the walk still cannot make:**
 
 - Node Groups, Processor Profiles and Search Results have NO DATA on this instance — the one "row"
-  the survey counted is a 20px placeholder with no text (the gate now requires text). `NodeGroupEdit`,
-  `ProcessorProfileEdit`, `ResultStoreSettings` need a node group, a profile and a completed search to
+  the survey counted is a 20px placeholder with no text (the gate now requires text). `NodeGroupEditor`,
+  `ProcessorProfileEditor`, `ResultStoreSettings` need a node group, a profile and a completed search to
   exist first: seeding, i.e. a mutation outside the walk.
 - `CreateNewGroupPresenter` is `Edit` on a selected GROUP row; the first row on User Groups is the
   user `admin` ("User editing is not supported"). The selection needs a row predicate — the next
@@ -441,8 +441,8 @@ whoever fires its event, not the Ginjector that holds an `AsyncProvider` for it.
 | a `docType` seed for `Folder` and the `System` root | 2 | `FolderPresenter`, `FolderRootPresenter` (`FolderPlugin` is a `DocumentPlugin`) |
 | the Welcome tab, which every run has open | 1 | `WelcomePresenter` — a `content-tab` seed, attribution only |
 | a dashboard/query table WITH RESULTS | 4+ | `ColumnFilter`, `RulesPresenter`, `ColumnValuesFilter`, `DownloadPresenter`, `ChangeStatus`/`ChangeAssignedTo` (rows carrying annotation ids) — whether `Execute Query` runs under the guard decides if this is a seed or data |
-| DATA that does not exist here (a mutation to seed) | 5 | `NodeGroupEdit`, `ProcessorProfileEdit`, `ResultStoreSettings` (empty grids), `TabSessionChooserPresenter` (needs ≥2 saved tab sessions — with none it is the alert the walk saw), `SelectionSummary`/`ProcessChoice` (a stream) |
-| a MUTATION path | 2 | `DocRefSelectionPresenter` (`PipelinePlugin.save` with several dirty documents), `GitRepoCommitDialogPresenter` (Push) |
+| DATA that does not exist here (a mutation to seed) | 5 | `NodeGroupEditor`, `ProcessorProfileEditor`, `ResultStoreSettings` (empty grids), `TabSessionChooser` (needs ≥2 saved tab sessions — with none it is the alert the walk saw), `SelectionSummary`/`ProcessChoice` (a stream) |
+| a MUTATION path | 2 | `SaveChangedDocuments` (`PipelinePlugin.save` with several dirty documents), `GitRepoCommitDialogPresenter` (Push) |
 | a PERMISSION or config | 1 | `CredentialsManagerDialogPresenter` (`AppPermission.CREDENTIALS` AND a content pack whose git needs auth) |
 
 Everything in the first seven rows is one directed pass — three small walker capabilities (row
@@ -500,9 +500,9 @@ was reached too but needed the miner; it is one of the two below, and the withdr
 | `NewElementPresenter`, `NewPropertyPresenter`, `NewPipelineReferencePresenter` | not attempted — the pipeline structure is not a GWT `Tree`, so `select-tree` does not apply | a `select-element` step on the pipeline canvas |
 | `Choose Pipeline To Process Data With` | reached under System › Data › Process; `DocSelectionPopup` is not in the reachability graph, so it is not a door — the caption is listed so the miner hole is visible, not because it counts | nothing, unless the graph decides `ExplorerPopupPresenter` subclasses are doors |
 
-The data rows above still stand: `NodeGroupEdit`, `ProcessorProfileEdit`, `ResultStoreSettings`,
-`TabSessionChooser` need data; `DocRefSelection`, `GitRepoCommitDialog` need a mutation path;
-`CredentialsManagerDialog` needs a permission and a content pack. The rest of the 37 are the query
+The data rows above still stand: `NodeGroupEditor`, `ProcessorProfileEditor`, `ResultStoreSettings`,
+`TabSessionChooser` need data; `SaveChangedDocuments`, `GitRepoCommit` need a mutation path;
+`CredentialsPicker` needs a permission and a content pack. The rest of the 37 are the query
 result-table dialogs (a search that has returned columns) and the Pathways / Data receipt / annotation
 edit dialogs the preconditions file classifies as `plain` — each a directed seed once its screen has a
 row to act on.
@@ -518,7 +518,7 @@ crawled blind.
 | --- | --- | --- |
 | **the AI dock open** | `Ask Stroom AI` is a TOGGLE (`InlineSvgToggleButton`, `.on`), and neither a closed tab nor a closed dialog turns it off — so the re-sync after the blocked `New Conversation` re-clicked it and CLOSED the dock (`Conversation History → present when surveyed, not locatable when clicked`). A toggle in a route is now a state to be in, not a click to be made, and the re-sync turns off any toggle the route ahead does not want on. | `AiChatHistoryPresenter` |
 | **a stream really selected** | `select-row` was clicking the first cell wider than 20px — on a stream grid that is the 24px `TickBoxCell`, which CHECKS the row (Process / Delete light up, `getSelectionSummary` fires) without SELECTING it, so the relation list and data preview never loaded. `probe-source.mjs` showed it: no `/api/data/v1/fetch` at all. A cell WITH TEXT selects; the preview loads; its `View Source` label (`DataViewImpl.sourceLinkLabel`, a `clickableLabel`, not a button — the `link:` affordance) fires `ShowDataEvent` as a content tab `Stream <id> : 1 : 1`. | `SourceTabPresenter` |
-| **a pipeline element selected** | the Structure canvas is not a GWT `Tree`: `DraggableTreePanel` selects on MOUSEUP when the target is the element the MOUSEDOWN landed on (movement between the two is a drag). `select-element` presses and releases on the LAST `.pipeline-element__label`. With the seed's own steps not spending `POSTDEPTH` (`seedDepth`), the properties grid gets the generic row selection too. | `NewElementPresenter` (Add › Filter › `Create Element`), `NewPropertyPresenter` (a property row › `Edit Property`) |
+| **a pipeline element selected** | the Structure canvas is not a GWT `Tree`: `DraggableTree` selects on MOUSEUP when the target is the element the MOUSEDOWN landed on (movement between the two is a drag). `select-element` presses and releases on the LAST `.pipeline-element-box__label`. With the seed's own steps not spending `POSTDEPTH` (`seedDepth`), the properties grid gets the generic row selection too. | `NewElementPresenter` (Add › Filter › `Create Element`), `NewPropertyPresenter` (a property row › `Edit Property`) |
 | **a query that RETURNS ROWS** | `Execute Query` is a search and the read-only guard allows it (a search only makes transient server state) — the question in "The research pass" is answered. The seeded documents' queries all error; `probe-results.mjs` found `from "Example Index" limit 20 select StreamId, EventTime, UserId` answers 20 rows (`limit` goes BEFORE `select` — after it is `Unexpected token LIMIT`) and `from "Annotations" select Id, Title, Status` 10. A `set-ace` route step writes the query, client-side, nothing saved. `QueryResultTablePresenter` has `allowHeaderSelection` on by default (MyDataGrid's default; only the dashboard's TablePresenter ties it to design mode), so the column menu opens with no mode to enter — `columnMenus` takes a scope now. | `ColumnFilterPresenter`, `RulesPresenter` (Conditional Formatting), `DownloadPresenter`, and on a SELECTED annotation row's `Annotate` menu `ChangeStatusPresenter`, `ChangeAssignedToPresenter` |
 
 **Naming what was reached** — the seed says whose surface it walks. The Query doc's result table is
@@ -548,17 +548,17 @@ needed a seed.
 - **A selected VALUE, not a row**: `CustomRowStylePresenter` appears when the rule editor's
   `Formatting Type` is set to Custom; `ColumnValuesFilterPresenter` is the header's filter icon,
   not the header. Both need a `set-select` / `click-icon` step.
-- **Client-side creates**: `ConstraintEdit`/`PathwayEdit` (a pathway added in the editor),
+- **Client-side creates**: `ConstraintEdit`/`PathwayEditor` (a pathway added in the editor),
   `NewPipelineReference` (an element with a reference property — `ReferenceDataFilter`, added
   client-side), `ElementPresenter`/`StepLocation` (stepping on a stream that produces output —
   `POST /api/stepping/v1/step` is BLOCKED by the guard, so this one is a whitelist decision).
 - **The data preview's pager**: `ItemSelection`, `CharacterRange` — the preview now loads under
   the fixed selection; the pager's `…` buttons were not offered, so the reader does not see them.
-- **Data or a mutation, as before**: `NodeGroupEdit`, `ResultStoreSettings`, `TabSessionChooser`,
-  `VisualisationAssetsEditAsset`, `AnnotationTagEdit`, `FieldEdit` (a receipt rule with a field),
+- **Data or a mutation, as before**: `NodeGroupEditor`, `ResultStoreSettings`, `TabSessionChooser`,
+  `VisualisationAssetsEditAsset`, `AnnotationTagEditor`, `FieldEdit` (a receipt rule with a field),
   `DataPreviewTab` (a task or hyperlink carrying a stream), `AiAttachmentData`/`DownloadChat`
   (`createChat` is a POST the guard blocks — a chat with messages is a mutation), `GitRepoCommit`,
-  `DocRefSelection`, `CredentialsManager`.
+  `SaveChangedDocuments`, `CredentialsManager`.
 
 ## Directed pass 4 (2026-09-18) — one level deeper, and a value rather than a row
 
@@ -585,9 +585,9 @@ permission, or this instance's configuration:
 
 | class | doors |
 | --- | --- |
-| data to seed (a mutation) | `NodeGroupEdit`, `ResultStoreSettings`, `TabSessionChooser` (≥2 saved tab sessions), `VisualisationAssetsEditAsset` (an asset), `AnnotationTagEdit` (a tag), `CommentEdit` (an annotation with a comment), `FieldEdit` (a receipt rule with a field — its `New` is `create`), `DataPreviewTab` (a task or hyperlink carrying a stream), `ItemSelection` / `CharacterRange` (the data preview's pager labels, which the stream here is too small to show) |
-| a mutation the guard blocks | `AiAttachmentData` / `DownloadChat` (`createChat`), `ElementPresenter` / `StepLocation` (`POST /api/stepping/v1/step` — **triaged and reached in pass 5, below**), `DocRefSelection` (a multi-document save), `GitRepoCommit` (push) |
-| this instance's configuration | `PathwayEdit` / `ConstraintEdit` (a node URL), `CredentialsManager` (`CREDENTIALS` permission + an authenticated content pack) |
+| data to seed (a mutation) | `NodeGroupEditor`, `ResultStoreSettings`, `TabSessionChooser` (≥2 saved tab sessions), `VisualisationAssetsEditAsset` (an asset), `AnnotationTagEditor` (a tag), `CommentEditor` (an annotation with a comment), `FieldEdit` (a receipt rule with a field — its `New` is `create`), `DataPreviewTab` (a task or hyperlink carrying a stream), `ItemSelection` / `CharacterRange` (the data preview's pager labels, which the stream here is too small to show) |
+| a mutation the guard blocks | `AiAttachmentData` / `DownloadChat` (`createChat`), `ElementPresenter` / `StepLocation` (`POST /api/stepping/v1/step` — **triaged and reached in pass 5, below**), `SaveChangedDocuments` (a multi-document save), `GitRepoCommit` (push) |
+| this instance's configuration | `PathwayEditor` / `ConstraintEdit` (a node URL), `CredentialsManager` (`CREDENTIALS` permission + an authenticated content pack) |
 | a screen with its own data | `ProcessorLimits` / `QueryInfo` (dashboard query settings that prompt on a search with limits), `EditExpression` × 2 and `SelectionHandler` (Data Retention's impact filter, a dashboard selection handler — both `create` paths on screens whose lists are empty here) |
 
 ## Directed pass 5 (2026-09-21) — the guard decision: stepping is a read
@@ -607,9 +607,9 @@ the guard's allow-list (`compare/lib/readonly-guard.mjs`); `getPipelineForSteppi
 | precondition | how the walk establishes it | what it opened |
 | --- | --- | --- |
 | **stepping mode at rest** | `Enter Stepping Mode` on the Structure tab (a toggle the document re-open resets). The meta list finds 100 streams; nothing is selected. `Refresh Current Step` is enabled here and answers a **500 NPE** (`criteria` is null) — a GWT defect, logged as gwt-bugs #36. | `SteppingPresenter`; `Change Step Filters`, `Filter Streams` (already known) |
-| **the location LABEL** | `selector: .stepLocationLink` — a new affordance class for a clickable whose text is DATA (`[<metaId>:<part>:<record>]`, `[??:??:??]` at rest), so no label can name it | `StepLocationPresenter` (`Set Location`) |
+| **the location LABEL** | `selector: .stepLocationLink` (now `.step-location-link`) — a new affordance class for a clickable whose text is DATA (`[<metaId>:<part>:<record>]`, `[??:??:??]` at rest), so no label can name it | `StepLocationPresenter` (`Set Location`) |
 | **a stream the pipeline can PARSE** | `select-row` with `text: '^\\S+ Events '`: the list's first row is an Error stream — `step` runs (200) but `Content is not allowed in prolog` leaves `foundRecord:false` and the four step buttons disabled. An `Events` row steps to `[2054:1:1]`; Forward → `[2054:1:2]`; First/Backward/Last/Terminate all run for real. | the step controls, walked as post-action states (each is the toolbar again, POSTDEPTH-bounded) |
-| **a NON-SOURCE element, on that stream** | the same `select-element match: xslt` as the Structure canvas — the stepping tree is the same `PipelineTreePresenter` | `ElementPresenter` — created client-side by `SteppingPresenter.getContent`; its code, input and output panes (three Ace editors) carry the XSLT filter's real IO from the response's `elementMap` |
+| **a NON-SOURCE element, on that stream** | the same `select-element match: xslt` as the Structure canvas — the stepping screen's bar (`PipelinePathBar`) shares `PipelinePicture` with it | `ElementPresenter` — created client-side by `SteppingPresenter.getContent`; its code, input and output panes (three Ace editors) carry the XSLT filter's real IO from the response's `elementMap` |
 
 **One miner rule, from a false credit it was about to make.** The merged shard credited
 `ElementPresenter` from eleven `Filter Streams` dialogs. `SteppingPresenter.java` declares
@@ -620,7 +620,7 @@ the element panel. A show site now resolves its variable to the nearest declarat
 (`typeAt` in `build-route-recipes.mjs`); the file-wide answer stands in only for a field declared
 below its use. Three edges moved, each checked against the source: `Filter Streams` →
 `ExpressionPresenter`, `Filter Documents` (BatchDocumentPermissionsPresenter:151) →
-`ExpressionPresenter`, and the hyperlink dialog (HyperlinkEventHandlerImpl:275) →
+`ExpressionPresenter`, and the hyperlink dialog (HyperlinkOpener:275) →
 `IFramePresenter`. `ElementPresenter` is now credited from exactly one place: the selected element.
 
 **The 21 left** are the table above minus the two stepping doors — data to seed (10), the three
@@ -645,7 +645,7 @@ row". What it creates, and the door each row opened:
 | seeded | how | door |
 | --- | --- | --- |
 | a node group | `POST /node/nodeGroup/v2` — a bare `String` body, which Jersey reads as TEXT whatever the media type: JSON-encoding the name stored it with its quotes | `NodeGroupEditPresenter` (Node Groups › select › Edit) |
-| two tab sessions | `POST /tabSession/v1`, each naming two seed documents — `Open Tab Session` is disabled with none and opens the ONE without asking; the chooser needs two | `TabSessionChooserPresenter` |
+| two tab sessions | `POST /tabSession/v1`, each naming two seed documents — `Open Tab Session` is disabled with none and opens the ONE without asking; the chooser needs two | `TabSessionChooser` |
 | one annotation tag of each type | `createAnnotationTag` — Status, Label, Collection, and a Comment with its canned text | `AnnotationTagEditPresenter` (the four tag screens › select › Edit) |
 | an annotation with a COMMENT entry | `create` writes no comment entry whatever its `comment` field says (AnnotationDaoImpl); the comment is a `change` of type `comment`, the way the Create dialog's own box sends it | `CommentEditPresenter` (the entry's mousedown menu › Edit Entry) |
 | a visualisation with an asset | its own document in the seed folder + `visualisationAssets/updateNewFile` + `saveDraftToLive` (so it is not left dirty) — none of the thirty visualisations here had one | `VisualisationAssetsEditAssetDialogPresenter` (Assets › select › Rename) |
@@ -681,8 +681,8 @@ upstream syncs, and seeding changes what the instance answers.
 
 | class | doors |
 | --- | --- |
-| a mutation the guard blocks | `AiAttachmentData` / `DownloadChat` (`createChat`), `DocRefSelection` (a multi-document save) |
-| this instance's configuration | `PathwayEdit` / `ConstraintEdit` (a node URL — the Pathways editor sits under `Remote node '' has no URL set`), `CredentialsManager` (`CREDENTIALS` permission + an authenticated content pack), `QueryInfo` (`stroom.ui.query.infoPopup.enabled`, which would make EVERY search prompt) |
+| a mutation the guard blocks | `AiAttachmentData` / `DownloadChat` (`createChat`), `SaveChangedDocuments` (a multi-document save) |
+| this instance's configuration | `PathwayEditor` / `ConstraintEdit` (a node URL — the Pathways editor sits under `Remote node '' has no URL set`), `CredentialsManager` (`CREDENTIALS` permission + an authenticated content pack), `QueryInfo` (`stroom.ui.query.infoPopup.enabled`, which would make EVERY search prompt) |
 
 A triage note for the guard: `POST /gitRepo/v1/areUpdatesAvailable` is blocked as a mutation and is
 a read (it asks the remote whether there is anything to pull).

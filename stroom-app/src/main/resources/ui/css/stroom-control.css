@@ -14,70 +14,26 @@
  * limitations under the License.
  */
 
-/* .page { */
-/* 	padding: 5px !important; */
-/* } */
+/* A Stroom control's field (stroom-control: selection boxes, date-time boxes, drop downs): its
+   border, colours and padding, greyed when disabled. Imported early (app.css), so the text field's
+   rules that come later still win. A control's read-only look is its own (e.g. drop-down--read-only) */
 
-/* .row { */
-
-/* } */
-
-/* .label { */
-/* 	float: left; */
-/* 	margin-top: 2px; */
-/* 	vertical-align: top; */
-/* 	white-space: nowrap; */
-/* } */
-
-/* .stroom .stroom-control-grid { */
-
-/* } */
-
-/* .stroom .stroom-control-grid th,td { */
-/*   vertical-align: top; */
-/*   white-space: nowrap; */
-/*   padding: 2px; */
-/* } */
-
-
-.stroom .stroom-control-page {
-	padding: 5px;
+.stroom-control {
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
 }
 
-.stroom .stroom-control-grid {
-	vertical-align: top;
+.stroom-control:disabled,
+.stroom-control.disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
 }
 
-.stroom .stroom-control-grid th, .stroom .stroom-control-grid td {
-	width: 100%;
-	border-left: 5px solid transparent;
-	border-top: 4px solid transparent;
-	white-space: nowrap;
-	vertical-align: middle;
-	/*padding: 0 10px 0 3px;*/
-}
-
-.stroom .stroom-control-grid tr:first-child th, .stroom .stroom-control-grid tr:first-child td {
-	height: 21px;
-	border-top: 0;
-}
-
-.stroom .stroom-control-grid th:first-child, .stroom .stroom-control-grid td:first-child {
-	width: 0;
-	border-left: 0;
-}
-
-.stroom .stroom-control-label {
-  	width: 100%;
-  	/* No point having labels span the full width of the screen */
-  	max-width: 60em;
-  	white-space: normal;
-  	padding: 3px 0;
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
-}
-
-.stroom .stroom-control-border {
-    border: solid 1px var(--control__border-color);
+/* A disabled control's icons are greyed with its value */
+.stroom-control.disabled svg {
+  opacity: var(--disabled-opacity);
 }

@@ -16,24 +16,24 @@
 
 package stroom.gwt.workbench.client.app.ai;
 
-import stroom.ai.client.AskStroomAiPresenter;
-import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.ai.client.component.AskStroomAiController;
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.widget.datagrid.client.AskStroomAiEvent;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiPresenter]) for the app events that open it,
+/// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiController]) for the app events that open it,
 /// `AskStroomAiEvent` (a table's 'Ask Stroom AI' button) and `ShowAskStroomAiEvent` (the toolbar's
-/// AI toggle), as the presenter's GWTP proxy does in Stroom.
+/// AI toggle), as `AskStroomAiScreens` does in Stroom.
 ///
-/// Like the proxy (`@ProxyCodeSplit`), it creates the presenter only when the first of those events
-/// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The presenter reads its
+/// Like that, it creates the controller only when the first of those events
+/// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The controller reads its
 /// configuration from the user's preferences as it is created (`AskStroomAiClient.getConfig`), and
 /// when they have no `askStroomAiConfig` (Stroom's default preferences have none) it fetches the
 /// default config and stores it in a copy of the current preferences. Created after start-up, the
-/// preferences are loaded and the default is stored in them, as in Stroom. (A presenter created
+/// preferences are loaded and the default is stored in them, as in Stroom. (A controller created
 /// before the preferences had loaded once failed copying null preferences; `AskStroomAiClient` now
 /// waits for the user's preferences (`UserPreferencesManager.whenLoaded`), so the lazy creation is
 /// only for fidelity.)
@@ -42,46 +42,40 @@ import java.util.function.Supplier;
 public final class AskStroomAiChat {
 
     private final ScreenHarness harness;
-    private final Supplier<AskStroomAiPresenter> factory;
-    private AskStroomAiPresenter presenter;
+    private final Supplier<AskStroomAiController> factory;
+    private AskStroomAiController controller;
 
-    private AskStroomAiChat(final ScreenHarness harness, final Supplier<AskStroomAiPresenter> factory) {
+    private AskStroomAiChat(final ScreenHarness harness, final Supplier<AskStroomAiController> factory) {
         this.harness = harness;
         this.factory = factory;
     }
 
     /// Registers the chat as the handler of `AskStroomAiEvent` and `ShowAskStroomAiEvent` on the
-    /// harness's event bus. The presenter is created (with `factory`, e.g. the story's injector's
+    /// harness's event bus. The controller is created (with `factory`, e.g. the story's injector's
     /// getter) when the first event is fired, and is closed and unbound when the story renders again.
     ///
     /// @param harness The story's harness.
-    /// @param factory Creates the presenter, e.g. `injector::getAskStroomAiPresenter`.
-    /// @return The registered chat, e.g. to get its presenter once shown.
+    /// @param factory Creates the controller, e.g. `injector::getAskStroomAiController`.
+    /// @return The registered chat, e.g. to get its controller once shown.
     public static AskStroomAiChat register(final ScreenHarness harness,
-                                           final Supplier<AskStroomAiPresenter> factory) {
+                                           final Supplier<AskStroomAiController> factory) {
         final AskStroomAiChat chat = new AskStroomAiChat(Objects.requireNonNull(harness),
                 Objects.requireNonNull(factory));
         harness.addRegistration(harness.getEventBus().addHandler(AskStroomAiEvent.getType(),
-                event -> chat.getPresenter().onAsk(event)));
+                event -> chat.getController().onAsk(event)));
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(),
-                event -> chat.getPresenter().onShow(event)));
+                event -> chat.getController().onShow(event)));
         return chat;
     }
 
-    /// @return Whether the presenter has been created, i.e. whether either event has been fired.
-    public boolean isCreated() {
-        return presenter != null;
-    }
-
-    /// Gets the chat's presenter, creating it if no event has created it yet.
+    /// Gets the chat's controller, creating it if no event has created it yet.
     ///
-    /// @return The presenter.
-    public AskStroomAiPresenter getPresenter() {
-        if (presenter == null) {
-            presenter = factory.get();
-            harness.unbindOnCleanUp(presenter);
-            harness.closeOnCleanUp(presenter);
+    /// @return The controller.
+    public AskStroomAiController getController() {
+        if (controller == null) {
+            controller = factory.get();
+            harness.ownPopup(controller);
         }
-        return presenter;
+        return controller;
     }
 }

@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A quick filter (quick-filter.css): a search box (role searchbox, to assistive technology; the
+  browser's own clear button is hidden, as the filter has its own), then its buttons over the end of it (Clear, while
+  there is text; the recent filters, when it has a context; and the syntax help), then, unseen, what
+  may be typed (read when the box is focused) and why the server rejected the filter (for screen
+  readers; sighted users have the box's invalid look and its hover text).
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:f="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:HTMLPanel styleName="quick-filter">
+        <f:TextBox ui:field="textBox" addStyleNames="quick-filter__input allow-focus"
+                     type="search" placeholder="Quick Filter"/>
+        <b:Toolbar ui:field="toolbar" name="Quick filter" addStyleNames="quick-filter__toolbar">
+            <b:ToolbarButton ui:field="clearButton" svg="TAB_CLOSE" title="Clear Filter"
+                             addStyleNames="quick-filter__button"/>
+            <b:ToolbarButton ui:field="dropDownButton" svg="ARROW_DOWN" title="Show Recent Filters"
+                             addStyleNames="quick-filter__button quick-filter__recent" opensMenu="true" visible="false"/>
+            <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Quick Filter Syntax Help"
+                             addStyleNames="quick-filter__button"/>
+        </b:Toolbar>
+        <tx:Label ui:field="description" visible="false"/>
+        <div ui:field="errorMessage" class="sr-only" aria-live="polite"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max">
+        <form:FormGroup identity="visualisationAssetsAssetName"
+                        label="Name"
+                        addStyleNames="dock-min"
+                        helpText="The new name for the file or folder. It must not contain '/' or ':'."
+                        screenReaderText="Must not contain a slash or a colon.">
+            <form:TextBox ui:field="txtAssetName" addStyleNames="stroom-control" name="assetName"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

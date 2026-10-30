@@ -81,7 +81,7 @@ public class WorkbenchManager {
     private StoryNavigation navigation;
     private final LayoutController layout;
     private final ShortcutHandler shortcutHandler;
-    private final SidebarView sidebarView;
+    private final Sidebar sidebarView;
     private final SettingsMenu settingsMenu;
     private final SettingsPages settingsPages;
     private final AddonPanel addonPanel;
@@ -108,8 +108,8 @@ public class WorkbenchManager {
         navigation = new StoryNavigation(topLevelNodes);
         layout = new LayoutController();
         shortcutHandler = new ShortcutHandler();
-        sidebarView = new SidebarView(sidebarModel, topLevelNodes, shortcutHandler,
-                new SidebarView.Listener() {
+        sidebarView = new Sidebar(sidebarModel, topLevelNodes, shortcutHandler,
+                new Sidebar.Listener() {
                     @Override
                     public void onStorySelected(final String storyId) {
                         navigateToStory(storyId);

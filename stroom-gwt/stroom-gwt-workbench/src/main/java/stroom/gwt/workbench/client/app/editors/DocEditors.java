@@ -17,12 +17,13 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.dispatch.client.RestFactory.MethodExecutor;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.document.client.event.SaveDocumentEvent;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
@@ -35,7 +36,11 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.component.client.Controller;
+import stroom.widget.help.client.HelpManager;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,7 +51,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/// Opens a document in its real Stroom editor (a `DocPresenter`, usually a `DocTabPresenter`) for
+/// Opens a document in its real Stroom editor (in a `DocumentEditorHost`, as its plugin opens it) for
 /// the `editors` batch of screen stories, as a `DocumentPlugin` does: it fetches the document,
 /// checks whether the user may edit it, reads it into the editor and shows the editor as the
 /// story's content. Saving (the toolbar's Save, which fires `SaveDocumentEvent`) is answered as
@@ -169,53 +174,167 @@ public final class DocEditors {
     /// and shows the editor as the story's content. Call it in [ScreenHarness#afterStartUp], as
     /// the editors read the user's preferences.
     ///
-    /// @param harness   The story's harness.
-    /// @param docRef    The document to open.
-    /// @param presenter The document's editor, from the story's injector.
-    /// @param resource  How to fetch and update the document.
-    /// @param <D>       The document type.
+    /// @param harness  The story's harness.
+    /// @param docRef   The document to open.
+    /// @param host     The document's editor in its tab, as its plugin makes it.
+    /// @param resource How to fetch and update the document.
+    /// @param <D>      The document type.
     public static <D> void open(final ScreenHarness harness,
                                 final DocRef docRef,
-                                final DocPresenter<?, D> presenter,
+                                final DocumentEditorHost<D> host,
                                 final DocResource<D> resource) {
-        harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
-            if (event.getTabData() == presenter) {
-                save(harness, docRef, presenter, resource);
+        open(harness, docRef, host, new Opened<>() {
+            @Override
+            public void setReadOnly(final boolean readOnly) {
+                host.setReadOnly(readOnly);
             }
-        }));
+
+            @Override
+            public void read(final DocRef docRef, final D document) {
+                host.read(docRef, document);
+            }
+
+            @Override
+            public D write(final D document) {
+                return host.write(document);
+            }
+
+            @Override
+            public boolean isDirty() {
+                return host.isDirty();
+            }
+
+            @Override
+            public D getEntity() {
+                return host.getEntity();
+            }
+
+            @Override
+            public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+                return host.getPostSaveCallback();
+            }
+        }, resource);
+    }
+
+    /// Opens a document in one tab of its editor, shown on its own (see [TabStory]), as
+    /// [#open(ScreenHarness, DocRef, DocumentEditorHost, DocResource)] opens a whole editor.
+    ///
+    /// @param harness  The story's harness.
+    /// @param docRef   The document to open.
+    /// @param tab      The tab.
+    /// @param resource How to fetch and update the document.
+    /// @param <D>      The document type.
+    public static <D> void open(final ScreenHarness harness,
+                                final DocRef docRef,
+                                final TabStory<?, D> tab,
+                                final DocResource<D> resource) {
+        open(harness, docRef, tab, new Opened<>() {
+            @Override
+            public void setReadOnly(final boolean readOnly) {
+                tab.setReadOnly(readOnly);
+            }
+
+            @Override
+            public void read(final DocRef docRef, final D document) {
+                tab.read(docRef, document);
+            }
+
+            @Override
+            public D write(final D document) {
+                return tab.write(document);
+            }
+
+            @Override
+            public boolean isDirty() {
+                return tab.isDirty();
+            }
+
+            @Override
+            public D getEntity() {
+                return tab.getEntity();
+            }
+
+            @Override
+            public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+                // A tab on its own has no Save
+                return null;
+            }
+        }, resource);
+    }
+
+    /// Opens a document in its editor, in a [DocumentEditorHost] as its plugin opens it, and shows
+    /// it as the story's content (see [#open(ScreenHarness, DocRef, DocumentEditorHost, DocResource)]).
+    ///
+    /// @param harness  The story's harness.
+    /// @param docRef   The document to open.
+    /// @param editor   The document's editor, from the story's injector.
+    /// @param resource How to fetch and update the document.
+    /// @param <D>      The document type.
+    /// @return The host the editor is shown in.
+    public static <D> DocumentEditorHost<D> open(final ScreenHarness harness,
+                                                 final DocRef docRef,
+                                                 final DocumentEditor<D> editor,
+                                                 final DocResource<D> resource) {
+        final DocumentEditorHost<D> host = new DocumentEditorHost<>(harness.getEventBus(), editor, docRef.getType());
+        open(harness, docRef, host, resource);
+        return host;
+    }
+
+    // Fetches the document, checks the user may edit it, reads it in and shows the editor, tells
+    // it that its tab is selected and answers its Save, as DocumentPlugin and the content pane do.
+    // The story owns it from the start, so that a fetch that fails leaves nothing unowned
+    private static <D> void open(final ScreenHarness harness,
+                                 final DocRef docRef,
+                                 final Controller shown,
+                                 final Opened<D> editor,
+                                 final DocResource<D> resource) {
+        harness.own(shown);
+        // An editor's host shows the request's progress, as in Stroom
+        final TaskMonitorFactory taskMonitorFactory = shown instanceof final TaskMonitorFactory hostMonitor
+                ? hostMonitor
+                : new DefaultTaskMonitorFactory(harness.getHasHandlers());
+        // A whole editor's Save (a tab on its own has none), unless the story can't save
+        if (shown instanceof DocumentEditorHost && resource.canUpdate()) {
+            harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+                if (event.getTabData() == shown) {
+                    save(harness, docRef, editor, resource, taskMonitorFactory);
+                }
+            }));
+        }
         resource.fetch(harness.getRestFactory())
-                .onSuccess(doc -> {
-                    if (presenter instanceof final DocTabPresenter<?, ?> docTabPresenter) {
-                        docTabPresenter.getDefaultTab().ifPresent(docTabPresenter::selectTab);
-                    }
-                    harness.getSecurityContext().hasDocumentPermission(
-                            docRef,
-                            DocumentPermission.EDIT,
-                            allowUpdate -> {
-                                presenter.read(docRef, doc, !allowUpdate);
-                                harness.addContent(presenter);
-                            },
-                            error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
-                            presenter);
-                })
+                .onSuccess(doc -> harness.getSecurityContext().hasDocumentPermission(
+                        docRef,
+                        DocumentPermission.EDIT,
+                        allowUpdate -> {
+                            editor.setReadOnly(!allowUpdate);
+                            editor.read(docRef, doc);
+                            harness.show(shown);
+                            // As Stroom's content pane does when it selects the editor's tab
+                            if (shown instanceof final TabData tab) {
+                                ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), tab);
+                            }
+                        },
+                        error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
+                        taskMonitorFactory))
                 .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
                         "Unable to load document " + docRef,
                         error.getMessage(),
                         null))
-                .taskMonitorFactory(presenter)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     // As DocumentPlugin.save
     private static <D> void save(final ScreenHarness harness,
                                  final DocRef docRef,
-                                 final DocPresenter<?, D> presenter,
-                                 final DocResource<D> resource) {
-        if (presenter.isDirty()) {
-            final D document = presenter.write(presenter.getEntity());
+                                 final Opened<D> editor,
+                                 final DocResource<D> resource,
+                                 final TaskMonitorFactory taskMonitorFactory) {
+        if (editor.isDirty()) {
+            final D document = editor.write(editor.getEntity());
             if (document != null) {
-                final Consumer<D> afterSave = saved -> presenter.read(docRef, saved, presenter.isReadOnly());
-                final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
+                final Consumer<D> afterSave = saved -> editor.read(docRef, saved);
+                final BiConsumer<D, Consumer<D>> postSaveCallback = editor.getPostSaveCallback();
                 resource.update(harness.getRestFactory(), document)
                         .onSuccess(saved -> {
                             // As the plugins with a post save callback (VisualisationPlugin) do
@@ -229,7 +348,7 @@ public final class DocEditors {
                                 "Unable to save document " + docRef,
                                 error.getMessage(),
                                 null))
-                        .taskMonitorFactory(presenter)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
         }
@@ -293,6 +412,36 @@ public final class DocEditors {
         ///
         /// @param fetch  Creates the request that fetches the document.
         /// @param update Creates the request that updates the document.
+        /// @return Whether the story can save the document: false for one only fetched, whose Save
+        /// nothing answers.
+        default boolean canUpdate() {
+            return true;
+        }
+
+        /// Creates a resource that only fetches the document, for a story that doesn't save it.
+        ///
+        /// @param fetch Creates the request that fetches the document.
+        /// @param <D>   The document type.
+        /// @return The resource.
+        static <D> DocResource<D> fetchOnly(final Function<RestFactory, MethodExecutor<?, D>> fetch) {
+            return new DocResource<>() {
+                @Override
+                public MethodExecutor<?, D> fetch(final RestFactory restFactory) {
+                    return fetch.apply(restFactory);
+                }
+
+                @Override
+                public MethodExecutor<?, D> update(final RestFactory restFactory, final D document) {
+                    throw new UnsupportedOperationException("The story doesn't save the document");
+                }
+
+                @Override
+                public boolean canUpdate() {
+                    return false;
+                }
+            };
+        }
+
         /// @param <D>    The document type.
         /// @return The resource.
         static <D> DocResource<D> of(final Function<RestFactory, MethodExecutor<?, D>> fetch,
@@ -309,5 +458,21 @@ public final class DocEditors {
                 }
             };
         }
+    }
+
+    // What opening and saving a document asks of what shows it: a whole editor, or one tab
+    private interface Opened<D> {
+
+        void setReadOnly(boolean readOnly);
+
+        void read(DocRef docRef, D document);
+
+        D write(D document);
+
+        boolean isDirty();
+
+        D getEntity();
+
+        BiConsumer<D, Consumer<D>> getPostSaveCallback();
     }
 }

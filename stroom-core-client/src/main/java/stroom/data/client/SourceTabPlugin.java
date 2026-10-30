@@ -17,7 +17,7 @@
 package stroom.data.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.component.SourceTabController;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;
@@ -28,13 +28,13 @@ import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, SourceTabPresenter> {
+public class SourceTabPlugin extends AbstractTabPlugin<SourceKey, SourceTabController> {
 
     @Inject
     public SourceTabPlugin(final EventBus eventBus,
                            final ContentManager contentManager,
-                           final Provider<SourceTabPresenter> sourceTabPresenterProvider) {
-        super(eventBus, contentManager, sourceTabPresenterProvider);
+                           final Provider<SourceTabController> sourceTabControllerProvider) {
+        super(eventBus, contentManager, sourceTabControllerProvider);
     }
 
     @Override
@@ -45,14 +45,14 @@ public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, Sourc
     /**
      * 4. This method will open the source and show it in the content pane.
      */
-    public Optional<SourceTabPresenter> open(final SourceLocation sourceLocation,
+    public Optional<SourceTabController> open(final SourceLocation sourceLocation,
                                              final boolean forceOpen) {
 
-        return super.openTabPresenter(
+        return super.openTabController(
                 forceOpen,
                 new SourceKey(sourceLocation),
-                sourceTabPresenter ->
-                        sourceTabPresenter.setSourceLocationUsingHighlight(sourceLocation));
+                sourceTabController ->
+                        sourceTabController.setSourceLocationUsingHighlight(sourceLocation));
 
     }
 }

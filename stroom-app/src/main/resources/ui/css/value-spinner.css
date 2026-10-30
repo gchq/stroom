@@ -36,6 +36,15 @@
     width: 104px;
 }
 
+/* A narrow spinner, and a wide one, e.g. for a large number; at any text size */
+.value-spinner.value-spinner--narrow {
+    width: 80px;
+}
+
+.value-spinner.value-spinner--wide {
+    width: 200px;
+}
+
 /* The field and the arrows over its end */
 .value-spinner__field {
     position: relative;
@@ -96,12 +105,19 @@
 }
 
 /* Its icon, above the fill: small, as the date picker's month and year arrows are, and in the
-   colour of a drop-down's arrow */
+   colour of a drop-down's arrow. The field's icon holds its drawing (svg:Icon); the grid cell's is
+   the drawing itself (ValueSpinnerCell) */
 .value-spinner__icon {
     position: relative;
     width: 10px;
     height: 10px;
     color: var(--icon-colour__black);
+}
+
+.value-spinner__icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 /* A disabled or read only field's arrows are dimmed and do nothing (:read-only also matches a
@@ -131,19 +147,6 @@
     display: none;
 }
 
-/* Announces why a typed value was rejected; not seen */
-.value-spinner__status {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-}
-
 /* The data grid's spinner (ValueSpinnerCell), a variant with no ARIA meaning: as wide as its cell,
    with a field as high as its arrows; the negative margin gives back the 2px it is taller than the
    grid's other cells' text, so its row is as high as theirs */
@@ -159,11 +162,11 @@
     padding-bottom: 0;
 }
 
-/* A disabled row's value is greyed, as the row's other text is (its cells' dataGridDisabledCell) */
-.dataGridDisabledCell .value-spinner__input {
+/* A disabled row's value is greyed, as the row's other text is (its cells' data-grid__cell--disabled) */
+.data-grid__cell--disabled .value-spinner__input {
     color: var(--text-color--disabled);
 }
 
-.data-grid__row--selected .dataGridDisabledCell .value-spinner__input {
+.data-grid__row--selected .data-grid__cell--disabled .value-spinner__input {
     color: var(--text-color--disabled--selected);
 }

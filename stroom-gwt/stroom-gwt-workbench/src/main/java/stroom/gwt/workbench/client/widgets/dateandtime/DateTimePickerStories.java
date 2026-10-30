@@ -23,19 +23,16 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.client.SvgIconBox;
-import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeModel;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
+import stroom.widget.datepicker.client.component.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.IconBox;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [DateTimeBox] (a text box for an ISO date-time, whose calendar icon opens
-/// the "Set Date And Time" dialog, [DateTimePopup], used by e.g. the schedule dialogs).
+/// the "Set Date And Time" dialog, [DateTimePickerController], used by e.g. the schedule dialogs).
 ///
 /// The dialog is shown with Stroom's `ShowPopupEvent`, so the stories use a [ScreenHarness] for
 /// its event bus and popup manager (no REST requests are made). Times are shown in Stroom's
@@ -44,8 +41,8 @@ public final class DateTimePickerStories {
 
     private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
     // The calendar icon, and the element its read-only class is on
-    private static final String ICON_OUTER = ".svg-icon-box__icon";
-    private static final String ICON_INNER = ".svg-icon-box";
+    private static final String ICON_OUTER = ".icon-box__icon";
+    private static final String ICON_INNER = ".icon-box";
     /// 2024-01-15T09:50:00.000Z.
     private static final long VALUE_MS = 1705312200000L;
 
@@ -97,10 +94,29 @@ public final class DateTimePickerStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.expect(play.querySelector("input")).toBeDisabled();
-                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
+                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(IconBox.ICON_BOX_READONLY_CLASS_NAME);
                     // The icon once still opened the dialog (DateTimeBox.setEnabled only disabled
                     // its text box)
                     play.click(play.querySelector(ICON_OUTER));
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                })
+                // Read only: the value can be read and stays in the tab order, but neither the icon
+                // nor Enter opens the dialog
+                .story("ReadOnly", context -> {
+                    final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
+                    final DateTimeBox box = dateTimeBox(context, harness, VALUE_MS);
+                    box.setReadOnly(true);
+                    harness.add(box);
+                    return harness.asWidget();
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(play.querySelector("input")).toHaveAttribute("readonly");
+                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(IconBox.ICON_BOX_READONLY_CLASS_NAME);
+                    play.click(play.querySelector(ICON_OUTER));
+                    play.tab();
+                    play.keyboard("{Enter}");
                     play.sleep(100);
                     play.expect(screen.queryByText("Set Date And Time")).toBeNull();
                 })
@@ -201,13 +217,10 @@ public final class DateTimePickerStories {
     private static DateTimeBox dateTimeBox(final StoryContext context,
                                            final ScreenHarness harness,
                                            final Long valueMs) {
-        final DateTimeBox box = new DateTimeBox();
+        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditorController
+        final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Start Time");
-        // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
-        box.setPopupProvider(() -> new DateTimePopup(harness.getEventBus(),
-                new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),
-                new DateTimeModel()));
         box.setValue(valueMs);
         final Spy onChange = context.fn(ON_CHANGE);
         box.addValueChangeHandler(event -> onChange.call(box.getValue()));

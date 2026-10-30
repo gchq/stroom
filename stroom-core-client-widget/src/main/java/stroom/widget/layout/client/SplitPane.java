@@ -17,12 +17,13 @@
 package stroom.widget.layout.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.Separator;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.GlobalResizeObserver;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -30,7 +31,6 @@ import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -95,6 +95,9 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     private static final String BLOCK = "split-pane";
     private static final String PANE = BLOCK + "__pane";
     private static final String SPLITTER = BLOCK + "__splitter";
+    // A pane or splitter that isn't shown
+    private static final String PANE_HIDDEN = PANE + "--hidden";
+    private static final String SPLITTER_HIDDEN = SPLITTER + "--hidden";
     private static final String VERTICAL = BLOCK + "--vertical";
     private static final String THIN = BLOCK + "--thin";
     // A state, but one ARIA has no attribute for (see split-pane.css)
@@ -136,11 +139,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             setOrientation(splitter);
         }
         layout();
-    }
-
-    /// @return Whether the panes are stacked one above another, rather than side by side.
-    public boolean isVertical() {
-        return vertical;
     }
 
     /// @param thin Whether the splitters are thin lines, rather than gaps between the panes.
@@ -241,12 +239,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         layout();
     }
 
-    /// @param widget The pane's widget.
-    /// @return Whether the pane is hidden.
-    public boolean isPaneHidden(final Widget widget) {
-        return panes.get(requireIndexOf(widget)).hidden;
-    }
-
     /// Sets a pane's size, as [#setSizes] does for all of them.
     ///
     /// @param widget The pane's widget.
@@ -276,13 +268,6 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     public void restore() {
         maximised = -1;
         layout();
-    }
-
-    /// @return The widget of the maximised pane, or null if no pane is maximised.
-    public Widget getMaximised() {
-        return maximised >= 0
-                ? panes.get(maximised).widget
-                : null;
     }
 
     /// Does nothing for the panes' widgets, which are told when their own panes are resized
@@ -326,23 +311,18 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             if (i > 0) {
                 final Element splitter = splitters.get(i - 1);
                 final boolean shown = isSplitterShown(i - 1);
-                setShown(splitter, shown);
+                setShown(splitter, shown, SPLITTER_HIDDEN);
                 if (shown) {
                     tracks.append("var(--split-pane__splitter-size) ");
                 }
             }
-            setShown(pane.element, !pane.hidden);
+            setShown(pane.element, !pane.hidden, PANE_HIDDEN);
             if (!pane.hidden) {
                 tracks.append(track(i, rest)).append(' ');
             }
         }
-        final Style style = getElement().getStyle();
-        style.setProperty(vertical
-                ? "gridTemplateRows"
-                : "gridTemplateColumns", tracks.toString().trim());
-        style.clearProperty(vertical
-                ? "gridTemplateColumns"
-                : "gridTemplateRows");
+        // The columns, or the rows when stacked (split-pane.css)
+        CssProperties.set(getElement(), "--split-pane__tracks", tracks.toString().trim());
         updateAria();
     }
 
@@ -897,11 +877,11 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         return index;
     }
 
-    private static void setShown(final Element element, final boolean shown) {
+    private static void setShown(final Element element, final boolean shown, final String hidden) {
         if (shown) {
-            element.getStyle().clearDisplay();
+            element.removeClassName(hidden);
         } else {
-            element.getStyle().setDisplay(Style.Display.NONE);
+            element.addClassName(hidden);
         }
     }
 

@@ -18,16 +18,16 @@ package stroom.gwt.workbench.client.app.screen;
 
 import stroom.gwt.workbench.client.app.rest.FixtureUploads;
 import stroom.gwt.workbench.client.app.rest.RecordedUpload;
-import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.form.client.FileUploadCallback;
 import stroom.widget.form.client.FileUploadTransport;
+import stroom.widget.form.client.component.FileChooserController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 
 import java.util.Objects;
 
-/// The [FileUploadTransport] a [ScreenHarness] installs in Stroom's [CustomFileUpload] (whose
+/// The [FileUploadTransport] a [ScreenHarness] installs in Stroom's [FileChooserController] (whose
 /// default posts the file with an `XMLHttpRequest`), so a screen's file uploads are answered by
 /// the story's fixtures ([FixtureUploads]) and never reach the network.
 ///
@@ -36,7 +36,7 @@ import java.util.Objects;
 /// host page (e.g. `importfile.rpc`), to the fixtures. Once disposed, a file still being read is
 /// dropped, as is any later upload.
 ///
-/// [CustomFileUpload]'s transport is static, so the most recently installed transport answers
+/// [FileChooserController]'s transport is static, so the most recently installed transport answers
 /// every upload; a harness uninstalls its own when the story renders again, restoring Stroom's
 /// default.
 public final class StoryUploadTransport implements FileUploadTransport {
@@ -51,11 +51,11 @@ public final class StoryUploadTransport implements FileUploadTransport {
         this.uploads = Objects.requireNonNull(uploads);
     }
 
-    /// Makes every [CustomFileUpload] upload with this transport, until it is disposed or another
+    /// Makes every [FileChooserController] upload with this transport, until it is disposed or another
     /// is installed.
     public void install() {
         installed = this;
-        CustomFileUpload.setUploadTransport(this);
+        FileChooserController.setUploadTransport(this);
     }
 
     /// Drops the files still being read and any later upload, and restores Stroom's default
@@ -65,7 +65,7 @@ public final class StoryUploadTransport implements FileUploadTransport {
         uploads.dispose();
         if (installed == this) {
             installed = null;
-            CustomFileUpload.setUploadTransport(null);
+            FileChooserController.setUploadTransport(null);
         }
     }
 

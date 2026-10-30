@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.feed;
 
 import stroom.docref.DocRef;
-import stroom.feed.client.presenter.FeedPresenter;
+import stroom.feed.client.component.FeedEditor;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
@@ -35,7 +35,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Feed/FeedEditor` stories, showing Stroom's real [FeedPresenter] (a Feed's tab: Data,
+/// The `App/Feed/FeedEditor` stories, showing Stroom's real [FeedEditor] (a Feed's tab: Data,
 /// Active Tasks, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `FeedPlugin` does, the story fetches the document (`GET /feed/v1/{uuid}`) and reads it into
@@ -123,7 +123,7 @@ public final class FeedEditorStories {
             .build();
 
     // A FormGroup gives its control the group's identity as its id
-    // (FeedSettingsViewImpl.ui.xml)
+    // (FeedSettings.ui.xml)
     private static final String CLASSIFICATION = "#feedSettingsClassification";
 
     private FeedEditorStories() {
@@ -170,7 +170,7 @@ public final class FeedEditorStories {
                     play.click(DocEditors.tab(play, "Active Tasks"));
                     play.waitFor(() -> play.expect(play.getAllByText("Events Task Pipeline").count())
                             .toSatisfy("more than none", count -> ((Integer) count) > 0));
-                    play.click(play.querySelector(".svgCell-icon"));
+                    play.click(play.querySelector(".icon-cell"));
                     final Play info = play.within(screen.findByText("Key Data").closest("table"));
                     play.expect(info.getByText("Priority")).toBeInTheDocument();
                     play.expect(info.getByText("Feed")).toBeInTheDocument();
@@ -193,7 +193,7 @@ public final class FeedEditorStories {
                     openTab(play, "Settings");
                     play.expect(play.findByText("Classification", "label")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(CLASSIFICATION)).toHaveValue("OFFICIAL"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -209,7 +209,7 @@ public final class FeedEditorStories {
         return DocEditors.render(context, FIXTURES, readOnly,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getFeedPresenter(),
+                        injector.getFeedEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

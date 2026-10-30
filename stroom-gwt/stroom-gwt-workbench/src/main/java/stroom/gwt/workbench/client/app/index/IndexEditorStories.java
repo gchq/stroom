@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.index;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -30,7 +31,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.index.client.presenter.IndexPresenter;
+import stroom.index.client.component.LuceneIndexEditor;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.shared.AppPermission;
@@ -38,7 +39,7 @@ import stroom.security.shared.AppPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Index/IndexEditor` stories, showing Stroom's real [IndexPresenter] (a Lucene index's
+/// The `App/Index/IndexEditor` stories, showing Stroom's real [LuceneIndexEditor] (a Lucene index's
 /// tab: Shards for users with Manage Index Shards, Fields, Settings, Documentation and Permissions)
 /// with fake REST replies.
 ///
@@ -85,6 +86,9 @@ public final class IndexEditorStories {
 
     private static final String FIND_FIELDS = "/index/v2/findFields";
 
+    // IndexResource.updateField(): saves an edited field
+    private static final String UPDATE_FIELD = "/index/v2/updateField";
+
     // IndexResource.reset(): deletes the index's shards, replying with how many were marked
     private static final String RESET = "/index/v2/index-events/reset";
 
@@ -92,9 +96,24 @@ public final class IndexEditorStories {
             .get("/index/v2/index-events", RestReply.json(DOC))
             .put("/index/v2/index-events", request -> RestReply.json(request.getBody()))
             .post(FIND_FIELDS, RestReply.json(FIELDS))
+            .put(UPDATE_FIELD, RestReply.json("true"))
             .post("/index/v2/shard/find", RestReply.json(SHARDS))
             .post("/index/volumeGroup/v2/find", RestReply.json(VOLUME_GROUPS))
             .build();
+
+    // The Data tab's default query: the index, then its stored fields, the time field first
+    private static final String DEFAULT_QUERY = "from \"Events Index\" limit 100 select EventTime";
+
+    // The Data tab's search: one row of the index's fields
+    private static final RestFixtures DATA_FIXTURES = QueryFixtures.editorRoutes(QueryFixtures.resultStoreRoutes(
+            RestFixtures.builder()
+                    .route(QueryFixtures.SEARCH, RestReply.json(QueryFixtures.response(true,
+                            QueryFixtures.tableResult("table", """
+                                    [{"id": "EventTime", "name": "EventTime", "visible": true},
+                                     {"id": "UserId", "name": "UserId", "visible": true}]""", """
+                                    [{"values": ["2024-01-01T00:00:00.000Z", "alice"], "depth": 0}]""", 1))))))
+            .build()
+            .followedBy(FIXTURES);
 
     private IndexEditorStories() {
         // Static utility
@@ -149,7 +168,7 @@ public final class IndexEditorStories {
                     play.expect(play.getByRole("button", "Delete Selected Index Shards"))
                             .not().toHaveAttribute("aria-disabled");
                     // The info column's popup shows what isn't a column
-                    play.click(play.querySelector(".svgCell-icon"));
+                    play.click(play.querySelector(".icon-cell"));
                     final Play info = play.within(screen.findByText("Index UUID").closest("table"));
                     play.expect(info.getByText("Commit Document Count")).toBeInTheDocument();
                     play.expect(info.getByText("/data/index/1")).toBeInTheDocument();
@@ -179,6 +198,53 @@ public final class IndexEditorStories {
                     play.expect(screen.getByText("Embedding Model", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Nearest Neighbour Count", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Minimum Rerank Score", "label")).toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
+                })
+                // OK saves a dense vector field with the settings shown: those edited and those kept
+                .story("DenseVectorFieldSaved", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Embedding")).toBeInTheDocument());
+                    play.click(play.getByText("Embedding"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
+                    play.waitFor(() -> play.expect(screen.getByText("Minimum Rerank Score", "label"))
+                            .toBeInTheDocument());
+                    play.clear(screen.querySelector("#rerankScoreMinimum"));
+                    play.type(screen.querySelector("#rerankScoreMinimum"), "0.5");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).withJsonBodyContaining(
+                                    "{\"fieldName\": \"Embedding\", \"indexField\": {\"denseVectorFieldConfig\":"
+                                    + " {\"vectorSimilarityFunction\": \"COSINE\", \"segmentSize\": 1500,"
+                                    + " \"rerankScoreMinimum\": 0.5}}}").toSpyMatcher()));
+                    DocEditors.expectNoProblems(play);
+                })
+                // A rerank score that isn't a score is refused: OK says why under it and keeps the
+                // dialog. Before, the text became the default, 0.8, and was saved
+                .story("DenseVectorFieldBadScoreRefused", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Embedding")).toBeInTheDocument());
+                    play.click(play.getByText("Embedding"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
+                    final Query score = screen.findByLabelText("Minimum Rerank Score");
+                    play.clear(score);
+                    play.type(score, "high");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Must be a number from 0 to 1"))
+                            .toBeInTheDocument());
+                    play.expect(score).toHaveFocus();
+                    play.expect(score).toHaveAttribute("aria-invalid", "true");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).toSpyMatcher());
+                    // Put right, OK saves it
+                    play.clear(score);
+                    play.type(score, "0.5");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).withJsonBodyContaining(
+                                    "{\"indexField\": {\"denseVectorFieldConfig\": {\"rerankScoreMinimum\": 0.5}}}")
+                                    .toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
                 // The Fields tab (the default) as an editable partner for FieldsReadOnly
@@ -212,7 +278,7 @@ public final class IndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, false, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab as an editable partner for SettingsReadOnly
@@ -241,7 +307,7 @@ public final class IndexEditorStories {
                 .story("SettingsReadOnly", context -> render(context, false, true))
                 .withPlay(play -> {
                     openSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Reset Data, once confirmed, deletes the index's shards and says how many were
@@ -250,7 +316,46 @@ public final class IndexEditorStories {
                 .withPlay(play -> resetData(play, "Index reset. 2 shards are marked for deletion."))
                 // Reset Data on an index with no shards says there were none to delete
                 .story("ResetDataNoShards", context -> renderWithReset(context, "0"))
-                .withPlay(play -> resetData(play, "Index reset. It had no shards to delete."));
+                .withPlay(play -> resetData(play, "Index reset. It had no shards to delete."))
+                // The Data tab starts with a query of the index's stored fields, the time field
+                // first, and its query actions
+                .story("DataTab", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    final Query query = openData(play);
+                    play.expect(play.getByRole("button", "Reset to Default")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Run")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Stop")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Create Dashboard")).toBeInTheDocument();
+                    play.expect(query.value()).toContain(DEFAULT_QUERY);
+                    DocEditors.expectNoProblems(play);
+                })
+                // Run searches with the query, and the table shows the rows
+                .story("DataTabRun", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    openData(play);
+                    play.click(play.getByRole("button", "Run"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.getByText("alice")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                    // Closing the editor's tab destroys the search's results on the server
+                    play.run("close the editor's tab", ScreenHarness::closeShownComponents);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/result-store/v1/destroy/" + RequestMatcher.PATH_WILDCARD)
+                                    .toSpyMatcher()));
+                })
+                // Enter in the query runs it, and Reset to Default puts the default query back
+                .story("DataTabEnterAndReset", context -> render(context, false, false, DATA_FIXTURES))
+                .withPlay(play -> {
+                    final Query query = openData(play);
+                    play.clear(query);
+                    play.type(query, "from \"Events Index\"{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
+                    play.click(play.getByRole("button", "Reset to Default"));
+                    play.expect(query.value()).toContain(DEFAULT_QUERY);
+                    DocEditors.expectNoProblems(play);
+                });
     }
 
     // Presses Reset Data, accepts the confirmation and expects the reset request and an info alert
@@ -280,6 +385,15 @@ public final class IndexEditorStories {
                 .build()
                 .followedBy(FIXTURES);
         return render(context, false, false, fixtures);
+    }
+
+    // Opens the Data tab and waits for its default query, which it makes once it has the fields
+    private static Query openData(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Data"));
+        final Query query = play.findByRole("textbox", "Query");
+        play.waitFor(() -> play.expect(query.value()).toContain("limit 100"));
+        return query;
     }
 
     // Opens the Settings tab and waits for its form
@@ -314,7 +428,7 @@ public final class IndexEditorStories {
                 },
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getIndexPresenter(),
+                        injector.getLuceneIndexEditor(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)

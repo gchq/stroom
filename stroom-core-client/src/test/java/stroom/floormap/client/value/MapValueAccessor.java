@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.value;
 
-import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.model.FloorMapEditorModel;
 import stroom.util.json.JsonUtil;
 
 import java.util.HashMap;

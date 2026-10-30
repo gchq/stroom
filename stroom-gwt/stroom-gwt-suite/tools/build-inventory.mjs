@@ -62,7 +62,7 @@ const UTIL_AREAS = new Set(['util', 'dispatch']);
 
 // Gradle modules that ARE the reusable widget library — anything in them that
 // isn't framework plumbing is a widget, regardless of its `area` (e.g. the
-// cell tables live under stroom.data.table, not stroom.widget).
+// cells live under stroom.cell, not stroom.widget).
 const WIDGET_MODULES = new Set(['stroom-core-client-widget']);
 
 // Display names for functional areas (subcategory labels). Unknowns are title-cased.
@@ -87,10 +87,12 @@ const titleArea = (a) => AREA_NAME[a] || (a ? a[0].toUpperCase() + a.slice(1) : 
 // Widget sub-package -> subcategory grouping.
 const WIDGET_SUB = {
   button: 'Input / Form', form: 'Input / Form', tickbox: 'Input / Form', valuespinner: 'Input / Form',
-  spinner: 'Feedback', linecolinput: 'Input / Form', customdatebox: 'Input / Form', datepicker: 'Input / Form',
+  spinner: 'Feedback', linecolinput: 'Input / Form', duration: 'Input / Form', datepicker: 'Input / Form',
+  selection: 'Input / Form',
   popup: 'Popup / Overlay', contextmenu: 'Menu', menu: 'Menu', tooltip: 'Popup / Overlay', help: 'Popup / Overlay',
-  tab: 'Tabs', htree: 'Tree', dropdowntree: 'Tree', xsdbrowser: 'Editor / Viewer',
+  tab: 'Tabs', htree: 'Tree', dropdowntree: 'Tree',
   progress: 'Feedback', util: 'Widget utilities', debug: 'Widget utilities',
+  preferences: 'Widget utilities',
 };
 // Subcategory for a file that qualifies as a widget only via its module.
 function widgetModuleSub(area, sub, role) {

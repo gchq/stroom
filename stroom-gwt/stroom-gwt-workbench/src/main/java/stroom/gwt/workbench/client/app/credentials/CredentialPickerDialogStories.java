@@ -1,0 +1,116 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package stroom.gwt.workbench.client.app.credentials;
+
+import stroom.credentials.client.component.CredentialsPickerController;
+import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.gwt.workbench.framework.client.story.StoryLayout;
+import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
+
+/// Stories of `App/Main/CredentialPickerDialog`, showing Stroom's real
+/// [CredentialsPickerController] (the 'Credentials' picker) with fake REST replies.
+///
+/// The controller comes from GIN ([AppScreenGinjector]), as Stroom injects it into
+/// `ContentStoreContentPackDetailsController`, and the story shows it as that controller does. The
+/// credentials come from `POST /credentials/findCredentialsWithPermissions`, and `onPick` is a spy
+/// called from the dialog's OK handler.
+public final class CredentialPickerDialogStories {
+
+    /// The name of the spy recording the credential picked.
+    static final String ON_PICK = "onPick";
+
+    // CredentialsResource.findCredentialsWithPermissions() (shaped as the gwt-suite corpus's reply)
+    private static final String CREDENTIALS = """
+            {
+              "values": [
+                {
+                  "credential": {"uuid": "c1", "name": "github-token", "credentialType": "ACCESS_TOKEN"},
+                  "edit": true,
+                  "delete": true
+                },
+                {
+                  "credential": {"uuid": "c2", "name": "gitlab-ssh", "credentialType": "SSH_KEY"},
+                  "edit": true,
+                  "delete": true
+                }
+              ],
+              "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
+            }
+            """;
+
+    private static final RestFixtures FIXTURES = RestFixtures.builder()
+            .post("/credentials/findCredentialsWithPermissions", RestReply.json(CREDENTIALS))
+            .build();
+
+    private CredentialPickerDialogStories() {
+        // Static utility
+    }
+
+    /// Adds the stories to the registry.
+    ///
+    /// @param registry The registry to add to.
+    public static void addTo(final StoryRegistry registry) {
+        registry.component("App/Main/CredentialPickerDialog", CredentialPickerDialogStories.class)
+                .layout(StoryLayout.FULLSCREEN)
+                // Pick a stored credential -> returns its name (GWT CredentialsPicker)
+                .story("Pick", CredentialPickerDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByText("github-token")).toBeInTheDocument());
+                    play.click(screen.getByText("gitlab-ssh"));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    // The credential's name, not its UUID ('c2'): ContentStore passes it on as the
+                    // GitRepo's credential name, which the server looks the credentials up by (the
+                    // view once returned the UUID)
+                    play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("gitlab-ssh"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/findCredentialsWithPermissions")
+                                    .withJsonBodyContaining("{\"requiredPermission\": \"VIEW\"}")
+                                    .toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                });
+    }
+
+    private static Widget render(final StoryContext context) {
+        final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+                .injector(injector)
+                .build();
+        harness.fn(ON_PICK);
+
+        // Shown as ContentStoreContentPackDetailsController shows it, with no help text and nothing
+        // selected
+        harness.afterStartUp(() -> injector.getCredentialsManagerDialogController().show(harness.getAppRoot(),
+                null,
+                null,
+                "No credentials were selected",
+                name -> harness.spy(ON_PICK, name)));
+        return harness.asWidget();
+    }
+}

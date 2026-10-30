@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An attachment's table: a page of its rows, bordered, with a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" addStyleNames="control-box">
+        <dg:DataGrid ui:field="dataGrid" tableName="Attachment Data"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

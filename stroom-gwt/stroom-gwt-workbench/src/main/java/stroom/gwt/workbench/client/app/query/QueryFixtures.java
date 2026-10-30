@@ -172,7 +172,7 @@ public final class QueryFixtures {
                + ", \"jsonData\": \"" + jsonData + "\"}";
     }
 
-    /// Adds the routes of the requests a StroomQL query editor (`QueryEditPresenter`, in a Query,
+    /// Adds the routes of the requests a StroomQL query editor (`QueryEditorController`, in a Query,
     /// an analytic rule or a report) makes as it opens and before it searches, with defaults: the
     /// query help's items (`POST /query/v1/helpItems`, none), the time zones
     /// (`GET /query/v1/fetchTimeZones`, `UTC`), the query's data source

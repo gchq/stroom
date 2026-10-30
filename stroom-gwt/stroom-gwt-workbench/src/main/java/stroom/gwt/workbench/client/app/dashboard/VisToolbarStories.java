@@ -82,7 +82,7 @@ public final class VisToolbarStories {
                 .story("ToolbarAboveVisualisation", DashboardSupport.story(DASHBOARD, VisToolbarStories::routes))
                 .withPlay(play -> {
                     final Query frame = visFrame(play);
-                    final Query pause = play.screen().querySelector(".visToolbarRow");
+                    final Query pause = play.screen().querySelector(".vis-toolbar-row");
                     play.expect(pause).toBeVisible();
                     play.expect("the toolbar row's bottom less the frame's top",
                             () -> pause.bottom().get() - frame.top().get()).toBeLessThanOrEqual(0);
@@ -129,7 +129,7 @@ public final class VisToolbarStories {
     // The visualisation's frame (VisFrame), once the dashboard has opened and its query has run
     private static Query visFrame(final Play play) {
         DashboardPlays.opened(play);
-        final Query frame = play.screen().querySelector("iframe.VisFrame-frame");
+        final Query frame = play.screen().querySelector("iframe.vis-frame__frame");
         play.waitFor(5000, () -> play.expect(frame).toBeVisible());
         final Query box = play.withinFrame(frame).querySelector(".pressed");
         play.waitFor(5000, () -> play.expect(box).toBeInTheDocument());

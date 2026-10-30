@@ -16,15 +16,14 @@
 
 package stroom.about.client;
 
-import stroom.about.client.event.ShowAboutEvent;
-import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
-import stroom.about.client.presenter.AboutPresenter;
+import stroom.about.client.component.AboutController;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Separator;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -33,21 +32,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class AboutPlugin extends Plugin implements ShowAboutHandler {
+public class AboutPlugin extends Plugin {
 
-    private final Provider<AboutPresenter> provider;
+    private final Provider<AboutController> provider;
+    private final AppRoot appRoot;
 
     @Inject
-    public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
+    public AboutPlugin(final EventBus eventBus,
+                       final Provider<AboutController> provider,
+                       final AppRoot appRoot) {
         super(eventBus);
         this.provider = provider;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(ShowAboutEvent.getType(), this));
+        this.appRoot = appRoot;
     }
 
     @Override
@@ -59,12 +55,12 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
                         .priority(11)
                         .icon(SvgImage.OO)
                         .text("About")
-                        .command(() -> provider.get().forceReveal())
+                        .command(this::showAbout)
                         .build());
     }
 
-    @Override
-    public void onShow(final ShowAboutEvent event) {
-        provider.get().show();
+    // The app owns the dialog while it is shown, as a plugin owns nothing
+    private void showAbout() {
+        provider.get().show(appRoot);
     }
 }

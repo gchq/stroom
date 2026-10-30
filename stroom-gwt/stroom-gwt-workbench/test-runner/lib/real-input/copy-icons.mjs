@@ -49,7 +49,7 @@ export const CHECKS = {
     }));
 
     // Press on the copy icon (shown on hover), drag across the page and let go
-    const copy = page.locator('.docRefLinkCopy').first();
+    const copy = page.locator('.doc-ref-link__copy').first();
     await copy.hover();
     const box = await copy.boundingBox();
     await page.mouse.move(box.x + (box.width / 2), box.y + (box.height / 2));

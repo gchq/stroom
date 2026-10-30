@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A new annotation label, collection, status or standard comment: its name and, for a comment, its text -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="annotationTagName" label="Name" required="true"
+                        helpText="The tag's name, shown on annotations (for a comment, in the Choose Comment list). Required, and must be different from other tags of the same type.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotation-tag-text"
+                        helpText="The text of this standard comment. Choosing it with Choose Comment on an annotation adds this text to the end of the comment being written.">
+            <form:TextArea ui:field="tagText" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

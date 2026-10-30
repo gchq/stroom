@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.search.solr.client.component.SolrIndexEditor;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
-    private final Provider<SolrIndexPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<SolrIndexEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public SolrIndexPlugin(final EventBus eventBus,
-                           final Provider<SolrIndexPresenter> editorProvider,
+                           final Provider<SolrIndexEditor> editorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager,
                            final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), SolrIndexDoc.TYPE);
     }
 
     @Override

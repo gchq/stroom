@@ -19,9 +19,9 @@ package stroom.widget.button.client;
 import java.util.function.Consumer;
 
 /// A [ToolbarButton] that is pressed (on) or not, e.g. to show or hide something. Its state is
-/// `aria-pressed`, which screen readers announce and toolbar.css styles. Made by [Toolbar#toggle],
+/// `aria-pressed`, which screen readers announce and toolbar-button.css styles. Made by [Toolbar#toggle],
 /// or declared in a template as `<b:ToolbarToggleButton svg="FILTER" title="Show Filters"/>`.
-public class ToolbarToggleButton extends ToolbarButton implements ToggleButtonView {
+public class ToolbarToggleButton extends ToolbarButton {
 
     private boolean pressed;
 
@@ -40,22 +40,6 @@ public class ToolbarToggleButton extends ToolbarButton implements ToggleButtonVi
 
     /// @return Whether the button is pressed (on).
     public boolean isPressed() {
-        return pressed;
-    }
-
-    /// As [#setPressed(boolean)], for presenters given it as a [ToggleButtonView].
-    ///
-    /// @param on Whether the button is pressed (on).
-    @Override
-    public void setState(final boolean on) {
-        setPressed(on);
-    }
-
-    /// As [#isPressed()], for presenters given it as a [ToggleButtonView].
-    ///
-    /// @return Whether the button is pressed (on).
-    @Override
-    public boolean getState() {
         return pressed;
     }
 

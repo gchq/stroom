@@ -16,11 +16,14 @@
 
 package stroom.widget.form.client;
 
+import stroom.widget.form.client.component.FileChooser;
+import stroom.widget.form.client.component.FileChooserController;
+
 import com.google.gwt.dom.client.Element;
 
-/// Sends the file chosen in a [CustomFileUpload] to the server. Stroom's own transport uploads it
+/// Sends the file chosen in a [FileChooser] to the server. Stroom's own transport uploads it
 /// with an `XMLHttpRequest` (see `FileUploadSubmitter`); another can be set with
-/// [CustomFileUpload#setUploadTransport(FileUploadTransport)], e.g. to fake uploads in tests.
+/// [FileChooserController#setUploadTransport(FileUploadTransport)], e.g. to fake uploads in tests.
 @FunctionalInterface
 public interface FileUploadTransport {
 

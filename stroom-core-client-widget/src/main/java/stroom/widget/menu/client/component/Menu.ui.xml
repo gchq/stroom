@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <!--
+      A menu (menu.css): the scrolling viewport, whose padding is room for an item's focus ring,
+      which the scrolling would otherwise clip, holding the menu, whose rows Menu draws
+    -->
+    <div class="menu__viewport">
+        <div ui:field="menuElement" class="menu" role="menu"/>
+    </div>
+</ui:UiBinder>

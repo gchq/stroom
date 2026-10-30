@@ -32,7 +32,7 @@ import java.util.List;
 
 /// The layout stories of `App/Editors/DashboardEditor` (see `DashboardEditorStories`): a
 /// dashboard's tabs, panels, splitters, design mode and tab menu, in Stroom's real `FlexLayout`
-/// and `TabManager`.
+/// and `TabMenuController`.
 ///
 /// Stroom's layout is driven with the mouse (`FlexLayout` reads mouse events, not pointer events):
 /// a click on a selected tab opens its menu, and tabs and splitters are dragged with
@@ -79,9 +79,28 @@ public final class DashboardLayoutStories {
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Params")).toBeInTheDocument());
                     play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument();
                     // The input has no id; it is the Key/Value Input's text box
-                    final Query input = play.querySelector(".KeyValueInputView input");
+                    final Query input = play.querySelector(".dashboard-input input");
                     play.expect(input).toBeInTheDocument();
                     play.expect(input).toHaveValue("user=jbloggs feed=MY_FEED");
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A Key/Value Input renamed in its settings shows its new name on its tab (it kept the old
+                // one, and the dashboard stayed unchanged, before)
+                .story("KeyValueInputSettingsRename", DashboardSupport.story(DashboardDocs.LEGACY_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Params")).toBeInTheDocument());
+                    DashboardPlays.openTabMenu(play, "Params");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Settings");
+                    final Query name = dialog.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Renamed Params");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Renamed Params")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The editor's tabs, the component's tab and the dashboard's time range
@@ -91,7 +110,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     for (final String tab : List.of("Dashboard", "Documentation", "Permissions")) {
                         // Stroom's link tabs have no role="tab"
-                        play.expect(play.getByText(tab, ".linkTabPanelViewImpl .tab-bar__label")).toBeInTheDocument();
+                        play.expect(play.getByText(tab, ".link-tab-panel .tab-bar__label")).toBeInTheDocument();
                     }
                     play.expect(DashboardPlays.tab(play, "My Panel")).toBeInTheDocument();
                     // An Embedded Query shows only its results, with no Execute button of its own;
@@ -109,7 +128,7 @@ public final class DashboardLayoutStories {
                     play.expect(DashboardPlays.tab(play, "Right Panel")).toBeInTheDocument();
                     // Embedded Queries have no Execute buttons, so the play checks that both panels
                     // show their (results) views, and that the reference panel loaded its query
-                    play.waitFor(() -> play.expect(play.querySelectorAll(".tabLayout-content .TableViewImpl"))
+                    play.waitFor(() -> play.expect(play.querySelectorAll(".tab-layout__content .embedded-query"))
                             .toHaveLength(2));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/query/v1/q-ref").toSpyMatcher()));
@@ -217,6 +236,68 @@ public final class DashboardLayoutStories {
                             .toBeNull());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Rename Tab: Enter renames it
+                .story("RenameTabWithEnter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Query");
+                    play.click(DashboardPlays.menuItem(screen, "Rename"));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Tab");
+                    final Query name = rename.getByLabelText("Name");
+                    play.expect(name).toHaveValue("The Query");
+                    play.clear(name);
+                    play.type(name, "Search");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Search")).toBeInTheDocument());
+                    play.expect(screen.queryByText("Rename Tab", StroomDom.DIALOG_TITLE)).toBeNull();
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Rename Tab: Cancel keeps the tab's name (design mode has already made the dashboard changed)
+                .story("RenameTabCancel", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Query");
+                    play.click(DashboardPlays.menuItem(screen, "Rename"));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Tab");
+                    final Query name = rename.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Search");
+                    play.click(rename.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Rename Tab", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument();
+                    play.expect(play.queryByText("Search", DashboardPlays.COMPONENT_TAB)).toBeNull();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Set Layout Constraints: a change applies at once, and makes the dashboard changed
+                .story("SetLayoutConstraints", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    play.click(play.getByRole("button", "Set Layout Constraints"));
+                    final Play constraints = DashboardPlays.dialog(screen, "Set Layout Constraints");
+                    final Query fitWidth = constraints.getByRole("checkbox", "Fit Width");
+                    play.waitFor(() -> play.expect(fitWidth).toHaveFocus());
+                    play.expect(fitWidth).toBeChecked();
+                    play.click(fitWidth);
+                    play.waitFor(() -> play.expect(play.querySelector(".flex-layout__scroll"))
+                            .toHaveClass("flex-layout__scroll--horizontal"));
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+                    play.click(constraints.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Layout Constraints",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // Dragging a tab to a panel's right edge docks it beside the panel
                 .story("DragTabToDock", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD, routes -> {
                 }))
@@ -285,12 +366,12 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     // The canvas is the design surface, sized in pixels both ways (the height fits
                     // the panel), inside a horizontally scrolling panel
-                    final Query canvas = play.querySelector(".dashboard-designSurface");
+                    final Query canvas = play.querySelector(".flex-layout__design-surface");
                     play.waitFor(() -> play.expect(canvas.attribute("style")).toMatch("width: 1200px"));
-                    play.expect(play.querySelector(".dashboard-scrollPanel"))
-                            .toHaveClass("dashboard-scrollPanel--horizontal-scroll");
-                    play.expect(play.querySelector(".dashboard-scrollPanel"))
-                            .not().toHaveClass("dashboard-scrollPanel--vertical-scroll");
+                    play.expect(play.querySelector(".flex-layout__scroll"))
+                            .toHaveClass("flex-layout__scroll--horizontal");
+                    play.expect(play.querySelector(".flex-layout__scroll"))
+                            .not().toHaveClass("flex-layout__scroll--vertical");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A panel's tab menu removes all its tabs, once confirmed

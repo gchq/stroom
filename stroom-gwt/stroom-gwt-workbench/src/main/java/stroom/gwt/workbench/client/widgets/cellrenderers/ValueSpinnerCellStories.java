@@ -16,9 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -26,9 +25,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -166,7 +165,7 @@ public final class ValueSpinnerCellStories {
         return within(play, row).getByRole("spinbutton", NAME);
     }
 
-    /// A grid of [#ROWS] with a column of spinners, as Stroom's list presenters build them.
+    /// A grid of [#ROWS] with a column of spinners, as Stroom's list controllers build them.
     private static Widget grid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Map<String, Integer> values = new LinkedHashMap<>();
@@ -174,7 +173,7 @@ public final class ValueSpinnerCellStories {
         values.put("Bravo", 5);
         values.put(READ_ONLY_ROW, 50);
 
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String name) -> name).build(), "Name", 150);

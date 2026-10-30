@@ -1,5 +1,14 @@
 # Quick filter: recent-filter drop-down and Advanced Query — design
 
+**Since 27 October 2026:** the GWT migration made the Advanced Query dialog a component with a
+controller (`AdvancedQuickFilter` and `AdvancedQuickFilterController` in
+`stroom.quickfilter.client.component`, made for each use) and deleted `QuickFilterModule`; the
+column value filter is `ColumnValuesFilter`. Since 28 October 2026 the widget `QuickFilter` is in
+`stroom.widget.quickfilter.client`, `RecentItems` in `stroom.explorer.client`, `EditExpressionPresenter`
+is `ExpressionEditorController` (`stroom.query.client.component`) and `ProcessorEditPresenter` is
+`ProcessorEditorController` (`stroom.processor.client.component`). The names, paths and line numbers
+below are as first built.
+
 **Status:** reviewed 2026-09-18; decisions in §8 taken. **A1–A3 implemented 2026-09-18** on
 `gh-5740_quick_filter` (uncommitted): shared `QuickFilterContext` / `QuickFilterHistoryKey`,
 `quick_filter_history` table + DAO + service + `QuickFilterHistoryResource`, widget `▼` + menu via
@@ -59,7 +68,7 @@ It is wrapped by `QuickFilterPageViewImpl` / `QuickFilterDialogViewImpl` (form-g
 and used directly from 16 `ui.xml` files. There are ~80 client files touching it; every surface
 that registers a tooltip does so via `QuickFilterTooltipUtil.createTooltip(title, …,
 FIELD_DEFINITIONS, …)` — roughly 25 call sites, all shaped like
-`DependenciesTabPresenter.java:60`.
+`DependenciesTabController.java:60`.
 
 The widget module has **no access to `RestFactory`** (that is `stroom-core-client`), so the widget
 cannot fetch history itself; it needs hooks set by the presenter.
@@ -67,7 +76,7 @@ cannot fetch history itself; it needs hooks set by the presenter.
 ### 2.2 Existing drop-down and popup building blocks
 
 - `BaseSelectionBox` (`stroom-core-client-widget/.../item/client/BaseSelectionBox.java:85`) is
-  the app's combo box: a `SvgIconBox` with `SvgImage.DROP_DOWN`, click → `SelectionPopup`
+  the app's combo box: a `IconBox` with `SvgImage.DROP_DOWN`, click → `SelectionPopup`
   (`:146`) with a filter box, list and keyboard navigation, auto-hide partnered with the text box.
 - `ShowMenuEvent` + `IconMenuItem` / `Separator` / `InfoMenuItem` (`stroom.widget.menu.client`)
   is the lightest popup and is already used from inside the widget module (`MyDataGrid.java:437`).
@@ -499,7 +508,7 @@ text form.
 | A1 | `QuickFilterContext` + `QuickFilterHistoryKey` (shared) for two surfaces: Dependencies, Global Properties | — |
 | A2 | Table, DAO, service, resource, `UiConfig.quickFilterHistorySize`, user-delete hook, DAO test | — |
 | A3 | Widget `▼` + menu + `QuickFilterContextHandler` + `QuickFilterHistoryTracker`; factory; wire the two surfaces | A1, A2 |
-| A4 | Roll the factory wiring out to the remaining surfaces (table in §4), incl. traces/index-fields `withDataSource`. Each surface must also route `ResultPage.filterError` to the widget, or nothing is ever recorded (§5.4). **Done.** Audit of A4 found and fixed a second such gap: `ExplorerServiceImpl.find()` computed the filter error and dropped it, and `FindDocResultListPresenter` had no consumer, so the Find and Recent Items dialogs would never have recorded anything. Caveat remaining: the traces *server* never sets `TracesResultPage.filterError` (`TraceArchiveReader` builds its predicate without an error consumer), so on that screen a rejected filter is indistinguishable from an empty one and *will* be recorded — a server-side follow-up | A3 |
+| A4 | Roll the factory wiring out to the remaining surfaces (table in §4), incl. traces/index-fields `withDataSource`. Each surface must also route `ResultPage.filterError` to the widget, or nothing is ever recorded (§5.4). **Done.** Audit of A4 found and fixed a second such gap: `ExplorerServiceImpl.find()` computed the filter error and dropped it, and `FindDocResultList` had no consumer, so the Find and Recent Items dialogs would never have recorded anything. Caveat remaining: the traces *server* never sets `TracesResultPage.filterError` (`TraceArchiveReader` builds its predicate without an error consumer), so on that screen a rejected filter is indistinguishable from an empty one and *will* be recorded — a server-side follow-up | A3 |
 | B1 | `QuickFilterPrinter` + round-trip tests against the existing conformance corpus | — |
 | B2 | `parseQuickFilter` / `formatQuickFilter` endpoints + request/result DTOs | B1 |
 | C1 | `AdvancedQuickFilterPresenter`, condition-set intersection, "Advanced Query…" menu item live | A3, B2 |

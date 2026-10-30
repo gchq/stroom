@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.app.data;
 
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.DataUploadController;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
@@ -37,7 +37,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Data/DataUploadDialog` stories, showing Stroom's real [DataUploadPresenter] (a feed's
+/// The `App/Data/DataUploadDialog` stories, showing Stroom's real [DataUploadController] (a feed's
 /// 'Upload' dialog, as the feed's data browser shows it) with fake REST replies.
 ///
 /// | Stroom | Used for |
@@ -48,8 +48,8 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `POST /data/v1/upload` (checked with the request spy) | adding the uploaded data to the feed |
 /// | the 'Uploaded file' message | its Close refreshes the data and closes the dialog |
 ///
-/// The dialog is shown as the feed's data browser (`MetaPresenter`) shows it, with that browser
-/// (from GIN, not shown) as the presenter it refreshes after an upload.
+/// The dialog is shown as the feed's data browser (`MetaBrowserController`) shows it, with that browser
+/// (from GIN, not shown) as the controller it refreshes after an upload.
 public final class DataUploadDialogStories {
 
     private static final String FEED_UUID = "feed-1";
@@ -92,7 +92,7 @@ public final class DataUploadDialogStories {
                     play.waitFor(() -> play.expect(dialog.getByDisplayValue("Events")).toBeInTheDocument());
                     // The button is named by its form group's label and its own text, and described by the
                     // chosen file and the group's help
-                    final Query choose = dialog.querySelector(".file-upload__button");
+                    final Query choose = dialog.querySelector(".file-chooser__button");
                     play.expect(choose).toHaveAttribute("aria-labelledby");
                     // Required, said in its description, as a button can't be aria-required
                     play.expect(choose).not().toHaveAttribute("aria-required");
@@ -144,13 +144,12 @@ public final class DataUploadDialogStories {
                 .realAlerts()
                 .build();
         final DocRef feedRef = DocRef.builder().type(FeedDoc.TYPE).uuid(FEED_UUID).name("TEST_FEED").build();
-        final DataUploadPresenter presenter = injector.getDataUploadPresenter();
         harness.afterStartUp(() -> {
-            // The feed's data browser, which the dialog refreshes after an upload (its info
-            // message is fired from it). Created after start-up, as it reads the UI config.
-            final MetaPresenter metaPresenter = harness.unbindOnCleanUp(injector.getMetaPresenter());
-            // As MetaPresenter's 'Upload Data to Feed' button shows it
-            presenter.show(metaPresenter, feedRef);
+            // The feed's data browser, which the dialog refreshes after an upload. Created after
+            // start-up, as it reads the UI config.
+            final MetaBrowserController metaController = harness.own(injector.getMetaBrowser());
+            // As MetaBrowserController's 'Upload Data to Feed' button shows it
+            injector.getDataUploadController().show(metaController, feedRef, metaController::refresh);
         });
         return harness.asWidget();
     }

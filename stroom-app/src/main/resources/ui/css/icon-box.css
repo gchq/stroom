@@ -1,0 +1,81 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The icon box (stroom.widget.form.client.IconBox), named BEM style (block, block__element,
+   block--modifier): a field with an icon inside the end of its border, e.g. a selection box's
+   drop-down arrow, or a date or time box's calendar or clock. The icon is a picture (the field opens
+   the same thing from the keyboard), so it has no focus or hover states.
+*/
+
+.icon-box {
+    position: relative;
+}
+
+/* The field, leaving room at its end for the icon (26px) and 4px between its text and the icon, as
+   every field with something over its end does (see FieldEnd). Under the block, to outrank the text
+   field's padding (text-field.css) */
+.icon-box .icon-box__field {
+    height: 100%;
+    width: 100%;
+    padding-right: 30px;
+    min-width: 200px;
+}
+
+/* A box whose field has no least width, as narrow as its box, e.g. in a grid's cell, an expression's
+   term or a duration's unit (were selection-box.css's, date-time-box.css's and
+   duration-picker.css's) */
+.icon-box--fluid .icon-box__field {
+    min-width: 0;
+}
+
+/* The icon, over the end of the field, centred on its height */
+.icon-box__icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.icon-box__image {
+    width: var(--icon-width);
+    height: var(--icon-height);
+    color: var(--icon-colour__grey);
+}
+
+/* A drop-down arrow (IconBox.setDropDownWidget), a variant with no ARIA meaning: the value
+   spinner's arrow, small (as the date picker's month and year arrows are) and in the drop-down
+   arrow's colour */
+.icon-box--drop-down .icon-box__image {
+    width: 10px;
+    height: 10px;
+    color: var(--icon-colour__black);
+}
+
+/* A box whose field can't be changed (disabled or read only): its icon is dimmed and does nothing.
+   A state with no ARIA attribute on the box, so a modifier, set by IconBox.setReadOnly */
+.icon-box--read-only .icon-box__icon {
+    cursor: default;
+}
+
+.icon-box--read-only .icon-box__image {
+    opacity: var(--disabled-opacity);
+}

@@ -16,10 +16,13 @@
 
 package stroom.activity.client;
 
+import stroom.activity.client.component.ManageActivityController;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -37,22 +40,37 @@ public class CurrentActivity implements HasHandlers {
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final EventBus eventBus;
-    private final Provider<ManageActivityPresenter> manageActivityPresenterProvider;
+    private final Provider<ManageActivityController> manageActivityProvider;
     private final RestFactory restFactory;
 
     private Activity currentActivity;
     private boolean fetched;
 
+    private final AppRoot appRoot;
+
     @Inject
     public CurrentActivity(final EventBus eventBus,
-                           final Provider<ManageActivityPresenter> manageActivityPresenterProvider,
-                           final RestFactory restFactory) {
+                           final Provider<ManageActivityController> manageActivityProvider,
+                           final RestFactory restFactory,
+                           final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.eventBus = eventBus;
-        this.manageActivityPresenterProvider = manageActivityPresenterProvider;
+        this.manageActivityProvider = manageActivityProvider;
         this.restFactory = restFactory;
     }
 
     public void getActivity(final Consumer<Activity> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        getActivity(consumer, null, taskMonitorFactory);
+    }
+
+    /// Gets the user's current activity, fetching it the first time.
+    ///
+    /// @param consumer           Given the activity, or `null` for none.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void getActivity(final Consumer<Activity> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
         if (fetched) {
             consumer.accept(currentActivity);
         } else {
@@ -64,6 +82,7 @@ public class CurrentActivity implements HasHandlers {
                         fetched = true;
                         consumer.accept(a);
                     })
+                    .onFailure(errorHandler)
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
@@ -83,11 +102,11 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
-        manageActivityPresenterProvider.get().showInitial(consumer);
+        manageActivityProvider.get().showInitial(appRoot, consumer);
     }
 
     public void showActivityChooser() {
-        manageActivityPresenterProvider.get().show(a -> {
+        manageActivityProvider.get().show(appRoot, a -> {
         });
     }
 

@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.tabs;
 
+import stroom.content.client.component.CurveTabLayout;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -27,14 +28,11 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.SimpleTask;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.CurveTabBar;
-import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
-import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
+import stroom.widget.tab.client.CurveTabBar;
+import stroom.widget.tab.client.TabBar;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.task.client.SimpleTask;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
@@ -47,21 +45,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayoutViewImpl`
-/// (`tabBarContainer` > optional sidebar toggle toolbar > `curveTabLayoutViewImpl-tabBarOuter` >
+/// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayout`
+/// (`curve-tab-layout__bar` > optional sidebar toggle toolbar > `curve-tab-layout__tab-bar-outer` >
 /// `tab-bar--curved`).
 /// The stories without the sidebar toggle build that row as the view does; the one with it uses
-/// the real [CurveTabLayoutViewImpl]. The overflow selector shows Stroom's real menu.
+/// the real [CurveTabLayout]. The overflow selector shows Stroom's real menu.
 public final class CurveTabBarStories {
 
     private static final String ON_SELECT = "onSelect";
     private static final String ON_CLOSE = "onClose";
     private static final String ON_TOGGLE_SIDEBAR = "onToggleSidebar";
 
-    // Stroom hides an overflowed tab with an inline `visibility: hidden` (and moves it off the bar)
-    private static final String OVERFLOWED = ".tab-bar__tab[style*='visibility: hidden']";
+    // Stroom hides an overflowed tab with its --hidden modifier (out of sight, off the bar)
+    private static final String OVERFLOWED = ".tab-bar__tab.tab-bar__tab--hidden";
     // The selector is only made visible when some tabs overflow
-    private static final String SELECTOR_SHOWN = ".tab-bar__selector[style*='visibility: visible']";
+    private static final String SELECTOR_SHOWN = ".tab-selector:not(.tab-selector--hidden)";
     // Each menu item's content is a `menu__item` (the item, with `role="menuitem"`, is its cell)
     private static final String MENU_ITEM = ".menu__item";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
@@ -164,7 +162,7 @@ public final class CurveTabBarStories {
         play.expect(play.querySelector(OVERFLOWED)).not().toBeNull();
         // The selector is a button named with the number of tabs it holds that don't fit
         final Query selector = play.getByRole("button", TextMatch.regex("^Show all tabs \\(\\d+ hidden\\)$"));
-        final Query count = play.within(selector).querySelector(".tab-bar__selector-count");
+        final Query count = play.within(selector).querySelector(".tab-selector__count");
         play.expect("the overflow count", () -> Double.valueOf(count.textContent().get())).toBeGreaterThan(0);
 
         // The selected tab is the walk centre, so it is never overflowed
@@ -203,12 +201,12 @@ public final class CurveTabBarStories {
         play.expect(play.getByText("SECRET_FEED")).not().toBeVisible();
         play.expect(play.querySelectorAll(".tab-bar--curved .tab-bar__tab")).toHaveLength(shownCount + 1);
         // The overflow count excludes the hidden tab
-        final Query count = play.querySelector(".tab-bar__selector-count");
+        final Query count = play.querySelector(".tab-selector__count");
         play.expect("the overflowed tab count", () -> Integer.valueOf(count.textContent().get())
                 + countVisibleTabs()).toBe(shownCount);
 
         // The selector menu lists only the non-hidden tabs
-        play.click(play.querySelector(".tab-bar__selector"));
+        play.click(play.querySelector(".tab-selector"));
         play.waitFor(() -> play.expect(play.screen().querySelectorAll(MENU_ITEM)).toHaveLength(shownCount));
         play.expect(play.screen().queryByText("SECRET_FEED", ".menu__text")).toBeNull();
     }
@@ -250,7 +248,7 @@ public final class CurveTabBarStories {
             }
             final NodeList<Element> selectors = bar.getElement().getElementsByTagName("div");
             for (int i = 0; i < selectors.getLength(); i++) {
-                if (selectors.getItem(i).hasClassName("tab-bar__selector")) {
+                if (selectors.getItem(i).hasClassName("tab-selector")) {
                     fixWidth(selectors.getItem(i), 40);
                 }
             }
@@ -285,7 +283,7 @@ public final class CurveTabBarStories {
         int count = 0;
         for (int i = 0; i < tabs.getLength(); i++) {
             final Element tab = tabs.getItem(i);
-            if (tab.hasClassName("tab-bar__tab") && "visible".equals(tab.getStyle().getVisibility())) {
+            if (tab.hasClassName("tab-bar__tab") && !tab.hasClassName("tab-bar__tab--hidden")) {
                 count++;
             }
         }
@@ -308,24 +306,23 @@ public final class CurveTabBarStories {
         final TabBar tabBar;
         final Widget row;
         if (sidebar) {
-            final CurveTabLayoutViewImpl view = new CurveTabLayoutViewImpl(
-                    GWT.create(CurveTabLayoutViewImpl.Binder.class));
-            view.setUiHandlers(new SidebarToggle(onToggleSidebar));
+            final CurveTabLayout view = new CurveTabLayout();
+            view.setOnToggleSidebar(onToggleSidebar::call);
             tabBar = view.getTabBar();
             row = view.asWidget();
         } else {
-            // CurveTabLayoutViewImpl's tab bar row, without the sidebar toggle
+            // CurveTabLayout's tab bar row, without the sidebar toggle
             final CurveTabBar curveTabBar = new CurveTabBar();
             final SimplePanel tabBarOuter = new SimplePanel(curveTabBar);
-            tabBarOuter.setStyleName("curveTabLayoutViewImpl-tabBarOuter");
+            tabBarOuter.setStyleName("curve-tab-layout__tab-bar-outer");
             final FlowPanel tabBarContainer = new FlowPanel();
-            tabBarContainer.setStyleName("tabBarContainer");
+            tabBarContainer.setStyleName("curve-tab-layout__bar");
             tabBarContainer.add(tabBarOuter);
             tabBar = curveTabBar;
             row = tabBarContainer;
         }
 
-        // As CurveTabLayoutPresenter handles the bar's events
+        // As ContentTabPaneController handles the bar's events
         harness.addRegistration(tabBar.addSelectionHandler(event -> {
             tabBar.selectTab(event.getSelectedItem());
             onSelect.call(((StoryTab) event.getSelectedItem()).getId());
@@ -390,24 +387,5 @@ public final class CurveTabBarStories {
                 new StoryTab("index", "Example Index", "Index", SvgImage.DOCUMENT_INDEX, true),
                 new StoryTab("dash", "Operations Dashboard", "Dashboard", SvgImage.DOCUMENT_DASHBOARD, true),
                 new StoryTab("folder", "System Folder", "Folder", SvgImage.DOCUMENT_FOLDER, true));
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The sidebar toggle's handler: Stroom's `CurveTabLayoutPresenter` maximises the content.
-    private static final class SidebarToggle implements CurveTabLayoutUiHandlers {
-
-        private final Spy onToggleSidebar;
-
-        private SidebarToggle(final Spy onToggleSidebar) {
-            this.onToggleSidebar = onToggleSidebar;
-        }
-
-        @Override
-        public void maximise() {
-            onToggleSidebar.call();
-        }
     }
 }

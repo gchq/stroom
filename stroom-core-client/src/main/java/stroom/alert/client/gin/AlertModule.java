@@ -17,13 +17,6 @@
 package stroom.alert.client.gin;
 
 import stroom.alert.client.AlertPlugin;
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.presenter.PromptPresenter.PromptProxy;
-import stroom.alert.client.presenter.PromptPresenter.PromptView;
-import stroom.alert.client.view.CommonAlertViewImpl;
-import stroom.alert.client.view.PromptViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AlertModule extends PluginModule {
@@ -31,8 +24,5 @@ public class AlertModule extends PluginModule {
     @Override
     protected void configure() {
         bind(AlertPlugin.class).asEagerSingleton();
-
-        bindPresenter(PromptPresenter.class, PromptView.class, PromptViewImpl.class, PromptProxy.class);
-        bindPresenterWidget(CommonAlertPresenter.class, CommonAlertView.class, CommonAlertViewImpl.class);
     }
 }

@@ -223,7 +223,7 @@ class TestStroomContent {
         server.start();
         try (final HttpClient httpClient = HttpClient.newHttpClient()) {
             final String baseUrl = "http://localhost:" + server.getPort();
-            // As VisPresenter loads an asset-based visualisation's frame
+            // As VisController loads an asset-based visualisation's frame
             final HttpResponse<String> index = get(httpClient, baseUrl + "/assets/vis-1/index.html");
             assertThat(index.statusCode()).isEqualTo(200);
             assertThat(index.body()).isEqualTo("<html></html>");

@@ -49,7 +49,7 @@
 
 /* The descriptions wrap, so the table fits in the popup (an info table doesn't wrap); the example
    inputs beside them stay on one line */
-.help-popup__content .infoTable td:last-child {
+.help-popup__content .info-table td:last-child {
     white-space: normal;
 }
 
@@ -69,4 +69,10 @@
     /* Make it a wee bit smaller than normal text in stroom which is size-13 */
     font-size: var(--font-size-13);
     line-height: 1.6em;
+}
+
+/* Links in the help are underlined, as links in running text are, so they are told from the text
+   round them by more than their colour (WCAG 1.4.1) (was base.css's) */
+.help-popup__content a {
+    text-decoration: underline;
 }

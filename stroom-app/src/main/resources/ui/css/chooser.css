@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A chooser popup's content (stroom.annotation.client.component.Chooser, e.g. an annotation's
+   status, labels or standard comments), named BEM style (block, block__element, block--modifier): a
+   quick filter (chooser__filter) above a list of values (chooser__values), as high as its values up
+   to 400px, then scrolling. Each value's text is a chooser__item. Ticked values (chooser--multi)
+   have tick boxes that can be pressed.
+*/
+
+.chooser {
+    display: flex;
+    flex-flow: column;
+}
+
+.chooser__filter {
+    flex-shrink: 0;
+}
+
+.chooser__values {
+    flex-grow: 1;
+    max-height: 400px;
+    max-width: 420px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0px 2px;
+    scrollbar-gutter: stable;
+}
+
+.chooser__item {
+    padding: 5px;
+    min-width: 200px;
+}
+
+.chooser--multi .chooser__tick-box {
+    cursor: pointer;
+}

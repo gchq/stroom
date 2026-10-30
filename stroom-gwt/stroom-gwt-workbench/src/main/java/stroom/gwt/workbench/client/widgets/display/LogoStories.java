@@ -22,17 +22,17 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for the Stroom wordmark logo in the navigation header.
 ///
-/// There is no logo widget in GWT: the stories build it as Stroom's `NavigationViewImpl` does, a
-/// `navigation-logo` button holding the [SvgImage#LOGO] image, whose click (with the primary
+/// There is no logo widget in GWT: the stories build it as Stroom's `Explorer` does, a
+/// `navigation__logo` button holding the [SvgImage#LOGO] image, whose click (with the primary
 /// button) opens the main menu in Stroom.
 public final class LogoStories {
 
@@ -57,7 +57,7 @@ public final class LogoStories {
     private static Widget clickable(final StoryContext context) {
         final Button logo = logo();
         final Spy onClick = context.fn(ON_CLICK);
-        // As NavigationViewImpl.onLogoClick handles it
+        // As Explorer handles a click on it
         logo.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event.getNativeEvent())) {
                 onClick.call("logo clicked");
@@ -66,11 +66,11 @@ public final class LogoStories {
         return wrap(logo);
     }
 
-    /// The logo, as `NavigationViewImpl`'s UiBinder template and constructor build it.
+    /// The logo, as `Explorer`'s UiBinder template and constructor build it.
     private static Button logo() {
         final Button logo = new Button();
-        logo.setStyleName("navigation-logo");
-        logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation-logo-image"));
+        logo.setStyleName("explorer__logo");
+        logo.setContent(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "explorer__logo-image"));
         // Out of the tab order and hidden from screen readers, as the Main Menu button beside it in
         // Stroom does the same
         logo.getElement().setTabIndex(-2);

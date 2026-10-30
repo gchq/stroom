@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.popuppositioner;
 
 import stroom.gwt.workbench.client.widgets.StoryPopups;
@@ -25,18 +24,18 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.Position;
-import stroom.widget.popup.client.presenter.PositionUtil;
+import stroom.widget.button.client.Button;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.Position;
+import stroom.widget.popup.client.PositionUtil;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -109,19 +108,19 @@ public final class PopupContractStories {
                 .panel(".popup--floating:has([role='listbox'][aria-label='Document types'])")
                 .insideTarget(".popup--floating:has([role='listbox'][aria-label='Document types']) .popupContent")
                 .placement(".type-filter-trigger", PopupLocation.RIGHT, 3,
-                        "TypeFilterPresenter.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
+                        "TypeFilterController.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
         cases.add(PopupCase.of("Popover (SettingBlock)", PopupHarnesses::settingBlock)
                 .opener(".setting-block")
                 // The block and the label inside it
-                .partners(".setting-block", ".setting-block .gwt-Label")
-                .panel(".popup--floating:has(.popover-body)")
-                .insideTarget(".popover-body"));
+                .partners(".setting-block", ".setting-block .text-label")
+                .panel(".popup--floating:has(.harness-editor-body)")
+                .insideTarget(".harness-editor-body"));
         cases.add(PopupCase.of("SelectionBox", PopupHarnesses::selectionBox)
-                .opener(".svg-icon-box__icon")
+                .opener(".icon-box__icon")
                 // Both of GWT's partners (BaseSelectionBox: the text box and the icon box), each
                 // with an inner child
-                .partners(".selection-box__control", ".selection-box__value", ".svg-icon-box__icon",
-                        ".svg-icon-box__image")
+                .partners(".selection-box__control", ".selection-box__value", ".icon-box__icon",
+                        ".icon-box__image")
                 .panel(".selection-popup")
                 .insideTarget(".selection-list")
                 // SelectionPopup positions itself with a shadow width of 4
@@ -134,8 +133,8 @@ public final class PopupContractStories {
                 .panel(MENU_PANEL)
                 // The panel's own content box, not a row — clicking a row runs its command
                 .insideTarget(MENU_PANEL + " .popupContent")
-                // Left out of EscapeCloses: a menu's Escape (MenuViewImpl.escape() →
-                // MenuPresenter.escape()) is checked by EscapeClosesOneLevelAtATime
+                // Left out of EscapeCloses: a menu's Escape (MenuController.onClose() →
+                // escape()) is checked by EscapeClosesOneLevelAtATime
                 .storyCases(true, false)
                 // A Stroom menu shown with ShowMenuEvent is placed where the call site asks
                 .placement(".menu-harness-trigger", PopupLocation.BELOW, 0,
@@ -665,7 +664,7 @@ public final class PopupContractStories {
     }
 
     /// `submenu/anchor-clipped-when-item-partly-scrolled`, asserted on GWT's `Rect.min` and
-    /// `growX`/`growY`, which `MenuPresenter.showSubMenu` anchors submenus with.
+    /// `growX`/`growY`, which `MenuController.showSubMenu` anchors submenus with.
     private static void submenuAnchorIsClipped(final Play play) {
         final Rect panel = rect(100, 100, 300, 200);
         // A row hanging below the panel's bottom edge — scrolled half out of view

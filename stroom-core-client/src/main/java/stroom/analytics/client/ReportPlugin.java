@@ -16,7 +16,7 @@
 
 package stroom.analytics.client;
 
-import stroom.analytics.client.presenter.ReportPresenter;
+import stroom.analytics.client.component.ReportEditor;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportResource;
 import stroom.core.client.ContentManager;
@@ -26,9 +26,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class ReportPlugin extends DocumentPlugin<ReportDoc> {
 
     private static final ReportResource REPORT_RESOURCE = GWT.create(ReportResource.class);
 
-    private final Provider<ReportPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<ReportEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public ReportPlugin(final EventBus eventBus,
-                        final Provider<ReportPresenter> editorProvider,
+                        final Provider<ReportEditor> editorProvider,
                         final RestFactory restFactory,
                         final ContentManager contentManager,
                         final DocumentPluginEventManager entityPluginEventManager,
                         final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), ReportDoc.TYPE);
     }
 
     @Override

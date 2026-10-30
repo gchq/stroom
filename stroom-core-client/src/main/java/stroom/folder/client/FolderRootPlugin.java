@@ -23,19 +23,19 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.folder.client.component.FolderTabs;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.component.client.Controller;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 import javax.inject.Singleton;
@@ -43,65 +43,28 @@ import javax.inject.Singleton;
 @Singleton
 public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData {
     private final ContentManager contentManager;
-    private final Provider<FolderRootPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FolderTabs> folderTabsProvider;
     private final ClientSecurityContext securityContext;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
-                            final Provider<FolderRootPresenter> editorProvider,
+                            final Provider<FolderTabs> folderTabsProvider,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager,
                             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.contentManager = contentManager;
-        this.editorProvider = editorProvider;
+        this.eventBus = eventBus;
+        this.folderTabsProvider = folderTabsProvider;
         this.securityContext = securityContext;
     }
 
-//    @Override
-//    protected void onBind() {
-//        super.onBind();
-//
-//        // 4. Handle explorer events and open items as required.
-//        registerHandler(
-//                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
-//                    final SelectionType selectionType = event.getSelectionType();
-//                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
-//                        final ExplorerNode selected = event.getSelectionModel().getSelected();
-//                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
-//                            if (presenter == null && selectionType.isDoubleSelect()) {
-//                                // If the presenter is null then we haven't got
-//                                // this tab open.
-//                                // Create a new presenter.
-//                                presenter = createEditor();
-//                            }
-//
-//                            if (presenter != null) {
-//                                final CloseContentEvent.Handler closeHandler = evt -> {
-//                                    // Give the content manager the ok to
-//                                    // close the tab.
-//                                    evt.getCallback().closeTab(true);
-//
-//                                    // After we close the tab set the
-//                                    // presenter back to null so
-//                                    // that we can open it again.
-//                                    presenter = null;
-//                                };
-//                                contentManager.open(closeHandler, presenter, presenter);
-//                            }
-//                        }
-//                    }
-//                }));
-//    }
-
     @Override
-    protected FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            return editorProvider.get();
-        }
-
-        return null;
+    protected DocumentEditorHost<DocRef> createEditor() {
+        return FolderTabs.canOpen(securityContext)
+                ? new DocumentEditorHost<>(eventBus, folderTabsProvider.get(), ExplorerConstants.SYSTEM_TYPE)
+                : null;
     }
 
     @Override
@@ -109,8 +72,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
-        // Root folder is just a constant so no load needed
-//        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
+        // The root folder is a constant, so there is nothing to load
     }
 
     @Override
@@ -124,24 +86,23 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> myPresenterWidget,
+                                final DocumentEditorHost<?> host,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
-                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                final Consumer<Controller> callbackOnOpen,
+                                final Runnable callbackOnFailure,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (myPresenterWidget instanceof FolderRootPresenter) {
-            ((FolderRootPresenter) myPresenterWidget).read();
-        }
+        FolderPlugin.readFolder(host, ExplorerConstants.SYSTEM_DOC_REF);
 
-        if (selectedTab != null && myPresenterWidget instanceof LinkTabPanelPresenter) {
-            ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
+        if (selectedTab != null) {
+            host.selectCommonTab(selectedTab);
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
+        contentManager.open(closeHandler, tabData, host, host, callbackOnOpen);
     }
 
     @Override

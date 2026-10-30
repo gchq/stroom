@@ -16,132 +16,121 @@
 
 package stroom.gwt.workbench.client.app.gin.processing;
 
-import stroom.analytics.client.presenter.ExecutionScheduleManager;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.MetaPresenter;
-import stroom.data.client.presenter.ProcessChoicePresenter;
-import stroom.data.client.presenter.ProcessorTaskListPresenter;
-import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.analytics.client.component.ExecutionSchedulesController;
+import stroom.dashboard.client.component.ProcessorLimitsController;
+import stroom.data.client.component.CreateProcessorsController;
+import stroom.data.client.component.DataPreviewTabController;
+import stroom.data.client.component.DataUploadController;
+import stroom.data.client.component.MetaBrowserController;
+import stroom.data.client.component.SourceTabController;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.presenter.DocSelectionPopup;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.node.client.presenter.NodeGroupEditPresenter;
-import stroom.node.client.presenter.NodeGroupPresenter;
+import stroom.node.client.component.NodeGroupEditorController;
+import stroom.node.client.component.NodeGroupsController;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
-import stroom.pipeline.client.presenter.PipelinePresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
-import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.processor.client.presenter.ProcessorEditPresenter;
-import stroom.processor.client.presenter.ProcessorPresenter;
-import stroom.processor.client.presenter.ProcessorProfilePresenter;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
-import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.pipeline.client.component.PipelineEditor;
+import stroom.pipeline.client.component.SaveChangedDocumentsController;
+import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
+import stroom.pipeline.stepping.client.component.SteppingScreenController;
+import stroom.pipeline.structure.client.PipelineElementTypesFactory;
+import stroom.pipeline.structure.client.PipelineModelFactory;
+import stroom.pipeline.structure.client.component.PipelineTree;
+import stroom.processor.client.component.ProcessorEditorController;
+import stroom.processor.client.component.ProcessorProfilesController;
+import stroom.processor.client.component.ProcessorsController;
+import stroom.processor.task.client.component.ProcessorTaskListController;
+import stroom.processor.task.client.component.ProcessorTasksController;
+import stroom.receive.rules.client.component.DataRetentionController;
+import stroom.receive.rules.client.component.RuleSetTabController;
 
 import com.google.gwt.inject.client.GinModules;
 
 /// A [ScreenGinjector] for the 'processing' screens (node groups, processors and their filters,
 /// processor profiles, pipelines and stepping, data retention and receipt rules, execution
-/// schedules and the data browser), which creates their presenters and views as Stroom's GIN
+/// schedules and the data browser), which creates their controllers and components as Stroom's GIN
 /// modules do. Create one each time the story renders and give it to the harness with
 /// `ScreenHarness.builder(...).injector(...)`.
 ///
 /// It lists the shared base modules of `AppScreenGinjector` that these screens need, plus mirrors
 /// of Stroom's modules in this package.
 @GinModules({
-        ScreenViewsModule.class,
-        EntityScreenModule.class,
-        ExplorerScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
-        TaskScreenModule.class,
-        PipelineScreenModule.class,
-        PolicyScreenModule.class,
-        StreamStoreScreenModule.class,
         ProcessingExtrasScreenModule.class,
-        AnalyticsScreenModule.class,
 })
 public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     // Node groups
 
     /// @return The 'Node Groups' tab, as `NodeGroupsPlugin` opens it.
-    NodeGroupPresenter getNodeGroupPresenter();
+    NodeGroupsController getNodeGroupsController();
 
     /// @return The node group members dialog ('Edit Node Group - name').
-    NodeGroupEditPresenter getNodeGroupEditPresenter();
+    NodeGroupEditorController getNodeGroupEditorController();
 
     // Execution schedules
 
-    /// @return The 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it.
-    ExecutionScheduleManager getExecutionScheduleManager();
+    /// @return The 'Execution Schedule Manager' tab, as `ExecutionSchedulesPlugin` opens it.
+    ExecutionSchedulesController getExecutionSchedulesController();
 
     // Processors
 
-    /// @return The 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it.
-    ProcessorProfilePresenter getProcessorProfilePresenter();
+    /// @return The 'Processor Profiles' tab, as `ProcessorProfilesPlugin` opens it.
+    ProcessorProfilesController getProcessorProfilesController();
 
     /// @return A pipeline's 'Processors' tab (the processor and filter tree).
-    ProcessorPresenter getProcessorPresenter();
+    ProcessorsController getProcessors();
 
-    /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it.
-    ProcessorEditPresenter getProcessorEditPresenter();
+    /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it.
+    ProcessorEditorController getProcessorEditorController();
 
-    /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.
-    ProcessorLimitsPresenter getProcessorLimitsPresenter();
+    /// @return The 'Process Search Results' dialog, as `QueryPaneController` shows it.
+    ProcessorLimitsController getProcessorLimitsController();
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
-    ProcessorTaskListPresenter getProcessorTaskListPresenter();
+    ProcessorTaskListController getProcessorTaskListController();
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
-    /// list), as `FolderPresenter`, `FeedPresenter` and `PipelinePresenter` create it.
-    ProcessorTaskPresenter getProcessorTaskPresenter();
+    /// list), as `FolderTabs`, `FeedEditor` and `PipelineEditor` create it, or a processor filter's
+    /// 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
+    ProcessorTasksController getProcessorTasksController();
 
     // Data
 
     /// @return The stream browser of a 'Data' tab (streams, relations and the data preview).
-    MetaPresenter getMetaPresenter();
+    MetaBrowserController getMetaBrowser();
 
     /// @return A 'Data Preview' tab, as `DataPreviewTabPlugin` opens it.
-    DataPreviewTabPresenter getDataPreviewTabPresenter();
+    DataPreviewTabController getDataPreviewTabController();
 
     /// @return A 'Source' tab, as `SourceTabPlugin` opens it.
-    SourceTabPresenter getSourceTabPresenter();
+    SourceTabController getSourceTabController();
 
     /// @return The 'Create Processors' dialog, as the data browser's meta list shows it.
-    ProcessChoicePresenter getProcessChoicePresenter();
+    CreateProcessorsController getCreateProcessorsController();
+
+    /// @return The dialog that asks which changed documents to save, as `PipelinePlugin` shows it.
+    SaveChangedDocumentsController getSaveChangedDocumentsController();
 
     /// @return A feed's 'Upload' dialog, as the data browser shows it.
-    DataUploadPresenter getDataUploadPresenter();
+    DataUploadController getDataUploadController();
 
     // Pipelines and stepping
 
-    /// @return A Pipeline's editor tab, as `PipelinePlugin` creates it.
-    PipelinePresenter getPipelinePresenter();
+    /// @return A Pipeline's editor, as `PipelinePlugin` opens it.
+    PipelineEditor getPipelineEditor();
 
-    /// @return A pipeline's stepper, as `PipelinePresenter` shows it in stepping mode.
-    SteppingPresenter getSteppingPresenter();
+    /// @return A pipeline's stepper, as `PipelineEditor` shows it in stepping mode.
+    SteppingScreenController getSteppingScreen();
 
-    /// @return A document chooser popup, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
-    DocSelectionPopup getDocSelectionPopup();
+    /// @return A document chooser, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
+    DocumentChooserController getDocumentChooserController();
 
-    /// @return The 'Change Step Filters' dialog, as `SteppingPresenter` shows it.
-    SteppingFilterPresenter getSteppingFilterPresenter();
+    /// @return The 'Change Step Filters' dialog, as `SteppingScreenController` shows it.
+    SteppingFilterEditorController getSteppingFilterEditorController();
 
-    /// @return A pipeline's element tree, as `PipelineStructurePresenter` shows it.
-    PipelineTreePresenter getPipelineTreePresenter();
+    /// @return A pipeline's element tree, as `PipelineStructureController` shows it.
+    PipelineTree getPipelineTree();
 
     /// @return The cache of the pipeline element types (`GET /pipeline/v1/propertyTypes`).
     PipelineElementTypesFactory getPipelineElementTypesFactory();
@@ -165,8 +154,8 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     // Data retention and receipt rules
 
     /// @return The 'Data Retention' tab, as `DataRetentionPlugin` opens it.
-    DataRetentionPresenter getDataRetentionPresenter();
+    DataRetentionController getDataRetentionController();
 
     /// @return The 'Data Receipt Rules' tab, as `ReceiveDataRuleSetPlugin` opens it.
-    RuleSetPresenter getRuleSetPresenter();
+    RuleSetTabController getRuleSetTabController();
 }

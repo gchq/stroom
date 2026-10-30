@@ -18,7 +18,7 @@ package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.MenuOpener;
+import stroom.widget.menu.client.MenuOpener;
 import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.KeyBinding;
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 /// An icon button in a [Toolbar]: a `<button class="toolbar-button">` holding its icon. It is named
-/// by its title, which is also its tooltip, and styled by toolbar.css.
+/// by its title, which is also its tooltip, and styled by toolbar-button.css.
 ///
 /// A button that a shortcut also presses shows the shortcut in its tooltip, e.g. "Save (Ctrl+S)"
 /// (see [#setShortcut(Action)]).
@@ -44,11 +44,11 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// Made by [Toolbar#button], or declared in a template inside a toolbar as
 /// `<b:ToolbarButton svg="SAVE" title="Save"/>`.
 ///
-/// It is a [ButtonView], so presenters that are given their buttons as button views (as views give
+/// It is a [IsButton], so controllers that are given their buttons as button views (as views give
 /// them the older buttons) work with it unchanged; that interface goes when they no longer need it.
-public class ToolbarButton extends ButtonBase implements ButtonView {
+public class ToolbarButton extends ButtonBase implements IsButton {
 
-    // Marks focus that a mouse press gave the button, which toolbar.css draws no focus ring for: the
+    // Marks focus that a mouse press gave the button, which toolbar-button.css draws no focus ring for: the
     // button focuses itself from code (see onBrowserEvent), which browsers treat as keyboard focus
     private static final String POINTER_FOCUS_ATTRIBUTE = "data-pointer-focus";
     private static final String ARIA_LABEL = "aria-label";
@@ -82,7 +82,7 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
 
     /// Marks the button as one that opens a menu, so screen readers announce that it does and
     /// whether the menu is open. The menu must be opened with this button's element as its opener
-    /// ([stroom.widget.menu.client.presenter.ShowMenuEvent.Builder#opener]), which keeps the open
+    /// ([stroom.widget.menu.client.ShowMenuEvent.Builder#opener]), which keeps the open
     /// state up to date. In a template:
     /// `<b:ToolbarButton svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>`.
     ///

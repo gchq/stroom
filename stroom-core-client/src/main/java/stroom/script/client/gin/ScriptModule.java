@@ -19,10 +19,6 @@ package stroom.script.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.script.client.ScriptCache;
 import stroom.script.client.ScriptPlugin;
-import stroom.script.client.presenter.ScriptPresenter;
-import stroom.script.client.presenter.ScriptSettingsPresenter;
-import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.script.client.view.ScriptSettingsViewImpl;
 
 import com.google.inject.Singleton;
 
@@ -33,7 +29,5 @@ public class ScriptModule extends PluginModule {
         bind(ScriptCache.class).in(Singleton.class);
 
         bindPlugin(ScriptPlugin.class);
-        bind(ScriptPresenter.class);
-        bindPresenterWidget(ScriptSettingsPresenter.class, ScriptSettingsView.class, ScriptSettingsViewImpl.class);
     }
 }

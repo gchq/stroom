@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /// Tests for [FloorMapViewport] — the pure pan/zoom/drag maths extracted
-/// from the canvas presenter. Verifies coordinate conversions, the
+/// from the canvas controller. Verifies coordinate conversions, the
 /// zoom-towards-cursor invariant, scale clamping, and Edit-Mode drag deltas.
 class TestFloorMapViewport {
 

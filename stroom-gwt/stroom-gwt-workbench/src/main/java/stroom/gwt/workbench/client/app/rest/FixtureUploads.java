@@ -51,7 +51,7 @@ public final class FixtureUploads {
     /// matches is reported to the listener and fails as Stroom's transport reports a `404`.
     ///
     /// @param upload   The upload.
-    /// @param callback Stroom's callback for the upload (`CustomFileUpload`'s result handler).
+    /// @param callback Stroom's callback for the upload (`FileChooserController`'s callback).
     public void upload(final RecordedUpload upload, final FileUploadCallback callback) {
         Objects.requireNonNull(callback);
         if (disposed) {

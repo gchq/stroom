@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The tasks running on every node, a tree of them, with a pager and their actions -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Task actions">
+        <b:ToolbarToggleButton ui:field="autoRefreshButton" svg="AUTO_REFRESH" title="Auto Refresh" pressed="true"/>
+        <b:ToolbarButton ui:field="terminateButton" svg="DELETE" title="Terminate Selected Tasks"/>
+        <b:ToolbarButton ui:field="expandAllButton" svg="EXPAND_ALL" title="Expand All Tasks" enabled="false"/>
+        <b:ToolbarButton ui:field="collapseAllButton" svg="COLLAPSE_ALL" title="Collapse All Tasks" enabled="false"/>
+        <b:ToolbarToggleButton ui:field="wrapToggleButton" svg="TEXT_WRAP" title="Wrap Text"/>
+        <b:ToolbarButton ui:field="warningsButton" svg="ALERT" title="Show Task Warnings" visible="false"/>
+        <dg:DataGrid ui:field="dataGrid" pageSize="1000" tableName="Server Tasks"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

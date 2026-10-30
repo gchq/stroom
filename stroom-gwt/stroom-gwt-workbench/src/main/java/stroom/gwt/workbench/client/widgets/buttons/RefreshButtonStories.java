@@ -16,10 +16,10 @@
 
 package stroom.gwt.workbench.client.widgets.buttons;
 
-import stroom.data.pager.client.RefreshButton;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.RefreshButton;
 import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.user.client.ui.FlowPanel;

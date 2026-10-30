@@ -19,8 +19,8 @@ package stroom.dashboard.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
-import stroom.dashboard.client.event.ReopenResultStoreEvent;
-import stroom.dashboard.client.main.DashboardSuperPresenter;
+import stroom.dashboard.client.component.DashboardEditor;
+import stroom.dashboard.client.event.ShowDashboardEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
@@ -29,23 +29,19 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.document.client.editor.MultiInstanceEditorHost;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.hyperlink.client.ShowDashboardEvent;
-import stroom.query.api.ResultStoreInfo;
-import stroom.query.api.SearchRequestSource;
-import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.util.client.PresenterScope;
+import stroom.widget.component.client.Controller;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,41 +53,42 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider;
+    private final EventBus eventBus;
+    private final Provider<DashboardEditor> dashboardEditorProvider;
     private final RestFactory restFactory;
     private String currentUuid;
 
     @Inject
     public DashboardPlugin(final EventBus eventBus,
-                           final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider,
+                           final Provider<DashboardEditor> dashboardEditorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager,
                            final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
-        this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
+        this.eventBus = eventBus;
+        this.dashboardEditorProvider = dashboardEditorProvider;
         this.restFactory = restFactory;
 
-        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
-                event -> openParameterisedDashboard(event.getContext(), event.getHref())));
-        registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
-                event -> reopen(event.getResultStoreInfo())));
+        eventBus.addHandler(ShowDashboardEvent.getType(),
+                event -> openParameterisedDashboard(event.getContext(), event.getHref()));
     }
 
     @Override
-    public MyPresenterWidget<?> open(final DocRef docRef,
+    public DocumentEditorHost<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
-                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final Consumer<Controller> callbackOnOpen,
+                                     final Runnable callbackOnFailure,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen, duplicate,
-                taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen,
+                callbackOnFailure, duplicate, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final Object context, final String href) {
@@ -111,33 +108,27 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             final DocRef docRef = new DocRef(DashboardDoc.TYPE, uuid);
 
             // If the item isn't already open but we are forcing it open then,
-            // create a new presenter and register it as open.
-            // As DocumentPlugin opens a document: its presenters belong to a scope that releases
-            // them when it is closed
-            final DashboardSuperPresenter presenter = new PresenterScope()
-                    .capture(dashboardSuperPresenterProvider::get);
-            presenter.setParentContext(context);
-            presenter.setParamsFromLink(params);
-            presenter.setCustomTitle(title);
-            presenter.setQueryOnOpen(queryOnOpen);
-
-            //        // Register the tab as being open.
-            //        documentToTabDataMap.put(docRef, tabData);
-            //        tabDataToDocumentMap.put(tabData, docRef);
+            // create a new controller and register it as open.
+            // As DocumentPlugin opens a document: the content manager releases it, with every
+            // controller it owns, when its tab is closed
+            final DashboardEditor editor = dashboardEditorProvider.get();
+            editor.setParentContext(context);
+            editor.setParamsFromLink(params);
+            editor.setCustomTitle(title);
+            editor.setQueryOnOpen(queryOnOpen);
+            final MultiInstanceEditorHost<DashboardDoc> controller = createHost(editor);
 
             // Load the document and show the tab.
             final CloseContentEvent.Handler closeHandler = event -> {
-                // Tell the presenter we are closing.
-                presenter.onClose();
-                // Actually close the tab.
+                // Tell the controller we are closing.
+                controller.onClose();
+                // Actually close the tab, which releases the dashboard and all its controllers
                 event.getCallback().closeTab(true);
-                // Closed for good, so release the dashboard and all its presenters
-                PresenterScope.disposeScopeOf(presenter);
             };
             showDocument(docRef,
-                    presenter,
+                    controller,
                     closeHandler,
-                    presenter,
+                    controller,
                     new DefaultTaskMonitorFactory(this));
         }
     }
@@ -172,39 +163,14 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         return out;
     }
 
-    private void reopen(final ResultStoreInfo resultStoreInfo) {
-        final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
-        if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
-            final DocRef docRef = source.getOwnerDocRef();
-            if (docRef != null) {
-                // If the item isn't already open but we are forcing it open then,
-                // create a new presenter and register it as open.
-                final DashboardSuperPresenter presenter = new PresenterScope()
-                        .capture(dashboardSuperPresenterProvider::get);
-                presenter.setResultStoreInfo(resultStoreInfo);
-
-                // Load the document and show the tab.
-                final CloseContentEvent.Handler closeHandler = event -> {
-                    // Tell the presenter we are closing.
-                    presenter.onClose();
-                    // Actually close the tab.
-                    event.getCallback().closeTab(true);
-                    // Closed for good, so release the dashboard and all its presenters
-                    PresenterScope.disposeScopeOf(presenter);
-                };
-                showDocument(docRef,
-                        presenter,
-                        closeHandler,
-                        presenter,
-                        new DefaultTaskMonitorFactory(this));
-            }
-        }
+    @Override
+    protected DocumentEditorHost<?> createEditor() {
+        return createHost(dashboardEditorProvider.get());
     }
 
-
-    @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return dashboardSuperPresenterProvider.get();
+    // The tab a dashboard is shown in: a dashboard may be open in more than one tab
+    private MultiInstanceEditorHost<DashboardDoc> createHost(final DashboardEditor editor) {
+        return new MultiInstanceEditorHost<>(eventBus, editor, DashboardDoc.TYPE);
     }
 
     @Override

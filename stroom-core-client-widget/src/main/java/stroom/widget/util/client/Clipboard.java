@@ -95,7 +95,7 @@ public final class Clipboard {
     private static native boolean writeWithTextArea(final String text) /*-{
         var focused = $doc.activeElement;
         var textArea = $doc.createElement('textarea');
-        textArea.className = 'clipboardCopy';
+        textArea.className = 'clipboard';
         textArea.setAttribute('aria-hidden', 'true');
         textArea.value = text;
         $doc.body.appendChild(textArea);

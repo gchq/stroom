@@ -22,11 +22,11 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's `TextBox` and `TextArea` (its copies of GWT's: a text box reports a change
@@ -75,7 +75,7 @@ public final class TextInputStories {
                 // Invalid state: aria-invalid, which also draws its red border (not a class as well)
                 .story("Invalid", context -> {
                     final TextBox textBox = InputWidgets.textBox(context, "not-an-email", "Email");
-                    // As Stroom's views (e.g. LoginViewImpl) mark an invalid field
+                    // As Stroom's views (e.g. Login) mark an invalid field
                     FieldValidity.setInvalid(textBox.getElement(), true);
                     return textBox;
                 })

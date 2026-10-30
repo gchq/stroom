@@ -215,9 +215,7 @@ public class ControlsAddon extends Addon {
                         .appendHtmlConstant("</span></span>");
                 break;
             case RADIO:
-            case INLINE_RADIO:
             case CHECK:
-            case INLINE_CHECK:
                 appendOptions(builder, argType);
                 break;
             case SELECT:
@@ -314,16 +312,13 @@ public class ControlsAddon extends Addon {
 
     private void appendOptions(final SafeHtmlBuilder builder, final ArgType argType) {
         final ControlType control = argType.getControl();
-        final boolean inline = control == ControlType.INLINE_RADIO || control == ControlType.INLINE_CHECK;
         final String inputType = control.isMulti()
                 ? "checkbox"
                 : "radio";
         final List<String> selected = control.isMulti()
                 ? args.getList(argType.getName())
                 : List.of(args.getString(argType.getName(), ""));
-        builder.appendHtmlConstant("<fieldset class=\"wbm-options" + (inline
-                ? " wbm-options--inline"
-                : "") + "\">");
+        builder.appendHtmlConstant("<fieldset class=\"wbm-options\">");
         for (final String option : argType.getOptions()) {
             builder.appendHtmlConstant("<label class=\"wbm-option\"><input type=\"" + inputType + "\""
                                        + (selected.contains(option)

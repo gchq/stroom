@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A tab bar's overflow button (tab-selector.css), shown when some tabs don't fit: a button showing
+  every tab in a menu, its arrows, then how many tabs are hidden (the bar names it with the count).
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <c:AriaPanel ui:field="button" styleName="tab-selector" role="button" ariaHasPopup="menu" ariaExpanded="false"
+                 ariaLabel="Show all tabs">
+        <g:SimplePanel styleName="tab-selector__arrows">
+            <svg:Icon image="DOUBLE_ARROW"/>
+        </g:SimplePanel>
+        <tx:Label ui:field="count" styleName="tab-selector__count"/>
+    </c:AriaPanel>
+</ui:UiBinder>

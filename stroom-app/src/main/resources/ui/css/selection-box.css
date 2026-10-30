@@ -15,9 +15,9 @@
  */
 
 /*
-   The selection box (stroom.item.client.BaseSelectionBox), named BEM style (block, block__element,
+   The selection box (stroom.widget.selection.client.BaseSelectionBox), named BEM style (block, block__element,
    block--modifier): a WAI-ARIA combobox, its text box over a picture of its value, with the icon
-   box's drop-down arrow at its end (svg-icon-box.css). Its list is styled by selection-popup.css.
+   box's drop-down arrow at its end (icon-box.css). Its list is styled by selection-popup.css.
 
    Its states (disabled, read only) are modifiers, as the box itself has no ARIA attribute for them:
    they follow its text box's disabled and aria-readonly.
@@ -59,8 +59,18 @@
 }
 
 /* A box that can't be typed in opens its list when clicked, so the whole box shows it can be */
-.selection-box--select-only:not(.selection-box--disabled):not(.selection-box--readonly) .selection-box__input {
+.selection-box--select-only:not(.selection-box--disabled):not(.selection-box--read-only) .selection-box__input {
     cursor: pointer;
+}
+
+/* Only the text box shows in a box that can be typed in, and only the value's picture in one that
+   can't (the text box, unseen over it, still takes the focus and the clicks) */
+.selection-box--select-only .selection-box__input {
+    opacity: 0;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__value {
+    opacity: 0;
 }
 
 /* Disabled: the filled field with no border that every disabled control has, drawn by the value (the
@@ -76,34 +86,30 @@
 }
 
 /* Read only: the normal field with its value greyed */
-.selection-box--readonly .selection-box__value {
+.selection-box--read-only .selection-box__value {
     color: var(--control__text-color--readonly);
 }
 
-/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (a box's field is
-   otherwise at least 200px, svg-icon-box.css) */
+/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (its field too, as the
+   cell is also icon-box--fluid; a box's field is otherwise at least 200px, icon-box.css) */
 .selection-box.selection-box--cell {
     width: 100%;
-}
-
-.selection-box--cell.svg-icon-box .svg-icon-box__field {
-    min-width: 0;
 }
 
 /* Where it sits: */
 
 /* In a Git repo's settings, beside the credentials' button */
-.gitrepo-settings-form #credentials-group .selection-box {
+.git-repo-settings__credentials .selection-box {
     width: 280px;
 }
 
 /* In a conditional formatting rule's style, a colour swatch filling the box */
-.conditionalFormatStyleSelection .selection-box__value {
+.selection-box--swatches .selection-box__value {
     padding: 0;
 }
 
-/* In an expression's term, as flat as the term's other fields (TermEditor.css) */
-.termEditor-inner .selection-box__value {
+/* In an expression's term, as flat as the term's other fields (term-editor.css) */
+.term-editor__fields .selection-box__value {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;

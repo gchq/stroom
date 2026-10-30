@@ -1,0 +1,5 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A colour box (colour-box.css): the browser's own colour picker, black until it is given a colour -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <input type="color" class="colour-box" value="#000000"/>
+</ui:UiBinder>

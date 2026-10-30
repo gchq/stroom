@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:j="urn:import:stroom.job.client.component"
+             xmlns:split="urn:import:stroom.widget.layout.client">
+    <g:SimplePanel styleName="max">
+        <split:SplitPane vertical="true" thin="true" sizes="400px, *"
+                         names="Jobs, Job nodes" addStyleNames="max">
+            <g:SimplePanel styleName="max">
+                <j:JobList ui:field="jobList"/>
+            </g:SimplePanel>
+            <g:FlowPanel styleName="max form">
+                <g:SimplePanel styleName="max">
+                    <j:JobNodeList ui:field="jobNodeList"/>
+                </g:SimplePanel>
+            </g:FlowPanel>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder>

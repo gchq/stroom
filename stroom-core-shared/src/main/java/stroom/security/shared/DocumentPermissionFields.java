@@ -130,7 +130,7 @@ public class DocumentPermissionFields {
 
     /**
      * The fields the document permission quick filters resolve against, server side.
-     * UserPermissionReportPresenter defaults to the name alone; BatchDocumentPermissionsPresenter
+     * UserPermissionReportController defaults to the name alone; BatchDocumentPermissionsController
      * also matches the uuid, so the wider set is the default here.
      */
     public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(

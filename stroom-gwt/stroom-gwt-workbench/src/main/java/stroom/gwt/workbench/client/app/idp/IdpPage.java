@@ -18,14 +18,13 @@ package stroom.gwt.workbench.client.app.idp;
 
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
-import stroom.security.identity.client.presenter.LoginPresenter;
+import stroom.security.identity.client.component.LoginController;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.HTML;
-import com.gwtplatform.mvp.client.Presenter;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,8 +34,8 @@ import java.util.function.Consumer;
 /// sign in page (`stroom-core/.../servlet/app.html`, served for `/signIn` and `/resetPassword`)
 /// provides it, for the stories of `App/IdP/*`:
 ///
-/// * the host page's `#loading` and `#loadingText` elements, which `LoginPresenter`,
-///   `AuthenticationErrorPresenter` and `ResetPasswordPresenter` look up when created (and fade
+/// * the host page's `#loading` and `#loadingText` elements, which `LoginController`,
+///   `AuthenticationErrorController` and `ResetPasswordController` look up when shown (and fade
 ///   out when revealed);
 /// * the URL's query parameters (`error`, `redirect_uri`, `token`), which they read with
 ///   `Window.Location.getParameter`: they are added to the story page's URL with
@@ -46,9 +45,8 @@ import java.util.function.Consumer;
 ///   to the sign in page), which would navigate the story away. The story page's `navigate` events
 ///   (the browser's Navigation API) are cancelled and their URLs given to a listener, so a play can
 ///   check where Stroom would have gone;
-/// * revealing: Stroom's `App.onModuleLoad` reveals the page's presenter with `forceReveal()`, which
-///   needs a GWTP proxy and place manager; [#reveal] calls the presenter's own `revealInParent()`
-///   instead, once its widget has been added to the story.
+/// * showing: Stroom's `App.onModuleLoad` shows the page's controller with `show()`, which makes it
+///   the whole page; a story adds its widget to itself instead, then calls its `onShown()`.
 public final class IdpPage {
 
     /// The spy recording where Stroom would have navigated to, relative to the page's origin (e.g.
@@ -80,26 +78,17 @@ public final class IdpPage {
         });
     }
 
-    /// Reveals a page as `forceReveal()` would, by calling its presenter's `revealInParent()`
-    /// (protected), which also does what the page does when it is shown (e.g. focusing the user
-    /// name, or the password reset page asking for the new password).
+    /// Stroom's check of a post sign in redirect, `LoginController.isSameOrigin` (private).
     ///
-    /// @param presenter The page's presenter, whose widget has been added to the story.
-    public static native void reveal(Presenter<?, ?> presenter) /*-{
-        presenter.@com.gwtplatform.mvp.client.Presenter::revealInParent()();
-    }-*/;
-
-    /// Stroom's check of a post sign in redirect, `LoginPresenter.isSameOrigin` (private).
-    ///
-    /// @param presenter A sign in page.
+    /// @param page A sign in page.
     /// @param uri       The `redirect_uri`, or null.
     /// @return Whether Stroom would navigate to it after signing in.
-    public static native boolean isSameOrigin(LoginPresenter presenter, String uri) /*-{
-        var p = presenter;
-        return p.@stroom.security.identity.client.presenter.LoginPresenter::isSameOrigin(Ljava/lang/String;)(uri);
+    public static native boolean isSameOrigin(LoginController page, String uri) /*-{
+        var p = page;
+        return p.@stroom.security.identity.client.component.LoginController::isSameOrigin(Ljava/lang/String;)(uri);
     }-*/;
 
-    /// @return The story page's origin, e.g. `http://localhost:6008`, as `LoginPresenter.isSameOrigin`
+    /// @return The story page's origin, e.g. `http://localhost:6008`, as `LoginController.isSameOrigin`
     /// builds it (`Window.Location.getProtocol() + "//" + Window.Location.getHost()`).
     public static native String origin() /*-{
         return $wnd.location.protocol + "//" + $wnd.location.host;
@@ -110,8 +99,8 @@ public final class IdpPage {
     ///
     /// @param url The URL, shown in bold, or an empty string for a reload of the page.
     /// @return The message.
-    public static HTML redirectedMessage(final String url) {
-        final HTML message = new HTML();
+    public static Html redirectedMessage(final String url) {
+        final Html message = new Html();
         message.setText("✓ Signed in — redirected to: ");
         final Element strong = Document.get().createElement("strong");
         strong.setInnerText(url.isEmpty()

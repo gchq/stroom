@@ -165,15 +165,16 @@ public final class FloorMapSwatchHtml {
     ///
     /// **Why there is no SVG scale compensation here.** The canvas
     /// has to compensate for SVGs with no `viewBox` (see
-    /// `FloorMapCanvasViewImpl.appendScaledImage`), because an SVG
+    /// `FloorMapCanvas.appendScaledImage`), because an SVG
     /// `<image>` scales its referent *through that referent's viewBox*
     /// and so cannot scale one that lacks it. An HTML `<img>` scales by a
     /// different route: the element's own box is the concrete object size and the SVG
     /// is scaled into it as an ordinary replaced element, viewBox or not. So sizing
     /// the element is sufficient here, and the two surfaces agree.
     ///
-    /// The size is set as both attributes and inline style so a stylesheet rule on
-    /// `img` cannot collapse the box and, with it, `object-fit`.
+    /// The size is set as both attributes and the `floor-map-swatch__image` class (from
+    /// the `--floor-map-swatch__size` custom property, floor-map-swatch.css) so a
+    /// stylesheet rule on `img` cannot collapse the box and, with it, `object-fit`.
     ///
     /// The URL is document-controlled data going into `innerHTML`, so it
     /// is escaped; an unescaped value (a stray quote) would allow attribute
@@ -182,8 +183,8 @@ public final class FloorMapSwatchHtml {
         return SafeHtmlUtils.fromTrustedString(
                 "<img src=\"" + SafeHtmlUtils.htmlEscape(url) + "\""
                 + " width=\"" + sizePx + "\" height=\"" + sizePx + "\""
-                + " style=\"width:" + sizePx + "px;height:" + sizePx + "px;"
-                + "object-fit:contain;\" alt=\"\"/>");
+                + " class=\"floor-map-swatch__image\""
+                + " style=\"--floor-map-swatch__size:" + sizePx + "px;\" alt=\"\"/>");
     }
 
     /// An inline-SVG preview of `shape` filled with `colour`.
@@ -213,7 +214,7 @@ public final class FloorMapSwatchHtml {
 
     /// The inner SVG for a shape centred on the origin and spanning
     /// `±extent`. Mirrors the canvas's dispatch in
-    /// `FloorMapCanvasViewImpl.appendStyledGlyph`.
+    /// `FloorMapCanvas.appendStyledGlyph`.
     private static String shapeSvg(final Shape shape, final String fill, final double extent) {
         if (shape == null) {
             // The fallback graphic for an unconfigured layer is a rounded rect.

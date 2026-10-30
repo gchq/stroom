@@ -166,14 +166,6 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         this.tree = tree;
     }
 
-    /**
-     * Returns the {@link NodeExtentProvider} used by this
-     * {@link AbegoTreeLayout}.
-     */
-    public NodeExtentProvider<TreeNode> getNodeExtentProvider() {
-        return nodeExtentProvider;
-    }
-
     private double getNodeHeight(final TreeNode node) {
         return nodeExtentProvider.getExtents(node).getHeight();
     }
@@ -289,7 +281,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      *
      * @return [level > 0]
      */
-    public int getLevelCount() {
+    private int getLevelCount() {
         return sizeOfLevel.size();
     }
 
@@ -304,7 +296,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * @param level
      * @return the size of the level [level >= 0 && level < levelCount]
      */
-    public double getSizeOfLevel(final int level) {
+    private double getSizeOfLevel(final int level) {
         Contract.checkArg(level >= 0, "level must be >= 0");
         Contract.checkArg(level < getLevelCount(), "level must be < levelCount");
 

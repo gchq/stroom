@@ -47,7 +47,7 @@ public class FloorMapObject {
     /// matrix — at this object's live position, instead of the generic type
     /// glyph.
     ///
-    /// Purely a client-side decoration set by the canvas presenter; never
+    /// Purely a client-side decoration set by the canvas controller; never
     /// serialised to the server. `null` when the entity has no
     /// image-bearing fact.
     private Fact imageFact;
@@ -118,7 +118,7 @@ public class FloorMapObject {
     }
 
     /// Attaches (or clears, with `null`) the image-bearing fact twin.
-    /// Only set by the client-side canvas presenter; never serialised.
+    /// Only set by the client-side canvas controller; never serialised.
     public void setImageFact(final Fact imageFact) {
         this.imageFact = imageFact;
     }

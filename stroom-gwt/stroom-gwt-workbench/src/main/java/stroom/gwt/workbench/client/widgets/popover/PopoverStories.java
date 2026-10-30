@@ -21,11 +21,11 @@ import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
+import stroom.widget.tooltip.client.component.InfoTooltip;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 /// Stories for Stroom's anchored popover.
 ///
 /// The popover is the shell behind the info tooltips of Stroom's monitoring screens, which show a
-/// [TooltipPresenter] (an auto-hiding `POPUP`) at a `PopupPosition` beside a rect.
+/// [InfoTooltipController] (an auto-hiding `POPUP`) at a `PopupPosition` beside a rect.
 public final class PopoverStories {
 
     private static final String ON_CLOSE = "onClose";
@@ -53,16 +53,16 @@ public final class PopoverStories {
                 .story("Default", context -> {
                     final Spy onClose = context.fn(ON_CLOSE);
                     final StoryPopups popups = StoryPopups.create(context);
-                    final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(),
-                            new TooltipViewImpl());
+                    final InfoTooltipController infoTooltip = new InfoTooltipController(popups.getEventBus(),
+                            new InfoTooltip());
                     popups.addCleanUp(popups.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
-                        if (event.getPresenterWidget() == tooltipPresenter) {
+                        if (event.getController() == infoTooltip) {
                             onClose.call();
                         }
                     })::removeHandler);
                     // An anchor {left: 100, top: 100, right: 120, bottom: 120}, to the right as
                     // InfoColumn asks
-                    tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>Anchored panel body</div>"),
+                    infoTooltip.show(SafeHtmlUtils.fromSafeConstant("<div>Anchored panel body</div>"),
                             new PopupPosition(new Rect(100, 120, 100, 120), PopupLocation.RIGHT));
                     return new FlowPanel();
                 })

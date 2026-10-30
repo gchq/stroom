@@ -26,14 +26,14 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
 /// The `App/IdP/ResetPassword` stories, showing Stroom's real password reset page
-/// (`ResetPasswordPresenter`, served for `/resetPassword?token=…` from an emailed link) with fake
+/// (`ResetPasswordController`, served for `/resetPassword?token=…` from an emailed link) with fake
 /// REST replies. It asks for the new password with the 'Change Password' dialog (captioned 'Reset
 /// Password').
 ///
@@ -45,7 +45,7 @@ import java.util.Map;
 /// | `Window.Location.replace("/signIn?error=login_required")` (`IdpPage.ON_NAVIGATE`) | back to sign in |
 public final class ResetPasswordStories {
 
-    // ResetPasswordPresenter.SIGN_IN_URL
+    // ResetPasswordController.SIGN_IN_URL
     private static final String SIGN_IN_URL = "/signIn?error=login_required";
     private static final String CAPTION = "Reset Password";
     private static final String STRONG = "Tr0ub4dour&3xtra";
@@ -170,6 +170,6 @@ public final class ResetPasswordStories {
                 ? Map.of()
                 : Map.of("token", token);
         return SignInPages.render(context, fixtures, null, parameters, ResetPasswordStories::signInMarker, false,
-                (injector, harness) -> injector.getResetPasswordPresenter());
+                (injector, harness) -> injector.getResetPasswordController());
     }
 }

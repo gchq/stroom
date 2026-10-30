@@ -18,7 +18,9 @@
    Toolbars (stroom.widget.button.client.Toolbar, ToolbarRow and ToolbarSeparator), named BEM style
    (block, block__element, block--modifier); states come from ARIA attributes, not modifiers.
 
-   The buttons inside are icon buttons, styled by stroom-button.css.
+   The buttons inside are icon buttons, styled by toolbar-button.css, as are the looks this block's
+   modifiers give them (toolbar--quiet, toolbar--control, toolbar--text-colour); a row of toolbars
+   is toolbar-row.css.
 */
 
 /* A named group of buttons that sit together, one tab stop */
@@ -33,128 +35,16 @@
     flex-direction: column;
 }
 
-/* A toolbar's icon button (ToolbarButton, ToolbarToggleButton). Its hover, pressed and focus fill
-   and border are drawn by ::before, under its icon; its states come from aria-pressed and
-   aria-disabled. It uses the icon button colours of the theme. It is 24px, the smallest target
-   WCAG 2.5.8 (Target Size, Minimum) allows. */
-.toolbar-button {
-    position: relative;
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    border-radius: .25rem;
-    outline: none;
-    background-color: transparent;
-    cursor: pointer;
-}
-
-.toolbar-button::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: .25rem;
-}
-
-.toolbar-button:hover::before {
-    background-color: var(--icon-button__background-color--hover);
-    border: thin solid var(--icon-button__border-color--hover);
-}
-
-.toolbar-button[aria-pressed="true"]::before {
-    background-color: var(--icon-button__background-color--on);
-    border: thin solid var(--icon-button__border-color--on);
-}
-
-/* Pressed with the mouse (:active), and still held with the pointer moved off it, when letting go
-   won't click it; a button that is on darkens its fill instead */
-.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active::before {
-    background-color: var(--icon-button__background-color--active);
-    border: none;
-}
-
-.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active:not(:hover)::before {
-    background-color: var(--icon-button__background-color--active-outside);
-}
-
-.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active::before {
-    background-image: linear-gradient(rgba(0, 0, 0, .2), rgba(0, 0, 0, .2));
-}
-
-.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active:not(:hover)::before {
-    background-image: linear-gradient(rgba(0, 0, 0, .1), rgba(0, 0, 0, .1));
-}
-
-.toolbar-button[aria-disabled="true"] {
-    opacity: var(--disabled-opacity);
-    cursor: default;
-}
-
-.toolbar-button[aria-disabled="true"]::before {
-    background-color: transparent;
-    border: none;
-}
-
-/* A disabled button that is pressed still shows that it is pressed (the whole button is dimmed) */
-.toolbar-button[aria-pressed="true"][aria-disabled="true"]::before {
-    background-color: var(--icon-button__background-color--on);
-    border: thin solid var(--icon-button__border-color--on);
-}
-
-/* Keyboard focus, but not the focus a mouse press gives (ToolbarButton marks it data-pointer-focus,
-   as it focuses itself from code, which the browser treats as keyboard focus) */
-.toolbar-button:focus-visible:not([data-pointer-focus]) {
-    box-shadow: var(--focus-shadow);
-}
-
-.toolbar-button:focus-visible:not([data-pointer-focus])::before {
-    border: thin solid var(--focus-border) !important;
-}
-
-/* The icon, above the fill */
-.toolbar-button__icon {
-    position: relative;
-    width: 18px;
-    height: 18px;
-    color: var(--icon-button__color);
-}
-
-/* A pressed button's icon has its colours flipped */
-.toolbar-button[aria-pressed="true"] .toolbar-button__icon {
-    --icon-colour__black: var(--icon-colour__black__on);
-    --icon-colour__white: var(--icon-colour__white__on);
-    color: var(--page__background-color);
-}
-
 /* The explorer's toolbar, without margins, as it sits in the explorer's own row (its buttons take
-   the explorer's colours, as all buttons in the explorer do: see .navigation in components.css) */
+   the explorer's colours, as all buttons in the explorer do: see explorer.css) */
 .toolbar--navigation {
     margin: 0;
 }
 
-/* Quieter buttons, in the text colour and faded until disabled (which fades them in its own way),
-   e.g. the application's toolbar and Ask Stroom AI's */
-.toolbar--quiet .toolbar-button:not([aria-disabled="true"]) {
-    opacity: 0.6;
-}
-
-.toolbar--quiet .toolbar-button__icon {
-    color: var(--button__text-color);
-}
-
 /* A toolbar inside a form control (e.g. a search box's options), without margins and with its icons
-   in the control's text colour */
+   in the control's text colour (toolbar-button.css) */
 .toolbar--control {
     margin: 0;
-}
-
-.toolbar--control .toolbar-button__icon {
-    color: var(--control__text-color);
 }
 
 /* For now, a toolbar that a document's tab adds to its document's toolbar
@@ -174,9 +64,7 @@
     background-color: var(--border-color);
 }
 
-/* A row of toolbars, spread across it: the first at the start, the last at the end */
-.toolbar-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* A toolbar pushed to the end of its row, e.g. a floor map editor's help toolbar */
+.toolbar--end {
+    margin-left: auto;
 }

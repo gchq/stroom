@@ -24,13 +24,14 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.floormap.client.presenter.FloorMapInitPresenter;
-import stroom.floormap.client.presenter.FloorMapPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.floormap.client.component.FloorMapEditor;
+import stroom.floormap.client.component.NewFloorMapStoresController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -44,34 +45,39 @@ import javax.inject.Singleton;
 
 /// Document plugin for [FloorMapDoc] documents.
 /// Handles loading and saving floor map documents via the REST API
-/// and provides the editor presenter for the content manager.
+/// and provides the editor controller for the content manager.
 @Singleton
 public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     private static final FloorMapResource FLOOR_MAP_RESOURCE = GWT.create(FloorMapResource.class);
 
-    private final Provider<FloorMapPresenter> editorProvider;
-    private final Provider<FloorMapInitPresenter> initPresenterProvider;
+    private final EventBus eventBus;
+    private final Provider<FloorMapEditor> editorProvider;
+    private final Provider<NewFloorMapStoresController> initProvider;
+    private final AppRoot appRoot;
     private final RestFactory restFactory;
 
     @Inject
     public FloorMapPlugin(final EventBus eventBus,
-                          final Provider<FloorMapPresenter> editorProvider,
-                          final Provider<FloorMapInitPresenter> initPresenterProvider,
+                          final Provider<FloorMapEditor> editorProvider,
+                          final Provider<NewFloorMapStoresController> initProvider,
+                          final AppRoot appRoot,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
-        this.initPresenterProvider = initPresenterProvider;
+        this.initProvider = initProvider;
+        this.appRoot = appRoot;
         this.restFactory = restFactory;
     }
 
     /// {@inheritDoc}
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), FloorMapDoc.TYPE);
     }
 
     /// Loads a [FloorMapDoc] from the server by fetching it via the
@@ -149,15 +155,14 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     /// {@inheritDoc}
     ///
-    /// Returns a [FloorMapInitPresenter] that prompts the user
-    /// to select Facts Store and Events Store references before the
-    /// FloorMap editor opens.
+    /// Returns a handler that shows a [NewFloorMapStoresController], made for one use, prompting the
+    /// user to select Facts Store and Events Store references before the FloorMap editor opens.
     ///
-    /// @return a non-null initialisation handler; each call returns a
-    ///         new instance from the injected provider
+    /// @return a non-null initialisation handler
     @Override
     public DocInitialisationHandler getInitialisationHandler() {
-        return initPresenterProvider.get();
+        return (docRef, onComplete, taskMonitorFactory) ->
+                initProvider.get().show(appRoot, docRef, onComplete, taskMonitorFactory);
     }
 
     @Override

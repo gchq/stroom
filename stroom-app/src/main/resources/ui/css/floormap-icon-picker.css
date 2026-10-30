@@ -15,7 +15,7 @@
  */
 
 /*
-   The floor map's icon picker (stroom.floormap.client.view.FloorMapIconPicker), the BEM block
+   The floor map's icon picker (stroom.floormap.client.component.FloorMapIconPicker), the BEM block
    floormap-icon-picker: a radio group (role="radiogroup") of its icons (floormap-icon-picker__cell, a
    label), each holding an unseen native radio button (__input), its picture (__glyph) and its name
    (__label). The chosen and focused looks are drawn from the radio button's state.
@@ -25,7 +25,7 @@
  * Built-in icon grid. Wider than the 260px the dialog gives its single-control
  * rows — five columns is what lets every icon's name sit under it unabbreviated,
  * and a grid of unlabelled pictograms would make the user guess which is which.
- * Its width comes from --floormap-style-control-width (stroom-floormap.css).
+ * Its width comes from --floor-map-layer-style__control-width (floor-map-layer-style.css).
  */
 .floormap-icon-picker {
     display: grid;

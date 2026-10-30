@@ -1,0 +1,71 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.security.client.component;
+
+import stroom.content.client.component.ContentTabController;
+import stroom.docref.DocRef;
+import stroom.svg.shared.SvgImage;
+
+import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Inject;
+
+/// A document's permissions ([DocumentUserPermissionsTabController]) in a main content tab of its own.
+public class DocumentUserPermissionsContentTabController extends ContentTabController {
+
+    /// The tab's type, its own (not Batch Document Permissions'), so a tab session doesn't reopen it
+    /// as the batch screen; with no plugin to open it again, a tab session skips it.
+    public static final String TAB_TYPE = "DocumentUserPermissions";
+
+    private final DocumentUserPermissionsTabController permissions;
+    private DocRef docRef;
+
+    /// Made by GIN.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param permissions The permissions.
+    @Inject
+    public DocumentUserPermissionsContentTabController(final EventBus eventBus,
+                                                       final DocumentUserPermissionsTabController permissions) {
+        super(eventBus);
+        this.permissions = own(permissions);
+        initWidget(permissions.asWidget());
+    }
+
+    /// Lists the permissions on a document.
+    ///
+    /// @param docRef The document.
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
+        permissions.setDocRef(docRef);
+    }
+
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.LOCKED;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Permissions For '" + docRef.getDisplayValue() + "'";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+}

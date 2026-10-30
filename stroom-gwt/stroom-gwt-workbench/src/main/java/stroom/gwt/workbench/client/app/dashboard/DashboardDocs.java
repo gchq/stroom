@@ -21,7 +21,7 @@ package stroom.gwt.workbench.client.app.dashboard;
 ///
 /// Every dashboard but the legacy one has the model version `7.2.0` that Stroom saves: Stroom
 /// treats a dashboard without one as legacy and adds a 'Params' input to it
-/// (`DashboardPresenter.onRead`).
+/// (`DashboardBodyController.read`).
 public final class DashboardDocs {
 
     // Every layout has a preferred size, as Stroom saves them (SIZELESS_THREE_PANEL leaves them out:
@@ -145,7 +145,7 @@ public final class DashboardDocs {
             table("t1", "T", "q1", NAME_FIELD, ""));
 
     /// GWT-only: a component of a type Stroom doesn't know (e.g. from a newer version), with no
-    /// settings, which Stroom shows as an `UnknownComponentPresenter`.
+    /// settings, which Stroom shows as an `UnknownPaneController`.
     public static final String UNKNOWN_COMPONENT_DASHBOARD = doc("dash-unknown", "Unknown Component", null,
             "\"designMode\": false",
             tabs(0, "m1"),

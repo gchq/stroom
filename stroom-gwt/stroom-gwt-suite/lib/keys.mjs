@@ -47,7 +47,7 @@ export function ctrlEnterVerdict({ keyOutcome, okOutcome, keySaid, aceFocused, o
   if (okBlocked || keyBlocked) return { verdict: 'unchecked', why: 'the guard blocked one of the two writes' };
   const said = keySaid?.text ? ` — it showed "${String(keySaid.text).slice(0, 70)}"` : '';
   // The contract is that Ctrl+Enter reaches `onDialogAction(OK)`, which is the very method the OK
-  // button's own @UiHandler calls (ResizableOkCancelContent:62-79). It is NOT that the two produce
+  // button's own @UiHandler calls (ResizableOkCancelContent:62-79; now OkCancelContent's setOnClick). It is NOT that the two produce
   // the same outcome: they are pressed in sequence, and the first is undone and re-synced before
   // the second, so a flow's dialog can legitimately answer them differently — `Create Processors`
   // opens a pipeline chooser for one and closes for the other. What the contract forbids is the
@@ -69,7 +69,7 @@ export function ctrlEnterVerdict({ keyOutcome, okOutcome, keySaid, aceFocused, o
 export function escapeVerdict({ before, after, said, aceFocused = false }) {
   // The panel skips key handling outright when the target is the ACE editor, so a dialog that
   // focuses its editor on show owes nothing here. `Set Expression For '…'` and `Filter '…'` both do
-  // (`ColumnFunctionEditorPresenter:135`, `ColumnFilterPresenter:57`).
+  // (`ColumnFunctionEditorController`, `ColumnFilterPresenter:57`).
   if (after === before && aceFocused) {
     return { verdict: 'unchecked', why: 'focus was in an ACE editor — the panel excludes it' };
   }

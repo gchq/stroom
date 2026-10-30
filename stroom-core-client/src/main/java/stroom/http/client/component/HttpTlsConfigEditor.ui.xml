@@ -1,0 +1,62 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An HTTP client's TLS settings -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
+    <g:FlowPanel styleName="max form-padding form http-tls-config-editor">
+        <form:FormGroup identity="httpTlsConfigProtocol"
+                        label="Protocol"
+                        helpText="The TLS protocol used to create the secure connection, e.g. TLSv1.2. Default is TLSv1.3."
+                        screenReaderText="TLS protocol name. Default is TLSv1.3.">
+            <form:TextBox ui:field="protocol" addStyleNames="http-tls-config-editor__text"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigProvider"
+                        label="Provider"
+                        helpText="The name of the Java security provider to use for TLS, e.g. SunJSSE. Leave blank to use the Java default."
+                        screenReaderText="Leave blank for the Java default.">
+            <form:TextBox ui:field="provider" addStyleNames="http-tls-config-editor__text"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigKeyStore"
+                        label="Key Store"
+                        helpText="Key store credentials holding the client certificate and private key, for servers that require a client certificate. Leave blank if none is needed."
+                        screenReaderText="Client certificate for mutual TLS. Leave blank if not needed.">
+            <l:SelectionBox ui:field="keyStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigTrustStore"
+                        label="Trust Store"
+                        helpText="Key store credentials holding the certificates used to trust the server. Leave blank to use the Java default trust store."
+                        screenReaderText="Leave blank for the Java default trust store.">
+            <l:SelectionBox ui:field="trustStore"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Trust a server certificate that is self-signed (one with no issuing certificate authority), even if it is not in the Trust Store. Other certificates must still be trusted by the Trust Store. Default is not ticked.">
+            <tickbox:TickBox ui:field="trustSelfSignedCertificates"
+                             identity="httpTlsConfigTrustSelfSignedCertificates"
+                             label="Trust Self Signed Certificates"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Check that the host name in the server's certificate matches the host being connected to. Untick only for testing, as it makes the connection less secure. Default is ticked.">
+            <tickbox:TickBox ui:field="verifyHostname"
+                             identity="httpTlsConfigVerifyHostname"
+                             label="Verify Host Name"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigSupportedProtocols"
+                        label="Supported Protocols"
+                        helpText="The TLS protocol versions that may be used, one per line, e.g. TLSv1.2. Leave blank to allow the Java defaults."
+                        screenReaderText="One per line, e.g. TLSv1.2. Blank allows Java defaults.">
+            <form:TextArea ui:field="supportedProtocols" addStyleNames="http-tls-config-editor__text"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigSupportedCiphers"
+                        label="Supported Ciphers"
+                        helpText="The cipher suites that may be used, one per line, e.g. TLS_AES_256_GCM_SHA384. Leave blank to allow the Java defaults."
+                        screenReaderText="One per line. Blank allows Java defaults.">
+            <form:TextArea ui:field="supportedCiphers" addStyleNames="http-tls-config-editor__text"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigCertAlias"
+                        label="Certificate Alias"
+                        helpText="The alias of the client certificate to use when the key store holds more than one. Leave blank to choose automatically."
+                        screenReaderText="Needed only if the key store has several certificates.">
+            <form:TextBox ui:field="certAlias" addStyleNames="http-tls-config-editor__text"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

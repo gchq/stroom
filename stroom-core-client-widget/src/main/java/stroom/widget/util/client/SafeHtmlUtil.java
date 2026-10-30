@@ -20,7 +20,7 @@ import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -183,26 +183,41 @@ public class SafeHtmlUtil {
         }
     }
 
-    /**
-     * @return Text coloured grey if enabled is false
-     */
+    /// @param string  The text, or null.
+    /// @param enabled Whether what it describes is enabled.
+    /// @return The text, in the muted text colour if what it describes isn't enabled (see
+    ///         [#getMutedText(String)]).
     public static SafeHtml getSafeHtml(final String string, final boolean enabled) {
         if (enabled) {
             return getSafeHtml(string);
         }
-        return getColouredText(string, "grey");
+        return getMutedText(string);
     }
 
-    /**
-     * @param trustedColour Must be trusted and known at compile time
-     * @return Text coloured grey if enabled is false
-     */
+    /// Text in the muted text colour, e.g. a grid row that doesn't match a filter
+    /// (`coloured-text--muted`, coloured-text.css).
+    ///
+    /// @param text The text, or null.
+    /// @return The text, muted.
+    public static SafeHtml getMutedText(final String text) {
+        // The theme's muted text colour, which is 4.5:1 on grid rows in both themes
+        return getTemplate().spanWithClass("coloured-text coloured-text--muted",
+                SafeHtmlUtil.getSafeHtml(text));
+    }
+
+    /// Text in a colour of its own (`coloured-text`, coloured-text.css, which reads the colour from
+    /// its `--coloured-text__colour` custom property).
+    ///
+    /// @param text          The text, or null.
+    /// @param trustedColour The colour, a CSS colour that must be trusted and known at compile time
+    ///                      (e.g. `var(--text-color--muted)`), or null or empty for none.
+    /// @return The text, coloured.
     public static SafeHtml getColouredText(final String text, final String trustedColour) {
         if (NullSafe.isEmptyString(trustedColour)) {
             return getSafeHtml(text);
         } else {
-            return getTemplate().spanWithStyle(
-                    new SafeStylesBuilder().trustedColor(trustedColour).toSafeStyles(),
+            return getTemplate().colouredText(
+                    SafeStylesUtils.fromTrustedString("--coloured-text__colour:" + trustedColour + ";"),
                     SafeHtmlUtil.getSafeHtml(text));
         }
     }
@@ -423,22 +438,13 @@ public class SafeHtmlUtil {
         @SafeHtmlTemplates.Template("<div title=\"{0}\">{1}</div>")
         SafeHtml divWithTitle(String title, SafeHtml inner);
 
-        @SafeHtmlTemplates.Template("<div style=\"{0}\">{1}</div>")
-        SafeHtml divWithStyle(SafeStyles style, SafeHtml inner);
-
         @SafeHtmlTemplates.Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
         SafeHtml divWithClassAndTitle(String className, String title, SafeHtml inner);
-
-        @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\">{3}</div>")
-        SafeHtml divWithClassStyleAndTitle(String className, SafeStyles style, String title, SafeHtml inner);
-
-        @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml divWithClassAndStyle(String className, SafeStyles style, SafeHtml inner);
 
         @SafeHtmlTemplates.Template("<span class=\"{0}\">{1}</span>")
         SafeHtml spanWithClass(String className, SafeHtml inner);
 
-        @SafeHtmlTemplates.Template("<span style=\"{0}\">{1}</span>")
-        SafeHtml spanWithStyle(SafeStyles style, SafeHtml inner);
+        @SafeHtmlTemplates.Template("<span class=\"coloured-text\" style=\"{0}\">{1}</span>")
+        SafeHtml colouredText(SafeStyles colour, SafeHtml inner);
     }
 }

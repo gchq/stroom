@@ -20,29 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pathways.client.PathwaysPlugin;
 import stroom.pathways.client.TracesDocPlugin;
 import stroom.pathways.client.TracesPlugin;
-import stroom.pathways.client.presenter.ConstraintEditPresenter;
-import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
-import stroom.pathways.client.presenter.PathwayEditPresenter;
-import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
-import stroom.pathways.client.presenter.PathwayTreePresenter;
-import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
-import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.PathwaysSettingsPresenter;
-import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter;
-import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
-import stroom.pathways.client.presenter.TracesListTabPresenter;
-import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
-import stroom.pathways.client.presenter.TracesPresenter;
-import stroom.pathways.client.presenter.TracesSettingsPresenter;
-import stroom.pathways.client.presenter.TracesSettingsPresenter.TracesSettingsView;
-import stroom.pathways.client.view.ConstraintEditViewImpl;
-import stroom.pathways.client.view.PathwayEditViewImpl;
-import stroom.pathways.client.view.PathwayTreeViewImpl;
-import stroom.pathways.client.view.PathwaysSettingsViewImpl;
-import stroom.pathways.client.view.PathwaysSplitViewImpl;
-import stroom.pathways.client.view.TracesSettingsViewImpl;
-import stroom.pathways.client.view.TracesViewImpl;
 
 public class PathwaysModule extends PluginModule {
 
@@ -51,28 +28,5 @@ public class PathwaysModule extends PluginModule {
         bindPlugin(PathwaysPlugin.class);
         bindPlugin(TracesPlugin.class);
         bindPlugin(TracesDocPlugin.class);
-        bind(PathwaysPresenter.class);
-        bindPresenterWidget(PathwaysSettingsPresenter.class,
-                PathwaysSettingsView.class,
-                PathwaysSettingsViewImpl.class);
-        bindPresenterWidget(PathwayEditPresenter.class,
-                PathwayEditView.class,
-                PathwayEditViewImpl.class);
-        bindPresenterWidget(PathwaysSplitPresenter.class,
-                PathwaysSplitView.class,
-                PathwaysSplitViewImpl.class);
-        bindPresenterWidget(PathwayTreePresenter.class,
-                PathwayTreeView.class,
-                PathwayTreeViewImpl.class);
-        bind(TracesPresenter.class);
-        bindPresenterWidget(TracesSettingsPresenter.class,
-                TracesSettingsView.class,
-                TracesSettingsViewImpl.class);
-        bindPresenterWidget(TracesListTabPresenter.class,
-                TracesView.class,
-                TracesViewImpl.class);
-        bindPresenterWidget(ConstraintEditPresenter.class,
-                ConstraintEditView.class,
-                ConstraintEditViewImpl.class);
     }
 }

@@ -18,16 +18,15 @@ package stroom.receive.rules.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.rules.client.presenter.DataRetentionPresenter;
+import stroom.receive.rules.client.component.DataRetentionController;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.MenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -37,15 +36,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter> {
+public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionController> {
 
     @Inject
     public DataRetentionPlugin(final EventBus eventBus,
                                final ContentManager eventManager,
-                               final Provider<DataRetentionPresenter> presenterProvider,
+                               final Provider<DataRetentionController> controllerProvider,
                                final ClientSecurityContext securityContext,
                                final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -78,6 +77,6 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
 
     @Override
     public String getType() {
-        return DataRetentionPresenter.TAB_TYPE;
+        return DataRetentionController.TAB_TYPE;
     }
 }

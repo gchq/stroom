@@ -17,13 +17,13 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.documentation.client.presenter.DocumentationPresenter;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/DocumentationEditor` stories, showing Stroom's real [DocumentationPresenter] (a
+/// The `App/Editors/DocumentationEditor` stories, showing Stroom's real [DocumentationEditor] (a
 /// Documentation document's tab: Documentation and Permissions, with Save, Save As and Download)
 /// with fake REST replies.
 ///
@@ -54,12 +54,12 @@ public final class DocumentationEditorStories {
                     "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
             .build();
 
-    // The preview is an iframe with no title, identified by its id (MarkdownEditPresenter's
+    // The preview is an iframe with no title, identified by its id (DocumentationTabController's
     // MARKDOWN_FRAME_ID)
     private static final String PREVIEW = "iframe#markdown-frame";
 
-    // Stroom's Ace editor has a text area with the class ace_text-input too
-    private static final String ACE_INPUT = ".ace_text-input";
+    // Stroom's Ace editor (its text area, ace_text-input, is transparent, so never visible)
+    private static final String ACE_EDITOR = ".ace_editor";
     // The Help with Documentation button's name, which says that it opens a new browser tab
     private static final String HELP_BUTTON = "Help with Documentation (opens in new tab)";
 
@@ -94,12 +94,26 @@ public final class DocumentationEditorStories {
                 .withPlay(play -> {
                     final Query edit = play.findByRole("button", "Edit Documentation");
                     play.expect(play.getByRole("button", HELP_BUTTON)).toBeInTheDocument();
-                    // Loads in preview mode (non-blank body): no Ace editor, Edit not pressed
+                    // Loads in preview mode (non-blank body): the Ace editor is hidden (it is declared,
+                    // so it is in the page, but not shown or reachable), Edit not pressed
                     play.expect(edit).toHaveAttribute("aria-pressed", "false");
-                    play.expect(play.querySelector(ACE_INPUT)).toBeNull();
+                    play.expect(play.querySelector(ACE_EDITOR)).not().toBeVisible();
                     play.click(edit);
-                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
                     play.expect(edit).toHaveAttribute("aria-pressed", "true");
+                    DocEditors.expectNoProblems(play);
+                })
+                // Typing in the Markdown makes the document changed, so Save is enabled
+                .story("TypingEnablesSave", context -> render(context, false))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.findByRole("button", "Edit Documentation"));
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_text-input")).toHaveFocus());
+                    play.keyboard("More");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only (no EDIT permission): the preview shows, the markdown toolbar is hidden
@@ -120,7 +134,7 @@ public final class DocumentationEditorStories {
         final DocumentationResource resource = GWT.create(DocumentationResource.class);
         return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getDocumentationPresenter(),
+                injector.getDocumentationEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

@@ -16,13 +16,13 @@
 
 package stroom.content.client.event;
 
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.Layer;
+import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
@@ -31,20 +31,20 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     private static Type<OpenContentTabHandler> TYPE;
     private final TabData tabData;
     private final Layer layer;
-    private final MyPresenterWidget<?> presenter;
-    private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
+    private final Controller controller;
+    private final Consumer<Controller> callbackOnOpen;
 
-    private OpenContentTabEvent(final TabData tabData, final Layer layer, final MyPresenterWidget<?> presenter,
-                                final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+    private OpenContentTabEvent(final TabData tabData, final Layer layer, final Controller controller,
+                                final Consumer<Controller> callbackOnOpen) {
         this.tabData = tabData;
         this.layer = layer;
-        this.presenter = presenter;
+        this.controller = controller;
         this.callbackOnOpen = callbackOnOpen;
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData, final Layer layer,
-            final MyPresenterWidget<?> presenter, final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
-        handlers.fireEvent(new OpenContentTabEvent(tabData, layer, presenter, callbackOnOpen));
+            final Controller controller, final Consumer<Controller> callbackOnOpen) {
+        handlers.fireEvent(new OpenContentTabEvent(tabData, layer, controller, callbackOnOpen));
     }
 
     public static Type<OpenContentTabHandler> getType() {
@@ -73,8 +73,8 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     }
 
     public void runCallbackOnOpen() {
-        if (presenter != null && callbackOnOpen != null) {
-            callbackOnOpen.accept(presenter);
+        if (controller != null && callbackOnOpen != null) {
+            callbackOnOpen.accept(controller);
         }
     }
 

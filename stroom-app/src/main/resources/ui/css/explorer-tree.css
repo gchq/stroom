@@ -13,81 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- .explorerTree {
+
+/* The explorer's tree (ExplorerTree): its grid, which fills it */
+.explorer-tree__grid {
     width: 100%;
- }
-
-/* The explorer's type filter: its rows' cells draw their own height, but have room at their sides
-   for the focus ring drawn inside the row */
-.data-grid.type-filter .data-grid__cell > div {
-    padding-left: var(--row__padding--horizontal);
-    padding-right: var(--row__padding--horizontal);
 }
 
-/* The type filter's line under its All / None row, and the space below it the line it had (an <hr>)
-   left */
-.data-grid__row.type-filter__all {
-    border-bottom: 1px solid var(--text-color);
-    margin-bottom: 0.5em;
+/* What holds the explorer's tree, which its grid fills */
+.explorer-tree {
+	position: relative;
 }
-
-.explorerCell {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: var(--row__gap--horizontal);
-}
-
-.explorerCell-expander {
-	display: flex;
-}
-
-.explorerCell-expander svg {
-    width: .7rem;
-    height: .7rem;
-}
-
-.explorerCell-icon {
-	display: flex;
-	color: var(--icon-colour__foreground);
-}
-
-.explorerCell-icon svg {
-	width: var(--icon-width);
-	height: var(--icon-height)
-}
-
-.explorerCell-alert-icon.svgIcon {
-    left: 6px;
-    position: absolute;
-    display: block;
-    margin-top: -11px;
-	display: block;
-	color: var(--icon-colour__foreground);
-}
-
-.explorerCell-alert-icon.svgIcon.small svg {
-    width: calc(var(--icon-width) * 0.8);
-    height: calc(var(--icon-height) * 0.8);
-}
-
-.explorerCell-text {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
-	white-space: nowrap;
-}
-
-.explorerCell-icon-wrapper {
-    position: relative;
-}
-
-.explorerCell-filter-match .explorerCell-text {
-}
-
-.explorerCell-filter-no-match .explorerCell-text {
-    color: var(--navigation__text-color--no-match);
-}
-
-.explorerCell-filter-no-match .explorerCell-icon.svg-image {
-    opacity: 50%;
-}
-

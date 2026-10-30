@@ -24,10 +24,6 @@ dependencies {
 
     implementation libs.gin
     implementation libs.gwt.user
-    implementation(libs.gwtp.mvp.client) {
-        exclude(module: 'persistence-api')
-        exclude(module: 'gwtp-crawler-service')
-    }
 
     // SafeHtmlBuilder checks its HTML constants with gwt-dev's HTML parser on the JVM
     testImplementation libs.gwt.dev

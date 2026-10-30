@@ -16,6 +16,7 @@
 
 package stroom.widget.form.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -25,6 +26,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focus;
@@ -34,20 +36,22 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /// A choice of one of a few options, all shown: a WAI-ARIA radio group (`role="radiogroup"`) of
 /// native radio buttons, which share a name, so the browser makes the group one tab stop with the
 /// arrow keys moving between its options (and choosing as they move). Each option is labelled by
 /// its text. The group is named by its form group's label, or by [#setAccessibleName(String)].
 ///
-/// The BEM block `radio-group` (`radio-button.css`): its options (`radio-group__option`, a label),
-/// each holding its radio button (`radio-group__input`) and text (`radio-group__label`).
+/// The BEM block `radio-group` (`radio-group.css`, markup `RadioGroup.ui.xml`): its options
+/// (`radio-group__option`, a label), each holding its radio button (`radio-group__input`) and text
+/// (`radio-group__label`).
 ///
 /// @param <T> The type of the options' values.
 public class RadioGroup<T> extends Widget implements HasValue<T>, Focus {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "radio-group";
-    private static final String ROLE = "role";
     private static final String ARIA_LABEL = "aria-label";
 
     // The name the radio buttons share, which makes them one group to the browser
@@ -55,15 +59,19 @@ public class RadioGroup<T> extends Widget implements HasValue<T>, Focus {
     private final List<T> values = new ArrayList<>();
     private final List<InputElement> inputs = new ArrayList<>();
     private T value;
+    private Consumer<T> onChange;
 
     /// Makes an empty group. Add its options with [#addItem(Object, String)].
     public RadioGroup() {
-        final DivElement element = Document.get().createDivElement();
-        element.setClassName(BLOCK);
-        element.setAttribute(ROLE, "radiogroup");
-        setElement(element);
+        setElement(BINDER.createAndBindUi(this));
         // A radio button's change bubbles to the group
         sinkEvents(Event.ONCHANGE);
+    }
+
+    /// @param onChange Told the option chosen when the user chooses one (or `setValue(value, true)`
+    ///                 changes it), or null for nothing.
+    public void setOnChange(final Consumer<T> onChange) {
+        this.onChange = onChange;
     }
 
     /// Adds an option.
@@ -158,8 +166,11 @@ public class RadioGroup<T> extends Widget implements HasValue<T>, Focus {
         for (int i = 0; i < inputs.size(); i++) {
             inputs.get(i).setChecked(Objects.equals(values.get(i), value));
         }
-        if (fireEvents) {
-            ValueChangeEvent.fireIfNotEqual(this, oldValue, value);
+        if (fireEvents && !Objects.equals(oldValue, value)) {
+            ValueChangeEvent.fire(this, value);
+            if (onChange != null) {
+                onChange.accept(value);
+            }
         }
     }
 
@@ -179,5 +190,15 @@ public class RadioGroup<T> extends Widget implements HasValue<T>, Focus {
                 setValue(values.get(index), true);
             }
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Generic in its owner, as the group is
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<DivElement, RadioGroup> {
+
     }
 }

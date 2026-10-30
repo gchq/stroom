@@ -1,0 +1,56 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* ============================================================
+ * The timeline's settings popup (FloorMapTimelineSettings)
+ * ============================================================ */
+
+.floor-map-timeline-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+    min-width: 280px;
+}
+
+.floor-map-timeline-settings__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.floor-map-timeline-settings__label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.floor-map-timeline-settings__date-box {
+    flex: 1;
+    min-width: 160px;
+}
+
+/* Show All button row — right-aligned, separated from the date pickers by a divider */
+.floor-map-timeline-settings__show-all-row {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 6px;
+    margin-top: 2px;
+    border-top: 1px solid var(--border-color);
+}

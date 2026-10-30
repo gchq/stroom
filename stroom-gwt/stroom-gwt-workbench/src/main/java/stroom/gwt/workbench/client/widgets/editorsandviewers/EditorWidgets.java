@@ -16,18 +16,16 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
-import stroom.data.client.presenter.TextPresenter;
-import stroom.data.client.view.TextViewImpl;
-import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.view.EditorMenuPresenter;
-import stroom.editor.client.view.EditorViewImpl;
+import stroom.data.client.component.DataTextPaneController;
+import stroom.editor.client.DelegatingAceCompleter;
+import stroom.editor.client.component.AceEditorPaneController;
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.widget.preferences.client.CurrentPreferences;
 import stroom.widget.util.client.GlobalKeyHandler;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -48,29 +46,38 @@ public final class EditorWidgets {
         // Static utility
     }
 
-    /// Creates Stroom's real Ace editor presenter and view, as GIN would.
+    /// Creates Stroom's real code editor, a controller attached to its component, as Stroom's
+    /// screens make one.
     ///
     /// @param eventBus The event bus, on which the editor's context menu is shown.
-    /// @return The presenter.
-    public static EditorPresenter editorPresenter(final EventBus eventBus) {
-        return new EditorPresenter(
-                eventBus,
-                new EditorViewImpl(GWT.create(EditorViewImpl.Binder.class)),
-                new EditorMenuPresenter(),
-                getDelegatingAceCompleter(),
-                currentPreferences(),
-                new NoOpGlobalKeyHandler());
+    /// @return The editor's controller, whose widget is the editor.
+    public static CodeEditorController codeEditor(final EventBus eventBus) {
+        return codeEditorController(eventBus).attach(new CodeEditor());
     }
 
-    /// Creates Stroom's data [TextPresenter] (the editor used to show stream data), as GIN would.
+    /// Creates Stroom's code editor controller, as GIN would; it is given its editor when attached.
+    ///
+    /// @param eventBus The event bus, on which the editor's context menu is shown.
+    /// @return The controller.
+    public static CodeEditorController codeEditorController(final EventBus eventBus) {
+        return new CodeEditorController(
+                eventBus,
+                new AceEditorPaneController(
+                        eventBus,
+                        getDelegatingAceCompleter(),
+                        currentPreferences(),
+                        new NoOpGlobalKeyHandler()));
+    }
+
+    /// Creates the controller of Stroom's data text pane (the editor used to show stream data), as
+    /// GIN would, for its owner to attach to a pane.
     ///
     /// @param eventBus The event bus.
-    /// @return The presenter.
-    static TextPresenter textPresenter(final EventBus eventBus) {
-        return new TextPresenter(
+    /// @return The pane's controller.
+    static DataTextPaneController dataTextPane(final EventBus eventBus) {
+        return new DataTextPaneController(
                 eventBus,
-                new TextViewImpl(GWT.create(TextViewImpl.Binder.class)),
-                editorPresenter(eventBus));
+                () -> codeEditorController(eventBus));
     }
 
     /// An editor frame, a `<div>` with a fixed size and a

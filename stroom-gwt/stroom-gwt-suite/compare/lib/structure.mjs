@@ -75,7 +75,7 @@ const HELPERS = `
     return t;
   };
   const labelOf = (el) => {
-    const inner = el.querySelector && el.querySelector('.Button__text, .tab-bar__label');
+    const inner = el.querySelector && el.querySelector('.button__text, .tab-bar__label');
     if (inner) return norm(inner.textContent);
     return undouble(el.getAttribute && el.getAttribute('title') ? el.getAttribute('title') : el.textContent);
   };
@@ -357,7 +357,7 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
       // across every grid that opens sorted.
       const headLabel = (el) => {
         const c = el.cloneNode(true);
-        c.querySelectorAll('.column-sortOrder').forEach((n) => n.remove());
+        c.querySelectorAll('.sort-icon__order, .column-header__sort-order').forEach((n) => n.remove());
         return norm(c.textContent);
       };
       const columns = heads.map((el, i) => {
@@ -581,7 +581,7 @@ export async function readDialogs(page) {
         t.closest('[role=dialog]') ||
         t.closest('.dialog__layout, .dialog, .popupContent') ||
         t.parentElement;
-      const btns = [...root.querySelectorAll('button, [role=button], .Button')]
+      const btns = [...root.querySelectorAll('button, [role=button], .button')]
         .filter(visible)
         .map((b, i) => ({
           kind: 'button',
@@ -642,7 +642,7 @@ export async function closeDialogs(page, { attempts = 4 } = {}) {
           t.closest('[role=dialog]') ||
           t.closest('.dialog__layout, .dialog, .popupContent');
         if (!root) continue;
-        const btn = [...root.querySelectorAll('button, [role=button], .Button')].find((b) =>
+        const btn = [...root.querySelectorAll('button, [role=button], .button')].find((b) =>
           /^(cancel|close)$/i.test(labelOf(b)),
         );
         if (btn) btn.click();
@@ -665,7 +665,7 @@ async function clickInertPoint(page) {
   const pt = await page.evaluate(`(() => {
     const interactive = (el) =>
       !el ||
-      el.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorerCell, [role=tab], .tab-bar__tab, .cellTableRow, tr, [role=row], .dialog, .popupContent');
+      el.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorer-cell, [role=tab], .tab-bar__tab, .cellTableRow, tr, [role=row], .dialog, .popupContent');
     const W = window.innerWidth, H = window.innerHeight;
     for (const y of [H - 6, Math.round(H * 0.5), Math.round(H * 0.75)]) {
       for (const x of [Math.round(W * 0.5), W - 6, Math.round(W * 0.75)]) {
@@ -771,7 +771,7 @@ export async function resolveButtonPoint(page, buttonSelector, label) {
       // panel. So: click through inert cover, never through a control.
       const interactiveBlocker =
         at != null &&
-        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorerCell, [role=tab], .tab-bar__tab, .tab-bar--link, .link-tab-bar, .cellTableRow, tr, [role=row]');
+        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorer-cell, [role=tab], .tab-bar__tab, .tab-bar--link, .link-tab-bar, .cellTableRow, tr, [role=row]');
       return { found: true, hits, x, y, interactiveBlocker, blockedBy: hits ? '' : chain.join(' < ') };
     })()`,
   );
@@ -797,7 +797,7 @@ export async function dismissMenus(page) {
 /**
  * Double-click an explorer node by name and report WHICH node was actually opened.
  *
- * The adapter previously did `locator('.explorerCell', { hasText: name }).first()`. Playwright's
+ * The adapter previously did `locator('.explorer-cell', { hasText: name }).first()`. Playwright's
  * `hasText` is a SUBSTRING match, so that silently opens the first node merely *containing* the
  * name — and `.first()` hides the ambiguity entirely. B3 asked for "Example Solr Index" and opened
  * a GitRepo document; it manufactured no finding, but the trace was filed under the wrong
@@ -819,7 +819,7 @@ export async function dismissMenus(page) {
  * Converter's. It produced no false findings; it simply meant the type was never measured while
  * appearing covered.
  *
- * So: prefer the row whose `.explorerCell-icon[title]` is the wanted TYPE, and fall back to
+ * So: prefer the row whose `.explorer-cell__icon[title]` is the wanted TYPE, and fall back to
  * name-only when no type is given or nothing matches.
  */
 export async function openExplorerDoc(page, name, type) {
@@ -828,8 +828,8 @@ export async function openExplorerDoc(page, name, type) {
       ${HELPERS}
       const wanted = ${JSON.stringify(name)};
       const wantedType = ${JSON.stringify(type ?? null)};
-      const cells = [...document.querySelectorAll('.explorerCell')].filter(visible);
-      const typeOf = (e) => norm(e.querySelector('.explorerCell-icon')?.getAttribute('title'));
+      const cells = [...document.querySelectorAll('.explorer-cell')].filter(visible);
+      const typeOf = (e) => norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title'));
       const byType = wantedType
         ? cells.filter((e) => typeOf(e) === wantedType)
         : [];
@@ -855,7 +855,7 @@ export async function openExplorerDoc(page, name, type) {
       };
     })()`,
   );
-  if (!found) throw new Error(`no visible .explorerCell matching "${name}"`);
+  if (!found) throw new Error(`no visible .explorer-cell matching "${name}"`);
   // Re-read the point AFTER the scroll has settled. The rect above is taken in the same tick as
   // `scrollIntoView`, which is fine for a row already on screen and wrong for one that had to be
   // scrolled to — the click then lands on whatever row now occupies the old coordinates. Harmless
@@ -867,8 +867,8 @@ export async function openExplorerDoc(page, name, type) {
       ${HELPERS}
       const wanted = ${JSON.stringify(name)};
       const wantedType = ${JSON.stringify(type ?? null)};
-      const typeOf = (e) => norm(e.querySelector('.explorerCell-icon')?.getAttribute('title'));
-      const cells = [...document.querySelectorAll('.explorerCell')].filter(visible);
+      const typeOf = (e) => norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title'));
+      const cells = [...document.querySelectorAll('.explorer-cell')].filter(visible);
       const el = (wantedType ? cells.filter((e) => typeOf(e) === wantedType) : cells)
         .find((e) => norm(e.textContent) === wanted) || cells.find((e) => norm(e.textContent) === wanted);
       if (!el) return null;

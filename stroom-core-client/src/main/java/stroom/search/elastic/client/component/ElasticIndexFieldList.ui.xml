@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An Elastic index's fields, with a pager, and when they were last read -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="dock-container-vertical">
+        <g:SimplePanel styleName="dock-max">
+            <dg:PagerPanel>
+                <dg:DataGrid ui:field="dataGrid" tableName="Elastic Index Fields"/>
+            </dg:PagerPanel>
+        </g:SimplePanel>
+        <g:ScrollPanel styleName="dock-min">
+            <g:HTMLPanel styleName="elastic-index-field-list__status-message">
+                <span ui:field="status">Field list updated at: <span ui:field="updatedAt"/></span>
+            </g:HTMLPanel>
+        </g:ScrollPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

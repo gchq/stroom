@@ -17,7 +17,7 @@
 package stroom.explorer.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.event.shared.EventHandler;

@@ -15,10 +15,13 @@
  */
 
 /*
-   Tab bars (stroom.widget.tab.client.view.AbstractTabBar), named BEM style (block, block__element,
+   Tab bars (stroom.widget.tab.client.AbstractTabBar), named BEM style (block, block__element,
    block--modifier): the document tabs' curved bar (tab-bar--curved) and the link tabs' bar
    (tab-bar--link). States come from ARIA attributes and pseudo-classes, not modifiers: a selected
    tab is [aria-selected="true"], the tab stop [tabindex="0"], and keyboard focus :focus-visible.
+   The bar places its tabs and separators (--tab-bar__left on each); a tab that doesn't fit is
+   tab-bar__tab--hidden, and one that can't be closed tab-bar__tab--fixed. Its overflow selector is
+   a block of its own (tab-selector.css).
 */
 
 .tab-bar {
@@ -60,6 +63,7 @@
 /* The "|" between link tabs, with room either side for a focused tab's ring and its band */
 .tab-bar__separator {
     position: absolute;
+    left: var(--tab-bar__left, 0);
     top: 0;
     padding-left: 10px;
     padding-right: 10px;
@@ -70,8 +74,14 @@
 
 .tab-bar__tab {
     position: absolute;
-    left: 0;
+    left: var(--tab-bar__left, 0);
     top: 0;
+}
+
+/* A tab that doesn't fit, out of sight until it does (within the bar, to outweigh its look) */
+.tab-bar .tab-bar__tab--hidden {
+    visibility: hidden;
+    left: -1000px;
 }
 
 /* A document tab: an icon, its label, then its spinner or close cross */
@@ -178,6 +188,15 @@
     opacity: 1;
 }
 
+/* A document tab that can't be closed: no cross, and room after its label instead */
+.tab-bar__tab--fixed .tab-bar__close {
+    display: none;
+}
+
+.tab-bar--curved .tab-bar__tab--fixed .tab-bar__label {
+    padding-right: 20px;
+}
+
 /* A link tab: its label, drawn over an invisible bold copy (the sizer) that keeps its width the
    same when it is selected (bold) */
 .tab-bar--link .tab-bar__tab {
@@ -187,7 +206,7 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab,
-.dashboard__designMode .tab-bar--link .tab-bar__tab {
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab {
     cursor: pointer;
 }
 
@@ -197,9 +216,17 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab:hover,
-.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab:hover {
     opacity: 1;
     text-decoration: underline;
+}
+
+/* A dashboard's link tabs (DashboardBody) stay faded, even when selected or hovered */
+.dashboard-body .tab-bar--link .tab-bar__tab {
+    opacity: 0.8 !important;
+    color: var(--link-tab__text-color) !important;
+    transition: none;
+    -webkit-transition: none;
 }
 
 .tab-bar__sizer {
@@ -244,71 +271,6 @@
 }
 
 /* --------------------------------------------------------------------------------
-   The overflow selector, shown when some tabs don't fit: a button showing every tab in a menu */
-
-.tab-bar__selector {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    height: 34px;
-    color: var(--control__text-color);
-}
-
-.tab-bar--curved .tab-bar__selector {
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);
-    background-color: var(--curve-tab__background-color);
-    padding: 10px;
-    align-items: center;
-}
-
-.tab-bar--curved .tab-bar__selector:hover {
-    background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
-}
-
-.tab-bar--link .tab-bar__selector {
-    border: 1px solid transparent;
-    border-radius: .25rem;
-    background-color: transparent;
-    padding: 1px;
-}
-
-.tab-bar__selector-arrows {
-    display: flex;
-}
-
-.tab-bar--curved .tab-bar__selector-arrows svg {
-    width: 14px;
-    height: 11px;
-}
-
-.tab-bar--link .tab-bar__selector-arrows svg {
-    width: 11px;
-    height: 9px;
-}
-
-/* The number of tabs that don't fit */
-.tab-bar__selector-count {
-    white-space: nowrap;
-    user-select: none;
-}
-
-.tab-bar--curved .tab-bar__selector-count {
-    font-size: var(--font-size-11);
-    margin-left: 0.25em;
-    margin-top: 1em;
-}
-
-.tab-bar--link .tab-bar__selector-count {
-    font-size: var(--font-size-7);
-    margin-left: 2px;
-    margin-top: 6px;
-}
-
-/* --------------------------------------------------------------------------------
    Keyboard focus (not a mouse click's): a line in the focus colour with a band of it beside the
    line, as a focused control has */
 
@@ -335,15 +297,10 @@
     pointer-events: none;
 }
 
-.tab-bar__selector:focus-visible {
-    outline: none;
-    box-shadow: inset 0 0 0 1px var(--tab__focus-color), inset 0 0 0 5px var(--tab__focus-band-color);
-}
 
 /* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */
 @media (forced-colors: active) {
-    .tab-bar--curved .tab-bar__tab:focus-visible,
-    .tab-bar__selector:focus-visible {
+    .tab-bar--curved .tab-bar__tab:focus-visible {
         outline: 2px solid Highlight;
         outline-offset: -2px;
     }

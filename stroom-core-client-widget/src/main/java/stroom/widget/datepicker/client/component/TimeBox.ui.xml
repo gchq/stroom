@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A time box (TimeBox): a date-time box's look (date-time-box.css), with a clock that opens the
+     "Set Time" dialog -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <form:IconBox ui:field="iconBox" addStyleNames="date-time-box date-time-box--time" icon="HISTORY"
+                  opensDialog="true">
+        <form:field>
+            <form:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
+        </form:field>
+    </form:IconBox>
+</ui:UiBinder>

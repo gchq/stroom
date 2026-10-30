@@ -18,101 +18,69 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.ManageActivityPresenter;
-import stroom.annotation.client.AnnotationPresenter;
+import stroom.activity.client.component.ManageActivityController;
 import stroom.annotation.client.AnnotationResourceClient;
-import stroom.annotation.client.AnnotationTagPresenter;
-import stroom.annotation.client.BrowseAnnotationPresenter;
-import stroom.annotation.client.FindAnnotationPresenter;
-import stroom.cache.client.presenter.CachePresenter;
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.contentstore.client.presenter.ContentStorePresenter;
+import stroom.annotation.client.component.AnnotationTabs;
+import stroom.annotation.client.component.AnnotationTagsController;
+import stroom.annotation.client.component.BrowseAnnotationController;
+import stroom.annotation.client.component.FindAnnotationController;
+import stroom.cache.client.component.CachesController;
+import stroom.config.global.client.component.GlobalPropertyTabController;
+import stroom.content.client.component.ContentTabPaneController;
+import stroom.contentstore.client.component.ContentStoreTabController;
 import stroom.core.client.ContentManager;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupsController;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
-import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
-import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
-import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
-import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
-import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
-import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
+import stroom.document.client.component.CreateDocumentController;
+import stroom.explorer.client.TabSessionManager;
+import stroom.explorer.client.component.FindController;
+import stroom.explorer.client.component.FindInContentController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.client.presenter.ImportConfigPresenter;
-import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
-import stroom.pathways.client.presenter.TracesPresenter;
-import stroom.query.client.presenter.ResultStorePresenter;
-import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
+import stroom.importexport.client.component.DependenciesInfoController;
+import stroom.importexport.client.component.DependenciesTabController;
+import stroom.importexport.client.component.ImportConfigConfirmController;
+import stroom.importexport.client.component.ImportConfigController;
+import stroom.index.client.component.IndexVolumeGroupsController;
+import stroom.node.client.component.DatabaseTablesController;
+import stroom.pathways.client.component.TracesEditor;
+import stroom.query.client.component.SearchResultStoresController;
+import stroom.receive.content.client.component.ContentTemplateTabController;
 import stroom.xmlschema.client.XMLSchemaPlugin;
 
 import com.google.gwt.inject.client.GinModules;
 
 /// The `content` batch's [ScreenGinjector]: it creates the screens of the `App/Main` content,
-/// annotation, activity and monitoring stories (presenters and their views) as Stroom's GIN
+/// annotation, activity and monitoring stories (controllers and their components) as Stroom's GIN
 /// modules do, as `AppScreenGinjector` does for the pilot's screens. Create one each time the
 /// story renders and give it to the harness with `ScreenHarness.Builder.injector(...)`.
 ///
-/// Its modules are the shared [ScreenViewsModule] (and other shared mirrors in `app.gin`) plus
-/// this package's mirrors of Stroom's modules.
+/// Its modules are the shared mirrors in `app.gin` plus this package's mirrors of Stroom's modules.
 @GinModules({
-        ScreenViewsModule.class,
-        QueryResultTableScreenModule.class,
-        CredentialsScreenModule.class,
-        EntityScreenModule.class,
-        ExplorerScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
-        TaskScreenModule.class,
-        PipelineScreenModule.class,
-        StreamStoreScreenModule.class,
-        CacheScreenModule.class,
-        ImportExportScreenModule.class,
-        AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ActivityScreenModule.class,
-        ContentExtrasScreenModule.class,
-        ResultStoreScreenModule.class,
-        ContentStoreScreenModule.class,
-        IndexVolumeScreenModule.class,
-        FsVolumeScreenModule.class,
-        PathwaysScreenModule.class,
-        PlanBScreenModule.class,
-        ContentTemplateScreenModule.class,
-        XMLSchemaScreenModule.class,
 })
 public interface ContentScreenGinjector extends ScreenGinjector {
 
     // Monitoring
 
     /// @return The 'Caches' tab.
-    CachePresenter getCachePresenter();
+    CachesController getCachesController();
 
     /// @return The 'Database Tables' tab.
-    DatabaseTablesMonitoringPresenter getDatabaseTablesMonitoringPresenter();
+    DatabaseTablesController getDatabaseTablesController();
 
     /// @return The 'Index Volumes' tab.
-    IndexVolumeGroupPresenter getIndexVolumeGroupPresenter();
+    IndexVolumeGroupsController getIndexVolumeGroupsController();
 
     /// @return The 'Data Volumes' tab.
-    FsVolumeGroupPresenter getFsVolumeGroupPresenter();
+    FsVolumeGroupsController getFsVolumeGroupsController();
 
     /// @return The 'Properties' tab.
-    GlobalPropertyTabPresenter getGlobalPropertyTabPresenter();
+    GlobalPropertyTabController getGlobalPropertyTabController();
 
     // Content
 
     /// @return The document tab pane, shown by registering it as the content events' handler.
-    ContentTabPanePresenter getContentTabPanePresenter();
+    ContentTabPaneController getContentTabPaneController();
 
     /// @return The content manager (a singleton), which opens tabs in the tab pane.
     ContentManager getContentManager();
@@ -125,44 +93,47 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     XMLSchemaPlugin getXMLSchemaPlugin();
 
     /// @return The 'Content Store' tab.
-    ContentStorePresenter getContentStorePresenter();
+    ContentStoreTabController getContentStoreTabController();
 
     /// @return The 'Content Templates' tab.
-    ContentTemplateTabPresenter getContentTemplateTabPresenter();
+    ContentTemplateTabController getContentTemplateTabController();
 
     // Import, export and dependencies
 
     /// @return The 'Dependencies' tab.
-    DependenciesTabPresenter getDependenciesTabPresenter();
+    DependenciesTabController getDependenciesTabController();
 
-    /// @return The 'Confirm Import' dialog, shown by firing `ImportConfigConfirmEvent`.
-    ImportConfigConfirmPresenter getImportConfigConfirmPresenter();
+    /// @return The 'Confirm Import' dialog, made for one use when `ImportConfigConfirmEvent` fires.
+    ImportConfigConfirmController getImportConfigConfirmController();
 
-    /// @return The 'Import' dialog (choose and upload a file), shown for `ImportConfigEvent`.
-    ImportConfigPresenter getImportConfigPresenter();
+    /// @return The 'Import' dialog (choose and upload a file), as `ImportConfigPlugin` shows it for
+    /// `ImportConfigEvent`.
+    ImportConfigController getImportConfigController();
 
     /// @return The Dependencies screen's information dialog, shown by firing
     /// `ShowDependenciesInfoDialogEvent`.
-    DependenciesInfoPresenter getDependenciesInfoPresenter();
+    DependenciesInfoController getDependenciesInfoController();
 
     // Documents and the explorer
 
     /// @return The 'New ...' / 'Save As' dialog, shown by firing `ShowCreateDocumentDialogEvent`.
-    CreateDocumentPresenter getCreateDocumentPresenter();
+    CreateDocumentController getCreateDocumentController();
 
-    /// @return The 'Find' dialog, shown by firing `ShowFindEvent`.
-    FindPresenter getFindPresenter();
+    /// @return The 'Find' dialog, as `ExplorerPlugin` shows it for `ShowFindEvent`.
+    FindController getFindController();
 
-    /// @return The 'Find In Content' dialog, shown by firing `ShowFindInContentEvent`.
-    FindInContentPresenter getFindInContentPresenter();
+    /// @return The 'Find In Content' dialog, as `ExplorerPlugin` shows it for
+    /// `ShowFindInContentEvent`.
+    FindInContentController getFindInContentController();
 
     /// @return The tab session manager, which shows the tab session chooser for `OpenTabSessionEvent`.
     TabSessionManager getTabSessionManager();
 
     // Activities
 
-    /// @return The activity chooser ('Choose Activity'), shown by its `show` method.
-    ManageActivityPresenter getManageActivityPresenter();
+    /// @return The activity chooser ('Choose Activity'), made for one use and shown by its
+    ///         `show` method.
+    ManageActivityController getManageActivityController();
 
     /// @return The current activity (a singleton), which opens the activity chooser.
     CurrentActivity getCurrentActivity();
@@ -170,25 +141,26 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     // Annotations
 
     /// @return An annotation tags tab (labels, statuses, comments...), as `AnnotationPlugin` creates it.
-    AnnotationTagPresenter getAnnotationTagPresenter();
+    AnnotationTagsController getAnnotationTagsController();
 
     /// @return An annotation's tab (the editor and its sub-tabs), as `AnnotationEditSupport` creates it.
-    AnnotationPresenter getAnnotationPresenter();
+    AnnotationTabs getAnnotationTabs();
 
-    /// @return The 'Choose Annotation' dialog, shown by firing `ShowFindAnnotationEvent`.
-    FindAnnotationPresenter getFindAnnotationPresenter();
+    /// @return The 'Choose Annotation' dialog, kept by the app and shown when
+    ///         `ShowFindAnnotationEvent` fires.
+    FindAnnotationController getFindAnnotationController();
 
     /// @return The annotation REST client, e.g. to fetch an annotation as `AnnotationEditSupport` does.
     AnnotationResourceClient getAnnotationResourceClient();
 
     /// @return The 'Annotations' (browse) tab.
-    BrowseAnnotationPresenter getBrowseAnnotationPresenter();
+    BrowseAnnotationController getBrowseAnnotationController();
 
     // Queries
 
     /// @return The 'Search Result Stores' dialog, shown by its `show` method.
-    ResultStorePresenter getResultStorePresenter();
+    SearchResultStoresController getSearchResultStoresController();
 
     /// @return The 'Traces' tab, as `TracesPlugin` opens it for `ShowTracesEvent`.
-    TracesPresenter getTracesPresenter();
+    TracesEditor getTracesEditor();
 }

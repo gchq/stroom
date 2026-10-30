@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The shared patterns of a form: a box holding a control (a list, tree, grid or editor) framed and
+   filled as one (control-box), or only framed (form-control-border), and a form's heading
+   (form-heading). */
+
+/* A box holding a control, or a read-only field's text, framed and filled as an input is, in either
+   theme, so it stands apart from the dialog around it */
+.control-box {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
+    background-color: var(--control__background-color);
+}
+
+/* A box with a field's padding and text colour, whose grid's header sits on the box's colour: the
+   look the panels framed by a field's class (stroom-control) had before wave 41, kept so they don't
+   move */
+.control-box--padded {
+    color: var(--control__text-color);
+    padding: var(--input__padding--vertical) var(--input__padding--horizontal);
+    overflow: visible;
+    --data-grid__head-background-color: var(--control__background-color);
+}
+
+.form-control-border {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
+}
+
+.form-heading {
+    font-weight: 500;
+    font-size: var(--font-size-19);
+    color: var(--form-group__label-color);
+    margin-bottom: 0.3em;
+}

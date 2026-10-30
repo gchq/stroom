@@ -16,9 +16,10 @@
 
 package stroom.gwt.workbench.client;
 
+import stroom.widget.text.client.InlineLabel;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Helpers for laying out the widgets in a story, e.g. in rows or columns, with notes beside them.

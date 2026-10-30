@@ -34,7 +34,7 @@ import java.util.Set;
 /// `(mx, my)` maps to screen `(offsetX + scale·mx, offsetY − scale·my)`
 /// (map space is Y-up, SVG is Y-down). Image facts are placed by the render
 /// wrapper `worldToMap · translate(0,h) · scale(1,-1)`, matching
-/// `FloorMapCanvasViewImpl.appendImageGlyph`.
+/// `FloorMapCanvas.appendImageGlyph`.
 ///
 /// Holds no GWT/DOM types. The view constructs one per query with the
 /// last-drawn scale/pan and an [AspectRatioSource] backed by its image

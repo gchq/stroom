@@ -15,13 +15,16 @@
  */
 
 /*
-   The popup (stroom.widget.popup.client.view.SimplePopup, and SimplePopupLayout inside another
+   The popup (stroom.widget.popup.client.SimplePopup, and SimplePopupLayout inside another
    popup panel such as a selection box's list): a menu, a chooser, a filter's list, a tooltip.
    Named BEM style (block, block__element, block--modifier). Its look is on the block itself, its
    content inside (in GWT's popupContent, for a SimplePopup).
 
    --floating (a modifier with no ARIA attribute): a SimplePopup, a panel of its own, hidden until
-   PopupUtil has placed it (which sets its opacity to 1).
+   PopupUtil has placed it (--placed).
+
+   --sized-width and --sized-height: a popup that PopupUtil has given a size (its popup size), which
+   its content takes from --popup__width and --popup__height.
 */
 
 .popup {
@@ -44,3 +47,44 @@
     z-index: 100;
 }
 
+.popup--floating.popup--placed {
+    opacity: 1;
+}
+
+.popup--sized-width > .popupContent > * {
+    width: var(--popup__width);
+}
+
+.popup--sized-height > .popupContent > * {
+    height: var(--popup__height);
+}
+
+/* The glass behind a modal popup (PopupUtil), and the glass over the page while a popup is
+   dragged or resized (AbstractPopupPanel), so the drag keeps its cursor (were GWT's
+   gwt-PopupPanelGlass and stroom.css's popupPanel-dragGlass) */
+.popup__glass {
+  background-color: #000;
+  opacity: 0.4;
+  z-index: 100;
+}
+
+.popup__drag-glass {
+    position: absolute;
+	background-color: transparent;
+	visibility: hidden;
+	z-index: 5;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
+}
+
+.popup__drag-glass--visible {
+	visibility: visible;
+}
+
+/* The colour a grid's header takes in it (data-grid.css): the elements between it and the grid are transparent, so the grid can't
+   inherit it */
+.popup {
+    --data-grid__head-background-color: var(--popup__background-color);
+}

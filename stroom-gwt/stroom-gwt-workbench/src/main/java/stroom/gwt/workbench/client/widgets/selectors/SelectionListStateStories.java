@@ -21,9 +21,9 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionList;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
+import stroom.widget.selection.client.SelectionList;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -123,7 +123,7 @@ public final class SelectionListStateStories {
         final SelectionList<String, SimpleSelectionItemWrapper<String>> list = new SelectionList<>();
         list.setMultiSelect(true);
         list.addStyleName("selection-list--field");
-        list.init(model);
+        list.setModel(model);
         list.getSelectionModel().setSelectedItems(chosen.stream().map(model::wrap).collect(Collectors.toList()));
         list.setAccessibleName("Row states");
         list.getElement().getStyle().setProperty("width", "260px");

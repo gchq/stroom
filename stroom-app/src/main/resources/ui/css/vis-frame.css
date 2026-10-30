@@ -1,0 +1,48 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A visualisation's frame (stroom.query.client.result.component.VisFrame): vis-frame, the container
+   that clips it, holding vis-frame__frame, the iframe. Each is placed by custom properties of its
+   own (--vis-frame__container-* and --vis-frame__frame-*), as they inherit into the frame. Was
+   dashboard.css's VisFrame-container and VisFrame-frame.
+*/
+
+/* Placed by VisFrame (setContainerPositionAndSize), with its own names as they inherit into the frame */
+.vis-frame {
+    position: absolute;
+    left: var(--vis-frame__container-left, auto);
+    top: var(--vis-frame__container-top, auto);
+    width: var(--vis-frame__container-width, auto);
+    height: var(--vis-frame__container-height, auto);
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* Placed by VisFrame (setInnerPositionAndSize) */
+.vis-frame__frame {
+    position: absolute;
+    left: var(--vis-frame__frame-left, auto);
+    top: var(--vis-frame__frame-top, auto);
+    width: var(--vis-frame__frame-width, auto);
+    height: var(--vis-frame__frame-height, auto);
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}

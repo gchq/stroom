@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.sqlstore.client.presenter.SqlTemporalStorePresenter;
+import stroom.sqlstore.client.component.SqlTemporalStoreEditor;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreDocResource;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -44,26 +44,28 @@ public class SqlTemporalStorePlugin extends DocumentPlugin<SqlTemporalStoreDoc> 
     private static final SqlTemporalStoreDocResource SQL_STORE_DOC_RESOURCE =
             GWT.create(SqlTemporalStoreDocResource.class);
 
-    private final Provider<SqlTemporalStorePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<SqlTemporalStoreEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public SqlTemporalStorePlugin(
             final EventBus eventBus,
-            final Provider<SqlTemporalStorePresenter> editorProvider,
+            final Provider<SqlTemporalStoreEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
 
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), SqlTemporalStoreDoc.TYPE);
     }
 
     @Override

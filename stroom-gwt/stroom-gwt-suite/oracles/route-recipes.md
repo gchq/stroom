@@ -42,15 +42,15 @@ declarative menu registration, so it re-derives instead of rotting.
 * `Main Menu > Monitoring > Nodes` → **NodePresenter** _(NodeMonitoringPlugin)_
 * `Main Menu > Monitoring > Processor Profiles` → **ProcessorProfilePresenter** _(ProcessorProfilePlugin)_
 * `Main Menu > Monitoring > Search Results` → **ResultStorePresenter** _(ResultStorePlugin)_
-* `Main Menu > Monitoring > Server Tasks` → **TaskManagerPresenter** _(TaskManagerPlugin)_
-* `Main Menu > Navigation > Add Current Item to Favourites` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Delete Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Find by Name` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Find in Content` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Locate Current Item` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Open Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Recent Items` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Save Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
+* `Main Menu > Monitoring > Server Tasks` → **TaskManagerPresenter** _(ServerTasksPlugin)_
+* `Main Menu > Navigation > Add Current Item to Favourites` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Delete Tab Session` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Find by Name` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Find in Content` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Locate Current Item` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Open Tab Session` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Recent Items` → **NavigationPresenter** _(ExplorerPlugin)_
+* `Main Menu > Navigation > Save Tab Session` → **NavigationPresenter** _(ExplorerPlugin)_
 * `Main Menu > Security > Accounts` → **AccountsPresenter** _(AccountsPlugin)_
 * `Main Menu > Security > API Keys` → **ApiKeysPresenter** _(ApiKeysPlugin)_
 * `Main Menu > Security > Application Permissions` → **AppPermissionsPresenter** _(AppPermissionsPlugin)_

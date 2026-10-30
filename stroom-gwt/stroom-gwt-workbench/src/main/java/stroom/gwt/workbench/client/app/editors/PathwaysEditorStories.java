@@ -18,7 +18,6 @@ package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
-import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -26,11 +25,12 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.pathways.client.presenter.PathwaysPresenter;
-import stroom.pathways.client.presenter.ShowTracesEvent;
+import stroom.pathways.client.component.PathwaysEditor;
+import stroom.pathways.client.event.ShowTracesEvent;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
 import stroom.pathways.shared.pathway.PathNode;
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.stream.Collectors;
 
-/// The `App/Editors/PathwaysEditor` stories, showing Stroom's real [PathwaysPresenter] (a Pathways
+/// The `App/Editors/PathwaysEditor` stories, showing Stroom's real [PathwaysEditor] (a Pathways
 /// document's tab: Pathways, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PathwaysPlugin` does, the story fetches the document (`GET /pathways/v2/{uuid}`) and reads
@@ -86,7 +86,7 @@ public final class PathwaysEditorStories {
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
     // A FormGroup gives its control the group's identity as its id
-    // (PathwaysSettingsViewImpl.ui.xml and its dialogs)
+    // (PathwaysSettings.ui.xml and its dialogs)
     private static final String PROCESSING_NODE = "#pathwaysProcessingNode";
 
     private PathwaysEditorStories() {
@@ -108,8 +108,22 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
                     play.expect(play.getByText("checkout")).toBeInTheDocument();
                     // The graph pane shows no nodes until a pathway is selected
-                    play.expect(play.querySelector(".pathway-nodeName")).toBeNull();
+                    play.expect(play.querySelector(".pathway-tree__node-name")).toBeNull();
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocEditors.expectNoProblems(play);
+                })
+                // New Pathway opens its dialog. Before, it threw (a new pathway has no root node to
+                // draw) and the dialog never opened
+                .story("NewPathway", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
+                    play.click(play.getByTitle("New Pathway"));
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("New Pathway", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Pathway", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
                 // Selecting a pathway shows its graph; a node can be selected
@@ -120,9 +134,10 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Start")).toBeInTheDocument());
                     play.expect(play.getByText("Auth")).toBeInTheDocument();
                     play.click(play.getByText("Auth"));
-                    play.waitFor(() -> play.expect(play.getByText("Auth")).toHaveClass("pathway-nodeName--selected"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth"))
+                            .toHaveClass("pathway-tree__node-name--selected"));
                     // The main graph has no node detail panel; a node's constraints are shown, as a
-                    // grid (ConstraintListPresenter), in the Edit Pathway dialog (opened by Edit
+                    // grid (ConstraintList), in the Edit Pathway dialog (opened by Edit
                     // Selected Pathway), so the play opens it and selects the node there
                     play.click(play.getByRole("button", "Edit Selected Pathway"));
                     final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
@@ -132,6 +147,9 @@ public final class PathwaysEditorStories {
                     final Play constraints = play.within(dialog.getByText("host").closest(".data-grid"));
                     play.expect(constraints.getByText("Name")).toBeInTheDocument();
                     play.expect(constraints.getByText("Optional")).toBeInTheDocument();
+                    // One column is headed Type, the next Value (both were once headed Type)
+                    play.expect(constraints.getByRole("columnheader", "Type")).toBeInTheDocument();
+                    play.expect(constraints.getByRole("columnheader", "Value")).toBeInTheDocument();
                     // The value's type is shown as Stroom's ConstraintValueType
                     play.expect(constraints.getByText("Any")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
@@ -149,7 +167,7 @@ public final class PathwaysEditorStories {
                     DocEditors.expectNoProblems(play);
                 })
                 // No NewPathway story yet: New Pathway reads a pathway with no root into the
-                // dialog's graph, and PathwayTreePresenter.read calls addNode(null), which throws
+                // dialog's graph, and PathwayTree.read calls addNode(null), which throws
                 // (see ISSUES.md)
                 // Edit Pathway: the dialog's graph and a node's constraints (a constraint can't be
                 // added, see below)
@@ -163,7 +181,7 @@ public final class PathwaysEditorStories {
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
                     // The constraint list's buttons stay disabled, titled 'New Constraint (read
-                    // only)' (a Stroom bug, see ISSUES.md: ConstraintListPresenter.setData
+                    // only)' (a Stroom bug, see ISSUES.md: ConstraintListController.setData
                     // sets readOnly but never calls enableButtons(), so the buttons keep their
                     // initial read only state), so the New Constraint dialog and its validation
                     // can't be reached
@@ -175,6 +193,63 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Pathway", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // The Constraint dialog: a renamed constraint replaces the one it was, a value that
+                // can't be read is refused and the dialog stays open, a range is shown as it is
+                // typed, and New adds one (it threw before, the new constraint having no value)
+                .story("ConstraintDialog", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("login-flow"));
+                    play.click(play.getByRole("button", "Edit Selected Pathway"));
+                    final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.findByText("Auth"));
+                    // Selecting a constraint enables the list's buttons (see EditConstraints)
+                    play.click(dialog.findByText("host"));
+                    play.click(dialog.getByRole("button", "Edit Selected Constraint"));
+                    final Play edit = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query name = edit.getByLabelText("Name");
+                    play.expect(name).toHaveValue("host");
+                    play.clear(name);
+                    play.type(name, "port");
+                    play.click(edit.within(edit.getByText("Type", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Integer Range", ".selection-popup *"));
+                    final Query value = edit.getByLabelText("Value");
+                    play.type(value, "80");
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("two values")));
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.expect(screen.getByText("Edit Constraint", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.clear(value);
+                    play.type(value, "80,443");
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(dialog.getByText("port")).toBeInTheDocument());
+                    play.expect(dialog.queryByText("host")).toBeNull();
+                    // The range is shown again as it was typed
+                    play.click(dialog.getByText("port"));
+                    play.click(dialog.getByRole("button", "Edit Selected Constraint"));
+                    final Play again = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(again.getByLabelText("Value")).toHaveValue("80,443");
+                    play.click(again.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // New
+                    play.click(dialog.getByRole("button", "New Constraint"));
+                    final Play add = play.within(screen.findByText("New Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(add.getByLabelText("Name")).toHaveValue("New");
+                    play.click(add.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(dialog.getByText("New")).toBeInTheDocument());
+                    DocEditors.expectNoUnhandledRequests(play);
                 })
                 // Settings: the document's configuration; an edit enables Save
                 .story("Settings", context -> render(context, "pathways-1", PATHWAYS, false))
@@ -194,18 +269,42 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // Read only, a pathway's node can still be chosen and its traces viewed, but not
+                // changed
+                .story("GraphReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))
+                .withPlay(play -> {
+                    play.click(play.findByText("login-flow"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth")).toBeInTheDocument());
+                    play.click(play.getByText("Auth"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth"))
+                            .toHaveClass("pathway-tree__node-name--selected"));
+                    play.expect(play.getByTitle("New Path (read only)")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Edit Selected Path (read only)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Delete Selected Path (read only)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("View Matching Traces")).not().toHaveAttribute("aria-disabled", "true");
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("ReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save (read only)");
                     play.click(DocEditors.tab(play, "Settings"));
                     final Query processingNode = play.findByDisplayValue("node1");
-                    // The Processing Node text box stays enabled (a Stroom bug, see ISSUES.md:
-                    // PathwaysSettingsViewImpl.onReadOnly only disables the ordering tolerance), but
-                    // an edit can't make the read only document dirty, so Save stays disabled
-                    play.expect(processingNode).not().toBeDisabled();
-                    play.type(processingNode, "-x");
-                    play.tab();
-                    play.sleep(300);
+                    // Every setting is read only. Before, only the ordering tolerance was, and edits
+                    // to the rest were lost, as they couldn't make the document dirty
+                    play.expect(processingNode).toHaveAttribute("readonly", "");
+                    for (final String tick : new String[]{"Allow Pathway Creation", "Allow Pathway Mutation",
+                            "Allow Constraint Creation", "Allow Constraint Mutation"}) {
+                        play.expect(play.getByRole("checkbox", tick)).toHaveAttribute("aria-readonly", "true");
+                    }
+                    // The trace store's and info feed's pickers can't be opened (they could be
+                    // before wave 8's audit)
+                    for (final String label : new String[]{"Trace Store", "Info Feed"}) {
+                        play.expect(play.within(play.getByText(label, "label").closest(".form-group"))
+                                        .querySelector("[aria-haspopup]:not(.form-group__help)"))
+                                .toHaveAttribute("aria-disabled", "true");
+                    }
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
@@ -238,7 +337,7 @@ public final class PathwaysEditorStories {
             }));
             DocEditors.open(harness,
                     docRef,
-                    injector.getPathwaysPresenter(),
+                    injector.getPathwaysEditor(),
                     DocResource.of(
                             restFactory -> restFactory.create(resource).method(res -> res.fetch(docRef.getUuid())),
                             (restFactory, doc) -> restFactory.create(resource)

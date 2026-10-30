@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A text field that suggests what to type (suggestion-box.css): the field is an editable combobox
+  whose list of suggestions, a popup below it, is made in Java.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:f="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="suggestion-box">
+        <f:TextBox ui:field="input" addStyleNames="suggestion-box__input" role="combobox"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -28,8 +28,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.node.shared.NodeResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.button.client.Button;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// Stroom has no separate host component: its `RestFactory` gives every request with no failure
 /// handler a `DefaultErrorHandler`, which fires an `AlertEvent`, which `AlertPlugin` shows in
-/// `CommonAlertPresenter`'s 'Alert' dialog. The story's button makes such a request
+/// `CommonAlertController`'s 'Alert' dialog. The story's button makes such a request
 /// (`NodeResource.listAllNodes`, `GET /node/v1/all`), answered with an error, and the harness shows
 /// Stroom's real alert dialog.
 public final class ApiErrorAlertHostStories {
@@ -88,7 +88,7 @@ public final class ApiErrorAlertHostStories {
         final NodeResource nodeResource = GWT.create(NodeResource.class);
         final Button button = new Button();
         button.setText("Trigger API error");
-        button.addStyleName("Button--contained-primary");
+        button.addStyleName("button--contained-primary");
         // A request with no failure handler: RestFactory reports its error with DefaultErrorHandler
         button.addClickHandler(event -> harness.getRestFactory()
                 .create(nodeResource)

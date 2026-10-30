@@ -19,16 +19,16 @@ package stroom.gwt.workbench.client.widgets.layout;
 
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Html;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 
 /// Stories for the rounded card of Stroom's login screen.
 ///
-/// Stroom has no rounded panel widget: it is the centred, rounded card that `LoginViewImpl.ui.xml`
-/// builds (`LoginView` > `LoginViewFormPanel` >
-/// `max form-padding form LoginViewForm`), so these stories build the same panels, styled by
-/// Stroom's `Login.css`.
+/// Stroom has no rounded panel widget: it is the centred, rounded card that `Login.ui.xml`
+/// builds (`sign-in-page` > `sign-in-page__form-panel` >
+/// `max form-padding form sign-in-page__form`), so these stories build the same panels, styled by
+/// Stroom's `sign-in-page.css`.
 public final class RoundedPanelStories {
 
     private RoundedPanelStories() {
@@ -43,14 +43,14 @@ public final class RoundedPanelStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The centred, rounded login card with some sample content
                 .story("Default", context -> {
-                    // LoginViewImpl's outer panel is a div, not a <main> landmark.
+                    // Login's outer panel is a div, not a <main> landmark.
                     final FlowPanel view = new FlowPanel();
-                    view.setStyleName("LoginView");
+                    view.setStyleName("sign-in-page");
                     final FlowPanel formPanel = new FlowPanel();
-                    formPanel.setStyleName("LoginViewFormPanel");
+                    formPanel.setStyleName("sign-in-page__form-panel");
                     final FlowPanel form = new FlowPanel();
-                    form.setStyleName("max form-padding form LoginViewForm");
-                    form.add(new HTML("<h2 style=\"margin: 0 0 12px\">Sign in</h2>"
+                    form.setStyleName("max form-padding form sign-in-page__form");
+                    form.add(new Html("<h2 style=\"margin: 0 0 12px\">Sign in</h2>"
                                       + "<p style=\"margin: 0\">Placeholder content inside the rounded panel.</p>"));
                     formPanel.add(form);
                     view.add(formPanel);

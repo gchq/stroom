@@ -1,0 +1,80 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A conditional formatting rule: the rows it matches and how they are shown -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="conditional-formatting-rule-editor max form">
+
+        <form:FormGroup addStyleNames="dock-max"
+                        identity="cfRuleExpression"
+                        label="Row Match Expression"
+                        helpText="All rows matching this expression are formatted according to this rule's settings."
+                        screenReaderText="Rows matching this expression get this rule's formatting.">
+            <g:SimplePanel styleName="dock-max control-box control-box--padded">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleEnabledState"
+                        helpText="Tick to enable this rule. When unticked, this rule is ignored."
+                        screenReaderText="When unticked, this rule is ignored.">
+            <tickbox:TickBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        label="Hide Matching Rows"
+                        helpText="When ticked, rows matching this rule are not shown in the table."
+                        screenReaderText="When ticked, matching rows are not shown.">
+            <tickbox:TickBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        label="Formatting Type"
+                        helpText="How the style is applied to matching rows: Background colours the row background, Text colours the text only, and Custom uses your own colours."
+                        screenReaderText="Background, Text or Custom.">
+            <l:SelectionBox ui:field="formattingType" addStyleNames="conditional-formatting-rule-editor__type"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="styleGroup"
+                        identity="cfStyle"
+                        label="Style"
+                        helpText="Standard colour style to apply to matching rows.">
+            <l:SelectionBox ui:field="formattingStyle" addStyleNames="selection-box--swatches"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="customStyleGroup"
+                        identity="cfCustomStyle"
+                        label="Custom Style"
+                        helpText="Opens a dialog to set your own background and text colours for matching rows, for both light and dark themes.">
+            <b:Button ui:field="editCustomStyle" text="Set Custom Style"
+                      addStyleNames="allow-focus button--contained-primary conditional-formatting-rule-editor__custom-style"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleTextBoldState"
+                        label="Make Text Bold"
+                        helpText="When ticked, the text of matching rows is shown in bold.">
+            <tickbox:TickBox ui:field="textBold" identity="cfRuleTextBold" label="Bold"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleTextItalicState"
+                        label="Make Text Italic"
+                        helpText="When ticked, the text of matching rows is shown in italics.">
+            <tickbox:TickBox ui:field="textItalic" identity="cfRuleTextItalic" label="Italic"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfExample"
+                        label="Example"
+                        helpText="Preview of how matching rows will look with the chosen style.">
+            <g:SimplePanel ui:field="example" styleName="conditional-formatting-rule-editor__example"/>
+        </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

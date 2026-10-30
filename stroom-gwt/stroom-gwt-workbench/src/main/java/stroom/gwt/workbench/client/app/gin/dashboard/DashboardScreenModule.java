@@ -16,50 +16,27 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.dashboard.client.main.DashboardPresenter;
-import stroom.dashboard.client.main.DashboardViewImpl;
-import stroom.dashboard.client.main.LayoutConstraintPresenter;
-import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
-import stroom.dashboard.client.main.LayoutConstraintViewImpl;
-import stroom.dashboard.client.main.RenameTabPresenter;
-import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
-import stroom.dashboard.client.main.RenameTabViewImpl;
-import stroom.dashboard.client.unknown.HTMLView;
-import stroom.dashboard.client.unknown.HTMLViewImpl;
-import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.dashboard.client.main.PaneRegistry;
+import stroom.visualisation.client.VisFunctionCache;
 
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
-/// The presenter and view bindings of Stroom's `DashboardModule`
+/// The controller and component bindings of Stroom's `DashboardModule`
 /// (`stroom/dashboard/client/gin/DashboardModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
 ///
-/// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
-/// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`
-/// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`), and leaves out the `LinkTabsLayoutView`
-/// that `ScreenViewsModule` already binds.
-public class DashboardScreenModule extends AbstractPresenterModule {
+/// Unlike the other mirrors, it keeps the dashboard's singletons: the `PaneRegistry` (which
+/// `DashboardPaneTypes` fills, and every dashboard's `Panes` reads) and the `VisFunctionCache`.
+public class DashboardScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
-        bind(ComponentRegistry.class).in(Singleton.class);
+        bind(PaneRegistry.class).in(Singleton.class);
         bind(VisFunctionCache.class).in(Singleton.class);
 
-        bindPresenterWidget(DashboardPresenter.class,
-                DashboardPresenter.DashboardView.class,
-                DashboardViewImpl.class);
-        bindPresenterWidget(RenameTabPresenter.class,
-                RenameTabView.class,
-                RenameTabViewImpl.class);
-        bindPresenterWidget(LayoutConstraintPresenter.class,
-                LayoutConstraintView.class,
-                LayoutConstraintViewImpl.class);
-        bindSharedView(HTMLView.class,
-                HTMLViewImpl.class);
     }
 }
 

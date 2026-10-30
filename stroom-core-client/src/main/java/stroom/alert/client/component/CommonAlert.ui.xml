@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An alert's or confirmation's content (common-alert.css): its icon, its message, and the detail that
+     Show Detail shows and hides -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:HTMLPanel styleName="common-alert">
+        <div class="common-alert__icon">
+            <svg:Icon ui:field="icon"/>
+        </div>
+        <g:FlowPanel styleName="common-alert__message-area">
+            <tx:Html ui:field="message" styleName="common-alert__message"/>
+            <b:LinkButton ui:field="showHideDetail" addStyleNames="common-alert__show-hide" visible="false"><span
+                    class="common-alert__show-hide-arrow" aria-hidden="true"></span>Show Detail</b:LinkButton>
+            <!-- Scrolls when it is long (e.g. a stack trace), so the keyboard can reach it to scroll it -->
+            <c:AriaPanel ui:field="detail" styleName="common-alert__detail" role="region" ariaLabel="Detail"
+                         tabIndex="0" visible="false">
+                <tx:Html ui:field="detailText" styleName="common-alert__detail-text"/>
+            </c:AriaPanel>
+        </g:FlowPanel>
+    </g:HTMLPanel>
+</ui:UiBinder>

@@ -18,14 +18,14 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.SigningKeyPresenter;
+import stroom.security.client.component.SigningKeysController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 
 @Singleton
-public class SigningKeyPlugin extends MonitoringPlugin<SigningKeyPresenter> {
+public class SigningKeyPlugin extends MonitoringPlugin<SigningKeysController> {
 
     public static final String SCREEN_NAME = "Signing Keys";
     public static final SvgImage ICON = SvgImage.KEY;
@@ -43,9 +43,9 @@ public class SigningKeyPlugin extends MonitoringPlugin<SigningKeyPresenter> {
     public SigningKeyPlugin(final EventBus eventBus,
                             final ContentManager eventManager,
                             final ClientSecurityContext securityContext,
-                            final Provider<SigningKeyPresenter> signingKeyPresenterProvider,
+                            final Provider<SigningKeysController> signingKeyControllerProvider,
                             final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, signingKeyPresenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, signingKeyControllerProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -84,6 +84,6 @@ public class SigningKeyPlugin extends MonitoringPlugin<SigningKeyPresenter> {
 
     @Override
     public String getType() {
-        return SigningKeyPresenter.TAB_TYPE;
+        return SigningKeysController.TAB_TYPE;
     }
 }

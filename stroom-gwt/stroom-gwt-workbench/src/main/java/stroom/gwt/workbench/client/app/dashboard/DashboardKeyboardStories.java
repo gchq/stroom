@@ -369,7 +369,7 @@ public final class DashboardKeyboardStories {
     // button (⋮)
     private static void openPanelMenu(final Play play, final String tab) {
         final Query button = play.within(DashboardPlays.tab(play, tab).closest(DashboardPlays.PANEL))
-                .querySelector(".tabLayout-settingsButton");
+                .querySelector(".tab-layout__settings-button");
         play.run("focus the menu button of " + tab + "'s panel", () -> button.element().get().focus());
         play.keyboard("{Enter}");
         DashboardPlays.menuItem(play.screen(), "Rename");
@@ -414,7 +414,7 @@ public final class DashboardKeyboardStories {
         if (el.getAttribute('role') === 'separator') {
             return (el.getAttribute('aria-orientation') || 'unoriented') + ' splitter';
         }
-        var panel = el.closest('.tabLayout');
+        var panel = el.closest('.tab-layout');
         if (!panel) {
             return 'outside the panels';
         }

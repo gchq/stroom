@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A query's history, above the expression of the one chosen -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <split:SplitPane vertical="true" sizes="*, 120px"
+                     names="History, Selected query" addStyleNames="max default-min-sizes">
+        <g:SimplePanel styleName="max control-box control-box--padded">
+            <dg:DataGrid ui:field="list" pageSize="100000" profile="LISTBOX" accessibleName="Query history"/>
+        </g:SimplePanel>
+        <g:ScrollPanel styleName="max control-box control-box--padded">
+            <q:ExpressionTree ui:field="expressionTree"/>
+        </g:ScrollPanel>
+    </split:SplitPane>
+</ui:UiBinder>

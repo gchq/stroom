@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A Text Input pane's Basic settings: its id, its name and its parameter's key -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="basicTextInputSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. text-input-AB1C2). It cannot be changed.">
+            <tx:Label ui:field="id" addStyleNames="w-100 text-label--value"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsKey" label="Key"
+                        helpText="Parameter name that the entered value is given. Use it in queries and expressions as ${{key}, e.g. a key of user is used as ${{user}."
+                        screenReaderText="Parameter name, used in queries as ${{key}.">
+            <form:TextBox ui:field="key" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

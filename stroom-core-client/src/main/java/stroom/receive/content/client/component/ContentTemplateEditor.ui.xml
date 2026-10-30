@@ -1,0 +1,89 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A content template: what it creates, from which pipeline, for data matching its expression -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup
+                identity="contentTemplateName"
+                label="Template Name"
+                helpText="The name of this template.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateDescription"
+                label="Template Description"
+                helpText="The description of this template.">
+            <form:TextArea ui:field="description" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateType"
+                label="Template Type"
+                screenReaderText="Add a filter to the pipeline, or create a pipeline that inherits from it.">
+            <form:HelpHTML>
+                <p>The type of content that is created from the template pipeline.</p>
+                <ul>
+                    <li>
+                        <strong>PROCESSOR_FILTER</strong>
+                        - A new Processor Filter will be created in the selected pipeline.
+                    </li>
+                    <li>
+                        <strong>INHERIT_PIPELINE</strong>
+                        - A new Pipeline (and associated Processor Filter) will be created that inherits
+                        from the selected pipeline.
+                    </li>
+                </ul>
+            </form:HelpHTML>
+            <i:SelectionBox ui:field="templateTypeSelectionBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                ui:field="copyDependenciesFormGroup"
+                identity="contentTemplateCopyDependencies"
+                helpText="Tick to give the new pipeline its own copies of the documents set in the inherited pipeline's element properties. Documents set on ancestor pipelines are not copied. Only available when Template Type is INHERIT_PIPELINE."
+                screenReaderText="Only available when Template Type is INHERIT_PIPELINE.">
+            <tickbox:TickBox ui:field="copyDependenciesCheckBox" addStyleNames="allow-focus" label="Copy Pipeline Element Dependencies"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplatePipeline"
+                label="Pipeline"
+                helpText="The pipeline to add the processor filter to, or to inherit from, depending on Template Type.">
+            <g:SimplePanel styleName="max">
+                <dd:DropDownBox ui:field="pipeline" addStyleNames="w-100"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateProcessorPriority"
+                label="Processor Priority"
+                helpText="The priority to assign to the pipeline processor when it is created. The higher the number, the higher the priority. Must be from 1 to 100. Default is 10."
+                screenReaderText="1 to 100, higher first. Default is 10.">
+            <v:ValueSpinner ui:field="processorPriority" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateProcessorMaxConcurrent"
+                label="Processor Max Concurrent Tasks"
+                helpText="The maximum number of concurrent tasks for the processor filter when it is created. 0 means no limit. Default is 0."
+                screenReaderText="0 means no limit. Default is 0.">
+            <v:ValueSpinner ui:field="processorMaxConcurrent" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="contentTemplateExpression"
+                        label="Expression"
+                        addStyleNames="dock-max"
+                        helpText="When data arrives for a feed that does not exist yet, the first active template whose expression matches the data's header attributes is used. Attribute names are not case sensitive; an empty expression matches all data.">
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

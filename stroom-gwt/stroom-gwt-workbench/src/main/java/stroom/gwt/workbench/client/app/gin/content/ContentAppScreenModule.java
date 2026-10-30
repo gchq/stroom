@@ -14,62 +14,23 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProxy;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
-import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.FindPresenter.FindProxy;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
-import stroom.explorer.client.view.FindInContentViewImpl;
-import stroom.explorer.client.view.TabSessionChooserViewImpl;
 
-import com.google.inject.Provides;
+import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The bindings of Stroom's app-wide `AppModule` (`stroom-app-gwt`,
 /// `stroom/app/client/gin/AppModule.java`) that the `content` batch's screens need: the Find and
 /// Find In Content dialogs, the tab session chooser, the content tab pane and the content manager.
-/// Presenters that Stroom binds with a GWTP proxy are bound with a null proxy: a story shows one by
-/// registering it as the handler of its event, as the proxy would.
-public class ContentAppScreenModule extends AbstractPresenterModule {
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
+public class ContentAppScreenModule extends AbstractGinModule {
 
-    /// Binds the presenters and views.
+    /// Binds the controllers and components.
     @Override
     protected void configure() {
         bind(ContentManager.class).in(Singleton.class);
-        bind(ContentTabPanePresenter.class);
-        bindPresenterWidget(FindInContentPresenter.class,
-                FindInContentView.class,
-                FindInContentViewImpl.class);
-        bind(FindPresenter.class);
-        bind(TabSessionChooserPresenter.class);
-        bindSharedView(TabSessionChooserView.class,
-                TabSessionChooserViewImpl.class);
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    ContentTabPaneProxy provideContentTabPaneProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    FindInContentProxy provideFindInContentProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    FindProxy provideFindProxy() {
-        return null;
     }
 }

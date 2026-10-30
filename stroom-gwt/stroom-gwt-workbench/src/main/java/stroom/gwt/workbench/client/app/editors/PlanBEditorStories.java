@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -30,6 +31,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.planb.client.component.PlanBEditor;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
 import stroom.security.shared.DocumentPermission;
@@ -37,7 +39,9 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBPresenter` (a Plan B store's
+import java.util.List;
+
+/// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBEditor` (a Plan B store's
 /// editor tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PlanBPlugin` does, the story fetches the document (`GET /planB/v1/{uuid}`), checks the user
@@ -48,7 +52,7 @@ public final class PlanBEditorStories {
 
     // The caption of a settings group (SettingsGroup's FormLabel).
     // The groups' captions are labels, not headings
-    private static final String GROUP_LABEL = "label.settings-group-label";
+    private static final String GROUP_LABEL = "label.settings-group__label";
     private static final String GROUP = ".settings-group";
     private static final String FORM_GROUP = ".form-group";
 
@@ -68,6 +72,9 @@ public final class PlanBEditorStories {
             .get("/planB/v1/planb-METRIC", RestReply.json(doc("METRIC", "metric", MAX_STORE_SIZE, "")))
             .get("/planB/v1/planb-SESSION", RestReply.json(doc("SESSION", "session", MAX_STORE_SIZE, "")))
             .get("/planB/v1/planb-TRACE", RestReply.json(doc("TRACE", "trace", MAX_STORE_SIZE, "")))
+            .get("/planB/v1/planb-TEMPORAL_STATE", RestReply.json(doc("TEMPORAL_STATE", "temporalState",
+                    MAX_STORE_SIZE, "")))
+            .get("/planB/v1/planb-HISTOGRAM", RestReply.json(doc("HISTOGRAM", "histogram", MAX_STORE_SIZE, "")))
             // MetricTimeZoneOffset: the key schema's time zone is an offset
             .get("/planB/v1/planb-METRIC-OFFSET", RestReply.json(doc("METRIC", "metric", MAX_STORE_SIZE,
                     ", \"keySchema\": {\"timeZone\": {\"use\": \"OFFSET\", \"offsetHours\": -1, "
@@ -122,7 +129,7 @@ public final class PlanBEditorStories {
                             "Store Latest Value", "Store Min Value", "Store Max Value", "Store Count", "Store Sum"}) {
                         play.expect(play.getByRole("checkbox", label)).toBeInTheDocument();
                     }
-                    // The key schema's TimeZoneWidget
+                    // The key schema's TimeZoneBox
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();
                     // A selection box in a form group is as wide as a text field, not the screen (its
                     // width was once lost, so they stretched across it)
@@ -130,7 +137,7 @@ public final class PlanBEditorStories {
                             .toHaveStyle("width", "200px");
                     DocumentEditors.expectNoProblems(play);
                 })
-                // The Time Zone control shows the offset when Use is Offset (TimeZoneWidget)
+                // The Time Zone control shows the offset when Use is Offset (TimeZoneBox)
                 .story("MetricTimeZoneOffset", context -> render(context, "planb-METRIC-OFFSET", false))
                 .withPlay(play -> {
                     // The offset is whole hours: its minutes can't be set, as browsers don't support
@@ -184,6 +191,56 @@ public final class PlanBEditorStories {
                     play.expect(play.queryByText("Value Schema", GROUP_LABEL)).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Changing the type shows that type's groups, and keeps the settings every type has:
+                // here the document's maximum store size, 1G, where a new type's default is 10G
+                .story("ChangingTypeKeepsCommonSettings", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    for (final String type : List.of("Temporal State", "Range State", "Temporal Range State",
+                            "Histogram")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    }
+                    // A histogram store's groups: no condense settings
+                    play.expect(play.getByText("Key Schema", GROUP_LABEL)).toBeInTheDocument();
+                    play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The temporal, ranged and histogram types show their own groups
+                .story("OtherTypes", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Range State", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull());
+                    play.expect(play.getByText("Value Schema", GROUP_LABEL)).toBeInTheDocument();
+                    for (final String type : List.of("Temporal State", "Temporal Range State")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(play.getByText("Condense Data", GROUP_LABEL))
+                                .toBeInTheDocument());
+                        play.expect(play.getByText("Value Schema", GROUP_LABEL)).toBeInTheDocument();
+                    }
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Histogram", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull());
+                    play.expect(selection(play, "Key Schema", "Temporal Resolution")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Changing the type keeps the data retention settings too
+                .story("ChangingTypeKeepsRetention", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(retentionEnabled(play)).not().toBeChecked());
+                    play.click(retentionEnabled(play));
+                    play.waitFor(() -> play.expect(retentionEnabled(play)).toBeChecked());
+                    for (final String type : List.of("Temporal State", "Histogram")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(retentionEnabled(play)).toBeChecked());
+                    }
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Editing a setting makes the document dirty, so Save is enabled
                 .story("EditEnablesSave", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
@@ -199,6 +256,27 @@ public final class PlanBEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A store size that isn't a size is refused: it says why under the box, and Save
+                // doesn't save but takes the user to it. Before, the text became 10 GiB and was saved
+                .story("MaxStoreSizeNotASizeIsRefused", context -> renderSaving(context, "planb-STATE"))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    play.click(maxStoreSize(play));
+                    play.clear(maxStoreSize(play));
+                    play.type(maxStoreSize(play), "lots");
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.getByText("Must be a size, e.g. 10 GiB")).toBeInTheDocument());
+                    play.expect(maxStoreSize(play)).toHaveValue("lots");
+                    play.expect(maxStoreSize(play)).toHaveAttribute("aria-invalid", "true");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveFocus());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put("/planB/v1/planb-STATE").toSpyMatcher());
+                    play.expect(maxStoreSize(play)).toHaveValue("lots");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Read only: the settings are disabled and Save can never be enabled
                 .story("ReadOnly", context -> render(context, "planb-STATE", true))
                 .withPlay(play -> {
@@ -207,12 +285,26 @@ public final class PlanBEditorStories {
                             .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // The document is locked and unlocked while it is open, as reading it again does
+                // when its lock changes: every settings field follows, as they watch READ_ONLY
+                // (from the document) rather than being told by the controllers between
+                .story("LockChangeWhileOpen", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).not().toHaveAttribute("readonly"));
+                    play.run("lock the document", () -> readAgain(true));
+                    play.expect(maxStoreSize(play)).toHaveAttribute("readonly");
+                    play.expect(play.getByRole("button", "Save (read only)")).toBeInTheDocument();
+                    play.run("unlock the document", () -> readAgain(false));
+                    play.expect(maxStoreSize(play)).not().toHaveAttribute("readonly");
+                    play.expect(play.getByRole("button", "Save")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // METRIC read only: the same settings as Metric, when the user may only view the store
                 .story("MetricReadOnly", context -> render(context, "planb-METRIC", true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Temporal Resolution", "label"))
                             .toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // SESSION read only: the same settings as Session, when the user may only view the store
@@ -220,14 +312,33 @@ public final class PlanBEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Condense Data", GROUP_LABEL))
                             .toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // TRACE read only: the same settings as Trace, when the user may only view the store
                 .story("TraceReadOnly", context -> render(context, "planb-TRACE", true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Storage", GROUP_LABEL)).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // TEMPORAL_STATE read only: its condense settings can't be changed either
+                .story("TemporalStateReadOnly", context -> render(context, "planb-TEMPORAL_STATE", true))
+                .withPlay(play -> {
+                    final Play condense = play.within(play.findByText("Condense Data", GROUP_LABEL).closest(GROUP));
+                    play.expect(condense.getByRole("checkbox", "Enabled")).toHaveAttribute("aria-readonly", "true");
+                    play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // HISTOGRAM read only: its settings can't be changed
+                .story("HistogramReadOnly", context -> render(context, "planb-HISTOGRAM", true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(selection(play, "Key Schema", "Temporal Resolution"))
+                            .toBeInTheDocument());
+                    play.expect(maxStoreSize(play)).toHaveAttribute("readonly");
+                    play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Unset schema fields show the Java defaults of their schemas
@@ -241,7 +352,7 @@ public final class PlanBEditorStories {
                     play.expect(selection(play, "Key Schema", "Hash Length")).toHaveValue("Integer");
                     DocumentEditors.expectNoProblems(play);
                 })
-                // GeneralSettingsWidget shows DEFAULT_MAX_STORE_SIZE for an unset max store size
+                // GeneralSettingsForm shows DEFAULT_MAX_STORE_SIZE for an unset max store size
                 .story("MaxStoreSizeDefaultsWhenUnset", context -> render(context, "planb-STATE-UNSET", false))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("10G"));
@@ -261,8 +372,27 @@ public final class PlanBEditorStories {
 
     // The Max Store Size text box.
     // Its FormGroup has no identity, so it has no id
+    // Reads the shown document again, as DocumentPlugin does, read only or not
+    private static void readAgain(final boolean readOnly) {
+        final DocumentEditorHost<PlanBDoc> host = ScreenHarness.shownComponent();
+        host.setReadOnly(readOnly);
+        host.read(host.getDocRef(), host.getEntity());
+    }
+
+    // The State Type selection box's text box
+    private static Query stateType(final Play play) {
+        return play.within(play.getByText("State Type", "label").closest(FORM_GROUP))
+                .querySelector(StroomDom.SELECTION_BOX);
+    }
+
     private static Query maxStoreSize(final Play play) {
         return play.within(play.getByText("Max Store Size", "label").closest(FORM_GROUP)).querySelector("input");
+    }
+
+    // The Data Retention group's Enabled tick box
+    private static Query retentionEnabled(final Play play) {
+        return play.within(play.getByText("Data Retention", GROUP_LABEL).closest(GROUP))
+                .getByRole("checkbox", "Enabled");
     }
 
     // The text box of the selection box labelled `label` in the settings group `group`
@@ -283,7 +413,7 @@ public final class PlanBEditorStories {
         final DocRef docRef = new DocRef(PlanBDoc.TYPE, uuid, uuid);
         final PlanBDocResource resource = GWT.create(PlanBDocResource.class);
         // Opened once Stroom has started, as PlanBPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getPlanBPresenter(), docRef,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getPlanBEditor(), docRef,
                 resource, res -> res.fetch(docRef.getUuid())));
         return harness.asWidget();
     }
@@ -297,7 +427,7 @@ public final class PlanBEditorStories {
         harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
         final DocRef docRef = new DocRef(PlanBDoc.TYPE, uuid, uuid);
         final PlanBDocResource resource = GWT.create(PlanBDocResource.class);
-        harness.afterStartUp(() -> DocEditors.open(harness, docRef, injector.getPlanBPresenter(),
+        harness.afterStartUp(() -> DocEditors.open(harness, docRef, injector.getPlanBEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(uuid)),
                         (restFactory, doc) -> restFactory.create(resource).method(res -> res.update(uuid, doc)))));

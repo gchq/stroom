@@ -1,0 +1,60 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The icon cell (stroom.cell.client.IconCell), named BEM style: an icon in a grid cell
+   (icon-cell), clickable (--button) or disabled (--disabled). ActionCell, ActionMenuCell and the
+   permission and user cells draw their icons with the same classes. Was SvgCell.css (svgCell-*).
+   svgCell-face is unused (see ISSUES.md).
+*/
+
+.icon-cell {
+	cursor: default;
+	vertical-align: middle;
+}
+
+.icon-cell svg {
+  width: var(--icon-width);
+  height: var(--icon-height);
+  color: var(--icon-colour__blue);
+}
+
+.icon-cell--button {
+	cursor: pointer;
+}
+
+/* A row's action button (ActionCell, ActionMenuCell, a RowActions button) is a 24px target
+   (WCAG 2.5.8) round its icon; a negative margin takes the extra back, so the row is no taller */
+.icon-cell--button.row-action {
+	min-width: 24px;
+	min-height: 24px;
+	margin: -4px;
+}
+
+/* ...which a grid cell's content (overflow-x hidden, so overflow-y auto) would otherwise scroll by.
+   It has no text to cut short */
+.data-grid__cell > div:has(> .icon-cell--button.row-action) {
+	overflow: visible;
+}
+
+.icon-cell--disabled {
+	cursor: default;
+	opacity: var(--disabled-opacity);
+}
+
+.stroom-theme-dark .data-grid__row--selected .icon-cell svg {
+    color: white !important;
+}

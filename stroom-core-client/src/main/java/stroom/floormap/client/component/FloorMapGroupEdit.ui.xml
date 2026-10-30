@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:colour="urn:import:stroom.widget.colour.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!--
+      The group edit dialog's content (floor-map-group-edit.css): the group's name and colour, and a
+      filterable tick list of its members. The table only lays the labels beside their controls, so
+      it is presentation to assistive technology
+    -->
+    <g:HTMLPanel styleName="floor-map-group-edit">
+        <table class="floor-map-group-edit__fields" role="presentation">
+            <tbody>
+                <tr>
+                    <td ui:field="nameLabel">Name</td>
+                    <td><form:TextBox ui:field="nameBox"/></td>
+                </tr>
+                <tr>
+                    <td ui:field="colourLabel">Colour</td>
+                    <td><colour:ColourBox ui:field="colourBox"/></td>
+                </tr>
+            </tbody>
+        </table>
+        <tx:Label ui:field="membersLabel" addStyleNames="floor-map-group-edit__label" text="Members"/>
+        <!-- A placeholder is not an accessible name: it is not exposed by every screen reader
+             and it disappears as soon as anything is typed -->
+        <form:TextBox ui:field="filterBox" addStyleNames="floor-map-group-edit__filter"
+                        placeholder="Filter by name, type or id"
+                        ariaLabel="Filter members by name, type or id"/>
+        <g:ScrollPanel ui:field="memberScroll" addStyleNames="floor-map-group-edit__scroll">
+            <g:FlowPanel ui:field="memberList" addStyleNames="floor-map-group-edit__members">
+                <tx:Label ui:field="empty"
+                         addStyleNames="floor-map-group-edit__empty"
+                         text="No entities have been seen on this map yet — run the map's queries first."
+                         visible="false"/>
+            </g:FlowPanel>
+        </g:ScrollPanel>
+        <tx:Label ui:field="summary" addStyleNames="floor-map-group-edit__summary"/>
+    </g:HTMLPanel>
+</ui:UiBinder>

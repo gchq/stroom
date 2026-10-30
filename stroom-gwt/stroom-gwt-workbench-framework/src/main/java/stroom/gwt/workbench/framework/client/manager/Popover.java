@@ -108,11 +108,6 @@ public final class Popover {
         }
     }
 
-    /// @return True if a popover is open.
-    public static boolean isAnyOpen() {
-        return current != null;
-    }
-
     /// Replaces the content of the popover, e.g. to show a changed state.
     ///
     /// @param content The new content.

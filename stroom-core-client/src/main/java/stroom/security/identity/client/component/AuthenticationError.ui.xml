@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="authentication-error">
+
+        <g:FlowPanel styleName="authentication-error__form-panel">
+            <g:FlowPanel styleName="max form-padding form authentication-error__form">
+
+                <g:SimplePanel styleName="authentication-error__image-container">
+                    <svg:Icon image="ERROR" addStyleNames="authentication-error__image"/>
+                </g:SimplePanel>
+
+                <form:FormGroup identity="error" label="Authentication Error" labelStyleName="authentication-error__title">
+                    <tx:Label ui:field="errorText"/>
+                </form:FormGroup>
+
+                <g:SimplePanel styleName="authentication-error__message-container">
+                    <tx:Html ui:field="genericMessage"/>
+                </g:SimplePanel>
+
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

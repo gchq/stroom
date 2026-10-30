@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A pathway's name, then its paths beside the constraints of the path chosen -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:p="urn:import:stroom.pathways.client.component">
+    <g:FlowPanel styleName="max form dock-container-vertical">
+        <form:FormGroup identity="pathwayName" label="Name">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <split:SplitPane sizes="400px, *"
+                         names="Paths, Constraints" addStyleNames="dock-max">
+            <form:FormGroup identity="pathwayDetails" label="Paths">
+                <g:SimplePanel styleName="max control-box">
+                    <p:PathwayTree ui:field="tree"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+            <form:FormGroup identity="pathwayConstraints" label="Constraints">
+                <g:SimplePanel styleName="max control-box">
+                    <p:ConstraintList ui:field="constraints"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+        </split:SplitPane>
+    </g:FlowPanel>
+</ui:UiBinder>

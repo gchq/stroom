@@ -23,19 +23,18 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.welcome.client.view.WelcomeViewImpl;
+import stroom.welcome.client.component.WelcomeTab;
+import stroom.welcome.client.component.WelcomeTabController;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/WelcomeScreen`, showing Stroom's real [WelcomePresenter] (the start-up
+/// Stories of `App/Main/WelcomeScreen`, showing Stroom's real [WelcomeTabController] (the start-up
 /// Welcome tab) with fake REST replies.
 ///
 /// The screen only makes Stroom's start-up requests (the session info and the UI config's
 /// `welcomeHtml`), so the story has no fixtures of its own: the harness's start-up fixtures answer
 /// them with their defaults (the `admin` user, build `SNAPSHOT`, node `node1a`, the usual "About
-/// Stroom" HTML). The presenter's UI config cache and date formatter come from the harness's
+/// Stroom" HTML). The controller's UI config cache and date formatter come from the harness's
 /// injector.
 public final class WelcomeScreenStories {
 
@@ -70,14 +69,14 @@ public final class WelcomeScreenStories {
     private static Widget render(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
 
-        final WelcomePresenter presenter = new WelcomePresenter(
+        final WelcomeTabController controller = new WelcomeTabController(
                 harness.getEventBus(),
-                new WelcomeViewImpl(GWT.create(WelcomeViewImpl.Binder.class)),
+                new WelcomeTab(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 harness.getDateTimeFormatter());
         // A tab's content, so shown in the story's canvas rather than as a popup
-        harness.add(harness.unbindOnCleanUp(presenter).getWidget());
+        harness.add(harness.own(controller).asWidget());
         return harness.asWidget();
     }
 }

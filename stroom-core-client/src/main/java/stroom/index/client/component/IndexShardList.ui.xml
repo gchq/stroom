@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An index's shards, each with a tick box to choose it, with Flush, Delete and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Shard actions">
+        <b:ToolbarButton ui:field="flushButton" svg="SHARD_FLUSH" title="Flush Selected Index Shards"
+                         enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Index Shards" enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Index Shards"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

@@ -21,11 +21,7 @@ import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 
-import com.gwtplatform.mvp.client.HandlerContainer;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,41 +30,6 @@ class TestStoryDocumentPlugins {
 
     private static final String PATH = "/xslt/v1/x1";
     private static final String DOC = "{\"type\": \"XSLT\", \"uuid\": \"x1\", \"name\": \"My XSLT\", \"data\": \"a\"}";
-
-    @Test
-    void testUnbindOnCleanUp_unbindsEachContainerOnlyWhenCleanedUp() {
-        final List<Runnable> cleanUps = new ArrayList<>();
-        final FakeContainer manager = new FakeContainer();
-        final FakeContainer plugin = new FakeContainer();
-
-        StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add, manager, plugin);
-
-        assertThat(cleanUps).hasSize(2);
-        assertThat(manager.isBound()).isTrue();
-        assertThat(plugin.isBound()).isTrue();
-
-        cleanUps.forEach(Runnable::run);
-
-        assertThat(manager.isBound()).isFalse();
-        assertThat(plugin.isBound()).isFalse();
-    }
-
-    @Test
-    void testUnbindOnCleanUp_withNoContainersAddsNothing() {
-        final List<Runnable> cleanUps = new ArrayList<>();
-
-        StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add);
-
-        assertThat(cleanUps).isEmpty();
-    }
-
-    @Test
-    void testUnbindOnCleanUp_refusesANullContainer() {
-        final List<Runnable> cleanUps = new ArrayList<>();
-
-        assertThatThrownBy(() -> StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add, (HandlerContainer) null))
-                .isInstanceOf(NullPointerException.class);
-    }
 
     @Test
     void testDocumentRoutes_fetchRepliesWithTheDocument() {
@@ -108,29 +69,5 @@ class TestStoryDocumentPlugins {
     void testDocumentRoutes_refusesANullDocument() {
         assertThatThrownBy(() -> StoryDocumentPlugins.documentRoutes(RestFixtures.builder(), PATH, null))
                 .isInstanceOf(NullPointerException.class);
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    // A plugin's bound state, as GWTP's HandlerContainerImpl keeps it
-    private static final class FakeContainer implements HandlerContainer {
-
-        private boolean bound = true;
-
-        @Override
-        public void bind() {
-            bound = true;
-        }
-
-        @Override
-        public boolean isBound() {
-            return bound;
-        }
-
-        @Override
-        public void unbind() {
-            bound = false;
-        }
     }
 }

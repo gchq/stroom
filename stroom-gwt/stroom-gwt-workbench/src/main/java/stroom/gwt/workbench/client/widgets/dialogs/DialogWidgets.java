@@ -18,19 +18,19 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.widget.button.client.Button;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Widgets shared by the `Widgets/Dialogs/*` stories.
 final class DialogWidgets {
 
     /// The class of a primary button.
-    static final String PRIMARY = "Button--contained-primary";
+    static final String PRIMARY = "button--contained-primary";
     /// The class of a secondary button.
-    static final String SECONDARY = "Button--contained-secondary";
+    static final String SECONDARY = "button--contained-secondary";
 
     private DialogWidgets() {
         // Static utility

@@ -16,7 +16,8 @@
 
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Method;
@@ -82,6 +83,7 @@ public class FakeRestFactory implements RestFactory {
         private final Function<T, R> function;
         private Consumer<R> resultConsumer;
         private RestErrorHandler errorHandler;
+        private HasControllerNode owner;
 
         private FakeRequest(final Function<T, R> function) {
             this.function = function;
@@ -111,6 +113,12 @@ public class FakeRestFactory implements RestFactory {
         }
 
         @Override
+        public MethodExecutor<T, R> owner(final HasControllerNode owner) {
+            this.owner = owner;
+            return this;
+        }
+
+        @Override
         public void exec() {
             requests.add(this);
         }
@@ -129,7 +137,10 @@ public class FakeRestFactory implements RestFactory {
         /// @param result The reply, which may be null.
         @SuppressWarnings("unchecked")
         public void succeed(final Object result) {
-            resultConsumer.accept((R) result);
+            // As Stroom's, a reply for a disposed owner is dropped
+            if (!isOwnerDisposed()) {
+                resultConsumer.accept((R) result);
+            }
         }
 
         /// Answers the request as a failure, e.g. no reply or an error from the server.
@@ -138,9 +149,13 @@ public class FakeRestFactory implements RestFactory {
         public void fail(final Throwable throwable) {
             // With no failure handler, Stroom's default one only shows an alert, which nothing here
             // can answer, so the caller hears nothing (e.g. a dialog waiting on it is never reset)
-            if (errorHandler != null) {
+            if (errorHandler != null && !isOwnerDisposed()) {
                 errorHandler.onError(new RestError(Mockito.mock(Method.class), throwable));
             }
+        }
+
+        private boolean isOwnerDisposed() {
+            return owner != null && owner.getControllerNode().isDisposed();
         }
 
         /// @return True if the request has its own failure handler, rather than Stroom's default.

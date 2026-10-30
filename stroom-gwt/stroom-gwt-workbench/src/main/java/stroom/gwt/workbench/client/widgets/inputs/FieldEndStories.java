@@ -18,12 +18,12 @@ package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBox;
-import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.quickfilter.client.QuickFilterContextHandler;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.util.client.FieldEnd;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -77,6 +77,7 @@ public final class FieldEndStories {
         panel.getElement().getStyle().setProperty("gap", "12px");
         panel.getElement().getStyle().setProperty("width", "200px");
 
+        // Only its layout is checked, so its calendar opens no dialog (no controller is attached)
         final DateTimeBox dateTime = new DateTimeBox();
         dateTime.setExpressionsAllowed(true);
         dateTime.setText(LONG);
@@ -96,7 +97,7 @@ public final class FieldEndStories {
         badged.setValue(LONG);
         badged.setShown(true);
         final SimplePanel badge = new SimplePanel();
-        badge.setStyleName("badge badge-pill badge-danger");
+        badge.setStyleName("change-password__length change-password__length--short");
         badge.getElement().setInnerText("9+");
         badged.setBadge(badge);
         panel.add(named(badged, "Password with a badge", "password-box--with-badge"));
@@ -150,7 +151,7 @@ public final class FieldEndStories {
     /// is drawn over its end.
     private static native double endGap(Element root) /*-{
         var text = root.querySelector('.selection-box__value') || root.querySelector('input');
-        var end = root.querySelector('.svg-icon-box__icon, .password-box__end, .quick-filter__toolbar,'
+        var end = root.querySelector('.icon-box__icon, .password-box__end, .quick-filter__toolbar,'
                                      + ' .value-spinner__steps');
         var t = text.getBoundingClientRect();
         var cs = $wnd.getComputedStyle(text);

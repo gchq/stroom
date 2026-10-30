@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:a="urn:import:stroom.document.asset.client.component"
+             xmlns:ed="urn:import:stroom.editor.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!-- A document's Assets tab (document-assets-tab.css) -->
+    <g:FlowPanel styleName="max form-padding form document-assets-tab">
+        <!-- The files beside the selected one's editor -->
+        <split:SplitPane thin="true" sizes="200px, *" names="Files, Editor" addStyleNames="max">
+            <a:DocumentAssetTree ui:field="tree" accessibleName="Assets"/>
+            <g:FlowPanel styleName="max document-assets-tab__editor-area">
+                <!-- Shown in the editor's place while no file is selected, so the area says what it is for -->
+                <tx:Label ui:field="editorPlaceholder" styleName="document-assets-tab__placeholder">Select a file to view or edit it</tx:Label>
+                <ed:CodeEditor ui:field="editor"/>
+            </g:FlowPanel>
+        </split:SplitPane>
+    </g:FlowPanel>
+</ui:UiBinder>

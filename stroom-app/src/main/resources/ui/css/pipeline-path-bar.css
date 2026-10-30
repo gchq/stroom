@@ -1,0 +1,578 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * The stepping screen's pipeline bar (PipelinePathBar): a row of chevrons. Named BEM style
+ * (block, block__element, block__element--modifier).
+ *
+ * A chevron is cut to shape with clip-path, which would also cut off a border, outline or box
+ * shadow, so its shape is drawn in layers:
+ *   - the chevron's ::before, set out by the focus ring's width: the focus ring
+ *   - the chevron's ::after, set out by 1px: the focus border of a chevron whose own border is a
+ *     problem's colour, so that it still has one
+ *   - .pipeline-path-bar__shape: the border, the shape's own background showing round...
+ *   - .pipeline-path-bar__shape's ::before, set in by the border's width: the fill
+ * A chevron (.pipeline-path-bar__segment) holds its button (.pipeline-path-bar__button) and, after a fork,
+ * its drop down chevron (.pipeline-path-bar__caret), a menu button. As with toolbar.css, their states
+ * come from their ARIA attributes (aria-current, aria-disabled, aria-expanded, and the focus), not
+ * modifiers; the chevron's shape takes the states of its button.
+ * Its states use the toolbar buttons' colours (see toolbar.css) and the focus colours.
+ * Warnings and worse have a thicker border in their colour; errors that a step has made new or
+ * worse pulse it three times (see PipelinePathBar.setElementSeverities).
+ */
+
+.pipeline-path-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    /* Room for the focus ring */
+    padding: 5px 6px;
+    overflow: hidden;
+}
+
+.pipeline-path-bar__segment {
+    --pipeline-path-bar__border: var(--pipeline-element__border-color);
+    --pipeline-path-bar__fill: transparent;
+    /* A darkening over the fill, e.g. while the selected chevron is pressed */
+    --pipeline-path-bar__shade: transparent;
+
+    /*
+     * The shapes. A chevron is 26px high and its point sticks out (and its notch goes in) 10px, so
+     * its slanted edges go 10px across for 13px down. An edge set out (or in) by d across its
+     * slant moves 1.262d across (sqrt(1 + (10/13)^2)), and its ends move 0.769d along it for each
+     * d its neighbouring edge moves. The ring and fill shapes below are worked out from these, for
+     * a 4px ring, a 1px (or a problem's 2px) border and a 1px focus border outside a problem's, so
+     * that their edges run alongside the chevron's.
+     */
+    --pipeline-path-bar__shape: polygon(
+            0 0,
+            calc(100% - 10px) 0,
+            100% 50%,
+            calc(100% - 10px) 100%,
+            0 100%,
+            10px 50%);
+    /* The fill, in a box set in 1px all round */
+    --pipeline-path-bar__fill-shape: polygon(
+            1.03px 0,
+            calc(100% - 9.49px) 0,
+            calc(100% - 0.26px) 50%,
+            calc(100% - 9.49px) 100%,
+            1.03px 100%,
+            10.26px 50%);
+    /* The fill inside a problem's 2px border, in a box set in 2px all round */
+    --pipeline-path-bar__thick-fill-shape: polygon(
+            2.06px 0,
+            calc(100% - 8.99px) 0,
+            calc(100% - 0.53px) 50%,
+            calc(100% - 8.99px) 100%,
+            2.06px 100%,
+            10.53px 50%);
+    /* The focus ring, in a box set out 4px above and below and 10px each side (the slanted edges'
+       ends reach further out than the ring's width) */
+    --pipeline-path-bar__ring-shape: polygon(
+            1.88px 0,
+            calc(100% - 18.03px) 0,
+            calc(100% - 4.95px) 50%,
+            calc(100% - 18.03px) 100%,
+            1.88px 100%,
+            14.95px 50%);
+    /* The focus border outside a problem's, in a box set out 1px above and below and 10px each
+       side */
+    --pipeline-path-bar__edge-shape: polygon(
+            7.97px 0,
+            calc(100% - 19.51px) 0,
+            calc(100% - 8.74px) 50%,
+            calc(100% - 19.51px) 100%,
+            7.97px 100%,
+            18.74px 50%);
+
+    position: relative;
+    z-index: 0;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-sizing: border-box;
+    height: 26px;
+    padding: 0 16px 0 18px;
+    /* Each chevron's notch takes the point of the one before, with a gap of 6px across (4.75px
+       square to the slanted edges), room for the 4px focus ring */
+    margin-left: -4px;
+    border-radius: 0;
+    color: var(--pipeline-element__text-color);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* A chevron's button, and what it shows (its element's icon, name and filter icon, or a `…`
+   chevron's ellipsis), which has the hover tip but is hidden from screen readers */
+.pipeline-path-bar__button {
+    display: flex;
+    align-items: center;
+    outline: none;
+}
+
+.pipeline-path-bar__content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* The focus ring */
+.pipeline-path-bar__segment::before {
+    content: "";
+    position: absolute;
+    inset: -4px -10px;
+    z-index: -2;
+    clip-path: var(--pipeline-path-bar__ring-shape);
+    background-color: transparent;
+}
+
+/* The focus border of a chevron whose own border is a problem's colour: just outside it, over the
+   focus ring (both under the chevron, so that nothing is over what can be clicked) */
+.pipeline-path-bar__segment::after {
+    content: "";
+    position: absolute;
+    inset: -1px -10px;
+    z-index: -2;
+    clip-path: var(--pipeline-path-bar__edge-shape);
+    background-color: transparent;
+}
+
+/* The border */
+.pipeline-path-bar__shape {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    clip-path: var(--pipeline-path-bar__shape);
+    /* A problem's colour (whatever the chevron's state, as the focus has its own ring), or the
+       border's */
+    background-color: var(--pipeline-path-bar__severity, var(--pipeline-path-bar__border));
+}
+
+/* The fill, over the elements' background (the pipeline structure tree's boxes' too), so that a
+   see-through fill (e.g. hovered) shades it and doesn't show the border */
+.pipeline-path-bar__shape::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    clip-path: var(--pipeline-path-bar__fill-shape);
+    background-color: var(--pipeline-element__background-color);
+    background-image: linear-gradient(var(--pipeline-path-bar__shade), var(--pipeline-path-bar__shade)),
+    linear-gradient(var(--pipeline-path-bar__fill), var(--pipeline-path-bar__fill));
+}
+
+/* A problem's border is 2px */
+.pipeline-path-bar__segment--warn .pipeline-path-bar__shape::before,
+.pipeline-path-bar__segment--error .pipeline-path-bar__shape::before,
+.pipeline-path-bar__segment--fatal .pipeline-path-bar__shape::before {
+    inset: 2px;
+    clip-path: var(--pipeline-path-bar__thick-fill-shape);
+}
+
+/* The first has a square, rounded start: its ring is set out 4px on that side, as its fill is 1px */
+.pipeline-path-bar__segment--first {
+    --pipeline-path-bar__shape: polygon(
+            0 0,
+            calc(100% - 10px) 0,
+            100% 50%,
+            calc(100% - 10px) 100%,
+            0 100%);
+    --pipeline-path-bar__fill-shape: polygon(
+            0 0,
+            calc(100% - 9.49px) 0,
+            calc(100% - 0.26px) 50%,
+            calc(100% - 9.49px) 100%,
+            0 100%);
+    --pipeline-path-bar__thick-fill-shape: polygon(
+            0 0,
+            calc(100% - 8.99px) 0,
+            calc(100% - 0.53px) 50%,
+            calc(100% - 8.99px) 100%,
+            0 100%);
+    --pipeline-path-bar__ring-shape: polygon(
+            0 0,
+            calc(100% - 18.03px) 0,
+            calc(100% - 4.95px) 50%,
+            calc(100% - 18.03px) 100%,
+            0 100%);
+    --pipeline-path-bar__edge-shape: polygon(
+            0 0,
+            calc(100% - 19.51px) 0,
+            calc(100% - 8.74px) 50%,
+            calc(100% - 19.51px) 100%,
+            0 100%);
+    margin-left: 0;
+    padding-left: 10px;
+    border-radius: .25rem 0 0 .25rem;
+}
+
+.pipeline-path-bar__segment--first::before {
+    left: -4px;
+    border-radius: calc(.25rem + 4px) 0 0 calc(.25rem + 4px);
+}
+
+.pipeline-path-bar__segment--first::after {
+    left: -1px;
+    border-radius: calc(.25rem + 1px) 0 0 calc(.25rem + 1px);
+}
+
+/* The last has a square, rounded end */
+.pipeline-path-bar__segment--last {
+    --pipeline-path-bar__shape: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%);
+    --pipeline-path-bar__fill-shape: polygon(1.03px 0, 100% 0, 100% 100%, 1.03px 100%, 10.26px 50%);
+    --pipeline-path-bar__thick-fill-shape: polygon(2.06px 0, 100% 0, 100% 100%, 2.06px 100%, 10.53px 50%);
+    --pipeline-path-bar__ring-shape: polygon(1.88px 0, 100% 0, 100% 100%, 1.88px 100%, 14.95px 50%);
+    --pipeline-path-bar__edge-shape: polygon(7.97px 0, 100% 0, 100% 100%, 7.97px 100%, 18.74px 50%);
+    padding-right: 10px;
+    border-radius: 0 .25rem .25rem 0;
+}
+
+.pipeline-path-bar__segment--last::before {
+    right: -4px;
+    border-radius: 0 calc(.25rem + 4px) calc(.25rem + 4px) 0;
+}
+
+.pipeline-path-bar__segment--last::after {
+    right: -1px;
+    border-radius: 0 calc(.25rem + 1px) calc(.25rem + 1px) 0;
+}
+
+/* The only one is a rounded box */
+.pipeline-path-bar__segment--first.pipeline-path-bar__segment--last {
+    --pipeline-path-bar__shape: none;
+    --pipeline-path-bar__fill-shape: none;
+    --pipeline-path-bar__thick-fill-shape: none;
+    --pipeline-path-bar__ring-shape: none;
+    --pipeline-path-bar__edge-shape: none;
+    border-radius: .25rem;
+}
+
+.pipeline-path-bar__segment--first.pipeline-path-bar__segment--last::before {
+    border-radius: calc(.25rem + 4px);
+}
+
+.pipeline-path-bar__segment--first.pipeline-path-bar__segment--last::after {
+    inset: -1px;
+    border-radius: calc(.25rem + 1px);
+}
+
+/* The states, as a toolbar button's: hovered */
+.pipeline-path-bar__segment:hover {
+    --pipeline-path-bar__fill: var(--icon-button__background-color--hover);
+}
+
+/* Pressed with the mouse, and still held with the pointer moved off it (but not when it is the drop
+   down chevron that is pressed) */
+.pipeline-path-bar__segment:active:not(:has(.pipeline-path-bar__caret:active)) {
+    /* The pressed name colour (the selected element keeps its own) */
+    --pipeline-element__text-color: var(--pipeline-element__text-color--pressed);
+    --pipeline-path-bar__fill: var(--icon-button__background-color--active);
+}
+
+.pipeline-path-bar__segment:active:not(:hover):not(:has(.pipeline-path-bar__caret:active)) {
+    --pipeline-path-bar__fill: var(--icon-button__background-color--active-outside);
+}
+
+/* The selected element (its button is aria-current), as a selected row is: the selected-row colour
+   (pressing it darkens it), and a bold name, so that it isn't told from the others by colour
+   alone. Its element's icon and drop down chevron keep their own colours */
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]) {
+    --pipeline-path-bar__fill: var(--pipeline-element__background-color--selected);
+    color: var(--pipeline-element__text-color--selected);
+}
+
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]):hover {
+    --pipeline-path-bar__fill: var(--pipeline-element__background-color--selected--hover);
+}
+
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]):active:not(:has(.pipeline-path-bar__caret:active)) {
+    --pipeline-path-bar__fill: var(--pipeline-element__background-color--selected--hover);
+    --pipeline-path-bar__shade: rgba(0, 0, 0, .15);
+}
+
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]):active:not(:hover) {
+    --pipeline-path-bar__fill: var(--pipeline-element__background-color--selected);
+    --pipeline-path-bar__shade: rgba(0, 0, 0, .1);
+}
+
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]) .pipeline-path-bar__label-text {
+    font-weight: bold;
+}
+
+/* An element that can't be stepped (its button is aria-disabled): faded, and not hovered or pressed */
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-disabled="true"]) {
+    --pipeline-path-bar__fill: transparent;
+    opacity: var(--disabled-opacity);
+    cursor: default;
+}
+
+/* Keyboard focus on a chevron's button: the focus border and ring used elsewhere, round the
+   chevron, above the chevrons beside it */
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button:focus-visible) {
+    --pipeline-path-bar__border: var(--focus-border);
+    z-index: 1;
+}
+
+.pipeline-path-bar__segment:has(> .pipeline-path-bar__button:focus-visible)::before {
+    background-color: var(--focus-ring__color);
+}
+
+/* A focused chevron whose border is a problem's colour keeps it, with the focus border outside it
+   (as the focus ring alone is under 3:1 against the page) */
+.pipeline-path-bar__segment:is(.pipeline-path-bar__segment--warn,
+    .pipeline-path-bar__segment--error,
+    .pipeline-path-bar__segment--fatal):has(> .pipeline-path-bar__button:focus-visible)::after {
+    background-color: var(--focus-border);
+}
+
+/* Warnings and worse have a thicker border in their colour */
+.pipeline-path-bar__segment--warn {
+    --pipeline-path-bar__severity: var(--pipeline-path-bar__warn);
+}
+
+.pipeline-path-bar__segment--error,
+.pipeline-path-bar__segment--fatal {
+    --pipeline-path-bar__severity: var(--pipeline-path-bar__error);
+}
+
+/* A new or worse error pulses its border three times, to the usual border's colour and back
+   (PULSE_MILLIS in PipelinePathBar). The bar sets a negative delay (--pipeline-path-bar__pulse-delay)
+   to carry on a pulse when it redraws the chevron */
+.pipeline-path-bar__segment--pulse .pipeline-path-bar__shape {
+    animation: pipeline-path-bar-border-pulse 1.4s ease-in-out 3;
+    animation-delay: var(--pipeline-path-bar__pulse-delay, 0ms);
+}
+
+@keyframes pipeline-path-bar-border-pulse {
+    50% {
+        background-color: var(--pipeline-path-bar__border);
+    }
+}
+
+@keyframes pipeline-path-bar-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .15;
+    }
+}
+
+.pipeline-path-bar__segment--collapsed {
+    display: none;
+}
+
+.pipeline-path-bar__icon,
+.pipeline-path-bar__filter {
+    flex: 0 0 auto;
+    width: var(--icon-width);
+    height: var(--icon-height);
+}
+
+/* A chevron's name. It is as wide as its name in bold, so that the bar doesn't shift when the
+   selection (whose name is bold) moves: an invisible bold copy of the name (::after, from its
+   data-text) shares its one column */
+.pipeline-path-bar__label {
+    display: inline-grid;
+    max-width: 16em;
+}
+
+.pipeline-path-bar__label::after {
+    content: attr(data-text);
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.pipeline-path-bar__label-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pipeline-path-bar__segment--ellipsis .pipeline-path-bar__label {
+    padding: 0 2px;
+}
+
+.pipeline-path-bar__segment--ellipsis .pipeline-path-bar__label-text {
+    font-weight: bold;
+}
+
+/* The drop down chevron of an element after a fork, at its end: the selection box's chevron. It is
+   a menu button of its own, at least 24px (the smallest target WCAG 2.5.8 allows), with the states
+   of a toolbar button: hovered, pressed (or its menu open) and focused */
+.pipeline-path-bar__caret {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-sizing: border-box;
+    min-width: 24px;
+    height: 24px;
+    margin: 0 -8px 0 -2px;
+    padding: 0 4px;
+    border-radius: 12px;
+    outline: none;
+}
+
+.pipeline-path-bar__caret:hover {
+    background-color: var(--icon-button__background-color--hover);
+}
+
+.pipeline-path-bar__caret:active,
+.pipeline-path-bar__caret[aria-expanded="true"] {
+    background-color: var(--icon-button__background-color--active);
+}
+
+.pipeline-path-bar__caret:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--focus-border), var(--focus-shadow);
+}
+
+/* A filter icon before the drop down chevron if the branches not shown have filters */
+.pipeline-path-bar__branch-filter svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* The drop down chevron, holding the badge on it */
+.pipeline-path-bar__caret-target {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Its arrow: that of every field that opens a list (a selection box's, icon-box.css) */
+.pipeline-path-bar__caret-arrow svg {
+    width: 10px;
+    height: 10px;
+    color: var(--icon-colour__black);
+}
+
+/* The standard icon of an element's severity (warnings or worse), after its name */
+.pipeline-path-bar__severity {
+    flex: 0 0 auto;
+    width: var(--icon-width);
+    height: var(--icon-height);
+}
+
+/* The icon of the worst severity in the branches not shown: a badge on the drop down chevron's top
+   right corner, so that it isn't taken for its element's own */
+.pipeline-path-bar__branch-severity {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 11px;
+    height: 11px;
+    pointer-events: none;
+}
+
+.pipeline-path-bar__branch-severity svg {
+    width: 11px;
+    height: 11px;
+}
+
+/* A new or worse error in the branches not shown pulses their icon, as a border pulses */
+.pipeline-path-bar__branch-severity--pulse {
+    animation: pipeline-path-bar-pulse 1.4s ease-in-out 3;
+    animation-delay: var(--pipeline-path-bar__pulse-delay, 0ms);
+}
+
+/* Those who would rather not see movement see the borders and icons, but no pulse */
+@media (prefers-reduced-motion: reduce) {
+    .pipeline-path-bar__segment--pulse .pipeline-path-bar__shape,
+    .pipeline-path-bar__branch-severity--pulse {
+        animation: none;
+    }
+}
+
+/* The icon of a branch's worst severity after its name in a drop down list, as on a chevron */
+.pipeline-path-bar__menu-severity {
+    display: inline-flex;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* The filter icons: an element's, the branches' not shown, and a branch's in a drop down list */
+.pipeline-path-bar__filter svg,
+.pipeline-path-bar__branch-filter svg,
+.pipeline-path-bar__menu-filter svg {
+    color: var(--pipeline-path-bar__filter);
+}
+
+/* A filter icon after a branch's name in a drop down list, if it has filters, as on a chevron */
+.pipeline-path-bar__menu-filter {
+    display: inline-flex;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Forced colours (e.g. Windows High Contrast), which would drop the background colours the chevrons
+   are drawn with. The bar keeps its own colours there (forced-color-adjust), all of them the user's
+   system colours: the chevron's border is CanvasText; hover and focus Highlight; the selected
+   element Highlight with HighlightText; problems' thicker border CanvasText, as forced colours have
+   no warning or error colour (their icons, which keep their own colours, and names say which);
+   and an element that can't be stepped GrayText */
+@media (forced-colors: active) {
+    .pipeline-path-bar__segment {
+        forced-color-adjust: none;
+        --pipeline-element__background-color: Canvas;
+        --pipeline-path-bar__border: CanvasText;
+        --pipeline-element__text-color: CanvasText;
+        --pipeline-element__text-color--pressed: CanvasText;
+        --icon-button__background-color--hover: Canvas;
+        --icon-button__background-color--active: Canvas;
+        --icon-button__background-color--active-outside: Canvas;
+        --pipeline-element__background-color--selected: Highlight;
+        --pipeline-element__background-color--selected--hover: Highlight;
+        --pipeline-element__text-color--selected: HighlightText;
+        --pipeline-path-bar__warn: CanvasText;
+        --pipeline-path-bar__error: CanvasText;
+        --error: CanvasText;
+        --focus-border: Highlight;
+        --focus-ring__color: Highlight;
+        --focus-shadow: 0 0 0 2px Highlight;
+        --icon-colour__black: CanvasText;
+    }
+
+    .pipeline-path-bar__segment:hover {
+        --pipeline-path-bar__border: Highlight;
+    }
+
+    .pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-current="true"]) {
+        --pipeline-path-bar__border: Highlight;
+        --icon-colour__black: HighlightText;
+    }
+
+    .pipeline-path-bar__segment:has(> .pipeline-path-bar__button[aria-disabled="true"]) {
+        color: GrayText;
+    }
+
+    /* The drop down chevron, pressed or open, is outlined rather than filled */
+    .pipeline-path-bar__caret:active,
+    .pipeline-path-bar__caret[aria-expanded="true"] {
+        outline: 1px solid Highlight;
+    }
+}

@@ -28,12 +28,12 @@ import java.util.Objects;
 ///
 /// It mirrors `PopupManager`: showing a popup that is already open hides it.
 ///
-/// @param <T> The type of the popups' presenters.
+/// @param <T> The type of the popups' controllers.
 final class PopupTracker<T> {
 
     private final List<T> open = new ArrayList<>();
 
-    /// @param popup The presenter of a popup being shown.
+    /// @param popup The controller of a popup being shown.
     void onShow(final T popup) {
         Objects.requireNonNull(popup);
         if (open.contains(popup)) {
@@ -44,7 +44,7 @@ final class PopupTracker<T> {
         }
     }
 
-    /// @param popup The presenter of a popup being hidden.
+    /// @param popup The controller of a popup being hidden.
     void onHide(final T popup) {
         open.remove(popup);
     }

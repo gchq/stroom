@@ -1,5 +1,5 @@
 /*
- * A field for a schedule's expression (ScheduleBox), with its clock at the end (an svg-icon-box,
+ * A field for a schedule's expression (ScheduleBox), with its clock at the end (an icon-box,
  * which keeps its text clear of the clock). Its field is a text field (text-field.css),
  * schedule-box__input.
  */

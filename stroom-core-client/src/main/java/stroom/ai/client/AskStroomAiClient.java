@@ -31,10 +31,11 @@ import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -51,6 +52,10 @@ public class AskStroomAiClient {
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
 
+    /// Made by GIN.
+    ///
+    /// @param restFactory            Makes REST requests.
+    /// @param userPreferencesManager The user's preferences, which hold their settings.
     @Inject
     public AskStroomAiClient(final RestFactory restFactory,
                              final UserPreferencesManager userPreferencesManager) {
@@ -58,7 +63,12 @@ public class AskStroomAiClient {
         this.userPreferencesManager = userPreferencesManager;
     }
 
-    public void setConfig(final AskStroomAiConfig config, final TaskMonitorFactory taskMonitorFactory) {
+    /// Saves the user's own settings, in their preferences.
+    ///
+    /// @param config             The settings.
+    /// @param taskMonitorFactory Shows the save is in progress.
+    public void setConfig(final AskStroomAiConfig config,
+                          final TaskMonitorFactory taskMonitorFactory) {
         // Wait for the user's preferences, so that saving the config doesn't lose them
         userPreferencesManager.whenLoaded(currentPrefs -> {
             final UserPreferences newPrefs = currentPrefs.copy()
@@ -70,7 +80,12 @@ public class AskStroomAiClient {
         });
     }
 
-    void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
+    /// Gives the user's own settings or, if they have none, the default settings, which then become theirs.
+    ///
+    /// @param consumer           Given the settings.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void getConfig(final Consumer<AskStroomAiConfig> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
         // Wait for the user's preferences, so that the user's own config is used if they have one
         userPreferencesManager.whenLoaded(userPreferences -> {
             final AskStroomAiConfig config = userPreferences.getAskStroomAiConfig();
@@ -93,8 +108,12 @@ public class AskStroomAiClient {
         });
     }
 
-    void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
-                          final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches the settings every user starts with.
+    ///
+    /// @param consumer           Given the default settings.
+    /// @param taskMonitorFactory Shows the fetch is in progress.
+    public void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
+                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(AskStroomAiResource::getDefaultConfig)
@@ -103,9 +122,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void setDefaultAskStroomAIConfig(final AskStroomAiConfig config,
-                                     final Consumer<Boolean> consumer,
-                                     final TaskMonitorFactory taskMonitorFactory) {
+    /// Saves the settings every user starts with.
+    ///
+    /// @param config             The new default settings.
+    /// @param consumer           Told whether they were saved.
+    /// @param taskMonitorFactory Shows the save is in progress.
+    public void setDefaultAskStroomAIConfig(final AskStroomAiConfig config,
+                                            final Consumer<Boolean> consumer,
+                                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.setDefaultAskStroomAIConfig(config))
@@ -114,10 +138,16 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void sendMessage(final AskStroomAiRequest request,
-                     final Consumer<AskStroomAiResponse> consumer,
-                     final RestErrorHandler errorHandler,
-                     final TaskMonitorFactory taskMonitorFactory) {
+    /// Sends a message to the AI.
+    ///
+    /// @param request            The message, with its conversation and attached data.
+    /// @param consumer           Given the AI's reply.
+    /// @param errorHandler       Told why the message couldn't be sent.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void sendMessage(final AskStroomAiRequest request,
+                            final Consumer<AskStroomAiResponse> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.askStroomAi(
@@ -128,8 +158,12 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void createChat(final Consumer<AiChat> consumer,
-                    final TaskMonitorFactory taskMonitorFactory) {
+    /// Starts a new conversation.
+    ///
+    /// @param consumer           Given the conversation.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void createChat(final Consumer<AiChat> consumer,
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(AskStroomAiResource::createChat)
@@ -138,9 +172,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void listChats(final FindAiChatHistoryCriteria criteria,
-                   final Consumer<ResultPage<AiChat>> consumer,
-                   final TaskMonitorFactory taskMonitorFactory) {
+    /// Finds the user's conversations.
+    ///
+    /// @param criteria           Which to find, and in what order.
+    /// @param consumer           Given a page of them.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void listChats(final FindAiChatHistoryCriteria criteria,
+                          final Consumer<ResultPage<AiChat>> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.listChats(criteria))
@@ -149,9 +188,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getChat(final int chatId,
-                 final Consumer<AiChat> consumer,
-                 final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches a conversation.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param consumer           Given the conversation.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void getChat(final int chatId,
+                        final Consumer<AiChat> consumer,
+                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.getChat(chatId))
@@ -160,9 +204,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteChat(final int chatId,
-                    final Consumer<Boolean> consumer,
-                    final TaskMonitorFactory taskMonitorFactory) {
+    /// Deletes a conversation.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param consumer           Told whether it was deleted.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void deleteChat(final int chatId,
+                           final Consumer<Boolean> consumer,
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.deleteChat(chatId))
@@ -171,10 +220,16 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteMessage(final int chatId,
-                       final int messageId,
-                       final Consumer<Boolean> consumer,
-                       final TaskMonitorFactory taskMonitorFactory) {
+    /// Deletes a message from a conversation.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param messageId          The message's id.
+    /// @param consumer           Told whether it was deleted.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void deleteMessage(final int chatId,
+                              final int messageId,
+                              final Consumer<Boolean> consumer,
+                              final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.deleteMessage(chatId, messageId))
@@ -183,9 +238,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteAllMessages(final int chatId,
-                           final Consumer<Boolean> consumer,
-                           final TaskMonitorFactory taskMonitorFactory) {
+    /// Deletes all a conversation's messages.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param consumer           Told whether they were deleted.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void deleteAllMessages(final int chatId,
+                                  final Consumer<Boolean> consumer,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.deleteAllMessages(chatId))
@@ -194,9 +254,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getMessages(final int chatId,
-                     final Consumer<List<AiChatMessage>> consumer,
-                     final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches a conversation's messages.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param consumer           Given the messages.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void getMessages(final int chatId,
+                            final Consumer<List<AiChatMessage>> consumer,
+                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.getMessages(chatId))
@@ -205,10 +270,16 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void updateChatTitle(final int chatId,
-                         final String title,
-                         final Consumer<Boolean> consumer,
-                         final TaskMonitorFactory taskMonitorFactory) {
+    /// Renames a conversation.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param title              Its new title.
+    /// @param consumer           Told whether it was renamed.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void updateChatTitle(final int chatId,
+                                final String title,
+                                final Consumer<Boolean> consumer,
+                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.updateChatTitle(chatId, title))
@@ -217,11 +288,18 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void pollMessages(final int chatId,
-                      final int lastSeenMessageId,
-                      final Consumer<AiChatPollResponse> consumer,
-                      final RestErrorHandler errorHandler,
-                      final TaskMonitorFactory taskMonitorFactory) {
+    /// Asks for a conversation's messages newer than those seen, and what the AI is doing.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param lastSeenMessageId  The id of the newest message seen.
+    /// @param consumer           Given the new messages and what the AI is doing.
+    /// @param errorHandler       Told why the request failed.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void pollMessages(final int chatId,
+                             final int lastSeenMessageId,
+                             final Consumer<AiChatPollResponse> consumer,
+                             final RestErrorHandler errorHandler,
+                             final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId)))
@@ -231,9 +309,14 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void cancelProcessing(final int chatId,
-                          final Consumer<Boolean> consumer,
-                          final TaskMonitorFactory taskMonitorFactory) {
+    /// Asks the AI to stop working on the last message sent.
+    ///
+    /// @param chatId             The conversation's id.
+    /// @param consumer           Told whether it stopped.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void cancelProcessing(final int chatId,
+                                 final Consumer<Boolean> consumer,
+                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.cancelProcessing(chatId))
@@ -242,10 +325,16 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void downloadChatHistory(final DownloadChatHistoryRequest request,
-                             final Consumer<ResourceGeneration> consumer,
-                             final RestErrorHandler errorHandler,
-                             final TaskMonitorFactory taskMonitorFactory) {
+    /// Makes a file of a conversation, to download.
+    ///
+    /// @param request            The conversation, and the file to make.
+    /// @param consumer           Given the file made.
+    /// @param errorHandler       Told why it couldn't be made.
+    /// @param taskMonitorFactory Shows the request is in progress.
+    public void downloadChatHistory(final DownloadChatHistoryRequest request,
+                                    final Consumer<ResourceGeneration> consumer,
+                                    final RestErrorHandler errorHandler,
+                                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.downloadChatHistory(request))
@@ -255,15 +344,24 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void getAttachmentData(final GetAttachmentDataRequest request,
-                           final Consumer<AiAttachmentDataPage> consumer,
-                           final RestErrorHandler errorHandler,
-                           final TaskMonitorFactory taskMonitorFactory) {
+    /// Fetches a page of an attachment's table.
+    ///
+    /// @param owner              What the reply is for: it is dropped once that is disposed.
+    /// @param request            The attachment, and the page of it.
+    /// @param consumer           Given the page.
+    /// @param errorHandler       Told why it failed.
+    /// @param taskMonitorFactory Shows the request's progress.
+    public void getAttachmentData(final HasControllerNode owner,
+                                  final GetAttachmentDataRequest request,
+                                  final Consumer<AiAttachmentDataPage> consumer,
+                                  final RestErrorHandler errorHandler,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.getAttachmentData(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .owner(owner)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

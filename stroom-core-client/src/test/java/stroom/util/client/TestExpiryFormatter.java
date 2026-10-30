@@ -48,7 +48,7 @@ class TestExpiryFormatter {
         when(dateTimeFormatter.format(expiryMs)).thenReturn("formatted expiry");
 
         assertThat(expiryFormatter.formatWithDuration(expiryMs, 1_000L).asString())
-                .isEqualTo("<span class=\"dataGridAlertText\">formatted expiry (EXPIRED)</span>");
+                .isEqualTo("<span class=\"data-grid__alert-text\">formatted expiry (EXPIRED)</span>");
 
         verify(dateTimeFormatter).format(expiryMs);
         verifyNoMoreInteractions(dateTimeFormatter);
@@ -62,7 +62,7 @@ class TestExpiryFormatter {
         when(dateTimeFormatter.formatWithDuration(expiryMs)).thenReturn("formatted duration");
 
         assertThat(expiryFormatter.formatWithDuration(expiryMs, 10_000L).asString())
-                .isEqualTo("<span class=\"dataGridAlertText\">formatted duration</span>");
+                .isEqualTo("<span class=\"data-grid__alert-text\">formatted duration</span>");
 
         verify(dateTimeFormatter).formatWithDuration(expiryMs);
     }

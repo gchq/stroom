@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.documentation.client.presenter.DocumentationPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
 
     private static final DocumentationResource DOCUMENTATION_RESOURCE = GWT.create(DocumentationResource.class);
 
-    private final Provider<DocumentationPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<DocumentationEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public DocumentationPlugin(final EventBus eventBus,
-                               final Provider<DocumentationPresenter> editorProvider,
+                               final Provider<DocumentationEditor> editorProvider,
                                final RestFactory restFactory,
                                final ContentManager contentManager,
                                final DocumentPluginEventManager entityPluginEventManager,
                                final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), DocumentationDoc.TYPE);
     }
 
     @Override

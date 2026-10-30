@@ -22,8 +22,8 @@ import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.inject.Inject;
 

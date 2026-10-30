@@ -23,17 +23,17 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.datepicker.client.CustomDatePicker;
+import stroom.widget.datepicker.client.Calendar;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.UTCDate;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.ClientStringUtil;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's calendar, the [CustomDatePicker] of `stroom.widget.datepicker.client`
-/// (its `DefaultMonthSelector` and `CalendarGrid`), as shown in the date and time dialog
-/// (`DateTimeViewImpl`).
+/// Stories for Stroom's calendar, the [Calendar] of `stroom.widget.datepicker.client`
+/// (its year and month rows and its `CalendarGrid`), as shown in the date and time dialog
+/// (`DateTimePicker`).
 ///
 /// The days are a WAI-ARIA grid named for its month, each day a `gridcell` named by its full date
 /// (in the browser's language, en-GB in the test runner). The grid is one tab stop, the focus on a
@@ -213,7 +213,7 @@ public final class CalendarGridStories {
     /// @param selected The selected day, or null for none.
     /// @param padded   True to show the month and day with two digits, false for no padding.
     private static Widget calendar(final StoryContext context, final UTCDate selected, final boolean padded) {
-        final CustomDatePicker datePicker = new CustomDatePicker();
+        final Calendar datePicker = new Calendar();
         if (selected != null) {
             datePicker.setCurrentMonth(selected);
             datePicker.setValue(selected);

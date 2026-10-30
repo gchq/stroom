@@ -29,8 +29,8 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableResult;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
@@ -58,7 +58,7 @@ class TestSearchModel {
     private final List<Boolean> searching = new ArrayList<>();
     private final List<List<ErrorMessage>> errors = new ArrayList<>();
     private IndexLoader indexLoader;
-    private ResultComponent table;
+    private DashboardResultPane table;
     private ResultStoreModel resultStoreModel;
     private SearchModel searchModel;
 
@@ -76,7 +76,7 @@ class TestSearchModel {
                 Mockito.mock(DateTimeSettingsFactory.class),
                 resultStoreModel);
         searchModel.init(new DocRef("Dashboard", "dashboard-uuid", "Dashboard"), "query-1");
-        table = Mockito.mock(ResultComponent.class);
+        table = Mockito.mock(DashboardResultPane.class);
         Mockito.when(table.getSettings()).thenReturn(TableComponentSettings.builder().build());
         searchModel.addComponent(TABLE_ID, table);
         searchModel.addSearchStateListener(searching::add);

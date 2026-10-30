@@ -656,7 +656,7 @@ TokenException(token, msg)              // token carries getStart() / getEnd()
   → TokenError {from, to, text}         // stroom-util-shared, GWT-safe, line/col
   → DashboardSearchResponse.tokenError  // :79 - travels WITH the results, not as an error
   → QueryModel:406-424 → addTokenErrorListener
-  → QueryEditPresenter:201-215          // Ace Marker + Indicators = inline underline
+  → QueryEditorController          // Ace Marker + Indicators = inline underline
 ```
 
 Two properties matter and should be preserved for every surface: the diagnostic rides back on

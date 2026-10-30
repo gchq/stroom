@@ -1,0 +1,37 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A stream's data: its Info, Error, Data Preview, Meta and Context tabs, with a link to its source
+     and its navigator, above the content of the tab selected and its data's classification -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:d="urn:import:stroom.data.client.component"
+             xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:pb="urn:import:stroom.widget.progress.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:btn="urn:import:stroom.widget.button.client">
+    <d:ClassificationWrapper ui:field="classificationWrapper">
+        <d:content>
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min data-viewer__tab-bar">
+                    <g:FlowPanel styleName="dock-max data-viewer__tab-bar-outer">
+                        <tab:LinkTabBar ui:field="tabBar"
+                                        addStyleNames="max data-viewer__tab-bar-inner"/>
+                    </g:FlowPanel>
+                    <g:HTMLPanel styleName="dock-min data-viewer__right-panel">
+                        <div class="data-viewer__button-panel"></div>
+                        <g:SimplePanel styleName="data-viewer__navigator-container">
+                            <d:ItemNavigator ui:field="navigator"/>
+                        </g:SimplePanel>
+                        <btn:LinkButton ui:field="sourceLink" addStyleNames="data-viewer__source-link-label"
+                                        text="View Source"/>
+                    </g:HTMLPanel>
+                </g:FlowPanel>
+                <g:SimplePanel styleName="dock-min data-viewer__progress-bar-panel">
+                    <pb:SourceProgressBar ui:field="progressBar" visible="false"/>
+                </g:SimplePanel>
+                <c:LayerContainer ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"/>
+                <spinner:LargeBusySpinner ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
+            </g:FlowPanel>
+        </d:content>
+    </d:ClassificationWrapper>
+</ui:UiBinder>

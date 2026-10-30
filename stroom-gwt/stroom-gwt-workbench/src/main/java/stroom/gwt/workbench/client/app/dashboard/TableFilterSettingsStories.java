@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.dashboard;
 
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -29,11 +28,11 @@ import java.util.List;
 import java.util.Map;
 
 /// The `App/Dashboard/TableFilterSettings` stories: the settings of a dashboard's Table Filter
-/// (`BasicTableFilterSettingsPresenter` with its `ColumnSelectionPresenter`), which list the
+/// (`BasicTableFilterInputSettingsController` with its `ColumnSelection`), which list the
 /// columns of the table it filters as tick boxes.
 ///
 /// The settings read the table from the dashboard's components, so the story opens a dashboard with
-/// the table and the filter (Stroom's real `DashboardPresenter`, see `DashboardSupport`) and opens
+/// the table and the filter (Stroom's real `DashboardBodyController`, see `DashboardSupport`) and opens
 /// the filter's settings from its tab's menu. The plays check the filter's settings in the dashboard
 /// that is saved (`PUT /dashboard/v1/{uuid}`).
 public final class TableFilterSettingsStories {
@@ -74,7 +73,7 @@ public final class TableFilterSettingsStories {
                     // The tick boxes are a grid's (TickBoxCell), found by their column's row; the
                     // select-all tick box is the grid's header
                     play.waitFor(() -> play.expect(dialog.getByText("Count")).toBeInTheDocument());
-                    play.expect(dialog.querySelector("th .tick-box, [data-hcol] .tick-box")).toBeInTheDocument();
+                    play.expect(dialog.querySelector("[data-hcol] .tick-box")).toBeInTheDocument();
                     play.expect(tickBox(dialog, "Name")).toBeInTheDocument();
                     final Query count = tickBox(dialog, "Count");
                     play.expect(count).toHaveAttribute("aria-checked", "false");

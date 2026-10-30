@@ -16,30 +16,20 @@
 
 package stroom.dashboard.client.gin;
 
-import stroom.about.client.gin.AboutGinjector;
 import stroom.about.client.gin.AboutModule;
-import stroom.activity.client.ActivityModule;
-import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.annotation.client.gin.AnnotationGinjector;
 import stroom.annotation.client.gin.AnnotationModule;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
-import stroom.dashboard.client.vis.gin.VisGinjector;
-import stroom.dashboard.client.vis.gin.VisModule;
+import stroom.core.client.component.AppPageController;
+import stroom.core.client.component.FullScreenController;
 import stroom.dispatch.client.RestModule;
-import stroom.entity.client.gin.EntityGinjector;
-import stroom.entity.client.gin.EntityModule;
+import stroom.document.client.gin.DocumentModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
-import stroom.quickfilter.client.gin.QuickFilterModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
-import stroom.security.identity.client.gin.ChangePasswordGinjector;
-import stroom.security.identity.client.gin.ChangePasswordModule;
+import stroom.security.identity.client.gin.IdentityGinjector;
+import stroom.security.identity.client.gin.IdentityModule;
 import stroom.widget.popup.client.gin.PopupGinjector;
 import stroom.widget.popup.client.gin.PopupModule;
 
@@ -47,46 +37,32 @@ import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
 
 @GinModules({
         RestModule.class,
         DashboardAppModule.class,
         PopupModule.class,
         AboutModule.class,
-        ActivityModule.class,
         AnnotationModule.class,
         AlertModule.class,
         SecurityModule.class,
-        ChangePasswordModule.class,
-        EntityModule.class,
+        IdentityModule.class,
+        DocumentModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
-        QuickFilterModule.class,
-        DashboardModule.class,
-        VisModule.class,
-        EmbeddedQueryModule.class})
+        DashboardModule.class})
 public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
-        AboutGinjector,
-        AlertGinjector,
         SecurityGinjector,
-        EntityGinjector,
-        DashboardGinjector,
         UserPreferencesGinjector,
-        VisGinjector,
-        EmbeddedQueryGinjector,
-        ChangePasswordGinjector,
-        AnnotationGinjector {
+        IdentityGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();
 
-    PlaceManager getPlaceManager();
+    // Controllers
+    Provider<AppPageController> getAppPageController();
 
-    // Presenters
-    Provider<CorePresenter> getCorePresenter();
-
-    Provider<FullScreenPresenter> getFullScreenPresenter();
+    Provider<FullScreenController> getFullScreenController();
 }

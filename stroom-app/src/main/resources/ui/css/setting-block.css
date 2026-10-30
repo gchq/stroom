@@ -1,0 +1,91 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A setting of an annotation (stroom.annotation.client.component.SettingBlock), shown as its value with a
+   hint (or button) to change it, named BEM style (block, block__element, block--modifier).
+*/
+.setting-block {
+    border-radius: 6px;
+    padding: 5px;
+    padding-right: 20px;
+
+	transition: background-color .3s;
+	-webkit-transition: background-color .3s;
+	-moz-transition: background-color .3s;
+	-o-transition: background-color .3s;
+}
+
+.setting-block:hover {
+    background-color: var(--border-color);
+}
+
+.setting-block:hover .setting-block__icon {
+    opacity: 0.6;
+}
+
+.setting-block__icon {
+    opacity: 0;
+    transition: opacity .3s;
+    -webkit-transition: opacity .3s;
+    -moz-transition: opacity .3s;
+    -o-transition: opacity .3s;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+}
+
+/* The ⋮ itself, laid out as its drawing alone, so it is no taller than the drawing */
+.setting-block__icon-image {
+    display: flex;
+}
+
+/* The setting (SettingBlock adds the class), after the hint, so without the space a form group has
+   above it after the first (form-group.css) */
+.setting-block .setting-block__setting:not(:first-child) {
+    margin-top: 0;
+}
+
+.setting-block,
+.setting-block label{
+    cursor: pointer;
+}
+
+/* A read-only annotation's settings: no ellipsis hint, no pointer */
+.setting-block.setting-block--read-only {
+    cursor: default;
+}
+
+.setting-block.setting-block--read-only .setting-block__icon {
+    display: none;
+}
+
+/* Its value greyed, as a read-only field's is */
+.setting-block.setting-block--read-only .setting-block__setting {
+    color: var(--control__text-color--readonly);
+}
+
+/* A setting's ⋮ is its button (SettingBlock): with the keyboard focus it shows, with a focus ring,
+   and its setting is highlighted as on a hover */
+.setting-block__icon:focus-visible {
+    opacity: 1;
+    outline: none;
+    border-radius: .25rem;
+    box-shadow: var(--focus-shadow);
+}
+
+.setting-block:has(> .setting-block__icon:focus-visible) {
+    background-color: var(--border-color);
+}

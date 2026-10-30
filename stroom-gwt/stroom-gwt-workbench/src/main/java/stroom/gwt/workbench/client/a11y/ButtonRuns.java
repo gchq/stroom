@@ -43,7 +43,7 @@ public final class ButtonRuns {
     /// The most levels above each of two buttons of a run that their shared container may be.
     public static final int MAX_CONTAINER_DEPTH = 4;
 
-    private static final String IMAGE_BUTTON_SELECTOR = ".toolbar-button, .stroom-button-fab";
+    private static final String IMAGE_BUTTON_SELECTOR = ".toolbar-button, .fab-button";
 
     private ButtonRuns() {
         // Static utility

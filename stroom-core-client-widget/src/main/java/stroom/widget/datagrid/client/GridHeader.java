@@ -17,9 +17,9 @@
 package stroom.widget.datagrid.client;
 
 import stroom.widget.datagrid.client.model.ColumnModel;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 
 /// Draws a grid's header row, keeping the focus on a column's header, or a control in one (with
@@ -49,13 +49,9 @@ final class GridHeader<R> {
         this.headerRow = headerRow;
     }
 
-    /// Draws the header row.
-    ///
-    /// @param hidden Whether the header is hidden.
-    void render(final boolean hidden) {
-        head.getStyle().setProperty("display", hidden
-                ? "none"
-                : "");
+    /// Draws the header row; a hidden header is hidden by the grid's `data-grid--no-header`
+    /// (data-grid.css).
+    void render() {
         final Element active = DataGridDom.getActiveElement();
         final boolean headerFocused = active != null && active.hasAttribute(GridHtml.DATA_HCOL)
                                       && headerRow.isOrHasChild(active);
@@ -110,11 +106,11 @@ final class GridHeader<R> {
         if (!grid.isAttached() || hidden) {
             return;
         }
-        head.getStyle().clearHeight();
+        CssProperties.remove(head, "--data-grid__head-height");
         final int height = head.getOffsetHeight();
         // A grid that is not displayed has no height to snap to.
         if (height > 0) {
-            head.getStyle().setHeight(height, Unit.PX);
+            CssProperties.set(head, "--data-grid__head-height", height + "px");
         }
     }
 

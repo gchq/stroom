@@ -90,13 +90,6 @@ public final class ArgType {
 
     /// @param name    The name of the arg.
     /// @param options The values to choose from.
-    /// @return An arg shown as radio buttons on one line.
-    public static ArgType inlineRadio(final String name, final String... options) {
-        return new ArgType(name, ControlType.INLINE_RADIO, Arrays.asList(options));
-    }
-
-    /// @param name    The name of the arg.
-    /// @param options The values to choose from.
     /// @return An arg shown as a drop down list.
     public static ArgType select(final String name, final String... options) {
         return new ArgType(name, ControlType.SELECT, Arrays.asList(options));
@@ -107,13 +100,6 @@ public final class ArgType {
     /// @return An arg shown as check boxes, whose value is a list.
     public static ArgType check(final String name, final String... options) {
         return new ArgType(name, ControlType.CHECK, Arrays.asList(options));
-    }
-
-    /// @param name    The name of the arg.
-    /// @param options The values to choose from.
-    /// @return An arg shown as check boxes on one line, whose value is a list.
-    public static ArgType inlineCheck(final String name, final String... options) {
-        return new ArgType(name, ControlType.INLINE_CHECK, Arrays.asList(options));
     }
 
     /// @param name The name of the arg.
@@ -233,7 +219,6 @@ public final class ArgType {
                     return null;
                 }
             case CHECK:
-            case INLINE_CHECK:
                 if (raw instanceof List) {
                     return raw;
                 }

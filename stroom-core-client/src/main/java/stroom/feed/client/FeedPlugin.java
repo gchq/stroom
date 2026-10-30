@@ -23,13 +23,15 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
-import stroom.feed.client.presenter.FeedPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.explorer.client.ExplorerTaskMonitorFactory;
+import stroom.feed.client.component.FeedEditor;
+import stroom.feed.client.event.CopyFeedUrlEvent;
+import stroom.feed.client.event.OpenFeedEvent;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.user.client.Window;
@@ -43,36 +45,31 @@ import javax.inject.Singleton;
 @Singleton
 public class FeedPlugin extends DocumentPlugin<FeedDoc> {
 
-    private final Provider<FeedPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FeedEditor> editorProvider;
     private final FeedClient feedClient;
 
     @Inject
     public FeedPlugin(final EventBus eventBus,
-                      final Provider<FeedPresenter> editorProvider,
+                      final Provider<FeedEditor> editorProvider,
                       final FeedClient feedClient,
                       final ContentManager contentManager,
                       final DocumentPluginEventManager entityPluginEventManager,
                       final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.feedClient = feedClient;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // Handle feed open events.
-        registerHandler(getEventBus().addHandler(OpenFeedEvent.getType(), event ->
+        getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 feedClient.getDocRefForName(event.getName(), docRef -> {
                     if (docRef != null) {
-                        open(docRef, event.isForceOpen(),
-                                event.isFullScreen(),
-                                new DefaultTaskMonitorFactory(this));
+                        open(docRef, event.isForceOpen(), false, new DefaultTaskMonitorFactory(this));
                     }
-                }, new ExplorerTaskMonitorFactory(this))));
+                }, new ExplorerTaskMonitorFactory(this)));
 
-        registerHandler(getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
+        getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
                 feedClient.getDocRefForName(event.getName(), docRef -> {
                     if (docRef != null) {
                         // Generate a URL that can be used to open a new Stroom window with the target document
@@ -85,12 +82,12 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                                 .buildString();
                         Clipboard.writeText(docUrl);
                     }
-                }, new ExplorerTaskMonitorFactory(this))));
+                }, new ExplorerTaskMonitorFactory(this)));
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), FeedDoc.TYPE);
     }
 
     @Override

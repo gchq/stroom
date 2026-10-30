@@ -231,8 +231,8 @@ await page.locator('button[title="Expand All Folders"]').first().click({ timeout
 await settleExplorer(page, { label: 'expand' }).catch(() => {});
 const tree = await page.evaluate(() => {
   const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-  return [...document.querySelectorAll('.explorerCell')].map((c) => ({
-    type: norm(c.querySelector('.explorerCell-icon')?.getAttribute('title')),
+  return [...document.querySelectorAll('.explorer-cell')].map((c) => ({
+    type: norm(c.querySelector('.explorer-cell__icon')?.getAttribute('title')),
     label: norm(c.textContent),
   }));
 });

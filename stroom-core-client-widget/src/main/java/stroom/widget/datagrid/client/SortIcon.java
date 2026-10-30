@@ -23,12 +23,11 @@ import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 
-/// The sort icon of a column's header, and the names and icons of its sort states, as the dashboard
-/// and query tables' column menus offer them.
+/// The sort icon of a column's header (the BEM block `sort-icon`, `sort-icon.css`), and the names
+/// and icons of its sort states, as the dashboard and query tables' column menus offer them.
 public final class SortIcon {
 
     public static final String SORT = "Sort";
-    public static final String UNSORTED = "Unsorted";
     public static final String SORT_ASCENDING = "Sort Ascending";
     public static final String SORT_DESCENDING = "Sort Descending";
     public static final SvgImage SORT_ASCENDING_ICON = SvgImage.FIELDS_SORT_ASCENDING;
@@ -71,11 +70,11 @@ public final class SortIcon {
             // Add icon.
             div.append(getSafeHtml(svgImage));
             // Add order.
-            div.div(c -> c.append(order), Attribute.className("column-sortOrder"));
-        }, Attribute.className("column-sortIcon"), Attribute.title(title));
+            div.div(c -> c.append(order), Attribute.className("sort-icon__order"));
+        }, Attribute.className("sort-icon"), Attribute.title(title));
     }
 
     private static SafeHtml getSafeHtml(final SvgImage svgImage) {
-        return SvgImageUtil.toSafeHtml(svgImage, "svgIcon");
+        return SvgImageUtil.toSafeHtml(svgImage, "icon-wrap");
     }
 }

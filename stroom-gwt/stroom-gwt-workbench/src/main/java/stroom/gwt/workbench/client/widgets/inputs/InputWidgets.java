@@ -18,9 +18,9 @@ package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Widgets shared by the `Widgets/Inputs/*` stories.

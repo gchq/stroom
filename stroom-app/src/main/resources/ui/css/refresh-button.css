@@ -1,5 +1,5 @@
 /*
-   The refresh button (stroom.data.pager.client.RefreshButton): a toolbar button (see toolbar.css)
+   The refresh button (stroom.widget.button.client.RefreshButton): a toolbar button (see toolbar.css)
    holding four icons, one above another, each centred in it. Named BEM style; its modifiers choose
    which icons are shown:
    - refresh, when it is none of refreshing, pausable or paused;
@@ -29,12 +29,12 @@
 }
 
 .refresh-button--refreshing .refresh-button__icon--spinning {
-    -webkit-animation: spinner-border .75s linear infinite;
-    animation: spinner-border .75s linear infinite;
+    -webkit-animation: refresh-button-spin .75s linear infinite;
+    animation: refresh-button-spin .75s linear infinite;
 }
 
 .refresh-button--paused {
-    animation: pulse-animation 2s infinite;
+    animation: refresh-button-pulse 2s infinite;
 }
 
 /* No turning or pulsing for those who ask for less motion */
@@ -45,7 +45,7 @@
     }
 }
 
-@keyframes pulse-animation {
+@keyframes refresh-button-pulse {
   0% {
     opacity: 1;
   }
@@ -57,6 +57,6 @@
   }
 }
 
-@keyframes spinner-border {
+@keyframes refresh-button-spin {
   to { transform: rotate(360deg); }
 }

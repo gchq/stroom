@@ -1,0 +1,113 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pathways.client.component;
+
+import stroom.docref.DocRef;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.pathways.shared.TracesDoc;
+import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.client.component.PlanBSettingsController;
+import stroom.planb.shared.StateType;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
+/// A traces store's editor: its Traces (the traces found), Settings (Plan B's, for traces only),
+/// Documentation and Permissions tabs (see [DocumentEditor]). It is also opened on its own to show
+/// the traces of a pathway ([#showTraces]), with only its Traces tab.
+public class TracesEditor extends DocumentEditor<TracesDoc> {
+
+    public static final String TAB_TYPE = "Traces";
+
+    private static final TabData TRACES = new TabDataImpl("Traces");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
+    private final TracesListTabController tracesListTab;
+
+    /// Makes the editor, with its Traces, Settings, Documentation and Permissions tabs.
+    ///
+    /// @param eventBus              The application's event bus.
+    /// @param view                  Its component.
+    /// @param tracesListTab         The traces list tab.
+    /// @param planBSettingsProvider Makes the plan bsettings.
+    /// @param documentationTabProvider  Makes the Documentation tab's editor.
+    /// @param permissionsProvider   Makes the Permissions tab.
+    @Inject
+    public TracesEditor(final EventBus eventBus,
+                        final LinkTabPanel view,
+                        final TracesListTabController tracesListTab,
+                        final Provider<PlanBSettingsController> planBSettingsProvider,
+                        final Provider<DocumentationTabController> documentationTabProvider,
+                        final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
+        super(eventBus, view);
+        this.tracesListTab = own(tracesListTab);
+        addOwnedTab(TRACES, tracesListTab, TracesListTabController::read);
+        // Plan B's settings, for traces only
+        addTab(SETTINGS,
+                () -> {
+                    final PlanBSettingsController planBSettings = planBSettingsProvider.get();
+                    planBSettings.setStateTypeLocked(true);
+                    return planBSettings;
+                },
+                (planBSettings, docRef, doc) -> {
+                    planBSettings.readSettings(doc.getSettings(), StateType.TRACE);
+                    planBSettings.setSharedFileStoreLocked(doc.hasSharedFileStoreData());
+                },
+                (planBSettings, doc) -> doc.copyTraces()
+                        .stateType(StateType.TRACE)
+                        .settings(planBSettings.writeSettings())
+                        .build());
+        addDocumentationTab(DOCUMENTATION,
+                documentationTabProvider,
+                TracesDoc::getDescription,
+                (doc, description) -> doc.copyTraces().description(description).build());
+        addPermissionsTab(PERMISSIONS, permissionsProvider);
+        setDefaultTab(TRACES);
+    }
+
+    @Override
+    public String getTabLabel() {
+        // Opened on its own (e.g. a pathway's traces) there is no store to name it after
+        return getDocRef() == null
+                ? "Traces"
+                : null;
+    }
+
+    /// Shows traces on their own, not a store's document: only the Traces tab, as the others have
+    /// no document to show.
+    ///
+    /// @param dataSourceRef The store to find the traces in.
+    /// @param pathway       The pathway the traces found must follow, or null for any.
+    /// @param filter        What the traces found must match, or null for all.
+    public void showTraces(final DocRef dataSourceRef, final Pathway pathway, final String filter) {
+        setTabHidden(SETTINGS, true);
+        setTabHidden(DOCUMENTATION, true);
+        setTabHidden(PERMISSIONS, true);
+        tracesListTab.setDataSourceRef(dataSourceRef);
+        tracesListTab.setPathway(pathway);
+        tracesListTab.setFilter(filter);
+        tracesListTab.refresh();
+    }
+}

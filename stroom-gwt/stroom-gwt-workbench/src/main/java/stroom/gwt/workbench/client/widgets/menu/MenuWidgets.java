@@ -18,13 +18,13 @@
 package stroom.gwt.workbench.client.widgets.menu;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.InfoMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.SimpleMenuItem;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.InfoMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.Separator;
+import stroom.widget.menu.client.SimpleMenuItem;
+import stroom.widget.menu.client.SimpleParentMenuItem;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;

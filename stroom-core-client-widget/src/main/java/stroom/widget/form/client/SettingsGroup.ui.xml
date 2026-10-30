@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A titled group of settings: its label, then the settings, added after it -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:f="urn:import:stroom.widget.form.client">
+    <g:FlowPanel ui:field="settingsGroupPanel" styleName="settings-group">
+        <f:FormLabel ui:field="formLabel" addStyleNames="settings-group__label"/>
+    </g:FlowPanel>
+</ui:UiBinder>

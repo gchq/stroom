@@ -38,7 +38,17 @@
 
    Modifiers of the grid, none with an ARIA attribute: --virtual (only the rows in view are drawn),
    --contain (a long page in natural mode), --selectable (it has a selection model), --no-header,
-   --dragging, --resizing, --scroll-timeline (the thumbs follow scroll-driven animations).
+   --empty (no rows, with a message to show), --dragging, --resizing, --scroll-timeline (the thumbs
+   follow scroll-driven animations).
+
+   What the grid works out as it lays itself out is set as custom properties on the part they
+   place, not as inline styles: --data-grid__head-height, --data-grid__content-height,
+   --data-grid__body-offset, --data-grid__v-track-top, --data-grid__v-thumb-length,
+   --data-grid__h-thumb-length, --data-grid__v-thumb-position, --data-grid__h-thumb-position,
+   --data-grid__handle-left, --data-grid__resize-line-left, --data-grid__move-ghost-left,
+   --data-grid__move-ghost-width, --data-grid__move-line-left, and a spanning cell's
+   --data-grid__span. The rules that use them select through the grid's own parts (child
+   combinators), so a grid inside another's cell isn't laid out by the outer grid's.
 
    Modifiers of a row: --even and --odd (its stripe), --selected, --keyboard (the keyboard's row),
    --probe. Of a header cell: --sortable. Of a cell: --keyboard (the keyboard's row's first cell),
@@ -126,28 +136,17 @@
     /* Opaque, as the rows scroll under it: the colour of what the grid sits in (MyDataGrid's
        header, which no row passes under, is transparent) */
     background-color: var(--data-grid__head-background-color, var(--page__background-color));
+    /* Snapped to a whole pixel once measured (GridHeader.snapHeight) */
+    height: var(--data-grid__head-height, auto);
 }
 
-/* What a grid sits on, when it isn't the page: a dialog's colour is painted by a layer behind its
-   content (dialog__frame), and the elements between a popup and the grid are transparent, so
-   neither can be inherited. The nearest of these round the grid sets it. */
-.dialog {
-    --data-grid__head-background-color: var(--dialog__background-color);
+.data-grid--no-header > .data-grid__scroller > .data-grid__head {
+    display: none;
 }
 
-.popup {
-    --data-grid__head-background-color: var(--popup__background-color);
-}
-
-/* A grid in a control's box, e.g. a list in a form, sits on the box's colour */
-.stroom-control {
-    --data-grid__head-background-color: var(--control__background-color);
-}
-
-.stroom-control:disabled,
-.stroom-control.disabled {
-    --data-grid__head-background-color: var(--control__background-color--disabled);
-}
+/* A grid's header takes the colour of what it sits on, when that isn't the page: the nearest dialog
+   (dialog.css), popup (popup.css) or control box (form-controls.css) round it sets
+   --data-grid__head-background-color. */
 
 .data-grid__header-row,
 .data-grid__row {
@@ -170,11 +169,11 @@
     vertical-align: middle;
 }
 
-.data-grid__header-cell.center-align {
+.data-grid__header-cell.data-grid__header-cell--align-center {
     text-align: center;
 }
 
-.data-grid__header-cell.right-align {
+.data-grid__header-cell.data-grid__header-cell--align-right {
     text-align: right;
 }
 
@@ -182,31 +181,38 @@
     font-weight: 500;
 }
 
+/* A results table's grid (result-table.css): its headers at the top of their cells, and padded
+   all round when they hold the value filters (FilterCell) */
+.result-table__grid .data-grid__header-cell {
+    min-height: 16px;
+    vertical-align: top;
+}
+
+.result-table__grid.result-table__grid--value-filters .data-grid__header-cell {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
+}
+
 .data-grid__header-cell--sortable {
     cursor: pointer;
 }
 
 /* A column headed by an icon (or two), e.g. a tick box column's */
-.data-grid__header-cell--sortable .single-icon-column-header,
-.data-grid__header-cell--sortable .two-icon-column-header,
-.data-grid__header-cell--sortable .single-icon-column-header .svgCell-icon,
-.data-grid__header-cell--sortable .two-icon-column-header .svgCell-icon {
+.data-grid__header-cell--sortable .data-grid__icon-header,
+.data-grid__header-cell--sortable .data-grid__icon-header .data-grid__header-icon {
     cursor: pointer;
 }
 
-.data-grid__header-cell .single-icon-column-header,
-.data-grid__header-cell .two-icon-column-header {
+.data-grid__header-cell .data-grid__icon-header {
     display: flex;
     flex-direction: row;
     justify-content: center;
 }
 
-.data-grid__header-cell:has(.single-icon-column-header),
-.data-grid__header-cell:has(.two-icon-column-header) {
+.data-grid__header-cell:has(.data-grid__icon-header) {
     text-decoration: none;
 }
 
-/* A sortable header's title: its name, then its sort icon (DataGridSortIcon) */
+/* A sortable header's title: its name, then its sort icon (SortIcon) */
 .data-grid__sort {
     display: flex;
     gap: 5px;
@@ -284,6 +290,11 @@
     vertical-align: middle;
 }
 
+/* A cell spanning columns (setColumnSpans) */
+.data-grid__cell.data-grid__cell--span {
+    grid-column: span var(--data-grid__span, 1);
+}
+
 .data-grid__cell > div {
     min-width: 0;
 }
@@ -325,7 +336,7 @@
 /* A right-aligned column followed by a left-aligned one, e.g. a count then a date: more space
    between them so the two don't read as one (#4442) */
 .data-grid__cell--align-right:has(+ .data-grid__cell:not(.data-grid__cell--align-right, .data-grid__cell--align-center)) > div,
-.data-grid__header-cell.right-align:has(+ .data-grid__header-cell:not(.right-align, .center-align)) > div {
+.data-grid__header-cell.data-grid__header-cell--align-right:has(+ .data-grid__header-cell:not(.data-grid__header-cell--align-right, .data-grid__header-cell--align-center)) > div {
     padding-right: calc(var(--row__padding--horizontal) * 3);
 }
 
@@ -357,6 +368,15 @@
     will-change: transform;
 }
 
+/* As tall as every row, with the rows drawn moved down to where they are in it */
+.data-grid--virtual > .data-grid__scroller > .data-grid__content {
+    height: var(--data-grid__content-height, auto);
+}
+
+.data-grid--virtual > .data-grid__scroller > .data-grid__content > .data-grid__body {
+    transform: translateY(var(--data-grid__body-offset, 0px));
+}
+
 .data-grid--virtual .data-grid__row {
     height: var(--data-grid__row-height, 24px);
     overflow: hidden;
@@ -372,8 +392,13 @@
 }
 
 .data-grid__empty {
+    display: none;
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     color: var(--text-color--disabled);
+}
+
+.data-grid--empty > .data-grid__scroller > .data-grid__content > .data-grid__empty {
+    display: block;
 }
 
 /* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */
@@ -393,6 +418,8 @@
 }
 
 .data-grid__track--vertical {
+    /* Below the header */
+    top: var(--data-grid__v-track-top, 0);
     right: 0;
     bottom: 0;
     width: 12px;
@@ -403,6 +430,11 @@
     right: 0;
     bottom: 0;
     height: 12px;
+}
+
+/* Nothing to scroll */
+.data-grid__track.data-grid__track--hidden {
+    display: none;
 }
 
 .data-grid__thumb {
@@ -417,12 +449,17 @@
     transition: background-color .5s;
 }
 
-.data-grid__track--vertical .data-grid__thumb {
+/* Placed directly too, which a running scroll-driven animation (below) overrides */
+.data-grid__track--vertical > .data-grid__thumb {
     width: 12px;
+    height: var(--data-grid__v-thumb-length, 0);
+    transform: translateY(var(--data-grid__v-thumb-position, 0px));
 }
 
-.data-grid__track--horizontal .data-grid__thumb {
+.data-grid__track--horizontal > .data-grid__thumb {
+    width: var(--data-grid__h-thumb-length, 0);
     height: 12px;
+    transform: translateX(var(--data-grid__h-thumb-position, 0px));
 }
 
 /*
@@ -483,8 +520,10 @@
  * lines.
  */
 .data-grid__resize-handle {
+    display: none;
     position: absolute;
     top: 0;
+    left: var(--data-grid__handle-left, 0);
     bottom: 0;
     width: 10px;
     z-index: 1;
@@ -494,8 +533,14 @@
     touch-action: none;
 }
 
+/* On the edge of the column under the pointer */
+.data-grid__resize-handle.data-grid__resize-handle--shown {
+    display: block;
+}
+
 .data-grid__resize-line,
 .data-grid__move-line {
+    display: none;
     position: absolute;
     top: 0;
     bottom: 0;
@@ -505,14 +550,32 @@
     pointer-events: none;
 }
 
+.data-grid__resize-line {
+    left: var(--data-grid__resize-line-left, 0);
+}
+
+.data-grid__move-line {
+    left: var(--data-grid__move-line-left, 0);
+}
+
 .data-grid__move-ghost {
+    display: none;
     position: absolute;
     top: 0;
     bottom: 0;
+    left: var(--data-grid__move-ghost-left, 0);
+    width: var(--data-grid__move-ghost-width, 0);
     z-index: 4;
     background-color: gray;
     opacity: 0.3;
     pointer-events: none;
+}
+
+/* The resize line shows while a column is resized, and the move ghost and line while one is moved */
+.data-grid--resizing > .data-grid__resize-line,
+.data-grid--dragging:not(.data-grid--resizing) > .data-grid__move-ghost,
+.data-grid--dragging:not(.data-grid--resizing) > .data-grid__move-line {
+    display: block;
 }
 
 /* While a column is dragged, nothing in the grid is selected and the cursor stays put. */
@@ -560,8 +623,8 @@
    and bottom), a mouse-over that fades in, and no pressed look (pressing a row selects it there and
    then).
 
-   A cell's own styles (from its column) dataGridDisabledCell, for a row that is switched off, and
-   dataGridAlertText, for text that warns, are also given their colours here.
+   A cell's own styles (from its column) data-grid__cell--disabled, for a row that is switched off, and
+   data-grid__alert-text, for text that warns, are also given their colours here.
 */
 
 /* Mouse over: a row that isn't selected fades into the hovered colour. A selected row shows no
@@ -608,19 +671,19 @@
 /* A disabled row (an item switched off, e.g. a disabled rule, job or node) has its text greyed;
    its tick boxes, spinners and icons still work, so are drawn as usual. A control that really
    can't be used shows its own disabled look */
-.dataGridDisabledCell {
+.data-grid__cell--disabled {
     color: var(--text-color--disabled);
 }
 
-.data-grid__row--selected .dataGridDisabledCell {
+.data-grid__row--selected .data-grid__cell--disabled {
     color: var(--text-color--disabled--selected);
 }
 
-.dataGridAlertText {
+.data-grid__alert-text {
     color: var(--text-color--red);
 }
 
-.data-grid__row--selected .dataGridAlertText {
+.data-grid__row--selected .data-grid__alert-text {
     color: var(--row__text-color--red--selected);
 }
 
@@ -656,7 +719,28 @@
         outline-color: HighlightText;
     }
 
-    .data-grid .data-grid__row:not([aria-selected="true"]) .dataGridDisabledCell {
+    .data-grid .data-grid__row:not([aria-selected="true"]) .data-grid__cell--disabled {
         color: GrayText;
     }
+}
+
+/* Not a row action (.row-action, row-action.css), a button that looks as the icon it holds: this
+   look would make its rows 5px taller. :where() keeps the specificity as it was (from
+   standard-mod.css); the row action is matched by its class attribute, as this rule styles the
+   grid's other buttons, not the row action */
+.data-grid button:where(:not([class~="row-action"])) {
+	margin: 0;
+	padding: 2px 4px;
+	text-decoration: none;
+	cursor: pointer;
+	cursor: hand;
+
+	border-radius: 6px;
+	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+	white-space: nowrap;
+
+	background-image: var(--button__background-image);
+	background-color: var(--button__background-color);
+	border: 1px solid var(--button__border-color);
+	color: var(--button__text-color);
 }

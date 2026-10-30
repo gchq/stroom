@@ -1,0 +1,45 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup
+                helpText="Deletes data once it is older than the Retain For period. Default is unticked."
+                screenReaderText="Deletes data older than Retain For. Default is unticked.">
+            <tickbox:TickBox ui:field="retentionEnabled"
+                                    identity="retentionEnabled" label="Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionCheckIntervalPanel"
+                        identity="retentionCheckIntervalPanel"
+                        label="Frequency"
+                        helpText="How often to check for data that has passed its retention period. Data may be kept for up to this long after it expires, so it must be shorter than Retain For. Enter 1 to 9999 and choose Minutes, Hours or Days. Default is 1 hour."
+                        screenReaderText="Number and unit; must be shorter than Retain For. Default is 1 hour."
+                        controlNames="Amount, Unit">
+            <g:FlowPanel styleName="duration-setting">
+                <valuespinner:ValueSpinner ui:field="retentionCheckInterval" minValue="1" maxValue="9999"/>
+                <i:SelectionBox ui:field="retentionCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionAgePanel"
+                        identity="retentionAgePanel"
+                        label="Retain For"
+                        helpText="How long to keep data before it is deleted. Enter a number from 1 to 9999 and choose Days, Weeks, Months or Years. Default is 1 year. Only used when retention is enabled."
+                        screenReaderText="Number from 1 to 9999 and a unit, days to years. Default is 1 year."
+                        controlNames="Amount, Unit">
+            <g:FlowPanel styleName="duration-setting">
+                <valuespinner:ValueSpinner ui:field="retentionAge" minValue="1" maxValue="9999"/>
+                <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="useStateTimePanel"
+                        identity="useStateTimePanel"
+                        helpText="Measures the age of data from its own state time rather than from when it was added to the store. Default is unticked."
+                        screenReaderText="Age is measured from state time, not insert time.">
+            <tickbox:TickBox ui:field="useStateTime"
+                                    identity="useStateTime" label="Use State Time"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

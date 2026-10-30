@@ -16,7 +16,7 @@
 
 package stroom.util.client;
 
-import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.GridDisplay;
 import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.cell.client.Cell;
@@ -70,8 +70,8 @@ class TestDataGridComparatorFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private static DataGridView<String> grid(final ColumnSortList sortList) {
-        final DataGridView<String> grid = Mockito.mock(DataGridView.class);
+    private static GridDisplay<String> grid(final ColumnSortList sortList) {
+        final GridDisplay<String> grid = Mockito.mock(GridDisplay.class);
         Mockito.when(grid.getColumnSortList()).thenReturn(sortList);
         return grid;
     }

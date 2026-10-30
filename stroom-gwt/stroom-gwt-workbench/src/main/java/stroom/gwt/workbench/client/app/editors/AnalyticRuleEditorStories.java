@@ -32,12 +32,14 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.result.component.ResultTable;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/AnalyticRuleEditor` stories, showing Stroom's real `AnalyticRulePresenter` (an
+/// The `App/Editors/AnalyticRuleEditor` stories, showing Stroom's real `AnalyticRuleEditor` (an
 /// analytic rule's editor tab: Query, Settings, Notifications, Execution, Shards or Duplicate
 /// Management, Documentation and Permissions) with fake REST replies.
 ///
@@ -74,6 +76,16 @@ public final class AnalyticRuleEditorStories {
 
     private static final String SCHEDULED = "\"analyticProcessType\": \"SCHEDULED_QUERY\", ";
 
+    // A table builder rule that runs on node9
+    private static final String TABLE_BUILDER = """
+            "analyticProcessType": "TABLE_BUILDER",
+              "analyticProcessConfig": {"type": "table_builder", "enabled": true, "node": "node9"},\s""";
+
+    // AnalyticProcessResource.getTracker(): the table builder's progress
+    private static final String TRACKER = """
+            {"analyticUuid": "rule-1", "analyticTrackerData": {"type": "table_builder",
+              "lastStreamCount": 3, "lastStreamId": 77, "totalStreamCount": 12, "totalEventCount": 4321}}""";
+
     // The duplicate rows: two columns and two rows
     private static final String DUPLICATES = """
             {"columnNames": ["host", "user"],
@@ -82,8 +94,35 @@ public final class AnalyticRuleEditorStories {
 
     private static final RestFixtures FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", SCHEDULED));
 
+    // The table builder's progress requests so far: the first is answered with TRACKER, the
+    // next (Refresh) with more events processed
+    private static int trackerRequests;
+
+    private static final RestFixtures TABLE_BUILDER_FIXTURES = analyticRoutes(RestFixtures.builder()
+            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", TABLE_BUILDER)))
+            .route(RequestMatcher.post("/analyticProcess/v1/tracker"), request -> {
+                trackerRequests++;
+                return RestReply.json(trackerRequests == 1
+                        ? TRACKER
+                        : TRACKER.replace("4321", "5000"));
+            })).build();
+
     // NewRuleHidesTypeTabs: no process type
     private static final RestFixtures NEW_RULE_FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", ""));
+
+    // The Shards story's spy of its shard data requests, and its other query table: its play can't
+    // reach its render's locals, so the story being shown sets them
+    private static final String SHARD_DATA = "shardData";
+    private static Runnable onShardData = () -> {
+    };
+    private static QueryResultTableController otherTable;
+
+    private static final RestFixtures SHARD_FIXTURES = analyticRoutes(RestFixtures.builder()
+            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED)))
+            .route(RequestMatcher.post("/analyticDataShard/v1/getData"), request -> {
+                onShardData.run();
+                return RestReply.json(QueryEditorStories.TABLE);
+            })).build();
 
     private AnalyticRuleEditorStories() {
         // Static utility
@@ -144,6 +183,28 @@ public final class AnalyticRuleEditorStories {
                     play.expect(play.getByText("node9")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // A shard's data is shown in the Shards tab's table (which once had no table
+                // preferences to read, and threw), and refreshed for its own table, not when another
+                // query's table (with no search of its own) is asked to refresh: the request went
+                // over the app's bus, so every open rule's Shards tab fetched its data again
+                .story("ShardsRefreshOnlyTheirOwn", AnalyticRuleEditorStories::renderShards)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Scheduled Query"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
+                    openTab(play, "Shards");
+                    play.click(play.findByText("rule-1/2023-11-15"));
+                    play.waitFor(() -> play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1));
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    expectNoProblems(play);
+                    play.run("Another query's table asks to be refreshed", () -> otherTable.refresh());
+                    play.sleep(200);
+                    play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1);
+                    expectNoProblems(play);
+                })
                 // Duplicate Management shows the columns of the duplicate checks found
                 .story("DuplicateManagement", context -> render(context, FIXTURES, UI_CONFIG))
                 .withPlay(play -> {
@@ -171,6 +232,22 @@ public final class AnalyticRuleEditorStories {
                             .toBeInTheDocument());
                     expectNoProblems(play);
                 })
+                // A stream destination's feed picker, declared in its template, has its controller
+                // attached: it shows that no feed is chosen, and opens a dialog to choose one
+                .story("StreamDestinationFeedPicker", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    final Query picker = dialog.querySelector(".drop-down");
+                    play.waitFor(() -> play.expect(picker).toHaveTextContent("None"));
+                    play.expect(picker).toHaveAttribute("role", "button");
+                    play.expect(picker).toHaveAttribute("aria-haspopup", "dialog");
+                    play.expect(dialog.getByRole("button", StroomDom.button("Set Default")))
+                            .toHaveAttribute("title", "Set as the default destination feed for all users");
+                    expectNoProblems(play);
+                })
                 // The notification dialog: its maximum is always shown, and switching the
                 // destination type back keeps what was typed
                 .story("NotificationDialogDetails", context -> render(context, FIXTURES, UI_CONFIG))
@@ -188,6 +265,74 @@ public final class AnalyticRuleEditorStories {
                     pickDestinationType(play, dialog, "Email");
                     play.waitFor(() -> play.expect(toField(dialog)).toHaveValue("ops@example.com"));
                     expectNoProblems(play);
+                })
+                // Resume Notifications After starts at a day, and may be Never, which keeps sending
+                // stopped until Stroom restarts. Before, it couldn't be none, though none means never
+                .story("ResumeAfterNever", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    // Resume applies only while notifications are limited
+                    play.click(dialog.getByRole("checkbox", "Limit Notifications"));
+                    final Play resume = dialog.within(dialog.getByRole("group", "Resume Notifications After"));
+                    play.expect(resume.getByRole("spinbutton", "Amount")).toHaveValue("1");
+                    play.expect(resume.getByLabelText("Unit")).toHaveValue("Days");
+                    play.click(resume.getByLabelText("Unit"));
+                    play.click(screen.findByText("Never", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(resume.getByLabelText("Unit")).toHaveValue("Never"));
+                    play.expect(resume.getByRole("spinbutton", "Amount")).toBeDisabled();
+                    expectNoProblems(play);
+                })
+                // Maximum and Resume Notifications After are enabled only while Limit Notifications
+                // is ticked; they stayed enabled when it wasn't, although then unused
+                .story("LimitGatesMaximumAndResume", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    final Query limit = dialog.getByRole("checkbox", "Limit Notifications");
+                    final Query maximum = dialog.getByRole("spinbutton", "Maximum Notifications");
+                    final Play resume = dialog.within(dialog.getByRole("group", "Resume Notifications After"));
+                    final Query amount = resume.getByRole("spinbutton", "Amount");
+                    final Query unit = resume.getByLabelText("Unit");
+                    // A new notification is not limited
+                    play.expect(limit).not().toBeChecked();
+                    play.expect(maximum).toBeDisabled();
+                    play.expect(amount).toBeDisabled();
+                    play.expect(unit).toBeDisabled();
+                    play.click(limit);
+                    play.expect(maximum).toBeEnabled();
+                    play.expect(amount).toBeEnabled();
+                    play.expect(unit).toBeEnabled();
+                    play.click(limit);
+                    play.expect(maximum).toBeDisabled();
+                    play.expect(amount).toBeDisabled();
+                    play.expect(unit).toBeDisabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    expectNoProblems(play);
+                })
+                // An email notification's subject template is tested on the server, which shows its
+                // output in an alert
+                .story("EmailTestTemplate", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    pickDestinationType(play, dialog, "Email");
+                    final Play subject = dialog.within(dialog.findByText("Email Subject Template", "label")
+                            .closest(".form-group"));
+                    play.click(subject.getByRole("button", "Test Template"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/analyticRule/v1/testTemplate")
+                                    .withJsonBodyContaining("{\"string\": \"Detection: {{ ruleName }}\"}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("INFO: Example template output:"));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Table preferences are kept on the rule: hiding a column makes it dirty
                 .story("TablePreferencesPersistOnTheDoc", context -> render(context, FIXTURES, UI_CONFIG))
@@ -221,6 +366,14 @@ public final class AnalyticRuleEditorStories {
                 // Execution (a scheduled query), read only: the partner of ExecutionEditable
                 .story("ExecutionReadOnly", context -> render(context, FIXTURES, UI_CONFIG, DocumentPermission.VIEW))
                 .withPlay(play -> showExecution(play, true))
+                // Execution (a table builder), editable: its settings and progress are shown, and
+                // Refresh fetches the progress again; the partner of TableBuilderReadOnly
+                .story("TableBuilderEditable", context -> render(context, TABLE_BUILDER_FIXTURES, UI_CONFIG))
+                .withPlay(play -> showTableBuilder(play, false))
+                // Execution (a table builder), read only: the partner of TableBuilderEditable
+                .story("TableBuilderReadOnly", context -> render(context, TABLE_BUILDER_FIXTURES, UI_CONFIG,
+                        DocumentPermission.VIEW))
+                .withPlay(play -> showTableBuilder(play, true))
                 // Duplicate Management, read only: the partner of DuplicateManagement
                 .story("DuplicateManagementReadOnly", context -> render(context, FIXTURES, UI_CONFIG,
                         DocumentPermission.VIEW))
@@ -247,6 +400,8 @@ public final class AnalyticRuleEditorStories {
                 .route(RequestMatcher.post("/analyticDataShard/v1/find").withQuery("nodeName=node9"),
                         RestReply.json(NODE9_SHARDS))
                 .route(RequestMatcher.post("/duplicateCheck/v1/find"), RestReply.json(DUPLICATES))
+                .route(RequestMatcher.post("/analyticRule/v1/testTemplate"),
+                        RestReply.json("{\"string\": \"Detection: My Rule\"}"))
                 .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionSchedule"),
                         RestReply.json(EMPTY_PAGE))
                 .route(RequestMatcher.post("/scheduledTime/v1"), RestReply.json("{\"nextScheduledTimeMs\": 0}"))
@@ -279,7 +434,7 @@ public final class AnalyticRuleEditorStories {
         play.findByText("alpha");
         play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
         // Stroom opens a column's menu when its header is clicked
-        QueryEditorStories.clickHeader(play, play.getByText("Count", ".column-top .column-label"));
+        StroomDom.clickHeader(play, play.getByText("Count", ".column-header__label"));
         play.click(screen.findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
         play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled"));
         // The preference is also sent with the next search
@@ -341,10 +496,30 @@ public final class AnalyticRuleEditorStories {
         expectNoProblems(play);
     }
 
+    // The Execution tab of a table builder rule: its node, its tick and its progress, and Refresh
+    private static void showTableBuilder(final Play play, final boolean readOnly) {
+        final Play screen = play.screen();
+        openTab(play, "Execution");
+        play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByText("4321")).toBeInTheDocument());
+        play.expect(play.getByText("Total Streams Processed")).toBeInTheDocument();
+        final Query enabled = play.getByRole("checkbox", "Enabled");
+        play.expect(enabled).toBeChecked();
+        if (readOnly) {
+            play.expect(enabled).toHaveAttribute("aria-readonly", "true");
+        } else {
+            play.expect(enabled).not().toHaveAttribute("aria-readonly", "true");
+        }
+        play.click(play.getByRole("button", "Refresh"));
+        play.waitFor(() -> play.expect(play.getByText("5000")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        expectNoProblems(play);
+    }
+
     // A read-only document's tab says so
     private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
         if (readOnly) {
-            play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+            play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
         }
     }
 
@@ -365,6 +540,8 @@ public final class AnalyticRuleEditorStories {
                                  final RestFixtures fixtures,
                                  final String uiConfig,
                                  final DocumentPermission permission) {
+        // Each story's table builder progress starts again at its first reply
+        trackerRequests = 0;
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -373,8 +550,32 @@ public final class AnalyticRuleEditorStories {
         harness.getSecurityContext().setDocumentPermission(permission);
         final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
         // Opened once Stroom has started, as AnalyticsPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRuleEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
+        return harness.asWidget();
+    }
+
+    // The Shards story's: a table builder rule whose shards' data replies are spied on
+    private static Widget renderShards(final StoryContext context) {
+        final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, SHARD_FIXTURES)
+                .injector(injector)
+                .uiConfig(UI_CONFIG)
+                .build();
+        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        harness.fn(SHARD_DATA);
+        onShardData = () -> harness.spy(SHARD_DATA, "getData");
+        final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
+        harness.afterStartUp(() -> {
+            DocumentEditors.open(harness, injector.getAnalyticRuleEditor(), DOC_REF,
+                    resource, res -> res.fetch(DOC_REF.getUuid()));
+            // Another query's table, not shown, as another open rule's Shards tab has
+            final ResultTable resultTable = new ResultTable();
+            resultTable.setTableName("Query Results");
+            final QueryResultTableController table = injector.getQueryResultTable().attach(resultTable);
+            harness.getComponentRoot().adopt(table.getControllerNode());
+            otherTable = table;
+        });
         return harness.asWidget();
     }
 

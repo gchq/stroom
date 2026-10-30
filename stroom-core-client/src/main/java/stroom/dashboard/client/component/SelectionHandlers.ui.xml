@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A pane's selection handlers (its Selection Query or Selection Filter): the list of handlers,
+     with the actions on its toolbar -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dash="urn:import:stroom.dashboard.client.component">
+    <g:SimplePanel styleName="max">
+        <g:SimplePanel styleName="max control-box">
+            <dash:SelectionHandlerList ui:field="handlerList"/>
+        </g:SimplePanel>
+    </g:SimplePanel>
+</ui:UiBinder>

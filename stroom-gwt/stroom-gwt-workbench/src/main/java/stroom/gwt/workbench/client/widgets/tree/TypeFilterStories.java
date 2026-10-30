@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.tree;
 
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
+import stroom.explorer.client.component.TypeFilter;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -30,12 +29,11 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.button.client.Button;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/// Stories for Stroom's [TypeFilterPresenter]: the explorer's popup of document types to show, each
+/// Stories for Stroom's [TypeFilterController]: the explorer's popup of document types to show, each
 /// with a tick box, under an "All / None" row.
 public final class TypeFilterStories {
 
@@ -103,17 +101,18 @@ public final class TypeFilterStories {
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.builder().build())
                 .withoutStartupFixtures()
                 .build();
-        final TypeFilterPresenter presenter = new TypeFilterPresenter(harness.getEventBus(), new TypeFilterViewImpl());
+        final TypeFilterController typeFilter = harness.own(
+                new TypeFilterController(harness.getEventBus(), new TypeFilter()));
         final List<DocumentType> types = new ArrayList<>();
         for (final String type : FIXTURE_DOC_TYPES) {
             types.add(DocumentTypeRegistry.get(type));
         }
-        presenter.setDocumentTypes(new DocumentTypes(types, types));
+        typeFilter.setDocumentTypes(new DocumentTypes(types, types));
         if (included != null) {
             // Stroom starts with every type ticked, so untick the others
             for (final DocumentType type : types) {
                 if (!included.contains(type.getType())) {
-                    presenter.execute(type);
+                    typeFilter.toggle(type);
                 }
             }
         }
@@ -125,7 +124,7 @@ public final class TypeFilterStories {
         echo.getElement().getStyle().setProperty("marginTop", "12px");
         final boolean showCount = included == null;
         final Runnable update = () -> {
-            final Optional<Set<String>> includedTypes = presenter.getIncludedTypes();
+            final Optional<Set<String>> includedTypes = typeFilter.getIncludedTypes();
             final List<String> names = new ArrayList<>();
             for (final DocumentType type : types) {
                 if (includedTypes.isPresent() && includedTypes.get().contains(type.getType())) {
@@ -147,28 +146,26 @@ public final class TypeFilterStories {
 
         final Spy onIncludedTypesChange = context.fn(ON_INCLUDED_TYPES_CHANGE);
         final Spy onClose = context.fn(ON_CLOSE);
-        harness.addRegistration(presenter.addDataSelectionHandler(event -> {
+        harness.addRegistration(typeFilter.addSelectionListener(event -> {
             update.run();
             onIncludedTypesChange.call(echo.getText());
         }));
-        // As NavigationPresenter shows it: by its button, hidden by clicking outside it or (here)
+        // As ExplorerController shows it: by its button, hidden by clicking outside it or (here)
         // the button
         final boolean[] showing = {false};
-        harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
-            if (event.getPresenterWidget() == presenter) {
-                showing[0] = false;
-                onClose.call();
-            }
-        }));
+        typeFilter.setOnHidden(() -> {
+            showing[0] = false;
+            onClose.call();
+        });
         final Runnable show = () -> {
             showing[0] = true;
-            presenter.show(button.getElement(), hasActiveFilter -> {
+            typeFilter.show(button.getElement(), hasActiveFilter -> {
                 // The tree is filtered by the popup's owner
             });
         };
         button.addClickHandler(event -> {
             if (showing[0]) {
-                presenter.escape();
+                typeFilter.hide();
             } else {
                 show.run();
             }

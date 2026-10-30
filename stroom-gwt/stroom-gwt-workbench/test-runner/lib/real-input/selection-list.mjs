@@ -20,8 +20,8 @@
 
 import assert from 'node:assert/strict';
 
-const DOCUMENT_TAGS = '.editNodeTagsNodeTagsFrmGrp';
-const KNOWN_TAGS = '.editNodeTagsAllTagsFrmGrp';
+const DOCUMENT_TAGS = '.explorer-node-edit-tags__node-tags';
+const KNOWN_TAGS = '.explorer-node-edit-tags__all-tags';
 
 // Waits (up to two seconds) for a condition the page reaches a moment after a key or click
 async function waitFor(page, condition, message) {

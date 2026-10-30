@@ -1,0 +1,189 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* An annotation's history, built as HTML by AnnotationEditorController: its comments and
+   changes, their actions buttons, the event tables and the links in comments. */
+
+.annotation-history {
+    width: 100%;
+    height: 100%;
+}
+
+.annotation-history__line {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 6px 0;
+    margin-left: 15px;
+    border-left: 1px solid var(--border-color);
+}
+
+.annotation-history__comment {
+    flex-grow: 1;
+    border: 1px solid var(--border-color);
+    background-color: var(--content-box__background-color);
+    border-radius: 5px;
+}
+
+.annotation-history__comment-header {
+    flex-grow: 1;
+    padding: 5px 8px;
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+
+    border-bottom: 1px solid var(--border-color);
+    color: var(--navigation__text-color);
+    background-color: var(--border-color);
+}
+
+.annotation-history__comment-body {
+    width: 100%;
+    padding: 5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--control__text-color);
+    max-height: 300px;
+    overflow: auto;
+}
+
+.annotation-history__item {
+    flex-grow: 1;
+    padding: 5px 8px;
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+
+    border-radius: 6px;
+    transition: background-color .3s;
+    -webkit-transition: background-color .3s;
+    -moz-transition: background-color .3s;
+    -o-transition: background-color .3s;
+}
+
+.annotation-history__item:hover {
+    background-color: var(--border-color);
+}
+
+/* An entry's ⋮: its actions button (a read-only entry's hint), shown faded while its entry is
+   hovered, as a setting's is (setting-block.css) */
+.annotation-history__ellipsis {
+    opacity: 0;
+    transition: opacity .3s;
+    -webkit-transition: opacity .3s;
+    -moz-transition: opacity .3s;
+    -o-transition: opacity .3s;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+}
+
+.annotation-history__item:hover .annotation-history__ellipsis svg,
+.annotation-history__comment-header:hover .annotation-history__ellipsis svg {
+    opacity: 1;
+}
+
+.annotation-history__label {
+    white-space: pre-wrap;
+    word-break: break-word;
+    cursor: pointer;
+}
+
+.annotation-history__item u,
+.annotation-history__group-header u {
+    cursor: pointer;
+}
+
+.annotation-history__group-header {
+    padding: 5px 8px;
+    display: flex;
+    cursor: pointer;
+    -moz-transition: background-color .3s;
+    -o-transition: background-color .3s;
+}
+
+.annotation-history__group-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px 10px 10px
+}
+
+.annotation-history__link {
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* An entry's actions button also shows while it has the focus */
+.annotation-history__actions:focus,
+.annotation-history__item:hover .annotation-history__ellipsis,
+.annotation-history__group-header:hover .annotation-history__ellipsis,
+.annotation-history__comment-header:hover .annotation-history__ellipsis {
+    opacity: 0.6;
+}
+
+/* ... and with the keyboard focus, it shows in full, with a focus ring (below) */
+.annotation-history__ellipsis:focus-visible {
+    opacity: 1;
+    outline: none;
+    border-radius: .25rem;
+    box-shadow: var(--focus-shadow);
+}
+
+.annotation-history__table {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.annotation-history__table tr:nth-child(even) {
+    background-color: var(--row__background-color--even);
+}
+
+.annotation-history__table tr:nth-child(odd) {
+    background-color: var(--row__background-color--odd);
+}
+
+.annotation-history__table th,
+.annotation-history__table td {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) 0 var(--row__padding--horizontal);
+    white-space: nowrap;
+}
+
+.annotation-history__table th {
+    font-weight: 500;
+}
+
+/* A group's expand and collapse arrow, at the right of its header */
+.annotation-history__expander {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+.annotation-history__expander svg {
+    width: 0.8rem !important;
+    height: 0.8rem !important;
+}
+
+/* Keyboard focus on a comment's link or an entry's actions button (from components.css) */
+.annotation-history__link:focus-visible,
+.annotation-history__actions:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}

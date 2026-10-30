@@ -16,11 +16,10 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.data.client.event.SelectAllEvent;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.datagrid.client.model.SelectionRules;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.KeyBinding;
@@ -43,7 +42,6 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.Range;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -269,7 +267,7 @@ public class DataGridSelectionEventManager<T>
         }
         final Element target = Element.as(eventTarget);
 
-        if (fireHyperlink(target) || isConsumedByCell(event, target)) {
+        if (fireHyperlink(target) || isConsumedByCell(dataGrid, event, target)) {
             return;
         }
 
@@ -303,7 +301,7 @@ public class DataGridSelectionEventManager<T>
         if (target.hasTagName("u")) {
             final String link = target.getAttribute("link");
             if (link != null && !link.isEmpty()) {
-                final Hyperlink hyperlink = Hyperlink.create(link);
+                final LinkValue hyperlink = LinkValue.create(link);
                 if (hyperlink != null) {
                     HyperlinkEvent.fire(dataGrid, hyperlink, new DefaultTaskMonitorFactory(this));
                     return true;
@@ -313,7 +311,17 @@ public class DataGridSelectionEventManager<T>
         return false;
     }
 
-    private boolean isConsumedByCell(final CellPreviewEvent<T> event, final Element target) {
+    /// Whether a press on `target` is the cell's own (a control in it, e.g. a button cell), or in
+    /// a part of the row marked as not selecting it (`data-dg-no-select`), so it doesn't select
+    /// the row.
+    ///
+    /// @param dataGrid The grid pressed on.
+    /// @param event    The press.
+    /// @param target   The element pressed.
+    /// @return Whether the press doesn't select the row.
+    static boolean isConsumedByCell(final DataGrid<?> dataGrid,
+                                    final CellPreviewEvent<?> event,
+                                    final Element target) {
         if (target.hasAttribute("data-dg-no-select")
             || findNoSelectAncestor(target)) {
             return true;
@@ -344,7 +352,7 @@ public class DataGridSelectionEventManager<T>
         return false;
     }
 
-    private boolean findNoSelectAncestor(final Element target) {
+    private static boolean findNoSelectAncestor(final Element target) {
         Element element = target;
         while (element != null && !isCell(element)) {
             if (element.hasAttribute("data-dg-no-select")) {

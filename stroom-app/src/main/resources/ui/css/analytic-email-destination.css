@@ -1,0 +1,17 @@
+/*
+ * An analytic notification's email settings (AnalyticEmailDestination): the recipients, the
+ * subject and body templates, each with Test Template, and Send Test Email.
+ */
+
+/* The subject is one line */
+.analytic-email-destination__subject-editor {
+    height: 60px;
+}
+
+.analytic-email-destination__body-editor {
+    min-height: 300px;
+}
+
+.analytic-email-destination__button {
+    width: 200px;
+}

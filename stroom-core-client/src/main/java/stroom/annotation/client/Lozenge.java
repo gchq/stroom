@@ -18,7 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.shared.AnnotationTag;
 import stroom.query.api.ConditionalFormattingStyle;
-import stroom.security.client.presenter.ClassNameBuilder;
+import stroom.widget.util.client.ClassNameBuilder;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 

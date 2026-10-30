@@ -140,6 +140,54 @@
         <!--      <property name="severity" value="warning"/>-->
         <!--    </module>-->
 
+        <!-- Stroom's widgets, not GWT's, wherever Stroom has its own version: Button, ToolbarButton,
+             LinkButton or FabButton for a button or link; TickBox; RadioGroup; SelectionBox; Stroom's
+             dialogs, tabs, SplitPane, DateTimeBox, DataGrid and Pager; and TextBox, TextArea and PasswordBox
+             (stroom.widget.form.client, built on Stroom's copies of GWT's, which only they name, in full).
+             (Templates are checked by TestStroomWidgetsOnly.) -->
+        <module name="IllegalImport">
+            <property name="id" value="GwtWidgetWithStroomVersion"/>
+            <property name="illegalClasses" value="
+      com.google.gwt.user.client.ui.Button,
+      com.google.gwt.user.client.ui.PushButton,
+      com.google.gwt.user.client.ui.ToggleButton,
+      com.google.gwt.user.client.ui.TextBox,
+      com.google.gwt.user.client.ui.TextArea,
+      com.google.gwt.user.client.ui.PasswordTextBox,
+      com.google.gwt.user.client.ui.Hyperlink,
+      com.google.gwt.user.client.ui.InlineHyperlink,
+      com.google.gwt.user.client.ui.CheckBox,
+      com.google.gwt.user.client.ui.SimpleCheckBox,
+      com.google.gwt.user.client.ui.RadioButton,
+      com.google.gwt.user.client.ui.ListBox,
+      com.google.gwt.user.client.ui.SuggestBox,
+      com.google.gwt.user.client.ui.Label,
+      com.google.gwt.user.client.ui.InlineLabel,
+      com.google.gwt.user.client.ui.HTML,
+      com.google.gwt.user.client.ui.InlineHTML,
+      com.google.gwt.user.client.ui.Frame,
+      com.google.gwt.user.client.ui.Anchor,
+      com.google.gwt.user.client.ui.SuggestOracle,
+      com.google.gwt.user.client.ui.MultiWordSuggestOracle,
+      com.google.gwt.user.client.ui.DialogBox,
+      com.google.gwt.user.client.ui.TabPanel,
+      com.google.gwt.user.client.ui.TabLayoutPanel,
+      com.google.gwt.user.client.ui.SplitLayoutPanel,
+      com.google.gwt.user.datepicker.client.DateBox,
+      com.google.gwt.user.cellview.client.CellTable,
+      com.google.gwt.user.cellview.client.DataGrid,
+      com.google.gwt.user.cellview.client.SimplePager"/>
+            <message key="import.illegal" value="Do not use GWT''s {0}: use Stroom''s own version of it (see AGENTS.md, Stroom''s widgets only)."/>
+        </module>
+
+        <!-- Handlers are wired in Java, in the component's constructor (button.setOnClick(...),
+             box.addKeyDownHandler(...)), never with @UiHandler (see stroom-gwt/UI-GUIDE.md). -->
+        <module name="IllegalImport">
+            <property name="id" value="UiHandlerAnnotation"/>
+            <property name="illegalClasses" value="com.google.gwt.uibinder.client.UiHandler"/>
+            <message key="import.illegal" value="Do not use @UiHandler: wire the handler in Java, in the constructor (see stroom-gwt/UI-GUIDE.md)."/>
+        </module>
+
         <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>
 

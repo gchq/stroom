@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!-- A floor map's Map tab: the map beside the right-hand dock, above the timeline (a fixed-height
+     strip, as on the Editor tab) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.layout.client"
+             xmlns:e="urn:import:stroom.document.client.editor"
+             xmlns:f="urn:import:stroom.floormap.client.component">
+    <g:FlowPanel styleName="max stroom-border-top dock-container-vertical">
+        <!-- The SVG map with the right-hand dock docked east -->
+        <l:SplitPane ui:field="topSplitPane" thin="true" sizes="*, 25%" names="Map, Controls"
+                     addStyleNames="max dock-max">
+            <g:SimplePanel addStyleNames="max">
+                <f:FloorMapCanvas ui:field="map"/>
+            </g:SimplePanel>
+            <e:LinkTabPanel ui:field="dockPanel" addStyleNames="overflow-hidden"/>
+        </l:SplitPane>
+        <!-- Timeline strip: a fixed height with no splitter, so it is not user-resizable -->
+        <g:SimplePanel addStyleNames="max floor-map-map-tab__timeline">
+            <f:FloorMapTimeline ui:field="timeline"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

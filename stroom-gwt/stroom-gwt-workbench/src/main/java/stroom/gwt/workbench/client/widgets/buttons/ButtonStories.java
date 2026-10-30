@@ -27,9 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.text.client.InlineLabel;
 
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,8 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// Stories for [Button].
 public final class ButtonStories {
 
-    private static final String PRIMARY = "Button--contained-primary";
-    private static final String SECONDARY = "Button--contained-secondary";
+    private static final String PRIMARY = "button--contained-primary";
+    private static final String SECONDARY = "button--contained-secondary";
     private static final int LOADING_RESET_MILLIS = 2000;
 
     // Arg names
@@ -105,12 +105,12 @@ public final class ButtonStories {
                 // shrunk away it stops, so an idle button's spinner costs nothing (#5299)
                 .withPlay(play -> {
                     final Query button = play.getByRole("button", "Submit");
-                    play.expect(button).not().toHaveClass("Button--spinning");
+                    play.expect(button).not().toHaveClass("button--spinning");
                     play.click(button);
-                    play.expect(button).toHaveClass("Button--loading");
-                    play.expect(button).toHaveClass("Button--spinning");
-                    play.waitFor(4000, () -> play.expect(button).not().toHaveClass("Button--loading"));
-                    play.waitFor(() -> play.expect(button).not().toHaveClass("Button--spinning"));
+                    play.expect(button).toHaveClass("button--loading");
+                    play.expect(button).toHaveClass("button--spinning");
+                    play.waitFor(4000, () -> play.expect(button).not().toHaveClass("button--loading"));
+                    play.waitFor(() -> play.expect(button).not().toHaveClass("button--spinning"));
                 })
                 .story("Disabled", context -> {
                     final Button disabledDefault = button(context, "Disabled default", null);
@@ -133,7 +133,7 @@ public final class ButtonStories {
         final String variant = args.getString(VARIANT, "default");
         final Button button = button(context, args.getString(TEXT, "Close"), "default".equals(variant)
                 ? null
-                : "Button--" + variant);
+                : "button--" + variant);
         button.setLoading(args.getBoolean(LOADING));
         button.setEnabled(!args.getBoolean(DISABLED));
         if (args.has(CLASS_NAME)) {

@@ -1,0 +1,36 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A user's or group's application permissions, each with a tick box, and below them how they
+     hold the one selected -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+
+    <!-- The details below the rest (addStyleNames, as styleName would replace the
+         split pane's own class) -->
+    <split:SplitPane vertical="true" thin="true" sizes="*, 300px" names="Permissions, Details"
+                     addStyleNames="max">
+        <form:FormGroup ui:field="appPermissionsFormGroup" label="Application Permissions:"
+                        addStyleNames="form-group--indented">
+            <form:HelpHTML>
+                <p>Lists all available application level permissions.</p>
+                <p>Ticked items are explicitly held by the user/group.</p>
+                <p>Half-ticked (solid box) items are inferred from group membership.</p>
+            </form:HelpHTML>
+            <g:SimplePanel styleName="max">
+                <dg:PagerPanel ui:field="pager">
+                    <dg:DataGrid ui:field="dataGrid" tableName="Application Permissions" multiLine="true"/>
+                </dg:PagerPanel>
+            </g:SimplePanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="detailsFormGroup" label="Application Permission Details:"
+                        helpText="Explains how the user/group has obtained the selected permission."
+                        addStyleNames="form-group--indented">
+            <g:SimplePanel styleName="max form-padding permission-details">
+                <tx:Html ui:field="details" styleName="max"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+    </split:SplitPane>
+</ui:UiBinder>

@@ -25,11 +25,11 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// The `App/Dashboard/QueryResultVis` stories, showing Stroom's real `QueryResultVisPresenter` (a
+/// The `App/Dashboard/QueryResultVis` stories, showing Stroom's real `QueryResultVisController` (a
 /// query's visualisation pane) in its Query editor, as `App/Editors/QueryEditor` does, with fake
 /// REST replies.
 ///
-/// The presenter keeps its pause state and shows it on its refresh button (titled 'Pause Update'
+/// The controller keeps its pause state and shows it on its refresh button (titled 'Pause Update'
 /// while updating, 'Resume Update' and marked `refresh-button--paused` when paused), which the play checks. The
 /// button can only be pressed while the search is updating, so the search's last reply is delayed.
 public final class QueryResultVisStories {
@@ -70,6 +70,6 @@ public final class QueryResultVisStories {
 
     // The visualisation pane's refresh (pause) button, in its toolbar
     private static Query pauseButton(final Play play) {
-        return play.querySelector(".visToolbarRow .refresh-button");
+        return play.querySelector(".vis-toolbar-row .refresh-button");
     }
 }

@@ -100,15 +100,6 @@ final class DataGridDom {
         }
     }-*/;
 
-    /// Set a CSS custom property on an element.
-    ///
-    /// @param element The element.
-    /// @param name    The property name, including the leading `--`.
-    /// @param value   The value.
-    static native void setCssVariable(Element element, String name, String value) /*-{
-        element.style.setProperty(name, value);
-    }-*/;
-
     /// Focus an element without the browser scrolling it into view.
     ///
     /// @param element The element.
@@ -248,7 +239,7 @@ final class DataGridDom {
         var link = $doc.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
-        link.style.display = "none";
+        link.hidden = true;
         $doc.body.appendChild(link);
         link.click();
         $doc.body.removeChild(link);

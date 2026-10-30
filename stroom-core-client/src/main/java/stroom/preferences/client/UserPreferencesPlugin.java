@@ -17,10 +17,13 @@
 package stroom.preferences.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.preferences.client.component.KeyboardShortcutsController;
+import stroom.preferences.client.component.UserPreferencesEditorController;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -33,16 +36,20 @@ import javax.inject.Singleton;
 @Singleton
 public class UserPreferencesPlugin extends Plugin {
 
-    private final Provider<UserPreferencesPresenter> preferencesPresenterProvider;
-    private final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider;
+    private final Provider<UserPreferencesEditorController> preferencesProvider;
+    private final Provider<KeyboardShortcutsController> keyboardShortcutsProvider;
+
+    private final AppRoot appRoot;
 
     @Inject
     public UserPreferencesPlugin(final EventBus eventBus,
-                                 final Provider<UserPreferencesPresenter> preferencesPresenterProvider,
-                                 final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider) {
+                                 final Provider<UserPreferencesEditorController> preferencesProvider,
+                                 final Provider<KeyboardShortcutsController> keyboardShortcutsProvider,
+                                 final AppRoot appRoot) {
         super(eventBus);
-        this.preferencesPresenterProvider = preferencesPresenterProvider;
-        this.keyboardShortcutsPresenterProvider = keyboardShortcutsPresenterProvider;
+        this.appRoot = appRoot;
+        this.preferencesProvider = preferencesProvider;
+        this.keyboardShortcutsProvider = keyboardShortcutsProvider;
 
         KeyBinding.addCommand(getOpenAction(), this::open);
         KeyBinding.addCommand(Action.SHOW_KEY_BINDS, this::showKeyboardShortcuts);
@@ -53,11 +60,13 @@ public class UserPreferencesPlugin extends Plugin {
     }
 
     private void open() {
-        preferencesPresenterProvider.get().show();
+        // Made for one use, and disposed once it is closed
+        preferencesProvider.get().show(appRoot);
     }
 
     private void showKeyboardShortcuts() {
-        keyboardShortcutsPresenterProvider.get().show();
+        // Made for one use, and disposed once it is closed
+        keyboardShortcutsProvider.get().show(appRoot);
     }
 
     @Override

@@ -1,0 +1,105 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.common-alert {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.common-alert__message-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.common-alert__message {
+    -webkit-user-select: text;  /* Chrome 49+ */
+    -moz-user-select: text;     /* Firefox 43+ */
+    -ms-user-select: text;      /* No support yet */
+    user-select: text;          /* Likely future */
+
+    /* Stop long messages falling off the screen, e.g. the selection summary */
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* A LinkButton that shows and hides the detail, drawn as a link with an arrow that points right
+   while the detail is hidden and down while it is shown */
+.common-alert__show-hide {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--link__text-color);
+}
+
+.common-alert__show-hide-arrow {
+    width: 0;
+    height: 0;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.4rem solid currentColor;
+    transition: transform 0.1s;
+}
+
+.common-alert__show-hide[aria-expanded="true"] .common-alert__show-hide-arrow {
+    transform: rotate(90deg);
+}
+
+.common-alert__detail {
+    display: flex;
+    padding: 5px;
+    overflow: auto;
+    flex-grow: 1;
+    flex-basis: 20rem;
+
+	border: solid 1px var(--control__border-color);
+	background-color: var(--content-box__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+}
+
+/* It takes the focus, so that the keyboard can scroll it */
+.common-alert__detail:focus-visible {
+    outline: none;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+.common-alert__detail-text {
+    font-family: monospace, Courier New;
+    white-space: pre;
+
+    -webkit-user-select: text;  /* Chrome 49+ */
+    -moz-user-select: text;     /* Firefox 43+ */
+    -ms-user-select: text;      /* No support yet */
+    user-select: text;          /* Likely future */
+}
+
+.common-alert__icon {
+    flex-shrink: 0;
+}
+
+.common-alert__icon svg {
+    width: 32px;
+    height: 32px;
+}

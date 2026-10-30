@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:r="urn:import:stroom.receive.rules.client.component">
+    <g:SimplePanel styleName="max">
+        <split:SplitPane vertical="true" thin="true" sizes="50%, *"
+                         names="Rules, Expression" addStyleNames="max">
+            <g:SimplePanel styleName="max dock-container-vertical">
+                <r:RuleSetList ui:field="ruleList"/>
+            </g:SimplePanel>
+            <g:SimplePanel styleName="max dock-container-vertical">
+                <q:ExpressionTree ui:field="expressionTree"/>
+            </g:SimplePanel>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder> 

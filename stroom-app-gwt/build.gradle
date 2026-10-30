@@ -93,7 +93,6 @@ dependencies {
     implementation libs.guice.gwt
     implementation libs.gwt.dev
     implementation libs.gwt.user
-    implementation libs.gwtp.mvp.client
     implementation libs.jackson.annotations
     implementation libs.jaxb.api.gwt
     // needed so gwt can compile the stroom-query code that contains swagger annotations
@@ -102,7 +101,6 @@ dependencies {
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt.user
-    gwtSourceImplementation libs.gwtp.mvp.client
     gwtSourceImplementation libs.jaxb.api.gwt
     // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.swagger.annotations

@@ -1,0 +1,39 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A stored query in the query history or favourites (stroom.dashboard.client.query.QueryCell),
+   named BEM style. Imported after dashboard.css, where it was.
+*/
+.query-cell {
+	padding: 5px;
+}
+
+.query-cell__time {
+	white-space: nowrap;
+	color: gray;
+	padding-right: 10px;
+}
+
+.query-cell__expression {
+	white-space: nowrap;
+}
+
+/* The space between a past query's time and its expression, for copying; the time's padding
+   spaces them */
+.query-cell__gap {
+	font-size: 0;
+}

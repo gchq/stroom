@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A Table Filter pane's Basic settings: its id and name, the table it filters, and the
+     columns to show filters for -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:dash="urn:import:stroom.dashboard.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="basicTableFilterSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. table-filter-AB1C2). It cannot be changed.">
+            <tx:Label ui:field="id" addStyleNames="w-100 text-label--value"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableFilterSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableFilterSettingsTable" label="Table"
+                        helpText="Table or embedded query whose columns this filter acts on.">
+            <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup label="Columns To Display" addStyleNames="dock-max"
+                        helpText="Columns of the selected table to show value filters for. Tick each column you want users to filter on."
+                        screenReaderText="Tick the columns to show filters for.">
+            <g:SimplePanel styleName="max control-box">
+                <dash:ColumnSelection ui:field="columns"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

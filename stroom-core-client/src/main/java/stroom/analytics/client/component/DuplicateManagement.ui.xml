@@ -1,0 +1,47 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:an="urn:import:stroom.analytics.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
+    <!-- An analytic rule's Duplicate Management tab (duplicate-management.css) -->
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min form-padding form">
+            <form:FormGroup identity="rememberNotifications"
+                            helpText="Store the duplicate check column values of each notification in the duplicate check store so they can be viewed in the duplicates list."
+                            screenReaderText="Stored values can be viewed in the duplicates list.">
+                <tickbox:TickBox ui:field="rememberNotifications" label="Remember Notifications"/>
+            </form:FormGroup>
+            <form:FormGroup identity="suppressDuplicateNotifications"
+                            helpText="Do not send a notification if its values in the duplicate check columns match one already stored. Values are stored automatically while this is ticked."
+                            screenReaderText="Skips notifications that match a stored one.">
+                <tickbox:TickBox ui:field="suppressDuplicateNotifications" label="Suppress Duplicate Notifications"/>
+            </form:FormGroup>
+            <form:FormGroup identity="chooseColumns"
+                            screenReaderText="If unticked, grouped columns, or else all columns, are compared.">
+                <tickbox:TickBox ui:field="chooseColumns" label="Choose Columns"/>
+                <form:HelpHTML>
+                    <p>If ticked, enter the column names in the Columns field to define which columns will be
+                        used for de-duplication of notifications. If unticked, the grouped columns are used, or all
+                        columns if the query has no grouping.</p>
+                    <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
+                        duplication store to be cleared.</p>
+                </form:HelpHTML>
+            </form:FormGroup>
+            <form:FormGroup identity="columns"
+                            label="Columns"
+                            screenReaderText="Comma-separated, case-sensitive. Enabled when Choose Columns is ticked.">
+                <form:TextBox ui:field="columns" addStyleNames="w-100" enabled="false"/>
+                <form:HelpHTML>
+                    <p>A comma delimited list of column names (case-sensitive) that should be used to
+                        de-duplicate notifications. Only editable when Choose Columns is ticked.</p>
+                    <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
+                    duplication store to be cleared.</p>
+                </form:HelpHTML>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:SimplePanel styleName="duplicate-management__list dock-max overflow-hidden">
+            <an:DuplicateManagementList ui:field="list"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

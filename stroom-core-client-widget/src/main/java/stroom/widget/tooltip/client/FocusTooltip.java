@@ -31,7 +31,7 @@ package stroom.widget.tooltip.client;
 /// classes ([#install()]), and refer to no widget, so there is nothing to release.
 public final class FocusTooltip {
 
-    private static final String BUTTON_SELECTOR = ".toolbar-button, .stroom-button-fab > .face";
+    private static final String BUTTON_SELECTOR = ".toolbar-button, .fab-button > .fab-button__face";
 
     private static boolean installed;
 
@@ -59,7 +59,7 @@ public final class FocusTooltip {
 
         var hide = function () {
             if (tooltip) {
-                tooltip.style.display = 'none';
+                tooltip.classList.remove('focus-tooltip--shown');
             }
         };
 
@@ -71,7 +71,7 @@ public final class FocusTooltip {
                 doc.body.appendChild(tooltip);
             }
             tooltip.textContent = text;
-            tooltip.style.display = 'block';
+            tooltip.classList.add('focus-tooltip--shown');
             // Below the button, centred, kept on screen; above it if there is no room below
             var rect = button.getBoundingClientRect();
             var width = tooltip.offsetWidth;
@@ -83,8 +83,9 @@ public final class FocusTooltip {
             if (top + height > view.clientHeight - gap) {
                 top = rect.top - height - gap;
             }
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
+            // Its place, as custom properties its class reads (focus-tooltip.css)
+            tooltip.style.setProperty('--focus-tooltip__left', left + 'px');
+            tooltip.style.setProperty('--focus-tooltip__top', top + 'px');
         };
 
         doc.addEventListener('focusin', function (event) {

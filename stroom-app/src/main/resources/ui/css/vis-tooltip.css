@@ -15,7 +15,7 @@
  */
 
 /*
-   A visualisation's hover tooltip (stroom.dashboard.client.vis.VisTooltip), shown on the page
+   A visualisation's hover tooltip (stroom.query.client.result.vis.VisTooltip), shown on the page
    rather than inside the visualisation's frame so that it isn't cut off at the frame's edges.
    Its content is the visualisation's own HTML, usually made by vis.js's stroom.tooltipHtml: a
    title over a table of rows, each a key and its value. Named BEM style (block, block__element),
@@ -28,7 +28,11 @@
 */
 
 .vis-tooltip {
+    display: none;
     position: fixed;
+    /* Placed by VisTooltip, beside what it describes */
+    left: var(--vis-tooltip__left, 0);
+    top: var(--vis-tooltip__top, 0);
     z-index: 3000;
     max-width: 400px;
     color: var(--text-color);
@@ -36,6 +40,10 @@
     line-height: 1.4;
     overflow-wrap: anywhere;
     pointer-events: none;
+}
+
+.vis-tooltip.vis-tooltip--shown {
+    display: block;
 }
 
 /* 6px by 8px from the edge in all, with the popup's own 4px (its padding and border) */

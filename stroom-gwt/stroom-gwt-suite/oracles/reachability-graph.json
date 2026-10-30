@@ -1260,7 +1260,7 @@
    "name": "FindPresenter",
    "area": "Explorer",
    "how": "dialog",
-   "via": "DocumentPluginEventManager, NavigationPlugin"
+   "via": "DocumentPluginEventManager, ExplorerPlugin"
   },
   {
    "name": "NavigationPresenter",
@@ -1272,7 +1272,7 @@
    "name": "RecentItemsPresenter",
    "area": "Explorer",
    "how": "dialog",
-   "via": "DocumentPluginEventManager, NavigationPlugin"
+   "via": "DocumentPluginEventManager, ExplorerPlugin"
   },
   {
    "name": "TabSessionChooserPresenter",
@@ -2394,7 +2394,7 @@
    "name": "TaskManagerPresenter",
    "area": "Tasks",
    "how": "screen/dialog via plugin",
-   "via": "TaskManagerPlugin"
+   "via": "ServerTasksPlugin"
   },
   {
    "name": "UserTaskManagerPresenter",

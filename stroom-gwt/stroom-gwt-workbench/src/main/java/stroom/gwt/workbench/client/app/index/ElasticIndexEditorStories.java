@@ -23,17 +23,18 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
+import stroom.search.elastic.client.component.ElasticIndexEditor;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Index/ElasticIndexEditor` stories, showing Stroom's real [ElasticIndexPresenter] (an
+/// The `App/Index/ElasticIndexEditor` stories, showing Stroom's real [ElasticIndexEditor] (an
 /// Elastic index's tab: Settings, Fields, Documentation and Permissions) with fake REST replies.
 ///
 /// As `ElasticIndexPlugin` does, the story fetches the document (`GET /elasticIndex/v1/{uuid}`) and
@@ -96,11 +97,44 @@ public final class ElasticIndexEditorStories {
                     waitForSettings(play);
                     DocEditors.expectNoProblems(play);
                 })
+                // Changing the rerank score field suffix makes the index changed (it didn't, so
+                // the change was saved only with another)
+                .story("RerankScoreSuffixChange", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.type(play.getByLabelText("Rerank score field suffix"), ".rerank");
+                    // The text box reports its change when it loses the focus
+                    play.tab();
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
+                // A minimum rerank score that isn't a score says why under it, and Save takes the user
+                // to it rather than saving. Before, leaving the box threw, as the tab is written on
+                // every change
+                .story("RerankScoreNotAScore", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query score = play.getByLabelText("Minimum Rerank Score");
+                    play.clear(score);
+                    play.type(score, "high");
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.getByText("Must be a number from 0 to 1")).toBeInTheDocument());
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(score).toHaveFocus());
+                    play.expect(score).toHaveValue("high");
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab (the default) when the user may only view the index
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     waitForSettings(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    play.expect(play.getByLabelText("Index name or pattern")).toHaveAttribute("readonly");
+                    play.expect(play.getByLabelText("Rerank score field suffix")).toHaveAttribute("readonly");
                     DocEditors.expectNoProblems(play);
                 })
                 // The Fields tab as an editable partner for FieldsReadOnly (the fields come from the
@@ -114,7 +148,7 @@ public final class ElasticIndexEditorStories {
                 .story("FieldsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     openFields(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -140,7 +174,7 @@ public final class ElasticIndexEditorStories {
         final ElasticIndexResource resource = GWT.create(ElasticIndexResource.class);
         return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getElasticIndexPresenter(),
+                injector.getElasticIndexEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

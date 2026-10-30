@@ -19,7 +19,6 @@ package stroom.widget.datagrid.client;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
 import java.util.function.Consumer;
@@ -31,33 +30,30 @@ import java.util.function.Consumer;
 /// goes to the next result starting with what is typed.
 public final class FindResultLists {
 
-    /// How many results a page has.
-    public static final int PAGE_SIZE = 100;
-
     private FindResultLists() {
         // Static utility
     }
 
-    /// Makes a list of results.
+    /// Makes a list a template declares into a list of results: its one column, drawn by `cell`, and how
+    /// it is selected and opened. The template gives it its page size (100), profile
+    /// (`LISTBOX`), name and stripes:
     ///
-    /// @param eventBus       The application event bus.
-    /// @param name           The list's name, for assistive technology, e.g. "Documents found".
+    /// ```
+    /// <dg:DataGrid ui:field="resultList" pageSize="100" profile="LISTBOX"
+    ///              accessibleName="Documents found" striped="true"/>
+    /// ```
+    ///
+    /// @param list           The declared list.
     /// @param cell           Draws a result.
     /// @param selectionModel The selection model: the result with the focus is chosen.
     /// @param onOpen         Opens a result (Enter, or a double click, on it).
     /// @param onUpFromFirst  What Up on the first result does, e.g. focusing the filter, or null.
     /// @param <T>            The type of a result.
-    /// @return The list.
-    public static <T> DataGrid<T> create(final HasHandlers eventBus,
-                                               final String name,
-                                               final Cell<T> cell,
-                                               final MultiSelectionModelImpl<T> selectionModel,
-                                               final Consumer<T> onOpen,
-                                               final Runnable onUpFromFirst) {
-        final DataGrid<T> list = new DataGrid<>(eventBus, PAGE_SIZE);
-        list.setProfile(DataGridProfile.LISTBOX);
-        list.setAccessibleName(name);
-        list.setStriped(true);
+    public static <T> void wire(final DataGrid<T> list,
+                                final Cell<T> cell,
+                                final MultiSelectionModelImpl<T> selectionModel,
+                                final Consumer<T> onOpen,
+                                final Runnable onUpFromFirst) {
         list.addColumn(new Column<T, T>(cell) {
             @Override
             public T getValue(final T result) {
@@ -74,6 +70,5 @@ public final class FindResultLists {
                 onOpen.accept(selectionModel.getSelected());
             }
         });
-        return list;
     }
 }

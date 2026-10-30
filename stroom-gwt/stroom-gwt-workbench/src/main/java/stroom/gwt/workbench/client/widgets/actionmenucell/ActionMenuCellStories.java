@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.actionmenucell;
 
-import stroom.cell.info.client.ActionMenuCell;
+import stroom.cell.client.ActionMenuCell;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -27,10 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -89,8 +88,8 @@ public final class ActionMenuCellStories {
                 })
                 // The "Actions..." button is a button, so the keyboard can use it (it was a picture that
                 // only a mouse press opened): in a grid, as Stroom's screens show it, the grid's keys
-                // reach it, Enter, or Space, opens the menu, which takes the focus, and Escape puts
-                // the focus back on the button
+                // reach it, Enter, or Space, opens the menu, which takes the focus, Escape puts
+                // the focus back on the button, and Left on a top item closes the menu
                 .story("OpensFromTheKeyboard", context -> {
                     final Spy clicked = context.fn(CLICKED);
                     final List<Item> items = new ArrayList<>();
@@ -112,7 +111,9 @@ public final class ActionMenuCellStories {
                     play.expect(button).toHaveFocus();
                     play.keyboard(" ");
                     play.waitFor(() -> play.expect(body.getByRole("menuitem", "Add Rule Above")).toHaveFocus());
-                    play.keyboard("{Escape}");
+                    // Left on a top item closes the row's menu too (the request carries it)
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(body.queryByRole("menu")).toBeNull());
                     play.expect(play.spy(CLICKED)).not().toHaveBeenCalled();
                 })
                 // No items: the cell has no menu to show, so no button (it once showed one that did
@@ -125,19 +126,21 @@ public final class ActionMenuCellStories {
     }
 
     private static Widget actionMenuCell(final StoryContext context, final List<Item> items) {
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final ActionMenuCell<String> cell = new ActionMenuCell<>(row -> items, popups.getEventBus()::fireEvent);
+        // The cell asks for its menu with a MenuRequest, which the relay shows
+        StoryPopups.create(context).withPageRequests();
+        final ActionMenuCell<String> cell = new ActionMenuCell<>(row -> items);
         return new CellWidget<>(cell, ROW);
     }
 
     // A one-row grid of a name column and the cell's, as Stroom's lists show it
     private static Widget actionMenuGrid(final StoryContext context, final List<Item> items) {
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        // The cell asks for its menu with a MenuRequest, which the relay shows
+        StoryPopups.create(context).withPageRequests();
+        final DataGrid<String> grid = new DataGrid<>();
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String row) -> row).build(), "Name", 150);
         grid.addColumn(DataGridUtil.columnBuilder(
                                 (String row) -> row,
-                                () -> new ActionMenuCell<String>(row -> items, popups.getEventBus()::fireEvent))
+                                () -> new ActionMenuCell<String>(row -> items))
                         .build(),
                 "",
                 40);

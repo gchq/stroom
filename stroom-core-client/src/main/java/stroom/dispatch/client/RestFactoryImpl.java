@@ -17,12 +17,15 @@
 package stroom.dispatch.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -121,6 +124,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
 
         private Consumer<R> resultConsumer;
         private RestErrorHandler errorConsumer;
+        private ControllerNode owner;
 
         public MethodExecutorImpl(final HasHandlers hasHandlers,
                                   final Dispatcher dispatcher,
@@ -147,8 +151,23 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                     function,
                     resultConsumer,
                     errorConsumer,
-                    taskMonitorFactory,
-                    taskMessage);
+                    taskMonitorFactory != null
+                            ? taskMonitorFactory
+                            : getOwnersTaskMonitorFactory(),
+                    taskMessage,
+                    owner);
+        }
+
+        // The owner's task monitor, unless nothing provides one (the context's default shows
+        // nothing, where a request's default fires task events)
+        private TaskMonitorFactory getOwnersTaskMonitorFactory() {
+            if (owner == null) {
+                return null;
+            }
+            final TaskMonitorFactory taskMonitorFactory = owner.lookup(Contexts.TASK_MONITOR);
+            return taskMonitorFactory == Contexts.TASK_MONITOR.getDefaultValue()
+                    ? null
+                    : taskMonitorFactory;
         }
 
         @Override
@@ -160,6 +179,12 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
         @Override
         public MethodExecutor<T, R> onFailure(final RestErrorHandler errorHandler) {
             this.errorConsumer = errorHandler;
+            return this;
+        }
+
+        @Override
+        public MethodExecutor<T, R> owner(final HasControllerNode owner) {
+            this.owner = Objects.requireNonNull(owner, "owner").getControllerNode();
             return this;
         }
 
@@ -180,6 +205,8 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
         private final RestErrorHandler errorHandler;
         private final TaskMonitorFactory taskMonitorFactory;
         private final Task task;
+        // The component the reply is for, or null
+        private final ControllerNode owner;
 
         public TaskExecutorImpl(final HasHandlers hasHandlers,
                                 final Dispatcher dispatcher,
@@ -188,7 +215,8 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                                 final Consumer<R> resultConsumer,
                                 final RestErrorHandler errorHandler,
                                 final TaskMonitorFactory taskMonitorFactory,
-                                final String taskMessage) {
+                                final String taskMessage,
+                                final ControllerNode owner) {
             this.hasHandlers = hasHandlers;
             this.dispatcher = dispatcher;
             this.service = service;
@@ -197,6 +225,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
             this.errorHandler = errorHandler;
             this.taskMonitorFactory = taskMonitorFactory;
             this.task = new RestFactoryTask<>(service, function, taskMessage);
+            this.owner = owner;
         }
 
         @Override
@@ -210,7 +239,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                     // Reload as we have been logged out.
                     Console.info(() -> "Unauthorised request, assuming user session is invalid, reloading...");
                     Location.reload();
-                } else {
+                } else if (!isOwnerDisposed()) {
                     innerErrorHandler.onError(error);
                 }
             };
@@ -218,6 +247,13 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                     () -> new DefaultTaskMonitorFactory(hasHandlers));
 
             final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
+            final Consumer<R> resultConsumer = this.resultConsumer == null || owner == null
+                    ? this.resultConsumer
+                    : result -> {
+                        if (!isOwnerDisposed()) {
+                            this.resultConsumer.accept(result);
+                        }
+                    };
             final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
                     hasHandlers,
                     resultConsumer,
@@ -234,6 +270,10 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
             }
             taskMonitor.onStart(task);
             function.apply(rest.call(service));
+        }
+
+        private boolean isOwnerDisposed() {
+            return owner != null && owner.isDisposed();
         }
     }
 

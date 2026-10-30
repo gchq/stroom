@@ -23,10 +23,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.SimpleTask;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.widget.popup.client.view.Dialog;
+import stroom.widget.popup.client.Dialog;
+import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -71,7 +71,7 @@ public final class DialogTitleStories {
                 // With a leading icon in the title bar
                 .story("WithIcon", DialogTitleStories::fromArgs)
                 .withArgs(Args.of(TITLE, "Information", ICON_HTML, "INFO"))
-                // Busy — the title-bar spinner (GWT SpinnerLarge) fades in
+                // Busy — the title-bar spinner (GWT LargeBusySpinner) fades in
                 .story("Busy", DialogTitleStories::fromArgs)
                 .withArgs(Args.of(TITLE, "Loading data", ICON_HTML, "QUESTION", BUSY, true))
                 // Its status (a live region) says it is busy only once it shows, so that a screen
@@ -89,9 +89,8 @@ public final class DialogTitleStories {
 
     private static Widget fromArgs(final StoryContext context) {
         final Args args = context.getArgs();
-        final Dialog dialog = new Dialog(action -> {
-            // No buttons, so no actions to handle
-        });
+        // No buttons, so no actions to handle
+        final Dialog dialog = new Dialog();
         // Not modal, so the workbench stays usable
         dialog.setModal(false);
         dialog.setCaption(args.getString(TITLE, ""));

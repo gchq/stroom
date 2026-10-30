@@ -53,6 +53,8 @@ public class LocationManager implements HasHandlers {
 
     /// Stops listening for the window closing, e.g. when the UI that created this is being thrown
     /// away without the window closing, so that it no longer warns about unsaved changes.
+    ///
+    /// For the workbench's harness, which throws away each story's UI without closing the window.
     public void removeWindowClosingHandler() {
         windowClosingRegistration.removeHandler();
     }

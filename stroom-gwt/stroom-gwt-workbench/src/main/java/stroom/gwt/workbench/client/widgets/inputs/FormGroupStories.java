@@ -24,13 +24,13 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public final class FormGroupStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/FormGroup", FormGroupStories.class)
                 .layout(StoryLayout.CENTERED)
-                // Basic labelled field wrapping a TextInput
+                // Basic labelled field wrapping a TextBox
                 .story("Basic", context -> {
                     final FormGroup formGroup = formGroup("fg-name", "Display Name");
                     formGroup.add(InputWidgets.textBox(context, "", "Enter display name…"));
@@ -115,7 +115,7 @@ public final class FormGroupStories {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
                     // The group shows the message under its control, which it marks invalid and
-                    // described by the message (as e.g. CreateDocumentViewImpl does). The message
+                    // described by the message (as e.g. CreateDocument does). The message
                     // updates when the text box reports its value, on leaving it.
                     formGroup.setRequired(true);
                     formGroup.add(textBox);
@@ -189,7 +189,7 @@ public final class FormGroupStories {
                     final FormGroup formGroup = new FormGroup();
                     formGroup.setIdentity("fg-tick");
                     formGroup.setHelpText(TICK_HELP);
-                    final CustomCheckBox tickBox = new CustomCheckBox();
+                    final TickBox tickBox = new TickBox();
                     tickBox.setLabel("Follow Redirects");
                     formGroup.add(tickBox);
                     formGroup.getElement().setAttribute("data-testid", "fg-tick-group");
@@ -205,16 +205,17 @@ public final class FormGroupStories {
                     play.expect(play.screen().findByText(TICK_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
-                // GWT-only: a group of several controls (an amount and its unit), which one label can't
+                // A group of several controls (an amount and its unit), which one label can't
                 // name: the label names the group and each control has its own name
                 .story("SeveralControls", context -> {
                     final FormGroup formGroup = formGroup("fg-retain-for", "Retain For");
                     formGroup.setScreenReaderText(RETAIN_FOR_SR);
                     formGroup.setControlNames("Amount, Unit");
                     final TextBox amount = InputWidgets.textBox(context, "30", null);
-                    final ListBox unit = new ListBox();
+                    final SelectionBox<String> unit = new SelectionBox<>();
                     unit.addItem("Days");
                     unit.addItem("Weeks");
+                    unit.setValue("Days");
                     final FlowPanel control = new FlowPanel();
                     control.add(amount);
                     control.add(unit);

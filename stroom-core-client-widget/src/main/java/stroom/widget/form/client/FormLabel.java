@@ -68,7 +68,7 @@ public class FormLabel extends Composite {
     }
 
     /// Marks the label of a field that must be filled in with an asterisk after it (drawn by
-    /// `form.css`, hidden from screen readers, which hear "required" from the field itself).
+    /// `form-label.css`, hidden from screen readers, which hear "required" from the field itself).
     ///
     /// @param required Whether the field is required.
     public void setRequired(final boolean required) {

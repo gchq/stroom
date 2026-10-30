@@ -1,0 +1,29 @@
+/*
+ * A query's toolbar (QueryToolbar): its time range, a button that shows the query's errors and
+ * the buttons that start and stop it, on the right of the query's pane or dashboard.
+ */
+
+.query-toolbar {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-grow: 1;
+    padding: 0 5px;
+}
+
+.query-toolbar__inner {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Holds the errors button, which sits in the row as if on its own */
+.query-toolbar__errors {
+    margin: 0;
+}
+
+/* No errors: the button keeps its place, so the toolbar doesn't shift, but visibility (not
+   opacity) also takes it out of the tab order and away from screen readers */
+.query-toolbar__errors--hidden {
+    visibility: hidden;
+}

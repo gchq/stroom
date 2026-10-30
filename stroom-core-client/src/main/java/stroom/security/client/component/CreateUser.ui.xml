@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:e="urn:import:stroom.document.client.component"
+             xmlns:sec="urn:import:stroom.security.client.component">
+    <g:FlowPanel styleName="create-user form max dock-container-vertical">
+        <form:FormGroup ui:field="createTypesFormGroup"
+                        identity="createTypes"
+                        label="Action"
+                        helpText="Choose whether to add a single identity provider user or several users at once."
+                        screenReaderText="Add one identity provider user or several at once.">
+            <i:SelectionBox ui:field="createTypes" addStyleNames="create-user__type dock-min w-100"/>
+        </form:FormGroup>
+        <!-- One of these is shown, for the type chosen -->
+        <g:FlowPanel addStyleNames="dock-max">
+            <e:NameEntry ui:field="groupForm" visible="false"/>
+            <sec:CreateExternalUser ui:field="externalUser" visible="false"/>
+            <sec:CreateMultipleUsers ui:field="multipleUsers" visible="false"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -55,12 +55,12 @@ public final class AiFixtures {
             {"dockType": "DIALOG", "dockLocation": "RIGHT"}""";
 
     /// The chat's Run button.
-    /// It has no title or accessible name (`AskStroomAiViewImpl` sets its text, which
-    /// `ToolbarButton` doesn't show), so it is found by its 'play' class.
-    static final String RUN = "button.play";
+    /// It has no title or accessible name (`AskStroomAi` sets its text, which
+    /// `ToolbarButton` doesn't show), so it is found by its play modifier.
+    static final String RUN = "button.toolbar-button--play";
 
-    /// The Run button while the chat is working (a Stop button), with the 'stop' class.
-    static final String STOP = "button.stop";
+    /// The Run button while the chat is working (a Stop button), with the stop modifier.
+    static final String STOP = "button.toolbar-button--stop";
 
     /// The user's preferences, with the workbench's (dark) theme: the chat saves its config into the
     /// preferences, which applies their theme to the page, as Stroom does.

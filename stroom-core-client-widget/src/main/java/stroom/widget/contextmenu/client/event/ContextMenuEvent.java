@@ -17,7 +17,7 @@
 package stroom.widget.contextmenu.client.event;
 
 import stroom.widget.contextmenu.client.TextEditTarget;
-import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.PopupPosition;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

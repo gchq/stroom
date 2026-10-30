@@ -16,8 +16,7 @@
 
 package stroom.cell.tickbox.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -282,7 +281,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         private static final String BLOCK = "tick-box";
         private static final String CELL_CLASS_NAMES = BLOCK + " " + BLOCK + "--cell";
-        private static final SafeHtml TICK_SVG = SafeHtmlUtils.fromSafeConstant(CustomCheckBox.TICK_SVG);
+        private static final SafeHtml TICK_SVG = SafeHtmlUtils.fromSafeConstant(TickBox.TICK_SVG);
 
         private static Template template;
 

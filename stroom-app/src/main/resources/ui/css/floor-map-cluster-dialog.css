@@ -1,0 +1,45 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The cluster dialog's filter bar: the search box and the two dropdowns on one line, above the
+   member grid.
+
+   Its own class rather than the usual `dock-container-horizontal form` pair:
+   `.form` sets flex-direction: column and, sitting on the same element, wins —
+   which stacks the controls. Declaring the direction here states the intent
+   once and cannot be undone by a class added beside it. */
+.floor-map-cluster-dialog__filters {
+    display: flex;
+    flex-direction: row;
+    /* Each control sits under its own label, so aligning the bottom edges is
+       what actually lines the inputs up with each other. */
+    align-items: flex-end;
+    gap: var(--control__gap--horizontal);
+}
+
+/* Takes the slack: what is typed here is the only unbounded value on the bar.
+   min-width lets it yield to the dropdowns on a narrowed dialog rather than
+   pushing them off the end — a flex item's floor is its content otherwise. */
+.floor-map-cluster-dialog__search {
+    flex: 1 1 auto;
+    min-width: 8rem;
+}
+
+/* Fixed width, so choosing a long area name does not resize the bar and move
+   the other controls out from under the pointer. */
+.floor-map-cluster-dialog__filter {
+    flex: 0 0 12rem;
+}

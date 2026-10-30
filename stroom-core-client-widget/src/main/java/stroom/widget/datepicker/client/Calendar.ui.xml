@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  Stroom's calendar (calendar.css): its year and month rows, each a selection box and a toolbar of
+  its Previous and Next buttons (one tab stop each), above the month's days. The years and months
+  listed are added in Java, in the browser's language.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:dp="urn:import:stroom.widget.datepicker.client">
+    <g:FlowPanel styleName="calendar">
+        <g:FlowPanel styleName="calendar__header">
+            <g:FlowPanel styleName="calendar__row">
+                <i:SelectionBox ui:field="yearSelect" addStyleNames="calendar__select" ariaLabel="Year"/>
+                <b:Toolbar name="Year" addStyleNames="calendar__toolbar">
+                    <b:ToolbarButton ui:field="previousYear" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_LEFT" title="Previous Year"/>
+                    <b:ToolbarButton ui:field="nextYear" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_RIGHT" title="Next Year"/>
+                </b:Toolbar>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="calendar__row">
+                <i:SelectionBox ui:field="monthSelect" addStyleNames="calendar__select" ariaLabel="Month"/>
+                <b:Toolbar name="Month" addStyleNames="calendar__toolbar">
+                    <b:ToolbarButton ui:field="previousMonth" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_LEFT" title="Previous Month"/>
+                    <b:ToolbarButton ui:field="nextMonth" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_RIGHT" title="Next Month"/>
+                </b:Toolbar>
+            </g:FlowPanel>
+        </g:FlowPanel>
+        <dp:CalendarGrid ui:field="grid"/>
+    </g:FlowPanel>
+</ui:UiBinder>

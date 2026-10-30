@@ -18,6 +18,7 @@ package stroom.widget.datagrid.client;
 
 import stroom.widget.datagrid.client.model.AutoFit;
 import stroom.widget.datagrid.client.model.ColumnModel;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -26,7 +27,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.ArrayList;
@@ -55,6 +55,8 @@ final class ColumnInteractions {
     private static final String DATA_HCOL = "data-hcol";
     private static final String DRAGGING_CLASS_NAME = "data-grid--dragging";
     private static final String RESIZING_CLASS_NAME = "data-grid--resizing";
+    // The resize handle shows on the edge of the column under the pointer
+    private static final String HANDLE_SHOWN_CLASS_NAME = "data-grid__resize-handle--shown";
     private static final String MEASURE_CLASS_NAME = "data-grid__measure";
 
     private final DataGrid<?> grid;
@@ -86,34 +88,34 @@ final class ColumnInteractions {
     // Set after a move, so the click that ends it does not also sort the column.
     private boolean suppressClick;
 
-    /// Create the handle, guide lines and ghost and add them to the grid.
+    /// Works the grid's handle, guide lines and ghost (its template's).
     ///
-    /// @param grid     The grid.
-    /// @param root     The grid's root element.
-    /// @param scroller The grid's scroller.
-    /// @param head     The grid's sticky header.
+    /// @param grid       The grid.
+    /// @param root       The grid's root element.
+    /// @param scroller   The grid's scroller.
+    /// @param head       The grid's header, which the handle is in.
+    /// @param handle     The resize handle.
+    /// @param resizeLine The line that follows a column's edge while it is resized.
+    /// @param moveGhost  The ghost of a column that follows the pointer while it is moved.
+    /// @param moveLine   The line where a moved column will go.
     ColumnInteractions(final DataGrid<?> grid,
                        final Element root,
                        final Element scroller,
-                       final Element head) {
+                       final Element head,
+                       final Element handle,
+                       final Element resizeLine,
+                       final Element moveGhost,
+                       final Element moveLine) {
         this.grid = grid;
         this.root = root;
         this.scroller = scroller;
         this.head = head;
-
-        final Document doc = Document.get();
-        handle = div(doc, "data-grid__resize-handle");
-        resizeLine = div(doc, "data-grid__resize-line");
-        moveGhost = div(doc, "data-grid__move-ghost");
-        moveLine = div(doc, "data-grid__move-line");
-        head.appendChild(handle);
-        root.appendChild(resizeLine);
-        root.appendChild(moveGhost);
-        root.appendChild(moveLine);
-        hide(handle);
-        hide(resizeLine);
-        hide(moveGhost);
-        hide(moveLine);
+        // Each hidden until needed (data-grid.css): the handle until shown (HANDLE_SHOWN_CLASS_NAME),
+        // the resize line while not resizing, and the move ghost and line while not moving
+        this.handle = handle;
+        this.resizeLine = resizeLine;
+        this.moveGhost = moveGhost;
+        this.moveLine = moveLine;
     }
 
     private static Element div(final Document doc, final String className) {
@@ -146,10 +148,7 @@ final class ColumnInteractions {
         handleColumn = -1;
         root.removeClassName(DRAGGING_CLASS_NAME);
         root.removeClassName(RESIZING_CLASS_NAME);
-        hide(handle);
-        hide(resizeLine);
-        hide(moveGhost);
-        hide(moveLine);
+        handle.removeClassName(HANDLE_SHOWN_CLASS_NAME);
     }
 
     /// @param element An element.
@@ -272,7 +271,7 @@ final class ColumnInteractions {
         }
         handleColumn = column;
         placeHandle(column);
-        show(handle);
+        handle.addClassName(HANDLE_SHOWN_CLASS_NAME);
     }
 
     private void placeHandle(final int column) {
@@ -280,12 +279,12 @@ final class ColumnInteractions {
         final int edge = model.getLeft(column) + model.getWidth(column);
         // Keep the handle inside the table, so it never makes the grid scroll sideways.
         final int left = Math.max(0, Math.min(edge - HALF_HANDLE_WIDTH, model.getTotalWidth() - HANDLE_WIDTH));
-        handle.getStyle().setLeft(left, Unit.PX);
+        CssProperties.set(handle, "--data-grid__handle-left", left + "px");
     }
 
     private void hideHandle() {
         handleColumn = -1;
-        hide(handle);
+        handle.removeClassName(HANDLE_SHOWN_CLASS_NAME);
     }
 
     private void startResize(final NativeEvent event) {
@@ -295,9 +294,9 @@ final class ColumnInteractions {
         resizeStartX = event.getClientX();
         DataGridDom.setPointerCapture(handle, DataGridDom.getPointerId(event));
         root.addClassName(DRAGGING_CLASS_NAME);
+        // Which shows the resize line
         root.addClassName(RESIZING_CLASS_NAME);
         placeResizeLine();
-        show(resizeLine);
 
         final HeadingListener headingListener = grid.getHeadingListener();
         if (headingListener != null) {
@@ -322,7 +321,9 @@ final class ColumnInteractions {
     private void placeResizeLine() {
         final ColumnModel<?> model = model();
         final int edge = model.getLeft(resizeColumn) + model.getWidth(resizeColumn);
-        resizeLine.getStyle().setLeft(edge - scroller.getScrollLeft() - HALF_LINE_WIDTH, Unit.PX);
+        CssProperties.set(resizeLine,
+                "--data-grid__resize-line-left",
+                (edge - scroller.getScrollLeft() - HALF_LINE_WIDTH) + "px");
     }
 
     private void endResize(final NativeEvent event) {
@@ -330,7 +331,6 @@ final class ColumnInteractions {
         DataGridDom.releasePointerCapture(handle, DataGridDom.getPointerId(event));
         root.removeClassName(DRAGGING_CLASS_NAME);
         root.removeClassName(RESIZING_CLASS_NAME);
-        hide(resizeLine);
 
         final int column = resizeColumn;
         final int width = model().getWidth(column);
@@ -402,6 +402,7 @@ final class ColumnInteractions {
         DataGridDom.setPointerCapture(head, DataGridDom.getPointerId(event));
         // The press may have started selecting header text.
         DataGridDom.clearTextSelection();
+        // Which shows the move ghost and line, placed by updateMove below
         root.addClassName(DRAGGING_CLASS_NAME);
         hideHandle();
 
@@ -417,9 +418,10 @@ final class ColumnInteractions {
     private void updateMove(final NativeEvent event) {
         final ColumnModel<?> model = model();
         final int column = pressedColumn;
-        moveGhost.getStyle().setLeft(event.getClientX() - pressOffset - root.getAbsoluteLeft(), Unit.PX);
-        moveGhost.getStyle().setWidth(model.getWidth(column), Unit.PX);
-        show(moveGhost);
+        CssProperties.set(moveGhost,
+                "--data-grid__move-ghost-left",
+                (event.getClientX() - pressOffset - root.getAbsoluteLeft()) + "px");
+        CssProperties.set(moveGhost, "--data-grid__move-ghost-width", model.getWidth(column) + "px");
 
         insertPosition = model.insertPosition(column, tableX(event.getClientX()));
         final int edge = insertPosition == 0
@@ -428,16 +430,13 @@ final class ColumnInteractions {
         final int left = insertPosition == 0
                 ? 0
                 : edge - scroller.getScrollLeft() - HALF_LINE_WIDTH;
-        moveLine.getStyle().setLeft(left, Unit.PX);
-        show(moveLine);
+        CssProperties.set(moveLine, "--data-grid__move-line-left", left + "px");
     }
 
     private void endMove(final NativeEvent event) {
         moving = false;
         DataGridDom.releasePointerCapture(head, DataGridDom.getPointerId(event));
         root.removeClassName(DRAGGING_CLASS_NAME);
-        hide(moveGhost);
-        hide(moveLine);
         // The release ends the move, so its click must not also sort or show the menu.
         suppressClick = true;
 
@@ -533,11 +532,4 @@ final class ColumnInteractions {
                 : null;
     }
 
-    private static void show(final Element element) {
-        element.getStyle().clearDisplay();
-    }
-
-    private static void hide(final Element element) {
-        element.getStyle().setProperty("display", "none");
-    }
 }

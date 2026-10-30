@@ -15,7 +15,7 @@
  */
 
 /*
-   The selection list (stroom.item.client.SelectionList), named BEM style (block, block__element,
+   The selection list (stroom.widget.selection.client.SelectionList), named BEM style (block, block__element,
    block--modifier): a list box whose rows are options (selection-list__options), with a quick filter
    (selection-list__filter, styled by quick-filter.css) above it and a path (a breadcrumb trail of the
    levels above) between them. It fills what holds it; a selection box's list is sized by

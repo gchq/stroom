@@ -7199,7 +7199,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7212,7 +7212,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7225,7 +7225,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7238,7 +7238,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7251,7 +7251,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7264,7 +7264,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7277,7 +7277,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7290,7 +7290,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -8129,7 +8129,7 @@
    ]
   },
   {
-   "class": "HyperlinkEventHandlerImpl",
+   "class": "HyperlinkOpener",
    "classKind": "widget",
    "kind": "dirty",
    "receiver": "presenter",
@@ -9582,7 +9582,7 @@
    ]
   },
   {
-   "class": "TraceHistogramWidget",
+   "class": "TraceHistogramChart",
    "classKind": "widget",
    "kind": "mousedown",
    "receiver": "panel",
@@ -11993,7 +11993,7 @@
    ]
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "mon",
@@ -12004,7 +12004,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "tue",
@@ -12015,7 +12015,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "wed",
@@ -12026,7 +12026,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "thu",
@@ -12037,7 +12037,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "fri",
@@ -12048,7 +12048,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "sat",
@@ -12059,7 +12059,7 @@
    "why": "needs-value"
   },
   {
-   "class": "DaysWidget",
+   "class": "DaysOfWeek",
    "classKind": "widget",
    "kind": "value",
    "receiver": "sun",
@@ -13062,7 +13062,7 @@
    "why": "needs-key"
   },
   {
-   "class": "TimeZoneWidget",
+   "class": "TimeZoneBox",
    "classKind": "widget",
    "kind": "value",
    "receiver": "timeZoneUse",
@@ -13073,7 +13073,7 @@
    "why": "needs-value"
   },
   {
-   "class": "TimeZoneWidget",
+   "class": "TimeZoneBox",
    "classKind": "widget",
    "kind": "value",
    "receiver": "timeZoneId",
@@ -13084,7 +13084,7 @@
    "why": "needs-value"
   },
   {
-   "class": "TimeZoneWidget",
+   "class": "TimeZoneBox",
    "classKind": "widget",
    "kind": "value",
    "receiver": "timeZoneOffsetHours",
@@ -13095,7 +13095,7 @@
    "why": "needs-value"
   },
   {
-   "class": "TimeZoneWidget",
+   "class": "TimeZoneBox",
    "classKind": "widget",
    "kind": "value",
    "receiver": "timeZoneOffsetMinutes",
@@ -16099,7 +16099,7 @@
    "why": "view"
   },
   {
-   "class": "TaskManagerPlugin",
+   "class": "ServerTasksPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -17355,7 +17355,7 @@
    ]
   },
   {
-   "class": "SvgIconBox",
+   "class": "IconBox",
    "classKind": "widget",
    "kind": "click",
    "receiver": "ClickEvent",
@@ -19929,7 +19929,7 @@
     "observed": false
    },
    {
-    "class": "HyperlinkEventHandlerImpl",
+    "class": "HyperlinkOpener",
     "classKind": "widget",
     "kind": "confirm",
     "template": "Are you sure you want to close?",

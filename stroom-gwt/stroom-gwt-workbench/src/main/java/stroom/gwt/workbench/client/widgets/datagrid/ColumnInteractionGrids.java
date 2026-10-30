@@ -17,7 +17,8 @@
 package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.ai.shared.GeneralTableContext;
-import stroom.data.client.event.AskStroomAiEvent;
+import stroom.cell.textfield.client.TextFieldCell;
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -27,26 +28,33 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.button.client.Button;
+import stroom.widget.datagrid.client.AskStroomAiEvent;
+import stroom.widget.datagrid.client.AskStroomAiTableRequest;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.Heading;
 import stroom.widget.datagrid.client.HeadingListener;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.cell.client.TextInputCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -70,6 +78,9 @@ final class ColumnInteractionGrids {
     private static final String ON_MOVE_START = "onMoveStart";
     private static final String ON_MOVE_END = "onMoveEnd";
     private static final String ON_FILTER_CHANGE = "onFilterChange";
+    // A link from the context menu, to the grid's own handler or to the app
+    private static final String ON_GRID_LINK = "onGridLink";
+    private static final String ON_APP_LINK = "onAppLink";
 
     private static final String HEADER_CELLS = "[role=\"columnheader\"]";
     private static final String ROW = ".data-grid__body [data-row]";
@@ -91,7 +102,7 @@ final class ColumnInteractionGrids {
     /// The people grid with a heading listener that records what the grid tells it. ID, Name, Role
     /// and Age can be resized and moved; Active is fixed.
     static Widget resizeAndReorder(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         addColumns(grid);
@@ -182,7 +193,7 @@ final class ColumnInteractionGrids {
     /// The same grid with resizing and moving switched off, as the dashboard does outside design
     /// mode.
     static Widget resizeAndReorderDisabled(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         addColumns(grid);
@@ -211,16 +222,16 @@ final class ColumnInteractionGrids {
     // --------------------------------------------------------------------------------
     // Interactive header cells
 
-    /// A header with a live text box, as the dashboard's `FilterCell`: what is typed reaches the
-    /// header's cell, a change fires its updater, and the grid neither takes the focus nor treats
-    /// the keys as its own.
+    /// A header with a live text box (a `TextFieldCell`, as the dashboard's `FilterCell` holds):
+    /// what is typed reaches the header's cell, a change fires its updater, and the grid neither
+    /// takes the focus nor treats the keys as its own.
     static Widget headerInput(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
         final Spy onFilterChange = context.fn(ON_FILTER_CHANGE);
-        final Header<String> filterHeader = new Header<String>(new LabelledTextInputCell("Filter names")) {
+        final Header<String> filterHeader = new Header<String>(new TextFieldCell(index -> "Filter names")) {
             @Override
             public String getValue() {
                 return "";
@@ -274,8 +285,11 @@ final class ColumnInteractionGrids {
     /// shows the menu the grid asks for, and can run its Ask Stroom AI items, showing what they
     /// send: the text comes from the row data, so rows that are not rendered are included.
     static Widget contextMenu(final StoryContext context) {
+        // What the grid asks for (its menu, asking Stroom AI) comes to the story's bus, as to Stroom's
         final SimpleEventBus eventBus = new SimpleEventBus();
-        final DataGrid<Person> grid = new DataGrid<>(eventBus);
+        context.addCleanUp(MenuRequest.relay(eventBus::fireEvent)::removeHandler);
+        context.addCleanUp(AskStroomAiTableRequest.relay(eventBus::fireEvent)::removeHandler);
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
@@ -342,6 +356,62 @@ final class ColumnInteractionGrids {
         play.waitFor(() -> play.expect(play.getByText(TextMatch.startingWith("AI: ")))
                 .toHaveTextContent("AI: People (500 rows, 5 cols) / columns: ID, Name, Role, Age, Active"
                                    + " / last row: 500, Person 500, Manager, 24, Yes"));
+    }
+
+    // --------------------------------------------------------------------------------
+    // Links in the context menu
+
+    /// A grid with a link to a dashboard in its cell, showing Stroom's real menu. With `handled`,
+    /// something handles the grid's links, as a dashboard's table does (adding the dashboard it is
+    /// in, which the linked dashboard takes its parameters from): the menu's link items go to it,
+    /// as a click on the link does. They went to the app directly, so a dashboard opened from the
+    /// menu had no parent. With nothing handling them, they go up the page for the app to open.
+    ///
+    /// @param context The story's context.
+    /// @param handled Whether something handles the grid's links.
+    /// @return The grid.
+    static Widget linkMenuGrid(final StoryContext context, final boolean handled) {
+        final Spy onGridLink = context.fn(ON_GRID_LINK);
+        final Spy onAppLink = context.fn(ON_APP_LINK);
+        final StoryPopups popups = StoryPopups.create(context).withPageRequests();
+        popups.getEventBus().addHandler(HyperlinkEvent.getType(), event ->
+                onAppLink.call(describe(event.getHyperlink())));
+        final DataGrid<String> grid = new DataGrid<>();
+        grid.setWidth("100%");
+        grid.setHeight("100%");
+        grid.addResizableColumn(new Column<String, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final String link) {
+                return SafeHtmlUtils.fromTrustedString("<u link=\"" + link + "\">Other Dashboard</u>");
+            }
+        }, "Link", 240);
+        grid.setRowData(List.of("[Other Dashboard](uuid=other){dashboard}"));
+        if (handled) {
+            grid.addHyperlinkHandler(event -> onGridLink.call(describe(event.getHyperlink())));
+        }
+        return sized(grid, "120px", "300px");
+    }
+
+    /// Opens a dashboard link from the menu of [#linkMenuGrid].
+    ///
+    /// @param play    The play.
+    /// @param handled Whether something handles the grid's links.
+    static void linkMenuPlay(final Play play, final boolean handled) {
+        play.rightClick(play.findByText("Other Dashboard"));
+        final Query menu = play.screen().findByRole("menu");
+        play.click(play.within(menu).getByRole("menuitem", TextMatch.containing("Open In This Tab")));
+        // The link, to open in this tab
+        final String expected = "uuid=other self";
+        if (handled) {
+            play.waitFor(() -> play.expect(play.spy(ON_GRID_LINK)).toHaveBeenCalledWith(expected));
+            play.expect(play.spy(ON_APP_LINK)).not().toHaveBeenCalled();
+        } else {
+            play.waitFor(() -> play.expect(play.spy(ON_APP_LINK)).toHaveBeenCalledWith(expected));
+        }
+    }
+
+    private static String describe(final LinkValue hyperlink) {
+        return hyperlink.getHref() + " " + hyperlink.getTarget();
     }
 
     private static void run(final Map<String, Command> commands, final String name) {
@@ -444,31 +514,6 @@ final class ColumnInteractionGrids {
         final Button button = new Button(text);
         button.addClickHandler(event -> action.run());
         return button;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// A [TextInputCell] whose input has an accessible name, as a header filter box needs.
-    private static final class LabelledTextInputCell extends TextInputCell {
-
-        private final String label;
-
-        private LabelledTextInputCell(final String label) {
-            this.label = label;
-        }
-
-        @Override
-        public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-            sb.appendHtmlConstant("<input type=\"text\" tabindex=\"-1\" aria-label=\"")
-                    .appendEscaped(label)
-                    .appendHtmlConstant("\" value=\"")
-                    .appendEscaped(value != null
-                            ? value
-                            : "")
-                    .appendHtmlConstant("\">");
-        }
     }
 
 

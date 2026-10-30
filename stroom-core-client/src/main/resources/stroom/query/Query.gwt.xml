@@ -19,6 +19,7 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <inherits name="stroom.widget.htree.HTree"/>
 
   <source path="client" />
   <source path="shared" />

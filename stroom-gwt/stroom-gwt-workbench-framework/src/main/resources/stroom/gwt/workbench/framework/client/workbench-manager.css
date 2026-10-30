@@ -1624,12 +1624,6 @@ body.wbm {
     border: 0;
 }
 
-.wbm-options--inline {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
 .wbm-option {
     display: flex;
     align-items: center;

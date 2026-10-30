@@ -56,7 +56,7 @@ public class ExpiryFormatter {
                     text = dateTimeFormatter.formatWithDuration(ms);
                 }
                 safeHtml = HtmlBuilder.builder()
-                        .span(text, Attribute.className("dataGridAlertText"))
+                        .span(text, Attribute.className("data-grid__alert-text"))
                         .toSafeHtml();
             } else {
                 safeHtml = SafeHtmlUtils.fromTrustedString(dateTimeFormatter.formatWithDuration(ms));

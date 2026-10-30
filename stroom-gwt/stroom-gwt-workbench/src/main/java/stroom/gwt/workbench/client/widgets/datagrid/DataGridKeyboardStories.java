@@ -18,9 +18,8 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -29,18 +28,18 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBoxCell;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Button;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.selection.client.SelectionBoxCell;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -48,8 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// The keyboard of a [DataGrid] (its `DataGridKeyboard`): the row focus, Right
-/// into the cells, the controls in them (a tick box and a value spinner, as `ProcessorListPresenter`
-/// has, a text field and a selection box, as `FloorMapSettingsPresenter`'s value schema has),
+/// into the cells, the controls in them (a tick box and a value spinner, as `ProcessorList`
+/// has, a text field and a selection box, as `FloorMapSettings`'s value schema has),
 /// editing with Enter or F2, and Tab from one control to the next while editing.
 ///
 /// The plays press the keys as `userEvent.keyboard` does; the real input checks
@@ -357,7 +356,7 @@ public final class DataGridKeyboardStories {
             rows.add(new Row(name));
         }
 
-        final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Row> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setAccessibleName("Processors");

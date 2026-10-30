@@ -1,0 +1,75 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.annotation.client.component;
+
+import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Component;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.Objects;
+
+/// The content of Change Assigned To: who to assign the annotations chosen to, which a press on
+/// chooses, and Assign Yourself.
+public class ChangeAssignee extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    AnnotationAssignedToSetting assignedTo;
+
+    /// Makes empty content.
+    public ChangeAssignee() {
+        initWidget(BINDER.createAndBindUi(this));
+    }
+
+    /// @param assignedTo Who to assign the annotations to, or null for nobody.
+    public void setAssignedTo(final UserRef assignedTo) {
+        this.assignedTo.setAssignedTo(assignedTo);
+    }
+
+    /// Enables Assign Yourself, or disables it, saying why, when the annotations are already to
+    /// be assigned to the current user.
+    ///
+    /// @param enabled Whether it is enabled.
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        assignedTo.setAssignYourselfEnabled(enabled);
+    }
+
+    /// @param onChooseAssignedTo Run when who to assign the annotations to is pressed.
+    public void setOnChooseAssignedTo(final Runnable onChooseAssignedTo) {
+        Objects.requireNonNull(onChooseAssignedTo, "onChooseAssignedTo");
+        assignedTo.setOnChoose(element -> onChooseAssignedTo.run());
+    }
+
+    /// @param onAssignYourself Run when Assign Yourself is pressed.
+    public void setOnAssignYourself(final Runnable onAssignYourself) {
+        Objects.requireNonNull(onAssignYourself, "onAssignYourself");
+        assignedTo.setOnAssignYourself(element -> onAssignYourself.run());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ChangeAssignee> {
+
+    }
+}

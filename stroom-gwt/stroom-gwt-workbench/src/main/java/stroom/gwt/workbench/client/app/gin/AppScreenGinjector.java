@@ -17,88 +17,80 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
-import stroom.dictionary.client.presenter.DictionaryPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.credentials.client.component.CredentialsPickerController;
+import stroom.dictionary.client.component.DictionaryEditor;
+import stroom.document.client.component.InfoDocumentController;
+import stroom.explorer.client.component.ExplorerNodeEditTagsController;
+import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.job.client.presenter.JobPresenter;
-import stroom.node.client.presenter.NodePresenter;
-import stroom.security.client.presenter.UsersPresenter;
-import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.UserTaskManagerPresenter;
+import stroom.job.client.component.JobsController;
+import stroom.node.client.component.NodesController;
+import stroom.security.client.component.UsersController;
+import stroom.task.client.component.ServerTasksController;
+import stroom.task.client.component.UserTaskManagerController;
 
 import com.google.gwt.inject.client.GinModules;
 
-/// A [ScreenGinjector] that also creates Stroom's screens (presenters and their views) as Stroom's
-/// GIN modules do, for stories to get their presenter from rather than creating it, and its
-/// graph of child presenters and views, with `new`:
+/// A [ScreenGinjector] that also creates Stroom's screens (controllers and their components) as Stroom's
+/// GIN modules do, for stories to get their controller from rather than creating it, and its
+/// graph of child controllers and components, with `new`:
 /// ```
 /// final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final JobPresenter presenter = injector.getJobPresenter();
+/// final JobsController controller = injector.getJobsController();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 ///
 /// Its modules mirror Stroom's (`XxxScreenModule` for Stroom's `XxxModule`), without the plugins
-/// and app services, and [ScreenViewsModule] binds the shared widgets. Presenters are created as
-/// in Stroom, so they are bound (`onBind`) as soon as they are created.
+/// and app services. Controllers are created as in Stroom, so they are bound (`onBind`) as soon as they are created.
 ///
-/// To add a screen: add a getter for its presenter here, under its area's comment, and, if GIN
+/// To add a screen: add a getter for its controller here, under its area's comment, and, if GIN
 /// reports a missing binding, add the mirror of the Stroom module that binds it to the
 /// `@GinModules` list (one module per line, so that parallel work rarely touches the same lines).
 /// See WRITING-STORIES.md.
 @GinModules({
-        ScreenViewsModule.class,
-        CredentialsScreenModule.class,
-        DictionaryScreenModule.class,
-        EntityScreenModule.class,
-        ExplorerScreenModule.class,
-        MonitoringScreenModule.class,
-        SecurityScreenModule.class,
-        TaskScreenModule.class,
 })
 public interface AppScreenGinjector extends ScreenGinjector {
 
     // Credentials
 
-    /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsPresenter` is
+    /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsController` is
     /// given.
-    CredentialsManagerDialogPresenter getCredentialsManagerDialogPresenter();
+    CredentialsPickerController getCredentialsManagerDialogController();
 
     // Documents and the explorer
 
     /// @return The document 'Info' dialog, shown by firing `ShowInfoDocumentDialogEvent`.
-    InfoDocumentPresenter getInfoDocumentPresenter();
+    InfoDocumentController getInfoDocumentController();
 
-    /// @return The 'Edit Tags' dialog, shown by firing `ShowEditNodeTagsDialogEvent`.
-    ExplorerNodeEditTagsPresenter getExplorerNodeEditTagsPresenter();
+    /// @return The 'Edit Tags' dialog, as `ExplorerPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
+    ExplorerNodeEditTagsController getExplorerNodeEditTagsController();
 
-    /// @return The 'Remove Tags' dialog, shown by firing `ShowRemoveNodeTagsDialogEvent`.
-    ExplorerNodeRemoveTagsPresenter getExplorerNodeRemoveTagsPresenter();
+    /// @return The 'Remove Tags' dialog, as `ExplorerPlugin` shows it for
+    /// `ShowRemoveNodeTagsDialogEvent`.
+    ExplorerNodeRemoveTagsController getExplorerNodeRemoveTagsController();
 
     // Monitoring
 
     /// @return The 'Jobs' tab.
-    JobPresenter getJobPresenter();
+    JobsController getJobsController();
 
     /// @return The 'Nodes' tab.
-    NodePresenter getNodePresenter();
+    NodesController getNodesController();
 
     /// @return The 'Server Tasks' tab.
-    TaskManagerPresenter getTaskManagerPresenter();
+    ServerTasksController getServerTasksController();
 
-    /// @return The user's task manager dialog, shown by firing `OpenUserTaskManagerEvent`.
-    UserTaskManagerPresenter getUserTaskManagerPresenter();
+    /// @return The user's task manager dialog, as `ServerTasksPlugin` shows it on `OpenUserTaskManagerEvent`.
+    UserTaskManagerController getUserTaskManagerController();
 
     // Security
 
     /// @return The 'Users' tab.
-    UsersPresenter getUsersPresenter();
+    UsersController getUsersController();
 
     // Dictionaries
 
-    /// @return A Dictionary's editor tab, as `DictionaryPlugin` creates it.
-    DictionaryPresenter getDictionaryPresenter();
+    /// @return A Dictionary's editor, which `DictionaryPlugin` opens in a `DocumentEditorHost`.
+    DictionaryEditor getDictionaryEditor();
 }

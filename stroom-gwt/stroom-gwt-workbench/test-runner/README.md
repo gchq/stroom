@@ -10,7 +10,7 @@ dialogs the stories cover (see [Coverage](#coverage)). See
 | Run every story and play function      | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest`                    |
 | Run against a running workbench        | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchUrl=http://localhost:6008` |
 | Run a title's stories                  | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter=Widgets/Buttons/Button` |
-| Stroom's screens and dialogs no story covers | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` |
+| Stroom's screens and dialogs no story covers | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDialogCoverage` |
 
 None of these are part of `build`/`check`, so normal builds don't need Node, npm or Playwright.
 The test runner needs Node.js 20+ (with npm). `workbenchTest` fails if npm isn't available, so
@@ -262,12 +262,22 @@ in 284 stories). Both densities are set explicitly, as the workbench's own prefe
 (heights) or a pixel (widths) before they count as changed; `lib/grid-geometry.mjs` measures and
 compares them.
 
+## Class census
+
+`--class-census <file>` (from Gradle, `-PworkbenchTestArgs='--class-census <file>'`) writes every
+class name the stories put on an element to the file as JSON, with how many stories set each and a
+few of them. A script added to every frame (`lib/class-census.mjs`) records each element's classes
+when the page loads, when an element is added and when its class changes, so a popup opened and
+closed again counts. It tells which stylesheet rules can still match something: a class no story
+sets, and that the code doesn't build, can only be styled for a screen no story shows.
+
 ## Leak check
 
 `-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory
-leaks. For a story that opens its screen with `ScreenHarness.afterStartUp` (with `probe=1` in its
+leaks, after its other checks (real input, accessibility, focus), as it loses what the play left
+on the screen. For a story that opens its screen with `ScreenHarness.afterStartUp` (with `probe=1` in its
 address the harness exposes `window.__leakProbe`; see `LeakProbe`), it closes the screen as closing
-a Stroom tab does, disposing the presenters made while opening it (as `DocumentPlugin` does), and
+a Stroom tab does, disposing the controllers made while opening it (as `DocumentPlugin` does), and
 opens it again, 2 times to warm up and then 8 times (`--leak-cycles N`), measuring the DOM nodes
 and event listeners left after each close (once garbage has been collected). The story fails if
 each close keeps more than 20 nodes or 5 listeners on average. A story that seems to leak is
@@ -324,11 +334,11 @@ renamed) stops the run before any story runs, as it would otherwise never run.
 
 ## Coverage
 
-`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` reports which of Stroom's
+`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDialogCoverage` reports which of Stroom's
 screens (content tabs, e.g. document editors) and dialogs the stories cover, by a static analysis
-of the source (`PresenterCoverage`): a screen or dialog is **covered** if a story's source names it
-or `src/test/resources/presenter-coverage-evidence.json` names a story whose play opens it,
-**reached** if only a covered presenter or plugin names it, and otherwise **not covered**.
+of the source (`DialogCoverage`): a screen or dialog is **covered** if a story's source names it
+or `src/test/resources/dialog-coverage-evidence.json` names a story whose play opens it,
+**reached** if only a covered controller or plugin names it, and otherwise **not covered**.
 
 ## Files
 

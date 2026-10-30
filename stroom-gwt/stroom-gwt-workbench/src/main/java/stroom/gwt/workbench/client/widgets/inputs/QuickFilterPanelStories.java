@@ -21,23 +21,22 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.quickfilter.client.QuickFilterDialog;
+import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.text.client.Label;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
-/// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPageViewImpl]) and
-/// the dialog layout ([QuickFilterDialogViewImpl]): a quick filter above a data panel. These
+/// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPage]) and
+/// the dialog layout ([QuickFilterDialog]): a quick filter above a data panel. These
 /// stories use the real views, with a list of rows as the data view.
 public final class QuickFilterPanelStories {
 
@@ -59,15 +58,14 @@ public final class QuickFilterPanelStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/QuickFilterPanel", QuickFilterPanelStories.class)
                 .layout(StoryLayout.CENTERED)
-                // The PAGE layout - GWT QuickFilterPageViewImpl: the filter sits in a form-padding
+                // The PAGE layout - QuickFilterPage: the filter sits in a form-padding
                 // FormGroup over a bare data panel. No border anywhere.
                 .story("Default", context -> {
-                    final QuickFilterPageViewImpl view = new QuickFilterPageViewImpl(
-                            GWT.create(QuickFilterPageViewImpl.Binder.class));
+                    final QuickFilterPage page = new QuickFilterPage();
                     final RowsView rows = new RowsView();
-                    view.setDataView(rows);
-                    view.setUiHandlers(filterHandler(context, rows));
-                    return frame(view.asWidget());
+                    page.setContent(rows);
+                    page.setOnFilterChange(filterHandler(context, rows));
+                    return frame(page);
                 })
                 .withPlay(play -> {
                     final Query panel = play.querySelector(PANEL);
@@ -75,23 +73,22 @@ public final class QuickFilterPanelStories {
                     play.expect(panel).toHaveClass("dock-container-vertical");
                     // No card: the border belongs to neither the outer nor the results in the page
                     // layout
-                    play.expect(panel).not().toHaveClass("form-control-border");
-                    play.expect(play.within(panel).querySelector(RESULTS)).not().toHaveClass("form-control-border");
+                    play.expect(panel).not().toHaveClass("control-box");
+                    play.expect(play.within(panel).querySelector(RESULTS)).not().toHaveClass("control-box");
                     // GWT's FormGroup contributes the padding
                     final Query group = play.within(panel).querySelector(".form-group.form-padding");
                     play.expect(group).not().toBeNull();
                     play.expect(play.within(group).querySelector(".quick-filter__input")).not().toBeNull();
                     play.expect(play.getByText("Scotland")).toBeInTheDocument();
                 })
-                // The DIALOG layout - GWT QuickFilterDialogViewImpl: no FormGroup and no padding, and
-                // form-control-border form-control-background on the DATA PANEL alone
+                // The DIALOG layout - QuickFilterDialog: no FormGroup and no padding, and
+                // control-box on the DATA PANEL alone
                 .story("DialogVariant", context -> {
-                    final QuickFilterDialogViewImpl view = new QuickFilterDialogViewImpl(
-                            GWT.create(QuickFilterDialogViewImpl.Binder.class));
+                    final QuickFilterDialog dialog = new QuickFilterDialog();
                     final RowsView rows = new RowsView();
-                    view.setDataView(rows);
-                    view.setUiHandlers(filterHandler(context, rows));
-                    return frame(view.asWidget());
+                    dialog.add(rows.asWidget());
+                    dialog.setOnFilterChange(filterHandler(context, rows));
+                    return frame(dialog);
                 })
                 .withPlay(play -> {
                     final Query panel = play.querySelector(PANEL);
@@ -100,13 +97,12 @@ public final class QuickFilterPanelStories {
                     // The filter is a direct child - no FormGroup wrapper in this variant
                     play.expect(play.within(panel).querySelector(".form-group.form-padding")).toBeNull();
                     final Query results = play.within(panel).querySelector(RESULTS);
-                    play.expect(results).toHaveClass("form-control-border");
-                    play.expect(results).toHaveClass("form-control-background");
+                    play.expect(results).toHaveClass("control-box");
                 });
     }
 
     /// The stories' filtering: rows containing the trimmed filter, ignoring case.
-    private static QuickFilterUiHandlers filterHandler(final StoryContext context, final RowsView rows) {
+    private static Consumer<String> filterHandler(final StoryContext context, final RowsView rows) {
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
         return text -> {
             onChange.call(text);
@@ -131,7 +127,7 @@ public final class QuickFilterPanelStories {
 
 
     /// The data view: `hoverable-row` rows, filtered.
-    private static class RowsView extends ViewImpl {
+    private static class RowsView implements IsWidget {
 
         private final FlowPanel panel = new FlowPanel();
 

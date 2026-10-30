@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:q="urn:import:stroom.query.client.component">
+    <!--
+      An expression's editor (expression-editor.css): a toolbar of the expression's actions over
+      its tree, which scrolls. Framed as a control is (its framed modifier) unless its owner
+      frames it
+    -->
+    <g:FlowPanel ui:field="root" styleName="max dock-container-vertical expression-editor expression-editor--framed">
+        <b:Toolbar name="Expression actions" addStyleNames="dock-min">
+            <b:ToolbarButton ui:field="addTermButton" svg="ADD" title="Add Term"/>
+            <b:ToolbarButton ui:field="addOperatorButton" svg="OPERATOR" title="Add Operator"/>
+            <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Duplicate Selected Expression Item"
+                             enabled="false"/>
+            <b:ToolbarButton ui:field="disableItemButton" svg="DISABLE" title="Disable Selected Expression Item"
+                             enabled="false"/>
+            <b:ToolbarButton ui:field="deleteItemButton" svg="DELETE" title="Delete Selected Expression Item"
+                             enabled="false"/>
+        </b:Toolbar>
+        <g:ScrollPanel styleName="dock-max">
+            <g:SimplePanel styleName="expression-editor__tree">
+                <q:ExpressionTree ui:field="expressionTree"/>
+            </g:SimplePanel>
+        </g:ScrollPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

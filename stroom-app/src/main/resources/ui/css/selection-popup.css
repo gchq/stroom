@@ -15,7 +15,7 @@
  */
 
 /*
-   The selection box's list (stroom.item.client.SelectionPopup), named BEM style: a popup below the
+   The selection box's list (stroom.widget.selection.client.SelectionPopup), named BEM style: a popup below the
    box holding a selection list (its quick filter, path and rows, styled by selection-list.css). The
    list inside it takes the size of what it holds, within limits, rather than filling a pane.
 */
@@ -24,13 +24,9 @@
     z-index: 100;
 }
 
-.selection-popup .selection-list {
+/* The list, as big as its options (SelectionList.setFitContent, which also keeps them within the
+   popup's limits: pager-panel--fit-content) */
+.selection-popup .selection-popup__list {
     width: auto;
     height: auto;
-}
-
-.selection-popup .listContainer {
-    min-width: 200px;
-    max-width: 400px;
-    max-height: 400px;
 }

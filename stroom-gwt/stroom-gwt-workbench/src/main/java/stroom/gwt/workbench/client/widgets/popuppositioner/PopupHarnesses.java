@@ -14,39 +14,40 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.popuppositioner;
 
-import stroom.annotation.client.SettingBlock;
+import stroom.annotation.client.component.SettingBlock;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
+import stroom.explorer.client.component.TypeFilter;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.gwt.workbench.client.widgets.ContentPresenter;
+import stroom.gwt.workbench.client.widgets.StoryContent;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
-import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.menu.client.presenter.SimpleMenuItem;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.menu.client.SimpleMenuItem;
+import stroom.widget.menu.client.SimpleParentMenuItem;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -89,41 +90,46 @@ final class PopupHarnesses {
         return formGroup;
     }
 
-    /// A button that shows Stroom's `TypeFilterPresenter`, as the explorer's filter button does.
+    /// A button that shows Stroom's `TypeFilterController`, as the explorer's filter button does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget typeFilter(final StoryPopups popups) {
-        final TypeFilterPresenter presenter = new TypeFilterPresenter(popups.getEventBus(), new TypeFilterViewImpl());
+        final TypeFilterController typeFilter = new TypeFilterController(popups.getEventBus(), new TypeFilter());
+        // Owned by a root of its own, disposed when the story goes
+        final ControllerNode root = ControllerNode.root("typeFilter");
+        root.adopt(typeFilter.getControllerNode());
+        popups.addCleanUp(root::dispose);
         final List<DocumentType> types = Arrays.asList(
                 new DocumentType(DocumentTypeGroup.DATA_PROCESSING, "Feed", "Feed", SvgImage.DOCUMENT_FEED),
                 new DocumentType(DocumentTypeGroup.CONFIGURATION, "Dictionary", "Dictionary",
                         SvgImage.DOCUMENT_DICTIONARY));
-        presenter.setDocumentTypes(new DocumentTypes(types, types));
+        typeFilter.setDocumentTypes(new DocumentTypes(types, types));
         final Button button = triggerButton("Filter Types", "type-filter-trigger");
-        // Stroom's filter button shows the presenter again to toggle it (PopupManager hides a
+        // Stroom's filter button shows the filter again to toggle it (PopupManager hides a
         // popup that is shown twice)
-        button.addClickHandler(event -> presenter.show(button.getElement(), active -> {
+        button.addClickHandler(event -> typeFilter.show(button.getElement(), active -> {
             // The explorer updates its filter icon here
         }));
         return button;
     }
 
     /// Stroom's `SettingBlock`, whose click shows a chooser below it as
-    /// `AnnotationEditPresenter.showStatusChooser` does.
+    /// `AnnotationEditorController.showStatusChooser` does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget settingBlock(final StoryPopups popups) {
         final SettingBlock settingBlock = new SettingBlock();
         settingBlock.add(new Label("Setting: current"));
-        final ContentPresenter editor = ContentPresenter.html(popups.getEventBus(),
-                "<div class=\"popover-body\">Editor body</div>");
+        // Shown again on each click, so owned by the story's popups until it renders again
+        final StoryContent editor = popups.own(StoryContent.html(popups.getEventBus(),
+                "<div class=\"harness-editor-body\">Editor body</div>"));
         settingBlock.addClickHandler(event -> {
             final Element element = settingBlock.getElement();
             final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                     element.getAbsoluteTop() + element.getClientHeight() + 2);
-            ShowPopupEvent.builder(editor)
+            ControllerDialog.show(editor)
                     .popupType(PopupType.POPUP)
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(element)
@@ -171,25 +177,25 @@ final class PopupHarnesses {
 
     /// Two popups, the child's trigger inside the parent's panel and its panel outside it (on the
     /// body, as every Stroom popup is). Each is shown with `ShowPopupEvent` as an auto-hiding
-    /// `POPUP` with its trigger as the auto-hide partner, as `MenuPresenter` shows a submenu.
+    /// `POPUP` with its trigger as the auto-hide partner, as `MenuController` shows a submenu.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget portalCascade(final StoryPopups popups) {
-        final ContentPresenter inner = new ContentPresenter(popups.getEventBus(),
+        final StoryContent inner = new StoryContent(popups.getEventBus(),
                 cascadePanel("cascade-inner-panel", "#444", new Label("inner body")));
         final Button innerTrigger = triggerButton("Inner", "cascade-inner-trigger");
         innerTrigger.addClickHandler(event -> showAt(inner, INNER_LEFT, innerTrigger));
 
-        final ContentPresenter outer = new ContentPresenter(popups.getEventBus(),
+        final StoryContent outer = new StoryContent(popups.getEventBus(),
                 cascadePanel("cascade-outer-panel", "#333", new Label("outer body"), innerTrigger));
         final Button outerTrigger = triggerButton("Outer", "cascade-outer-trigger");
         outerTrigger.addClickHandler(event -> showAt(outer, OUTER_LEFT, outerTrigger));
         return outerTrigger;
     }
 
-    private static void showAt(final ContentPresenter presenter, final int left, final Widget trigger) {
-        ShowPopupEvent.builder(presenter)
+    private static void showAt(final StoryContent controller, final int left, final Widget trigger) {
+        ControllerDialog.show(controller)
                 .popupType(PopupType.POPUP)
                 .popupPosition(new PopupPosition(left, CASCADE_TOP))
                 .addAutoHidePartner(trigger.getElement())

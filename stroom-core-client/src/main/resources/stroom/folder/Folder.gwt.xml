@@ -3,6 +3,8 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <!-- The component model, for a folder's tabs (FolderTabs) -->
+  <inherits name='stroom.widget.component.Component' />
 
   <source path="client" />
   <source path="shared" />

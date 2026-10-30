@@ -16,8 +16,6 @@
 
 package stroom.cell.valuespinner.client;
 
-import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

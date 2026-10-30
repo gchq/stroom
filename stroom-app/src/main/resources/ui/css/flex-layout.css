@@ -26,6 +26,65 @@
    released, so while it is dragged the marker is drawn as the dragged splitter.
 */
 
+/* The layout's scrolling panel and the design surface its panes are laid on, with a grid in design
+   mode */
+
+.flex-layout {
+    display: flex;
+    flex-grow: 1;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
+
+.flex-layout__scroll {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	background-color: var(--dashboard-panel__grid-background-color);
+}
+
+.flex-layout__scroll--horizontal {
+    overflow-x: auto;
+}
+
+.flex-layout__scroll--vertical {
+    overflow-y: auto;
+}
+
+.flex-layout__layout {
+    display: flex;
+    flex-grow: 1;
+	position: relative;
+}
+
+.flex-layout__design-surface {
+    position: absolute;
+    overflow: hidden;
+    min-width: 100%;
+    min-height: 100%;
+    background: var(--dashboard-panel__grid-background-color);
+}
+
+.flex-layout--design-mode .flex-layout__design-surface {
+    background-image:
+        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+}
+
+/* A pane or splitter, where the layout puts it (the custom properties are set by FlexLayout) */
+.flex-layout__item {
+    position: absolute;
+    left: var(--flex-layout__left);
+    top: var(--flex-layout__top);
+    width: var(--flex-layout__width);
+    height: var(--flex-layout__height);
+}
+
 /* A splitter: a focusable separator, its line a vertical one (aria-orientation="vertical")
    between panels side by side, or a horizontal one between stacked panels */
 .flex-layout__splitter {
@@ -33,16 +92,6 @@
     background-color: var(--splitter__background-color);
     z-index: 6;
     outline: none;
-}
-
-.flex-layout__splitter[aria-orientation="vertical"] {
-    width: 1px;
-    height: 100%;
-}
-
-.flex-layout__splitter[aria-orientation="horizontal"] {
-    width: 100%;
-    height: 1px;
 }
 
 /* What can be grabbed: wider than the line, across it */
@@ -111,26 +160,44 @@
    a background for the mouse to be caught, so it is transparent instead */
 .flex-layout__glass {
     position: absolute;
-    left: 0;
-    top: 0;
     margin: 0;
     padding: 0;
     border-width: 0;
     background-color: white;
     opacity: 0;
     z-index: 10;
+    cursor: default;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
+}
+
+/* The glass's mouse cursor, as what is dragged */
+.flex-layout__glass--move {
+    cursor: move;
+}
+
+.flex-layout__glass--col-resize {
+    cursor: col-resize;
+}
+
+.flex-layout__glass--row-resize {
+    cursor: row-resize;
 }
 
 /* The marker: where a dragged tab would be dropped (a highlighted area), or the dragged splitter */
 .flex-layout__marker {
     position: absolute;
-    left: 0;
-    top: 0;
     margin: 0;
     padding: 0;
     background: var(--splitter__background-color--highlight);
     opacity: 0.6;
     z-index: 5;
+    left: var(--glass__left, 0);
+    top: var(--glass__top, 0);
+    width: var(--glass__width);
+    height: var(--glass__height);
 }
 
 /* Where a dragged tab would go in a tab bar */
@@ -175,4 +242,10 @@
         background-color: Highlight;
         box-shadow: none;
     }
+}
+
+/* The tab (or splitter) pressed with the mouse in design mode, until it is released (FlexLayout) */
+.flex-layout__tab--selected {
+    text-decoration: underline;
+    cursor: pointer;
 }

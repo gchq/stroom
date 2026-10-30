@@ -18,7 +18,7 @@ package stroom.util.client;
 
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.GridDisplay;
 import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -35,12 +35,12 @@ import java.util.function.Function;
 
 public class DataGridComparatorFactory<T> {
 
-    private final DataGridView<T> dataGrid;
+    private final GridDisplay<T> dataGrid;
     private final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap;
     private final List<String> defaultSortFields;
 
     private DataGridComparatorFactory(
-            final DataGridView<T> dataGrid,
+            final GridDisplay<T> dataGrid,
             final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap,
             final List<String> defaultSortFields) {
         this.dataGrid = dataGrid;
@@ -58,7 +58,6 @@ public class DataGridComparatorFactory<T> {
                 if (column instanceof final OrderByColumn<?, ?> orderByColumn) {
                     final String sortField = orderByColumn.getField();
                     final boolean isAscending = columnSortInfo.isAscending();
-//                    GWT.log("sortField " + i + ": " + sortField + " isAscending: " + isAscending);
                     Comparator<T> comparator = null;
                     final Function<T, U> extractor = (Function<T, U>) fieldNameToExtractorMap.get(sortField);
                     if (extractor != null) {
@@ -98,7 +97,7 @@ public class DataGridComparatorFactory<T> {
         };
     }
 
-    public static <T> Builder<T> builder(final DataGridView<T> dataGrid) {
+    public static <T> Builder<T> builder(final GridDisplay<T> dataGrid) {
         return new Builder<>(dataGrid);
     }
 
@@ -108,11 +107,11 @@ public class DataGridComparatorFactory<T> {
 
     public static class Builder<T> {
 
-        private final DataGridView<T> dataGrid;
+        private final GridDisplay<T> dataGrid;
         private final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap = new HashMap<>();
         private final List<String> defaultSortFields = new ArrayList<>();
 
-        public Builder(final DataGridView<T> dataGrid) {
+        public Builder(final GridDisplay<T> dataGrid) {
             this.dataGrid = dataGrid;
         }
 

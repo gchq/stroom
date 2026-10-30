@@ -931,7 +931,7 @@
    "presenter": "AnnotationCollectionPlugin",
    "inheritsFrom": [
     "AnnotationPlugin",
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -952,7 +952,7 @@
    "presenter": "AnnotationCommentPlugin",
    "inheritsFrom": [
     "AnnotationPlugin",
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -1011,7 +1011,7 @@
    "presenter": "AnnotationLabelPlugin",
    "inheritsFrom": [
     "AnnotationPlugin",
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -1061,7 +1061,7 @@
   {
    "presenter": "AnnotationPlugin",
    "inheritsFrom": [
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -1148,7 +1148,7 @@
    "presenter": "AnnotationStatusPlugin",
    "inheritsFrom": [
     "AnnotationPlugin",
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -3159,7 +3159,7 @@
    ],
    "embeds": [
     "EditorPresenter",
-    "HtmlPresenter"
+    "HtmlPane"
    ],
    "viaChildren": [],
    "popupTypes": [],
@@ -3327,7 +3327,7 @@
     "MyPresenterWidget"
    ],
    "embeds": [
-    "HtmlPresenter",
+    "HtmlPane",
     "TextPresenter",
     "ItemNavigatorPresenter",
     "ProgressPresenter",
@@ -3890,7 +3890,7 @@
   {
    "presenter": "ManageFsVolumesPlugin",
    "inheritsFrom": [
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -5383,7 +5383,7 @@
   {
    "presenter": "ManageIndexVolumesPlugin",
    "inheritsFrom": [
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [
@@ -6006,7 +6006,7 @@
   {
    "presenter": "ManageGlobalPropertiesPlugin",
    "inheritsFrom": [
-    "NodeToolsContentPlugin",
+    "ToolsContentPlugin",
     "MyPresenterWidget"
    ],
    "embeds": [

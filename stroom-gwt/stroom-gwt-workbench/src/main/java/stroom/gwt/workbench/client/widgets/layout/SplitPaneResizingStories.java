@@ -20,11 +20,10 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.Button;
 import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -132,10 +131,11 @@ public final class SplitPaneResizingStories {
         final FlowPanel frame = frame(pane, vertical, sizes[0]);
         page.add(frame);
         for (final int size : sizes) {
-            buttons.add(new Button(size + "px", (ClickHandler) event ->
-                    frame.getElement().getStyle().setProperty(vertical
-                            ? "height"
-                            : "width", size + "px")));
+            final Button button = new Button(size + "px");
+            button.setOnClick(() -> frame.getElement().getStyle().setProperty(vertical
+                    ? "height"
+                    : "width", size + "px"));
+            buttons.add(button);
         }
         return page;
     }

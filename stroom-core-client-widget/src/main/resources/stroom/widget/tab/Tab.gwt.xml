@@ -3,5 +3,7 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <inherits name='stroom.widget.component.Component' />
+  <inherits name='stroom.svg.SVG' />
   <source path="client" />
 </module>

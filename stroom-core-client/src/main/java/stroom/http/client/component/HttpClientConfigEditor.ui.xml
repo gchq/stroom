@@ -1,0 +1,88 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An HTTP client's settings, with a button that opens its TLS settings -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:d="urn:import:stroom.widget.duration.client">
+    <g:FlowPanel styleName="max form-padding form http-client-config-editor">
+        <form:FormGroup identity="httpClientTimeout"
+                        label="Timeout"
+                        helpText="How long to wait for a response once a request has been sent. 0 means wait indefinitely. Default is 3 minutes."
+                        screenReaderText="0 waits indefinitely. Default is 3 minutes.">
+            <d:DurationPicker ui:field="timeout" zeroAllowed="true"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientConnectionTimeout"
+                        label="Connection Timeout"
+                        helpText="How long to wait for a new connection to be established, including any TLS negotiation. 0 means wait indefinitely. Default is 3 minutes."
+                        screenReaderText="Includes TLS negotiation; 0 waits indefinitely. Default is 3 minutes.">
+            <d:DurationPicker ui:field="connectionTimeout" zeroAllowed="true"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientConnectionRequestTimeout"
+                        label="Connection Request Timeout"
+                        helpText="How long to wait for a free connection from the connection pool. Default is 3 minutes."
+                        screenReaderText="Wait for a free pooled connection. Default is 3 minutes.">
+            <d:DurationPicker ui:field="connectionRequestTimeout"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientTimeToLive"
+                        label="Time To Live"
+                        helpText="The longest time a pooled connection can stay idle before it is closed. Default is 1 hour."
+                        screenReaderText="Idle time before a pooled connection is closed. Default is 1 hour.">
+            <d:DurationPicker ui:field="timeToLive"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether cookies set by a server are kept and sent back to it on later requests. Some endpoints use a cookie to hold a session, e.g. after signing in, so requests to them need cookies. Default is unticked."
+                        screenReaderText="Keeps and sends back server cookies. Default is unticked.">
+            <tickbox:TickBox ui:field="cookiesEnabled"
+                             identity="httpClientCookiesEnabled"
+                             label="Cookies Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default is ticked."
+                        screenReaderText="Some endpoints redirect to authenticate. Default is ticked.">
+            <tickbox:TickBox ui:field="followRedirects"
+                             identity="httpClientFollowRedirects"
+                             label="Follow Redirects"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientMaxConnections"
+                        label="Max Connections"
+                        helpText="The maximum number of connections in the pool across all hosts. Default is 1024."
+                        screenReaderText="Total across all hosts. Default is 1024.">
+            <v:ValueSpinner ui:field="maxConnections" minValue="1" maxValue="1000000"
+                            addStyleNames="http-client-config-editor__number"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
+                        label="Max Connections Per Route"
+                        helpText="The maximum number of pooled connections to any one host. Default is 1024."
+                        screenReaderText="Per host. Default is 1024.">
+            <v:ValueSpinner ui:field="maxConnectionsPerRoute" minValue="1" maxValue="1000000"
+                            addStyleNames="http-client-config-editor__number"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientKeepAlive"
+                        label="Keep Alive"
+                        helpText="How long a connection is kept open for reuse before it is reconnected. 0 closes the connection after every request. Default is 0."
+                        screenReaderText="0 closes the connection after each request. Default is 0.">
+            <d:DurationPicker ui:field="keepAlive" zeroAllowed="true"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientRetries"
+                        label="Retries"
+                        helpText="How many times a failed request is retried. 0 means no retries. Default is 0."
+                        screenReaderText="0 to 1000. Default is 0.">
+            <v:ValueSpinner ui:field="retries" maxValue="1000" addStyleNames="http-client-config-editor__number"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientUserAgent"
+                        label="User Agent"
+                        helpText="The value sent as the User-Agent header of each request. Leave blank to use the HTTP client's default."
+                        screenReaderText="Sent as the User-Agent header. Blank uses the HTTP client's default.">
+            <form:TextBox ui:field="userAgent" addStyleNames="http-client-config-editor__text"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
+                        label="Validate After Inactivity Period"
+                        helpText="How long a pooled connection can be idle before it is checked as still usable before reuse. 0 checks it every time. Default is 0."
+                        screenReaderText="Idle time before a reused connection is checked. Default is 0.">
+            <d:DurationPicker ui:field="validateAfterInactivityPeriod" zeroAllowed="true"/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config"
+                  addStyleNames="allow-focus http-client-config-editor__button"/>
+    </g:FlowPanel>
+</ui:UiBinder>

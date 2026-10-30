@@ -48,7 +48,7 @@ const tabs = () => page.locator('.tab-bar--link .tab-bar__label').evaluateAll((e
 // Duplicate the first component tab from its own Settings menu, then press the key.
 const duplicateThenPress = async (key) => {
   const before = await tabs();
-  await page.locator('.tabLayout-barOuter button[title="Tab Actions"]').first().click();
+  await page.locator('.tab-layout__bar-outer button[title="Tab Actions"]').first().click();
   await page.waitForTimeout(600);
   if (!(await clickMenuItem(page, 'Duplicate'))) throw new Error('no Duplicate in the tab menu');
   await page.waitForTimeout(800);

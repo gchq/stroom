@@ -9,10 +9,10 @@ screenshots and the leak check.
 
 ## Rules
 
-* **Use Stroom's real widgets, presenters and views**, not look-alikes, created as Stroom creates
-  them (see [GIN, not `new`](#gin-not-new)). Where Stroom has no widget for something its views
-  build themselves, build the same widgets the same way in the story, copying the view's code, and
-  name the source view in the class comment.
+* **Use Stroom's real widgets, components and controllers**, not look-alikes, created as Stroom
+  creates them (see [GIN, not `new`](#gin-not-new)). Where Stroom has no widget for something its
+  components build themselves, build the same widgets the same way in the story, copying the
+  component's code, and name the source in the class comment.
 * **Check what Stroom does.** A story is a regression test of Stroom's behaviour. Never write a
   check that can't fail (e.g. `queryByText(x).toBeNull()` for text the screen never shows, or
   selecting by a class and then asserting that class); check what the screen does show instead.
@@ -35,16 +35,21 @@ screenshots and the leak check.
 ## Packages and registration
 
 * Stories are grouped by title (`Widgets/Buttons/StepControls`, `App/Main/JobsScreen`). One
-  `XxxStories` class per title, named after its last part, in a package named after the middle
-  part in lower case without spaces or punctuation: `Widgets/Date & Time/*` →
-  `client.widgets.dateandtime`, `App/Main/JobsScreen` → `client.app.main.JobsScreenStories`.
+  `XxxStories` class per title, named after its last part. A widget's stories are in a package
+  named after the title's middle part in lower case without spaces or punctuation:
+  `Widgets/Date & Time/*` → `client.widgets.dateandtime`. A screen's stories are in the package
+  of the Stroom area the screen belongs to, as Stroom's client packages are grouped, whatever its
+  title: `App/Main/JobsScreen` → `client.app.nodes.JobsScreenStories`, `App/Main/UsersScreen` →
+  `client.app.security.UsersScreenStories`; `client.app.main` holds the shell's own (`AppShell`,
+  `TopBar`, `ContentTabPane`, `AboutDialog`, `WelcomeScreen`). A title never changes when its
+  class moves.
 * A story's id, and so its URL, is made from its title and export name with Storybook's rules:
   `Widgets/Buttons/Button` + `WithIcons` → `widgets-buttons-button--with-icons`. A display name
   given with `.story(exportName, name, ...)` changes only the name shown, not the id.
 * Register the class in `WidgetsStories`, `AppStories` or `ScreensStories`, on the line after the
   comment holding its title. For a new title, add a comment with the title next to the related
   ones (each title has its own line, so that parallel work rarely touches the same lines).
-* A screen story's class comment names the Stroom presenter, and lists the REST endpoints the
+* A screen story's class comment names the Stroom controller, and lists the REST endpoints the
   story answers (a small table for more than three, as `JobsScreenStories` has).
 * Pure-Java arg conversions shared by widget stories are in `widgets/StoryArgs` (`toSvgImage`,
   `getBoolean(args, name, default)`, `getLong`), unit tested by `TestStoryArgs`. Widgets shared
@@ -56,10 +61,9 @@ screenshots and the leak check.
 A widget story creates the widget, applies the story's args and returns it. See
 `client/widgets/buttons/ButtonStories.java`.
 
-* Create views with `new XxxViewImpl(GWT.create(XxxViewImpl.Binder.class))`, presenters with `new`
-  and a `SimpleEventBus` (use a `ScreenHarness` only for screens that make REST calls). Widgets with
-  a private constructor that Stroom only creates in UiBinder (e.g. `CustomFileUpload`) are created
-  with `GWT.create(Xxx.class)`. Implement small interfaces (e.g. `GlobalKeyHandler`) with a private
+* Create components with `new Xxx()`, controllers with `new` and a `SimpleEventBus` (use a
+  `ScreenHarness` only for screens that make REST calls). Widgets with
+  a private constructor that Stroom only creates in UiBinder are created with `GWT.create(Xxx.class)`. Implement small interfaces (e.g. `GlobalKeyHandler`) with a private
   no-op nested class.
 * **Args.** Stories that only set args use `fromArgs(context)` with an `ArgType` for each option
   (`.args(...)` for the title's args, `.withArgs(...)` for the story's).
@@ -70,15 +74,15 @@ A widget story creates the widget, applies the story's args and returns it. See
 * **Echoes** of the widget's state (`Clicked: 3`, `Value: x`) are a `StoryPanels.note(...)` or a
   `Label` updated by the widget's own events.
 * **Story-only adapters.** Where Stroom has no callback and reads the value later (e.g.
-  `LineColInput.getLocation()`, `CustomFileUpload.getFilename()`), read it in the story on the
+  `LineColInput.getLocation()`, `FileChooser.getFilename()`), read it in the story on the
   event a user would expect (blur/Enter, the input's change event).
 
 ## Screen stories
 
-Screens (presenters and views) run for real against fake REST replies. Copy the story closest to
+Screens (controllers and their components) run for real against fake REST replies. Copy the story closest to
 your screen:
 
-* a dialog opened by an event, with its own fixtures: `client/app/main/RecentItemsDialogStories`;
+* a dialog opened by an event, with its own fixtures: `client/app/explorer/RecentItemsDialogStories`;
 * start-up fixtures only, customised: `AboutDialogStories`; a tab's content: `WelcomeScreenStories`;
 * simple dialogs: `CredentialPickerDialogStories`, `DocInfoDialogStories`; chained requests:
   `EditTagsDialogStories`; lists with toolbars and permissions: `JobsScreenStories`,
@@ -102,11 +106,11 @@ etc. record into the same spies.
   Stroom's GIN modules would: `getUiConfigCache()`, `getDateTimeFormatter()`,
   `getUserPreferencesManager()`, `getCurrentPreferences()`, `getClientSecurityContext()`,
   `getLocationManager()` (shortcuts for the common ones are on the harness). Ask for these rather
-  than creating them with `new`, so that a presenter and the harness share them. Each is a
+  than creating them with `new`, so that a controller and the harness share them. Each is a
   singleton of the harness's injector. To add another singleton, add a getter to
   `ScreenGinjector` (GIN creates anything with an `@Inject` constructor; bind fakes in
-  `ScreenGinModule`). Presenters and views are not added there, as each would compile its whole
-  graph into every story;
+  `ScreenGinModule`). Controllers are not added there, as each would compile its whole graph into
+  every story;
 * spies: `REQUEST_SPY` (`"METHOD /path?query body"`), `UNHANDLED_REQUEST_SPY`, `ALERT_SPY`
   (`"ERROR: message"`), `CONFIRM_SPY`, `DOWNLOAD_SPY` and `UPLOAD_SPY` (see [Uploads](#uploads)). A
   story's own spies are made with `harness.fn(name)` **as the story renders** (so a play can check
@@ -123,42 +127,48 @@ final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
 harness.getSecurityContext().setDocumentPermission(DocumentPermission.VIEW);
 ```
 
-Get the screen's presenter from **`AppScreenGinjector`** (`client/app/gin`), or the area's own
-ginjector (see [Support by area](#support-by-area)), so the presenter and its graph of child
-presenters and views are created (and bound) as in Stroom; give it to the harness with
-`.injector(...)`. Small presenters with no graph may still be created with `new` (pass `null` for a
-GWTP proxy), as `RecentItemsDialogStories` does.
+Get the screen's controller from **`AppScreenGinjector`** (`client/app/gin`), or the area's own
+ginjector (see [Support by area](#support-by-area)), so the controller and its graph of child
+controllers and components are created as in Stroom; give it to the harness with
+`.injector(...)`. Small controllers with no graph may still be created with `new`, as
+`RecentItemsDialogStories` does.
 
 ```java
 final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-harness.afterStartUp(() -> harness.addContent(injector.getJobPresenter()));
+harness.afterStartUp(() -> harness.show(injector.getJobsController()));
 return harness.asWidget();
 ```
 
-A screen opened by an event is shown by registering the presenter as the event's handler and
-firing the event, as GWTP's proxy would; a tab's content (not a popup) is added with
-`harness.addContent(presenter)`, which fills the canvas (the full page height, as Stroom's content
-pane does) and unbinds the presenter on re-render.
+**One rule: the story's root owns whatever the story shows**, as an open tab's root does in
+Stroom, and disposes it, with everything it owns, on re-render and when the leak probe closes the
+screen. A tab's content (a controller) is shown with `harness.show(screen)`, which
+fills the canvas (the full page height, as Stroom's content pane does); a page shown on its own
+(sign in) with `harness.showPage(page)`. Anything else the story makes and shows itself (in a frame
+of its own, or as a dialog) is given to `harness.own(screen)`. A screen opened by an event is shown
+by adding a handler for the event and firing it, as its area's plugin would. Own nothing before
+`afterStartUp`: the first `own` makes the story's root, and the leak probe's close disposes only
+what was registered once the screen opened, so a root made earlier keeps every screen the probe
+opens (e.g. make a dialog in its event's handler, `event -> harness.own(injector.getX()).show(...)`).
 
 Also on the harness, for what Stroom's app does around a screen:
 
 * **`afterStartUp(action)`** runs the action once the harness has loaded the UI config into its
   `UiConfigCache` and the user's preferences into `CurrentPreferences`, as Stroom does at login
   before it shows any screen. Create the screen in it, as Stroom opens screens after login, and
-  always when the screen (or anything it creates) reads the cached UI config at once (e.g. a
-  `ClassificationLabel`'s colours) or the user's preferences (`EditorPresenter` reads the editor
-  preferences, lists format dates with them). Without it, each `UiConfigCache.get` call made before
-  the config arrives is answered, which a screen may not expect (`UserListPresenter` then sets up
+  always when the screen (or anything it creates) reads the cached UI config at once or the
+  user's preferences (`CodeEditorController` reads the editor preferences, lists format dates
+  with them). Without it, each `UiConfigCache.get` call made before
+  the config arrives is answered, which a screen may not expect (`UserList` then sets up
   its columns twice). Most of the `UsersScreen` stories deliberately open the screen at once:
   they are the regression test for `UiConfigCache.get` calling its consumer with null.
 * **Menus**: the harness installs Stroom's `MenuManager`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
   'Actions...' menu, a grid's context menu) show Stroom's real menu on the page's body. Don't
   install another (menus would show twice).
-* **`closeOnCleanUp(popup)`** asks a popup to close on re-render as its Close button would
-  (`HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides the popups still
-  open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
-  cancelled in its `onHideRequest` (`UserTaskManagerPresenter`): the harness's own hiding
+* **`ownPopup(popup)`** owns a popup as `own` does, and asks it to close on re-render as its
+  Close button would (`ControllerDialog.pressAction` with `DialogAction.CLOSE`), before the harness hides
+  the popups still open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
+  cancelled in its `onHideRequest` (`UserTaskManagerController`): the harness's own hiding
   (`HidePopupEvent`) skips `onHideRequest`, and the timer would keep polling the disposed
   dispatcher (a `console.warn` per request).
 * `GlobalKeyHandler` is bound to `StoryGlobalKeyHandler`, which ignores the app's keyboard
@@ -167,12 +177,12 @@ Also on the harness, for what Stroom's app does around a screen:
 **Document plugins.** Stroom finds a document's plugin (`DocumentPlugin`: load, save, open its
 tab) by type in `DocumentPluginRegistry`, which the app fills as its plugins start; a plugin
 registers itself when it is created. Screens that go through a plugin (`OpenDocumentEvent`, an
-editor's Save via `DocumentPluginEventManager`, a stepping element's code in `ElementPresenter`, an
+editor's Save via `DocumentPluginEventManager`, a stepping element's code in `SteppingElementController`, an
 embedded document created from a pipeline property, `PipelinePlugin`'s 'Save Pipeline' picker) need
 the plugins created from the story's ginjector (which must bind `ContentManager` as a singleton, as
 `AppModule` does). `StoryDocumentPlugins` does the rest: `register(harness, eventManager,
 plugins...)` unbinds them on re-render, `showOpenedTabs()` shows the tab a plugin opens
-(`OpenContentTabEvent`) with `addContent`, and `documentRoutes(builder, path, docJson)` answers a
+(`OpenContentTabEvent`) with `show`, and `documentRoutes(builder, path, docJson)` answers a
 plugin's `GET` and `PUT /{resource}/v1/{uuid}`. Without a plugin for the type, Stroom fails with
 "Cannot read properties of undefined (reading 'load')".
 
@@ -190,15 +200,15 @@ harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), docR
 
 ### Finding the screen and its endpoints
 
-1. Read the screen's **plugin** (`XxxPlugin`, e.g. `UsersPlugin`, `TaskManagerPlugin`,
+1. Read the screen's **plugin** (`XxxPlugin`, e.g. `UsersPlugin`, `ServerTasksPlugin`,
    `DictionaryPlugin`) to see how Stroom opens the screen, and do the same in `render`:
-   `UsersPlugin.open` calls `refresh()`; `NodeMonitoringPlugin` calls `setSelected(node)` for an
-   `OpenNodeEvent`; `TaskManagerPlugin` calls `changeNameFilter(...)`; a `DocumentPlugin` loads the
+   `UsersPlugin.open` calls `refresh()`; `NodesPlugin` calls `setSelected(node)` for an
+   `OpenNodeEvent`; `ServerTasksPlugin` calls `changeNameFilter(...)`; a `DocumentPlugin` loads the
    document, checks `DocumentPermission.EDIT` and calls `read(docRef, doc, !allowUpdate)`. For a
-   popup opened by an event (`ShowXxxEvent`, `OpenUserTaskManagerEvent`), register the presenter as
+   popup opened by an event (`ShowXxxEvent`, `OpenUserTaskManagerEvent`), register the controller as
    the event's handler and fire the event; where Stroom fetches what the event carries first (e.g.
    the explorer's Info item fetches `POST /explorer/v2/info`), the story does that request too.
-2. Read the presenters for `restFactory.create(XXX_RESOURCE).method(r -> r.xxx(...))` (and their
+2. Read the controllers for `restFactory.create(XXX_RESOURCE).method(r -> r.xxx(...))` (and their
    `XxxClient` helpers, e.g. `NodeClient`, `CredentialClient`), then the resource interface in the
    `*-shared` module for the HTTP method and `@Path` (constants such as `BASE_PATH` are at its top).
    Paths are relative to `/api`.
@@ -358,17 +368,17 @@ disposed through `StoryContext.addCleanUp`, before the preview removes what is l
 
 1. the harness's dispatcher cancels the replies still pending and drops (with a `console.warn`)
    any request that still reaches it. Stroom's `RestFactory` sends each request with the
-   dispatcher it was created with, so an old presenter's chained request or polling timer can
+   dispatcher it was created with, so an old controller's chained request or polling timer can
    only reach its own (now disposed) harness's dispatcher, never the new rendering's fixtures or
    spies;
 2. `UiConfigCache.stopRefreshing()` stops its one-minute refresh timer, and
    `LocationManager.removeWindowClosingHandler()` removes the window-closing handler the harness's
    `StoryLocationManager` added;
 3. the popups the harness's `PopupManager` opened are hidden with Stroom's `HidePopupEvent`, which
-   unbinds their presenters and restores the focus;
-4. the story's clean ups run: `harness.addTimer(timer)`, `harness.addRegistration(registration)`,
-   `harness.unbindOnCleanUp(presenter)` and `harness.addCleanUp(runnable)`. Register anything the
-   story starts that outlives the rendering, e.g. a presenter shown in the canvas;
+   restores the focus (a dialog made for one use is then disposed);
+4. the story's clean ups run: `harness.addTimer(timer)`, `harness.addRegistration(registration)`
+   and `harness.addCleanUp(runnable)`, and the story's root is disposed with what it owns
+   (`harness.show`, `harness.own`). Register anything the story starts that outlives the rendering;
 5. the event bus stops firing events and the security context reports being logged out, so
    anything else left over does nothing.
 
@@ -378,7 +388,7 @@ are reported with `console.error`.
 
 Nothing is left behind per rendering: rerunning a screen story 20 times leaves one live interval
 timer and one window-closing handler per harness (those of the current rendering's
-`UiConfigCache` and `StoryLocationManager`). Anything a story's presenter starts itself (its own
+`UiConfigCache` and `StoryLocationManager`). Anything a story's controller starts itself (its own
 repeating timers or window handlers) must be registered with the harness as above. Check with the
 story's Rerun: no "A request from a previous rendering of the story was dropped" warnings after it.
 
@@ -403,7 +413,7 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
   `expectNoProblems`),
   and confirmations (`ConfirmEvent`) by `CONFIRM_SPY`. They are not shown, and a confirmation is
   never answered, unless the harness is built with `realAlerts()`, which shows Stroom's real alert
-  dialog (`AlertPlugin`/`CommonAlertPresenter`). Use it for a story that answers a confirmation
+  dialog (`AlertPlugin`/`CommonAlertController`). Use it for a story that answers a confirmation
   (e.g. 'Run Now', 'Remove Imported Dictionary', terminating a task) or closes an alert: alerts are shown in a
   `CLOSE_DIALOG` (caption 'Alert', closed with its 'Close' button); confirmations have OK and
   Cancel.
@@ -421,9 +431,9 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
 
 ### Uploads
 
-Stroom's `CustomFileUpload` (the import, data upload, visualisation asset and key store dialogs)
+Stroom's `FileChooser` (the import, data upload, visualisation asset and key store dialogs)
 posts the chosen file to the import file servlet (`ImportUtil.getImportFileURL()`,
-`importfile.rpc`) through a static `FileUploadTransport` (`CustomFileUpload.setUploadTransport`),
+`importfile.rpc`) through a static `FileUploadTransport` (`FileChooserController.setUploadTransport`),
 whose default is an `XMLHttpRequest`. The harness installs its own, `StoryUploadTransport`, when it
 is built and restores Stroom's default when the story renders again, so uploads never reach the
 network. It reads the chosen file (a `FileReader`, asynchronously) and answers the upload from the
@@ -442,7 +452,7 @@ RestFixtures.builder()
 ```
 
 * `UploadReply.success(key, name)` is the servlet's `PropertyMap` arg line
-  (`#PM#success=true key=res-1 name=import.zip#PM#`), which Stroom's `FileUploadResultHandler`
+  (`#PM#success=true key=res-1 name=import.zip#PM#`), which Stroom's `FileChooserController.readReply`
   reads into the `ResourceKey` given to the screen's success handler (e.g. the key sent with
   `ImportConfigRequest`, `UploadDataRequest` or a key store secret). `failure(message)` is the
   servlet's `success=false` reply, whose exception message goes to the screen's failure handler
@@ -461,26 +471,25 @@ RestFixtures.builder()
   `lenient()` it only fails the upload.
 * Choose the file with `play.upload(input, name, content, mimeType)` on the hidden file input
   (`StroomDom.FILE_INPUT`, inside the dialog): it sets the input's files with a `DataTransfer` and
-  fires `input` and `change`, so `CustomFileUpload` shows the name, whether or not the input is
+  fires `input` and `change`, so `FileChooser` shows the name, whether or not the input is
   visible. Then press the dialog's OK, which submits it. Where a story works on what an upload
   returns (e.g. Import's 'Confirm Import'), it uploads the file too.
-* Browsers give a file input's value as `C:\fakepath\<name>`. `CustomFileUpload.getFilename()`
+* Browsers give a file input's value as `C:\fakepath\<name>`. `FileChooser.getFilename()`
   returns just the name (`FileUploadUtil.getFileName`).
-* `CustomFileUpload`'s transport is static, so with several harnesses in one rendering the last
+* `FileChooserController`'s transport is static, so with several harnesses in one rendering the last
   one built answers every upload. Widget stories (no harness) keep Stroom's default transport, so
-  they must not submit a `CustomFileUpload`.
+  they must not upload a `FileChooser`.
 
 ### GIN, not `new`
 
-* Get the presenter from `AppScreenGinjector` (or the area's ginjector): add a getter under its
-  area's comment. Its modules mirror Stroom's GIN modules (`XxxScreenModule` for
-  `stroom...gin.XxxModule`) with the `bindPresenterWidget`/`bindSharedView`/`bind(X)` lines
-  copied, plugins (`bindPlugin`), eager singletons and app services (`ClientSecurityContext`,
-  `LoginManager`) left out, and each `bindPresenter(P, V, VImpl, Proxy)` turned into
-  `bindPresenterWidget(P, V, VImpl)` plus a `@Provides` method returning a null proxy (the story
-  registers the presenter as its event's handler instead). Shared widgets (pager views, menus, tool
-  tips, editors, expression trees, the explorer drop-downs, date pickers) are bound once, in
-  `ScreenViewsModule`.
+* Get the controller from `AppScreenGinjector` (or the area's ginjector): add a getter under its
+  area's comment (a controller needs no binding: GIN makes it from its `@Inject` constructor). Its
+  modules mirror Stroom's GIN modules (`XxxScreenModule` for `stroom...gin.XxxModule`) with their
+  `bind(X)` lines copied, and plugins (`bindPlugin`), eager singletons and app services
+  (`ClientSecurityContext`, `LoginManager`) left out (the story registers the controller as its
+  event's handler instead). A binding several areas share goes once in `ScreenViewsModule`, which
+  binds nothing today: the menus, tool tips, editors, expression trees and date pickers it bound are
+  controllers and components, which need no binding.
 * GIN checks the whole graph of **every** binding of the injector's modules, used or not, and the
   compile fails if a key is bound twice. So when GIN reports `No @Inject or default constructor
   found for X`, read its "Path to required node", find the Stroom module that binds `X`
@@ -494,27 +503,26 @@ RestFixtures.builder()
   `stroom.widget.tooltip.Tooltip`; stepping needs `stroom.pipeline.Pipeline` as well as
   `PipelineStepping`), and RestyGWT generates code for every method of a resource interface used,
   so the types of all of them must be available.
-* Presenters from GIN are bound (`onBind`) when created, as in Stroom; one made with `new` is not
-  bound until it is revealed (or `bind()` is called), so e.g. `CredentialsListPresenter`'s data
-  provider would still be null when its dialog is set up.
+* A controller registers its handlers when it is made, whether by GIN or with `new`, and keeps
+  them until it is disposed: show one the story makes with `harness.show(controller)`, or give it to
+  `harness.own(controller)` (or to whatever owns it).
 * Create the injector in `render` (`GWT.create(AppScreenGinjector.class)`), a new one each time:
   the harness refuses an injector another harness has used.
-* **Package-private or private Stroom methods** (e.g. `NodeGroupEditPresenter.show`, called only by
-  `NodeGroupPresenter`; `LoginPresenter.isSameOrigin`) are called with a JSNI method in the story,
-  which ignores Java's access rules, on a real presenter, rather than by opening the whole parent
-  screen.
+* **Package-private or private Stroom methods** (e.g. `LoginController.isSameOrigin`) are called
+  with a JSNI method in the story, which ignores Java's access rules, on a real controller, rather
+  than by opening the whole parent screen.
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`,
-  `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPresenter.setProcessorLimits`)
-  are copied into the story's `render`, naming the source, when they only wire up presenters the
+  `DataDisplaySupport`, `HyperlinkOpener.openData`, `QueryPaneController.setProcessorLimits`)
+  are copied into the story's `render`, naming the source, when they only wire up controllers the
   injector can create.
 
 ### Polling and sequences
 
 * Stroom's lists that "poll" (Server Tasks, Nodes, Jobs) refresh when the content pane calls
-  `Refreshable.refresh()`, which nothing does in a story, so they make one round of requests.
-* A screen with its own timer (`UserTaskManagerPresenter` polls every second) gets the same reply
+  `HasRefresh.refresh()`, which nothing does in a story, so they make one round of requests.
+* A screen with its own timer (`UserTaskManagerController` polls every second) gets the same reply
   each poll (a route's single reply repeats); use a sequence (`get(path, first, second)`) when the
-  play needs the data to change. Stop the timer on re-render with `closeOnCleanUp(popup)` (or
+  play needs the data to change. Stop the timer on re-render with `ownPopup(popup)` (or
   `addTimer` if the story owns it).
 * A polling chat (Ask Stroom AI) uses a stateless `RestHandler` that replies with the messages
   after the request's `lastSeenMessageId`, as the server does (a repeated reply would add the
@@ -526,27 +534,27 @@ RestFixtures.builder()
 Each area has its own ginjector in `client/app/gin/<area>` and helpers for its screens. Reuse them.
 
 * **Document editors** (`client/app/editors/DocEditors`): `DocEditors.render(context, fixtures,
-  readOnly, (harness, injector) -> DocEditors.open(harness, docRef, injector.getXxxPresenter(),
+  readOnly, (harness, injector) -> DocEditors.open(harness, docRef, injector.getXxxEditor(),
   DocResource.of(fetch, update)))` creates the `EditorsScreenGinjector` and a harness with
   `realAlerts()`, gives the user OWNER (or VIEW) on every document, sets up Stroom's
   `StaticEventBus` and `HelpManager` (form help buttons) and, after start-up, opens the document as
-  `DocumentPlugin` does (fetch, permission check, `read`, the default tab). The toolbar's Save
+  `DocumentPlugin` does, in a `DocumentEditorHost` (fetch, permission check, `read`; the editor shows
+  its default tab once it is on the page). One tab on its own is opened as a `TabStory` (no Save). The toolbar's Save
   (`SaveDocumentEvent`) is answered as `DocumentPlugin.save`: write, `PUT` to `update`, then the
-  editor's post save callback (`VisualisationPresenter` publishes its assets there), then `read`.
+  editor's post save callback (`VisualisationEditor` publishes its assets there), then `read`.
   So a story checks a change by editing, saving and checking the `PUT` body.
   `DocEditors.permissionRoutes(builder)` answers the Permissions tabs (admin is OWNER);
   `DocEditors.docSelectionRoutes(builder)` answers `explorer/v2/decorate` and `getFromDocRef`
   (document selection boxes) with the document asked about.
 * **Query, rule, report, View, Plan B and statistic store editors**
   (`client/app/gin/query/QueryScreenGinjector`, `client/app/query`):
-  `DocumentEditors.open(harness, presenter, docRef, resource, res -> res.fetch(uuid))` does what a
+  `DocumentEditors.open(harness, editor, docRef, resource, res -> res.fetch(uuid))` does what a
   `DocumentPlugin` does and then fires `ContentTabSelectionChangeEvent` for the editor, as the
   content pane does when it selects a tab (the query table only reacts to annotation changes while
   its tab is visible); `ownerPermissions(builder)` and `decorated(builder, docRefJson...)` answer the
-  Permissions tab and doc pickers. The ginjector also gives `HyperlinkEventHandlerImpl` and
+  Permissions tab and doc pickers. The ginjector also gives `HyperlinkOpener` and
   `DataDisplaySupport` (Stroom creates both eagerly), `DateTimeSettingsFactory` and
-  `ResultStoreModel`; its `QueryExtrasScreenModule` holds single bindings these screens need
-  (`DataUploadPresenter`, `IFrameContentPresenter`).
+  `ResultStoreModel`.
 * **Searches** (`client/app/query/QueryFixtures`, also for dashboards): a search is a poll of
   `POST /query/v1/search/{node}` (`/dashboard/v1/search/{node}` for a dashboard's `SearchModel`)
   until a reply is `complete` or `null`: route `QueryFixtures.SEARCH` with a reply sequence
@@ -559,33 +567,30 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
 * **Processing** (pipelines, stepping, processors, data retention and receipt rules, execution
   schedules, data): `ProcessingScreenGinjector` gives `DocumentPluginEventManager`,
   `PipelinePlugin` and `XsltPlugin` for `StoryDocumentPlugins`; shared pipeline replies (element
-  types, a stepper) are in `app/main/PipelineFixtures`.
+  types, a stepper) are in `app/pipeline/PipelineFixtures`.
 * **Content screens** (content, monitoring, volume, activity and annotation screens):
   `ContentStorySupport` (`expectNoProblems`, `queryParam`, `decorate`, which answers the explorer's
   `decorate` with the document asked about), `ActivityFixtures`, `AnnotationFixtures`.
-* **Security** (`client/app/gin/security/SecurityScreenGinjector`, whose `IdentityScreenModule`
-  mirrors Stroom's `ChangePasswordModule` without the sign-in pages): `CurrentPasswordPresenter`
+* **Security** (`client/app/gin/security/SecurityScreenGinjector`): `CurrentPasswordController`
   needs Stroom's concrete `CurrentUser` (whose graph GIN can't build here): create it with `new`,
   giving it `new CurrentUser(eventBus, restFactory, null, null)` signed in with
   `setUserAndPermissions(aup, false)`. RestyGWT ignores `@JsonInclude(NON_NULL)`, so a change such
   as `AccountChange` sends the members it leaves alone as `null` (and an empty action set as `[]`):
   check "only these values" with `SecurityPlays.withOnlyValues(matcher, json)`, and read the first
   of several requests with `SecurityPlays.firstBody(spy, matcher)`. Lists that select their first
-  row when they load (`UserAccessListPresenter`, `UserDependenciesListPresenter`) are cleared with a
-  ctrl-mousedown on the selected row. A `UserListPresenter`'s whole block (label, quick filter,
+  row when they load (`UserAccessList`, `UserDependenciesList`) are cleared with a
+  ctrl-mousedown on the selected row. A `UserList`'s whole block (label, quick filter,
   toolbar, grid and pager) is its label's `.closest(".dock-container-vertical")`. Rules that
   aren't screens (`DeleteConfirmation.isEmpty`,
   `CurrentUser.hasAppPermission`, `DocumentPluginEventManager` handling `DeleteDocumentEvent`) are
   checked by calling Stroom's code in a value's supplier, or with a real handler created with `new`
   and `bind()` driven by a button per case; create the Stroom objects inside the supplier, so each
   run of the play checks fresh ones.
-* **Sign-in pages** (`client/app/gin/idp/IdpScreenGinjector` with `IdpScreenModule`,
-  `client/app/idp/IdpPage`,
-  `SignInPages`): Stroom's `App.onModuleLoad` reveals `LoginPresenter`,
-  `AuthenticationErrorPresenter` and `ResetPasswordPresenter` with `forceReveal()`; a story adds
-  the presenter with `addContent` and calls its protected `revealInParent()` with JSNI
-  (`IdpPage.reveal`). They look up the host page's `#loading`/`#loadingText` elements when
-  created, which `IdpPage.setUp` adds. A screen that reads `Window.Location.getParameter`
+* **Sign-in pages** (`client/app/gin/idp/IdpScreenGinjector`, `client/app/idp/IdpPage`,
+  `SignInPages`): Stroom's `App.onModuleLoad` shows `LoginController`,
+  `AuthenticationErrorController` and `ResetPasswordController` with `show()`, which makes the page
+  the whole browser page; a story adds the controller to itself and calls its `onShown()`. They
+  hide the host page's `#loading` element when shown, which `IdpPage.setUp` adds. A screen that reads `Window.Location.getParameter`
   (`error`, `redirect_uri`, `token`) gets them added to the story page's URL with
   `history.replaceState`, restored on clean up. `Window.Location.replace(url)` (which a
   `LocationManager` can't intercept) is cancelled with the browser's Navigation API (Chromium) and
@@ -594,19 +599,17 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `create(context, fixtures, options)` builds the harness (with `realAlerts()`);
   `start(initialDocRef)` then logs in as Stroom does: every main menu plugin, the
   Dictionary/Feed/Folder document plugins and `DocumentPluginEventManager` are created, the dialogs
-  GWTP proxies would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
+  their listeners would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
   Export, Edit Tags), then the splash screen, the initial activity chooser and `ShowMainEvent`,
   which shows the main view and the explorer and opens the initial document (a deep link).
   `startFullScreen(docRef)` is Stroom's embedded view instead. Reuse it for any story about the
   shell, the explorer, the main menu or opening documents from the explorer.
-  `ContentTabPanePresenter.onOpen` calls `forceReveal()`, whose `revealInParent()` clears every
-  tab, so a tab pane that isn't visible keeps only the last tab opened; the shell makes the main
-  view visible as GWTP's root would (JSNI `PresenterWidget.internalReveal()`), with the tab pane
-  already in its content slot, and puts the explorer in its slot after
-  `NavigationPresenter.onShowMain`; stories that only need one tab can use
-  `harness.addContent(tabPane)` instead. Its ginjector adds `ShellAppScreenModule` (the main view,
-  `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
-  cancels `MainPresenter`'s 30 second refresh timer on re-render. `MainPresenter` adds `GlobalKeyHandler` DOM handlers to the
+  The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
+  adds it to the story, as `MainScreens` puts it in the page, and it shows the explorer
+  (`MainController.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
+  instead. Its ginjector adds `ShellAppScreenModule` (the main view,
+  `ExplorerController`, About, User Preferences, Welcome, current password and Feed), and it
+  cancels `MainController`'s 30 second refresh timer on re-render. `MainController` adds `GlobalKeyHandler` DOM handlers to the
   page's body and never removes them, so the shell passes keys to Stroom's real
   `GlobalKeyHandlerImpl` only until the story renders again; `KeyBinding`'s commands are static, so
   the last shell rendered owns them. Fixture shapes: `fetchDocumentTypes` needs `visibleTypes` as
@@ -616,7 +619,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   Stroom's uuids (`0`, `1`).
 * **Dashboards** (`app/dashboard/DashboardSupport`, `gin/dashboard/DashboardScreenGinjector`):
   `DashboardSupport.story(docJson, routes, options)` renders Stroom's real
-  `DashboardSuperPresenter` (Dashboard, Documentation, Permissions) as `DashboardPlugin` opens it,
+  `DashboardEditor` (Dashboard, Documentation, Permissions) as `DashboardPlugin` opens it,
   with `realAlerts()`, OWNER permission, the dark theme's preferences
   (`DashboardSupport.DARK_PREFERENCES`) and Save answered as
   `DocumentPlugin.save`. The dashboard is a `DashboardDoc` JSON served from
@@ -624,9 +627,9 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   dashboard search with `t1`'s rows `alpha`/`beta`, a StroomQL search, the referenced query
   `q-ref`, the editor routes and the Permissions tab) after the story's own routes. Options:
   `linkParams` (as `DashboardPlugin.openParameterisedDashboard`), `harness(...)`,
-  `setup((harness, injector) -> ...)` and `afterOpen(...)`. `registerComponentTypes` gets every
-  component plugin from the injector before the dashboard is read, as Stroom's eager singletons
-  fill `ComponentRegistry` (the ginjector keeps `ComponentRegistry` and `VisFunctionCache` as
+  `setup((harness, injector) -> ...)` and `afterOpen(...)`. `registerComponentTypes` gets
+  `DashboardPaneTypes` from the injector before the dashboard is read, as Stroom's eager singleton
+  fills `PaneRegistry` (the ginjector keeps `PaneRegistry` and `VisFunctionCache` as
   singletons, so they belong to the rendering's harness). `app/dashboard/DashboardDocs` builds dashboards in Stroom's JSON
   (`component`, `query`, `table`, `tabs`, `split`, `sized`, `operator`, `term`), adding what Stroom
   needs: a preferred size on every layout, an `automate`, `queryTablePreferences` and full
@@ -640,11 +643,11 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   request bodies. A search whose result handling throws ends with the error shown in the Query's
   errors, so a play that waits for nothing in particular should check no error is shown.
 * **Ask Stroom AI opened by another screen** (a results table's 'Ask Stroom AI' button fires
-  `AskStroomAiEvent`): add the ginjector's `AskStroomAIScreenModule` and a getter for
-  `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
+  `AskStroomAiEvent`): add a getter for
+  `AskStroomAiController`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
-  with `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`. It creates the
-  presenter on the first event, as its GWTP proxy does, i.e. after start-up.
+  with `AskStroomAiChat.register(harness, injector::getAskStroomAiController)`. It creates the
+  controller on the first event, as `AskStroomAiScreens` does, i.e. after start-up.
 
 ## Play functions
 
@@ -835,14 +838,13 @@ Also:
   other rows' are `-1`): give a row the focus (press its text), then `play.tab()` reaches its row
   actions in order. Enter and Space press a button, Enter follows a link; the grid leaves the keys
   pressed on them alone (`JobsScreen` `CommandLinksByKeyboard`).
-* Grid tick boxes are `TickBoxCell` divs (`.tickBox`) with the `checkbox` role, not inputs, so
+* Grid tick boxes are `TickBoxCell` divs (`.tick-box--cell`) with the `checkbox` role, not inputs, so
   `getAllByRole("checkbox")` finds them too; list boxes (`<select multiple>`) are driven with
   `play.selectOptions(...)`; context menus with `play.rightClick(cell)`.
-* **Results table headers**: `MyDataGrid` only handles a header's mouse buttons after the mouse has
-  moved over it (a deferred native preview handler), and a click moves the mouse in again from the
-  body, so `QueryEditorStories.clickHeader(play, target)` fires a mousemove, waits 200ms, then
-  mousedown/mouseup/click. A column's menu opens on a left click (not a context menu); the values
-  filter on the header's `.column-valueFilterIcon`. Header labels are `.column-top .column-label`.
+* **Results table headers**: click a part of a header with `StroomDom.clickHeader(play, target)`,
+  which fires the pointer and mouse events, then the click, at the target's centre, without moving
+  the mouse in from the body as user-event's click does. A column's menu opens on a left click (not a context menu); the values
+  filter on the header's `.column-header__value-filter-icon`. Header labels are `.column-header__label`.
 * **Form groups**: a `FormGroup`'s label names the one form control in it (an input, select or text
   area, even inside a panel or composite such as a tick box or password box), so find it with
   `getByLabelText(label)`. A group with several controls is `role="group"`, named by its label
@@ -856,7 +858,7 @@ Also:
   `required="true"` marks the control `aria-required`.
 * **Text boxes report their change** (and so make a document dirty) when they lose the focus: type,
   then `play.tab()`.
-* **Read-only text in a text area** (e.g. `DependenciesInfoViewImpl`) is checked with
+* **Read-only text in a text area** (e.g. `DependenciesInfo`) is checked with
   `querySelector("textarea...").value()`, not `getByText`.
 * **Ace editors**: click `.ace_content` then `play.keyboard(text)`, and wait for the text in
   `.ace_content` before pressing OK.
@@ -881,8 +883,8 @@ Also:
   `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while
   `x == null` is true for both. Check with `== null` when a value may come from a builder that left
   it unset.
-* Don't create a presenter that reads the user's preferences before start-up (e.g.
-  `AskStroomAiPresenter`, whose constructor reads the AI config): create it in `afterStartUp`, as
+* Don't create a controller that reads the user's preferences before start-up (e.g.
+  `AskStroomAiController`, whose constructor reads the AI config): create it in `afterStartUp`, as
   Stroom does.
 * A leftover workbench server (e.g. after a Gradle daemon is killed for memory) keeps the test port;
   stop it by its PID (`ss -ltnp | grep <port>`) before the next run.
@@ -898,6 +900,16 @@ Also:
   While iterating, a draft compile (`workbenchDraftCompile`, ~25s) and
   `node run.mjs App/Main/JobsScreen --url http://127.0.0.1:<port>` in `test-runner` against your
   own `workbenchServe` is quickest.
+* The `App/Visualisations` stories (tagged `visualisations`) load a visualisations content pack, as
+  Stroom would. By default it is the release Stroom itself uses, named in the root
+  `content-packs.json`: `workbenchFetchVisualisations` (run by `workbenchServe` and `workbenchTest`)
+  downloads it once and unpacks it into the Gradle user home. To try changes to the visualisations,
+  build them in a [stroom-visualisations-dev](https://github.com/gchq/stroom-visualisations-dev)
+  checkout on the branch for this Stroom (`8.0`; `main` has the legacy pack) with `npm run build`;
+  a checkout beside this repository is used instead of the release when it has a built pack
+  (`war/stroom_content`), or give one with `-PworkbenchVisualisationsDir=<dir>`. `workbenchTest`
+  says which it used. Without either (e.g. offline before the first download) it skips the
+  `visualisations` stories.
 * To see the DOM before writing a play, register the story with a minimal play (the preview runs
   the play when it loads), then read the page (`iframe.html?id=<id>&viewMode=story`) with
   Playwright.

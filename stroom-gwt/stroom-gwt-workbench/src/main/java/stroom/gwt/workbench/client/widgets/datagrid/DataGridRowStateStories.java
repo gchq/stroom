@@ -18,27 +18,26 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.ComponentStories;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBoxCell;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.selection.client.SelectionBoxCell;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -53,8 +52,8 @@ import java.util.List;
 /// doesn't scroll).
 ///
 /// The grid's columns are those of Stroom's grids with controls in their cells: a tick box and a
-/// value spinner (as `ProcessorListPresenter`'s), and a text field and a selection box (as
-/// `FloorMapSettingsPresenter`'s value schema).
+/// value spinner (as `ProcessorList`'s), and a text field and a selection box (as
+/// `FloorMapSettings`'s value schema).
 ///
 /// A row's states are partly pseudo-classes (`:hover`, `:focus-within`, `:focus-visible`), which a
 /// script can't put an element in. So, as `Widgets/Selectors/SelectionListStates` does, the story
@@ -172,7 +171,7 @@ public final class DataGridRowStateStories {
 
     // The grid, with a row for each state, put in their states once drawn
     private static Widget newGrid(final Section section) {
-        final DataGrid<RowState> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<RowState> grid = new DataGrid<>();
         grid.setAccessibleName(section.title + ", new");
         addColumns(grid::addResizableColumn, grid::addColumn, grid::addColumn);
         final MultiSelectionModelImpl<RowState> selectionModel = grid.addDefaultSelectionModel(true);

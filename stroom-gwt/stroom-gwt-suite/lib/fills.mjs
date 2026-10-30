@@ -164,7 +164,7 @@ export async function pickDocRef(page, label, name) {
     await filter.pressSequentially(name, { delay: 30 });
     await page.waitForTimeout(1000);
   }
-  const item = page.locator(`.explorerCell:has-text("${name}"), .selectionBoxItem:has-text("${name}")`).first();
+  const item = page.locator(`.explorer-cell:has-text("${name}"), .selectionBoxItem:has-text("${name}")`).first();
   if (!(await item.count())) {
     await page.keyboard.press('Escape');
     return false;

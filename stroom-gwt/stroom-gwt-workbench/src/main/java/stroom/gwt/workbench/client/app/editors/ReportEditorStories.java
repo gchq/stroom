@@ -37,7 +37,7 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/ReportEditor` stories, showing Stroom's real `ReportPresenter` (a report's
+/// The `App/Editors/ReportEditor` stories, showing Stroom's real `ReportEditor` (a report's
 /// editor tab: Query, Settings, Notifications, Execution, Documentation and Permissions) with fake
 /// REST replies.
 ///
@@ -115,7 +115,7 @@ public final class ReportEditorStories {
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
                     play.expect(play.within(play.getByText("File Type", "label").closest(".form-group"))
-                            .querySelector(".selection-box")).toHaveClass("selection-box--readonly");
+                            .querySelector(".selection-box")).toHaveClass("selection-box--read-only");
                     play.expect(play.getByRole("checkbox", "Send Empty Reports"))
                             .toHaveAttribute("aria-readonly", "true");
                     play.expect(picker(play, "Feed For Errors")).toHaveAttribute("aria-disabled", "true");
@@ -206,6 +206,10 @@ public final class ReportEditorStories {
         openTab(play, "Execution");
         play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
         play.waitFor(() -> play.expect(play.getByRole("button", "New Execution Schedule")).toBeInTheDocument());
+        // The schedules are sorted by name, as the header says: the list makes its columns afresh
+        // when the document's read only state is first known, and they once lost the sort
+        play.expect(play.querySelector("[role=\"columnheader\"][aria-sort=\"ascending\"]"))
+                .toHaveTextContent(TextMatch.containing("Name"));
         expectReadOnlyNote(play, readOnly);
         DocumentEditors.expectNoProblems(play);
     }
@@ -213,7 +217,7 @@ public final class ReportEditorStories {
     // A read-only document's tab says so
     private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
         if (readOnly) {
-            play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+            play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
         }
     }
 
@@ -257,7 +261,7 @@ public final class ReportEditorStories {
         harness.getSecurityContext().setDocumentPermission(permission);
         final ReportResource resource = GWT.create(ReportResource.class);
         // Opened once Stroom has started, as ReportPlugin opens a document
-        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getReportPresenter(), DOC_REF,
+        harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getReportEditor(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
         return harness.asWidget();
     }

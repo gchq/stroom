@@ -18,23 +18,22 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBoxCell;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.selection.client.SelectionBoxCell;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -310,7 +309,7 @@ public final class DataGridRowUpdateStories {
         for (final String name : NAMES.subList(0, 3)) {
             rows.add(new ChoiceRow(name, 1, "Name"));
         }
-        final DataGrid<ChoiceRow> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<ChoiceRow> grid = new DataGrid<>();
         grid.setKeyProvider(row -> row.name);
         grid.addColumn(DataGridUtil.textColumnBuilder((ChoiceRow row) -> row.name).build(), "Name", 100);
         grid.addColumn(DataGridUtil.textColumnBuilder((ChoiceRow row) -> String.valueOf(row.count)).build(),
@@ -334,7 +333,7 @@ public final class DataGridRowUpdateStories {
             grid.setRowData(0, copies);
             grid.setRowCount(copies.size());
         };
-        // Saved by the row's name, as a presenter saves by its id: the row given is as it was when the
+        // Saved by the row's name, as a controller saves by its id: the row given is as it was when the
         // list opened, which a poll may have changed since
         kind.setFieldUpdater((index, row, value) -> {
             for (int i = 0; i < rows.size(); i++) {
@@ -502,7 +501,7 @@ public final class DataGridRowUpdateStories {
 
     private static final class NewGrid implements Grid {
 
-        private final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
+        private final DataGrid<Row> grid = new DataGrid<>();
 
         private NewGrid() {
             // A row is the same row while its name is, as a screen's key provider says, so a changed

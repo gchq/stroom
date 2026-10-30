@@ -28,10 +28,10 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.ShowMenuEvent;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.Rect;
 
@@ -47,11 +47,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /// Stories for Stroom's menus (`ShowMenuEvent`, handled by Stroom's `MenuManager` with a
-/// `MenuPresenter` per menu and submenu).
+/// `MenuController` per menu and submenu).
 public final class MenuPanelStories {
 
-    // Stroom's menu (`Menu`) has this class and `role="menu"`.
-    static final String MENU = ".menu";
     // The highlighted row is the menu's active row.
     private static final String ACTIVE_ROW = ".menu .menu__row--active";
     private static final String NO_ACTION = "(no action yet)";

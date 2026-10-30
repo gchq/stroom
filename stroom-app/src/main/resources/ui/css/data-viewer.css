@@ -1,0 +1,73 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The data viewer (stroom.data.client.component.DataViewer), named BEM style. Its rules were in `components.css`.
+*/
+
+.data-viewer__tab-bar {
+    align-items: center;
+    padding: 0 .75rem;
+    gap: .75rem;
+    min-height: 27px;
+}
+
+.data-viewer__tab-bar-outer {
+    overflow: hidden;
+    flex-shrink: 1;
+}
+
+.data-viewer__tab-bar-inner {
+    position: relative;
+}
+
+.data-viewer__right-panel {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    padding-right: 0.25em;
+    padding-top: 1px;
+    align-items: center;
+    gap: .75rem;
+}
+
+.data-viewer__button-panel {
+    float: left;
+}
+
+.data-viewer__navigator-container {
+    float: left;
+}
+
+.data-viewer__progress-bar-panel {
+    width: 100%;
+    height: 10px;
+}
+
+.data-viewer__layer-container {
+    /* To make the info pane fit the remaining space in the parent rather
+    than 100% of the content */
+    height: 0px;
+}
+
+/* The source link (a LinkButton, which has a pointer and an underline on a hover): greyed while
+   it can't be followed (DisabledState's class), with no pointer or underline */
+.data-viewer__source-link-label.disabled,
+.data-viewer__source-link-label.disabled:hover {
+    color: var(--text-color--disabled);
+    cursor: default;
+    text-decoration: none;
+}

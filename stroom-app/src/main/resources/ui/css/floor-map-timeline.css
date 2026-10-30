@@ -1,0 +1,405 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* ============================================================
+ * The floor map's timeline (FloorMapTimeline)
+ * ============================================================ */
+
+/* Grid: the histogram and date-label rows share the middle column with the scrubber bar,
+   so they stay exactly in line with it whatever width the flanking control groups take
+   (e.g. when the Editor tab appends a help button to the right controls). */
+.floor-map-timeline {
+    position: relative; /* anchor for absolutely-positioned out-of-range chevrons */
+    padding: 6px 12px 8px 12px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        ".    histogram ."
+        "left bar       right"
+        ".    labels    .";
+    column-gap: 8px;
+    align-items: center;
+    /* Rows keep their natural heights, packed at the top — without this the default
+       align-content: stretch spreads the rows out to fill the panel height. */
+    align-content: start;
+}
+
+/* Left control group: step-back | play/pause | step-forward */
+.floor-map-timeline__left-controls {
+    grid-area: left;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Play / pause button — slightly larger than step buttons */
+.floor-map-timeline__play-button {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Step-back / step-forward buttons — compact, flanking the play button.
+   24px is the floor rather than a design choice: WCAG 2.5.8 minimum target
+   size. If you shrink these, the out-of-range chevron offsets below must be
+   recomputed — they are measured from the same run of controls. */
+.floor-map-timeline__step-button {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.floor-map-timeline__step-button:hover {
+    opacity: 1;
+}
+
+/* The center section holds the scrubber bar */
+.floor-map-timeline__centre {
+    grid-area: bar;
+    min-width: 0;
+    cursor: pointer;
+}
+
+/* Right control group: speed badge | settings gear */
+.floor-map-timeline__right-controls {
+    grid-area: right;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Speed badge — clickable button showing current playback speed (e.g. "×1");
+   clicking it opens the playback-speed menu */
+.floor-map-timeline__speed-badge {
+    font-size: 10px;
+    font-weight: 600;
+    /* This is 10px text, so it owes 4.5:1 (WCAG 1.4.3) — not the 3:1 the icon buttons
+       either side of it owe. Take the colour from the primary *text* token, whose
+       contract is that threshold, rather than a raw palette entry: --blue-500 measures
+       only 3.12:1 on this theme's white page background. There is deliberately no
+       `opacity` here either — fading the text multiplied away what headroom was left
+       (0.85 dropped it to 4.29:1). De-emphasis, if wanted, belongs in the colour. */
+    color: var(--floormap-accent__color);
+    width: 44px;         /* Fixed — wide enough for the longest label (×10,000) */
+    flex-shrink: 0;
+    text-align: center;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    padding: 3px 0;
+    border-radius: 3px;
+    transition: background-color 0.15s ease;
+}
+
+/* Neutral hover wash, matching the step and settings buttons beside it — NOT the
+   accent-tinted --button--default-primary__background-color--hover. That tint is the same
+   hue as the text (40% blue-300 in the dark theme), so it collapses the label to 3.03:1
+   on hover; no choice of blue fixes it, because lightening the text lightens the tint
+   with it. The neutral wash holds 5.13:1 in both themes. */
+.floor-map-timeline__speed-badge:hover,
+.floor-map-timeline__speed-badge:focus-visible {
+    background-color: var(--icon-button__background-color--hover);
+}
+
+/* Settings gear button */
+.floor-map-timeline__settings-button {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.floor-map-timeline__settings-button:hover {
+    opacity: 1;
+}
+
+/* ============================================================
+ * Histogram hover pop-up
+ * ============================================================ */
+
+/* Container that wraps the histogram canvas — always visible.
+   Occupies the same grid column as the scrubber bar, so its edges are always
+   exactly in line with the bar ends. */
+.floor-map-timeline__histogram {
+    grid-area: histogram;
+    height: 48px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Date labels row below the bar — same grid column as the bar, so the labels
+   sit exactly under the bar ends. */
+.floor-map-timeline__date-labels {
+    grid-area: labels;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    pointer-events: none;
+}
+
+.floor-map-timeline__date-label {
+    font-size: 10px;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.floor-map-timeline__date-label--end {
+    text-align: right;
+}
+
+/* The progress bar track */
+.floor-map-timeline__bar {
+    position: relative;
+    background-color: var(--control__background-color);
+    width: 100%;
+    height: 5px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 3px;
+}
+
+/* The bar is a role="slider" with tabindex="0", so it takes a tab stop and must
+   show one. base.css sets `outline: none` on every div app-wide, so the UA
+   default focus ring is gone and this has to be drawn explicitly; a class
+   selector out-specifies that element-list rule without needing !important.
+   Matches the .toolbar-button:focus-visible treatment in toolbar-button.css so
+   keyboard focus looks the same across the whole timeline strip. */
+.floor-map-timeline__bar:focus-visible {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Grows the 7px-tall track (5px + 2 × 1px border) to a 24px pointer/touch
+   target — WCAG 2.5.8 — without changing how it looks. The extra height is
+   transparent, and because a pseudo-element is not its own event target the
+   mousedown still reports the bar itself, so computeBarPct() (which reads only
+   the bar's own left edge and width) is unaffected.
+
+   Biased downward: below the bar is the date-labels row, which is
+   `pointer-events: none`, so those 11px are free. Above the bar is the
+   histogram, whose bottom few pixels are already faded out by its mask — and
+   both a histogram click and a bar press seek to the same place, so the small
+   overlap changes nothing the user can perceive. */
+.floor-map-timeline__bar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -6px;
+    bottom: -11px;
+}
+
+/* The filled portion of the bar */
+.floor-map-timeline__progress {
+    position: absolute;
+    background-color: #1e88e5; /* Stroom Blue */
+    /* As far as the handle: the timeline's progress, set on the bar */
+    width: var(--floor-map-timeline__progress, 0%);
+    height: 100%;
+    border-radius: 3px 0 0 3px;
+    pointer-events: none;
+}
+
+/* The draggable circle handle */
+.floor-map-timeline__handle {
+    position: absolute;
+    top: 50%;
+    left: var(--floor-map-timeline__progress, 0%);
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: #1e88e5;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Datetime pill shown above the handle while scrubbing */
+.floor-map-timeline__scrub-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px); /* sit above the handle (bar height / 2 + handle radius + gap) */
+    left: var(--floor-map-timeline__progress, 0%);
+    transform: translateX(-50%);
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 10px; /* matches start/end date labels */
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 20;
+}
+
+/* Caret — outer (border colour) layer */
+.floor-map-timeline__scrub-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--floormap-accent__color);
+}
+
+/* Caret — inner (background colour) layer, sits 1px higher to mask the fill */
+.floor-map-timeline__scrub-tooltip::after {
+    content: '';
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--page__background-color);
+}
+
+.floor-map-timeline__scrub-tooltip--visible {
+    opacity: 1;
+}
+
+/* -----------------------------------------------------------------------
+   Out-of-range indicators (« / »)
+   Shown next to the start/end date labels when the selected time
+   falls outside the visible timeline range.
+   ----------------------------------------------------------------------- */
+.floor-map-timeline__out-of-range {
+    position: absolute;
+    bottom: 4px; /* sit in the date-labels row at the foot of the container */
+    color: var(--floormap-out-of-range__color);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    pointer-events: auto;
+    user-select: none;
+    /* Resting glow — kept for reduced-motion users where the pulse is disabled.
+       currentColor so the glow follows the per-theme chevron colour rather than
+       being pinned to one orange. */
+    text-shadow: 0 0 4px currentColor;
+}
+
+/* Left chevron: centred under the Step-Forward button.
+   12px container padding + 60px (step-back 24 + gap 4 + play 28 + gap 4)
+   + 24px/2 (half the step-forward button) = 84px.
+   The pulse keyframes carry the same translateX so the chevron stays centred while it scales;
+   the static transform below is the fallback when animation is disabled. */
+.floor-map-timeline__out-of-range--left {
+    left: 84px;
+    transform: translateX(-50%);
+    animation:
+        floor-map-timeline-chevron-fade-in 0.3s ease-out both,
+        floor-map-timeline-chevron-pulse-left 1.6s ease-in-out infinite;
+}
+
+/* Right chevron: centred under the speed badge.
+   12px container padding + 28px (settings + gap) + 44px/2 (half the badge) = 62px from the right. */
+.floor-map-timeline__out-of-range--right {
+    right: 62px;
+    transform: translateX(50%);
+    animation:
+        floor-map-timeline-chevron-fade-in 0.3s ease-out both,
+        floor-map-timeline-chevron-pulse-right 1.6s ease-in-out infinite;
+}
+
+/* Fade the chevron in when it first appears (opacity only, so it never fights the pulse). */
+@keyframes floor-map-timeline-chevron-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Gentle "breathing" pulse — scales up slightly and brightens the glow, then relaxes.
+   translateX is repeated in every keyframe so the centring offset is preserved throughout. */
+@keyframes floor-map-timeline-chevron-pulse-left {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+        text-shadow: 0 0 3px currentColor;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.18);
+        text-shadow: 0 0 11px currentColor;
+    }
+}
+
+@keyframes floor-map-timeline-chevron-pulse-right {
+    0%, 100% {
+        transform: translateX(50%) scale(1);
+        text-shadow: 0 0 3px currentColor;
+    }
+    50% {
+        transform: translateX(50%) scale(1.18);
+        text-shadow: 0 0 11px currentColor;
+    }
+}
+
+/* -----------------------------------------------------------------------
+   Reduced motion
+
+   The chevron pulse is indefinite (`infinite`), so without this it is
+   moving content the user cannot stop — WCAG 2.2.2, not merely the AAA
+   2.3.3. Dropping the animation falls the chevrons back to the static
+   translateX and resting text-shadow declared on the rules above, which is
+   exactly what those declarations are there for.
+
+   The remaining transitions are opacity/background-colour only (no
+   movement), but they are all purely decorative, so they go too: a user
+   asking for less motion gains nothing from a 150ms cross-fade.
+
+   Deliberately NOT disabled: entity movement on the canvas and timeline
+   playback. Those are the information the map exists to convey rather than
+   decoration, and both are already fully under user control — playback
+   never autostarts and the pause button is always available.
+   ----------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .floor-map-timeline__out-of-range--left,
+    .floor-map-timeline__out-of-range--right {
+        animation: none;
+    }
+
+    .floor-map-timeline__speed-badge,
+    .floor-map-timeline__step-button,
+    .floor-map-timeline__settings-button,
+    .floor-map-timeline__scrub-tooltip {
+        transition: none;
+    }
+}
+
+/* Flex containers for left/right date label groups */
+.floor-map-timeline__date-labels-left,
+.floor-map-timeline__date-labels-right {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}

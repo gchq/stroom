@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.data;
 
-import stroom.data.client.presenter.MetaPresenter;
+import stroom.data.client.component.MetaBrowserController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -32,9 +32,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaPresenter] (the stream browser of
+/// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaBrowserController] (the stream browser of
 /// a 'Data' tab: the stream list, its relations and the data preview) with fake REST replies, read
-/// with no document (all unlocked streams), as `MetaPresenter.read` does for the data browser.
+/// with no document (all unlocked streams), as `MetaBrowserController.read` does for the data browser.
 ///
 /// | Stroom REST endpoint | Used for |
 /// |---|---|
@@ -140,7 +140,7 @@ public final class MetaBrowserStories {
                     // Rich cells: Pipeline and Feed are document links, Created and Type copy text.
                     // The feed is a document link (titled 'Open Feed ... in new tab') and the copy
                     // text cells have a 'Copy value' icon
-                    play.expect(play.getByText("Events Pipeline").closest(".docRefLinkContainer")).not().toBeNull();
+                    play.expect(play.getByText("Events Pipeline").closest(".doc-ref-link")).not().toBeNull();
                     play.expect(play.getAllByTitle("Open Feed EVENTS").count()).toBeGreaterThan(0);
                     play.expect(play.getAllByTitle("Copy value 'Raw Events' to clipboard").count())
                             .toBeGreaterThan(0);
@@ -215,7 +215,7 @@ public final class MetaBrowserStories {
                 });
     }
 
-    // Before its selection summary, Stroom's AbstractMetaListPresenter.confirmSelection asks 'Are you
+    // Before its selection summary, Stroom's MetaListController.confirmSelection asks 'Are you
     // sure you want to <action> the selected items?' and, for a select all, warns that every stream
     // matching the filter is included; both are answered OK
     private static void confirmSelectAll(final Play play, final Play screen, final String action) {
@@ -245,10 +245,10 @@ public final class MetaBrowserStories {
                 .realAlerts()
                 .build();
         harness.afterStartUp(() -> {
-            final MetaPresenter presenter = injector.getMetaPresenter();
-            harness.addContent(presenter);
+            final MetaBrowserController controller = injector.getMetaBrowser();
+            harness.show(controller);
             // As the data browser reads it, with no document: all unlocked streams
-            presenter.read(null, null, false);
+            controller.read(null, null);
         });
         return harness.asWidget();
     }

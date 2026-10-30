@@ -1,0 +1,50 @@
+/*
+*/
+
+.percent-bar-cell {
+    width: 100%;
+    height: 100%;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--grey-700);
+}
+
+.data-grid__row--odd .percent-bar-cell {
+    background-color: var(--row__background-color--odd);
+}
+
+.data-grid__row--even .percent-bar-cell {
+    background-color: var(--row__background-color--even);
+}
+
+.data-grid__row--selected .data-grid__cell--disabled .percent-bar-cell {
+    border-color: var(--text-color--disabled);
+}
+
+.data-grid__row--selected .percent-bar-cell {
+    border-color: var(--grey-500);
+}
+
+.percent-bar-cell__bar {
+    /* The percentage (PercentBarCell.java) */
+    width: var(--percent-bar-cell__width, 0);
+    height: 12px;
+}
+
+.percent-bar-cell__bar.percent-bar-cell__bar--healthy {
+     background-color: var(--status__color--ok);
+}
+
+.percent-bar-cell__bar.percent-bar-cell__bar--warning {
+     background-color: var(--status__color--warning);
+}
+
+.percent-bar-cell__bar.percent-bar-cell__bar--danger {
+     background-color: var(--status__color--danger);
+}
+
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--healthy,
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--warning,
+.data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--danger {
+     background-color: var(--text-color--disabled);
+}

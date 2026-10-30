@@ -16,8 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
@@ -26,22 +25,31 @@ import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.datagrid.client.model.SortRebuild;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.hyperlink.client.OpenHyperlinkRequest;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -94,7 +102,7 @@ import java.util.function.Function;
 ///
 /// @param <R> The row type.
 public class DataGrid<R> extends Widget
-        implements DataGridView<R>, HasKeyboardSelectionPolicy, Focusable {
+        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable {
 
     /// The default page size.
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
@@ -102,7 +110,7 @@ public class DataGrid<R> extends Widget
     /// The page size for grids that show a very large list on one page.
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
 
-    private final HasHandlers globalEventBus;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     // The column model holds sizing; headers and wrapping are kept alongside it by column.
     private final ColumnModel<Column<R, ?>> columnModel = new ColumnModel<>();
@@ -112,17 +120,43 @@ public class DataGrid<R> extends Widget
     // The screen's default sort (R-H4b, D10): shown from the start, and restored when a click
     // leaves the sort list empty
     private final List<SortEntry<Column<?, ?>>> defaultSort = new ArrayList<>();
+    // The sort's and default sort's entries of removed columns, taken back by columns added again
+    // with the same sort field (a list that makes its columns afresh, e.g. when read only changes)
+    private final SortRebuild<Column<?, ?>> sortRebuild = new SortRebuild<>(Column::getDataStoreName);
+    private final SortRebuild<Column<?, ?>> defaultSortRebuild = new SortRebuild<>(Column::getDataStoreName);
     private final GridHtml<R> html;
 
     private final PageState<R> pageState;
 
-    // DOM.
-    private final Element scroller;
-    private final Element head;
-    private final Element headerRow;
-    private final Element content;
-    private final Element body;
-    private final Element empty;
+    // DOM, from the template
+    @UiField
+    Element scroller;
+    @UiField
+    Element head;
+    @UiField
+    Element headerRow;
+    @UiField
+    Element content;
+    @UiField
+    Element body;
+    @UiField
+    Element empty;
+    @UiField
+    Element verticalTrack;
+    @UiField
+    Element verticalThumb;
+    @UiField
+    Element horizontalTrack;
+    @UiField
+    Element horizontalThumb;
+    @UiField
+    Element resizeHandle;
+    @UiField
+    Element resizeLine;
+    @UiField
+    Element moveGhost;
+    @UiField
+    Element moveLine;
     private final OverlayScrollbars scrollbars;
     private final ColumnInteractions columnInteractions;
     private final DataGridContextMenu<R> contextMenu;
@@ -164,12 +198,13 @@ public class DataGrid<R> extends Widget
     private boolean multiSelectable;
     private boolean multiLine;
     private boolean virtual;
-    private int rowHeight;
     private boolean hideHeader;
     private boolean allowMove = true;
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
     private boolean hasContextMenu = true;
+    // How many handle the grid's links (addHyperlinkHandler)
+    private int hyperlinkHandlerCount;
     private String tableName;
     private String emptyMessage;
 
@@ -186,19 +221,18 @@ public class DataGrid<R> extends Widget
     // Listeners added outside GWT's event system.
     private final List<JavaScriptObject> nativeListeners = new ArrayList<>();
 
-    /// Create a grid with the default page size.
-    ///
-    /// @param globalEventBus The application event bus.
-    public DataGrid(final HasHandlers globalEventBus) {
-        this(globalEventBus, DEFAULT_LIST_PAGE_SIZE);
+    /// Create a grid with the default page size, e.g. one a template declares. What it asks of the
+    /// app (its context menu, a link from it, asking Stroom AI about it) goes up the page as
+    /// requests (`MenuRequest`, `OpenHyperlinkRequest`, `AskStroomAiTableRequest`) to the page's
+    /// relays.
+    public DataGrid() {
+        this(DEFAULT_LIST_PAGE_SIZE);
     }
 
     /// Create a grid.
     ///
-    /// @param globalEventBus The application event bus.
-    /// @param pageSize       The page size.
-    public DataGrid(final HasHandlers globalEventBus, final int pageSize) {
-        this.globalEventBus = globalEventBus;
+    /// @param pageSize The page size.
+    public DataGrid(final int pageSize) {
         this.pageState = new PageState<>(pageSize);
         this.sortList = new ColumnSortList(() -> {
             headersDirty = true;
@@ -208,32 +242,24 @@ public class DataGrid<R> extends Widget
         // Before the first input the grid puts the focus back after (see refocus)
         InputModality.install();
 
-        final Document doc = Document.get();
-        final Element root = doc.createDivElement();
-        root.setClassName("data-grid data-grid--header-selection");
-
-        // The scroller is the grid as far as ARIA is concerned, and takes keyboard focus, so a grid
-        // can always be scrolled from the keyboard. Key events bubble from it to the root, where they
-        // are handled.
-        scroller = div(doc, "data-grid__scroller");
-        scroller.setAttribute("role", "grid");
-        scroller.setTabIndex(0);
-        head = div(doc, "data-grid__head");
-        headerRow = div(doc, "data-grid__header-row");
-        headerRow.setAttribute("role", "row");
-        head.appendChild(headerRow);
-        content = div(doc, "data-grid__content");
-        body = div(doc, "data-grid__body");
-        body.setAttribute("role", "rowgroup");
-        content.appendChild(body);
-        empty = div(doc, "data-grid__empty");
-        content.appendChild(empty);
-        scroller.appendChild(head);
-        scroller.appendChild(content);
-        root.appendChild(scroller);
-
-        scrollbars = new OverlayScrollbars(root, scroller, this::getHeaderHeight);
-        columnInteractions = new ColumnInteractions(this, root, scroller, head);
+        // The parts (see the template), which key events bubble from to the root, where they are
+        // handled
+        final Element root = BINDER.createAndBindUi(this);
+        scrollbars = new OverlayScrollbars(root,
+                scroller,
+                verticalTrack,
+                verticalThumb,
+                horizontalTrack,
+                horizontalThumb,
+                this::getHeaderHeight);
+        columnInteractions = new ColumnInteractions(this,
+                root,
+                scroller,
+                head,
+                resizeHandle,
+                resizeLine,
+                moveGhost,
+                moveLine);
         contextMenu = new DataGridContextMenu<>(this);
 
         keyboard = new DataGridKeyboard<>(this);
@@ -254,12 +280,6 @@ public class DataGrid<R> extends Widget
                    | Event.KEYEVENTS
                    | Event.ONCHANGE
                    | Event.ONCONTEXTMENU);
-    }
-
-    private static Element div(final Document doc, final String className) {
-        final Element element = doc.createDivElement();
-        element.setClassName(className);
-        return element;
     }
 
     // --------------------------------------------------------------------------------
@@ -357,24 +377,6 @@ public class DataGrid<R> extends Widget
         addColumn(column, header, ColumnSizing.fill(initialMinimumWidth));
     }
 
-    /// Add a column whose starting width is a percentage of the grid's initial visible width.
-    ///
-    /// @param column  The column.
-    /// @param name    The header text. Treated as HTML, as `MyDataGrid` does.
-    /// @param percent The percentage, e.g. `25`.
-    public void addPercentColumn(final Column<R, ?> column, final String name, final double percent) {
-        addColumn(column, textHeader(name), ColumnSizing.percent(percent));
-    }
-
-    /// Add a column whose starting width is a percentage of the grid's initial visible width.
-    ///
-    /// @param column  The column.
-    /// @param header  The header.
-    /// @param percent The percentage, e.g. `25`.
-    public void addPercentColumn(final Column<R, ?> column, final Header<?> header, final double percent) {
-        addColumn(column, header, ColumnSizing.percent(percent));
-    }
-
     /// Add a column with explicit sizing settings.
     ///
     /// @param column The column.
@@ -396,6 +398,13 @@ public class DataGrid<R> extends Widget
                              final ColumnSizing sizing) {
         columnModel.insert(beforeIndex, column, sizing);
         headers.put(column, header);
+        // A column made afresh takes back the sort of the one it replaces
+        if (sortRebuild.isPending()) {
+            setSortList(sortRebuild.add(currentSort(), column));
+        }
+        if (defaultSortRebuild.isPending()) {
+            setDefaultSortEntries(defaultSortRebuild.add(new ArrayList<>(defaultSort), column));
+        }
         scheduleRender();
     }
 
@@ -406,6 +415,10 @@ public class DataGrid<R> extends Widget
         if (columnModel.remove(column)) {
             headers.remove(column);
             wrappingColumns.remove(column);
+            // The sort never names a column the grid doesn't have; its entry is kept for a column
+            // added again with the same sort field
+            setSortList(sortRebuild.remove(currentSort(), column));
+            setDefaultSortEntries(defaultSortRebuild.remove(new ArrayList<>(defaultSort), column));
             scheduleRender();
         }
     }
@@ -444,12 +457,38 @@ public class DataGrid<R> extends Widget
     /// Set a column's width programmatically.
     ///
     /// @param column The column.
-    /// @param width  The width. Only pixel widths are supported; other units are treated as pixels.
-    /// @param unit   The unit.
-    public void setColumnWidth(final Column<R, ?> column, final int width, final Unit unit) {
+    /// @param width  The width in pixels.
+    public void setColumnWidth(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
             columnModel.setWidth(index, width);
+            scheduleRender();
+        }
+    }
+
+    /// Set a column's width programmatically.
+    ///
+    /// @param column The column.
+    /// @param width  The width. Only pixel widths are supported; other units are treated as pixels.
+    /// @param unit   The unit.
+    public void setColumnWidth(final Column<R, ?> column, final int width, final Unit unit) {
+        setColumnWidth(column, width);
+    }
+
+    /// Set a column's width as its content needs (e.g. a tree's expander column), the fill columns
+    /// giving back what it gains where the columns would otherwise run past the grid's edge.
+    ///
+    /// @param column The column.
+    /// @param width  The width in pixels.
+    public void setColumnWidthWithinFill(final Column<R, ?> column, final int width) {
+        final int index = columnModel.indexOf(column);
+        if (index != -1) {
+            final int outerWidth = getElement().getClientWidth();
+            if (isAttached() && columnModel.isResolved() && outerWidth > 0) {
+                columnModel.setWidthWithinFill(index, width, outerWidth);
+            } else {
+                columnModel.setWidth(index, width);
+            }
             scheduleRender();
         }
     }
@@ -645,8 +684,37 @@ public class DataGrid<R> extends Widget
         for (final ColumnSortInfo info : defaultSort) {
             this.defaultSort.add(new SortEntry<>(info.getColumn(), info.isAscending()));
         }
-        if (sortList.size() == 0) {
+        // Not while columns are being made afresh: the sort they had comes back with them
+        if (sortList.size() == 0 && !sortRebuild.isPending()) {
             setSortList(this.defaultSort);
+        }
+    }
+
+    // Replaces the default sort's entries
+    private void setDefaultSortEntries(final List<SortEntry<Column<?, ?>>> entries) {
+        defaultSort.clear();
+        defaultSort.addAll(entries);
+    }
+
+    // The sort list's entries, primary column first
+    private List<SortEntry<Column<?, ?>>> currentSort() {
+        final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
+        for (int i = 0; i < sortList.size(); i++) {
+            final ColumnSortInfo info = sortList.get(i);
+            current.add(new SortEntry<>(info.getColumn(), info.isAscending()));
+        }
+        return current;
+    }
+
+    // Once columns made afresh are all added: what no column took back is forgotten, and if that
+    // leaves nothing sorted, the default sort applies, so the header shows the order of the data
+    private void finishSortRebuild() {
+        if (sortRebuild.isPending() || defaultSortRebuild.isPending()) {
+            sortRebuild.finish();
+            defaultSortRebuild.finish();
+            if (sortList.size() == 0 && !defaultSort.isEmpty()) {
+                setSortList(defaultSort);
+            }
         }
     }
 
@@ -665,13 +733,8 @@ public class DataGrid<R> extends Widget
     /// @param column The column.
     /// @param ctrl   Whether Ctrl was held, which adds the column to the sort.
     void onHeaderSortClick(final Column<R, ?> column, final boolean ctrl) {
-        final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
-        for (int i = 0; i < sortList.size(); i++) {
-            final ColumnSortInfo info = sortList.get(i);
-            current.add(new SortEntry<>(info.getColumn(), info.isAscending()));
-        }
         final List<SortEntry<Column<?, ?>>> next = SortCycle.orDefault(
-                SortCycle.next(current, column, column.isDefaultSortAscending(), ctrl),
+                SortCycle.next(currentSort(), column, column.isDefaultSortAscending(), ctrl),
                 defaultSort);
         setSortList(next);
         ColumnSortEvent.fire(this, sortList);
@@ -705,19 +768,6 @@ public class DataGrid<R> extends Widget
             this.virtual = virtual;
             scheduleRender();
         }
-    }
-
-    /// @return Whether virtual rendering has been requested.
-    public boolean isVirtual() {
-        return virtual;
-    }
-
-    /// Set the fixed row height used in virtual mode.
-    ///
-    /// @param rowHeight The height in pixels, or `0` to measure it from the current density.
-    public void setRowHeight(final int rowHeight) {
-        this.rowHeight = Math.max(0, rowHeight);
-        scheduleRender();
     }
 
     /// Makes the grid a list rather than a grid (see [DataGridProfile]): its roles, whether it has a
@@ -829,6 +879,8 @@ public class DataGrid<R> extends Widget
     public void setHideHeader(final boolean hideHeader) {
         this.hideHeader = hideHeader;
         setStyleName("data-grid--no-header", hideHeader);
+        // Drawn again, so a header shown again is snapped to its height (see GridHeader.snapHeight)
+        headersDirty = true;
         scheduleRender();
     }
 
@@ -866,6 +918,13 @@ public class DataGrid<R> extends Widget
     /// @param hasContextMenu Whether right-clicking shows the grid's context menu.
     public void hasContextMenu(final boolean hasContextMenu) {
         this.hasContextMenu = hasContextMenu;
+    }
+
+    /// As [#hasContextMenu(boolean)], as a setter a template can call (`hasContextMenu="false"`).
+    ///
+    /// @param hasContextMenu Whether right-clicking shows the grid's context menu.
+    public void setHasContextMenu(final boolean hasContextMenu) {
+        hasContextMenu(hasContextMenu);
     }
 
     /// @return Whether right-clicking shows the grid's context menu.
@@ -999,13 +1058,6 @@ public class DataGrid<R> extends Widget
     /// @return The key provider, or `null`.
     public ProvidesKey<R> getKeyProvider() {
         return keyProvider;
-    }
-
-    /// Does nothing. Kept for compatibility with `MyDataGrid`; hover is pure CSS here.
-    ///
-    /// @param skipRowHoverCheck Ignored.
-    public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
-        // Hover is handled by CSS.
     }
 
     // --------------------------------------------------------------------------------
@@ -1151,12 +1203,30 @@ public class DataGrid<R> extends Widget
     /// @param handler The handler.
     /// @return The registration.
     public HandlerRegistration addHyperlinkHandler(final HyperlinkEvent.Handler handler) {
-        return addHandler(handler, HyperlinkEvent.getType());
+        final HandlerRegistration registration = addHandler(handler, HyperlinkEvent.getType());
+        hyperlinkHandlerCount++;
+        final boolean[] removed = new boolean[1];
+        return () -> {
+            // Counted once, however often it is removed
+            if (!removed[0]) {
+                removed[0] = true;
+                registration.removeHandler();
+                hyperlinkHandlerCount--;
+            }
+        };
     }
 
-    /// @return The application event bus passed to the constructor.
-    public HasHandlers getGlobalEventBus() {
-        return globalEventBus;
+    /// Opens a link from a cell, e.g. from the context menu: as a click on it does, with the
+    /// grid's [HyperlinkEvent] if something handles it (a dashboard's table, which adds the
+    /// dashboard it is in), else with an [OpenHyperlinkRequest] for the app to open it.
+    ///
+    /// @param hyperlink The link.
+    void followHyperlink(final LinkValue hyperlink) {
+        if (hyperlinkHandlerCount > 0) {
+            HyperlinkEvent.fire(this, hyperlink, new DefaultTaskMonitorFactory(this));
+        } else {
+            OpenHyperlinkRequest.fire(getElement(), hyperlink);
+        }
     }
 
     // --------------------------------------------------------------------------------
@@ -1414,6 +1484,9 @@ public class DataGrid<R> extends Widget
     }
 
     private void render() {
+        // First, while a render is still scheduled, so that a change to the sort it makes is drawn
+        // by this render rather than scheduling another
+        finishSortRebuild();
         renderScheduled = false;
         // Columns added after the grid was laid out (once a fetch returns) haven't been resolved
         // by the resize observer, which saw none
@@ -1441,7 +1514,7 @@ public class DataGrid<R> extends Widget
         }
         final boolean headerChanged = structureChanged || headersDirty;
         if (headerChanged) {
-            gridHeader.render(hideHeader);
+            gridHeader.render();
         }
         final boolean widthsChanged = structureChanged || renderedWidthVersion != columnModel.getWidthVersion();
         if (widthsChanged) {
@@ -1465,9 +1538,8 @@ public class DataGrid<R> extends Widget
         headersDirty = false;
 
         final boolean isEmpty = pageState.getRowDataSize() == 0;
-        empty.getStyle().setProperty("display", isEmpty && emptyMessage != null
-                ? ""
-                : "none");
+        // Which shows the empty message (data-grid.css)
+        setStyleName("data-grid--empty", isEmpty && emptyMessage != null);
         if (profile.hasCells()) {
             scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
             scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));
@@ -1537,12 +1609,12 @@ public class DataGrid<R> extends Widget
 
     private void applyWidths() {
         if (profile.hasCells()) {
-            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
-            DataGridDom.setCssVariable(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
+            CssProperties.set(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
+            CssProperties.set(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
         } else {
             // A list is as wide as what it is in, its last column taking the rest of the width
-            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toListTemplate());
-            DataGridDom.setCssVariable(getElement(),
+            CssProperties.set(getElement(), "--data-grid__columns", columnModel.toListTemplate());
+            CssProperties.set(getElement(),
                     "--data-grid__total-width",
                     "max(100%, " + columnModel.getListMinWidth() + "px)");
         }
@@ -1584,12 +1656,6 @@ public class DataGrid<R> extends Widget
     /// @return Whether the focus is in the grid's rows; the keyboard row is only shown while it is.
     boolean hasRowFocus() {
         return hasFocus;
-    }
-
-    /// @return The fixed row height set ([#setRowHeight(int)]), or 0 for rows as high as their
-    /// content.
-    int getFixedRowHeight() {
-        return rowHeight;
     }
 
     /// @return The row styles set ([#setRowStyles(RowStyles)]), or null.
@@ -1825,5 +1891,15 @@ public class DataGrid<R> extends Widget
         /// @param absIndex The absolute row index.
         /// @return A map of column index to the number of columns that cell spans. Empty for none.
         Map<Integer, Integer> getSpans(R row, int absIndex);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The owner is raw: a binder can't name a type variable
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<DivElement, DataGrid> {
+
     }
 }

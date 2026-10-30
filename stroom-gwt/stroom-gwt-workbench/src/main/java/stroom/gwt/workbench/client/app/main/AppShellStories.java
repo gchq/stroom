@@ -22,6 +22,7 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.app.activity.ActivityFixtures;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
@@ -30,8 +31,10 @@ import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.app.security.UserGroupsScreenStories;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.EventInit;
@@ -59,8 +62,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stories of `App/Main/AppShell`: Stroom's app shell put together by [ShellScreen] from Stroom's
-/// real presenters and plugins: the main view (its main menu), the explorer (`NavigationPresenter`:
-/// the tree, its toolbar and the current activity), the document tabs (`ContentTabPanePresenter`),
+/// real controllers and plugins: the main view (its main menu), the explorer (`ExplorerController`:
+/// the tree, its toolbar and the current activity), the document tabs (`ContentTabPaneController`),
 /// the explorer's and tabs' menus and document actions (`DocumentPluginEventManager`), keyboard
 /// shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary, Feed and Folder editors.
 ///
@@ -87,8 +90,8 @@ public final class AppShellStories {
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
-    // The explorer panel is NavigationViewImpl's '.navigation'
-    private static final String NAVIGATION = ".navigation";
+    // The explorer panel is Explorer's '.explorer'
+    private static final String NAVIGATION = ".explorer";
     // The document tabs' labels
     private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
     // A menu item's row (MenuItemCell), inside the element with its role and aria-disabled
@@ -97,8 +100,8 @@ public final class AppShellStories {
     private static final String MENU_SHORTCUT = ".menu__shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
-    // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
-    private static final String CONTENT_WITH_FOCUS = ".curveTabLayoutViewImpl-layerContainerOuter:focus-within";
+    // The content tab pane (CurveTabLayout) when the focus is in it
+    private static final String CONTENT_WITH_FOCUS = ".curve-tab-layout__layer-container-outer:focus-within";
 
     private static final String DICTIONARY_PATH = "/dictionary/v1/";
     private static final String CREATE_PATH = "/explorer/v2/create";
@@ -110,7 +113,7 @@ public final class AppShellStories {
     private static final String PERMISSIONS_PATH = "/explorer/v2/fetchExplorerPermissions";
     private static final String TERMINATE_OTHER_PATH = "/session/v1/terminateOther";
     private static final String EXPORT_PATH = "/content/v1/export";
-    private static final String ACKNOWLEDGE_SPLASH_PATH = ActivityFixtures.PATH + "/acknowledgeSplash";
+    private static final String ACKNOWLEDGE_SPLASH_PATH = ActivityFixtures.PATH + "/acknowledge";
 
     private static final String EMPTY_PAGE = """
             {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}""";
@@ -223,7 +226,7 @@ public final class AppShellStories {
                 .story("Embedded", AppShellStories::renderEmbedded)
                 .withPlay(play -> {
                     // Stroom shows a document without the shell for a URL that
-                    // names it without the open-doc action (CorePresenter); with open-doc (a deep
+                    // names it without the open-doc action (AppPageController); with open-doc (a deep
                     // link) it shows the whole shell, embedded or not. So the story opens the
                     // document as Stroom's embedded view does: its editor, without the explorer or
                     // the Ask Stroom AI button
@@ -360,6 +363,24 @@ public final class AppShellStories {
                             "One dark");
                     expectNoProblems(play);
                 })
+                // The Date and Time tab: a time zone given as an offset shows the offset's hours,
+                // named for what they are (the minutes are hidden: browsers don't support them)
+                .story("DateAndTimePreferences", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    final Query timeZone = dialog.querySelector("#userPreferencesTimeZone .selection-box__input");
+                    play.waitFor(() -> play.expect(timeZone).toHaveAttribute("role", "combobox"));
+                    play.click(timeZone);
+                    play.click(screen.findByText("Offset", ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Hours")).toBeVisible());
+                    play.expect(dialog.queryByRole("spinbutton", "Minutes")).toBeNull();
+                    expectNoProblems(play);
+                })
                 // The Keyboard Shortcuts tab lists each action the user can bind, one row per
                 // shortcut, with the built-in arrow keys that can't be changed
                 .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))
@@ -446,7 +467,7 @@ public final class AppShellStories {
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
                     // The banner is an alert, so a screen reader says it when it is shown
-                    play.waitFor(() -> play.expect(play.querySelector(".mainViewImpl-banner"))
+                    play.waitFor(() -> play.expect(play.querySelector(".main-screen__banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
                     play.expect(play.getByRole("alert")).toHaveTextContent(
                             TextMatch.containingIgnoreCase("system maintenance"));
@@ -504,15 +525,22 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.getByText("You must accept the terms to use this system"))
                             .toBeInTheDocument());
                     play.click(screen.getByRole("button", TextMatch.regex("close|ok", "i")));
-                    // Once the warning is closed, Stroom closes the splash screen
-                    // and never shows the app (SplashPresenter hides it and passes the rejection on),
-                    // so the terms can't then be accepted in the same story: nothing was acknowledged
-                    play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
+                    // Once the warning is closed, the terms are still shown, not acknowledged, and
+                    // the app still isn't shown (the splash screen once closed, leaving a blank page)
+                    play.waitFor(() -> play.expect(screen.queryByText(
+                            "You must accept the terms to use this system")).toBeNull());
+                    play.expect(screen.getByText("Accept to continue.")).toBeInTheDocument();
                     play.expect(play.queryByText("Dictionaries")).toBeNull();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(ACKNOWLEDGE_SPLASH_PATH).toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
                             "WARN: You must accept the terms to use this system");
+                    // Accepting them then is recorded, and the app is shown
+                    play.click(screen.getByRole("button", TextMatch.regex("accept", "i")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(ACKNOWLEDGE_SPLASH_PATH).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("Dictionaries")).toBeInTheDocument());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Double-clicking a document opens its editor in a tab; a folder opens too
@@ -558,7 +586,8 @@ public final class AppShellStories {
                             "Ask Stroom AI, Show Main Menu: 1 tab stop",
                             "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
-                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
+                            + "Collapse All Folders, Reload Explorer Tree, Filter Document Types, "
+                            + "Find in Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeInTheDocument());
@@ -569,7 +598,21 @@ public final class AppShellStories {
                             "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Save, Save As, Download Dictionary Words: 1 tab stop",
                             "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
-                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
+                            + "Collapse All Folders, Reload Explorer Tree, Filter Document Types, "
+                            + "Find in Content: 1 tab stop"));
+                })
+                // Reload fetches the tree again, asking the server to rebuild its copy first, so changes
+                // others made are shown
+                .story("ReloadExplorerTree", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Reload Explorer Tree"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/explorer/v2/fetchExplorerNodes")
+                                    .withJsonBodyContaining("{\"refresh\": true}")
+                                    .toSpyMatcher()));
+                    play.expect(navTree(play).getByText("Countries")).toBeInTheDocument();
+                    expectNoProblems(play);
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the
@@ -577,7 +620,7 @@ public final class AppShellStories {
                 .story("MainToolbarTabOrder", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
-                    final Query mainToolbar = play.querySelector(".mainToolbar");
+                    final Query mainToolbar = play.querySelector(".main-toolbar");
                     final Query explorer = play.querySelector(NAVIGATION);
                     play.run("expect the main toolbar to come before the explorer in the page", () -> {
                         if (!isBefore(mainToolbar.element().get(), explorer.element().get())) {
@@ -591,7 +634,7 @@ public final class AppShellStories {
                     play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
                     // The main view round it all isn't a tab stop (it was: a nameless stop holding
                     // the whole app, which Shift+Tab from the first button landed on)
-                    play.expect(play.querySelector(".mainViewImpl[tabindex]")).not().toBeInTheDocument();
+                    play.expect(play.querySelector(".main-screen[tabindex]")).not().toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened
@@ -627,6 +670,11 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    // The document's selected tab has it, so its tabs' keys work at once. Before, the
+                    // first tab stop did, which was the first toolbar button if the tabs hadn't been
+                    // laid out yet
+                    play.expect(play.querySelector(CONTENT_WITH_FOCUS + " [role='tab'][aria-selected='true']"))
+                            .toHaveFocus();
                     expectNoProblems(play);
                 })
                 // The 'Ask Stroom AI' chat docked to the right of the content (its config's dock
@@ -711,8 +759,8 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "new-doc").toSpyMatcher()));
                     // The tab is re-keyed in place: still one tab, labelled with the new document's
-                    // name (it once kept the old label, as DocTabPresenter.onRead didn't refresh the
-                    // tab when the name changed)
+                    // name (it once kept the old label, as the document's tab wasn't refreshed when
+                    // the name changed)
                     play.expect(tabs(play)).toHaveLength(1);
                     play.waitFor(() -> play.expect(tabs(play).nth(0)).toHaveTextContent("Countries Copy"));
                     expectNoProblems(play);
@@ -782,6 +830,19 @@ public final class AppShellStories {
                 // narrows. The runner's real input check (test-runner/lib/real-input/shortcuts.mjs)
                 // presses '?' to show the list, and Alt+PageUp and Alt+PageDown to move between the
                 // two tabs, as a play's keys have no key codes for the key bindings to read
+                // G S opens Search Result Stores (it did nothing: the shortcut was bound to the
+                // dialog before one had been made)
+                .story("GoToSearchResults", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    navTree(play).findByText("Countries");
+                    // GWT's key sequences complete on the keys' release, so the keys are pressed
+                    // and released rather than only pressed
+                    play.keyboard("gs");
+                    play.waitFor(() -> play.expect(screen.getByText("Search Result Stores", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument());
+                    expectNoProblems(play);
+                })
                 .story("KeyboardShortcuts", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -913,9 +974,9 @@ public final class AppShellStories {
                             .toBeInTheDocument();
                     final Query typeFilter = play.within(dialog).getByRole("button", "Filter Document Types");
                     play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
-                    // The Filter Document Types button is beside the quick filter, in the same row.
-                    // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
-                    play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
+                    // The Filter Document Types button is beside the quick filter, in the same row
+                    play.expect(play.within(typeFilter.closest(".dock-container-horizontal"))
+                            .getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER)).toBeInTheDocument();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(EXPORT_PATH)
@@ -949,8 +1010,7 @@ public final class AppShellStories {
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.queryByLabelText("Name")).toBeNull());
                     // The editor reloads the renamed document, and its tab is relabelled (it once kept
-                    // the old label, as DocTabPresenter.onRead didn't refresh the tab when the name
-                    // changed)
+                    // the old label, as the document's tab wasn't refreshed when the name changed)
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("document fetches", () -> countCalls(requests,
                             "GET " + DICTIONARY_PATH + "dict-countries")).toBe(2));
@@ -969,6 +1029,30 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.getByText("You must provide a new name for Countries"))
                             .toBeInTheDocument());
                     play.expect(screen.getByLabelText("Name")).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A failed rename is reported and keeps the dialog open with the new name, so it can
+                // be tried again (the dialog was once hidden before the request was sent)
+                .story("RenameFailureKeepsDialog", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> routes.put(RENAME_PATH, RestReply.error(500, "Name already in use")),
+                        builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
+                    final Query name = screen.findByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Nations");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.expect(screen.findByText(TextMatch.containing("Name already in use"))).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            ValueMatcher.stringContaining("Name already in use"));
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Name already in use")))
+                            .toBeNull());
+                    play.expect(screen.getByText("Rename Countries", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(screen.getByLabelText("Name")).toHaveValue("Nations");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Delete confirms, deletes and closes the deleted document's tab
@@ -1275,7 +1359,7 @@ public final class AppShellStories {
                 routes -> AiFixtures.chatRoutes(routes, "{\"dockType\": \"DOCK\", \"dockLocation\": \"RIGHT\"}"),
                 builder -> {
                 });
-        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiPresenter);
+        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiController);
         shell.start(null);
         return shell.asWidget();
     }
@@ -1426,7 +1510,7 @@ public final class AppShellStories {
         // Its options, the current theme's selected
         play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
                 .toBeGreaterThan(1));
-        play.click(play.screen().findByText(theme, ".selection-popup .selectionItemCell-text"));
+        play.click(play.screen().findByText(theme, ".selection-popup .selection-item-cell__text"));
         play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
         play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .selection-box__value"))
                 .toHaveTextContent(theme));
@@ -1438,11 +1522,11 @@ public final class AppShellStories {
         final Play screen = play.screen();
         play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
         play.click(dialog.querySelector("#userPreferencesEditorTheme .selection-box__input"));
-        final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
+        final Play list = screen.within(screen.findByText(themes[0], ".selection-item-cell__text")
                 .closest(".selection-popup"));
-        play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
+        play.expect(list.querySelector(".selection-item-cell__text")).toHaveTextContent(themes[0]);
         for (final String theme : themes) {
-            play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
+            play.expect(list.getByText(theme, ".selection-item-cell__text")).toBeInTheDocument();
         }
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());

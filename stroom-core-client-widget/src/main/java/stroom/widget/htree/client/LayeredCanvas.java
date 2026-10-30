@@ -16,26 +16,30 @@
 
 package stroom.widget.htree.client;
 
+import stroom.widget.util.client.CssProperties;
+
 import com.google.gwt.canvas.client.Canvas;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.OutlineStyle;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/// A canvas of stacked layers, made on demand by name, e.g. a tree's lines on one and its selection
+/// on another. Styled by `layered-canvas.css`; its size is set as custom properties on the root and
+/// on every layer, as a layer may be moved elsewhere to be drawn (e.g. the pipeline tree's faded
+/// layer, drawn in its faded group).
 public class LayeredCanvas extends FlowPanel {
+
+    private static final String BLOCK = "layered-canvas";
 
     private final Map<String, Canvas> layerMap = new HashMap<>();
     private int width = 100;
     private int height = 100;
 
     private LayeredCanvas() {
-        final Style style = getElement().getStyle();
-        style.setWidth(width, Unit.PX);
-        style.setHeight(height, Unit.PX);
+        setStyleName(BLOCK);
+        setSizeProperties(getElement());
     }
 
     public static LayeredCanvas createIfSupported() {
@@ -50,13 +54,8 @@ public class LayeredCanvas extends FlowPanel {
         if (canvas != null) {
             layerMap.put(name, canvas);
 
-            final Style style = canvas.getElement().getStyle();
-            style.setPosition(Position.ABSOLUTE);
-            style.setLeft(0, Unit.PX);
-            style.setTop(0, Unit.PX);
-            style.setWidth(width, Unit.PX);
-            style.setHeight(height, Unit.PX);
-            style.setOutlineStyle(OutlineStyle.NONE);
+            canvas.setStyleName(BLOCK + "__layer");
+            setSizeProperties(canvas.getElement());
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
 
@@ -80,14 +79,10 @@ public class LayeredCanvas extends FlowPanel {
         this.width = width;
         this.height = height;
 
-        Style style = getElement().getStyle();
-        style.setWidth(width, Unit.PX);
-        style.setHeight(height, Unit.PX);
+        setSizeProperties(getElement());
 
         for (final Canvas canvas : layerMap.values()) {
-            style = canvas.getElement().getStyle();
-            style.setWidth(width, Unit.PX);
-            style.setHeight(height, Unit.PX);
+            setSizeProperties(canvas.getElement());
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
         }
@@ -108,6 +103,12 @@ public class LayeredCanvas extends FlowPanel {
         for (final Canvas canvas : layerMap.values()) {
             hide(canvas);
         }
+    }
+
+    // The size, which layered-canvas.css's rules use
+    private void setSizeProperties(final Element element) {
+        CssProperties.set(element, "--" + BLOCK + "__width", width + "px");
+        CssProperties.set(element, "--" + BLOCK + "__height", height + "px");
     }
 
     private static void hide(final Canvas canvas) {

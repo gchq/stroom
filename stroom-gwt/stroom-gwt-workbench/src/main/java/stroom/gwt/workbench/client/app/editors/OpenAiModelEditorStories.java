@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
+import stroom.openai.client.component.OpenAIModelEditor;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelPresenter] (an
+/// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelEditor] (an
 /// OpenAI Model's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `OpenAIModelPlugin` does, the story fetches the document (`GET /openAIModel/v1/{uuid}`) and
@@ -99,7 +99,7 @@ public final class OpenAiModelEditorStories {
     private static final String VALIDATE = "/openAIModel/v1/validate";
 
     // A FormGroup gives its control the group's identity as its id
-    // (OpenAIModelSettingsViewImpl.ui.xml)
+    // (OpenAIModelSettings.ui.xml)
     private static final String BASE_URL = "#openAIModelBaseUrl";
     private static final String MODEL_ID = "#openAIModelId";
     private static final String API_KEY = "#openAIModelApiKey";
@@ -252,8 +252,8 @@ public final class OpenAiModelEditorStories {
                     // Read only, not disabled: the fields can be read and copied but not changed
                     play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toHaveAttribute("readonly"));
                     play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();
-                    // A read-only SelectionBox has the selection-box--readonly modifier
-                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--readonly");
+                    // A read-only SelectionBox has the selection-box--read-only modifier
+                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--read-only");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -265,7 +265,7 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
                     play.waitFor(() -> play.expect(play.within(play.querySelector(API_KEY))
                             .querySelector(StroomDom.SELECTION_BOX)).toHaveValue("openai-key"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The HTTP client configuration dialog, editable: the partner of
@@ -283,7 +283,7 @@ public final class OpenAiModelEditorStories {
                 .story("HttpClientConfigReadOnly", context -> render(context, null, true))
                 .withPlay(play -> {
                     showHttpClientConfig(play);
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The TLS dialog's Key Store picker offers both kinds of key store credential: an
@@ -361,7 +361,7 @@ public final class OpenAiModelEditorStories {
         final OpenAIModelResource resource = GWT.create(OpenAIModelResource.class);
         return DocEditors.render(context, builder.build(), readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getOpenAIModelPresenter(),
+                injector.getOpenAIModelEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

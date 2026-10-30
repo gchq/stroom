@@ -244,21 +244,6 @@ final class Keys {
         return new String[]{UNKNOWN, code};
     }
 
-    /// @param name A key name from between braces, e.g. `Enter` or `enter`.
-    /// @return The key value, e.g. `Enter`; an unknown name is its own key value, as in
-    /// user-event, e.g. `{Foo}` presses a key `Foo` whose `code` is `Unknown`.
-    static String keyForName(final String name) {
-        return lookUpName(name)[0];
-    }
-
-    /// @param code A key code from between brackets, e.g. `KeyA`, `Digit1` or `ShiftLeft`, in any
-    ///             case, as user-event looks codes up ignoring case.
-    /// @return The key value, e.g. `a`, `1` or `Shift`, or `Unknown` for a code that isn't on
-    /// user-event's keyboard.
-    static String keyForCode(final String code) {
-        return lookUpCode(code)[0];
-    }
-
     /// @param key A key value, e.g. `a`, `A`, `Enter` or ` `.
     /// @return The legacy `keyCode` browsers give it, e.g. 65 for `a`, which GWT's `KeyCodes`
     /// use; 0 if unknown.

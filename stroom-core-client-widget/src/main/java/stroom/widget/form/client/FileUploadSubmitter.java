@@ -27,7 +27,7 @@ import com.google.gwt.dom.client.Element;
  * security filter requires for session-authenticated, state-changing requests. Cross-site
  * scripts cannot set custom headers, so the header proves the request came from our own UI.
  */
-final class FileUploadSubmitter {
+public final class FileUploadSubmitter {
 
     /**
      * Must match {@code ImportFileServlet.FILE_UPLOAD_PROP_NAME} on the server.
@@ -48,9 +48,9 @@ final class FileUploadSubmitter {
      * @param fileInputElement The {@code <input type="file">} element holding the selected file.
      * @param callback         Notified of the success or failure of the upload.
      */
-    static void submit(final String url,
-                       final Element fileInputElement,
-                       final FileUploadCallback callback) {
+    public static void submit(final String url,
+                              final Element fileInputElement,
+                              final FileUploadCallback callback) {
         doSubmit(url, fileInputElement, FILE_FIELD_NAME, CSRF_HEADER, CSRF_VALUE, callback);
     }
 

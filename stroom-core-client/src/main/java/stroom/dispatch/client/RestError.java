@@ -52,10 +52,6 @@ public class RestError {
         return getUnwrapped();
     }
 
-    public Throwable getRawThrowable() {
-        return throwable;
-    }
-
     @Override
     public String toString() {
         return getMessage();

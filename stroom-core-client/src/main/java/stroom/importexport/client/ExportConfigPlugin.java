@@ -17,16 +17,19 @@
 package stroom.importexport.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
+import stroom.importexport.client.component.ExportConfigController;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Separator;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
@@ -38,9 +41,15 @@ public class ExportConfigPlugin extends Plugin {
 
     @Inject
     public ExportConfigPlugin(final EventBus eventBus,
-                              final ClientSecurityContext securityContext) {
+                              final ClientSecurityContext securityContext,
+                              final AppRoot appRoot,
+                              final Provider<ExportConfigController> exportConfigProvider) {
         super(eventBus);
         this.securityContext = securityContext;
+
+        // The screens it opens, made when first asked for
+        eventBus.addHandler(ExportConfigEvent.getType(), event ->
+                exportConfigProvider.get().show(appRoot, event.getSelection()));
     }
 
     @Override

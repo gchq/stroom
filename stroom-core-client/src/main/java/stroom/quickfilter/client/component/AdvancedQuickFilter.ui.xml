@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A quick filter as an expression tree, below a message when its text couldn't be converted -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max dock-container-vertical advanced-quick-filter">
+        <tx:Label ui:field="message" styleName="dock-min advanced-quick-filter__message" visible="false"/>
+        <g:SimplePanel styleName="dock-max advanced-quick-filter__expression">
+            <q:ExpressionEditor ui:field="expressionEditor"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

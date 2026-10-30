@@ -42,12 +42,12 @@ export function readColumn(page, name) {
     for (const g of scope.querySelectorAll('.data-grid, [role=grid]')) {
       if (!(g.offsetWidth > 0)) continue;
       const heads = [...g.querySelectorAll('thead th, [role=columnheader]')];
-      const idx = heads.findIndex((h) => strip(h.querySelector('.column-label')?.textContent ?? h.textContent) === wanted);
+      const idx = heads.findIndex((h) => strip(h.querySelector('.column-header__label')?.textContent ?? h.textContent) === wanted);
       if (idx < 0) continue;
       const h = heads[idx];
       const icon = h.querySelector('[class*="fields-sort-"]');
       const direction = icon ? (/descending/.test(icon.className.baseVal ?? icon.className) ? 'desc' : 'asc') : null;
-      const order = norm(h.querySelector('.column-sortOrder')?.textContent) || null;
+      const order = norm(h.querySelector('.sort-icon__order, .column-header__sort-order')?.textContent) || null;
       const rows = [...g.querySelectorAll('tbody tr, [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && norm(r.textContent));
       const values = rows.map((r) => {
         const cells = r.querySelectorAll('td, [role=gridcell]');
@@ -148,9 +148,9 @@ export function readPager(page, title) {
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const btn = [...scope.querySelectorAll(`button[title="${wanted}"]`)].find((b) => b.offsetWidth > 0);
-    const pager = btn?.closest('.pager-paging');
+    const pager = btn?.closest('.paging-bar');
     if (!pager) return null;
-    const labels = [...pager.querySelectorAll('.pager-label')].map((l) => norm(l.textContent));
+    const labels = [...pager.querySelectorAll('.paging-bar__label')].map((l) => norm(l.textContent));
     // title · from · "to" · to · "of" · of — the separators are labels too, and the title is the
     // grid's name. Read the three numbers by position around the separators.
     const toI = labels.findIndex((l) => l === 'to');

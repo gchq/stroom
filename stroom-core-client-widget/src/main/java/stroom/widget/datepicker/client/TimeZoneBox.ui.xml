@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A time zone: how it is given (local, UTC, an id or an offset), then the id or the offset -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.widget.selection.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="timeZone"
+                        label="Time Zone"
+                        helpText="Time zone used for times in this setting: Local, UTC, Id (a named zone) or Offset (a fixed offset from UTC). Default is UTC."
+                        screenReaderText="Local, UTC, Id or Offset. Default is UTC.">
+            <item:SelectionBox ui:field="timeZoneUse"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="timeZoneIdGroup"
+                        identity="timeZoneId"
+                        label="Time Zone Id"
+                        helpText="Named time zone, e.g. Europe/London. Shown when Time Zone is set to Id."
+                        screenReaderText="e.g. Europe/London.">
+            <item:SelectionBox ui:field="timeZoneId"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="timeZoneOffsetGroup"
+                        identity="timeZoneOffset"
+                        label="Time Zone Offset"
+                        helpText="Fixed offset from UTC in whole hours, from -12 to +12. Shown when Time Zone is set to Offset."
+                        screenReaderText="Whole hours from -12 to +12.">
+            <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

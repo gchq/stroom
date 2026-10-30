@@ -16,21 +16,20 @@
 
 package stroom.security.identity.client;
 
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.CellIcon;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.identity.client.component.AccountsController;
 import stroom.security.identity.client.event.OpenAccountEvent;
-import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -41,7 +40,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
+public class AccountsPlugin extends MonitoringPlugin<AccountsController> {
 
     public static final String SCREEN_NAME = "Accounts";
     public static final SvgImage ICON = SvgImage.USER;
@@ -52,16 +51,16 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     public AccountsPlugin(final EventBus eventBus,
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<AccountsPresenter> accountsPresenterProvider,
+                          final Provider<AccountsController> accountsControllerProvider,
                           final Provider<UiConfigCache> uiConfigCacheProvider,
                           final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, accountsPresenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, accountsControllerProvider, securityContext, documentPluginRegistry);
         this.uiConfigCacheProvider = uiConfigCacheProvider;
 
-        registerHandler(getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
-            open(accountsPresenter ->
-                    accountsPresenter.setFilterInput(buildFilterInput(event.getUserId())));
-        }));
+        getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
+            open(accountsController ->
+                    accountsController.setFilterInput(buildFilterInput(event.getUserId())));
+        });
     }
 
     private String buildFilterInput(final String userId) {
@@ -83,10 +82,10 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     }
 
     @Override
-    public void open(final Consumer<AccountsPresenter> consumer) {
-        super.open(presenter -> {
-            presenter.refresh();
-            consumer.accept(presenter);
+    public void open(final Consumer<AccountsController> consumer) {
+        super.open(controller -> {
+            controller.refresh();
+            consumer.accept(controller);
         });
     }
 
@@ -118,6 +117,6 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
     @Override
     public String getType() {
-        return AccountsPresenter.TAB_TYPE;
+        return AccountsController.TAB_TYPE;
     }
 }

@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent folder"
+                        addStyleNames="dock-max overflow-hidden focus-ring-room"
+                        helpText="The folder to create the new item in.">
+            <g:SimplePanel styleName="dock-max overflow-hidden default-min-sizes focus-ring-room">
+                <ex:DocumentPicker ui:field="folders"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="nameGroup" identity="createDocumentName" label="Name" addStyleNames="dock-min" required="true"
+                        helpText="The name of the new item. Folder names may only contain letters, numbers, spaces and _ - . ( )."
+                        screenReaderText="Folder names: letters, numbers, spaces, underscores, hyphens, full stops, brackets only.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="createDocumentPermissions" label="Permissions" addStyleNames="dock-min"
+                        helpText="Sets the permissions of the new item. None: no permissions are added. Destination: the parent folder's permissions are copied. You always become an owner. Default is Destination."
+                        screenReaderText="You become an owner. Default is Destination.">
+            <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

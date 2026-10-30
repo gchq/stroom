@@ -1,0 +1,53 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A task of the user's (stroom.task.client.component.UserTask), named BEM style: its details (its
+   name, age and status), taking the width, then its actions (its Terminate button, red).
+*/
+
+.user-task {
+    position: relative;
+    width: 100%;
+    display: flex;
+    border-bottom: 1px solid grey;
+}
+
+.user-task__details {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+}
+
+.user-task__actions {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 5px 8px;
+}
+
+/* Its details' lines wrap */
+.user-task .user-task__text {
+    white-space: normal;
+}
+
+.user-task__name {
+    font-weight: bold;
+}
+
+/* Its icon red: the colour a toolbar button's icon takes (toolbar-button.css) */
+.user-task__terminate {
+    --icon-button__color: red;
+}

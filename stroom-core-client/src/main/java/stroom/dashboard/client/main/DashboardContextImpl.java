@@ -16,12 +16,8 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.main.DashboardContextChangeEvent.Handler;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.client.component.TableController;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnValueSelection;
@@ -33,13 +29,18 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
-import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.component.QueryToolbarController;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
+import stroom.query.client.result.table.HasParams;
 import stroom.util.shared.NullSafe;
 import stroom.visualisation.shared.VisColourList;
+import stroom.widget.component.client.Listeners;
+import stroom.widget.datagrid.client.CopyTextUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -58,25 +59,30 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     private final EventBus eventBus;
-    private final Components components;
-    private final QueryToolbarPresenter queryToolbarPresenter;
+    private final Panes components;
+    private final QueryToolbarController queryToolbar;
     // The colours of the values the visualisations colour by
     private final VisColourList visColourList = new VisColourList();
     private List<ComponentState> parentComponentStates = new ArrayList<>();
     private List<Param> linkParams = Collections.emptyList();
     private DocRef dashboardDocRef;
 
+    // The components that follow the dashboard's components and context
+    private final Listeners<DashboardPane> componentChangeListeners = new Listeners<>();
+    private final Listeners<DashboardContext> contextChangeListeners = new Listeners<>();
+
     public DashboardContextImpl(final EventBus eventBus,
-                                final Components components,
-                                final QueryToolbarPresenter queryToolbarPresenter) {
+                                final Panes components,
+                                final QueryToolbarController queryToolbar) {
         this.eventBus = eventBus;
         this.components = components;
-        this.queryToolbarPresenter = queryToolbarPresenter;
+        this.queryToolbar = queryToolbar;
     }
 
     public void setParent(final DashboardContext parent) {
@@ -89,7 +95,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     @Override
     public TimeRange getRawTimeRange() {
-        return queryToolbarPresenter.getTimeRange();
+        return queryToolbar.getTimeRange();
     }
 
     @Override
@@ -101,7 +107,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public Components getComponents() {
+    public Panes getComponents() {
         return components;
     }
 
@@ -118,7 +124,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     @Override
     public List<Param> getParams() {
         final List<Param> combinedParams = new ArrayList<>();
-        for (final Component component : components) {
+        for (final DashboardPane component : components) {
             if (component instanceof HasParams) {
                 final List<Param> params = ((HasParams) component).getParams();
                 combinedParams.addAll(params);
@@ -129,11 +135,11 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     public SafeHtml toSafeHtml(final boolean showInsert) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
         final List<ComponentState> componentStates = getComponentStates();
         printContext(tb, componentStates, showInsert);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb::write, Attribute.className("info-table"));
         return htmlBuilder.toSafeHtml();
     }
 
@@ -173,13 +179,13 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         Collections.emptyList()));
             }
 
-            final Components components = dashboardContext.getComponents();
-            final Collection<Component> componentList = components
+            final Panes components = dashboardContext.getComponents();
+            final Collection<DashboardPane> componentList = components
                     .getComponents()
                     .stream()
-                    .sorted(Comparator.comparing(Component::getDisplayValue))
+                    .sorted(Comparator.comparing(DashboardPane::getDisplayValue))
                     .collect(Collectors.toList());
-            for (final Component component : componentList) {
+            for (final DashboardPane component : componentList) {
                 List<Param> paramList = new ArrayList<>();
                 final List<List<Param>> selectionList = new ArrayList<>();
                 final List<ColumnSelectionFilter> filterList = new ArrayList<>();
@@ -205,8 +211,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     }
                 }
 
-                if (component instanceof final TablePresenter tablePresenter) {
-                    final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+                if (component instanceof final TableController tableController) {
+                    final List<Column> columns = tableController.getTableComponentSettings().getColumns();
                     if (NullSafe.hasItems(columns)) {
                         for (final Column column : columns) {
                             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
@@ -241,29 +247,29 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return list;
     }
 
-    private void printContext(final TableBuilder tb,
+    private void printContext(final HtmlTableBuilder tb,
                               final List<ComponentState> componentStates,
                               final boolean showInsert) {
         if (componentStates != null) {
             for (final ComponentState componentState : componentStates) {
-                tb.row(TableCell.header(componentState.name));
+                tb.row(HtmlTableCell.header(componentState.name));
                 for (final Param param : componentState.params) {
                     final String key = ParamUtil.create(param.getKey());
-                    tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                            TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
+                    tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                            HtmlTableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                 }
 
                 if (NullSafe.hasItems(componentState.selectionList)) {
                     boolean first = true;
                     for (final List<Param> selection : componentState.selectionList) {
                         if (!first) {
-                            tb.row(TableCell.data("------"));
+                            tb.row(HtmlTableCell.data("------"));
                         }
                         for (final Param param : selection) {
                             final String key = ParamUtil.create(param.getKey());
 
-                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                                    TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
+                            tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    HtmlTableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                         }
                         first = false;
                     }
@@ -272,7 +278,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 if (NullSafe.hasItems(componentState.filterList)) {
                     for (final ColumnSelectionFilter filter : componentState.filterList) {
                         if (filter.selection.isEnabled()) {
-                            tb.row(TableCell.header(filter.name));
+                            tb.row(HtmlTableCell.header(filter.name));
                             String value = filter
                                     .selection
                                     .getValues()
@@ -285,8 +291,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                             }
 
                             final String key = ParamUtil.create(filter.id);
-                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                                    TableCell.data(CopyTextUtil.render(value, showInsert)));
+                            tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    HtmlTableCell.data(CopyTextUtil.render(value, showInsert)));
                         }
                     }
                 }
@@ -521,18 +527,18 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public HandlerRegistration addComponentChangeHandler(final ComponentChangeEvent.Handler handler) {
-        return eventBus.addHandlerToSource(ComponentChangeEvent.getType(), this, handler);
+    public HandlerRegistration addComponentChangeListener(final Consumer<DashboardPane> listener) {
+        return componentChangeListeners.add(listener);
     }
 
     @Override
-    public HandlerRegistration addContextChangeHandler(final Handler handler) {
-        return eventBus.addHandlerToSource(DashboardContextChangeEvent.getType(), this, handler);
+    public HandlerRegistration addContextChangeListener(final Runnable listener) {
+        return contextChangeListeners.add(ignored -> listener.run());
     }
 
     @Override
-    public void fireComponentChangeEvent(final Component component) {
-        ComponentChangeEvent.fire(this, component);
+    public void fireComponentChangeEvent(final DashboardPane component) {
+        componentChangeListeners.fire(component);
         fireContextChangeEvent();
     }
 
@@ -543,7 +549,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     @Override
     public void fireContextChangeEvent() {
-        DashboardContextChangeEvent.fire(this, this);
+        contextChangeListeners.fire(this);
     }
 
     private static class ComponentState {
@@ -572,18 +578,6 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
         public String getName() {
             return name;
-        }
-
-        public List<Param> getParams() {
-            return params;
-        }
-
-        public List<List<Param>> getSelectionList() {
-            return selectionList;
-        }
-
-        public List<ColumnSelectionFilter> getFilterList() {
-            return filterList;
         }
     }
 

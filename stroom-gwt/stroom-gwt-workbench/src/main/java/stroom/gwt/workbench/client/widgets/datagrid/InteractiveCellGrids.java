@@ -16,14 +16,13 @@
 
 package stroom.gwt.workbench.client.widgets.datagrid;
 
+import stroom.cell.client.ActionMenuCell;
+import stroom.cell.client.CommandLink;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.ActionMenuCell;
-import stroom.cell.info.client.CommandLink;
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -33,12 +32,11 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Item;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Timer;
@@ -59,7 +57,7 @@ import java.util.Set;
 /// They check that [DataGrid] works with Stroom's existing GWT cells unchanged: the cells get
 /// their events, their field updaters fire, a click on a control in a cell does not select the row,
 /// a cell that redraws itself is put right when the row is sent again, and a cell being edited keeps
-/// the focus while its row is redrawn. The columns are built as Stroom's presenters build them.
+/// the focus while its row is redrawn. The columns are built as Stroom's controllers build them.
 final class InteractiveCellGrids {
 
     static final String ON_CHANGE = "onChange";
@@ -78,6 +76,9 @@ final class InteractiveCellGrids {
     // Enter), as one did now and then under load when it was 250ms: the row drawn again lost the
     // cleared field's text, and the typed value wasn't committed
     private static final int SPINNER_POLL_MILLIS = 10;
+    // Stops the value spinner grid's polling (valueSpinnerGrid sets it)
+    private static Runnable stopPolling = () -> {
+    };
 
     private InteractiveCellGrids() {
         // Static utility
@@ -89,7 +90,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Tick box column with a select-all header, as ColumnSelectionPresenter builds them
+    // Tick box column with a select-all header, as ColumnSelection builds them
 
     static Widget tickBoxGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
@@ -129,7 +130,7 @@ final class InteractiveCellGrids {
         });
         column.setFieldUpdater((index, person, value) -> {
             if (LOCKED.equals(person.getName())) {
-                // Refused: send the rows again, as a presenter refreshing from the server would
+                // Refused: send the rows again, as a controller refreshing from the server would
                 grid.setRowData(0, rows);
                 return;
             }
@@ -153,7 +154,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Value spinner column, as JobNodeListPresenter's Max Tasks, in a grid that polls
+    // Value spinner column, as JobNodeList's Max Tasks, in a grid that polls
 
     static Widget valueSpinnerGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
@@ -177,11 +178,13 @@ final class InteractiveCellGrids {
                 DataGridUtil.headingBuilder("Max Tasks").build(),
                 80);
         // Changes on every poll, so each poll really rewrites every row
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> "Poll " + polls[0]).build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> polls[0] < 0
+                        ? "Stopped"
+                        : "Poll " + polls[0]).build(),
                 "Polled", 100);
         grid.setRowData(rows);
 
-        // As NodeStatusListPresenter and JobNodeListPresenter poll and redraw
+        // As NodeStatusList and JobNodeList poll and redraw
         final Timer poll = new Timer() {
             @Override
             public void run() {
@@ -196,16 +199,29 @@ final class InteractiveCellGrids {
                 poll.cancel();
             }
         });
+        // For the play's end: the grid stops polling and shows the same thing every run, so that
+        // its screenshot doesn't depend on how many polls the play took
+        stopPolling = () -> {
+            poll.cancel();
+            polls[0] = -1;
+            grid.setRowData(0, rows);
+        };
         return sized(grid);
     }
 
+    /// Stops the value spinner grid's polling, its Polled column then saying so.
+    static void stopPolling() {
+        stopPolling.run();
+    }
+
     // --------------------------------------------------------------------------------
-    // Text field column, as FloorMapSettingsPresenter builds them, in a grid showing Stroom's menus
+    // Text field column, as FloorMapSettings builds them, in a grid showing Stroom's menus
 
     static Widget textFieldGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final DataGrid<Person> grid = new DataGrid<>(popups.getEventBus()::fireEvent);
+        // The grid asks for its context menu with a MenuRequest
+        StoryPopups.create(context).withPageRequests();
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setTableName("People");
@@ -232,7 +248,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Expander column, as the client-built trees (e.g. DataRetentionImpactPresenter) build them
+    // Expander column, as the client-built trees (e.g. DataRetentionImpactController) build them
 
     static Widget expanderGrid(final StoryContext context) {
         final List<TreeRow> tree = Arrays.asList(
@@ -243,7 +259,7 @@ final class InteractiveCellGrids {
                 new TreeRow("Bob Smith", 1, true));
         final Set<String> expanded = new HashSet<>();
 
-        final DataGrid<TreeRow> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<TreeRow> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
@@ -282,7 +298,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Command link column, as JobNodeListHelper's schedule column
+    // Command link column, as JobNodeColumns' schedule column
 
     static Widget commandLinkGrid(final StoryContext context) {
         final Spy onOpen = context.fn(ON_OPEN);
@@ -300,11 +316,12 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Action menu column, as the rule list presenters' row menus
+    // Action menu column, as the rule list controllers' row menus
 
     static Widget actionMenuGrid(final StoryContext context) {
         final Spy onAction = context.fn(ON_ACTION);
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        // The cell asks for its menu with a MenuRequest, which the relay shows
+        StoryPopups.create(context).withPageRequests();
         final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
@@ -317,7 +334,7 @@ final class InteractiveCellGrids {
                     .command(() -> onAction.call("copy", person.getName()))
                     .build());
             return items;
-        }, popups.getEventBus()::fireEvent);
+        });
         grid.addColumn(new Column<Person, Person>(cell) {
             @Override
             public Person getValue(final Person person) {
@@ -336,7 +353,7 @@ final class InteractiveCellGrids {
     }
 
     private static DataGrid<Person> grid() {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         return grid;

@@ -22,9 +22,9 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.TickBox;
 
-/// Stories for [CustomCheckBox], the tick box (`tick-box`) used in Stroom's forms. A form's tick box is
+/// Stories for [TickBox], the tick box (`tick-box`) used in Stroom's forms. A form's tick box is
 /// ticked or not (e.g. whether something is enabled), so it has no half-ticked state: that belongs
 /// to the tick box of Stroom's grids, which is smaller and has its own stories
 /// (`Widgets/Cell Renderers/TickBoxCell`).
@@ -73,7 +73,7 @@ public final class TickBoxStories {
                 })
                 // Read only - can be focused and read, but clicking it or its label changes nothing
                 .story("ReadOnly", context -> {
-                    final CustomCheckBox checkBox = checkBox(context, true, "Read only");
+                    final TickBox checkBox = checkBox(context, true, "Read only");
                     checkBox.setReadOnly(true);
                     return checkBox;
                 })
@@ -101,7 +101,7 @@ public final class TickBoxStories {
                 // Its text set with GWT's setText: the label's text, not the box's (which it once replaced,
                 // losing the tick)
                 .story("SetText", context -> {
-                    final CustomCheckBox checkBox = checkBox(context, true, null);
+                    final TickBox checkBox = checkBox(context, true, null);
                     checkBox.setText("Set by setText");
                     return checkBox;
                 })
@@ -113,17 +113,17 @@ public final class TickBoxStories {
                 })
                 // No label - a bare tick box, named for screen readers as a view would name it
                 .story("NoLabel", context -> {
-                    final CustomCheckBox checkBox = checkBox(context, false, null);
+                    final TickBox checkBox = checkBox(context, false, null);
                     checkBox.setAriaLabel("Agree");
                     return checkBox;
                 })
                 .withPlay(play -> play.expect(play.getByRole("checkbox", "Agree")).not().toBeChecked());
     }
 
-    private static CustomCheckBox checkBox(final StoryContext context,
+    private static TickBox checkBox(final StoryContext context,
                                            final boolean value,
                                            final String label) {
-        final CustomCheckBox checkBox = new CustomCheckBox();
+        final TickBox checkBox = new TickBox();
         checkBox.setValue(value);
         if (label != null) {
             checkBox.setLabel(label);
@@ -133,7 +133,7 @@ public final class TickBoxStories {
         return checkBox;
     }
 
-    private static CustomCheckBox disabled(final CustomCheckBox checkBox) {
+    private static TickBox disabled(final TickBox checkBox) {
         checkBox.setEnabled(false);
         return checkBox;
     }

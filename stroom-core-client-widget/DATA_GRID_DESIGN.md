@@ -35,7 +35,7 @@ The forks shadow GWT 2.13.0. This architecture has several costs:
 * **Header and body are separate tables.** GWT `DataGrid` puts them in a `HeaderPanel` with a
   `CustomScrollPanel`, and keeps their column widths and horizontal scroll in step by hand.
 * **The whole page is always rendered.** The dashboard table allows a page of up to 10,000 rows
-  (`BasicTableSettingsViewImpl.java:72-74`), and `ImportConfigConfirmPresenter` uses a page of
+  (`BasicTableSettings.ui.xml` (`minValue`/`maxValue`)), and `ImportConfigConfirmController` uses a page of
   100,000 (`MASSIVE_LIST_PAGE_SIZE`). Every one of those rows is in the DOM.
 * **Browser events are handled one tick late.** The forked `AbstractHasData.onBrowserEvent`
   (`AbstractHasData.java:744-776`) runs `onBrowserEvent2` inside `scheduleDeferred`. By then the
@@ -108,7 +108,7 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | multi-select / single-select / no selection | 30 / ~35 / ~11 |
 | server sort (`addColumnSortHandler` + `CriteriaUtil`) / client sort | 33 / ~7 |
 | server-paged (`RestDataProvider`) / client list (`setRowData`) | 46 / ~30 |
-| `setMultiLine(true)` | 16 (`TaskManagerListPresenter` toggles it at runtime) |
+| `setMultiLine(true)` | 16 (`ServerTaskList` toggles it at runtime) |
 | tick-box columns / select-all header | 21 / 7 |
 | in-cell editors (`TickBoxCell`, `ValueSpinnerCell`) | 21 / 3 |
 | expander (tree) columns | 8 |
@@ -116,9 +116,9 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | header tooltips (`withToolTip`) | 35 files, 153 calls |
 | `enabledWhen` (dimmed cells) | 24 files, 121 calls |
 | `setRowStyles` | 3 (dashboard, query results, traces) |
-| `setHeadingListener` (header menu, persisted widths and order) | 2 (dashboard `TablePresenter`, `QueryResultTablePresenter`) |
+| `setHeadingListener` (header menu, persisted widths and order) | 2 (dashboard `TableController`, `QueryResultTableController`) |
 | `setTableName` (for Ask AI and CSV) | 75 files |
-| page size other than 100 | 1000 ×4, 100000 ×1 (`ImportConfigConfirmPresenter`) |
+| page size other than 100 | 1000 ×4, 100000 ×1 (`ImportConfigConfirmController`) |
 | dashboard page size | user-configurable, 1–10,000 |
 
 Usage falls into eight categories:
@@ -137,10 +137,10 @@ Usage falls into eight categories:
 
 ### 3.1 The hardest consumers
 
-1. **Dashboard `TablePresenter` and `QueryResultTablePresenter`.**
+1. **Dashboard `TableController` and `QueryResultTableController`.**
    * Pages of up to 10k rows.
    * Variable row heights from per-column wrapping (`Format.wrap` → `white-space: normal`,
-     `TablePresenter.java:862-875`).
+     `TableController.java:862-875`).
    * A server-driven group tree.
    * Conditional-formatting CSS generated at runtime.
    * A live `<input>` and button in each header (`FilterCell`).
@@ -152,7 +152,7 @@ Usage falls into eight categories:
    command links must not select the row (the `EventCell` / consumed-events rules,
    `DataGridSelectionEventManager.java:89-149`).
 3. **Meta browser.** Id-set selection kept across pages; a tri-state header; `redrawHeaders()`.
-4. **Server Tasks** (`TaskManagerListPresenter`). Pages of 1000 rows, auto-refresh, tree expanders,
+4. **Server Tasks** (`ServerTaskList`). Pages of 1000 rows, auto-refresh, tree expanders,
    and multi-line switched on and off at runtime.
 5. **ImportConfigConfirm.** A page of 100k rows with a select-all header.
 
@@ -163,7 +163,7 @@ Usage falls into eight categories:
 ### 4.1 Package and naming
 
 Package `stroom.widget.datagrid.client`, main class `DataGrid<R>` (decided, §10). During
-switch-over both `DataGrid` and `MyDataGrid` implement a `DataGridView<R>` interface.
+switch-over both `DataGrid` and `MyDataGrid` implement a `GridDisplay<R>` interface.
 
 * The pure-Java model classes go in `stroom.widget.datagrid.client.model`, in
   `stroom-core-client-widget` (decided, §10).
@@ -193,7 +193,7 @@ div.data-grid                       role=grid, tabindex, CSS vars: --data-grid__
 * **Column template.** `--data-grid__columns` holds the template, e.g. `"22px 200px 340.5px"`.
   * Header rows and body rows both use `display: grid; grid-template-columns: var(--data-grid__columns)`.
   * Resizing a column means writing one CSS custom property. No rows are re-rendered.
-  * A column span is `grid-column: span N` (R-R9).
+  * A column span is the cell's `data-grid__cell--span` class with its `--data-grid__span: N` (so the cell's `style` holds only a custom property) (R-R9).
 * **Horizontal scroll.** Header and body are in the same scroller, so they always scroll together.
   No synchronisation code is needed.
 * **Scrollbars: overlay thumbs (decided, §10).** The thumbs float over the grid area as they do
@@ -305,7 +305,7 @@ mostly changing a type:
   * `parent` is the `data-grid__cell` element.
   * `ColumnBuilder`, `HeadingBuilder` and `DataGridUtil` keep working.
 * **`MyDataGrid` method set.** All the `MyDataGrid` methods listed in §5.12. The plan is to extract an
-  interface `DataGridView<R>` that **both** widgets implement, so presenters can be switched by
+  interface `GridDisplay<R>` that **both** widgets implement, so presenters can be switched by
   changing one type, or one factory, at a time.
 
 ---
@@ -335,10 +335,10 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | --- | --- | --- |
 | R-C1 | **Fixed column**: `addColumn(col, name[, width])`. Default width 200. Not resizable, not movable. | G `:912-922` |
 | R-C2 | **Resizable column**: `addResizableColumn(col, name/header, width)`. Resizable **and** movable. | G `:928, :992` |
-| R-C3 | **Fill column**: `addAutoResizableColumn(col, name/header, [fillWeight=100], initialMinimumWidth)`. Resizable and movable. Takes up the remaining space on the first layout, and that pixel width becomes its starting width. The declared width is a floor: fill only ever grows a column, never shrinks it. Usually the last column. Several fill columns share the space by weight (Dependencies has 4, DocRefList and PropertyList have 2 each). | G `:953-990` |
+| R-C3 | **Fill column**: `addAutoResizableColumn(col, name/header, [fillWeight=100], initialMinimumWidth)`. Resizable and movable. Takes up the remaining space on the first layout, and that pixel width becomes its starting width. The declared width is a floor: fill only ever grows a column, never shrinks it. Usually the last column. Several fill columns share the space by weight (Dependencies has 4, ImportList and PropertyList have 2 each). | G `:953-990` |
 | R-C3a | **Percent column** (new): a width given as a percentage of the grid's **initial visible width**. It is converted to pixels once, on the first layout, and is a plain pixel column from then on. It does not track later resizes. | New |
 | R-C4 | **Initial width resolution runs once, on the first layout with a non-zero width**, so a grid built in a hidden tab waits until it is shown. Order: (1) fixed columns use their declared pixels; (2) percent columns become `(int)(outerWidth × pct / 100)`; (3) fill columns share what is left. If steps 1–2 already overflow the grid, fill columns keep their declared floor and the grid scrolls horizontally. `remaining = outerWidth − Σ(widths after steps 1–2, including fill floors)`. If `remaining > 0`, each fill column gets `declared + (int)(remaining / Σweight × weight)`, **truncated, not rounded** (rounding was a source of drift found by the React port). After that, widths belong to the user. A container resize does **not** run the fill again. (Today it runs six times on timers; one run on the first non-zero `ResizeObserver` measurement replaces that.) | G `:1059, :1132-1151` |
-| R-C5 | `resizeTableToFitColumns()` is kept as a public method. Callers use it after rebuilding columns (`TablePresenter`, `QueryResultTablePresenter :731, :917`). | G |
+| R-C5 | `resizeTableToFitColumns()` is kept as a public method. Callers use it after rebuilding columns (`TableController`, `QueryResultTableController :731, :917`). | G |
 | R-C6 | `removeColumn`, `insertColumn`, `moveColumn(from, to)`, `resizeColumn(index, width)`, `setColumnWidth(col, width, unit)`, `getColumnCount`, `getColumn(i)`. Per-column settings move with their column. They are stored **on a column model entry**, not in a parallel list. | G `:1001-1038` |
 | R-C7 | Columns can be rebuilt from scratch: remove all and add all, often. This must not flicker, must keep the vertical scroll position, and must keep the horizontal position when it is still valid. | G (dashboard) |
 | R-C8 | Header contents can be a `String`, which is **treated as HTML** for compatibility (for example the `"<br/>"` headers on icon columns), or a `Header<?>`, including `SafeHtmlHeader` and `CompositeCell` headers. | G |
@@ -366,7 +366,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-CM2 | During the move, a translucent full-height ghost follows the pointer, and a 2px line marks the insertion point, which is worked out from column midpoints. The resize handle is hidden. Dropping a column directly after itself does nothing. | G |
 | R-CM3 | The insertion point cannot be before the first movable column. **Non-movable columns later in the table are not protected today.** Fix this, or match it (§8, D6). | G |
 | R-CM4 | On drop, call `HeadingListener.moveColumn(from, to)` **before** the column model changes (current order), then move the column and its settings. `onMoveStart` / `onMoveEnd` are called around the drag. | G `:1009-1027` |
-| R-CM5 | `setAllowMove(boolean)` can be switched at runtime (dashboard design mode, `TablePresenter.java:1453-1458`). | G |
+| R-CM5 | `setAllowMove(boolean)` can be switched at runtime (dashboard design mode, `TableController.java:1453-1458`). | G |
 
 ### 5.5 Header
 
@@ -378,7 +378,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-H4 | `sort(col)` pushes the column onto the sort list **without** firing an event (initial sort, 14 sites). Calling it again on the current first column flips its direction (GWT `push` semantics). `clearColumnSortList()`. | G `:940, :1174` |
 | R-H4a | **Sorting stays in the data model; the grid only fires sort actions (decided, §10).** The grid owns the `ColumnSortList` (what is sorted and in which direction) and fires `ColumnSortEvent`. Ordering the rows is the job of whatever supplies the data: server sort through `CriteriaUtil` + `RestDataProvider`, and client sort through the presenter's `ListDataProvider` + `DataGridComparatorFactory`. Both use the same mechanism. The grid has **no** built-in client-side sorting. | G |
 | R-H4b | **Default sort (D10).** `setDefaultSort(ColumnSortInfo...)` declares a screen's default sort on visible columns. It is (1) shown in the header from the start without firing an event, (2) used for the first request, and (3) **restored when the user's clicks leave the sort list empty** (the third click on the only sorted column). On a restore, the grid fires `ColumnSortEvent` with the default list, so what the header shows is always what the data model applies. Ctrl+click removing one of several sorted columns does not restore the default. Grids with no default go back to an empty list, and the data model then uses its natural order (D7). | changed |
-| R-H4c | **Tie-breaker sorts on hidden fields** (e.g. the meta browser's Id) are not part of the grid's sort state. The presenter appends them when building the request, as `AbstractMetaListPresenter` does today. They are never shown in a header and can never be clicked. | G |
+| R-H4c | **Tie-breaker sorts on hidden fields** (e.g. the meta browser's Id) are not part of the grid's sort state. The presenter appends them when building the request, as `MetaListController` does today. They are never shown in a header and can never be clicked. | G |
 | R-H5 | Header classes must be kept (CSS and tests depend on them): `dataGridHeader`, `dataGridFirstColumnHeader`, `dataGridLastColumnHeader`, `dataGridSortableHeader`, `dataGridSortedHeaderAscending/Descending`, `dataGridSortableHeaderOuterDiv`, `dataGridSortableHeaderNameHolder`, plus `Header.getHeaderStyleNames()`. | G |
 | R-H6 | **Header click menu:** a primary-button press and release on a header that did not turn into a resize or move calls `HeadingListener.onShowMenu(event, headingSupplier)`. Requires `allowHeaderSelection` and a listener. The event target must let the listener hit-test the value-filter icon and the filter-disable button (`ColumnsManager.java:137-213`). | G `:749-756` |
 | R-H7 | `setAllowHeaderSelection(boolean)` toggles `allow-header-selection` on the header (header text becomes selectable, plus the dashboard styling hooks). | G `:1188` |
@@ -398,10 +398,10 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-R3 | Hover highlight in CSS (`--row__background-color--hovered`). The GWT check for "a floating element is over the row" (`:2021-2050`) is not needed with CSS `:hover`. | G |
 | R-R4 | By default cells do not wrap: `nowrap`, ellipsis, `user-select: text`. | G CSS |
 | R-R5 | `setMultiLine(boolean)` at runtime: adds or removes `multiline`; cells top-aligned and wrapping (header too). Turning it on in a virtual grid suspends virtualisation (§4.4). | G `:174` |
-| R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TablePresenter :862-875` |
+| R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TableController :862-875` |
 | R-R7 | `dataGridDisabledCell` (`enabledWhen`) styling, including on selected rows. | G |
 | R-R8 | `redraw()`, `redrawRow(index)`, `getRowElement(index)` (returns the `data-grid__row` element, or null if not rendered), `getVisibleItem(s)`, `getVisibleItemCount`. | G |
-| R-R9 | **Column span per row** (`MarkerListPresenter` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
+| R-R9 | **Column span per row** (`MarkerList` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
 | R-R10 | Expander and tree cells (`ExpanderCell`: indent 20px per level, DOT / ARROW icons) work unchanged. An expander column width of `maxDepth×20+25`, or 0, is set by `TreeRowHandler` or the presenter, and the grid applies it immediately (R-L5). | G |
 
 ### 5.7 Selection and keyboard
@@ -418,7 +418,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-S8 | **Superseded** by the grid keyboard (`DataGridKeyboard`, see `COMPONENT_MODEL_DESIGN.md`, Data grid): row focus with the selection following it, cells and headers by the arrows, editing with Enter/F2. What GWT does: **Keys** (`KeyBinding` → `Action`): Up/W/K and Down/S/J move by 1. PageDown moves by 10. Home and End go to the first and last row. Enter selects only the row (`onExecute`). Space selects with the Ctrl/Shift state. Ctrl+A fires `SelectAllEvent`; the grid selects nothing itself. Left/Right, Esc and Alt+ContextMenu do nothing in the grid. Movement skips rows where `isSelectable(item)` is false. Keys from inside `<input>`, `<textarea>` or `contenteditable` are ignored, except Esc. | G `KeyBinding :65-78`, `AbstractSelectionEventManager` |
 | R-S9 | **PageUp** moves up 10 in the grid keyboard (D2 applied). GWT: consumed, but **does nothing** today (`onMovePageUp` is never called, `:62-64`). Match it, or fix it to move up 10 (§8, D2). | G (bug) |
 | R-S10 | Selection works through `SelectionModel` (`SelectionChangeEvent`, plus `MultiSelectEvent(SelectionType)`), unchanged, so the 51 `isDoubleSelect` consumers and the meta browser's id-set selection keep working. | G |
-| R-S11 | Focus: `setFocused(boolean)` (fork addition, `TablePresenter:1379`). Focus is restored after a redraw only if the grid had it before. Clicking the header does not take focus (R-H8). The grid root is in the tab order once a selection model is set. | G fork |
+| R-S11 | Focus: `setFocused(boolean)` (fork addition, `TableController:1379`). Focus is restored after a redraw only if the grid had it before. Clicking the header does not take focus (R-H8). The grid root is in the tab order once a selection model is set. | G fork |
 | R-S12 | The keyboard row after `setRowData` matches GWT (measured in Phase 0, `Widgets/Data Grid/Behaviour` stories). It starts at 0, and is 0 on an empty page. When rows arrive it follows its row's key to the nearest row with that key. If that key has gone (e.g. the row's values changed and there is no key provider), it goes back to row 0. Its style (`dataGridKeyboardSelectedRow`, `dataGridKeyboardSelectedCell`) is shown only while the grid's rows have the focus. Clicking a row focuses it. If the focused row is rewritten or removed, the keyboard row takes the focus. A refresh never takes the focus from outside the grid. | G |
 
 ### 5.8 Context menu, copy, export, AI
@@ -437,11 +437,11 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | ID | Requirement | Source |
 | --- | --- | --- |
 | R-D1 | Full `HasData<R>`: `setRowData(start, values)`, `setRowCount(count, exact)`, `setVisibleRange(start, length)`, `getVisibleRange`, `setPageSize`, `RangeChangeEvent`, `RowCountChangeEvent`, `LoadingStateChangeEvent` (2 handlers). Constructors take the page size (default `DEFAULT_LIST_PAGE_SIZE = 100`, `MASSIVE_LIST_PAGE_SIZE = 100000`). | G |
-| R-D2 | Works with `PagerView` / `Pager`: the pager calls `setDisplay(grid)`, and the "from to of", "?" for an inexact count, and typed-range behaviours are unchanged. | G |
+| R-D2 | Works with `PagerPanel` (was `PagerView`) / `Pager`: the pager calls `setDisplay(grid)`, and the "from to of", "?" for an inexact count, and typed-range behaviours are unchanged. | G |
 | R-D3 | Pushed data with a range-change feedback guard (dashboard `ignoreRangeChange`). Setting rows must not fire `RangeChangeEvent` unless the range changed. | G |
 | R-D4 | `flush()` applies pending changes synchronously (67 sites). `redraw()` re-renders. | G |
 | R-D5 | The empty state is **blank by default**, as today (decided, §10). Screens can opt in with `setEmptyMessage(String)` or `setEmptyTableWidget(Widget)`. Errors are still shown in the pager's `MessagePanel`. | G |
-| R-D6 | The loading state stays the pager's refresh spinner (`PagerView.createTaskMonitor`). The grid's own loading widget stays blank. | G |
+| R-D6 | The loading state stays the pager's refresh spinner (`PagerPanel.createTaskMonitor`, was `PagerView`'s). The grid's own loading widget stays blank. | G |
 | R-D7 | The vertical scroll position matches GWT (measured in Phase 0). It is kept when the same rows arrive again (a poll), when every row's values change, and when the columns are rebuilt. A page too short to scroll is at the top. A polling refresh never moves it. | G |
 | R-D8 | `scrollToRow(index)` / reveal: scroll a row into view in either mode (needed by keyboard moves and by presenters that select an item after loading). | G / R |
 
@@ -473,7 +473,7 @@ Constructors `(HasHandlers eventBus[, int pageSize])`.
 | Data | the `HasData` methods (R-D1), `addRangeChangeHandler`, `addRowCountChangeHandler`, `addLoadingStateChangeHandler` |
 | Other | `addHyperlinkHandler`, `hasContextMenu`, `setTableName` / `getTableName`, `setEmptyTableWidget`, `setSkipRowHoverCheck` (no-op) |
 
-**Not carried over:** `getTableHeadElement()`, which only widens visibility. `TablePresenter.getFilterButton`
+**Not carried over:** `getTableHeadElement()`, which only widens visibility. `TableController.getFilterButton`
 reaches into `thead > tr > th` (`:755-765`); that needs a supported replacement, `getHeaderCellElement(col)`.
 
 **New:** `addPercentColumn(col, name/header, percent)` (resizable and movable, R-C3a), `setVirtual(boolean)`, `setRowHeight(int)` (virtual mode), `setHideHeader(boolean)`,
@@ -657,7 +657,7 @@ interactive header cells, the context menu, copy, export and AI.
   * A header cell gets the same parent element as in GWT (the name holder of a sortable header,
     otherwise the header cell), so `FilterCell` finds its input.
 
-**Phase 3: the `DataGridView<R>` interface and opt-in switching.**
+**Phase 3: the `GridDisplay<R>` interface and opt-in switching.**
 
 * Extract the interface (§5.12) and have `MyDataGrid` implement it.
 * Switch screens one category at a time:
@@ -673,7 +673,7 @@ interactive header cells, the context menu, copy, export and AI.
 * Give each screen switched a key provider (rows keyed by their id), so that a row whose values
   change is still the same row: its unsaved cell text, keyboard row and selection survive
   (`Widgets/Data Grid/DataGridRowUpdates`).
-* **Started (2026-10-20) with the dashboard table**, `TablePresenter`, the most demanding consumer
+* **Started (2026-10-20) with the dashboard table**, `TableController`, the most demanding consumer
   (§3.1), switched by type alone and without `setVirtual(true)` for now. Its stories and the
   query screen's (still `MyDataGrid`) pass, and its screenshots match `MyDataGrid`'s but for
   sub-pixel header text and the agreed row colours. Found and fixed on the way:
@@ -696,7 +696,7 @@ interactive header cells, the context menu, copy, export and AI.
     now give each row a key, as the server does.
   * The dashboard plays' header clicks send pointer events as well as mouse events, as a browser
     does (the new grid reads pointer events), and find rows by `tr` or `role="row"`.
-* **Then the query screen's table** (`QueryResultTablePresenter`, 2026-10-21), and both tables
+* **Then the query screen's table** (`QueryResultTableController`, 2026-10-21), and both tables
   with `setVirtual(true)`, each wrapping column declared with `setColumnWraps` (the wrap was an
   inline `white-space: normal` the grid can't see). Found and fixed:
   * `setEmptyText` (`MyDataGrid`'s name) shows the text as `MyDataGrid` did.
@@ -715,26 +715,26 @@ interactive header cells, the context menu, copy, export and AI.
     key or click. Its handler is now wrapped in `$entry`, which every resize listener gets. A play
     can't show it (its own steps run the pending work), so the regression check is a real-input
     one, on `Widgets/Data Grid/Behaviour/RowsFollowDensityVirtual`.
-* **The interface** (2026-10-21): `stroom.widget.datagrid.client.DataGridView<R>`, which `MyDataGrid` and
+* **The interface** (2026-10-21): `stroom.widget.datagrid.client.GridDisplay<R>`, which `MyDataGrid` and
   `DataGrid` both implement. It holds the §5.12 methods both grids have, plus
   `addColumn(ColSpec)` (new to `DataGrid`, sized by `ColumnSizing.fromColSettings`) and
   `getHeaderCellElement` (new to `MyDataGrid`). The code several screens share takes it rather
   than `MyDataGrid`: `DataGridUtil`'s column helpers (`addExpanderColumn`, `addStatusIconColumn`,
-  `addDocRefColumn`, `addFeedColumn`) and `JobNodeListHelper`, so the job and node screens can
-  move one at a time. `AbstractMetaListPresenter`'s grid moves with the meta browser.
+  `addDocRefColumn`, `addFeedColumn`) and `JobNodeColumns`, so the job and node screens can
+  move one at a time. `MetaListController`'s grid moves with the meta browser.
 * **Small lists, first batch** (2026-10-21): 14 client-side lists, switched by type:
-  * `LinkedEventPresenter`, `ScriptListPresenter`, `StatisticsFieldListPresenter`,
-    `ElasticIndexFieldListPresenter`, `SolrIndexFieldListPresenter`, `DocRefListPresenter`,
-    `SelectionHandlerListPresenter`, `SigningKeyListPresenter`, receive rules'
-    `FieldListPresenter`, `RuleListPresenter` (conditional formatting),
-    `UserSessionsListPresenter`, `WordListPresenter`, and the floor map editor's
-    `FloorMapTimeListPresenter` and `FloorMapFactListPresenter`.
+  * `LinkedEventPresenter`, `ScriptDependencyList`, `StatisticsFieldList`,
+    `ElasticIndexFieldList`, `SolrIndexFieldList`, `ImportList`,
+    `SelectionHandlerList`, `SigningKeyList`, receive rules'
+    `FieldList`, `RuleList` (conditional formatting),
+    `UserSessionsList`, `WordListPresenter`, and the floor map editor's
+    `FloorMapTimeList` and `FloorMapFactList`.
   * Key providers where the row's `equals` is not already its id: index fields by name, word by
     word, selection handler, signing key and formatting rule by id (a rule with no id falls back to
     the row itself), session by handle, floor map time entry by time (the list holds one fact's).
     `DocRef`, `QueryField`, the statistics `Field`, `EventId` and the fact rows already compare by
     their id.
-  * `DataGridComparatorFactory` takes a `DataGridView`; the floor map lists' row elements are plain
+  * `DataGridComparatorFactory` takes a `GridDisplay`; the floor map lists' row elements are plain
     `Element`s.
   * Found: the new grid's sticky header is opaque (rows scroll under it) in the page's colour, but
     a list in a control's box (`.stroom-control`, e.g. a dictionary's imports), a dialog or a popup
@@ -745,25 +745,25 @@ interactive header cells, the context menu, copy, export and AI.
   * Differences kept: a play's click on a row left it scrolled to a different place (the Solr field
     paging story); the conditional formatting dialog opens sooner without `MyDataGrid`'s resize
     timers, so its own focus on show lands before the play's tab click rather than after.
-  * Held back at first: receive rules' `RuleSetListPresenter` (no stable row id) and the floor
+  * Held back at first: receive rules' `RuleSetList` (no stable row id) and the floor
     map's tracking, groups and cluster lists (no story renders them).
 * **Decisions** (2026-10-21, the user): fix the workbench frame now and take the screenshot
   baseline again; key the receive rules by position (`getRuleNumber`: an edited rule keeps its
   row, a moved one is a new row); write a story for a screen that has none before switching it;
   switch the server-paged lists in two or three batches.
-* **Then** `RuleSetListPresenter` (keyed by rule number) and `KeyBindingPreferencesPresenter` (its
+* **Then** `RuleSetList` (keyed by rule number) and `KeyBindingPreferences` (its
   story, `KeyboardShortcutPreferences`, does exist; rows already compare by all their fields).
-* **Server-paged lists, first batch**: `AiAttachmentDataPresenter` (`setPageStart` is
-  `setVisibleRange`), `DuplicateManagementListPresenter`, `IndexVolumeGroupListPresenter`,
-  `PathwayListPresenter` (keyed by name), `ProcessorProfileListPresenter` (id),
-  `AnnotationTagListPresenter`, `CacheListPresenter` (cache name), `FsVolumeGroupListPresenter`
-  (group id), `UserDependenciesListPresenter`, `CacheNodeListPresenter` (node name). Held back:
-  * `NodeGroupListPresenter`, `NodeJobListPresenter`, `JobNodeListPresenter`: tick boxes and a
+* **Server-paged lists, first batch**: `AiAttachmentDataController` (`setPageStart` is
+  `setVisibleRange`), `DuplicateManagementList`, `IndexVolumeGroupList`,
+  `PathwayList` (keyed by name), `ProcessorProfileList` (id),
+  `AnnotationTagList`, `CacheList` (cache name), `FsVolumeGroupList`
+  (group id), `UserDependenciesList`, `CacheNodeList` (node name). Held back:
+  * `NodeGroupList`, `NodeJobList`, `JobNodeList`: tick boxes and a
     value spinner, so the editable category.
-  * `UserRefPopupPresenter` (the user picker): it uses `DataGridSelectionEventManager`'s
+  * `UserRefPopupController` (the user picker): it uses `DataGridSelectionEventManager`'s
     selection-follows-focus, Up from the first row to the filter and typing into the filter, which
     `DataGridSelectionEventManager` doesn't have yet; a step of its own.
-  * `AnalyticDataShardListPresenter`: no story opens its grid (needs one first, as do the floor
+  * `AnalyticDataShardList`: no story opens its grid (needs one first, as do the floor
     map's three lists).
 * In the workbench, a full-screen app screen is 48px taller than the window
   (`StroomThemeDecorator` pads every story by 24px around the screen's `100vh`), so the bottom of
@@ -815,18 +815,18 @@ interactive header cells, the context menu, copy, export and AI.
     following the focus it had asked for is every single-choice grid's.
 
 * **Editable lists** (2026-10-21): 15 grids with tick boxes, spinners and select-all headers, switched
-  by type: `NodeJobListPresenter`, `JobNodeListPresenter`, `NodeStatusListPresenter`,
-  `IndexShardPresenter`, `ColumnSelectionPresenter`, `NodeGroupStateListPresenter`,
-  `StatisticsCustomMaskListPresenter`, `UserListPresenter`, `ConstraintListPresenter`,
-  `NodeGroupListPresenter`, `ContentTemplateListPresenter`, `DataRetentionPolicyListPresenter`,
-  `XPathListPresenter`, `DocRefSelectionPresenter`, and `ProcessorTaskSummaryPresenter` (given
+  by type: `NodeJobList`, `JobNodeList`, `NodeStatusList`,
+  `IndexShard`, `ColumnSelection`, `NodeGroupStateList`,
+  `StatisticsCustomMaskList`, `UserList`, `ConstraintList`,
+  `NodeGroupList`, `ContentTemplateList`, `DataRetentionPolicyList`,
+  `XPathList`, `SaveChangedDocuments`, and `ProcessorTaskSummary` (given
   stories first, `App/Main/ProcessorTaskSummary`).
   * Key providers where a tick or refresh brings new, unequal rows: node groups and index shards
     by id, content templates and retention rules by number (their position), constraints by name,
     task summaries by their group (not their count).
   * The select-all headers (anonymous `Header`s with an updater) work as they are: the new grid
     gives header cells their events.
-  * `UserListPresenter.getDataGrid()` returns a `DataGridView`; `DocRefSelectionView.setDataWidget`
+  * `UserList.getDataGrid()` returns a `GridDisplay`; `SaveChangedDocuments.setDataWidget`
     takes a `Widget`.
   * The plays find rows, cells and headers with `StroomDom.GRID_ROW`, `GRID_HEADER_CELL`,
     `GRID_HEADER_TEXT` and `GRID_CELL_TEXT` (new), which match either grid.
@@ -839,15 +839,15 @@ interactive header cells, the context menu, copy, export and AI.
     because the old grid's click ticked a box), the XPath list's inert Ignore Case tick box, and the
     task summary losing its selection when a count changes (the presenter compares whole rows; see
     `ISSUES.md`).
-  * Held back: the floor map settings' Value Schema (`FloorMapSettingsPresenter`): its rows have no
+  * Held back: the floor map settings' Value Schema (`FloorMapSettings`): its rows have no
     stable id, it uses a selection model with no handler, and it restores focus through table rows.
 
-* **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyListPresenter`,
-  `ProfilePeriodListPresenter`, `FeedDependencyListPresenter`, `PipelineReferenceListPresenter`,
-  `ManageGlobalPropertyListPresenter`, `ActivityListPresenter`, `CredentialsListPresenter`,
-  `ContentStoreContentPackListPresenter`, `DocumentUserPermissionsListPresenter`,
-  `AppUserPermissionsListPresenter`, `ScheduledProcessHistoryListPresenter`,
-  `AppPermissionsEditPresenter`, `JobListPresenter`.
+* **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyList`,
+  `ProfilePeriodList`, `FeedDependencyList`, `PipelineReferenceList`,
+  `ManageGlobalPropertyList`, `ActivityList`, `CredentialsList`,
+  `ContentStoreContentPackList`, `DocumentUserPermissionsList`,
+  `AppUserPermissionsList`, `ScheduledProcessHistoryList`,
+  `AppPermissionsEditor`, `JobList`.
   * Key providers where an edit, refresh or node reply brings new rows: profile periods by uuid,
     pipeline properties by element and name, activities by id, global properties by name,
     content packs by their pack.
@@ -861,9 +861,9 @@ interactive header cells, the context menu, copy, export and AI.
     grid's tables hid.
 
 * **Trees** (2026-10-21): the five grids with an expander column, with all their columns as before:
-  `ProcessorListPresenter`, `TaskManagerListPresenter`, `MarkerListPresenter`,
-  `ConfigPropertyClusterValuesListPresenter` and `DataRetentionImpactPresenter`.
-  `TreeRowHandler` takes a `DataGridView`.
+  `ProcessorList`, `ServerTaskList`, `MarkerList`,
+  `ConfigPropertyClusterValuesList` and `DataRetentionImpactController`.
+  `TreeRowHandler` takes a `GridDisplay`.
   * **Tree grid semantics.** A grid with an `ExpanderCell` column is an ARIA `treegrid`: rows carry
     `aria-level` and, unless they're leaves, `aria-expanded`. On a row, Right expands a collapsed
     row (else enters the cells), and Left collapses an expanded one (else goes to its parent row).
@@ -877,9 +877,9 @@ interactive header cells, the context menu, copy, export and AI.
     up was left as a gap at the right (Server Tasks' Info column stopped 199px short). The handler
     now asks the grid to give spare width to the fill columns (`resizeTableToFitColumns(true)`).
 
-* **Lists with their own selection manager** (2026-10-21): `ApiKeysListPresenter`,
-  `ScheduledProcessListPresenter`, `DocumentCreatePermissionsListPresenter` and
-  `AbstractNotificationListPresenter` (the analytic rule and report notifications). The three that
+* **Lists with their own selection manager** (2026-10-21): `ApiKeysList`,
+  `ScheduledProcessList`, `DocumentCreatePermissionsList` and
+  `NotificationList` (the analytic rule and report notifications). The three that
   made a `DataGridSelectionEventManager` make the new grid's. API keys are keyed by id and
   notifications by uuid, as their `equals` compares every field, so a tick or edit brings an
   unequal row.
@@ -892,13 +892,13 @@ interactive header cells, the context menu, copy, export and AI.
     now waits for columns, and the grid resolves when it draws as well as on a resize
     (`TestColumnModel.testResolveWaitsForColumns`).
 * **The last three** (2026-10-21):
-  * The meta browser (`AbstractMetaListPresenter`, and so the stream list, the relation list and
+  * The meta browser (`MetaListController`, and so the stream list, the relation list and
     stepping's list): its own `DataGridSelectionEventManager` becomes the new grid's (its select-all
     handler included). The relation list narrows its expander column once rows arrive, so it
     gives the width back to the fill columns, as `TreeRowHandler` does.
-  * The import confirmation (`ImportConfigConfirmPresenter`): one page of up to 100,000 items,
+  * The import confirmation (`ImportConfigConfirmController`): one page of up to 100,000 items,
     now `setVirtual(true)`, so only the rows in view are drawn (`MyDataGrid` drew them all).
-  * The floor map settings' Value Schema (`FloorMapSettingsPresenter`): an edit replaces a mapping
+  * The floor map settings' Value Schema (`FloorMapSettings`): an edit replaces a mapping
     with a new, unequal one, so rows are keyed by the mapping they started as (an identity map
     of numbers; a replacement takes the key of the mapping it replaces). Its `SingleSelectionModel`
     becomes the single-select `MultiSelectionModelImpl` with the new grid's manager, so the
@@ -919,7 +919,7 @@ interactive header cells, the context menu, copy, export and AI.
       them. A selection box marks itself open, and its list's filter takes the focus out of the
       grid; the redraw for that replaced the open box, so it never read as expanded and its list
       was placed against a box no longer in the page. Only the class changes now.
-  * `TypeFilterPresenter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
+  * `TypeFilter` and `ColumnValuesFilterController` use only `MyDataGrid`'s
     `DEFAULT_LIST_PAGE_SIZE` (for a `MyCellTable`, session 5); it moves when `MyDataGrid` goes.
 
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
@@ -935,7 +935,7 @@ interactive header cells, the context menu, copy, export and AI.
     two grids side by side (Behaviour's `…Old`, Row Updates' `CurrentGrid`, Row States' current
     grid, the benchmark's `old` kind) keep only the new grid's half; the cell renderer, view state
     and split pane stories use `DataGrid`, their plays its keys (a row's buttons are reached
-    with Right, not Tab). `DataGridView` stays, with one implementation, as the shared helpers take
+    with Right, not Tab). `GridDisplay` stays, with one implementation, as the shared helpers take
     it. None of the forked `cellview` classes could go: `MyCellTable` and the selection models
     still use them all.
   * **The old class names.** The grid no longer carries `MyDataGrid`'s classes. Its own are BEM
@@ -986,7 +986,7 @@ interactive header cells, the context menu, copy, export and AI.
 
 | # | Question | Decision |
 | --- | --- | --- |
-| 1 | Naming and package | `DataGrid<R>` in `stroom.widget.datagrid.client`, with a `DataGridView<R>` interface implemented by both grids during switch-over (§4.1). |
+| 1 | Naming and package | `DataGrid<R>` in `stroom.widget.datagrid.client`, with a `GridDisplay<R>` interface implemented by both grids during switch-over (§4.1). |
 | 2 | Scrollbars | Custom overlay thumbs that float over the grid as they do today. The implementation is a native scroller with its scrollbar hidden, plus overlay thumbs, with CSS scroll-driven animations as an enhancement (§4.2, D1). |
 | 3 | Live resize | Live reflow; persist on release (R-CR2, D8). |
 | 4 | Column minimum width | Per column, default 30px (R-CR7, D9). |
@@ -1048,7 +1048,7 @@ and a typed character to the filter where the host has one, else type-ahead.
 
 **What doesn't:** the menus (`MenuViewImpl`, then a `MyCellTable` with menu roles, done in session 3; since 23 October 2026 their own `Menu` widget),
 and the drawn trees (the pipeline tree and bar, the expression tree, pathways), which are layouts
-with their own agreed keys (`DraggableTreePanel`, `TreeKeyboard`). While the menus are on
+with their own agreed keys (`DraggableTree`, `TreeKeyboard`). While the menus are on
 `MyCellTable`, the forked `cellview` classes stay; moving the menus onto the grid too is for later.
 
 **Order:**

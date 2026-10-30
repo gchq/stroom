@@ -46,8 +46,52 @@ class TestColumnModel {
     }
 
     @Test
+    void testSetWidthWithinFillTakesBackWhatTheColumnGains() {
+        // Server Tasks: the expander column widens as the tree deepens (25 to 45). The fill
+        // column gives the 20 back, rather than the columns running past the grid's edge.
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("expander", ColumnSizing.fixed(25));
+        model.add("info", ColumnSizing.fill(200));
+        model.resolve(500);
+        assertThat(model.getWidths()).containsExactly(25, 475);
+
+        model.setWidthWithinFill(0, 45, 500);
+        assertThat(model.getWidths()).containsExactly(45, 455);
+        assertThat(model.getTotalWidth()).isEqualTo(500);
+
+        // Narrower again: the gap is left for a fill to take
+        model.setWidthWithinFill(0, 25, 500);
+        assertThat(model.getWidths()).containsExactly(25, 455);
+    }
+
+    @Test
+    void testSetWidthWithinFillKeepsAnOverflowThatWasThere() {
+        // The user widened the fill column past the edge: only the expander's gain is taken back
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("expander", ColumnSizing.fixed(25));
+        model.add("info", ColumnSizing.fill(200));
+        model.resolve(500);
+        model.resize(1, 600);
+
+        model.setWidthWithinFill(0, 45, 500);
+        assertThat(model.getWidths()).containsExactly(45, 580);
+    }
+
+    @Test
+    void testSetWidthWithinFillLeavesTheFloor() {
+        // A fill column already at its floor gives nothing, so the columns overflow
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("expander", ColumnSizing.fixed(25));
+        model.add("info", ColumnSizing.fill(200));
+        model.resolve(225);
+
+        model.setWidthWithinFill(0, 45, 225);
+        assertThat(model.getWidths()).containsExactly(45, 200);
+    }
+
+    @Test
     void testResolveWaitsForColumns() {
-        // A presenter that adds its columns once a fetch returns: the grid is laid out first
+        // A controller that adds its columns once a fetch returns: the grid is laid out first
         final ColumnModel<String> model = new ColumnModel<>();
         assertThat(model.resolve(500)).isFalse();
         assertThat(model.isResolved()).isFalse();

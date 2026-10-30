@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The main toolbar (main-toolbar.css): the busy spinner, then the Ask Stroom AI toggle and
+  the main menu's button.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:s="urn:import:stroom.main.client.component"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="main-toolbar">
+        <s:TaskSpinner ui:field="spinner"/>
+        <b:Toolbar name="Application" addStyleNames="toolbar--quiet">
+            <b:ToolbarToggleButton ui:field="showAi" svg="AI" title="Ask Stroom AI"/>
+            <b:ToolbarButton ui:field="menu" svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>
+        </b:Toolbar>
+    </g:FlowPanel>
+</ui:UiBinder>

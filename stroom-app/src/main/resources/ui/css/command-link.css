@@ -1,0 +1,43 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A link that runs a command (CommandLinkCell), in a list's cell: its text, then its open icon
+   (command-link__icon), shown on a hover or with the keyboard focus on the row. Was ref-link.css's,
+   with user-ref-link.css and doc-ref-link.css. */
+
+.command-link__open {
+    cursor: pointer;
+}
+
+.command-link {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.command-link .command-link__icon {
+    opacity: 0;
+}
+
+/* Shown on hover, and on the row with keyboard focus so keyboard users see it too; the same
+   whether the row is disabled or not */
+.data-grid__row--keyboard:focus-within .command-link .command-link__icon,
+.command-link:hover .command-link__icon,
+.data-grid__cell--disabled .command-link:hover .command-link__icon {
+    opacity: .8;
+    color: var(--text-color);
+    cursor: pointer;
+}

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:ht="urn:import:stroom.widget.htree.client"
+             xmlns:qc="urn:import:stroom.query.client.component">
+    <!--
+      An expression's tree of terms and operators (expression-tree.css), whose items can be dragged
+      to another operator
+    -->
+    <ht:DraggableTree ui:field="layoutPanel" addStyleNames="expression-tree" allowDragging="true">
+        <ht:tree>
+            <qc:ExpressionTreePanel ui:field="treePanel"/>
+        </ht:tree>
+    </ht:DraggableTree>
+</ui:UiBinder>

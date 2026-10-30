@@ -1,0 +1,32 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A visualisation's toolbar row (stroom.query.client.result.vis.VisToolbarRow), named BEM style: above
+   the visualisation as a table's pager row is, the buttons the visualisation asks for
+   (vis-toolbar-row__actions), then its pause and resume button. Padded as a table's pager.
+*/
+
+.vis-toolbar-row {
+    padding: 0 5px;
+}
+
+/* The visualisation's buttons, in a row, taking the room the pause button doesn't */
+.vis-toolbar-row__actions {
+    display: flex;
+    flex-grow: 1;
+    gap: var(--control__gap--horizontal);
+}

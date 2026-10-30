@@ -22,13 +22,10 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -46,7 +43,7 @@ import java.util.List;
 /// operation and timing the next painted frame as well. The grid gets five columns and generated
 /// rows.
 ///
-/// For the behaviour measurements, `replace` sends different data as a presenter would,
+/// For the behaviour measurements, `replace` sends different data as a controller would,
 /// `rebuildColumns` removes and re-adds every column as the dashboard does on a settings change,
 /// and `state` reports the keyboard row, focus, selection and scroll position.
 public final class BenchmarkStories {
@@ -96,7 +93,7 @@ public final class BenchmarkStories {
         final int pageSize = Math.max(rowCount, 1);
 
         final double start = now();
-        grid = new DataGrid<>(new SimpleEventBus(), pageSize);
+        grid = new DataGrid<>(pageSize);
         grid.setVirtual("virtual".equals(kind));
         addColumns(grid);
         if (selection) {
@@ -153,7 +150,7 @@ public final class BenchmarkStories {
         return now() - start;
     }
 
-    /// Send different data, as a presenter does when new data arrives.
+    /// Send different data, as a controller does when new data arrives.
     ///
     /// @param what `same` (an unchanged refresh), `changed` (every row's values changed, same keys),
     ///             `fewer` (the first 3 rows only), `empty` (no rows) or `restore` (the rows the

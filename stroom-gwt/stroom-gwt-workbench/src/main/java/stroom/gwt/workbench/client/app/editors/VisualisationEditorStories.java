@@ -26,10 +26,11 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Value;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.client.component.VisualisationEditor;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
@@ -38,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/Editors/VisualisationEditor` stories, showing Stroom's real [VisualisationPresenter] (a
+/// The `App/Editors/VisualisationEditor` stories, showing Stroom's real [VisualisationEditor] (a
 /// Visualisation's tab: Settings, Assets, Documentation and Permissions) with fake REST replies.
 ///
 /// As `VisualisationPlugin` does, the story fetches the document (`GET /visualisation/v1/{uuid}`)
@@ -70,9 +71,11 @@ public final class VisualisationEditorStories {
     private static final String SAVE_TO_LIVE = "/visualisationAssets/saveDraftToLive/vis-1";
 
     // A FormGroup gives its control the group's identity as its id
-    // (VisualisationSettingsViewImpl.ui.xml)
+    // (VisualisationSettings.ui.xml)
     private static final String FUNCTION_NAME = "#visualisationSettingsFunctionName";
     private static final String ASSET_NAME = "#visualisationAssetsName";
+    private static final String NEW_FILE = "/visualisationAssets/updateNewFile/vis-1";
+    private static final String RENAME = "/visualisationAssets/updateRename/vis-1";
 
     // Stroom's Ace editor's text area
     private static final String ACE_INPUT = ".ace_text-input";
@@ -125,7 +128,7 @@ public final class VisualisationEditorStories {
                     play.expect(play.queryByText("main.js")).toBeNull();
                     // Expand the folder from its expander, then open the file in the editor
                     play.click(play.within(play.getByText("src").closest("[role='treeitem']"))
-                            .querySelector(".explorerCell-expander"));
+                            .querySelector(".explorer-cell__expander"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
                     // Until a file is selected, the editor's area asks for one (it was blank)
                     final Query placeholder = play.getByText("Select a file to view or edit it");
@@ -150,6 +153,75 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(screen.querySelector(ASSET_NAME)).not().toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
+                // A new file's name with a character a name can't hold is refused, saying which
+                // (the dialog said "Item name not set" for any name it refused)
+                .story("NewFileIllegalName", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.type(dialog.querySelector(ASSET_NAME), "a/b.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            // The spy records the message as HTML, its quotes escaped
+                            ValueMatcher.stringContaining("File names must not contain the character")));
+                    play.expect(screen.getByText("New File", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                })
+                // New File: OK with a name adds it; Cancel adds nothing
+                .story("NewFile", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play cancelled = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.type(cancelled.querySelector(ASSET_NAME), "unwanted.css");
+                    play.click(cancelled.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New File", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.querySelector(ASSET_NAME)).toHaveFocus());
+                    play.type(dialog.querySelector(ASSET_NAME), "extra.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(NEW_FILE).withBodyContaining("extra.css").toSpyMatcher()));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(NEW_FILE).withBodyContaining("unwanted.css").toSpyMatcher());
+                    play.waitFor(() -> play.expect(screen.queryByText("New File", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Rename Selected Asset starts with its name; OK renames it
+                .story("RenameAsset", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.click(play.findByText("style.css"));
+                    play.click(play.getByRole("button", "Rename Selected Asset"));
+                    final Play dialog = screen.within(screen.findByText("Edit", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query name = dialog.getByLabelText("Name");
+                    play.expect(name).toHaveValue("style.css");
+                    play.clear(name);
+                    play.type(name, "main.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(RENAME).withBodyContaining("main.css").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit", StroomDom.DIALOG_TITLE)).toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
@@ -170,7 +242,7 @@ public final class VisualisationEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Assets");
                     play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Saving the document publishes the asset draft (the editor's post save callback
@@ -224,6 +296,8 @@ public final class VisualisationEditorStories {
                 .get("/visualisation/v1/vis-1", RestReply.json(DOC))
                 .put("/visualisation/v1/vis-1", request -> RestReply.json(request.getBody()))
                 .get("/visualisationAssets/fetchDraftAssets/vis-1", RestReply.json(ASSETS))
+                .put(NEW_FILE, RestReply.json("true"))
+                .put(RENAME, RestReply.json("true"))
                 .get("/visualisationAssets/getContent/vis-1", RestReply.json(
                         "{\"content\": \"// src/main.js\\nconsole.log(1);\", \"editorMode\": \"JAVASCRIPT\"}"))
                 // Publishing: true, then false for the second save
@@ -232,7 +306,7 @@ public final class VisualisationEditorStories {
         final VisualisationResource resource = GWT.create(VisualisationResource.class);
         return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getVisualisationPresenter(),
+                injector.getVisualisationEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

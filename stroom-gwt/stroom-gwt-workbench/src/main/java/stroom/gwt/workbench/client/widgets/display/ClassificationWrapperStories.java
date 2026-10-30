@@ -16,21 +16,18 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.data.client.view.ClassificationLabel;
-import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.component.ClassificationWrapper;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.Html;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
-/// Stories for Stroom's [ClassificationWrapperViewImpl] (the view that docks a
-/// [ClassificationLabel] banner below some content, e.g. the data viewer).
+/// Stories for Stroom's [ClassificationWrapper] (the component that docks a
+/// [stroom.data.client.component.ClassificationLabel] banner below some content, e.g. the data viewer).
 ///
 /// As for `ClassificationLabelStories`, the label colours are served in the UI config fixture of
 /// a [ScreenHarness], and the view is created once the config has been fetched.
@@ -64,32 +61,14 @@ public final class ClassificationWrapperStories {
         final FlowPanel container = new FlowPanel();
         container.getElement().getStyle().setProperty("height", "300px");
         DisplayWidgets.whenUiConfigLoaded(harness, () -> {
-            final ClassificationWrapperViewImpl view = new ClassificationWrapperViewImpl(
-                    GWT.create(ClassificationWrapperViewImpl.Binder.class),
-                    new ClassificationLabel(harness.getUiConfigCache()));
-            view.setContent(new ContentView(new HTML(contentHtml)));
-            view.setClassification(classification);
-            container.add(view.asWidget());
+            final ClassificationWrapper wrapper = new ClassificationWrapper();
+            DisplayWidgets.withColours(harness, wrapper.getClassificationLabel());
+            wrapper.setContent(new Html(contentHtml));
+            wrapper.setClassification(classification);
+            container.add(wrapper);
         });
         harness.add(container);
         return harness.asWidget();
     }
 
-    // --------------------------------------------------------------------------------
-
-
-    /// The wrapped content, as a view (Stroom wraps another presenter's view).
-    private static final class ContentView extends ViewImpl {
-
-        private final Widget widget;
-
-        private ContentView(final Widget widget) {
-            this.widget = widget;
-        }
-
-        @Override
-        public Widget asWidget() {
-            return widget;
-        }
-    }
 }

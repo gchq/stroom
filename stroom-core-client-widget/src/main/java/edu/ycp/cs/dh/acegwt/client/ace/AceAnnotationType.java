@@ -5,7 +5,7 @@ package edu.ycp.cs.dh.acegwt.client.ace;
  */
 public enum AceAnnotationType {
 
-    // Each has Stroom's own gutter class (editor.css draws its icon), so a fatal error can look
+    // Each has Stroom's own gutter class (code-editor.css draws its icon), so a fatal error can look
     // different from an error, and the Ace type it is (which Ace names it by, e.g. for screen
     // readers). Ace (1.44) takes the class as the annotation's className, so ace.js
     // needs no change for it.

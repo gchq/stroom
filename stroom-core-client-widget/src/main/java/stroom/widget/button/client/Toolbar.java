@@ -16,7 +16,6 @@
 
 package stroom.widget.button.client;
 
-import stroom.data.pager.client.RefreshButton;
 import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.uibinder.client.UiConstructor;

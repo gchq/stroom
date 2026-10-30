@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An annotation's Assigned To setting: who it is assigned to, which a press on chooses, and
+     Assign Yourself (annotation-setting.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:c="urn:import:stroom.annotation.client.component"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <c:SettingBlock ui:field="block" title="Change Assigned To">
+        <form:FormGroup ui:field="group" identity="annotationAssignedTo" label="Assigned To">
+            <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
+                <tx:Label ui:field="assignedTo" styleName="annotation-setting__value"/>
+                <b:LinkButton ui:field="assignYourself" text="Assign Yourself"
+                              title="Assign this annotation to yourself"
+                              addStyleNames="annotation-setting__assign-yourself"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </c:SettingBlock>
+</ui:UiBinder>

@@ -17,9 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.tree;
 
-import stroom.explorer.client.presenter.EntityTreeUiHandlers;
-import stroom.explorer.client.presenter.ExplorerTree;
-import stroom.explorer.client.view.EntityTreeViewImpl;
+import stroom.explorer.client.component.DocumentPicker;
+import stroom.explorer.client.component.ExplorerTree;
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -28,17 +28,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.button.client.Button;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -47,10 +46,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /// Stories for Stroom's [ExplorerTree]. The tree is Stroom's real explorer tree (its
-/// `ExplorerTreeModel` fetches the nodes from the explorer service), answered by an
+/// `ExplorerTreeController` fetches the nodes from the explorer service), answered by an
 /// [ExplorerFixture] of a fixed tree.
 ///
-/// The quick filter bar is the filter of Stroom's [EntityTreeViewImpl] (the explorer
+/// The quick filter bar is the filter of Stroom's [DocumentPicker] (the explorer
 /// tree with a quick filter, used in Stroom's explorer popups), shown with the stories' tree in it.
 public final class ExplorerTreeStories {
 
@@ -59,7 +58,7 @@ public final class ExplorerTreeStories {
     private static final String ON_NAME_FILTER_CHANGE = "onNameFilterChange";
     // The tree's chosen items
     private static final String SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
-    private static final String EXPANDER = ".explorerCell-expander";
+    private static final String EXPANDER = ".explorer-cell__expander";
 
     private ExplorerTreeStories() {
         // Static utility
@@ -195,7 +194,7 @@ public final class ExplorerTreeStories {
         // Arrives open: System's children are visible and its arrow points down
         play.findByText(shownText);
         play.expect(play.getByText("Feeds")).toBeInTheDocument();
-        final Query expander = play.within(play.getByText("System").closest(".explorerCell")).querySelector(EXPANDER);
+        final Query expander = play.within(play.getByText("System").closest(".explorer-cell")).querySelector(EXPANDER);
         play.expect(expander.className()).toMatch("arrow-down");
         // One click collapses it
         play.click(expander);
@@ -208,12 +207,12 @@ public final class ExplorerTreeStories {
                         ExplorerFixture.doc("Deep Doc", "Dictionary"))));
         final Options options = new Options();
         final Widget treeWidget = tree(context, fixture, options);
-        final ExplorerTree tree = options.tree;
+        final ExplorerTreeController controller = options.controller;
         final Button reveal = new Button("Reveal Deep Doc");
         reveal.getElement().setAttribute("type", "button");
         reveal.addClickHandler(event -> {
-            tree.getTreeModel().setEnsureVisible(fixture.toExplorerNode("Deep Doc"));
-            tree.refresh();
+            controller.setEnsureVisible(fixture.toExplorerNode("Deep Doc"));
+            controller.refresh();
         });
         final FlowPanel frame = frame(treeWidget);
         frame.insert(reveal, 0);
@@ -225,16 +224,26 @@ public final class ExplorerTreeStories {
                                final ExplorerFixture fixture,
                                final Options options) {
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(fixture).build());
-        final ExplorerTree tree = new ExplorerTree(harness.getRestFactory(),
-                new DefaultTaskMonitorFactory(harness.getHasHandlers()),
-                options.multiSelect,
-                options.showAlerts);
+        // With a quick filter, the tree is the one Stroom's folder picker (DocumentPicker) declares
+        final DocumentPicker view = options.quickFilter
+                ? new DocumentPicker()
+                : null;
+        final ExplorerTree tree = view != null
+                ? view.getTree()
+                : new ExplorerTree();
+        tree.setMultiSelect(options.multiSelect);
+        // Owned by the story's root, as a screen's controller owns it in Stroom
+        final ExplorerTreeController controller = harness.own(
+                new ExplorerTreeController(harness.getRestFactory())).attach(tree);
+        controller.setTaskMonitorFactory(new DefaultTaskMonitorFactory(harness.getHasHandlers()));
+        controller.setShowAlerts(options.showAlerts);
         options.tree = tree;
+        options.controller = controller;
         if (options.includedTypes != null) {
-            tree.getTreeModel().setIncludedTypes(options.includedTypes);
+            controller.setIncludedTypes(options.includedTypes);
         }
         if (options.nameFilter != null) {
-            tree.getTreeModel().setInitialNameFilter(options.nameFilter);
+            controller.setInitialNameFilter(options.nameFilter);
         }
 
         final Spy onSelectionChange = context.fn(ON_SELECTION_CHANGE);
@@ -256,26 +265,23 @@ public final class ExplorerTreeStories {
 
         if (options.seedRoot) {
             // As Stroom's explorer opens its first root before the first fetch
-            tree.getTreeModel().setItemOpen(fixture.toExplorerNode("System"), true);
+            controller.setItemOpen(fixture.toExplorerNode("System"), true);
         } else {
-            tree.refresh();
+            controller.refresh();
         }
 
         final Widget widget;
         if (options.quickFilter) {
-            final EntityTreeViewImpl view = new EntityTreeViewImpl(GWT.create(EntityTreeViewImpl.Binder.class));
-            view.setCellTree(tree);
             final Spy onNameFilterChange = context.fn(ON_NAME_FILTER_CHANGE);
-            final EntityTreeUiHandlers handlers = filter -> {
+            view.setOnFilterChange(filter -> {
                 onNameFilterChange.call(filter);
                 if (options.onNameFilterChange != null) {
                     options.onNameFilterChange.accept(filter);
                 }
-                tree.changeNameFilter(filter);
-            };
-            view.setUiHandlers(handlers);
+                controller.changeNameFilter(filter);
+            });
             if (options.nameFilter != null) {
-                // The filter's text, as Stroom's ExplorerPopupPresenter.setInitialQuickFilter shows it
+                // The filter's text, as Stroom's DocumentChooserController.setInitialQuickFilter shows it
                 final NodeList<Element> inputs = view.asWidget().getElement().getElementsByTagName("input");
                 if (inputs.getLength() > 0) {
                     InputElement.as(inputs.getItem(0)).setValue(options.nameFilter);
@@ -299,7 +305,7 @@ public final class ExplorerTreeStories {
             if ("treeitem".equals(row.getAttribute("role")) && "true".equals(row.getAttribute("aria-selected"))) {
                 final NodeList<Element> divs = row.getElementsByTagName("div");
                 for (int j = 0; j < divs.getLength(); j++) {
-                    if (divs.getItem(j).hasClassName("explorerCell-text")) {
+                    if (divs.getItem(j).hasClassName("explorer-cell__text")) {
                         names.add(divs.getItem(j).getInnerText());
                     }
                 }
@@ -372,6 +378,7 @@ public final class ExplorerTreeStories {
     private static final class Options {
 
         private ExplorerTree tree;
+        private ExplorerTreeController controller;
         private boolean quickFilter;
         private boolean multiSelect;
         private boolean showAlerts;

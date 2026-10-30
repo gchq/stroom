@@ -1,0 +1,38 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A pipeline property's or reference's name or value, marked by where it comes from: set on this
+   pipeline, removed (set back to its default), inherited from a parent (unmarked) or its default */
+.pipeline-property--added {
+    font-weight: 600;
+}
+
+.pipeline-property--removed {
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.pipeline-property--default {
+    color: var(--text-color--muted);
+}
+
+/* On a selected row the muted colour is too faint against the selection, so a default takes the
+   row's text colour and is told apart by its style instead */
+.data-grid__row--selected .pipeline-property--default,
+.data-grid__row--selected .pipeline-property--default * {
+    color: inherit;
+    font-style: italic;
+}

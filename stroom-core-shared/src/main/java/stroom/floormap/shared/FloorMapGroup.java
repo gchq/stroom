@@ -51,7 +51,7 @@ import java.util.Set;
 /// a group is invented in the UI and has no natural key.
 ///
 /// Immutable, and every mutation is a static helper returning a new value, so
-/// all list surgery is unit-testable off the GWT presenters (the shape
+/// all list surgery is unit-testable off the GWT controllers (the shape
 /// [TypeStyle#merge] already established). Holds no GWT or DOM types.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)

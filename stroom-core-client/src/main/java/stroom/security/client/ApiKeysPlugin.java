@@ -18,16 +18,15 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.ApiKeysController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
-import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -37,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
+public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysController> {
 
     public static final String SCREEN_NAME = "API Keys";
     public static final SvgImage ICON = SvgImage.KEY;
@@ -46,14 +45,14 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
     public ApiKeysPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
                          final ClientSecurityContext securityContext,
-                         final Provider<ApiKeysPresenter> apiKeysPresenterAsyncProvider,
+                         final Provider<ApiKeysController> apiKeysControllerAsyncProvider,
                          final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext, documentPluginRegistry);
+        super(eventBus, eventManager, apiKeysControllerAsyncProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
-            open(apiKeysPresenter ->
-                    apiKeysPresenter.showOwner(event.getUserRef()));
-        }));
+        getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
+            open(apiKeysController ->
+                    apiKeysController.showOwner(event.getUserRef()));
+        });
     }
 
     @Override
@@ -88,6 +87,6 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
 
     @Override
     public String getType() {
-        return ApiKeysPresenter.TAB_TYPE;
+        return ApiKeysController.TAB_TYPE;
     }
 }

@@ -26,11 +26,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.Button;
 import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -101,7 +100,7 @@ public final class SplitPaneContentStories {
                     play.findByText("Person 1");
                     play.expect(play.getByTestId("grid").width()).toBe(420.0);
                 })
-                // The stepping screen's element layout (ElementViewImpl): code above, log below,
+                // The stepping screen's element layout (SteppingElement): code above, log below,
                 // and input beside output in between, as three nested split panes
                 .story("SteppingLayout", context -> frame(stepping(), "320px"))
                 .withPlay(play -> {
@@ -203,7 +202,7 @@ public final class SplitPaneContentStories {
                 // the pane either side of it, or restores them, so a pane can be resized without
                 // dragging (WCAG 2.5.7); Alt+M is hinted on the item it would do
                 .story("SplitterMenu", context -> {
-                    StoryPopups.create(context).withMenuRequests();
+                    StoryPopups.create(context).withPageRequests();
                     final SplitPane pane = thin("300px, *", "Properties, Content");
                     pane.add(SplitPaneContent.block("Properties", "properties", true));
                     pane.add(SplitPaneContent.block("Content", "content", false));
@@ -257,7 +256,9 @@ public final class SplitPaneContentStories {
                     final Spy onResized = context.fn(ON_RESIZED);
                     pane.setOnResized(() -> onResized.call(pane.getPaneSize(explorer)));
                     final FlowPanel page = new FlowPanel();
-                    page.add(new Button("Set in code", (ClickHandler) event -> pane.setPaneSize(explorer, "200px")));
+                    final Button setInCode = new Button("Set in code");
+                    setInCode.setOnClick(() -> pane.setPaneSize(explorer, "200px"));
+                    page.add(setInCode);
                     page.add(frame(pane, "200px"));
                     return page;
                 })
@@ -308,7 +309,7 @@ public final class SplitPaneContentStories {
         return frame;
     }
 
-    // ElementViewImpl's layout: code, the middle and the log stacked, and the middle input beside
+    // SteppingElement's layout: code, the middle and the log stacked, and the middle input beside
     // output
     // The name of the splitter the pointer would find at the centre of an element
     private static native String labelAtCentre(Element element) /*-{

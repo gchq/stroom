@@ -27,11 +27,11 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.Location;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Optional;

@@ -28,14 +28,14 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
+import stroom.search.elastic.client.component.ElasticClusterEditor;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/ElasticClusterEditor` stories, showing Stroom's real [ElasticClusterPresenter]
+/// The `App/Editors/ElasticClusterEditor` stories, showing Stroom's real [ElasticClusterEditor]
 /// (an Elastic Cluster's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `ElasticClusterPlugin` does, the story fetches the document
@@ -84,7 +84,7 @@ public final class ElasticClusterEditorStories {
     private static final String DEFAULT_HTTP_CLIENT_CONFIG_PATH = "/elasticCluster/v1/getDefaultHttpClientConfig";
 
     // A FormGroup gives its control the group's identity as its id
-    // (ElasticClusterSettingsViewImpl.ui.xml)
+    // (ElasticClusterSettings.ui.xml)
     private static final String URLS = "#elasticClusterSettingsConnectionURLs";
     private static final String API_KEY = "#elasticClusterSettingsAPIKey";
 
@@ -100,7 +100,7 @@ public final class ElasticClusterEditorStories {
                 .layout(StoryLayout.FULLSCREEN)
                 .story("Default", context -> render(context, true, null, false))
                 .withPlay(play -> {
-                    // ElasticClusterPresenter's tabs: Settings (default), Documentation, Permissions
+                    // ElasticClusterEditor's tabs: Settings (default), Documentation, Permissions
                     for (final String label : new String[]{"Settings", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
                     }
@@ -190,6 +190,23 @@ public final class ElasticClusterEditorStories {
                             .toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
+                // Keep Alive takes 0, which closes the connection after each request (its default).
+                // Before, its least was 1, so 0 couldn't be kept once it was changed
+                .story("KeepAliveTakesZero", context -> render(context, true, null, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByRole("button", "Save");
+                    showHttpClientConfig(play);
+                    final Query amount = screen.within(screen.getByRole("group", "Keep Alive"))
+                            .getByRole("spinbutton", "Amount");
+                    play.clear(amount);
+                    play.type(amount, "0");
+                    play.tab();
+                    play.expect(amount).toHaveValue("0");
+                    play.expect(amount).not().toHaveAttribute("aria-invalid", "true");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("ReadOnly", context -> render(context, true, null, true))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save (read only)");
@@ -198,13 +215,13 @@ public final class ElasticClusterEditorStories {
                     play.expect(play.querySelector(URLS)).not().toBeDisabled();
                     play.type(play.querySelector(URLS), "x");
                     play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
-                    // A read-only SelectionBox has the selection-box--readonly modifier
-                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--readonly");
+                    // A read-only SelectionBox has the selection-box--read-only modifier
+                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--read-only");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     // The tab says it is read only, as a status that screen readers announce
-                    final Query note = play.getByText("Read only", ".docTab-readOnlyNote");
+                    final Query note = play.getByText("Read only", ".link-tab-panel__read-only-note");
                     play.expect(note).toBeVisible();
-                    play.expect(note.closest(".docTab-readOnlyStatus")).toHaveAttribute("role", "status");
+                    play.expect(note.closest(".link-tab-panel__read-only-status")).toHaveAttribute("role", "status");
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only, with nothing typed (ReadOnly types into a field): the partner
@@ -214,7 +231,7 @@ public final class ElasticClusterEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Connection URLs", "label")).toBeInTheDocument());
                     play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
                     play.waitFor(() -> play.expect(apiKeyBox(play)).toHaveValue("elastic-key"));
-                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -263,7 +280,7 @@ public final class ElasticClusterEditorStories {
         final ElasticClusterResource resource = GWT.create(ElasticClusterResource.class);
         return DocEditors.render(context, builder.build(), readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
-                injector.getElasticClusterPresenter(),
+                injector.getElasticClusterEditor(),
                 DocResource.of(
                         restFactory -> restFactory.create(resource).method(res -> res.fetch(DOC_REF.getUuid())),
                         (restFactory, doc) -> restFactory.create(resource)

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:pp="urn:import:stroom.pathways.client.component">
+    <!-- A Traces store's Traces tab: its traces above the selected one's spans -->
+    <split:SplitPane vertical="true" thin="true" sizes="440px, *"
+                     names="Traces, Trace overview" addStyleNames="max default-min-sizes">
+        <g:SimplePanel addStyleNames="max">
+            <pp:TracesList ui:field="tracesList"/>
+        </g:SimplePanel>
+        <g:SimplePanel addStyleNames="max">
+            <pp:TraceOverviewChart ui:field="traceOverview"/>
+        </g:SimplePanel>
+    </split:SplitPane>
+</ui:UiBinder>

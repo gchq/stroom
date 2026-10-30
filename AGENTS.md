@@ -158,6 +158,16 @@ Stroom expects Java 25 (Eclipse Temurin)
 * Tests that require mocks should use only Mockito.
 
 
+### GWT UI components
+
+Before changing GWT client code (`stroom-core-client`, `stroom-core-client-widget`, `stroom-dashboard-gwt`, `stroom-app-gwt`, `stroom-statistics-client` or anything under `stroom-gwt/`), read `stroom-gwt/UI-GUIDE.md` and follow it.
+The rules most costly to miss:
+
+* A screen, dialog or tab is a dumb **component** (a UiBinder template and its Java) and a **controller** that wires it; there are no presenters.
+* Use Stroom's widgets, never GWT's versions of them (`Button`, `CheckBox`, `ListBox`, `TextBox`, ...) or raw HTML controls (`<input>`, `<select>`, `<textarea>`, `<button>`); wire handlers in Java, never with `@UiHandler`; no inline styles, BEM classes in the component's own stylesheet.
+* Every screen has workbench stories (default, read-only, dialog OK and Cancel), run with the leak check; see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`.
+
+
 ## Generated and third party files
 
 The following code is generated and should not be edited directly:

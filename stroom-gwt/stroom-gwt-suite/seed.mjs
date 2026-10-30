@@ -100,8 +100,8 @@ async function freshTree() {
 const readTree = () =>
   page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.explorerCell')].map((c) => ({
-      type: norm(c.querySelector('.explorerCell-icon')?.getAttribute('title')),
+    return [...document.querySelectorAll('.explorer-cell')].map((c) => ({
+      type: norm(c.querySelector('.explorer-cell__icon')?.getAttribute('title')),
       // Not textContent: an inline SVG icon's <style> or <title> is text too (Elastic Index's
       // `.st0{fill:…}`, OpenAI Model's "OpenAI icon"), so the name never matched for those types.
       label: norm([...c.querySelectorAll('*:not(svg):not(svg *)')].filter((e) => !e.children.length).map((e) => e.textContent).join(' ')),
@@ -118,7 +118,7 @@ const dialog = () => page.locator('.dialog').last();
  */
 async function createDoc(parentLabel, category, type, name) {
   await dismissMenus(page).catch(() => {});
-  if (!(await rightClickByText(page, '.explorerCell', parentLabel))) throw new Error(`no explorer row "${parentLabel}"`);
+  if (!(await rightClickByText(page, '.explorer-cell', parentLabel))) throw new Error(`no explorer row "${parentLabel}"`);
   if (!(await clickMenuItem(page, 'New'))) throw new Error('no New item');
   await page.waitForTimeout(600);
   if (category) {

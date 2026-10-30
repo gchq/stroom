@@ -24,14 +24,14 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.CurrentUser;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.util.shared.UserRef;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.EnumSet;
@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 ///
 /// * Holding a permission: Stroom's `CurrentUser.hasAppPermission` (`ADMINISTRATOR` implies every
 ///   permission), checked against `CurrentUser`s holding each case's permissions;
-/// * The user tab's label: `UserTabPresenter.setUserRef`'s tab label, read from real presenters (from
+/// * The user tab's label: `UserTabController.setUserRef`'s tab label, read from real controllers (from
 ///   GIN) given each case's user. The story shows each case and its label, and the play checks
 ///   them.
 public final class AppPermissionsStories {
@@ -152,19 +152,19 @@ public final class AppPermissionsStories {
         return harness.asWidget();
     }
 
-    /// Shows the caption `UserTabPresenter` gives a user's tab.
+    /// Shows the caption `UserTabController` gives a user's tab.
     private static void addCaption(final SecurityScreenGinjector injector,
                                    final FlowPanel panel,
                                    final String id,
                                    final UserRef userRef) {
-        final UserTabPresenter presenter = injector.getUserTabPresenter();
+        final UserTabController controller = injector.getUserTabController();
         String note = "";
         try {
-            presenter.setUserRef(userRef);
+            controller.setUserRef(userRef);
         } catch (final RuntimeException e) {
             note = "(setUserRef threw)";
         }
-        final Label label = new Label(presenter.getLabel());
+        final Label label = new Label(controller.getLabel());
         label.getElement().setAttribute("data-testid", "caption-" + id);
         panel.add(StoryPanels.row(8, new Label(id + ":"), label, new Label(note)));
     }

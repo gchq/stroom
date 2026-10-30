@@ -16,9 +16,9 @@
 
 package stroom.gwt.workbench.client.app.ai;
 
-import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.component.AskStroomAiController;
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.ai.shared.GeneralTableContext;
-import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -33,16 +33,13 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.main.client.presenter.MainUiHandlers;
-import stroom.main.client.view.MainToolbar;
+import stroom.main.client.component.MainToolbar;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/AI/AskStroomAiDialog` stories, showing Stroom's real [AskStroomAiPresenter] as the 'Ask
+/// The `App/AI/AskStroomAiDialog` stories, showing Stroom's real [AskStroomAiController] as the 'Ask
 /// Stroom AI' dialog, opened by `ShowAskStroomAiEvent` as the app's toolbar opens it, with fake
 /// REST replies ([AiFixtures]): a reply with an attachment, two past chats (`listChats`, filtered
 /// by the request's filter), a past chat's messages (`getMessages`), the attachment's data
@@ -50,7 +47,7 @@ import java.util.List;
 /// `DOWNLOAD_SPY`).
 ///
 /// `ToolbarEntryPoint` shows Stroom's `MainToolbar` (the app's top bar) with its AI toggle wired
-/// as `MainPresenter` wires it.
+/// as `MainController` wires it.
 public final class AskStroomAiDialogStories {
 
     private static final String CAPTION = "Ask Stroom AI";
@@ -164,6 +161,8 @@ public final class AskStroomAiDialogStories {
                             .toBeInTheDocument());
                     // The toggle shows its state with the 'on' class
                     play.expect(aiButton).toHaveAttribute("aria-pressed", "true");
+                    // Ready to type a question (it once left the focus on the toolbar)
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Message")).toHaveFocus());
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(aiButton).toHaveAttribute("aria-pressed", "false");
@@ -184,7 +183,7 @@ public final class AskStroomAiDialogStories {
                     play.expect(grid.getByText("ALPHA")).toBeInTheDocument();
                     // The pager's range is separate labels (with no-break spaces), so its text is
                     // normalised
-                    final Value<String> pager = screen.querySelector(".pager").textContent();
+                    final Value<String> pager = screen.querySelector(".pager-panel__bar").textContent();
                     play.expect("the pager's text", () -> pager.get().replaceAll("[\\s\u00a0]+", " "))
                             .toMatch("1 to 3 of 3");
                     DocEditors.expectNoProblems(play);
@@ -231,6 +230,31 @@ public final class AskStroomAiDialogStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Configure Ask Stroom AI",
                             StroomDom.DIALOG_TITLE)).toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // Set As Default sends the settings both tabs show
+                .story("SetAsDefaultSendsSettings", AskStroomAiDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText(CAPTION, StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByTitle("Configure"));
+                    play.waitFor(() -> play.expect(screen.getByText("Configure Ask Stroom AI", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument());
+                    play.clear(screen.querySelector("#chatSystemPrompt"));
+                    play.type(screen.querySelector("#chatSystemPrompt"), "Be brief.");
+                    play.click(screen.getByText("Table Analysis", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(screen.getByText("Max Total Rows", "label")).toBeInTheDocument());
+                    play.clear(screen.querySelector("#tableQueryUserPrompt"));
+                    play.type(screen.querySelector("#tableQueryUserPrompt"), "Analyse the table.");
+                    play.click(screen.getByRole("button", StroomDom.button("Set As Default")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/ai/v1/setDefaultAskStroomAIConfig")
+                                    .withJsonBodyContaining("{\"chatSystemPrompt\": \"Be brief.\","
+                                                            + " \"tableAnalysis\":"
+                                                            + " {\"tableQueryUserPrompt\": \"Analyse the table.\"}}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("INFO: Default config updated"));
+                    DocEditors.expectNoUnhandledRequests(play);
                 });
     }
 
@@ -246,13 +270,13 @@ public final class AskStroomAiDialogStories {
         return CHATS.replace("CHATS", chats).replace("COUNT", String.valueOf(count));
     }
 
-    // As the AI toolbar button does: the presenter handles ShowAskStroomAiEvent (its proxy event)
-    private static AskStroomAiPresenter showPresenter(final ScreenHarness harness,
+    // As the AI toolbar button does: the controller handles ShowAskStroomAiEvent (its listener event)
+    private static AskStroomAiController showController(final ScreenHarness harness,
                                                       final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
-        harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), presenter));
-        harness.unbindOnCleanUp(presenter);
-        return presenter;
+        final AskStroomAiController controller = injector.getAskStroomAiController();
+        harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), controller));
+        harness.own(controller);
+        return controller;
     }
 
     private static Widget render(final StoryContext context) {
@@ -262,16 +286,16 @@ public final class AskStroomAiDialogStories {
     }
 
     private static void showDialog(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = showPresenter(harness, injector);
-        harness.closeOnCleanUp(presenter);
+        final AskStroomAiController controller = showController(harness, injector);
+        harness.ownPopup(controller);
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
     }
 
     private static void showDialogWithContext(final ScreenHarness harness,
                                               final EditorsScreenGinjector injector) {
-        final AskStroomAiPresenter presenter = showPresenter(harness, injector);
-        harness.closeOnCleanUp(presenter);
-        presenter.setContext(new GeneralTableContext("Orders table",
+        final AskStroomAiController controller = showController(harness, injector);
+        harness.ownPopup(controller);
+        controller.setContext(new GeneralTableContext("Orders table",
                 List.of("Order", "Total"),
                 List.of(List.of("1", "42"))));
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
@@ -283,26 +307,17 @@ public final class AskStroomAiDialogStories {
                 AskStroomAiDialogStories::showToolbar);
     }
 
-    // As MainPresenter wires the toolbar's AI toggle
+    // As MainController wires the toolbar's AI toggle
     private static void showToolbar(final ScreenHarness harness, final EditorsScreenGinjector injector) {
-        showPresenter(harness, injector);
+        showController(harness, injector);
         final MainToolbar toolbar = new MainToolbar();
         final boolean[] showing = {false};
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), event -> {
             showing[0] = event.isShow();
-            toolbar.getShowAi().setState(showing[0]);
+            toolbar.getShowAi().setPressed(showing[0]);
         }));
-        toolbar.setMainUiHandlers(new MainUiHandlers() {
-            @Override
-            public void showMenu(final NativeEvent event, final Element target) {
-                // No main menu in a story
-            }
-
-            @Override
-            public void showAi(final NativeEvent event, final Element target) {
-                ShowAskStroomAiEvent.fire(harness.getHasHandlers(), !showing[0]);
-            }
-        });
+        // No main menu in a story
+        toolbar.setOnShowAi(() -> ShowAskStroomAiEvent.fire(harness.getHasHandlers(), !showing[0]));
         harness.add(toolbar);
     }
 }

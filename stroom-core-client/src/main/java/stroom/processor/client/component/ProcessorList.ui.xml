@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The processors and their filters, a tree of rows, with a pager and their actions (each shown
+     only where it is available) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Processor actions">
+        <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Processor"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor" enabled="false"/>
+        <b:ToolbarButton ui:field="duplicateButton" svg="COPY" title="Duplicate Selected Processor" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processors" enabled="false"/>
+        <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Processors"/>
+        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Filtered Processors"/>
+        <b:ToolbarButton ui:field="showTasksButton" svg="JOBS" title="Show Tasks for Selected Processor"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Processors"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

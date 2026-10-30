@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:HTMLPanel>
+        <div>The chosen set of execution schedules will be run now, executing according to frequency until up to date.</div>
+        <div class="dialog__buttons">
+            <div class="dialog__button-cell">
+                <b:Button ui:field="applySelectionButton" addStyleNames="allow-focus button--contained-primary w-100"
+                          text="Apply to Selection" icon="OK"/>
+            </div>
+            <div class="dialog__button-cell">
+                <b:Button ui:field="applyFilteredButton" addStyleNames="allow-focus button--contained-green w-100"
+                          text="Apply to Filtered" icon="GENERATE"/>
+            </div>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

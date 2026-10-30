@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A data volume group: its name, above its volumes -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:fs="urn:import:stroom.data.store.impl.fs.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName" label="Volume Group Name"
+                        helpText="A unique name for the volume group."
+                        screenReaderText="Must be unique."
+                        required="true">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <g:SimplePanel styleName="dock-max control-box control-box--padded">
+            <fs:FsVolumeStatusList ui:field="list"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

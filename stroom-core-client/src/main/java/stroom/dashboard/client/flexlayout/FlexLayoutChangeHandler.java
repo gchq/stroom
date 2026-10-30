@@ -16,7 +16,9 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 
 import java.util.List;
 
@@ -32,6 +34,6 @@ public interface FlexLayoutChangeHandler {
     /// that they can be removed again: they were made before they were placed.
     ///
     /// @param components The components that were not placed.
-    default void cancelNewComponents(final List<Component> components) {
+    default void cancelNewComponents(final List<DashboardPane> components) {
     }
 }

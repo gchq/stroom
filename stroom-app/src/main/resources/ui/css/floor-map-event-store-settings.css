@@ -1,0 +1,15 @@
+/*
+ * A floor map event store's Settings tab (FloorMapEventStoreSettings).
+ */
+
+/* The consequence of enabling condense, stated beside the setting that causes it: a
+   stationary entity's repeats are collapsed to the earliest, so its last-seen time stops
+   advancing and expiry removes it from the map while it is still emitting. Sited with the
+   control rather than in the help text because it is the kind of thing a reader needs at
+   the moment of the decision. */
+.floor-map-event-store-settings__condense-warning {
+    display: block;
+    margin-bottom: 0.5em;
+    color: var(--floormap-warning__color);
+    font-weight: 500;
+}

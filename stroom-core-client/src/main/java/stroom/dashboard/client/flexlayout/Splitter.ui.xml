@@ -1,0 +1,7 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A splitter of a dashboard's layout: a focusable separator, and what can be grabbed to drag it -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="flex-layout__splitter" tabindex="0" role="separator">
+        <div class="flex-layout__dragger"/>
+    </div>
+</ui:UiBinder>

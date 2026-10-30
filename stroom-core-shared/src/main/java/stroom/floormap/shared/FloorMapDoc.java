@@ -48,17 +48,17 @@ import java.util.Objects;
 /// ### UI Tabs
 ///
 /// When a user opens a Floor Map document in the Stroom UI, the
-/// `FloorMapPresenter`
-/// builds several tabs, each backed by a sub-presenter:
+/// `FloorMapEditor`
+/// builds several tabs, each backed by a controller:
 ///
-/// Floor Map tabs and their presenters
+/// Floor Map tabs and their controllers
 ///
-/// | Tab | Presenter | Purpose |
+/// | Tab | Controller | Purpose |
 /// |---|---|---|
-/// | Settings | `FloorMapSettingsPresenter` | Configures store references, value format, and value schema |
-/// | Events Query | `FloorMapQueryPresenter` | Edits the StroomQL query for the events store |
-/// | Map | `FloorMapMapPresenter` | Read-only (or light-edit) canvas rendering of facts at a point in time |
-/// | Editor | `FloorMapEditorPresenter` | Full authoring environment with staged (pending) saves |
+/// | Settings | `FloorMapSettingsController` | Configures store references, value format, and value schema |
+/// | Events Query | `FloorMapQueryController` | Edits the StroomQL query for the events store |
+/// | Map | `FloorMapMapTabController` | Read-only (or light-edit) canvas rendering of facts at a point in time |
+/// | Editor | `FloorMapEditorTabController` | Full authoring environment with staged (pending) saves |
 ///
 /// ### Two-Store Architecture
 ///
@@ -189,7 +189,7 @@ public class FloorMapDoc extends AbstractDoc {
 
     /// StroomQL query string for the events store.
     /// Executed by
-    /// `FloorMapMapPresenter` to
+    /// `FloorMapMapTabController` to
     /// populate the events overlay on the canvas.
     /// May be `null` if not configured.
     @JsonProperty
@@ -235,7 +235,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// May be `null` for documents created before the value
     /// schema feature was introduced. New documents are always seeded
     /// with [FloorMapFieldMapping#initialValueSchema()] by
-    /// `FloorMapInitPresenter`.
+    /// `NewFloorMapStoresController`.
     @JsonProperty
     private final List<FloorMapFieldMapping> valueSchema;
 
@@ -564,7 +564,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// to one with `valueFormat == JSON`, even though their getters
     /// would return the same value. This is intentional — it allows the
     /// dirty-detection logic in
-    /// `stroom.entity.client.presenter.DocPresenter#onChange()`
+    /// `stroom.document.client.editor.DocumentEditor#onChange()`
     /// to correctly detect when a user has explicitly set a field that
     /// previously relied on the default.
     ///

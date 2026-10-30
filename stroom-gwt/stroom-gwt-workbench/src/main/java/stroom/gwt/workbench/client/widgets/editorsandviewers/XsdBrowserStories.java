@@ -16,6 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -24,17 +26,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
-import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
-import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.widget.xsdbrowser.client.view.XSDNode;
+import stroom.xmlschema.client.component.XsdBrowser;
+import stroom.xmlschema.client.component.XsdBrowserController;
+import stroom.xmlschema.client.xsdbrowser.XsdModel;
+import stroom.xmlschema.client.xsdbrowser.XsdNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's XSD browser ([XSDBrowserPresenter], the box diagram shown by the XML
+/// Stories for Stroom's XSD browser ([XsdBrowserController], the box diagram shown by the XML
 /// schema editor).
 public final class XsdBrowserStories {
 
@@ -135,6 +136,23 @@ public final class XsdBrowserStories {
     private static final String SCHEMA_DOCUMENTATION = "A small sample library schema for the XSD browser.";
     private static final String BOOK_DOCUMENTATION = "A single book entry with a title, author and genre.";
 
+    // A sequence and a choice with their occurrences given, shown over their images
+    private static final String OCCURRENCES_XSD = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="shelf">
+                <xs:complexType>
+                  <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="label" type="xs:string"/>
+                    <xs:choice minOccurs="1" maxOccurs="3">
+                      <xs:element name="book" type="xs:string"/>
+                      <xs:element name="magazine" type="xs:string"/>
+                    </xs:choice>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>""";
+
     // Malformed: the <xs:element> start tag is never closed
     private static final String MALFORMED_XSD = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -152,7 +170,7 @@ public final class XsdBrowserStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Editors & Viewers/XsdBrowser", XsdBrowserStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                .argType(ArgType.text(XSD_TEXT).description("The raw schema text (GWT XSDModel.setContents(...))."))
+                .argType(ArgType.text(XSD_TEXT).description("The raw schema text (GWT XsdModel.setContents(...))."))
                 .argType(ArgType.text(OPEN).description("The name of a global element or type to open "
                                                         + "(as a double-click does), or blank for the schema."))
                 .args(Args.of(XSD_TEXT, SAMPLE_XSD, OPEN, ""))
@@ -172,7 +190,7 @@ public final class XsdBrowserStories {
                 .story("KeyboardNavigation", XsdBrowserStories::fromArgs)
                 .withArgs(Args.of(OPEN, "book"))
                 .withPlay(play -> {
-                    final Query documentation = play.querySelector(".xsdBrowser-documentation");
+                    final Query documentation = play.querySelector(".xsd-browser__documentation");
                     play.waitFor(() -> play.expect(documentation).toHaveTextContent(BOOK_DOCUMENTATION));
                     final Play navigation = play.within(play.getByRole("group", "Schema navigation"));
                     final Query home = navigation.getByRole("button", "Schema Home");
@@ -193,8 +211,36 @@ public final class XsdBrowserStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(documentation).toHaveTextContent(SCHEMA_DOCUMENTATION));
                 })
+                // A sequence's and a choice's occurrences are small labels over their images
+                // (they lost their class in wave 8 and were shown as plain text below them)
+                .story("Occurrences", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(XSD_TEXT, OCCURRENCES_XSD, OPEN, "shelf"))
+                .withPlay(play -> {
+                    final Query sequence = play.getByText("0..*");
+                    play.waitFor(() -> play.expect(sequence).toBeVisible());
+                    play.expect(sequence).toHaveClass("xsd-browser__occurrence-label");
+                    play.expect(sequence).toHaveStyle("position", "absolute");
+                    play.expect(play.getByText("1..3")).toHaveClass("xsd-browser__occurrence-label");
+                })
+                // A type restricted to listed values: its constraints are headed "Enumeration"
+                .story("EnumerationConstraint", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "GenreType"))
+                .withPlay(play -> {
+                    final Query heading = play.querySelector(".xsd-browser__restriction-type");
+                    play.waitFor(() -> play.expect(heading).toHaveTextContent("Enumeration"));
+                    play.expect(play.getByText("non-fiction")).toBeVisible();
+                })
+                // A type restricted to a pattern: its constraints are headed "Pattern" (they were
+                // headed "Enumeration", as every restriction's were)
+                .story("PatternConstraint", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "IsbnType"))
+                .withPlay(play -> {
+                    final Query heading = play.querySelector(".xsd-browser__restriction-type");
+                    play.waitFor(() -> play.expect(heading).toHaveTextContent("Pattern"));
+                    play.expect(play.getByText("[0-9]{13}")).toBeVisible();
+                })
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
-                // XML parser recovers, and GWT's XSDModel once showed what it recovered)
+                // XML parser recovers, and GWT's XsdModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)
                 .withArgs(Args.of(XSD_TEXT, MALFORMED_XSD))
                 .withPlay(play -> {
@@ -205,11 +251,11 @@ public final class XsdBrowserStories {
     }
 
     private static Widget fromArgs(final StoryContext context) {
-        final XSDBrowserPresenter presenter = new XSDBrowserPresenter(
-                new SimpleEventBus(),
-                new XSDBrowserViewImpl(GWT.create(XSDBrowserViewImpl.Binder.class)));
-        final XSDModel model = new XSDModel();
-        presenter.setModel(model);
+        final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
+        final XsdBrowserController browser = harness.own(new XsdBrowserController(harness.getEventBus(),
+                new XsdBrowser()));
+        final XsdModel model = new XsdModel();
+        browser.setModel(model);
         model.setContents(context.getArgs().getString(XSD_TEXT, ""));
         open(model, context.getArgs().getString(OPEN, ""));
 
@@ -220,16 +266,17 @@ public final class XsdBrowserStories {
         frame.getElement().getStyle().setProperty("borderRadius", "4px");
         frame.getElement().getStyle().setProperty("overflow", "hidden");
         frame.getElement().getStyle().setProperty("position", "relative");
-        frame.add(presenter.getWidget());
-        return frame;
+        frame.add(browser);
+        harness.add(frame);
+        return harness.asWidget();
     }
 
     // Opens the global element or type with this name, if there is one
-    private static void open(final XSDModel model, final String name) {
+    private static void open(final XsdModel model, final String name) {
         if (name.isEmpty() || model.getGlobalElementMap() == null) {
             return;
         }
-        XSDNode node = model.getGlobalElementMap().get(name);
+        XsdNode node = model.getGlobalElementMap().get(name);
         if (node == null) {
             node = model.getGlobalTypeMap().get(name);
         }

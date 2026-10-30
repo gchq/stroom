@@ -25,11 +25,11 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
+import stroom.widget.tooltip.client.component.InfoTooltip;
+import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Style;
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's tooltips.
 ///
-/// Stroom has two kinds: a [TooltipPresenter] popup shown next to a widget at a `PopupLocation`,
+/// Stroom has two kinds: a [InfoTooltipController] popup shown next to a widget at a `PopupLocation`,
 /// and the native `title` that Stroom gives its toolbar buttons ([ToolbarButton]).
 public final class TooltipStories {
 
@@ -91,24 +91,24 @@ public final class TooltipStories {
                 });
     }
 
-    /// A button that shows a [TooltipPresenter] beside it while the pointer is over it.
+    /// A button that shows a [InfoTooltipController] beside it while the pointer is over it.
     private static Widget hoverTooltip(final StoryPopups popups,
                                        final String text,
                                        final String tooltip,
                                        final PopupLocation location) {
         final Button button = button(text);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new TooltipViewImpl());
+        final InfoTooltipController infoTooltip = new InfoTooltipController(popups.getEventBus(), new InfoTooltip());
         final boolean[] showing = {false};
         button.addDomHandler(event -> {
             if (!showing[0]) {
                 showing[0] = true;
-                tooltipPresenter.show(tooltip, new PopupPosition(new Rect(button.getElement()), location));
+                infoTooltip.show(tooltip, new PopupPosition(new Rect(button.getElement()), location));
             }
         }, MouseOverEvent.getType());
         button.addDomHandler(event -> {
             if (showing[0]) {
                 showing[0] = false;
-                HidePopupEvent.builder(tooltipPresenter).fire();
+                HidePopupEvent.builder(infoTooltip).fire();
             }
         }, MouseOutEvent.getType());
         return button;

@@ -84,6 +84,7 @@ public final class FloorMapMarker {
     /// balloon and the shape stops reading as a pin.
     public static final double TIP_RADIUS = 2.5;
 
+    // For tests
     /// How far the drawn shape hangs below the head, in grid units.
     ///
     /// Not a setting — derived from the constants above and asserted, because
@@ -92,7 +93,7 @@ public final class FloorMapMarker {
     /// disappears and the shape looks like a circle with a defect. This sits
     /// between, which is the "circle with a subtle tail" the marker is meant to
     /// be.
-    public static double tailOverhang() {
+    static double tailOverhang() {
         return bottomY() - (HEAD_Y + HEAD_RADIUS);
     }
 

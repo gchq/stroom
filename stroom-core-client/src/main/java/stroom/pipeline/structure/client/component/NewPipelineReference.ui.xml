@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+        xmlns:ui="urn:ui:com.google.gwt.uibinder"
+        xmlns:g="urn:import:com.google.gwt.user.client.ui"
+        xmlns:form="urn:import:stroom.widget.form.client"
+        xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+        xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id"
+                        helpText="The ID of the pipeline element that this reference data lookup belongs to.">
+            <tx:Label ui:field="element" addStyleNames="text-label--value"/>
+        </form:FormGroup>
+        <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline"
+                        helpText="The reference loader pipeline that loads the reference data. A Plan B store can also be chosen here for state lookups.">
+            <dd:DropDownBox ui:field="pipeline" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="newPipelineReferenceFeed" label="Feed"
+                        helpText="The feed that holds the reference data streams.">
+            <dd:DropDownBox ui:field="feed" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="newPipelineReferenceType" label="Stream Type"
+                        helpText="The stream type to load reference data from. Default is Reference. Choose Context to use the context data of the stream being processed."
+                        screenReaderText="Default is Reference.">
+            <i:SelectionBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+ 
