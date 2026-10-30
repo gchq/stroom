@@ -4141,21 +4141,7 @@ public class AskStroomAiPresenter
                     getView().setSendButtonLoadingState(true);
                     askStroomAiClient.editMessage(request, response -> {
                         rememberSentTab(currentChat.getId(), tabSnapshot);
-                        // The question and what follows are replaced; the new question is shown now, until
-                        // polling brings the stored one.
-                        removeMessageElementsFrom(messageId, false);
-                        followBottom = true;
-                        // The edited question replaces this one, so has its attachments, and those attached since
-                        // (shown above the input box) are sent with it.
-                        sendingAttachments = new ArrayList<>(sentAttachments.getOrDefault(messageId, List.of()));
-                        pendingAttachments.values().stream()
-                                .filter(pending -> !sendingAttachments.contains(pending))
-                                .forEach(sendingAttachments::add);
-                        pendingAttachments.clear();
-                        refreshAttachmentList();
-                        appendPendingQuestion(newText);
-                        scrollToBottom();
-                        startPolling();
+                        showReplacedQuestion(messageId, newText);
                     }, error -> showError(error, "Unable to edit the question", () ->
                             getView().setSendButtonLoadingState(false)), getView());
                 }, getView());
@@ -4230,24 +4216,49 @@ public class AskStroomAiPresenter
             final AiTabSnapshot tabSnapshot = attachedTabSnapshot();
             final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, turnId, null,
                     tabSnapshot);
+            // Read before the question's element goes.
+            final String question = NullSafe.get(renderedMessages.get(turnId), AiChatMessage::getMessage);
             askStroomAiClient.editMessage(request, response -> {
                 rememberSentTab(currentChat.getId(), tabSnapshot);
-                // The question and everything after it are replaced by the new answer, which keeps the question
-                // where it is in the conversation.
-                removeMessageElementsFrom(turnId, true);
-                startPolling();
+                // Asked again, the question is stored afresh with a new id, as an edited one is.
+                showReplacedQuestion(turnId, question);
             }, error -> showError(error, "Unable to ask again", () ->
                     getView().setSendButtonLoadingState(false)), getView());
         }, getView());
     }
 
     /**
+     * Shows a question asked again (edited, or as it was) in place of the one it replaces: the server removes that
+     * question and what follows, and stores the new one with a new id, so the old elements go and the new question
+     * is shown now, until polling brings the stored one.
+     *
+     * @param messageId The id of the question replaced.
+     * @param text      The question asked, or null if it isn't known (polling then brings it).
+     */
+    private void showReplacedQuestion(final int messageId, final String text) {
+        removeMessageElementsFrom(messageId);
+        followBottom = true;
+        // The new question replaces this one, so has its attachments, and those attached since (shown above the
+        // input box) are sent with it.
+        sendingAttachments = new ArrayList<>(sentAttachments.getOrDefault(messageId, List.of()));
+        pendingAttachments.values().stream()
+                .filter(pending -> !sendingAttachments.contains(pending))
+                .forEach(sendingAttachments::add);
+        pendingAttachments.clear();
+        refreshAttachmentList();
+        if (NullSafe.isNonBlankString(text)) {
+            appendPendingQuestion(text);
+        }
+        scrollToBottom();
+        startPolling();
+    }
+
+    /**
      * Removes the elements of the messages from one onwards.
      *
      * @param fromMessageId The first message to remove.
-     * @param keepFirst     True to keep the first message itself, i.e. only remove those after it.
      */
-    private void removeMessageElementsFrom(final int fromMessageId, final boolean keepFirst) {
+    private void removeMessageElementsFrom(final int fromMessageId) {
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         Element child = markdownContainer.getFirstChildElement();
         while (child != null) {
@@ -4259,7 +4270,7 @@ public class AskStroomAiPresenter
             } else if (NullSafe.isNonBlankString(idStr)) {
                 // Not always just a number, e.g. the steps a message left to the user.
                 final int id = AiConversationEntries.messageIdOf(idStr);
-                if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
+                if (id >= fromMessageId) {
                     child.removeFromParent();
                     renderedMessages.remove(id);
                 }
