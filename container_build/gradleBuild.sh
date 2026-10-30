@@ -34,6 +34,7 @@ set -euo pipefail
 
 # -Dorg.gradle.caching=true
 GRADLE_ARGS=(
+  "--no-daemon" # daemon no good in a container
   "-Dorg.gradle.daemon=false" # daemon no good in a container
   "-Dorg.gradle.parallel=true"
   "-Dorg.gradle.workers.max=${MAX_WORKERS:-6}"

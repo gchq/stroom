@@ -303,7 +303,7 @@ subprojects {
         // Set heap size for the test JVM(s) as we were running out of heap on GH Actions
         //maxHeapSize = (8 / Runtime.runtime.availableProcessors().intdiv(2)) + "G"
 
-        final int totalHeapMb = 12 * 1024
+        final int totalHeapMb = 10 * 1024
         //final int testForks = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2).intValue())
         // Not much point in setting maxParallelForks > maxGradleWorkers as the concurrent test forks
         // are limited by the workers anyway.
