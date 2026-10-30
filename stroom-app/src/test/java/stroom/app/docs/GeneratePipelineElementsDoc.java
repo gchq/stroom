@@ -139,7 +139,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
     void generatePipelineElementReferenceContent(final ScanResult scanResult) {
-        final String generatedContent = scanResult.getClassesImplementing(Element.class.getName())
+        final String generatedContent = scanResult.getAllClassesImplementing(Element.class.getName())
                 .parallelStream()
                 .map(GeneratePipelineElementsDoc::mapClassInfo)
                 .filter(Objects::nonNull)
@@ -177,7 +177,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
     void generatePipeElmShortcodeNames(final ScanResult scanResult) {
-        final String dictContent = scanResult.getClassesImplementing(Element.class.getName())
+        final String dictContent = scanResult.getAllClassesImplementing(Element.class.getName())
                 .parallelStream()
                 .map(GeneratePipelineElementsDoc::mapClassInfo)
                 .filter(Objects::nonNull)
@@ -312,7 +312,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
     private static ElementInfo mapClassInfo(final ClassInfo elementClassInfo) {
-        final Class<? extends Element> clazz = (Class<? extends Element>) elementClassInfo.loadClass();
+        final Class<? extends Element> clazz = (Class<? extends Element>) loadClass(elementClassInfo.getName());
         if (!clazz.isInterface()
             && !Modifier.isAbstract(clazz.getModifiers())
             && !clazz.getSimpleName().startsWith("Abstract")
@@ -375,6 +375,15 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
     private static boolean isMethodExcluded(final Method method) {
         return EXCLUDED_METHODS.contains(Map.entry(method.getDeclaringClass(), method.getName()));
+    }
+
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, GeneratePipelineElementsDoc.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

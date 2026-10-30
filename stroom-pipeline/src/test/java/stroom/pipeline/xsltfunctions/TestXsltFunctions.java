@@ -34,7 +34,7 @@ public class TestXsltFunctions {
             streamFunctionClasses(scanResult)
                     .filter(classInfo -> !classInfo.hasAnnotation(XsltFunctionDef.class))
                     .forEach(classInfo -> {
-                        final Class<?> clazz = classInfo.loadClass();
+                        final Class<?> clazz = loadClass(classInfo.getName());
                         LOGGER.error("XSLT Function {} is missing annotation {}. " +
                                      "It's time to write some documentation.",
                                 clazz.getName(),
@@ -55,7 +55,7 @@ public class TestXsltFunctions {
             streamFunctionClasses(scanResult)
                     .filter(classInfo -> classInfo.hasAnnotation(XsltFunctionDef.class))
                     .forEach(classInfo -> {
-                        final Class<?> clazz = classInfo.loadClass();
+                        final Class<?> clazz = loadClass(classInfo.getName());
                         final XsltFunctionDef anno = clazz.getAnnotation(XsltFunctionDef.class);
                         final String funcName = anno.name();
                         assertThat(funcName)
@@ -220,9 +220,17 @@ public class TestXsltFunctions {
     }
 
     private Stream<ClassInfo> streamFunctionClasses(final ScanResult scanResult) {
-        return scanResult.getSubclasses(StroomExtensionFunctionCall.class)
+        return scanResult.getAllSubclasses(StroomExtensionFunctionCall.class)
                 .stream()
                 .filter(classInfo -> !classInfo.isInterface())
                 .filter(classInfo -> !classInfo.isAbstract());
+    }
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestXsltFunctions.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

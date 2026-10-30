@@ -73,6 +73,8 @@ public class UsersAndGroupsController extends Controller {
 
     private final ToolbarButton addMembersInButton;
     private final ToolbarButton removeMembersInButton;
+    // The one user or group shown, when the users and groups list is hidden (a user's tab)
+    private UserRef userRef;
 
     /// Made by GIN, with its content.
     ///
@@ -170,14 +172,14 @@ public class UsersAndGroupsController extends Controller {
 
         // Deal with Member Of Groups pane.
         own(parentsList.getSelectionModel().addSelectionHandler(e -> {
-            final User user = userList.getSelectionModel().getSelected();
+            final UserRef user = getSelectedUserRef();
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
 
         // Deal with Members in Group pane.
         own(childrenList.getSelectionModel().addSelectionHandler(e -> {
-            final User group = userList.getSelectionModel().getSelected();
+            final UserRef group = getSelectedUserRef();
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
@@ -185,7 +187,7 @@ public class UsersAndGroupsController extends Controller {
     }
 
     private void onAddMemberOf() {
-        final User user = userList.getSelectionModel().getSelected();
+        final UserRef user = getSelectedUserRef();
         if (user != null) {
             final UserRefPopupController userRefPopup = userRefPopupProvider.get();
             userRefPopup.setAdditionalTerm(ExpressionTerm
@@ -197,33 +199,33 @@ public class UsersAndGroupsController extends Controller {
 
             userRefPopup.showOnce(this, "Select Group", groupRef -> {
                 if (groupRef != null) {
-                    addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
+                    addUserToGroup(user, groupRef, parentsList, groupRef);
                 }
             });
         }
     }
 
     private void onRemoveMemberOf() {
-        final User user = userList.getSelectionModel().getSelected();
+        final UserRef user = getSelectedUserRef();
         final User group = parentsList.getSelectionModel().getSelected();
-        removeUserFromGroup(user, group, parentsList);
+        removeUserFromGroup(user, NullSafe.get(group, User::asRef), parentsList);
     }
 
     private void onAddMembersIn() {
-        final User group = userList.getSelectionModel().getSelected();
+        final UserRef group = getSelectedUserRef();
         if (group != null) {
             userRefPopupProvider.get().showOnce(this, "Add User Or Group", userRef -> {
                 if (userRef != null) {
-                    addUserToGroup(userRef, group.asRef(), childrenList, userRef);
+                    addUserToGroup(userRef, group, childrenList, userRef);
                 }
             });
         }
     }
 
     private void onRemoveMembersIn() {
-        final User group = userList.getSelectionModel().getSelected();
+        final UserRef group = getSelectedUserRef();
         final User user = childrenList.getSelectionModel().getSelected();
-        removeUserFromGroup(user, group, childrenList);
+        removeUserFromGroup(NullSafe.get(user, User::asRef), group, childrenList);
     }
 
     private void setParentsListExtraTerm(final UserRef userRef) {
@@ -295,8 +297,17 @@ public class UsersAndGroupsController extends Controller {
     }
 
     private void onSelection() {
+        onSelection(getSelectedUserRef());
+    }
+
+    // When showing a specific user (e.g. on a user's tab) the top user list is hidden and has no
+    // selection, so the fixed user takes precedence over the user list selection.
+    private UserRef getSelectedUserRef() {
+        if (userRef != null) {
+            return userRef;
+        }
         final User selected = userList.getSelectionModel().getSelected();
-        onSelection(NullSafe.get(selected, User::asRef));
+        return NullSafe.get(selected, User::asRef);
     }
 
     private void onSelection(final UserRef selected) {
@@ -384,8 +395,8 @@ public class UsersAndGroupsController extends Controller {
         }
     }
 
-    private void removeUserFromGroup(final User user,
-                                     final User group,
+    private void removeUserFromGroup(final UserRef user,
+                                     final UserRef group,
                                      final UserListController targetList) {
         if (NullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(targetList);
@@ -500,6 +511,7 @@ public class UsersAndGroupsController extends Controller {
     /// @param userRef The user or group.
     public void setUserRef(final UserRef userRef) {
         Objects.requireNonNull(userRef);
+        this.userRef = userRef;
 
         // Specific user so don't show the top pane
         view.setUserListVisible(false);

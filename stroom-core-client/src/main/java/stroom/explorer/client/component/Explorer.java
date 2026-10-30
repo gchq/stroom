@@ -67,6 +67,8 @@ public class Explorer extends Component {
     @UiField
     ToolbarButton collapseAll;
     @UiField
+    ToolbarButton reload;
+    @UiField
     ToolbarToggleButton filter;
     @UiField
     ToolbarButton find;
@@ -115,6 +117,7 @@ public class Explorer extends Component {
         buttons.put(ExplorerAction.LOCATE, locate);
         buttons.put(ExplorerAction.EXPAND_ALL, expandAll);
         buttons.put(ExplorerAction.COLLAPSE_ALL, collapseAll);
+        buttons.put(ExplorerAction.RELOAD, reload);
         buttons.put(ExplorerAction.FILTER, filter);
         buttons.put(ExplorerAction.FIND, find);
         buttons.forEach((action, button) -> button.setOnClick(() -> onAction.accept(action)));
@@ -226,6 +229,16 @@ public class Explorer extends Component {
         nameFilter.setContextHandler(contextHandler);
     }
 
+    /// Spins the Reload button's icon once, to show the reload was asked for. Pressed again
+    /// mid-spin, the spin starts again.
+    public void spinReload() {
+        final Element element = reload.getElement();
+        element.removeClassName("explorer__reload--spin");
+        // Reading the width forces a reflow, so the animation restarts
+        element.getOffsetWidth();
+        element.addClassName("explorer__reload--spin");
+    }
+
     /// @return The explorer's spinner, for the progress of its requests.
     public TaskMonitorFactory getTaskListener() {
         return spinner;
@@ -245,6 +258,7 @@ public class Explorer extends Component {
         LOCATE,
         EXPAND_ALL,
         COLLAPSE_ALL,
+        RELOAD,
         FILTER,
         FIND
     }

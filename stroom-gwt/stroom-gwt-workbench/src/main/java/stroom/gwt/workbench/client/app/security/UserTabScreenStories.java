@@ -49,6 +49,7 @@ import java.util.List;
 /// | `POST /permission/app/v1/getAppUserPermissionsReport` | the Application Permissions tab |
 /// | `POST /permission/app/v1/changeAppPermission` | changing an app permission (checked on the request spy) |
 /// | `POST /explorer/v2/advancedFindWithPermissions` | the Document Permissions tab |
+/// | `DELETE /users/v1/u-bob/g-admins` | removing Bob from Administrators (checked on the request spy) |
 ///
 /// The signed in user is `admin` holding `MANAGE_USERS_PERMISSION` (not `MANAGE_API_KEYS`), so the
 /// tab set has Application Permissions and not API Keys. The controller comes from GIN; a user's tab
@@ -65,6 +66,8 @@ public final class UserTabScreenStories {
             {"id": 2, "uuid": "g-admins", "subjectId": "Administrators", "displayName": "Administrators",
               "group": true, "enabled": true}""";
 
+    private static final String REMOVE_BOB_FROM_ADMINS_PATH = "/users/v1/u-bob/g-admins";
+
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ChildrenOf"),
                     RestReply.json(page()))
@@ -77,6 +80,7 @@ public final class UserTabScreenStories {
                     {"explicitPermissions": ["ANNOTATIONS"],
                      "inheritedPermissions": {"STEPPING_PERMISSION": ["Administrators"]}}"""))
             .post("/permission/app/v1/changeAppPermission", RestReply.json("true"))
+            .delete(REMOVE_BOB_FROM_ADMINS_PATH, RestReply.json("true"))
             .post("/explorer/v2/advancedFindWithPermissions", RestReply.json(page("""
                     {"findResult": {"docRef": {"type": "Feed", "uuid": "f-1", "name": "TEST_FEED"},
                                     "path": "/System/Feeds"},
@@ -159,6 +163,20 @@ public final class UserTabScreenStories {
                     // Remove from Selected Group is a pager toolbar button, not a per-row one
                     play.expect(row.queryByTitle("Remove from Selected Group")).toBeNull();
                     play.expect(play.getAllByTitle("Remove from Selected Group").count()).toBeGreaterThan(0);
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // The User Groups tab removes the user from a group. Its buttons once did nothing, as
+                // they read the hidden (and empty) users list's selection, not the tab's user
+                .story("GroupsTabRemoveFromGroup", context -> render(context, BOB))
+                .withPlay(play -> {
+                    play.click(play.findByText("User Groups", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(play.getAllByText("Administrators").count()).toBeGreaterThan(0));
+                    play.click(play.getAllByText("Administrators").nth(0));
+                    final Query remove = play.getAllByTitle("Remove from Selected Group").nth(0);
+                    play.waitFor(() -> play.expect(remove).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(remove);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.delete(REMOVE_BOB_FROM_ADMINS_PATH).toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The Application Permissions tab changes a permission

@@ -63,8 +63,8 @@ LATEST_SUFFIX="-LATEST"
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 
-# The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
+# The version of stroom-resources used for running the DB and Elasticsearch, should be a tag really
+STROOM_RESOURCES_GIT_TAG="7.14-stroom-7.14-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
@@ -72,6 +72,7 @@ RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
 DDL_DUMP_DIR="${BUILD_DIR}/build"
 DDL_DUMP_FILE="${DDL_DUMP_DIR}/stroom-database-schema-${BUILD_TAG}.sql"
+DOCKER_SCOUT_THRESHOLD="critical,high"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -113,8 +114,8 @@ stop_and_clear_down_stroom_all_dbs() {
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 }
 
-start_databases() {
-  local dbs_to_start=( "$@" )
+start_services() {
+  local services_to_start=( "$@" )
 
   if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
     echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
@@ -133,17 +134,36 @@ start_databases() {
   #export JAVA_OPTS=-Xmx1024m
   #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-  echo -e "${GREEN}Starting [${dbs_to_start[*]}] in the background${NC}"
+  echo -e "${GREEN}Starting [${services_to_start[*]}] in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
     -x \
-    "${dbs_to_start[@]}"
+    "${services_to_start[@]}"
 
   echo -e "${GREEN}Running Docker containers:${NC}"
   docker ps --format '{{.Names}}'
 
   popd > /dev/null
+}
+
+# Wait for the elasticsearch service to be ready for the integration tests that use it
+wait_for_elasticsearch() {
+  local -r health_url="http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"
+  local -r max_attempts=60
+
+  echo -e "${GREEN}Waiting for elasticsearch to be ready${NC}"
+  for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+    if curl --silent --fail --output /dev/null "${health_url}"; then
+      echo -e "${GREEN}elasticsearch is ready${NC}"
+      return 0
+    fi
+    sleep 5
+  done
+
+  echo -e "${RED}ERROR${NC} elasticsearch was not ready after $(( max_attempts * 5 )) seconds" >&2
+  docker logs --tail 50 bounceit_elasticsearch >&2 || true
+  exit 1
 }
 
 generate_ddl_dump() {
@@ -153,7 +173,7 @@ generate_ddl_dump() {
   stop_and_clear_down_stroom_all_dbs
 
   # The service name is not prefixed with bounceit_ at this point
-  start_databases stroom-all-dbs
+  start_services stroom-all-dbs
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -334,14 +354,20 @@ releaseToDockerHub() {
   shift 2
 
   local allTagArgs=()
+  local firstTag=""
 
   for tagVersionPart in "$@"; do
     if [[ -n "${tagVersionPart}" ]]; then
       # echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
-      allTagArgs+=("--tag=${dockerRepo}:${tagVersionPart}")
+      local tag="${dockerRepo}:${tagVersionPart}"
+      allTagArgs+=("--tag=${tag}")
+      if [[ -z "${firstTag}" ]]; then
+        firstTag="${tag}"
+      fi
     fi
   done
 
+  echo "::group::Docker build (${dockerRepo})"
   echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
@@ -351,7 +377,33 @@ releaseToDockerHub() {
     --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
+  echo "::endgroup::"
 
+  # Vulns with no-fix available, so just log them so we can investigate
+  echo "::group::Docker Scout un-fixed scan (${dockerRepo})"
+  echo -e "Doing Scout un-fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
+    "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
+  docker scout \
+    cves \
+    "${firstTag}" \
+    --only-unfixed \
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+  echo "::endgroup::"
+
+  # TODO add '--exit-code' arg back in once vulns are fixed and vex files are in place
+  # Vulns with a fix available, so error. Either we fix and re-build or create
+  # a vex file to explain why we can ignore.
+  echo "::group::Docker Scout fixed scan (${dockerRepo})"
+  echo -e "Doing Scout fixed CVE scan with tag ${GREEN}${firstTag}${NC}" \
+    "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
+  docker scout \
+    cves \
+    "${firstTag}" \
+    --only-fixed \
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+  echo "::endgroup::"
+
+  echo "::group::Docker release (${dockerRepo})"
   if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
@@ -359,16 +411,16 @@ releaseToDockerHub() {
       push \
       --all-tags \
       "${dockerRepo}"
+    echo -e "Completed Docker release"
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker push${NC}"
   fi
-
-  echo -e "Completed Docker release"
+  echo "::endgroup::"
 }
 
 docker_login() {
   # The username and password are configured in the travis gui
-  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PAT}" ]]; then
     # Docker login stores the creds in a file so check it to
     # see if we are already logged in
     #local dockerConfigFile="${HOME}/.docker/config.json"
@@ -380,7 +432,7 @@ docker_login() {
       echo -e "Logging in to Docker (if this fails, have you provided the" \
         "correct docker creds)"
       # Login is idempotent
-      echo "${DOCKER_PASSWORD}" \
+      echo "${DOCKER_PAT}" \
         | docker login \
           -u "${DOCKER_USERNAME}" \
           --password-stdin \
@@ -388,7 +440,7 @@ docker_login() {
       echo -e "Successfully logged in to docker"
     #fi
   else
-    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PAT not set so" \
       "skipping docker login. Pulls/builds will be un-authenticated and rate" \
       "limited, pushes will fail.${NC}"
   fi
@@ -396,11 +448,11 @@ docker_login() {
 
 docker_logout() {
   # The username and password are configured in the travis gui
-  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PAT}" ]]; then
     echo -e "Logging out of Docker"
     docker logout >/dev/null 2>&1
   else
-    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PAT not set so" \
       "skipping docker logout"
   fi
 }
@@ -605,8 +657,9 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs"
-start_databases stroom-all-dbs
+echo "::group::Start stroom-all-dbs and elasticsearch"
+start_services stroom-all-dbs elasticsearch
+wait_for_elasticsearch
 echo "::endgroup::"
 
 echo "::group::Setup local.yml"
@@ -628,7 +681,12 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
-  echo "::group::DockerHub release"
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
+
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
@@ -640,7 +698,6 @@ if [ "$doDockerBuild" = true ]; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
-  echo "::endgroup::"
 fi
 
 # If it is a tagged build copy all the files needed for the github release

@@ -29,6 +29,8 @@ public class ApiKeyModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
+        bind(ApiKeyHasherFactory.class).to(ApiKeyHasherFactoryImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ApiKeyService.class);
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)

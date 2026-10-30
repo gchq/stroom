@@ -29,9 +29,9 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.importexport.shared.ContentResource;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.DocRefs;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -160,9 +160,14 @@ public class ExportConfigController extends Controller {
                 docRefs.add(explorerNode.getDocRef());
             }
 
+            // Pass the type filter so the server only exports matching docs when it
+            // expands any selected folders.
+            final Set<String> includedTypes = typeFilter.getIncludedTypes().orElse(null);
+            final ExportContentRequest request = new ExportContentRequest(docRefs, includedTypes);
+
             restFactory
                     .create(CONTENT_RESOURCE)
-                    .method(res -> res.exportContent(new DocRefs(docRefs)))
+                    .method(res -> res.exportContent(request))
                     .onSuccess(result -> {
                         ExportFileCompleteUtil.onSuccess(locationManager, this, result);
                         event.hide();

@@ -329,6 +329,7 @@ public class ExplorerController extends Controller
             case LOCATE -> onLocate();
             case EXPAND_ALL -> onExpandAll();
             case COLLAPSE_ALL -> onCollapseAll();
+            case RELOAD -> onReload();
             case FILTER -> onFilter();
             case FIND -> onFind();
         }
@@ -351,6 +352,13 @@ public class ExplorerController extends Controller
     private void onCollapseAll() {
         treeController.setForceSelection(explorerTree.getSelectionModel().getSelected());
         treeController.collapseAll();
+    }
+
+    // Fetches the tree again, asking the server to rebuild its copy first, so changes made by
+    // others are shown; open folders, the filter and the selection are kept
+    private void onReload() {
+        view.spinReload();
+        treeController.reload();
     }
 
     // The filter is only pressed when a filter has been set, not just when clicked

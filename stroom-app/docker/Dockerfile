@@ -24,12 +24,13 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24@sha256:3fd2d245c4e0eba615fe366a71b8bd25f5db7104f53e4026b24bf508b880bd2a AS stroom-base-stage
+FROM eclipse-temurin:25.0.4.1_1-jdk-alpine-3.23@sha256:c6acc8b9925c6b6091977462ebae4fb3b37c132159069964f595ba17e7d19c3a AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
+# Semi-fixed brotli version is to fix CVE-2026-111497, can remove once eclipse-temurin includes latest alpine
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
@@ -37,7 +38,8 @@ RUN echo "http_proxy: $http_proxy" && \
         jq \
         curl \
         su-exec \
-        tini
+        tini \
+        'brotli-libs>=1.2.1-r0'
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

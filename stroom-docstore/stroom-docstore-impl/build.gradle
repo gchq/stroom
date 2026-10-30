@@ -18,6 +18,7 @@ ext.moduleName = 'stroom.docstore.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
@@ -27,6 +28,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-common')

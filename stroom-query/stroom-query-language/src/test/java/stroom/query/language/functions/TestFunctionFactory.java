@@ -52,6 +52,8 @@ class TestFunctionFactory {
 
         // Scan the class path to find all the classes with @FunctionDef
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages(Function.class.getPackageName())
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -62,7 +64,7 @@ class TestFunctionFactory {
                     .stream()
                     .filter(classInfo -> classInfo.implementsInterface(Function.class.getName()))
                     .filter(classInfo -> !classInfo.hasAnnotation(ArchitecturalFunction.class.getName()))
-                    .map(classInfo -> (Class<? extends Function>) classInfo.loadClass())
+                    .map(classInfo -> (Class<? extends Function>) loadClass(classInfo.getName()))
                     .collect(Collectors.toList());
 
             return allFunctionClasses.stream()
@@ -255,5 +257,13 @@ class TestFunctionFactory {
                                  name +
                                  " is only allowed to have zero or one items.")
                 .isLessThanOrEqualTo(1);
+    }
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestFunctionFactory.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

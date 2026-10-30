@@ -81,6 +81,7 @@ public class ExplorerTreeController extends Controller {
     private List<ExplorerNode> currentRootNodes;
     private boolean selectParentIfNotFound = false;
     private Consumer<String> onFilterError;
+    private boolean forceServerRefresh = false;
 
     /// Made by GIN; [#attach(ExplorerTree)] gives it its tree.
     ///
@@ -240,6 +241,14 @@ public class ExplorerTreeController extends Controller {
         fetchData();
     }
 
+    /// Fetches the tree from the server, asking it to rebuild its tree model from the database first so
+    /// that changes made by other users, background processes or on other nodes are shown.
+    /// Open folders, the filter and the selection are all retained.
+    public void reload() {
+        forceServerRefresh = true;
+        fetchData();
+    }
+
     private void refresh(final boolean fetch) {
         if (fetch) {
             // Fetch data from the server to update the tree.
@@ -260,7 +269,8 @@ public class ExplorerTreeController extends Controller {
                     explorerTreeFilter,
                     minDepth,
                     ensureVisible,
-                    showAlerts);
+                    showAlerts,
+                    forceServerRefresh);
 
             if (!fetching) {
                 fetching = true;
@@ -289,6 +299,10 @@ public class ExplorerTreeController extends Controller {
             // Some settings have changed so try again with the new settings.
             refresh();
         } else {
+            // The server has now rebuilt its model, so later fetches can use the cached one.
+            if (criteria.isRefresh()) {
+                forceServerRefresh = false;
+            }
             onDataChanged(result);
             // If we have asked the server to ensure one or more nodes are visible then some
             // folders might have been opened to make this happen. The server will tell us which

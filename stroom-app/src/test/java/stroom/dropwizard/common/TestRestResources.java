@@ -86,6 +86,8 @@ class TestRestResources {
     @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -95,7 +97,7 @@ class TestRestResources {
             final List<? extends Class<? extends RestResource>> classes = result.getAllClasses()
                     .stream()
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
-                    .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
+                    .map(classInfo -> (Class<? extends RestResource>) loadClass(classInfo.getName()))
                     .filter(clazz ->
                             !clazz.getName().contains("Test"))
                     .sorted(Comparator.comparing(Class::getName))
@@ -121,6 +123,8 @@ class TestRestResources {
     void listMethods() {
 
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -130,7 +134,7 @@ class TestRestResources {
             final List<? extends Class<? extends RestResource>> classes = result.getAllClasses()
                     .stream()
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
-                    .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
+                    .map(classInfo -> (Class<? extends RestResource>) loadClass(classInfo.getName()))
                     .sorted(Comparator.comparing(Class::getName))
                     .toList();
 
@@ -675,6 +679,14 @@ class TestRestResources {
 
     // --------------------------------------------------------------------------------
 
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestRestResources.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static class MethodSignature {
 

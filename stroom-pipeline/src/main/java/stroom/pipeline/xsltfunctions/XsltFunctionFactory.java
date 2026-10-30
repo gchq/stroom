@@ -47,6 +47,8 @@ public class XsltFunctionFactory {
 
         // Scan the class path to find all the classes with @XsltFunctionDef
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages(StroomExtensionFunctionCall.class.getPackageName())
                 .enableAnnotationInfo()
                 .enableClassInfo()
@@ -56,7 +58,13 @@ public class XsltFunctionFactory {
             result.getClassesWithAnnotation(XsltFunctionDef.class.getName())
                     .forEach(classInfo -> {
 
-                        final Class<?> clazz = classInfo.loadClass();
+                        final Class<?> clazz;
+                        try {
+                            clazz = Class.forName(
+                                    classInfo.getName(), false, XsltFunctionFactory.class.getClassLoader());
+                        } catch (final ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
                         if (StroomExtensionFunctionCall.class.isAssignableFrom(clazz)) {
                             final Class<? extends StroomExtensionFunctionCall> functionClazz =
                                     (Class<? extends StroomExtensionFunctionCall>) clazz;

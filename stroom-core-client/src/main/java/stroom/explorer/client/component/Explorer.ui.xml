@@ -30,10 +30,11 @@
                 <b:ToolbarButton ui:field="locate" svg="LOCATE" title="Locate Current Item" enabled="false"/>
                 <b:ToolbarButton ui:field="expandAll" svg="EXPAND_ALL" title="Expand All Folders"/>
                 <b:ToolbarButton ui:field="collapseAll" svg="COLLAPSE_ALL" title="Collapse All Folders"/>
+                <b:ToolbarButton ui:field="reload" svg="REFRESH" title="Reload Explorer Tree"/>
                 <b:ToolbarToggleButton ui:field="filter" svg="FILTER" title="Filter Document Types"/>
                 <b:ToolbarButton ui:field="find" svg="FIND" title="Find in Content"/>
             </b:Toolbar>
-            <spinner:SmallBusySpinner ui:field="spinner"/>
+            <spinner:SmallBusySpinner ui:field="spinner" addStyleNames="explorer__spinner"/>
         </b:ToolbarRow>
         <!-- The tree, shown once the explorer is first shown -->
         <layout:ScrollPane addStyleNames="dock-max">

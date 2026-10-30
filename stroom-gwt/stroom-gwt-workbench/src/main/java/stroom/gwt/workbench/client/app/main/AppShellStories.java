@@ -586,7 +586,8 @@ public final class AppShellStories {
                             "Ask Stroom AI, Show Main Menu: 1 tab stop",
                             "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
-                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
+                            + "Collapse All Folders, Reload Explorer Tree, Filter Document Types, "
+                            + "Find in Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeInTheDocument());
@@ -597,7 +598,21 @@ public final class AppShellStories {
                             "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Save, Save As, Download Dictionary Words: 1 tab stop",
                             "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
-                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
+                            + "Collapse All Folders, Reload Explorer Tree, Filter Document Types, "
+                            + "Find in Content: 1 tab stop"));
+                })
+                // Reload fetches the tree again, asking the server to rebuild its copy first, so changes
+                // others made are shown
+                .story("ReloadExplorerTree", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Reload Explorer Tree"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/explorer/v2/fetchExplorerNodes")
+                                    .withJsonBodyContaining("{\"refresh\": true}")
+                                    .toSpyMatcher()));
+                    play.expect(navTree(play).getByText("Countries")).toBeInTheDocument();
+                    expectNoProblems(play);
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the

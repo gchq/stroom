@@ -2213,7 +2213,10 @@ to delete them by hand.~~
   A screenshot diff should allow it, or the tooltip be placed on whole pixels.
 * `App/Main/TopBar` `Keyboard`'s screenshot differed in a full run (found 25 October 2026, in wave
   6): the tooltip under the top bar's menu button, beside the focused button, was drawn differently
-  (436 pixels). Unchanged alone, twice; a tooltip timing, as for `Tree` `Keyboard` above.
+  (436 pixels). Unchanged alone, twice; a tooltip timing, as for `Tree` `Keyboard` above. By 30
+  October 2026 it differed in every full run (waves 40 to 47) and alone too, always with the
+  Show Main Menu tooltip shown; its baseline was retaken with the tooltip when master's explorer
+  Reload button was merged in (the toolbar changed anyway).
 * Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
   (found 25 October 2026 in wave 4's audit; older; harmless, as `ExecutionScheduleManager` acts
   only on `true`). Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
