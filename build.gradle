@@ -92,6 +92,18 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
     return val
 }
 
+ext.getSystemOrDefault = { propName, defaultValue ->
+    def val
+    if (System.hasProperty(propName)
+            && System.getProperty(propName) != "unspecified"
+            && System.getProperty(propName) != "") {
+        val = System.getProperty(propName)
+    } else {
+        val = defaultValue
+    }
+    return val
+}
+
 // Try to determine the jdbc url from local.yml so that when using
 // Jooq code generator with a locally named database (from SetupDevEnv),
 // Jooq will point to the correct DB.
@@ -146,6 +158,12 @@ ext.contentPackDefinitionFile = contentPackDefinitionFile
 // content pack zips. Packs will be downloaded to here if they don't exist or copied if they do.
 def contentPackDownloadDir = "${System.properties['user.home']}/.stroom/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
+
+final int maxGradleWorkers = getSystemPropertyOrDefault(
+        "org.gradle.workers.max",
+        Runtime.runtime.availableProcessors().intValue())
+
+logger.info("Max Gradle Workers: [$maxGradleWorkers]")
 
 //defines a list of gradle projects that we will publish with maven
 def projectsToBePublished = subprojects.findAll { project ->
@@ -282,14 +300,25 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        // set heap size for the test JVM(s)
-//        minHeapSize = "128m"
-//        maxHeapSize = "8G"
+        // Set heap size for the test JVM(s) as we were running out of heap on GH Actions
+        //maxHeapSize = (8 / Runtime.runtime.availableProcessors().intdiv(2)) + "G"
+
+        final int totalHeapMb = 12 * 1024
+        //final int testForks = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2).intValue())
+        // Not much point in setting maxParallelForks > maxGradleWorkers as the concurrent test forks
+        // are limited by the workers anyway.
+        maxParallelForks = maxGradleWorkers
+        minHeapSize = "128m"
+        final int heapPerFork = maxGradleWorkers == 1
+                ? totalHeapMb
+                : totalHeapMb.intdiv(maxGradleWorkers).intValue()
+        maxHeapSize = "${heapPerFork}M"
+        logger.info("Configuring tests - maxGradleWorkers: ${maxGradleWorkers}, maxHeapSize: ${maxHeapSize}")
 
         // Run test classes in N different JVMs
         // The internet seems to suggest the divide by 2, not sure why, maybe
         // not to exhaust all cores. Removing it doesn't seem to speed it up.
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        //maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
         // Capture the report output location here (where 'reports' is in scope on the

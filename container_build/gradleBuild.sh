@@ -38,6 +38,7 @@ GRADLE_ARGS=(
   "-Dorg.gradle.parallel=true"
   "-Dorg.gradle.workers.max=${MAX_WORKERS:-6}"
   "-Dorg.gradle.configureondemand=true"
+  "-Dorg.gradle.jvmargs=-Xmx${GRADLE_JVM_XMX:-1g} -XX:MaxMetaspaceSize=${GRADLE_JVM_MAX_METASPACE:-512m}"
   "--console=plain"
 )
 
@@ -125,6 +126,8 @@ main() {
   #echo "::endgroup::"
 
   echo "::group::Run Java compile"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Run Java compile${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -144,6 +147,8 @@ main() {
   # This will implicitly run the java compile too
   # Run with --quiet so it is easier to see CS issues.
   echo "::group::Run checkstyle"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Run checkstyle${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -164,6 +169,8 @@ main() {
   # content pack zips
   # Fully qualify the shadowJar tasks as we want to run lucene553 shadowJar
   echo "::group::Basic Java build"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Do the basic java build (compilation & tests)${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -185,6 +192,8 @@ main() {
   echo "::endgroup::"
 
   echo "::group::GWT UI build"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Do the GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -195,6 +204,8 @@ main() {
   echo "::endgroup::"
 
   echo "::group::Dashboard GWT UI build"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -207,6 +218,8 @@ main() {
   # Make the distribution.
   # Fully qualify the shadowJar tasks as have run lucene553 shadowJar
   echo "::group::Distribution build"
+  echo -e "${GREEN}RAM Stats:${NC}"
+  free -mh
   echo -e "${GREEN}Build the distribution with version" \
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
   ./gradlew \
@@ -228,7 +241,4 @@ main() {
   echo "::endgroup::"
 }
 
-echo "::group::Gradle build timings"
-# Get a time for the whole build
-time main "$@"
-echo "::endgroup::"
+main "$@"
