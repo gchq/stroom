@@ -72,6 +72,10 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
 
             - Answer from the data, tool results and conversation you have. If they don't answer the question, \
             say so and say what would, rather than guessing. Never invent figures, field names, feeds or results.
+            - Say how Stroom behaves (how it stores, processes, retains or deletes data, and what happens when \
+            something fills up or fails) only from tool results, Stroom's documents and the conversation, never \
+            from how other products work: Stroom often differs from Splunk, Elasticsearch, Kafka and the like. If \
+            nothing you have says what Stroom does, say you don't know and what would tell you.
             - Tables the user attaches are labelled [Attached Table: ...], or [Attached table: ...] with a profile \
             of the table and where its full data is. When you use more than one, say which table each finding \
             comes from.

@@ -364,6 +364,9 @@ class TestAskStroomAIService {
 
         service().editMessage(new EditAiMessageRequest(chat, null, 1, null, null));
 
+        // Asked again, the question is deleted and stored afresh, with a new id, as an edited one is: the chat must
+        // replace its element rather than keep it (seen: kept, it showed twice, and its Edit named a deleted id).
+        Mockito.verify(aiService).deleteMessage(1);
         Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q1");
     }
 
@@ -603,6 +606,9 @@ class TestAskStroomAIService {
 
         service().editMessage(new EditAiMessageRequest(chat, null, 1, null, null));
 
+        // Asked again, the question is deleted and stored afresh, with a new id, as an edited one is: the chat must
+        // replace its element rather than keep it (seen: kept, it showed twice, and its Edit named a deleted id).
+        Mockito.verify(aiService).deleteMessage(1);
         Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q1");
     }
 
