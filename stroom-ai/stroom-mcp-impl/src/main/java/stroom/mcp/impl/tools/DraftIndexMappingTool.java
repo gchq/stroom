@@ -661,7 +661,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             return plan.withStandIns(remembered);
         }
         final Map<String, String> chosen = new LinkedHashMap<>();
-        answers.get().forEach((value, label) -> chosen.put(value, PlaceholderChoices.EVENTS_OPTIONS.get(label)));
+        PlaceholderChoices.byValue(found, answers.get())
+                .forEach((value, label) -> chosen.put(value, PlaceholderChoices.EVENTS_OPTIONS.get(label)));
         memory.chooseStandIns(indexName, chosen);
         final Map<String, String> all = new LinkedHashMap<>(remembered);
         all.putAll(chosen);
@@ -1022,7 +1023,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             return discovery.withStandIns(remembered);
         }
         final Map<String, String> chosen = new LinkedHashMap<>();
-        answers.get().forEach((value, label) -> chosen.put(value, PlaceholderChoices.JSON_OPTIONS.get(label)));
+        PlaceholderChoices.byValue(found, answers.get())
+                .forEach((value, label) -> chosen.put(value, PlaceholderChoices.JSON_OPTIONS.get(label)));
         memory.chooseStandIns(indexName, chosen);
         final Map<String, String> all = new LinkedHashMap<>(remembered);
         all.putAll(chosen);
