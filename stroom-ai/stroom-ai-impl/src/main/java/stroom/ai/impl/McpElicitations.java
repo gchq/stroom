@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.ElicitationRecord.Status;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
@@ -118,9 +119,10 @@ public class McpElicitations {
     /// @param callId  The id of the tool call asking, or null if it isn't asked in one.
     /// @param message What the questions are for.
     /// @param schema  The questions, as a form.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user sent a message
-    /// instead, or the run was stopped.
+    /// @return The user's answer, or a decline or cancel if the form can't be shown (asked outside a tool call), the
+    /// user sent a message instead, or the run was stopped.
     /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
+    /// @throws ToolRefusal if the form, asked in a tool call, can never be shown (e.g. it is too large).
     public ElicitResult askUser(final int chatId,
                                 final String tool,
                                 final String callId,
@@ -141,9 +143,14 @@ public class McpElicitations {
         }
         final String problem = ElicitationSchema.check(message, schema);
         if (problem != null) {
-            // Declined, as the form can never be shown as it is, and asking again would fail the same way.
-            warn(chatId, "A form from " + STROOM_AI + " was declined, as " + problem + ".");
-            return new ElicitResult(Action.DECLINE, null);
+            // The form can never be shown as it is, and asking again would fail the same way. It is the tool's fault,
+            // not the user's answer, so the agent is told so, not that the user declined (seen: told "The user made
+            // no choice", the agent called the tool again and again, each time asked the same questions).
+            warn(chatId, "A form from " + STROOM_AI + " couldn't be shown, as " + problem + ".");
+            throw new ToolRefusal("Stroom couldn't show this tool's form to the user, as " + problem + ", so the "
+                                  + "user wasn't asked and didn't decline. It would fail the same way again: don't "
+                                  + "repeat the call as it was. Tell the user what you were doing and that the "
+                                  + "form couldn't be shown, and ask them how to go on.");
         }
         // It waits for as long as the user takes, as nothing is held while it does.
         aiDao.storeMessage(chatId, AiMessageType.ELICITATION, JsonUtil.writeValueAsString(

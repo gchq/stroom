@@ -61,9 +61,10 @@ public final class ChatUserQuestions implements UserQuestions {
     /// @param callId   The id of the tool call asking, or null if it has none (it then waits for the answer).
     /// @param intro    What the questions are for.
     /// @param form     The questions, as an MCP form's schema.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user sent a message
-    /// instead, or the run is stopped.
+    /// @return The user's answer, or a decline or cancel if the form can't be shown (asked with no call id), the user
+    /// sent a message instead, or the run is stopped.
     /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
+    /// @throws ToolRefusal if the form, asked in a tool call, can never be shown (e.g. it is too large).
     @Override
     public ElicitResult ask(final String toolName,
                             final String callId,
