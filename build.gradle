@@ -92,7 +92,7 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
     return val
 }
 
-ext.getSystemOrDefault = { propName, defaultValue ->
+ext.getSystemPropertyOrDefault = { propName, defaultValue ->
     def val
     if (System.hasProperty(propName)
             && System.getProperty(propName) != "unspecified"
