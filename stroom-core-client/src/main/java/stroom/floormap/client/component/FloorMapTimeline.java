@@ -60,10 +60,10 @@ public class FloorMapTimeline extends Component {
 
     /// Class that makes the datetime pill visible.
     private static final String SCRUB_TOOLTIP_VISIBLE =
-            "stroom-floormap-timeline-scrub-tooltip--visible";
+            "floor-map-timeline__scrub-tooltip--visible";
 
     /// The bar's position, in %, read by its inner bar (width), handle and datetime pill (left).
-    private static final String PROGRESS = "--stroom-floormap-timeline__progress";
+    private static final String PROGRESS = "--floor-map-timeline__progress";
 
     /// Number of histogram bins a Page Up / Page Down moves — the ARIA slider
     /// pattern's "larger step". Ten bins crosses a visible fraction of the bar

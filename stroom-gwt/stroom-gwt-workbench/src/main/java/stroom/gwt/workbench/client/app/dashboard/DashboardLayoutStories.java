@@ -128,7 +128,7 @@ public final class DashboardLayoutStories {
                     play.expect(DashboardPlays.tab(play, "Right Panel")).toBeInTheDocument();
                     // Embedded Queries have no Execute buttons, so the play checks that both panels
                     // show their (results) views, and that the reference panel loaded its query
-                    play.waitFor(() -> play.expect(play.querySelectorAll(".tab-layout__content .result-table"))
+                    play.waitFor(() -> play.expect(play.querySelectorAll(".tab-layout__content .embedded-query"))
                             .toHaveLength(2));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/query/v1/q-ref").toSpyMatcher()));
@@ -290,8 +290,8 @@ public final class DashboardLayoutStories {
                     play.waitFor(() -> play.expect(fitWidth).toHaveFocus());
                     play.expect(fitWidth).toBeChecked();
                     play.click(fitWidth);
-                    play.waitFor(() -> play.expect(play.querySelector(".dashboard__scroll"))
-                            .toHaveClass("dashboard__scroll--horizontal"));
+                    play.waitFor(() -> play.expect(play.querySelector(".flex-layout__scroll"))
+                            .toHaveClass("flex-layout__scroll--horizontal"));
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     play.click(constraints.getByRole("button", StroomDom.button("Close")));
                     play.waitFor(() -> play.expect(screen.queryByText("Set Layout Constraints",
@@ -366,12 +366,12 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     // The canvas is the design surface, sized in pixels both ways (the height fits
                     // the panel), inside a horizontally scrolling panel
-                    final Query canvas = play.querySelector(".dashboard__design-surface");
+                    final Query canvas = play.querySelector(".flex-layout__design-surface");
                     play.waitFor(() -> play.expect(canvas.attribute("style")).toMatch("width: 1200px"));
-                    play.expect(play.querySelector(".dashboard__scroll"))
-                            .toHaveClass("dashboard__scroll--horizontal");
-                    play.expect(play.querySelector(".dashboard__scroll"))
-                            .not().toHaveClass("dashboard__scroll--vertical");
+                    play.expect(play.querySelector(".flex-layout__scroll"))
+                            .toHaveClass("flex-layout__scroll--horizontal");
+                    play.expect(play.querySelector(".flex-layout__scroll"))
+                            .not().toHaveClass("flex-layout__scroll--vertical");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A panel's tab menu removes all its tabs, once confirmed

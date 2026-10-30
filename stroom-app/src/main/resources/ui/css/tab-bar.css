@@ -206,7 +206,7 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab,
-.dashboard--design-mode .tab-bar--link .tab-bar__tab {
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab {
     cursor: pointer;
 }
 
@@ -216,9 +216,17 @@
 }
 
 .tab-bar--link.tab-bar--multiple .tab-bar__tab:hover,
-.dashboard--design-mode .tab-bar--link .tab-bar__tab:hover {
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab:hover {
     opacity: 1;
     text-decoration: underline;
+}
+
+/* A dashboard's link tabs (DashboardBody) stay faded, even when selected or hovered */
+.dashboard-body .tab-bar--link .tab-bar__tab {
+    opacity: 0.8 !important;
+    color: var(--link-tab__text-color) !important;
+    transition: none;
+    -webkit-transition: none;
 }
 
 .tab-bar__sizer {

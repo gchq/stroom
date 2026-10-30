@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 
 public class TableCell {
 
-    public static final String WRAP_CLASS = "wrap";
+    // A cell whose text wraps, in an information tooltip (info-tooltip.css)
+    public static final String WRAP_CLASS = "info-tooltip__wrap";
 
     private final SafeHtml value;
     private final boolean header;

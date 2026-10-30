@@ -1,0 +1,141 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The layer appearance dialog's content (FloorMapLayerStyle) — align the graphic/shape/image/colour rows */
+.floor-map-layer-style {
+    border-spacing: 8px 10px;
+    /* Shared by the two wide rows below — five icon columns plus their gaps. */
+    --floor-map-layer-style__control-width: 388px;
+}
+
+.floor-map-layer-style td {
+    vertical-align: middle;
+}
+
+.floor-map-layer-style td:first-child {
+    text-align: right;
+    white-space: nowrap;
+    color: var(--text-color--low-emphasis);
+}
+
+.floor-map-layer-style td:last-child > * {
+    width: 260px;
+}
+
+/* Whichever of the Shape / Image rows the current mode does not use: its controls dimmed (they
+   are disabled), its label in the disabled text colour, which can still be read (faded by opacity,
+   it fell to 2.35:1) */
+.floor-map-layer-style__row--dimmed td {
+    opacity: 0.45;
+}
+
+.floor-map-layer-style .floor-map-layer-style__row--dimmed td:first-child {
+    opacity: 1;
+    color: var(--text-color--disabled);
+}
+
+/* Asset picker + Upload button on one line, picker taking the slack */
+.floor-map-layer-style__image {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/*
+ * The two wide rows — the icon grid and the picker-plus-Upload pair — share one
+ * width, so the dialog has a single edge down its right-hand side rather than a
+ * ragged one.
+ *
+ * It has to be a *definite* width, not 100%. These sit in an auto-layout table,
+ * where a column stretches to its content: sized to fit, the drop-down's label
+ * pulled the whole dialog past 1200px on a deeply nested asset path. A definite
+ * width caps the column, and the label truncates instead, which is what its own
+ * `overflow: hidden` was always for.
+ */
+.floor-map-layer-style td:last-child > .floor-map-layer-style__image,
+.floor-map-layer-style td:last-child > .floor-map-layer-style__icon-picker {
+    width: var(--floor-map-layer-style__control-width);
+}
+
+.floor-map-layer-style__image > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.floor-map-layer-style__image > :last-child {
+    flex: 0 0 auto;
+}
+
+/*
+ * The platform's drop-down carries a hard width and hangs its ellipsis button
+ * off the right edge with absolute positioning, so when the row is narrower than
+ * that width the button does not travel with the shrinking box — it sits on top
+ * of whatever follows, which here was Upload. Letting the drop-down fill its
+ * flex slot keeps the ellipsis inside the control at any row width, and hands it
+ * the leftover space rather than a fixed 200px, so longer asset paths stay
+ * readable. The drop-down is DropDownBox's button (its role="button" element, in the asset
+ * picker's panel, which this component declares).
+ */
+.floor-map-layer-style__asset-picker [role="button"] {
+    width: 100%;
+    min-width: 0;
+}
+
+/*
+ * Lets the path truncate instead of pushing the control open. A flex item's
+ * default `min-width: auto` is its content size, so without this the label
+ * refuses to shrink below the full path and overflows the drop-down it is meant
+ * to sit inside — the `overflow: hidden` it already carries never gets to bite.
+ * (The dialog's overall width is capped by the definite width above, not here.) The label is
+ * the button's first part.
+ */
+.floor-map-layer-style__asset-picker [role="button"] > :first-child {
+    flex: 1 1 0;
+    min-width: 0;
+    /*
+     * The control's own ellipsis button is pinned inside its right edge, so the
+     * path has to stop before it rather than run underneath. The reserved strip
+     * is the button's 15px plus its 4px offset.
+     */
+    padding-right: 22px;
+    text-overflow: ellipsis;
+}
+
+/* Preview graphic beside its explanatory hint */
+.floor-map-layer-style__preview-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.floor-map-layer-style__preview {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 3px;
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+.floor-map-layer-style__hint {
+    flex: 1 1 auto;
+    font-size: 0.85em;
+    line-height: 1.3;
+    color: var(--text-color--low-emphasis);
+    white-space: normal;
+}

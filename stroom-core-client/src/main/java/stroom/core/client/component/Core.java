@@ -33,7 +33,7 @@ public class Core extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // Hidden, not just transparent, so screen readers stop reading "Loading..."
-    private static final String LOADING_HIDDEN = "loading--hidden";
+    private static final String LOADING_HIDDEN = "app-page__loading--hidden";
 
     @UiField
     SimplePanel content;

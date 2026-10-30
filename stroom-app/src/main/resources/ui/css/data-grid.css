@@ -144,17 +144,9 @@
     display: none;
 }
 
-/* What a grid sits on, when it isn't the page: a dialog's colour is painted by a layer behind its
-   content (dialog__frame), and the elements between a popup and the grid are transparent, so
-   neither can be inherited. The nearest of these round the grid sets it (a control's box sets it
-   too, form-controls.css). */
-.dialog {
-    --data-grid__head-background-color: var(--dialog__background-color);
-}
-
-.popup {
-    --data-grid__head-background-color: var(--popup__background-color);
-}
+/* A grid's header takes the colour of what it sits on, when that isn't the page: the nearest dialog
+   (dialog.css), popup (popup.css) or control box (form-controls.css) round it sets
+   --data-grid__head-background-color. */
 
 .data-grid__header-row,
 .data-grid__row {
@@ -177,11 +169,11 @@
     vertical-align: middle;
 }
 
-.data-grid__header-cell.center-align {
+.data-grid__header-cell.data-grid__header-cell--align-center {
     text-align: center;
 }
 
-.data-grid__header-cell.right-align {
+.data-grid__header-cell.data-grid__header-cell--align-right {
     text-align: right;
 }
 
@@ -189,27 +181,34 @@
     font-weight: 500;
 }
 
+/* A results table's grid (result-table.css): its headers at the top of their cells, and padded
+   all round when they hold the value filters (FilterCell) */
+.result-table__grid .data-grid__header-cell {
+    min-height: 16px;
+    vertical-align: top;
+}
+
+.result-table__grid.result-table__grid--value-filters .data-grid__header-cell {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
+}
+
 .data-grid__header-cell--sortable {
     cursor: pointer;
 }
 
 /* A column headed by an icon (or two), e.g. a tick box column's */
-.data-grid__header-cell--sortable .single-icon-column-header,
-.data-grid__header-cell--sortable .two-icon-column-header,
-.data-grid__header-cell--sortable .single-icon-column-header .icon-cell,
-.data-grid__header-cell--sortable .two-icon-column-header .icon-cell {
+.data-grid__header-cell--sortable .data-grid__icon-header,
+.data-grid__header-cell--sortable .data-grid__icon-header .data-grid__header-icon {
     cursor: pointer;
 }
 
-.data-grid__header-cell .single-icon-column-header,
-.data-grid__header-cell .two-icon-column-header {
+.data-grid__header-cell .data-grid__icon-header {
     display: flex;
     flex-direction: row;
     justify-content: center;
 }
 
-.data-grid__header-cell:has(.single-icon-column-header),
-.data-grid__header-cell:has(.two-icon-column-header) {
+.data-grid__header-cell:has(.data-grid__icon-header) {
     text-decoration: none;
 }
 
@@ -337,7 +336,7 @@
 /* A right-aligned column followed by a left-aligned one, e.g. a count then a date: more space
    between them so the two don't read as one (#4442) */
 .data-grid__cell--align-right:has(+ .data-grid__cell:not(.data-grid__cell--align-right, .data-grid__cell--align-center)) > div,
-.data-grid__header-cell.right-align:has(+ .data-grid__header-cell:not(.right-align, .center-align)) > div {
+.data-grid__header-cell.data-grid__header-cell--align-right:has(+ .data-grid__header-cell:not(.data-grid__header-cell--align-right, .data-grid__header-cell--align-center)) > div {
     padding-right: calc(var(--row__padding--horizontal) * 3);
 }
 
@@ -727,8 +726,9 @@
 
 /* Not a row action (.row-action, row-action.css), a button that looks as the icon it holds: this
    look would make its rows 5px taller. :where() keeps the specificity as it was (from
-   standard-mod.css) */
-.data-grid button:where(:not(.row-action)) {
+   standard-mod.css); the row action is matched by its class attribute, as this rule styles the
+   grid's other buttons, not the row action */
+.data-grid button:where(:not([class~="row-action"])) {
 	margin: 0;
 	padding: 2px 4px;
 	text-decoration: none;

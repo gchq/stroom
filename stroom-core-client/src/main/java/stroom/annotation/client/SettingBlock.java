@@ -113,8 +113,8 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         }
     }
 
-    /// Makes the setting read only: its value is greyed and its chooser doesn't open (the controller
-    /// refuses the change too), and its ellipsis hint is hidden.
+    /// Makes the setting read only: its chooser doesn't open (the controller refuses the change too),
+    /// and its ellipsis hint is hidden.
     ///
     /// @param readOnly Whether the setting is read only.
     public void setReadOnly(final boolean readOnly) {
@@ -129,6 +129,7 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         }
         this.childWidget = widget;
         widget.addStyleName("allow-focus");
+        widget.addStyleName("setting-block__setting");
         // After the hint
         formGroupPanel.add(widget);
     }

@@ -75,9 +75,9 @@ public class HeadingBuilder {
         String headingStyle = null;
         if (hasAlignment) {
             if (HeadingAlignment.CENTER == headingAlignment) {
-                headingStyle = "center-align";
+                headingStyle = "data-grid__header-cell--align-center";
             } else if (HeadingAlignment.RIGHT == headingAlignment) {
-                headingStyle = "right-align";
+                headingStyle = "data-grid__header-cell--align-right";
             }
         }
 

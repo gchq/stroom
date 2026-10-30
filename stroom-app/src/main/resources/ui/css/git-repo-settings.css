@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-/* Ask Stroom AI's settings, in tabs, then the buttons for the defaults */
+/* A Git repository's settings (GitRepoSettings): its fields, the credentials' box and its buttons
+   are all 400px wide */
+.git-repo-settings button.git-repo-settings__button {
+    width: 400px;
+}
 
-/* The gap between the tabs and the tab showing, as the form's other rows have */
-.ask-stroom-ai-config-dialog__tabs {
-    gap: var(--control__gap--vertical);
+.git-repo-settings input.git-repo-settings__field {
+    width: 400px;
+}
+
+.git-repo-settings div.git-repo-settings__credentials {
+    width: 400px;
 }

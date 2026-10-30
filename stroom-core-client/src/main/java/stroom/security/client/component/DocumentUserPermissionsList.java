@@ -234,11 +234,11 @@ public class DocumentUserPermissionsList extends Component {
                                                                 SafeHtmlUtils.fromTrustedString(typeIcon.getSvg())),
                                                 Attribute.title(type.getDisplayType()),
                                                 Attribute.className(
-                                                        "icon-cell create-document-types-icon "
+                                                        "icon-cell create-document-types__icon "
                                                         + typeIcon.getClassName()));
                                     });
                                 },
-                                Attribute.className("create-document-types-container"))
+                                Attribute.className("create-document-types"))
                         .toSafeHtml();
             }
         } else {

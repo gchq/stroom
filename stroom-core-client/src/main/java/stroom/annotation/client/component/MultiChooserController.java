@@ -60,7 +60,8 @@ import java.util.function.Function;
 /// @param <T> The type of the values.
 public class MultiChooserController<T> extends Controller {
 
-    private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
+    private static final TickBoxCell.DefaultAppearance TICK_BOX =
+            new TickBoxCell.DefaultAppearance("chooser__tick-box");
 
     private final Chooser<T> view;
     private final MultiSelectionModel<T> selectionModel = new MultiSelectionModelImpl<>();

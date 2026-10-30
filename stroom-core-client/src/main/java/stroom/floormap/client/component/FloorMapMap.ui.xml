@@ -32,7 +32,7 @@
             <e:LinkTabPanel ui:field="dockPanel" addStyleNames="overflow-hidden"/>
         </l:SplitPane>
         <!-- Timeline strip: a fixed height with no splitter, so it is not user-resizable -->
-        <g:SimplePanel addStyleNames="max floormap-timeline-strip">
+        <g:SimplePanel addStyleNames="max floor-map-map__timeline">
             <f:FloorMapTimeline ui:field="timeline"/>
         </g:SimplePanel>
     </g:FlowPanel>

@@ -57,7 +57,8 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String ICON_CLASS_NAME = "icon-wrap";
     private static final String COPY_CLASS_NAME = "user-ref-link__copy";
     private static final String OPEN_CLASS_NAME = "user-ref-link__open";
-    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
+    // The icons shown only on a hover, or with the keyboard on the row (user-ref-link.css)
+    private static final String HOVER_ICON_CLASS_NAME = "user-ref-link__icon user-ref-link__icon--hover";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
 
     private final boolean showIcon;
@@ -177,7 +178,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                             icon,
                             ICON_CLASS_NAME,
                             IconColour.BLUE.getClassName(),
-                            "userRefLinkIcon");
+                            "user-ref-link__icon");
                     sb.append(iconDiv);
                 }
                 sb.append(textDiv);
@@ -192,7 +193,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                 if (isOpenable(userRef)) {
                     // A button the keyboard reaches from its row (a row action)
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
-                            SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME);
+                            SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME, RowActions.ICON_CLASS_NAME);
                     sb.append(RowActions.button(
                             OPEN_CLASS_NAME,
                             "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText,

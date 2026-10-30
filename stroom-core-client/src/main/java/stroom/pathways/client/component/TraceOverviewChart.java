@@ -80,7 +80,7 @@ import java.util.function.Consumer;
 /// above a waterfall of the spans in the window, as a tree that opens and closes, and a panel of a
 /// chosen span's details. A trace too large to show whole is shown a page of spans at a time, with a
 /// pager. Its frame is in `TraceOverviewChart.ui.xml`; the trace itself is drawn as HTML, again on
-/// every change, styled by `pathways.css` (with custom properties for the positions and sizes).
+/// every change, styled by `trace-overview-chart.css` (with custom properties for the positions and sizes).
 public class TraceOverviewChart extends Composite implements TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -118,7 +118,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     // vertically compressed to fill the strip so none are clipped.
     private static final int SPAN_INFO_MIN_WIDTH = 240;
     private static final int WATERFALL_MIN_WIDTH = 240;
-    // The strip's height, as .timeline-bar (pathways.css) has it
+    // The strip's height, as __timeline-bar (trace-overview-chart.css) has it
     private static final int OVERVIEW_STRIP_PX = 40;
     private static final int OVERVIEW_ROW_PX = 3;   // fixed row stride when the set fits
     private static final int OVERVIEW_BAR_PX = 2;   // bar height at the fixed stride
@@ -191,7 +191,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             }
         });
 
-        glass = new Glass("timeline-glass");
+        glass = new Glass("trace-overview-chart__glass");
 
         panel.addMouseDownHandler(e -> {
 
@@ -318,7 +318,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     }
 
     private NanoDuration calcWindow(final MouseMoveEvent e) {
-        final Element element = ElementUtil.findChild(panel.getElement(), "timeline-controls");
+        final Element element = ElementUtil.findChild(panel.getElement(), "trace-overview-chart__timeline-controls");
         if (element == null) {
             return null;
         }
@@ -511,26 +511,26 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
                 appendTimelineControls(div);
                 appendButtons(div);
 
-            }, Attribute.className("timeline-container"));
+            }, Attribute.className("trace-overview-chart__timeline"));
 
             hb.div(body -> {
                 appendServiceOperations(body);
                 if (selectedSpan != null) {
                     appendSpanInfo(body, selectedSpan);
                 }
-            }, Attribute.className("trace-body"));
+            }, Attribute.className("trace-overview-chart__body"));
         }
         panel.setHTML(hb.toSafeHtml());
         setOperationListScrollTop(operationScrollTop);
     }
 
     private int getOperationListScrollTop() {
-        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        final Element list = ElementUtil.findChild(panel.getElement(), "trace-overview-chart__operation-list");
         return list == null ? 0 : list.getScrollTop();
     }
 
     private void setOperationListScrollTop(final int scrollTop) {
-        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        final Element list = ElementUtil.findChild(panel.getElement(), "trace-overview-chart__operation-list");
         if (list != null) {
             list.setScrollTop(scrollTop);
         }
@@ -563,7 +563,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             while (pct < 100) {
                 final long t = time;
                 div.span(s -> s.append(NanoTime.ofNanos(t).toString()),
-                        Attribute.style("--timeline-marker__left: " + pct + "%;"));
+                        Attribute.style("--trace-overview-chart__marker-left: " + pct + "%;"));
                 pct += pctInc;
                 time += bigChunk;
             }
@@ -571,19 +571,19 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             // Add last marker if we think there is room.
             if (pct - pctInc < 90) {
                 div.span(s -> s.append(extents.totalDuration.toString()),
-                        Attribute.className("timeline-header__end"));
+                        Attribute.className("trace-overview-chart__timeline-end"));
             }
 
             div.append(SafeHtmlUtil.NBSP);
 
-        }, Attribute.className("timeline-header"));
+        }, Attribute.className("trace-overview-chart__timeline-header"));
     }
 
     private void appendTimelineControls(final HtmlBuilder hb) {
         hb.div(div -> {
             appendTimelineBar(div);
             appendTimeSlider(div);
-        }, Attribute.className("timeline-controls"));
+        }, Attribute.className("trace-overview-chart__timeline-controls"));
     }
 
     private void appendTimelineBar(final HtmlBuilder hb) {
@@ -601,7 +601,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
                 final int[] rowIndex = {0};
                 roots.forEach(span -> appendSpanForest(div, span, rowIndex, rowCount));
             }
-        }, Attribute.className("timeline-bar"),
+        }, Attribute.className("trace-overview-chart__timeline-bar"),
                 Attribute.id("timelineBar"),
                 Attribute.style(style));
     }
@@ -666,12 +666,14 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         }
 
         hb.div("",
-                Attribute.className("timeline-span"),
+                Attribute.className("trace-overview-chart__timeline-span"),
                 Attribute.title(span.getName() + " (" + span.duration() + ")"),
                 new Attribute("data-span-id", span.getSpanId()),
                 Attribute.style(
-                        "--timeline-span__left: " + leftPct + "%; --timeline-span__width: " + widthPct +
-                        "%; --timeline-span__top: " + topPx + "px; --timeline-span__height: " + barH + "px;"));
+                        "--trace-overview-chart__timeline-span-left: " + leftPct
+                        + "%; --trace-overview-chart__timeline-span-width: " + widthPct
+                        + "%; --trace-overview-chart__timeline-span-top: " + topPx
+                        + "px; --trace-overview-chart__timeline-span-height: " + barH + "px;"));
     }
 
     private void appendTimeSlider(final HtmlBuilder hb) {
@@ -679,28 +681,29 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         final double endPct = (100D / extents.totalDuration.getNanos()) * windowEnd.getNanos();
         hb.div(div -> {
             div.div("",
-                    Attribute.className("time-dim-overlay time-dim-overlay--before"),
+                    Attribute.className("trace-overview-chart__dim-overlay trace-overview-chart__dim-overlay--before"),
                     Attribute.id("leftDimOverlay"));
             div.div("",
-                    Attribute.className("time-dim-overlay time-dim-overlay--after"),
+                    Attribute.className("trace-overview-chart__dim-overlay trace-overview-chart__dim-overlay--after"),
                     Attribute.id("rightDimOverlay"));
             div.div("",
-                    Attribute.className("time-range-overlay"),
+                    Attribute.className("trace-overview-chart__range-overlay"),
                     Attribute.id("timeRangeOverlay"));
             div.div(dim -> div.div(d -> d.append(formatHandleTime(windowStart)),
-                            Attribute.className("slider-label"),
+                            Attribute.className("trace-overview-chart__slider-label"),
                             Attribute.id("startLabel")),
-                    Attribute.className("time-slider time-slider--start"),
+                    Attribute.className("trace-overview-chart__slider trace-overview-chart__slider--start"),
                     Attribute.id("startSlider"));
             div.div(dim -> div.div(d -> d.append(formatHandleTime(windowEnd)),
-                            Attribute.className("slider-label"),
+                            Attribute.className("trace-overview-chart__slider-label"),
                             Attribute.id("endLabel")),
-                    Attribute.className("time-slider time-slider--end"),
+                    Attribute.className("trace-overview-chart__slider trace-overview-chart__slider--end"),
                     Attribute.id("endSlider"));
 
-        }, Attribute.className("time-slider-container"),
+        }, Attribute.className("trace-overview-chart__slider-container"),
                 // Where the window starts and ends, which the overlays and sliders are placed by
-                Attribute.style("--time-slider__start: " + startPct + "%; --time-slider__end: " + endPct + "%;"));
+                Attribute.style("--trace-overview-chart__window-start: " + startPct
+                                + "%; --trace-overview-chart__window-end: " + endPct + "%;"));
     }
 
     private void appendButtons(final HtmlBuilder hb) {
@@ -715,13 +718,13 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             }
 
             div.elem("Reset Range", SafeHtmlUtil.from("button"),
-                    Attribute.className("reset-range-btn"),
+                    Attribute.className("trace-overview-chart__reset-range-button"),
                     Attribute.id("resetRangeBtn"));
             div.div(info,
-                    Attribute.className("time-range-info"),
+                    Attribute.className("trace-overview-chart__range-info"),
                     Attribute.id("timeRangeInfo"));
 
-        }, Attribute.className("timeline-buttons"));
+        }, Attribute.className("trace-overview-chart__timeline-buttons"));
     }
 
     private Extents computeExtents() {
@@ -758,12 +761,12 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             appendSectionHeader(div);
             appendOperationList(div);
 
-        }, Attribute.className("service-operations"));
+        }, Attribute.className("trace-overview-chart__operations"));
     }
 
     private void appendGridLines(final HtmlBuilder hb) {
         final String style = computeGridStyle(windowStart.getNanos(), windowEnd.subtract(windowStart).getNanos());
-        hb.div("", Attribute.className("grid-lines"), Attribute.style(style));
+        hb.div("", Attribute.className("trace-overview-chart__grid-lines"), Attribute.style(style));
     }
 
     private String computeGridStyle(final long start,
@@ -797,14 +800,14 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         final double bigOffsetPct = (bigAbsolute / (duration - bigChunk)) * 100D;
         final double smallOffsetPct = (smallAbsolute / (duration - smallChunk)) * 100D;
 
-        // The grid's spacing and offsets, which .timeline-bar and .grid-lines draw their lines by
-        return "--grid-lines__big-size: " +
+        // The grid's spacing and offsets, which __timeline-bar and __grid-lines draw their lines by
+        return "--trace-overview-chart__grid-big-size: " +
                bigWidthPct +
-               "%; --grid-lines__small-size: " +
+               "%; --trace-overview-chart__grid-small-size: " +
                smallWidthPct +
-               "%; --grid-lines__big-offset: " +
+               "%; --trace-overview-chart__grid-big-offset: " +
                bigOffsetPct +
-               "%; --grid-lines__small-offset: " +
+               "%; --trace-overview-chart__grid-small-offset: " +
                smallOffsetPct +
                "%;";
     }
@@ -812,7 +815,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
 
     private void appendSectionHeader(final HtmlBuilder hb) {
         hb.div(div -> div.append(SafeHtmlUtils.fromTrustedString("Service &amp; Operation")),
-                Attribute.className("section-header"));
+                Attribute.className("trace-overview-chart__section-header"));
     }
 
 
@@ -821,7 +824,7 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     // would be better still)
     private void appendOperationList(final HtmlBuilder hb) {
         final Attribute[] attributes = {
-                Attribute.className("operation-list scroll-region"),
+                Attribute.className("trace-overview-chart__operation-list scroll-region"),
                 Attribute.id("operationList"),
                 new Attribute("tabindex", "0"),
                 new Attribute("role", "region"),
@@ -843,7 +846,9 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         hb.div(div -> {
             appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
-        }, Attribute.className(isSelected(span) ? "operation-item operation-item--selected" : "operation-item"),
+        }, Attribute.className(isSelected(span)
+                        ? "trace-overview-chart__operation trace-overview-chart__operation--selected"
+                        : "trace-overview-chart__operation"),
                 new Attribute("data-span-id", span.getSpanId()));
     }
 
@@ -857,13 +862,15 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
         hb.div(div -> {
             appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
-        }, Attribute.className(isSelected(span) ? "operation-item operation-item--selected" : "operation-item"),
+        }, Attribute.className(isSelected(span)
+                        ? "trace-overview-chart__operation trace-overview-chart__operation--selected"
+                        : "trace-overview-chart__operation"),
                 new Attribute("data-span-id", span.getSpanId()));
 
         // Client-side prune: only descend into a span's children when it is expanded.
         if (hasChildren && isOpen(span.getSpanId(), depth)) {
             hb.div(div -> children.forEach(child -> appendOperationItem(div, child, extents, depth + 1)),
-                    Attribute.className("children"));
+                    Attribute.className("trace-overview-chart__children"));
         }
 
     }
@@ -878,10 +885,10 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
             appendExpander(c, span, depth, hasChildren);
             final String name = span.getName() == null ? "" : span.getName();
             final HtmlBuilder nameHtml = new HtmlBuilder();
-            nameHtml.span(name, Attribute.className("operation-name"), Attribute.title(name));
+            nameHtml.span(name, Attribute.className("trace-overview-chart__operation-name"), Attribute.title(name));
             CopyTextUtil.render(name, nameHtml.toSafeHtml(), c, false);
-        }, Attribute.className("operation-content"),
-                Attribute.style("--operation__depth: " + depth + ";"));
+        }, Attribute.className("trace-overview-chart__operation-content"),
+                Attribute.style("--trace-overview-chart__depth: " + depth + ";"));
     }
 
     // The expander cell: a clickable +/- for a span with children (▾ open, ▸ collapsed), or a leaf spacer
@@ -889,14 +896,15 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     private void appendExpander(final HtmlBuilder hb, final Span span, final int depth,
                                 final boolean hasChildren) {
         if (!hasChildren) {
-            hb.span("", Attribute.className("expand-icon expand-leaf"));
+            hb.span("", Attribute.className("trace-overview-chart__expand trace-overview-chart__expand--leaf"));
             return;
         }
         // The same ARROW_DOWN / ARROW_RIGHT SVGs used by the query/dashboard tables and the navigator.
         final SafeHtml icon = SvgImageUtil.toSafeHtml(
-                isOpen(span.getSpanId(), depth) ? SvgImage.ARROW_DOWN : SvgImage.ARROW_RIGHT);
+                isOpen(span.getSpanId(), depth) ? SvgImage.ARROW_DOWN : SvgImage.ARROW_RIGHT,
+                "trace-overview-chart__expand-icon");
         hb.span(s -> s.append(icon),
-                Attribute.className("expand-icon"),
+                Attribute.className("trace-overview-chart__expand"),
                 new Attribute("data-expander-span-id", span.getSpanId()),
                 new Attribute("data-expander-depth", String.valueOf(depth)));
     }
@@ -929,17 +937,17 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
 
                 // A span that reported an error status gets a red bar; otherwise the default style.
                 final String barClass = isErrorSpan(span)
-                        ? "span-bar span-error"
-                        : "span-bar span-http";
+                        ? "trace-overview-chart__span-bar trace-overview-chart__span-bar--error"
+                        : "trace-overview-chart__span-bar trace-overview-chart__span-bar--http";
                 c.div("",
                         Attribute.className(barClass),
-                        Attribute.style("--span-bar__left: " + leftPct
-                                        + "%; --span-bar__width: " + widthPct + "%;"));
+                        Attribute.style("--trace-overview-chart__bar-left: " + leftPct
+                                        + "%; --trace-overview-chart__bar-width: " + widthPct + "%;"));
                 c.span(span.duration().toString(),
-                        Attribute.className("duration"),
-                        Attribute.style("--span-bar__end: " + (leftPct + widthPct) + "%;"));
+                        Attribute.className("trace-overview-chart__duration"),
+                        Attribute.style("--trace-overview-chart__bar-end: " + (leftPct + widthPct) + "%;"));
             }
-        }, Attribute.className("waterfall-container"));
+        }, Attribute.className("trace-overview-chart__waterfall"));
     }
 
     private static boolean isErrorSpan(final Span span) {
@@ -1080,17 +1088,17 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
     private void appendSpanInfo(final HtmlBuilder hb, final Span span) {
         hb.div(sp -> {
             // Left-edge drag handle for resizing the panel.
-            sp.div("", Attribute.className("span-info-resize"), Attribute.id("spanInfoResize"));
+            sp.div("", Attribute.className("trace-overview-chart__span-info-resize"), Attribute.id("spanInfoResize"));
             sp.div(header -> {
-                header.span("Span Info", Attribute.className("span-info-title"));
+                header.span("Span Info", Attribute.className("trace-overview-chart__span-info-title"));
                 header.div("×",
-                        Attribute.className("span-info-close"),
+                        Attribute.className("trace-overview-chart__span-info-close"),
                         Attribute.id("closeSpanInfo"),
                         Attribute.title("Close"));
-            }, Attribute.className("span-info-header"));
+            }, Attribute.className("trace-overview-chart__span-info-header"));
 
             sp.div(body -> {
-                body.div(span.getName(), Attribute.className("span-info-name"));
+                body.div(span.getName(), Attribute.className("trace-overview-chart__span-info-name"));
 
                 appendInfoRow(body, "Kind", span.getKind() == null ? "" : span.getKind().toString());
                 if (span.start() != null && span.end() != null) {
@@ -1103,31 +1111,31 @@ public class TraceOverviewChart extends Composite implements TaskMonitorFactory 
 
                 final List<KeyValue> attributes = span.getAttributes();
                 if (attributes != null && !attributes.isEmpty()) {
-                    body.div("Attributes", Attribute.className("span-info-section"));
+                    body.div("Attributes", Attribute.className("trace-overview-chart__span-info-section"));
                     attributes.forEach(attr -> {
                         final String value = rawValue(attr.getValue());
                         body.div(row -> {
-                            row.span(attr.getKey() + ": ", Attribute.className("span-info-key"));
+                            row.span(attr.getKey() + ": ", Attribute.className("trace-overview-chart__span-info-key"));
                             CopyTextUtil.render(value, row, false);
-                        }, Attribute.className("span-info-attr"));
+                        }, Attribute.className("trace-overview-chart__span-info-attr"));
                     });
                 }
-            }, Attribute.className("span-info-body scroll-region"),
+            }, Attribute.className("trace-overview-chart__span-info-body scroll-region"),
                     // It scrolls when it is taller than the panel, so, as the operation list, it is
                     // a named region that takes the focus, so that the keyboard can scroll it
                     new Attribute("tabindex", "0"),
                     new Attribute("role", "region"),
                     new Attribute("aria-label", "Span info"));
-        }, Attribute.className("span-info-panel"),
+        }, Attribute.className("trace-overview-chart__span-info"),
                 Attribute.id("spanInfo"),
-                Attribute.style("--span-info__width: " + spanInfoWidth + "px;"));
+                Attribute.style("--trace-overview-chart__span-info-width: " + spanInfoWidth + "px;"));
     }
 
     private void appendInfoRow(final HtmlBuilder hb, final String key, final String value) {
         hb.div(row -> {
-            row.span(key + ": ", Attribute.className("span-info-key"));
+            row.span(key + ": ", Attribute.className("trace-overview-chart__span-info-key"));
             CopyTextUtil.render(value, row, false);
-        }, Attribute.className("span-info-row"));
+        }, Attribute.className("trace-overview-chart__span-info-row"));
     }
 
     // Raw string for string values (toString() would add surrounding quotes, which CopyTextUtil would copy).

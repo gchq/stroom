@@ -20,9 +20,8 @@
    searchbox to assistive technology) with its buttons over the end of it (quick-filter__toolbar):
    Clear, the recent filters (quick-filter__recent, with the block's --recent modifier leaving room
    for it) and its syntax help. Its look, and its disabled, read-only, focused and invalid looks, are
-   the text field's (text-field.css).
-
-   quick-filter-layout is a panel holding a quick filter above what it filters.
+   the text field's (text-field.css). A panel holding a quick filter above what it filters is a
+   layout helper (quick-filter-layout, layout-helpers.css).
 */
 
 .quick-filter {
@@ -66,27 +65,24 @@
 
 /* Its buttons are the 24px of a minimum touch target (WCAG 2.5.8), as they sit over the box with no
    space around them */
-.quick-filter__toolbar .toolbar-button {
+.quick-filter__toolbar .quick-filter__button {
     width: 24px;
     height: 24px;
 }
 
-/* Its icons are in the colour of a form group's help icon */
-.quick-filter__toolbar .toolbar-button__icon {
-    color: var(--navigation-icon-button__color);
+/* Its icons are in the colour of a form group's help icon: the colour a toolbar button's icon takes
+   (toolbar-button.css) */
+.quick-filter__button {
+    --icon-button__color: var(--navigation-icon-button__color);
 }
 
 /* ... except the recent filters' drop-down arrow, which is every field's drop-down arrow (a selection
-   box's, and the value spinner's): small, and in the drop-down arrow's colour */
-.quick-filter__toolbar .quick-filter__recent .toolbar-button__icon {
+   box's, and the value spinner's): small, and in the drop-down arrow's colour (its drawing, with a
+   class more than the explorer's icon colour, toolbar-button.css) */
+.quick-filter .quick-filter__toolbar .quick-filter__recent svg {
     width: 10px;
     height: 10px;
     color: var(--icon-colour__black);
-}
-
-/* A panel holding a quick filter above what it filters */
-.quick-filter-layout {
-    gap: var(--control__padding--vertical);
 }
 
 /* Where it sits: */

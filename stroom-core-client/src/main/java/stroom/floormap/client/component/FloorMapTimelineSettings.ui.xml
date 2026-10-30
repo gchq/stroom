@@ -22,25 +22,25 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
 
-    <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-popup">
+    <g:FlowPanel addStyleNames="floor-map-timeline-settings">
         <!-- Loop playback toggle -->
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <tx:Label text="Loop Playback" addStyleNames="stroom-floormap-timeline-settings-label" />
+        <g:FlowPanel addStyleNames="floor-map-timeline-settings__row">
+            <tx:Label text="Loop Playback" addStyleNames="floor-map-timeline-settings__label" />
             <tickbox:TickBox ui:field="loopCheckBox" identity="floorMapTimelineLoop" label="" ariaLabel="Loop Playback"/>
         </g:FlowPanel>
 
         <!-- Date Range -->
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <tx:Label text="Start Date" addStyleNames="stroom-floormap-timeline-settings-label" />
-            <datetimebox:DateTimeBox ui:field="startDateTimeBox" addStyleNames="stroom-floormap-timeline-settings-date-box" />
+        <g:FlowPanel addStyleNames="floor-map-timeline-settings__row">
+            <tx:Label text="Start Date" addStyleNames="floor-map-timeline-settings__label" />
+            <datetimebox:DateTimeBox ui:field="startDateTimeBox" addStyleNames="floor-map-timeline-settings__date-box" />
         </g:FlowPanel>
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
-            <tx:Label text="End Date" addStyleNames="stroom-floormap-timeline-settings-label" />
-            <datetimebox:DateTimeBox ui:field="endDateTimeBox" addStyleNames="stroom-floormap-timeline-settings-date-box" />
+        <g:FlowPanel addStyleNames="floor-map-timeline-settings__row">
+            <tx:Label text="End Date" addStyleNames="floor-map-timeline-settings__label" />
+            <datetimebox:DateTimeBox ui:field="endDateTimeBox" addStyleNames="floor-map-timeline-settings__date-box" />
         </g:FlowPanel>
 
         <!-- Show All — sets date range to cover all data in the store -->
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-show-all-row">
+        <g:FlowPanel addStyleNames="floor-map-timeline-settings__show-all-row">
             <b:Button ui:field="showAllButton" addStyleNames="allow-focus" text="Show All"/>
         </g:FlowPanel>
     </g:FlowPanel>

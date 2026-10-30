@@ -16,7 +16,8 @@
 
 /* A dictionary's Imports tab (ImportsTab). */
 
-/* The effective words' label: a smidge of a gap between the split and it */
-.imports-tab__words > .form-group__label-row {
-    margin-top: 0.5em;
+/* The effective words: a smidge of a gap between the split and their label (the group's first
+   part) */
+.imports-tab__words {
+    padding-top: 0.5em;
 }

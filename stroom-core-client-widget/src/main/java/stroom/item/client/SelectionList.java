@@ -70,6 +70,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private static final String PATH_LINK = BLOCK + "__path-link";
     private static final String PATH_SEPARATOR = BLOCK + "__path-separator";
     private static final String PATH_CURRENT = BLOCK + "__path-current";
+    // The pager panel's modifier that keeps a list that fits its options within the popup's limits
+    private static final String PAGER_FIT_CONTENT = "pager-panel--fit-content";
 
     @UiField
     QuickFilter quickFilter;
@@ -168,13 +170,15 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     /// Makes the options as high and wide as they need, up to the size their container allows
-    /// (its `max-height` and `max-width`), then scrolling, as a selection box's list in its popup.
-    /// By default the options fill what holds the list.
+    /// (its `max-height` and `max-width`, the popup's limits that `pager-panel--fit-content` sets),
+    /// then scrolling, as a selection box's list in its popup. By default the options fill what
+    /// holds the list.
     ///
     /// @param fitContent Whether the options are as big as they need.
     public void setFitContent(final boolean fitContent) {
         grid.setFitContent(fitContent);
         grid.setFitWidth(fitContent);
+        pager.setStyleName(PAGER_FIT_CONTENT, fitContent);
     }
 
     /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).

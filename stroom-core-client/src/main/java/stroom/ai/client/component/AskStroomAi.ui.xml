@@ -33,7 +33,7 @@
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min ask-stroom-ai__model-pane">
                     <g:SimplePanel styleName="dock-max">
-                        <dd:DropDownBox ui:field="modelRef"/>
+                        <dd:DropDownBox ui:field="modelRef" addStyleNames="ask-stroom-ai__model drop-down--icon-raised"/>
                     </g:SimplePanel>
                     <spinner:SpinnerSmall ui:field="spinner"/>
                     <p:Toolbar name="Message" addStyleNames="toolbar--control">

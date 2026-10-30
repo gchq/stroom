@@ -20,10 +20,10 @@
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- The FocusPanel is the map's keyboard host: GWT gives it tabindex="0", and
          the controller binds pan/zoom/traversal keys to it. It therefore needs a
-         focus ring of its own, which stroom-floormap.css draws off this class. -->
+         focus ring of its own, which floor-map-canvas.css draws off its class. -->
     <g:FocusPanel ui:field="focusPanel" styleName="max"
-                  addStyleNames="stroom-floormap-canvas-focus">
-        <g:HTMLPanel styleName="max stroom-floormap-canvas-container">
+                  addStyleNames="floor-map-canvas">
+        <g:HTMLPanel styleName="max floor-map-canvas__container">
             <!-- The map is a picture of its data, so it is named and summarised as one image
                  rather than exposed as a tree of shapes. The role and name go on this container,
                  not on the <svg>: each frame replaces the SVG, whereas the container lasts as long
@@ -32,27 +32,27 @@
                  (paint) order they are a stream of disconnected names and numbers. The summary and
                  the Tracking grid say the same thing usefully -->
             <div ui:field="svgContainer" class="max" role="img" aria-label="Floor map"></div>
-            <tx:Label ui:field="areaDrawHint" addStyleNames="stroom-floormap-area-draw-hint"/>
+            <tx:Label ui:field="areaDrawHint" addStyleNames="floor-map-canvas__area-draw-hint"/>
             <!-- Follows the cursor during a move or resize, reporting the
                  position or size being dragged out in real-world units. -->
-            <tx:Label ui:field="gestureReadout" addStyleNames="stroom-floormap-gesture-readout"/>
+            <tx:Label ui:field="gestureReadout" addStyleNames="floor-map-canvas__gesture-readout"/>
             <!-- Describes the glyph under the pointer: the members of a cluster,
                  or one entity's details. Anchored to the glyph rather than the
                  cursor: a panel that slid about while the pointer moved across a
                  single glyph would read as unstable, and a fixed anchor lets the
                  contents be rebuilt only when the hovered glyph changes. -->
             <g:FlowPanel ui:field="hoverTooltip"
-                         addStyleNames="stroom-floormap-hover-tooltip">
-                <tx:Label ui:field="hoverCaption" addStyleNames="stroom-floormap-hover-tooltip__caption"/>
+                         addStyleNames="floor-map-canvas__hover-tooltip">
+                <tx:Label ui:field="hoverCaption" addStyleNames="floor-map-canvas__hover-caption"/>
                 <g:FlowPanel ui:field="hoverLines"/>
             </g:FlowPanel>
             <!-- Always-on scale bar: the origin indicator only helps while (0,0)
                  is on screen, which is not the normal state of a map being read. -->
-            <g:FlowPanel ui:field="scaleBar" addStyleNames="stroom-floormap-scale-bar">
+            <g:FlowPanel ui:field="scaleBar" addStyleNames="floor-map-canvas__scale-bar">
                 <tx:Label ui:field="scaleBarLabel"
-                         addStyleNames="stroom-floormap-scale-bar__label"/>
+                         addStyleNames="floor-map-canvas__scale-bar-label"/>
                 <g:SimplePanel ui:field="scaleBarLine"
-                               addStyleNames="stroom-floormap-scale-bar__line"/>
+                               addStyleNames="floor-map-canvas__scale-bar-line"/>
             </g:FlowPanel>
             <!-- Says why the map is empty, when it is persistently empty for a
                  reason worth naming. A DOM element rather than text painted into
@@ -63,7 +63,7 @@
                  that exist only on the Editor tab, and this line is only ever set
                  by the Map tab. -->
             <tx:Label ui:field="emptyStatus"
-                     addStyleNames="stroom-floormap-empty-status"/>
+                     addStyleNames="floor-map-canvas__empty-status"/>
             <!-- The map's spoken commentary: selection, tracking, time changes and
                  entities leaving the timeline range. Everything the canvas says
                  visually is otherwise invisible to a screen reader, because the SVG
@@ -73,7 +73,7 @@
                  Visually hidden rather than display:none — a hidden live region is
                  removed from the accessibility tree and never announces. -->
             <div ui:field="statusRegion"
-                 class="stroom-floormap-visually-hidden"
+                 class="sr-only"
                  role="status"
                  aria-live="polite"
                  aria-atomic="true"></div>

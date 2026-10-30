@@ -33,8 +33,8 @@
             <e:LinkTabPanel ui:field="dock" addStyleNames="overflow-hidden"/>
         </l:SplitPane>
         <g:FlowPanel styleName="max dock-container-vertical">
-            <!-- The timeline is a compact bar of a fixed height (floormap-timeline-strip) -->
-            <g:SimplePanel styleName="overflow-hidden stroom-border-bottom floormap-timeline-strip">
+            <!-- The timeline is a compact bar of a fixed height (floor-map-editor.css) -->
+            <g:SimplePanel styleName="overflow-hidden stroom-border-bottom floor-map-editor__timeline">
                 <f:FloorMapTimeline ui:field="timeline"/>
             </g:SimplePanel>
             <l:SplitPane thin="true" sizes="50%, *" names="Fact List, Time List" addStyleNames="dock-max">

@@ -38,7 +38,8 @@
     padding: 5px 8px;
 }
 
-.user-task .text-label {
+/* Its details' lines wrap */
+.user-task .user-task__text {
     white-space: normal;
 }
 
@@ -46,6 +47,7 @@
     font-weight: bold;
 }
 
-.user-task__terminate .toolbar-button__icon {
-    color: red;
+/* Its icon red: the colour a toolbar button's icon takes (toolbar-button.css) */
+.user-task__terminate {
+    --icon-button__color: red;
 }

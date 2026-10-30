@@ -15,26 +15,15 @@
  */
 
 /*
-   Forms: a form's groups in a column (form, form-padding), the layout many templates share. A form
-   group is form-group.css, and its label form-label.css.
+   Forms: a form's groups in a column, the layout many templates share. A form group is
+   form-group.css, its label form-label.css, and a button in either button.css.
 */
 
-/* A form: its groups in a column (with form-padding, inset from the edges of its panel) */
+/* A form: its groups in a column (with form-padding, layout-helpers.css, inset from the edges of its
+   panel) */
 .form {
     display: flex;
     gap: var(--control__gap--vertical);
     flex-direction: column;
     overflow: auto;
-}
-
-.form-padding {
-    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
-}
-
-/* A button in a form (one that acts on the whole document, e.g. Reset Data, needs no group) or in
-   a form group is as wide as its text, but at least as wide as the form's other controls (200px),
-   rather than stretched across the form (one that should fill it says so, e.g. w-100) */
-.form > .button {
-    align-self: flex-start;
-    min-width: 200px;
 }

@@ -5,30 +5,30 @@
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The Layers panel (stroom-floormap.css): a scrolling list of layer rows, which the Java adds
+      The Layers panel (floor-map-layers.css): a scrolling list of layer rows, which the Java adds
       before the empty messages and the Discover footer. It needs no title of its own: the dock tab
       already reads "Layers"
     -->
     <g:HTMLPanel styleName="max">
         <g:ScrollPanel addStyleNames="max">
-            <g:FlowPanel ui:field="list" addStyleNames="floormap-layers-list">
+            <g:FlowPanel ui:field="list" addStyleNames="floor-map-layers__list">
                 <!-- An empty panel is otherwise indistinguishable from a broken one. The wording
                      differs by tab because so does the remedy: the Editor can add layers, and the
                      read-only Map tab cannot -->
                 <tx:Label ui:field="editorEmpty"
-                         addStyleNames="floormap-layer-empty"
+                         addStyleNames="floor-map-layers__empty"
                          text="No layers yet. Types found in the data appear here, or use Discover types."
                          visible="false"/>
                 <tx:Label ui:field="mapEmpty"
-                         addStyleNames="floormap-layer-empty"
+                         addStyleNames="floor-map-layers__empty"
                          text="No layers configured. They are added on the Editor tab."
                          visible="false"/>
-                <g:FlowPanel ui:field="discoverFooter" addStyleNames="floormap-layers-footer" visible="false">
-                    <b:Toolbar name="Discover types" addStyleNames="floormap-layer-toolbar">
+                <g:FlowPanel ui:field="discoverFooter" addStyleNames="floor-map-layers__footer" visible="false">
+                    <b:Toolbar name="Discover types" addStyleNames="floor-map-layers__toolbar">
                         <b:ToolbarButton ui:field="discover"
                                          svg="REFRESH"
                                          title="Discover types from the facts store"
-                                         addStyleNames="floormap-layers-discover"/>
+                                         addStyleNames="floor-map-layers__discover"/>
                     </b:Toolbar>
                     <!-- Kept clickable as a larger pointer target for the button beside it, which
                          is fully keyboard operable, but hidden from screen readers, which would
@@ -36,7 +36,7 @@
                          loose text that looks interactive and is not focusable -->
                     <c:AriaPanel ariaHidden="true">
                         <tx:Label ui:field="discoverLabel"
-                                 addStyleNames="floormap-layers-footer-label"
+                                 addStyleNames="floor-map-layers__footer-label"
                                  text="Discover types"/>
                     </c:AriaPanel>
                 </g:FlowPanel>
@@ -46,7 +46,7 @@
              rows, and a live region that is removed and made again never announces: assistive
              technology only reports changes to a region it was already watching -->
         <div ui:field="statusRegion"
-             class="stroom-floormap-visually-hidden"
+             class="sr-only"
              role="status"
              aria-live="polite"
              aria-atomic="true"></div>

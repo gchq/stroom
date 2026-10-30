@@ -308,7 +308,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
     // screen readers, unseen over its picture, as the widget's does in a box that can't be typed in
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"icon-box icon-box--drop-down selection-box selection-box--select-only "
+        @Template("<div class=\"icon-box icon-box--drop-down icon-box--fluid selection-box selection-box--select-only "
                   + "selection-box--cell\"><div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"
                   + "<input type=\"text\" class=\"text-field selection-box__input stroom-control "
@@ -318,7 +318,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                   + "<div class=\"icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
         SafeHtml box(SafeHtml rendered, String text, String name, String rowId, SafeHtml arrow);
 
-        @Template("<div class=\"icon-box icon-box--drop-down icon-box--read-only selection-box "
+        @Template("<div class=\"icon-box icon-box--drop-down icon-box--read-only icon-box--fluid selection-box "
                   + "selection-box--select-only selection-box--read-only selection-box--cell\">"
                   + "<div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"

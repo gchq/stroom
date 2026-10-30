@@ -98,6 +98,8 @@ public class FormGroup extends Composite implements HasWidgets {
             STYLE_FORM_GROUP_DESCRIPTION_ROW + "--disabled";
     // A group with no label of its own whose tick box has one: the help goes beside that label
     public static final String STYLE_FORM_GROUP_INLINE_TICK = "form-group--inline-tick";
+    // Its tick box, in such a group
+    private static final String STYLE_FORM_GROUP_TICK = "form-group__tick";
 
     // The elements that are form controls a label can name
     private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
@@ -501,6 +503,15 @@ public class FormGroup extends Composite implements HasWidgets {
         }
     }
 
+    /// Gives the group's label a class of the component that declares the group, for a look of its
+    /// own, e.g. `labelStyleName="authentication-error__title"` for a larger heading. It is added to
+    /// the label's own classes.
+    ///
+    /// @param styleName The class.
+    public void setLabelStyleName(final String styleName) {
+        formLabel.addStyleName(styleName);
+    }
+
     // The help is for the group's label or, if it has none, the label beside its tick box
     private void updateHelpTitle() {
         final String label = NullSafe.isNonBlankString(getLabel())
@@ -531,6 +542,10 @@ public class FormGroup extends Composite implements HasWidgets {
         final boolean inline = NullSafe.isBlankString(getLabel())
                                && NullSafe.isNonBlankString(getTickBoxLabel());
         formGroupPanel.setStyleName(STYLE_FORM_GROUP_INLINE_TICK, inline);
+        // The tick box, first on that line
+        if (childWidget != null) {
+            childWidget.setStyleName(STYLE_FORM_GROUP_TICK, inline);
+        }
     }
 
     public String getLabel() {

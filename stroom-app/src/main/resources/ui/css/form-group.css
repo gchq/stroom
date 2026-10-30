@@ -33,11 +33,6 @@
     display: flex;
 }
 
-.form-group > .button {
-    align-self: flex-start;
-    min-width: 200px;
-}
-
 .form-group:not(:first-child) {
     margin-top: 0.3em;
 }
@@ -51,7 +46,22 @@
     color: var(--feedback);
 }
 
-.form-group__label-row .form-label {
+/* A group that keeps a line under its control for its message whether or not there is one, so the
+   form doesn't move as messages come and go (the sign-in pages and the name dialog): the message's
+   own line, or an empty one of the same height while there is none */
+.form-group--reserve-feedback > .form-group__feedback {
+    margin-top: .25rem;
+    min-height: 16px;
+}
+
+.form-group--reserve-feedback:not(:has(> .form-group__feedback))::after {
+    content: "";
+    display: block;
+    margin-top: .25rem;
+    height: 16px;
+}
+
+.form-group__label-row .form-group__label {
     margin-bottom: 0;
 }
 
@@ -77,7 +87,7 @@
     order: 2;
 }
 
-.form-group--inline-tick > .tick-box {
+.form-group--inline-tick > .form-group__tick {
     flex-basis: auto;
     order: 0;
 }

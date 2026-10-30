@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-/* Labels and collections as lozenges (Lozenge), in a list (lozenge-list). */
-
-.lozenge-list {
-    padding: 3px 0;
-}
+/* Labels and collections as lozenges (Lozenge). */
 
 .lozenge {
     padding: 1px 8px;

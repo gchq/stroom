@@ -16,10 +16,11 @@
 
 package stroom.preferences.client.component;
 
-import stroom.entity.client.component.LinkTabPanel;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
+import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;
@@ -36,7 +37,9 @@ public class UserPreferencesDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    LinkTabPanel tabs;
+    LinkTabBar tabBar;
+    @UiField
+    LayerContainerImpl layerContainer;
     @UiField
     Button setAsDefault;
     @UiField
@@ -54,12 +57,13 @@ public class UserPreferencesDialog extends Component {
         initWidget(BINDER.createAndBindUi(this));
         setAsDefault.setOnClick(this::onClickSetAsDefault);
         revertToDefault.setOnClick(this::onClickRevertToDefault);
-        tabs.getTabBar().addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
+        tabBar.setTabPanel(layerContainer.getElement());
+        tabBar.addSelectionHandler(event -> onTabSelected.accept(event.getSelectedItem()));
     }
 
     /// @param tab A tab to add to the tab bar.
     public void addTab(final TabData tab) {
-        tabs.getTabBar().addTab(tab);
+        tabBar.addTab(tab);
     }
 
     /// Shows a tab as selected, with its content.
@@ -67,8 +71,8 @@ public class UserPreferencesDialog extends Component {
     /// @param tab   The tab.
     /// @param layer Its content.
     public void showTab(final TabData tab, final Layer layer) {
-        tabs.getTabBar().selectTab(tab);
-        tabs.getLayerContainer().show(layer);
+        tabBar.selectTab(tab);
+        layerContainer.show(layer);
     }
 
     /// @param visible Whether Set As Default shows, for a user who may change the defaults.

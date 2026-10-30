@@ -42,7 +42,7 @@
                 <l:SelectionBox ui:field="typeColumn" addStyleNames="w-100" ariaLabel="Type Column"/>
             </form:FormGroup>
             <!-- Shown until the query has been run: before then the lists hold only the mapped columns. -->
-            <tx:Label ui:field="columnsHint" styleName="floormap-query-columns-hint"
+            <tx:Label ui:field="columnsHint" styleName="floor-map-query__columns-hint"
                      text="Run the query to list its columns"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="queryEditContainer" styleName="dock-max overflow-hidden"/>

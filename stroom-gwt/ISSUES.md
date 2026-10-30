@@ -1899,6 +1899,12 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
+**Confirmed** (29 October 2026, wave 42): a read-only annotation's settings aren't greyed, though
+`SettingBlock.setReadOnly`'s doc said they were. Its only rule, `.setting-block--read-only
+.text-label`, styled nothing: no `text-label` is inside a setting block. The rule went with wave
+42's sheet work and the doc now says what happens; greying the values (e.g. a `--read-only` rule on
+`setting-block__setting`) waits for a decision on how read-only values should look.
+
 **Fixed** (29 October 2026, wave 36; changelog entry): ~~the XSD browser heads a type's
 pattern restrictions "Enumeration". `XSDConstraintDisplay` asked `getList` for the enumeration list
 and, when there was none, for the pattern list, both with `enumeration = true`, so the "Pattern"
@@ -2123,8 +2129,8 @@ to delete them by hand.
   list's `traces-toolbar` (`pathways.css`, set in `TracesListTabController`). Rename them with their
   rules to `annotation-edit__…` and `traces-list-tab__toolbar` in one pass each. **The annotation
   editor's done** (wave 28, 29 October 2026: `annotation-edit`, `annotation-setting`,
-  `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is a valid BEM name and
-  stays.
+  `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is
+  `traces-list-tab__toolbar` (`traces-list-tab.css`) since UI audit wave 8 (29 October 2026).
 * Read-only read once rather than followed (found 27 October 2026, in wave 12's audit; as before
   the wave): the pipeline's Structure tab, a document's Assets tab and the scheduled processing pane
   take `Contexts.READ_ONLY` when they read, so a lock change without a re-read leaves their buttons

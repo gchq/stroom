@@ -86,9 +86,9 @@ public class FloorMapLayers extends Component {
     /// Size of each row's graphic preview in pixels.
     private static final int SWATCH_SIZE_PX = 16;
 
-    private static final String ROW_DRAGGING = "floormap-layer-row--dragging";
-    private static final String ROW_DROP_ABOVE = "floormap-layer-row--drop-above";
-    private static final String ROW_DROP_BELOW = "floormap-layer-row--drop-below";
+    private static final String ROW_DRAGGING = "floor-map-layers__row--dragging";
+    private static final String ROW_DROP_ABOVE = "floor-map-layers__row--drop-above";
+    private static final String ROW_DROP_BELOW = "floor-map-layers__row--drop-below";
 
     @UiField
     FlowPanel list;
@@ -315,19 +315,19 @@ public class FloorMapLayers extends Component {
     /// A discovered-but-unsaved type: name + an add button to make it a layer.
     private Widget buildProvisionalRow(final String type) {
         final FlowPanel row = new FlowPanel();
-        row.addStyleName("floormap-layer-row");
-        row.addStyleName("floormap-layer-row--provisional");
+        row.addStyleName("floor-map-layers__row");
+        row.addStyleName("floor-map-layers__row--provisional");
 
         final Label name = new Label(type);
-        name.addStyleName("floormap-layer-name");
+        name.addStyleName("floor-map-layers__name");
         name.setTitle("Discovered type — not yet a saved layer");
         row.add(name);
 
         final Toolbar toolbar = new Toolbar(type + " layer actions");
-        toolbar.addStyleName("floormap-layer-toolbar");
+        toolbar.addStyleName("floor-map-layers__toolbar");
         final ToolbarButton add = toolbar.button(
                 SvgImage.ADD, "Add the discovered type " + type + " as a layer", () -> promote(type));
-        add.addStyleName("floormap-layer-add");
+        add.addStyleName("floor-map-layers__add");
         row.add(toolbar);
         return row;
     }
@@ -460,7 +460,7 @@ public class FloorMapLayers extends Component {
     private Widget buildRow(final TypeStyle ts, final int index) {
         final String type = ts.getType();
         final FlowPanel row = new FlowPanel();
-        row.addStyleName("floormap-layer-row");
+        row.addStyleName("floor-map-layers__row");
 
         // Editor-only: drag a row to reorder the layers (z-order). List order is
         // the z-order — earlier = painted behind, later = painted in front.
@@ -503,16 +503,16 @@ public class FloorMapLayers extends Component {
         final int state = visibilityByType.getOrDefault(type, FULL);
 
         final Label name = new Label(type);
-        name.addStyleName("floormap-layer-name");
+        name.addStyleName("floor-map-layers__name");
         applyNameState(name, state);
 
         // The row's eye and lock buttons, as one tab stop
         final Toolbar toolbar = new Toolbar(type + " layer actions");
-        toolbar.addStyleName("floormap-layer-toolbar");
+        toolbar.addStyleName("floor-map-layers__toolbar");
 
         // Its icon and name are set by applyEyeState
         final ToolbarButton eye = toolbar.button(SvgImage.EYE, type + " layer visibility", null);
-        eye.addStyleName("floormap-layer-eye");
+        eye.addStyleName("floor-map-layers__eye");
         applyEyeState(eye, type, state);
         eye.setOnClick(() -> {
             // Cycle full → 30% → off → full.
@@ -528,7 +528,7 @@ public class FloorMapLayers extends Component {
         if (editorMode) {
             // Its icon and name are set by applyLockState
             final ToolbarButton lock = toolbar.button(SvgImage.UNLOCKED_DEFAULT_COLOUR, type + " layer lock", null);
-            lock.addStyleName("floormap-layer-lock");
+            lock.addStyleName("floor-map-layers__lock");
             applyLockState(lock, type, lockedTypes.contains(type));
             lock.setOnClick(() -> {
                 final boolean nowLocked = !lockedTypes.contains(type);
@@ -563,7 +563,7 @@ public class FloorMapLayers extends Component {
     private Widget buildGrip(final String type, final int index) {
         final LinkButton grip = new LinkButton();
         // Only its own style (no link-button), so nothing fights the dot-grid background it paints
-        grip.setStyleName("floormap-layer-grip");
+        grip.setStyleName("floor-map-layers__grip");
         grip.setTitle("Reorder the " + type
                       + " layer — drag, or use the up and down arrow keys");
         grip.addKeyDownHandler(event -> {
@@ -597,7 +597,7 @@ public class FloorMapLayers extends Component {
         final LinkButton swatch = new LinkButton();
         // Only its own style (no link-button); the CSS resets the browser's button look so nothing
         // boxes in the preview graphic
-        swatch.setStyleName("floormap-layer-swatch");
+        swatch.setStyleName("floor-map-layers__swatch");
         swatch.setHTML(FloorMapSwatchHtml.swatch(ts, SWATCH_SIZE_PX));
         // Names the layer: a panel of identically-titled "Edit appearance"
         // buttons tells a screen-reader user nothing about which one they are
@@ -622,7 +622,7 @@ public class FloorMapLayers extends Component {
         row.removeStyleName(ROW_DROP_BELOW);
     }
 
-    // Its icon's opacity follows from the state class (stroom-floormap.css): never under 0.7, the
+    // Its icon's opacity follows from the state class (floor-map-layers.css): never under 0.7, the
     // lowest an enabled control's graphic may be drawn at here and still clear 3:1 against the
     // panel (WCAG 1.4.11), as these icons are the only sign of a layer's visibility and lock
     private static void applyLockState(final ToolbarButton lock,
@@ -636,14 +636,14 @@ public class FloorMapLayers extends Component {
         lock.setTitle(locked
                 ? type + " layer is locked — items can’t be moved (click to unlock)"
                 : type + " layer is unlocked — items can be moved (click to lock)");
-        lock.setStyleName("floormap-layer-lock--locked", locked);
+        lock.setStyleName("floor-map-layers__lock--locked", locked);
     }
 
     private static void applyEyeState(final ToolbarButton eye,
                                       final String type,
                                       final int state) {
-        eye.setStyleName("floormap-layer-eye--off", state == OFF);
-        eye.setStyleName("floormap-layer-eye--dim", state == DIM);
+        eye.setStyleName("floor-map-layers__eye--off", state == OFF);
+        eye.setStyleName("floor-map-layers__eye--dim", state == DIM);
         switch (state) {
             case OFF:
                 eye.setSvg(SvgImage.EYE_OFF);
@@ -660,10 +660,10 @@ public class FloorMapLayers extends Component {
         }
     }
 
-    // Dims a layer's name in step with its visibility state (stroom-floormap.css)
+    // Dims a layer's name in step with its visibility state (floor-map-layers.css)
     private static void applyNameState(final Label name, final int state) {
-        name.setStyleName("floormap-layer-name--off", state == OFF);
-        name.setStyleName("floormap-layer-name--dim", state == DIM);
+        name.setStyleName("floor-map-layers__name--off", state == OFF);
+        name.setStyleName("floor-map-layers__name--dim", state == DIM);
     }
 
 

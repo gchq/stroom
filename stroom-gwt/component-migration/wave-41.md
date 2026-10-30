@@ -56,6 +56,9 @@ D8); written 29 October 2026, after wave 40.
   the lost nudge, and after it was restored its and the nodes screen's 10 stories match their
   baselines.
 
+> **Undone in wave 42** (30 October 2026): the user asked for the layout to stay as it was, to
+> within a pixel; the look changes this wave took are put back there (see `wave-42.md`).
+
 ## Looks that changed
 
 - Panels framed by `control-box` rather than `stroom-control` lose its 0.4rem padding and take the

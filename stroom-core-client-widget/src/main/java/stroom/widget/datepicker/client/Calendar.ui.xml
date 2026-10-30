@@ -12,17 +12,21 @@
     <g:FlowPanel styleName="calendar">
         <g:FlowPanel styleName="calendar__header">
             <g:FlowPanel styleName="calendar__row">
-                <i:SelectionBox ui:field="yearSelect" ariaLabel="Year"/>
-                <b:Toolbar name="Year">
-                    <b:ToolbarButton ui:field="previousYear" svg="ARROW_LEFT" title="Previous Year"/>
-                    <b:ToolbarButton ui:field="nextYear" svg="ARROW_RIGHT" title="Next Year"/>
+                <i:SelectionBox ui:field="yearSelect" addStyleNames="calendar__select" ariaLabel="Year"/>
+                <b:Toolbar name="Year" addStyleNames="calendar__toolbar">
+                    <b:ToolbarButton ui:field="previousYear" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_LEFT" title="Previous Year"/>
+                    <b:ToolbarButton ui:field="nextYear" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_RIGHT" title="Next Year"/>
                 </b:Toolbar>
             </g:FlowPanel>
             <g:FlowPanel styleName="calendar__row">
-                <i:SelectionBox ui:field="monthSelect" ariaLabel="Month"/>
-                <b:Toolbar name="Month">
-                    <b:ToolbarButton ui:field="previousMonth" svg="ARROW_LEFT" title="Previous Month"/>
-                    <b:ToolbarButton ui:field="nextMonth" svg="ARROW_RIGHT" title="Next Month"/>
+                <i:SelectionBox ui:field="monthSelect" addStyleNames="calendar__select" ariaLabel="Month"/>
+                <b:Toolbar name="Month" addStyleNames="calendar__toolbar">
+                    <b:ToolbarButton ui:field="previousMonth" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_LEFT" title="Previous Month"/>
+                    <b:ToolbarButton ui:field="nextMonth" addStyleNames="calendar__button toolbar-button--arrow"
+                                     svg="ARROW_RIGHT" title="Next Month"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </g:FlowPanel>

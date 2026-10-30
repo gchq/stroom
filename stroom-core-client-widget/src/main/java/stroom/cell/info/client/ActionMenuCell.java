@@ -169,7 +169,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
             sb.append(RowActions.menuButton(
                     "icon-cell--button " + ACTION_MENU_CELL_CLASS_NAME,
                     tooltipText,
-                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "icon-cell")));
+                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "icon-cell", RowActions.ICON_CLASS_NAME)));
         }
     }
 }

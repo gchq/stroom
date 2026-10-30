@@ -15,9 +15,10 @@
  */
 
 /* The round button that starts stepping from a data or source view (TextPane, DataTextPane,
-   SourceViewer), at the bottom right of its container. */
+   SourceViewer), at the bottom right of its container (stepping-button__container), blue
+   (fab-button--primary, fab-button.css). */
 
-.stepping-button-container {
+.stepping-button__container {
 	position: relative;
 }
 
@@ -32,12 +33,4 @@
     width: 46px;
     height: 46px;
     margin-left: 2px;
-}
-
-.stepping-button .fab-button__face {
-	background: #3385ff;
-}
-
-.stepping-button .fab-button__face:hover {
-	background: #51a5ff;
 }

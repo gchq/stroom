@@ -153,7 +153,8 @@ public final class AccountsScreenStories {
                     // Its sign in failures, a count, are right-aligned, as their heading is (#4442)
                     play.expect(row.getByText("3").closest(".data-grid__cell"))
                             .toHaveClass("data-grid__cell--align-right");
-                    play.expect(play.getByText("Sign In Failures").closest("[data-hcol]")).toHaveClass("right-align");
+                    play.expect(play.getByText("Sign In Failures").closest("[data-hcol]"))
+                            .toHaveClass("data-grid__header-cell--align-right");
                     // The unlocked account's Locked cell stays blank
                     final Play adminRow = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
                     play.expect(adminRow.queryByText(TextMatch.startingWith("Locked"))).toBeNull();

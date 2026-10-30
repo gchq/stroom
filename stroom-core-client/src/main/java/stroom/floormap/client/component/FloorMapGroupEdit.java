@@ -179,9 +179,10 @@ public class FloorMapGroupEdit extends Component {
 
     private void addCandidateRow(final MemberCandidate candidate, final boolean selected) {
         final FlowPanel row = new FlowPanel();
-        row.addStyleName("floormap-group-edit-member");
+        row.addStyleName("floor-map-group-edit__member");
 
         final TickBox checkBox = new TickBox();
+        checkBox.addStyleName("floor-map-group-edit__member-tick-box");
         checkBox.setLabel(candidate.getName());
         checkBox.setValue(selected);
         //noinspection unused e
@@ -196,9 +197,9 @@ public class FloorMapGroupEdit extends Component {
                 : NOT_ON_MAP;
         if (detail != null && !detail.isEmpty()) {
             final Label detailLabel = new Label(detail);
-            detailLabel.addStyleName("floormap-group-edit-member-detail");
+            detailLabel.addStyleName("floor-map-group-edit__member-detail");
             if (!candidate.isOnTheMap()) {
-                detailLabel.addStyleName("floormap-group-edit-member-detail--absent");
+                detailLabel.addStyleName("floor-map-group-edit__member-detail--absent");
                 detailLabel.setTitle("This member has not been seen on the map this session."
                                      + " It stays in the group.");
             }

@@ -15,10 +15,12 @@
         <f:TextBox ui:field="textBox" addStyleNames="quick-filter__input allow-focus"
                      type="search" placeholder="Quick Filter"/>
         <b:Toolbar ui:field="toolbar" name="Quick filter" addStyleNames="quick-filter__toolbar">
-            <b:ToolbarButton ui:field="clearButton" svg="TAB_CLOSE" title="Clear Filter"/>
+            <b:ToolbarButton ui:field="clearButton" svg="TAB_CLOSE" title="Clear Filter"
+                             addStyleNames="quick-filter__button"/>
             <b:ToolbarButton ui:field="dropDownButton" svg="ARROW_DOWN" title="Show Recent Filters"
-                             addStyleNames="quick-filter__recent" opensMenu="true" visible="false"/>
-            <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Quick Filter Syntax Help"/>
+                             addStyleNames="quick-filter__button quick-filter__recent" opensMenu="true" visible="false"/>
+            <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Quick Filter Syntax Help"
+                             addStyleNames="quick-filter__button"/>
         </b:Toolbar>
         <tx:Label ui:field="description" visible="false"/>
         <div ui:field="errorMessage" class="sr-only" aria-live="polite"></div>

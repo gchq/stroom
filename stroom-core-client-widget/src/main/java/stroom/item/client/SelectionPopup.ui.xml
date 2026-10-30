@@ -7,6 +7,6 @@
              xmlns:v="urn:import:stroom.widget.popup.client"
              xmlns:i="urn:import:stroom.item.client">
     <v:SimplePopupLayout>
-        <i:SelectionList ui:field="selectionList" fitContent="true"/>
+        <i:SelectionList ui:field="selectionList" fitContent="true" addStyleNames="selection-popup__list"/>
     </v:SimplePopupLayout>
 </ui:UiBinder>

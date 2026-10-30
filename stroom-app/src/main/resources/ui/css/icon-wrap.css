@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-/* A Git repository's settings (GitRepoSettings). */
+/* An icon's box (icon-wrap), holding its drawing at the icon size (--icon-width, --icon-height), or
+   smaller (icon-wrap--small). Was svg-icon.css. */
 
-/* Settings form */
-.gitrepo-settings-form button.button {
-    width: 400px;
+.icon-wrap {
+  display: flex;
 }
 
-.gitrepo-settings-form input[type="text"] {
-    width: 400px;
+.icon-wrap svg {
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
-.gitrepo-settings-form #credentials-group {
-    width: 400px;
+/* A small icon, on a line no taller than its text's at 80% (as Bootstrap's small class, which it
+   was given before, made it), so the cell it is in doesn't grow */
+.icon-wrap--small {
+  font-size: 80%;
+  font-weight: 400;
+}
+
+.icon-wrap.icon-wrap--small svg {
+  width: calc(var(--icon-width) * 0.7);
+  height: calc(var(--icon-height) * 0.7);
 }

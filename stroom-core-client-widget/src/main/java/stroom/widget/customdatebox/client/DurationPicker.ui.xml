@@ -9,6 +9,6 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="duration-picker">
         <v:ValueSpinner ui:field="time" addStyleNames="duration-picker__amount" ariaLabel="Amount"/>
-        <i:SelectionBox ui:field="timeUnit" addStyleNames="duration-picker__unit" ariaLabel="Unit"/>
+        <i:SelectionBox ui:field="timeUnit" addStyleNames="duration-picker__unit icon-box--fluid" ariaLabel="Unit"/>
     </g:FlowPanel>
 </ui:UiBinder>

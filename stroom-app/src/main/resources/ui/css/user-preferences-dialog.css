@@ -16,11 +16,6 @@
 
 /* The user's preferences, in tabs, then the buttons for the defaults */
 
-/* The gap between the tabs and the tab showing, as the form's other rows have */
-.user-preferences-dialog__tabs {
-    gap: var(--control__gap--vertical);
-}
-
 /* Set As Default and Revert To Default, each the same width */
 .user-preferences-dialog__buttons button {
     width: 250px;

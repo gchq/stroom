@@ -15,9 +15,28 @@
  */
 
 /*
-   The authentication error page (stroom.security.identity.client.component.AuthenticationError), named BEM style. Its rules were in `Login.css` (now
-   `sign-in-page.css`), which still holds the rules the page shares with the sign-in page.
+   The authentication error page (stroom.security.identity.client.component.AuthenticationError),
+   named BEM style: laid out as the sign in page is (sign-in-page.css, imported just before this),
+   with its heading (authentication-error__title, FormGroup's label) larger.
 */
+
+.authentication-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.authentication-error .authentication-error__form-panel {
+    border-radius: var(--dialog__border-radius);
+    background-color: var(--dialog__background-color);
+    color: var(--page__text-color);
+}
 
 .authentication-error .authentication-error__form-panel .authentication-error__form {
     padding: 2rem;
@@ -43,10 +62,16 @@
     border-radius: 4rem;
 }
 
-.authentication-error .authentication-error__form-panel .authentication-error__form .form-group__label {
+.authentication-error .authentication-error__form-panel .authentication-error__form .authentication-error__title {
     font-size: var(--font-size-15);
 }
 
 .authentication-error .authentication-error__message-container > div {
     padding-top: 1em;
+}
+
+/* Links in the message are underlined, as links in running text are, so they are told from the text
+   round them by more than their colour (WCAG 1.4.1) (was base.css's) */
+.authentication-error__message-container a {
+    text-decoration: underline;
 }

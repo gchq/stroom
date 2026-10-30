@@ -1,0 +1,242 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* -----------------------------------------------------------------------
+   The Layers panel, a dock tab (FloorMapLayers)
+   ----------------------------------------------------------------------- */
+
+.floor-map-layers__list {
+    padding: 4px;
+}
+
+/* One layer row: [reorder handle via drag] eye [lock] name */
+.floor-map-layers__row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.floor-map-layers__row:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+/* The row being dragged to reorder (Editor tab) */
+.floor-map-layers__row--dragging {
+    opacity: 0.4;
+}
+
+/* Where a dragged row will drop: above or below this one, so the last position is reachable */
+.floor-map-layers__row--drop-above {
+    box-shadow: inset 0 2px 0 0 var(--blue-500);
+}
+
+.floor-map-layers__row--drop-below {
+    box-shadow: inset 0 -2px 0 0 var(--blue-500);
+}
+
+/* Whole row is a drag handle for reordering (Editor tab) */
+.floor-map-layers__row[draggable="true"] {
+    cursor: grab;
+}
+
+.floor-map-layers__row[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Layer name fills the row and truncates rather than wrapping */
+.floor-map-layers__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 4px;
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+/* A layer's name dims in step with its visibility. The hidden state's floor is 0.65 rather than
+   the icons' 0.7 because this is text, which needs 4.5:1 rather than 3:1: 0.55 over white
+   composites to about #7e7e7e, 4.06:1, short of the mark */
+.floor-map-layers__name--dim {
+    opacity: 0.75;
+}
+
+.floor-map-layers__name--off {
+    opacity: 0.65;
+}
+
+/* The eye / lock icon buttons keep the standard icon-button sizing; nudge
+   spacing so they sit tightly at the start of the row */
+/* The eye / lock / add icon buttons. `.toolbar-button` in toolbar-button.css sizes
+   every icon button in the app at 22 × 22, which is under the WCAG 2.5.8 minimum
+   of 24. Widening it there would move every toolbar in Stroom, so it is raised
+   locally for the layer panel's buttons — the row is 28px tall, so there is room
+   without disturbing the layout. */
+.floor-map-layers__eye,
+.floor-map-layers__lock,
+.floor-map-layers__add {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+}
+
+/* A dimmed or hidden layer's eye, and an unlocked layer's lock, are faded, but no further than
+   0.7: the lowest an enabled control's graphic may be drawn at here and still clear 3:1 against
+   the panel (WCAG 1.4.11). Body text at 0.45 over the light theme's white composites to about
+   #969696, 2.96:1, just under. These icons are the only sign of a layer's visibility and lock, so
+   they are the "meaningful non-text content" the rule is about */
+.floor-map-layers__eye--dim,
+.floor-map-layers__eye--off,
+.floor-map-layers__lock {
+    opacity: 0.7;
+}
+
+.floor-map-layers__lock--locked {
+    opacity: 0.95;
+}
+
+/* The toolbar holding a row's (or the footer's) icon buttons, sized to its buttons */
+.floor-map-layers__toolbar {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+/* Drag handle (Editor): the classic six-dot grip, drawn with a tiled radial
+   gradient so no icon asset is needed. Signals the row can be grabbed to
+   reorder; the whole row is the drag source, and focusing the grip lets the
+   arrow keys do the same job without a pointer.
+
+   It is a real <button> (a LinkButton, see FloorMapLayers), so the first block
+   strips the UA button chrome — border, background, font — that would
+   otherwise draw a box around the dots.
+
+   Sized 24 × 24 for WCAG 2.5.8 while the dot grid itself stays 10 × 16: the
+   padding supplies the extra target area, and background-origin/-clip:
+   content-box keep the `background-repeat: round` tiling inside that 10 × 16
+   box so the larger button does not simply grow more dots. */
+.floor-map-layers__grip {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    padding: 4px 7px;
+    border: 0;
+    margin-right: 2px;
+    font: inherit;
+    color: var(--text-color--low-emphasis);
+    opacity: 0.75;
+    background-color: transparent;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+    background-size: 4px 5px;
+    background-position: center;
+    background-repeat: round;
+    background-origin: content-box;
+    background-clip: content-box;
+    cursor: grab;
+}
+
+.floor-map-layers__row:hover .floor-map-layers__grip {
+    opacity: 1;
+}
+
+/* base.css removes the outline from every element, so the grip needs its own
+   focus ring — and it needs it more than most, because "which layer will the
+   arrow keys move?" is answerable only from where focus is. */
+.floor-map-layers__grip:focus-visible {
+    opacity: 1;
+    box-shadow: var(--focus-shadow);
+    outline: thin solid var(--focus-border);
+}
+
+/* Appearance swatch (Editor): previews the layer's shape in its colour and
+   opens the style dialog. A real <button> (a LinkButton, see FloorMapLayers), so it
+   is focusable and Enter/Space-activatable; these rules strip the UA button
+   chrome that would otherwise box the preview in.
+
+   24 × 24 is the WCAG 2.5.8 minimum target size, not a visual choice — the
+   graphic inside stays SWATCH_SIZE_PX and is centred in the larger box. */
+.floor-map-layers__swatch {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* base.css kills the outline on every element, so the swatch needs its own
+   focus ring — same treatment as .toolbar-button in toolbar-button.css. */
+.floor-map-layers__swatch:focus-visible {
+    box-shadow: var(--focus-shadow);
+    outline: thin solid var(--focus-border);
+}
+
+.floor-map-layers__swatch:hover {
+    background-color: rgba(128, 128, 128, 0.15);
+}
+
+/* Discovered-but-unsaved type: muted + italic, with an add button */
+.floor-map-layers__row--provisional .floor-map-layers__name {
+    font-style: italic;
+    color: var(--text-color--low-emphasis);
+}
+
+/* Shown when the panel has no rows at all. Low emphasis on purpose: an empty layer set is an
+   ordinary state, not a fault, and this only exists so that a blank panel does not read as one. */
+.floor-map-layers__empty {
+    padding: 8px;
+    color: var(--text-color--low-emphasis);
+    font-style: italic;
+    white-space: normal;
+}
+
+/* .floor-map-layers__add is sized with the other layer-row icon buttons above; a
+   second rule here would win on source order and silently undo the 24px target
+   size. */
+
+/* Discover action footer at the foot of the layer list */
+.floor-map-layers__footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 4px 4px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Same 24px minimum target size as the layer-row buttons — the Discover button
+   carries no class of its own, so it is reached through the footer. */
+.floor-map-layers__discover {
+    width: 24px;
+    height: 24px;
+}
+
+.floor-map-layers__footer-label {
+    font-size: 12px;
+    color: var(--text-color--low-emphasis);
+    cursor: pointer;
+}

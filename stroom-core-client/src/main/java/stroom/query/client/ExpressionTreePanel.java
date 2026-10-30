@@ -99,7 +99,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.addStyleName("expression-tree__canvas");
+            canvas.addStyleName("expression-tree-panel__canvas");
             panel.addAndReplaceElement(canvas, canvasSlot);
         } else {
             canvasSlot.removeFromParent();

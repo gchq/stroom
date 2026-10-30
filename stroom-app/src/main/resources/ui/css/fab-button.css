@@ -58,6 +58,15 @@
 	opacity: var(--disabled-opacity);
 }
 
+/* A blue button, for the action its view is for (e.g. stepping's, stepping-button.css) */
+.fab-button--primary .fab-button__face {
+	background: #3385ff;
+}
+
+.fab-button--primary .fab-button__face:hover {
+	background: #51a5ff;
+}
+
 .fab-button__face--down {
 	left: 1px;
 	top: 1px;

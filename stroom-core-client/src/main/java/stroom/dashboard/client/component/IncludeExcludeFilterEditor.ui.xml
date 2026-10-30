@@ -16,7 +16,7 @@
                 <form:FormGroup label="Include Dictionaries" addStyleNames="default-min-sizes dock-max"
                                 helpText="Dictionaries of values to include. Rows whose value exactly matches a dictionary word (case-sensitive) are shown; * can be used as a wildcard."
                                 screenReaderText="Exact, case-sensitive matches; * is a wildcard.">
-                    <g:SimplePanel addStyleNames="max control-box">
+                    <g:SimplePanel addStyleNames="max control-box control-box--padded">
                         <c:IncludeExcludeFilterDictionary ui:field="includeDictionaries"/>
                     </g:SimplePanel>
                 </form:FormGroup>
@@ -31,7 +31,7 @@
                 <form:FormGroup label="Exclude Dictionaries" addStyleNames="default-min-sizes dock-max"
                                 helpText="Dictionaries of values to exclude. Rows whose value exactly matches a dictionary word (case-sensitive) are hidden; * can be used as a wildcard."
                                 screenReaderText="Exact, case-sensitive matches; * is a wildcard.">
-                    <g:SimplePanel addStyleNames="max control-box">
+                    <g:SimplePanel addStyleNames="max control-box control-box--padded">
                         <c:IncludeExcludeFilterDictionary ui:field="excludeDictionaries"/>
                     </g:SimplePanel>
                 </form:FormGroup>

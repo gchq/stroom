@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// feedback, or, outside a form group, a line of its own under it (`drop-down__feedback`), shown only
 /// while there is a problem.
 ///
-/// Its root is a wrapper (`drop-down-box`) that takes no box of its own, holding the button and its
+/// Its root is a wrapper (`drop-down__wrapper`) that takes no box of its own, holding the button and its
 /// feedback line. The classes a template gives it (`addStyleNames`, `styleName`) are the button's, as
 /// its look and size are the button's; hiding it hides both.
 ///

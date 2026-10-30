@@ -25,3 +25,15 @@
 	-moz-user-select: text;
 	user-select: text;
 }
+
+/* Its links are underlined, as links in running text are, so they are told from the text round
+   them by more than their colour (WCAG 1.4.1) (was base.css's) */
+.info-page a {
+	text-decoration: underline;
+}
+
+/* In a dashboard's Text pane (text-pane.css), showing its text as HTML: placed so that its content
+   scrolls */
+.text-pane .info-page {
+    position: absolute !important;
+}

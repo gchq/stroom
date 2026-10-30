@@ -9,9 +9,9 @@
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="user-task">
         <g:FlowPanel styleName="user-task__details">
-            <tx:Label ui:field="taskName" addStyleNames="user-task__name"/>
-            <tx:Label ui:field="taskAge"/>
-            <tx:Label ui:field="taskStatus"/>
+            <tx:Label ui:field="taskName" addStyleNames="user-task__text user-task__name"/>
+            <tx:Label ui:field="taskAge" addStyleNames="user-task__text"/>
+            <tx:Label ui:field="taskStatus" addStyleNames="user-task__text"/>
         </g:FlowPanel>
         <g:SimplePanel styleName="user-task__actions">
             <b:Toolbar name="Task actions">

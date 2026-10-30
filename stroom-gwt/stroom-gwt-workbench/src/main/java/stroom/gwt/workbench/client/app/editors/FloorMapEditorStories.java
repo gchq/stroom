@@ -98,7 +98,7 @@ public final class FloorMapEditorStories {
     private static final RestFixtures FIXTURES = fixtures(DOC);
 
     // The canvas's focusable element (FloorMapCanvas's focus panel)
-    private static final String CANVAS = ".stroom-floormap-canvas-focus";
+    private static final String CANVAS = ".floor-map-canvas";
     // Told when the editor tells its document of a change
     private static final String ON_CHANGE = "onChange";
 
@@ -210,11 +210,11 @@ public final class FloorMapEditorStories {
                     play.run("focus the canvas", () -> canvas.element().get().focus());
                     play.keyboard("{Shift>}{F10}{/Shift}");
                     play.click(screen.findByRole("menuitem", "Set Scale"));
-                    play.waitFor(() -> play.expect(canvas).toHaveClass("stroom-floormap-canvas-focus--crosshair"));
+                    play.waitFor(() -> play.expect(canvas).toHaveClass("floor-map-canvas--crosshair"));
                     play.waitFor(() -> play.expect(canvas).toHaveFocus());
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(canvas)
-                            .not().toHaveClass("stroom-floormap-canvas-focus--crosshair"));
+                            .not().toHaveClass("floor-map-canvas--crosshair"));
                     DocEditors.expectNoProblems(play);
                 })
                 // Set Scale: a line measured on the map is given its real length, and OK scales the
@@ -327,20 +327,20 @@ public final class FloorMapEditorStories {
                 .story("LayerVisibilityAndLock", context -> render(context, fixtures(DOC_WITH_LAYER)))
                 .withPlay(play -> {
                     final Query eye = play.findByRole("button", "desk layer is visible — click to dim to 30%");
-                    final Query name = play.getByText("desk", ".floormap-layer-name");
+                    final Query name = play.getByText("desk", ".floor-map-layers__name");
                     play.click(eye);
                     play.expect(play.getByRole("button", "desk layer is dimmed to 30% — click to hide"))
-                            .toHaveClass("floormap-layer-eye--dim");
-                    play.expect(name).toHaveClass("floormap-layer-name--dim");
+                            .toHaveClass("floor-map-layers__eye--dim");
+                    play.expect(name).toHaveClass("floor-map-layers__name--dim");
                     play.click(play.getByRole("button", "desk layer is dimmed to 30% — click to hide"));
                     final Query hidden = play.getByRole("button", "desk layer is hidden — click to show");
-                    play.expect(hidden).toHaveClass("floormap-layer-eye--off");
-                    play.expect(hidden).not().toHaveClass("floormap-layer-eye--dim");
-                    play.expect(name).toHaveClass("floormap-layer-name--off");
+                    play.expect(hidden).toHaveClass("floor-map-layers__eye--off");
+                    play.expect(hidden).not().toHaveClass("floor-map-layers__eye--dim");
+                    play.expect(name).toHaveClass("floor-map-layers__name--off");
 
                     play.click(play.getByRole("button", TextMatch.startingWith("desk layer is unlocked")));
                     play.expect(play.getByRole("button", TextMatch.startingWith("desk layer is locked")))
-                            .toHaveClass("floormap-layer-lock--locked");
+                            .toHaveClass("floor-map-layers__lock--locked");
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -353,7 +353,7 @@ public final class FloorMapEditorStories {
         play.run("focus the canvas", () -> canvas.element().get().focus());
         play.keyboard("{Shift>}{F10}{/Shift}");
         play.click(screen.findByRole("menuitem", "Set Scale"));
-        play.waitFor(() -> play.expect(canvas).toHaveClass("stroom-floormap-canvas-focus--crosshair"));
+        play.waitFor(() -> play.expect(canvas).toHaveClass("floor-map-canvas--crosshair"));
         play.fireEvent().mouseDown(canvas, EventInit.create().relativeTo(canvas, 100, 200).buttons(1));
         play.fireEvent().mouseMove(canvas, EventInit.create().relativeTo(canvas, 200, 200).buttons(1));
         play.fireEvent().mouseMove(canvas, EventInit.create().relativeTo(canvas, 300, 200).buttons(1));

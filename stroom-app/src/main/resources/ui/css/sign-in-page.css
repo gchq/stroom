@@ -1,4 +1,8 @@
-.sign-in-page, .authentication-error {
+/* The sign in page (Login), and the empty page shown while a password is reset (ResetPassword): a
+   form over the page's background, in its centre. The authentication error page, laid out the
+   same, is authentication-error.css. */
+
+.sign-in-page {
     position: absolute;
     top: 0;
     left: 0;
@@ -10,8 +14,7 @@
     justify-content: center;
 }
 
-.sign-in-page .sign-in-page__form-panel,
-.authentication-error .authentication-error__form-panel {
+.sign-in-page .sign-in-page__form-panel {
     border-radius: var(--dialog__border-radius);
     background-color: var(--dialog__background-color);
     color: var(--page__text-color);

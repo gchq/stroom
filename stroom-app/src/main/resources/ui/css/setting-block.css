@@ -52,7 +52,9 @@
     display: flex;
 }
 
-.setting-block .form-group:not(:first-child) {
+/* The setting (SettingBlock adds the class), after the hint, so without the space a form group has
+   above it after the first (form-group.css) */
+.setting-block .setting-block__setting:not(:first-child) {
     margin-top: 0;
 }
 
@@ -61,13 +63,9 @@
     cursor: pointer;
 }
 
-/* A read-only annotation's settings: their values greyed, no ellipsis hint, no pointer */
+/* A read-only annotation's settings: no ellipsis hint, no pointer */
 .setting-block.setting-block--read-only {
     cursor: default;
-}
-
-.setting-block.setting-block--read-only .text-label {
-    color: var(--control__text-color--readonly);
 }
 
 .setting-block.setting-block--read-only .setting-block__icon {

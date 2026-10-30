@@ -78,8 +78,20 @@
     background-color: var(--border-color);
 }
 
-.annotation-history__item:hover .setting-block__icon svg,
-.annotation-history__comment-header:hover .setting-block__icon svg {
+/* An entry's ⋮: its actions button (a read-only entry's hint), shown faded while its entry is
+   hovered, as a setting's is (setting-block.css) */
+.annotation-history__ellipsis {
+    opacity: 0;
+    transition: opacity .3s;
+    -webkit-transition: opacity .3s;
+    -moz-transition: opacity .3s;
+    -o-transition: opacity .3s;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+}
+
+.annotation-history__item:hover .annotation-history__ellipsis svg,
+.annotation-history__comment-header:hover .annotation-history__ellipsis svg {
     opacity: 1;
 }
 
@@ -116,10 +128,18 @@
 
 /* An entry's actions button also shows while it has the focus */
 .annotation-history__actions:focus,
-.annotation-history__item:hover .setting-block__icon,
-.annotation-history__group-header:hover .setting-block__icon,
-.annotation-history__comment-header:hover .setting-block__icon {
+.annotation-history__item:hover .annotation-history__ellipsis,
+.annotation-history__group-header:hover .annotation-history__ellipsis,
+.annotation-history__comment-header:hover .annotation-history__ellipsis {
     opacity: 0.6;
+}
+
+/* ... and with the keyboard focus, it shows in full, with a focus ring (below) */
+.annotation-history__ellipsis:focus-visible {
+    opacity: 1;
+    outline: none;
+    border-radius: .25rem;
+    box-shadow: var(--focus-shadow);
 }
 
 .annotation-history__table {

@@ -22,11 +22,11 @@
    its form group's feedback, or a line of its own under it (drop-down__feedback).
    It draws the field with the shared stroom-control class, whose disabled class gives it the
    disabled look every field has; read only, its value is greyed (drop-down--read-only).
-   The button and its feedback line are held by a wrapper (drop-down-box) with no box of its own,
-   so they are laid out as their parent's children.
+   The button and its feedback line are held by a wrapper (drop-down__wrapper) with no box of its
+   own, so they are laid out as their parent's children.
 */
 
-.drop-down-box {
+.drop-down__wrapper {
     display: contents;
 }
 
@@ -78,6 +78,11 @@
 .drop-down__icon svg {
     width: 15px;
     height: 15px;
+}
+
+/* The icon raised from the bottom corner, for a picker without a border (e.g. the AI chat's model) */
+.drop-down--icon-raised .drop-down__icon {
+    bottom: 3px;
 }
 
 /* A problem with the value (e.g. the document can't be found): the red border of an invalid field,

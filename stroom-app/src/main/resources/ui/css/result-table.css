@@ -19,22 +19,33 @@
    stroom.query.client.component.QueryResultTable), named BEM style. Its rules were in `dashboard.css`.
 */
 
-.result-table .pager-panel__bar {
-    padding: 0 5px;
-}
-
 .result-table__grid th span,
 .result-table__grid .data-grid__header-cell span {
     display: flex;
 }
 
-.result-table__grid .data-grid__header-cell {
-    min-height: 16px;
-    vertical-align: top;
+/* Its grid's header cells are in data-grid.css, and its pager's bar in pager-panel.css */
+
+/* A cell's content, with no padding of its own: the value (result-table__cell) has it */
+.result-table .data-grid__cell > div {
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	padding: 0;
 }
 
-.result-table__grid.result-table__grid--value-filters .data-grid__header-cell {
-    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
+.result-table td {
+	padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* A value (TableRow): on one line, cut short with an ellipsis */
+.result-table .result-table__cell {
+	padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
+	overflow: hidden;
+	white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* A value whose column's format wraps it (TableRow): onto more lines, rather than cut short */

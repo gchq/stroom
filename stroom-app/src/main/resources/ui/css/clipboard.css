@@ -16,7 +16,7 @@
 
 /* The text area Clipboard copies from: out of sight, behind the page. */
 
-textarea.clipboard-copy {
+textarea.clipboard {
 	position: absolute;
 	top: 0px;
 	left: 0px;

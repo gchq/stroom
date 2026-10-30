@@ -25,7 +25,7 @@
                     <form:TextBox ui:field="textBox"
                                   addStyleNames="lower-case-input dock-max"
                                   title="Enter tags manually or filter 'All Known Tags'"/>
-                    <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min">
+                    <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min explorer-node-edit-tags__clear-toolbar">
                         <!-- Hidden while nothing is entered, never disabled -->
                         <b:ToolbarButton ui:field="clearInputButton" svg="CLEAR" title="Clear Entered Tags"
                                          addStyleNames="explorer-node-edit-tags__clear" visible="false"/>

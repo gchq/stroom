@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/* A page shown as a tab (IFrameContent): its place in the tab, filling it (was iframe.css's
+   iframe-panel) */
+.iframe-content {
+    width: 100%;
+    height: 100%;
+}
+
 /* The frame of a page shown as a tab (IFrameContent): over the app, outside the tab, at the tab's
    place and size, which the tab sets as custom properties when it is shown and resized */
 .iframe-content__frame {

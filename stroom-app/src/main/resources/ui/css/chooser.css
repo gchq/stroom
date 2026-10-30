@@ -46,6 +46,6 @@
     min-width: 200px;
 }
 
-.chooser--multi .tick-box {
+.chooser--multi .chooser__tick-box {
     cursor: pointer;
 }

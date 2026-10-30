@@ -10,6 +10,6 @@
                         required="true">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="list" styleName="dock-max control-box"/>
+        <g:SimplePanel ui:field="list" styleName="dock-max control-box control-box--padded"/>
     </g:FlowPanel>
 </ui:UiBinder>

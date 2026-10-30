@@ -308,7 +308,6 @@ public class DashboardBodyController
         setConstraintsButton.setVisible(designMode);
         selectionInfoButton.setVisible(designMode);
         layoutController.setDesignMode(designMode);
-        view.setDesignMode(designMode);
 
         editModeButton.setState(designMode);
     }

@@ -13,7 +13,7 @@
                     <svg:Icon image="ERROR" addStyleNames="authentication-error__image"/>
                 </g:SimplePanel>
 
-                <form:FormGroup identity="error" label="Authentication Error">
+                <form:FormGroup identity="error" label="Authentication Error" labelStyleName="authentication-error__title">
                     <tx:Label ui:field="errorText"/>
                 </form:FormGroup>
 

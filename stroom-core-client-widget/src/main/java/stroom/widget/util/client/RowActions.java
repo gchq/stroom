@@ -40,6 +40,8 @@ public final class RowActions {
 
     /// The attribute that marks a button or link in a cell as a row action.
     public static final String ATTRIBUTE = "data-row-action";
+    /// The class of a row action's icon, which shows while its button has the focus (row-action.css).
+    public static final String ICON_CLASS_NAME = "row-action__icon";
 
     private static Template template;
 

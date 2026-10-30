@@ -17,7 +17,8 @@
 /*
    A toolbar's icon button (stroom.widget.button.client.ToolbarButton, ToolbarToggleButton), named
    BEM style (block, block__element, block--modifier); states come from ARIA attributes, not
-   modifiers. Imported before toolbar.css, whose modifiers (e.g. toolbar--quiet) restyle it.
+   modifiers. The looks a toolbar's modifiers (e.g. toolbar--quiet) give its buttons are at the
+   end, with the toolbar as their context.
 */
 
 
@@ -118,6 +119,13 @@
     color: var(--icon-button__color);
 }
 
+/* In the explorer (navigation.css), the icons are in the explorer's colours, a quiet toolbar's too
+   (so three classes, to outweigh toolbar.css's toolbar--quiet), but not a pressed button's (after
+   this) */
+.navigation .toolbar-button .toolbar-button__icon {
+    color: var(--navigation-icon-button__color);
+}
+
 /* A pressed button's icon has its colours flipped */
 .toolbar-button[aria-pressed="true"] .toolbar-button__icon {
     --icon-colour__black: var(--icon-colour__black__on);
@@ -134,4 +142,47 @@
 
 .toolbar-button.toolbar-button--stop svg {
     color: #d32f2f;
+}
+
+/* In a quieter toolbar (toolbar--quiet), e.g. the application's toolbar and Ask Stroom AI's: in the
+   text colour, and faded until disabled (which fades them in its own way) (were toolbar.css's) */
+.toolbar--quiet .toolbar-button:not([aria-disabled="true"]) {
+    opacity: 0.6;
+}
+
+.toolbar--quiet .toolbar-button__icon {
+    color: var(--button__text-color);
+}
+
+/* In a toolbar inside a form control (toolbar--control, e.g. a search box's options): its icons in
+   the control's text colour */
+.toolbar--control .toolbar-button__icon {
+    color: var(--control__text-color);
+}
+
+/* In a toolbar that is part of what it sits in rather than actions of its own (toolbar--text-colour,
+   e.g. a dialog's window options and a password box's Show Password): its icons in the text colour
+   (were dialog.css's and password-box.css's, after the rules above, as these are) */
+.toolbar--text-colour .toolbar-button__icon {
+    color: var(--text-color);
+}
+
+/* An arrow that steps a field's value, e.g. the calendar's Previous and Next Year and Month: a small
+   arrow in the navigation's text colour (was calendar.css's) */
+.toolbar-button--arrow .toolbar-button__icon {
+    color: var(--navigation__text-color);
+    width: 10px;
+    height: 10px;
+}
+
+/* In the explorer (navigation.css), the hover and pressed fills are the explorer's: last, so that its
+   hover outweighs a press (:active, above), and shows over a pressed button's fill too */
+.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.navigation .toolbar-button[aria-pressed="true"]::before {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
 }

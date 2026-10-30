@@ -71,7 +71,7 @@ public class AnnotationHistory extends Html {
     private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SvgImageUtil.toSafeHtml(SvgImage.ELLIPSES_VERTICAL,
-            "setting-block__icon", "icon-colour__grey", "icon-wrap");
+            "annotation-history__ellipsis", "icon-colour__grey", "icon-wrap");
     private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromSafeConstant(
             "<div class=\"annotation-history__line\"></div>");
     private static final SafeHtml EXPAND = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN,
@@ -693,7 +693,7 @@ public class AnnotationHistory extends Html {
     // An entry's actions button: its icon, named for the entry
     interface Templates extends SafeHtmlTemplates {
 
-        @Template("<div class=\"setting-block__icon icon-colour__grey icon-wrap annotation-history__actions\" "
+        @Template("<div class=\"annotation-history__ellipsis icon-colour__grey icon-wrap annotation-history__actions\" "
                   + "role=\"button\" tabindex=\"0\" aria-haspopup=\"menu\" aria-expanded=\"false\" "
                   + "aria-label=\"{0}\">{1}</div>")
         SafeHtml actions(String name, SafeHtml icon);

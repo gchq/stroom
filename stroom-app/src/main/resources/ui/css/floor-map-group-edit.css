@@ -1,0 +1,115 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The group edit dialog's content (FloorMapGroupEdit) */
+
+.floor-map-group-edit {
+    display: flex;
+    flex-direction: column;
+    width: 420px;
+    padding: 4px;
+}
+
+.floor-map-group-edit__fields {
+    border-spacing: 8px 10px;
+}
+
+.floor-map-group-edit__fields td {
+    vertical-align: middle;
+}
+
+.floor-map-group-edit__fields td:first-child {
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+}
+
+.floor-map-group-edit__fields input[type="text"] {
+    width: 300px;
+}
+
+.floor-map-group-edit__label {
+    margin: 6px 0 4px 8px;
+    color: var(--text-color--low-emphasis);
+}
+
+.floor-map-group-edit__filter {
+    margin: 0 8px 6px;
+}
+
+.floor-map-group-edit__scroll {
+    height: 240px;
+    margin: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.floor-map-group-edit__members {
+    padding: 4px;
+}
+
+/* One candidate row: [checkbox + name] type */
+.floor-map-group-edit__member {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.floor-map-group-edit__member:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+/* A member's tick box (a TickBox, tick-box.css) takes the row's slack, leaving its type at the end */
+.floor-map-group-edit__member .floor-map-group-edit__member-tick-box {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* min-width:0 is what lets a long name ellipsise inside the flex line rather
+   than pushing the type label out of the row. The name is the tick box's last part, its
+   tick-box__label. */
+.floor-map-group-edit__member .floor-map-group-edit__member-tick-box > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.floor-map-group-edit__member-detail {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-color--low-emphasis);
+}
+
+/* A member the roster has not seen this session — kept, but flagged. */
+.floor-map-group-edit__member-detail--absent {
+    font-style: italic;
+}
+
+.floor-map-group-edit__empty {
+    padding: 8px;
+    font-style: italic;
+    color: var(--text-color--low-emphasis);
+}
+
+.floor-map-group-edit__summary {
+    margin: 6px 8px 2px;
+    font-size: 11px;
+    color: var(--text-color--low-emphasis);
+}

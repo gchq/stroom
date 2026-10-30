@@ -62,11 +62,11 @@ public final class FloorMapCellHtml {
                                           final String text,
                                           final String tooltip) {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.appendHtmlConstant("<span class=\"floormap-cell-with-swatch\" title=\"");
+        builder.appendHtmlConstant("<span class=\"floor-map-cell\" title=\"");
         builder.appendEscaped(tooltip != null ? tooltip : "");
         builder.appendHtmlConstant("\">");
         if (swatch != null) {
-            builder.appendHtmlConstant("<span class=\"floormap-cell-swatch\">");
+            builder.appendHtmlConstant("<span class=\"floor-map-cell__swatch\">");
             builder.append(swatch);
             builder.appendHtmlConstant("</span>");
         }

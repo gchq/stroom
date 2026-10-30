@@ -9,12 +9,12 @@
              xmlns:fv="urn:import:stroom.floormap.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The layer appearance dialog's content (stroom-floormap.css): the graphic a layer draws (a
+      The layer appearance dialog's content (floor-map-layer-style.css): the graphic a layer draws (a
       shape, an icon or an image), its colour and a preview. The table only lays the labels beside
       their controls, so it is presentation to assistive technology
     -->
     <g:HTMLPanel>
-        <table class="floormap-layer-style-dialog" role="presentation">
+        <table class="floor-map-layer-style" role="presentation">
             <tbody>
                 <tr>
                     <td ui:field="graphicLabel">Graphic</td>
@@ -26,13 +26,13 @@
                 </tr>
                 <tr ui:field="iconRow">
                     <td ui:field="iconLabel">Icon</td>
-                    <td><fv:FloorMapIconPicker ui:field="iconPicker"/></td>
+                    <td><fv:FloorMapIconPicker ui:field="iconPicker" addStyleNames="floor-map-layer-style__icon-picker"/></td>
                 </tr>
                 <tr ui:field="imageRow">
                     <td ui:field="imageLabel">Image</td>
                     <td>
-                        <g:FlowPanel addStyleNames="floormap-layer-style-image">
-                            <g:SimplePanel ui:field="assetPickerPanel">
+                        <g:FlowPanel addStyleNames="floor-map-layer-style__image">
+                            <g:SimplePanel ui:field="assetPickerPanel" addStyleNames="floor-map-layer-style__asset-picker">
                                 <dd:DropDownBox ui:field="assetBox"/>
                             </g:SimplePanel>
                             <b:Button ui:field="uploadButton"
@@ -49,13 +49,13 @@
                 <tr>
                     <td>Preview</td>
                     <td>
-                        <g:FlowPanel addStyleNames="floormap-layer-style-preview-row">
-                            <g:SimplePanel addStyleNames="floormap-layer-style-preview">
+                        <g:FlowPanel addStyleNames="floor-map-layer-style__preview-row">
+                            <g:SimplePanel addStyleNames="floor-map-layer-style__preview">
                                 <tx:Html ui:field="preview"/>
                             </g:SimplePanel>
                             <!-- Uploaded assets are only served once the document is saved, so an
                                  image picked here can fail to render until then -->
-                            <tx:Label addStyleNames="floormap-layer-style-hint"
+                            <tx:Label addStyleNames="floor-map-layer-style__hint"
                                      text="Drawn at a fixed size on the map. Newly uploaded images appear after the document is saved."/>
                         </g:FlowPanel>
                     </td>

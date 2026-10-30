@@ -9,7 +9,7 @@
     -->
     <g:HTMLPanel styleName="max default-min-sizes dock-container-vertical quick-filter-layout overflow-hidden focus-ring-room">
         <v:QuickFilter ui:field="nameFilter" accessibleName="Filter documents" addStyleNames="dock-min"/>
-        <g:ScrollPanel addStyleNames="dock-max control-box">
+        <g:ScrollPanel addStyleNames="dock-max control-box control-box--padded">
             <ex:ExplorerTree ui:field="tree" accessibleName="Documents"/>
         </g:ScrollPanel>
         <div ui:field="status" class="sr-only" aria-live="polite"></div>

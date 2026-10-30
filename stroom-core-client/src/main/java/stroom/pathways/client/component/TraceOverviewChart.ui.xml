@@ -5,15 +5,15 @@
              xmlns:p="urn:import:stroom.data.pager.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      A trace's overview (pathways.css): a vertical stack of the pager bar, shown once a trace is,
+      A trace's overview (trace-overview-chart.css): a vertical stack of the pager bar, shown once a trace is,
       with the group level buttons on the left and the pager on the right, then the trace itself
       (a fixed timeline above a scrolling list of its spans), which TraceOverviewChart draws
     -->
-    <g:FlowPanel styleName="trace-overview-root">
-        <g:FlowPanel ui:field="pagerBar" styleName="trace-pager-bar" visible="false">
-            <b:Toolbar ui:field="expandControls" name="Group levels" addStyleNames="trace-expand-controls"/>
+    <g:FlowPanel styleName="trace-overview-chart">
+        <g:FlowPanel ui:field="pagerBar" styleName="trace-overview-chart__pager-bar" visible="false">
+            <b:Toolbar ui:field="expandControls" name="Group levels" addStyleNames="trace-overview-chart__expand-controls"/>
             <p:Pager ui:field="pager"/>
         </g:FlowPanel>
-        <tx:Html ui:field="panel" addStyleNames="trace-overview"/>
+        <tx:Html ui:field="panel" addStyleNames="trace-overview-chart__panel"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -14,16 +14,19 @@
         <g:FlowPanel ui:field="inner" styleName="term-editor__fields">
             <i:BaseSelectionBox ui:field="fieldListBox" addStyleNames="term-editor__item term-editor__item--field"/>
             <i:SelectionBox ui:field="conditionListBox" addStyleNames="term-editor__item term-editor__item--condition"/>
-            <i:SuggestionBox ui:field="value" addStyleNames="term-editor__item term-editor__item--wide" visible="false"/>
-            <i:SuggestionBox ui:field="valueFrom" addStyleNames="term-editor__item term-editor__item--narrow" visible="false"/>
-            <dt:DateTimeBox ui:field="date" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
+            <i:SuggestionBox ui:field="value" addStyleNames="term-editor__item term-editor__item--wide suggestion-box--borderless" visible="false"/>
+            <i:SuggestionBox ui:field="valueFrom" addStyleNames="term-editor__item term-editor__item--narrow suggestion-box--borderless" visible="false"/>
+            <dt:DateTimeBox ui:field="date" expressionsAllowed="true"
+                            addStyleNames="term-editor__item term-editor__item--narrow icon-box--fluid"
                             visible="false"/>
-            <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
+            <dt:DateTimeBox ui:field="dateFrom" expressionsAllowed="true"
+                            addStyleNames="term-editor__item term-editor__item--narrow icon-box--fluid"
                             visible="false"/>
             <tx:Label ui:field="andLabel" addStyleNames="term-editor__label" wordWrap="false" text=" and "
                      visible="false"/>
-            <i:SuggestionBox ui:field="valueTo" addStyleNames="term-editor__item term-editor__item--narrow" visible="false"/>
-            <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true" addStyleNames="term-editor__item term-editor__item--narrow"
+            <i:SuggestionBox ui:field="valueTo" addStyleNames="term-editor__item term-editor__item--narrow suggestion-box--borderless" visible="false"/>
+            <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true"
+                            addStyleNames="term-editor__item term-editor__item--narrow icon-box--fluid"
                             visible="false"/>
             <dd:DropDownBox ui:field="docRefBox" addStyleNames="term-editor__item term-editor__item--picker term-editor__item--doc"
                             visible="false"/>

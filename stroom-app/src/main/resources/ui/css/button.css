@@ -153,6 +153,16 @@ General button styles
   flex-shrink: 0;
 }
 
+/* In a form (one that acts on the whole document, e.g. Reset Data, needs no group) or in a form
+   group: as wide as its text, but at least as wide as the form's other controls (200px), rather
+   than stretched across the form (one that should fill it says so, e.g. w-100) (were form.css's
+   and form-group.css's) */
+.form > .button,
+.form-group > .button {
+    align-self: flex-start;
+    min-width: 200px;
+}
+
 .button:focus {
   /*border-color: var(--button__base-focus-border-color); */
   /*outline: none; */

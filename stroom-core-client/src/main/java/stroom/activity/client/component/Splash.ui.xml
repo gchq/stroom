@@ -18,7 +18,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <g:ScrollPanel styleName="max default-min-sizes control-box">
+    <g:ScrollPanel styleName="max default-min-sizes control-box control-box--padded">
         <tx:Html ui:field="html" styleName="splash__content"/>
     </g:ScrollPanel>
 </ui:UiBinder>

@@ -170,10 +170,11 @@
     opacity: 1;
 }
 
-.ai-message__delete .toolbar-button__icon {
-    color: var(--control__text-color--disabled);
+/* Its icon greyed, red on a hover: the colour a toolbar button's icon takes (toolbar-button.css) */
+.ai-message__delete {
+    --icon-button__color: var(--control__text-color--disabled);
 }
 
-.ai-message__delete:hover .toolbar-button__icon {
-    color: var(--icon-colour__red);
+.ai-message__delete:hover {
+    --icon-button__color: var(--icon-colour__red);
 }

@@ -48,6 +48,8 @@ public class LinkTabPanel extends Component {
             SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()), ". " + READ_ONLY_REASON + ".");
 
     @UiField
+    FlowPanel tabRow;
+    @UiField
     LinkTabBar tabBar;
     @UiField
     AriaPanel status;
@@ -64,6 +66,15 @@ public class LinkTabPanel extends Component {
         // The tabs name the panel their content is shown in
         tabBar.setTabPanel(layerContainer.getElement());
         updateToolbarRow();
+    }
+
+    /// Sets whether the tab row sits flush with the panel's edge, with no padding or minimum height of
+    /// its own, as a dialog's tabs do where the dialog's content already has its margin (e.g. a
+    /// credential's). Template attribute `flush="true"`.
+    ///
+    /// @param flush Whether it is flush.
+    public void setFlush(final boolean flush) {
+        tabRow.setStyleName("link-tab-panel--flush", flush);
     }
 
     /// @return The tab bar.

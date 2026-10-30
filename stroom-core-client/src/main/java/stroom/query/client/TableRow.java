@@ -294,12 +294,9 @@ public class TableRow {
             return rawValue;
         }
 
-        // The cell's classes: result-table.css's modifiers for a wrapped or grouped value
+        // The cell's classes: result-table.css's, with its modifiers for a wrapped or grouped value
         String getClassName() {
-            if (!wrap && !grouped) {
-                return "cell";
-            }
-            final StringBuilder sb = new StringBuilder("cell result-table__cell");
+            final StringBuilder sb = new StringBuilder("result-table__cell");
             if (wrap) {
                 sb.append(" result-table__cell--wrap");
             }

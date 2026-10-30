@@ -47,7 +47,8 @@ public class CopyTextUtil {
     public static final String COPY_CLASS_NAME = "doc-ref-link__copy";
     public static final String INSERT_CLASS_NAME = "doc-ref-link__insert";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
+    // The icons shown only on a hover, or with the keyboard on the row (doc-ref-link.css)
+    private static final String HOVER_ICON_CLASS_NAME = "doc-ref-link__icon doc-ref-link__icon--hover";
     private static final int TRUNCATE_THRESHOLD = 30;
 
     public static SafeHtml render(final String value,
@@ -79,8 +80,8 @@ public class CopyTextUtil {
                     HOVER_ICON_CONTAINER_CLASS_NAME,
                     "doc-ref-link");
             hb.div(div -> {
-                div.div(d -> d.append(safeHtml),
-                        Attribute.className("doc-ref-link__text"));
+                // The text, then its icons
+                div.div(d -> d.append(safeHtml));
 
                 NullSafe.consumeNonBlankString(value, str -> {
                     final SafeHtml copy = SvgImageUtil.toSafeHtml(

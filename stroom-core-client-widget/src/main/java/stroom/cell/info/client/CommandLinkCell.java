@@ -92,7 +92,8 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
             sb.appendHtmlConstant("<div class=\"command-link\">");
             sb.append(textSafeHtml);
 
-            final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME);
+            final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME,
+                    "command-link__icon", RowActions.ICON_CLASS_NAME);
             sb.append(RowActions.button(OPEN_CLASS_NAME, value.getTooltip(), open));
 
             sb.appendHtmlConstant("</div>");

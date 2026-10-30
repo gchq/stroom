@@ -19,7 +19,7 @@
                 <g:SimplePanel styleName="dialog__spinner">
                     <spinner:SpinnerLarge ui:field="spinner" visible="false"/>
                 </g:SimplePanel>
-                <b:Toolbar ui:field="windowToolbar" name="Window" addStyleNames="dialog__toolbar">
+                <b:Toolbar ui:field="windowToolbar" name="Window" addStyleNames="dialog__toolbar toolbar--text-colour">
                     <b:ToolbarButton ui:field="windowButton" svg="ELLIPSES_VERTICAL" title="Window Options"
                                      opensMenu="true"/>
                 </b:Toolbar>

@@ -78,7 +78,7 @@
 }
 
 .ask-stroom-ai__message-pane input,
-.ask-stroom-ai__model-pane .drop-down {
+.ask-stroom-ai__model.drop-down {
     border: 1px solid transparent;
     background: none;
 }
@@ -89,20 +89,13 @@
     align-items: center;
 }
 
-.ask-stroom-ai__model-pane .drop-down {
+/* The model picker (DropDownBox): borderless, across the pane */
+.ask-stroom-ai__model.drop-down {
     width: 100%;
 }
 
-.ask-stroom-ai__model-pane .drop-down__icon {
-    bottom: 3px;
-}
-
-.ask-stroom-ai__bottom button.button {
-    min-width: 80px;
-}
-
 /* ---- Empty state (centered input, ChatGPT-style) ---- */
-.ask-stroom-ai--empty .markdown-container {
+.ask-stroom-ai--empty .ask-stroom-ai__middle {
     display: none;
 }
 

@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-/* A results table's filter row (FilterCell): a filter box per column (a text field) with its
-   disable button over its right end, shown while the table shows its value filters. A filter that is
-   off (--disabled) has a box that looks disabled, but can still be changed. */
+/* A results table's filter row (FilterCell): a filter box per column (a text field, in __field)
+   with its disable button over its right end, shown while the table shows its value filters. A
+   filter that is off (--disabled) has a box that looks disabled, but can still be changed. */
 
-.data-grid .dashboard-table-filter-cell {
+.data-grid .filter-cell {
     display: none;
     position: relative;
     width: 100%;
 }
 
-.data-grid.result-table__grid--value-filters .dashboard-table-filter-cell {
+.data-grid.result-table__grid--value-filters .filter-cell {
     display: block;
 }
 
 /* Room for the button */
-.data-grid .dashboard-table-filter-cell .text-field {
+.data-grid .filter-cell__field > input {
     padding-right: 25px;
 }
 
-.data-grid .dashboard-table-filter-cell--disabled .text-field {
+.data-grid .filter-cell--disabled .filter-cell__field > input {
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
 
-.data-grid .dashboard-table-filter-cell__buttons {
+.data-grid .filter-cell__buttons {
     position: absolute;
     display: flex;
     height: 100%;
@@ -49,7 +49,7 @@
     padding: 5px;
 }
 
-.data-grid .dashboard-table-filter-cell__disable-button {
+.data-grid .filter-cell__disable-button {
     display: flex;
     position: relative;
     width: 22px;

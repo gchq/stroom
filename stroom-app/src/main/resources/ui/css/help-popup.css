@@ -70,3 +70,9 @@
     font-size: var(--font-size-13);
     line-height: 1.6em;
 }
+
+/* Links in the help are underlined, as links in running text are, so they are told from the text
+   round them by more than their colour (WCAG 1.4.1) (was base.css's) */
+.help-popup__content a {
+    text-decoration: underline;
+}

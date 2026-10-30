@@ -3,12 +3,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.component.client">
     <!--
-      An expression's tree (expression-tree.css): the brackets between its items, drawn on a canvas
+      An expression's tree (in ExpressionTree, expression-tree.css): the brackets between its items, drawn on a canvas
       the Java puts in the slot, and the items' boxes, which are the tree's items for assistive
       technology (ExpressionItemRenderer)
     -->
-    <g:HTMLPanel styleName="expression-tree">
+    <g:HTMLPanel styleName="expression-tree-panel">
         <div ui:field="canvasSlot"></div>
-        <c:AriaPanel ui:field="boxPanel" styleName="expression-tree__items" role="tree" ariaLabel="Expression"/>
+        <c:AriaPanel ui:field="boxPanel" styleName="expression-tree-panel__items" role="tree" ariaLabel="Expression"/>
     </g:HTMLPanel>
 </ui:UiBinder>

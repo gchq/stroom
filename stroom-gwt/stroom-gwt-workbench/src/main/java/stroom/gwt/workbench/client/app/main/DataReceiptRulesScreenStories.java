@@ -90,9 +90,8 @@ public final class DataReceiptRulesScreenStories {
             + ",\"receiptCheckMode\":\"FEED_STATUS\",\"lastAnnotationChangeTime\":0}";
 
     private static final String SAVE = "Save Rules";
-    // The expression panel has no class of its own; it is the expression tree's
-    // view (ExpressionTree)
-    private static final String EXPRESSION_PANEL = ".expression-tree-view";
+    // The expression panel is the expression tree (ExpressionTree)
+    private static final String EXPRESSION_PANEL = ".expression-tree";
 
     private DataReceiptRulesScreenStories() {
         // Static utility

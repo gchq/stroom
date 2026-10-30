@@ -15,8 +15,9 @@
  */
 
 /* The page's element defaults (no classes): the body's font and colours, headings, tables, form
-   controls with no block of their own yet, links, and the underline on links in running text. First
-   Bootstrap's element rules (its Reboot and type, which Stroom relied on when it loaded Bootstrap),
+   controls with no block of their own yet and links. (The look of inputs and text areas that aren't
+   text fields is text-field.css's, which says which are; the underline on links in running text is
+   each block's that has running text.) First Bootstrap's element rules (its Reboot and type, which Stroom relied on when it loaded Bootstrap),
    then Stroom's changes to them (custom-bootstrap.css), then GWT's standard theme (standard.css),
    Stroom's changes to it (standard-mod.css) and stroom.css's element rules, in that order, so the
    later still win. */
@@ -423,17 +424,6 @@ a:hover {
   color: var(--link__text-color);
 }
 
-/* Links in running text are underlined, so they are told from the text round them by more than
-   their colour (WCAG 1.4.1). Links that are part of the UI (toolbars, tabs, grids) are left as
-   they are. */
-.markdown a,
-.info-page a,
-.help-popup__content a,
-.welcome-tab__body a,
-.authentication-error__message-container a {
-  text-decoration: underline;
-}
-
 textarea {
 	resize: none;
 	height: 80px;
@@ -530,17 +520,6 @@ table {
 	border-spacing: 0px;
 }
 
-/* A text area that isn't a text field (text-field.css styles those) */
-textarea:where(:not(.text-field)) {
-	display: block;
-	margin: 0px;
-	_margin-top: -1px;
-	resize: none;
-	height: 80px;
-	/* To ensure we get a pointer for the scrollbar */
-	cursor: auto;
-}
-
 img {
 	vertical-align: top;
 }
@@ -583,10 +562,9 @@ td {
 	font-size: 1px;
 }
 
+/* The other fields (inputs and text areas that aren't text fields have the same look, in
+   text-field.css) */
 select,
-textarea:where(:not(.text-field)),
-input:where(:not(.text-field)),
-input[type="text"]:where(:not(.text-field)),
 input[type="checkbox"],
 input[type="file"] {
 	border: solid 1px var(--control__border-color);
@@ -596,31 +574,7 @@ input[type="file"] {
 	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
 }
 
-/* Fix auto fill colours */
-input:where(:not(.text-field)):-webkit-autofill,
-input:where(:not(.text-field)):-webkit-autofill:hover,
-input:where(:not(.text-field)):-webkit-autofill:focus,
-input:where(:not(.text-field)):-webkit-autofill:active {
-	font-family: var(--regular-font-family);
-	font-size: var(--font-size-13);
-	font-weight: 400;
-	-moz-box-sizing: border-box;
-	-ms-box-sizing: border-box;
-	box-sizing: border-box;
-	background-size: 100% 100%;
-	outline: none;
-	background-color: var(--control__background-color) !important;
-	color: var(--control__text-color) !important;
-	-webkit-box-shadow: 0 0 0px 30px var(--control__background-color) inset;
-	-webkit-text-fill-color: var(--control__text-color) !important;
-	transition: background-color 5000s ease-in-out 0s;
-	transition: color 5000s ease-in-out 0s;
-}
-
 select:disabled,
-textarea:where(:not(.text-field)):disabled,
-input:where(:not(.text-field)):disabled,
-input[type="text"]:where(:not(.text-field)):disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
 	border: solid 1px var(--control__border-color--disabled);
@@ -648,41 +602,17 @@ select option:disabled {
 	color: var(--control__text-color--disabled);
 }
 
-/*
-The one read-only look for every control: the normal field (its border and background) with its
-value greyed. Disabled controls use the --control__*--disabled look above instead: a filled field
-with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
-looking editable.)
-*/
-input:where(:not(.text-field))[readonly],
-textarea:where(:not(.text-field))[readonly] {
-  color: var(--control__text-color--readonly);
-}
-
-/* Placeholders in the muted text colour, which is 4.5:1 on inputs (the browser's and Bootstrap's
-   greys aren't); Firefox also fades them, which opacity: 1 stops */
-:where(:not(.text-field))::placeholder {
-  color: var(--text-color--muted);
-  opacity: 1;
-}
-
-/* Keyboard focus on a field that isn't a text field (text-field.css has those) */
-select:focus-visible,
-input:where(:not(.text-field)):focus-visible,
-textarea:where(:not(.text-field)):focus-visible {
+/* Keyboard focus on a drop-down list (text-field.css has inputs' and text areas') */
+select:focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
 
-select[aria-invalid="true"]:focus-visible,
-input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
-textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
+select[aria-invalid="true"]:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
 
 /* A rejected value (aria-invalid, as FieldValidity sets it) */
-select[aria-invalid="true"],
-input:where(:not(.text-field))[aria-invalid="true"],
-textarea:where(:not(.text-field))[aria-invalid="true"] {
+select[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
 }

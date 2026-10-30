@@ -152,10 +152,10 @@ public class TracesList extends Component {
         this.onSortChange = onSortChange;
     }
 
-    // Red-tints the whole row for a trace with any errored span (see pathways.css .trace-row--error).
+    // Red-tints the whole row for a trace with any errored span (traces-list.css).
     private RowStyles<TraceRoot> errorRowStyles() {
         return (row, rowIndex) -> row != null && row.isError()
-                ? "trace-row--error"
+                ? "traces-list__row--error"
                 : "";
     }
 

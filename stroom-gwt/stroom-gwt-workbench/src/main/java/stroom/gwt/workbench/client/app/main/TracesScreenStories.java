@@ -46,6 +46,11 @@ public final class TracesScreenStories {
 
     private static final DocRef DATA_SOURCE = new DocRef("PlanB", "ds1", "My PlanB store");
 
+    // The trace overview's operation names, their rows' content (indented by depth) and its span info
+    private static final String OPERATION_NAME = ".trace-overview-chart__operation-name";
+    private static final String OPERATION_CONTENT = ".trace-overview-chart__operation-content";
+    private static final String SPAN_INFO = ".trace-overview-chart__span-info";
+
     private static final String TRACES = """
             {
               "values": [
@@ -111,18 +116,18 @@ public final class TracesScreenStories {
                 .story("SpanInfo", TracesScreenStories::render)
                 .withPlay(play -> {
                     play.click(play.findByText("GET /api/things"));
-                    final Query child = play.findByText("db query", ".operation-name");
-                    play.expect(play.getByText("GET /api/things", ".operation-name").closest(".operation-content"))
+                    final Query child = play.findByText("db query", OPERATION_NAME);
+                    play.expect(play.getByText("GET /api/things", OPERATION_NAME).closest(OPERATION_CONTENT))
                             .toHaveStyle("padding-left", "0px");
-                    play.expect(child.closest(".operation-content")).toHaveStyle("padding-left", "30px");
+                    play.expect(child.closest(OPERATION_CONTENT)).toHaveStyle("padding-left", "30px");
 
                     play.click(child);
                     play.expect(play.findByText("Span Info")).toBeInTheDocument();
-                    play.expect(play.querySelector(".span-info-panel")).toHaveStyle("width", "340px");
+                    play.expect(play.querySelector(SPAN_INFO)).toHaveStyle("width", "340px");
                     // Its details scroll, so the keyboard reaches them (they couldn't be scrolled)
                     play.expect(play.getByRole("region", "Span info")).toHaveAttribute("tabindex", "0");
 
-                    play.rightClick(play.getByText("db query", ".operation-name"));
+                    play.rightClick(play.getByText("db query", OPERATION_NAME));
                     final Play screen = play.screen();
                     play.expect(screen.findByText("Copy", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.keyboard("{Escape}");

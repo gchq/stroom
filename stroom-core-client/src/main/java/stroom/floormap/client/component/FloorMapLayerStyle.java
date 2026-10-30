@@ -66,7 +66,7 @@ public class FloorMapLayerStyle extends Component {
     private static final int PREVIEW_SIZE_PX = 32;
 
     /// Applied to whichever of the Shape / Icon / Image rows the mode ignores.
-    private static final String DIMMED_ROW_STYLE = "floormap-layer-style-row-dimmed";
+    private static final String DIMMED_ROW_STYLE = "floor-map-layer-style__row--dimmed";
 
     @UiField
     TableCellElement graphicLabel;

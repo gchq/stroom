@@ -230,7 +230,7 @@ public class AnnotationEdit extends Component {
         } else {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : tags) {
-                htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozenge-list"));
+                htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("annotation-edit__tag"));
             }
             html.setHTML(htmlBuilder.toSafeHtml());
             html.removeStyleName(EMPTY_VALUE_STYLE);

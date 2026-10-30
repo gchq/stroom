@@ -322,7 +322,7 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
     ///
     /// @param readOnly Whether it has the look.
     public void setReadOnlyLook(final boolean readOnly) {
-        layoutPanel.setStyleName("expression-tree-view--read-only", readOnly);
+        layoutPanel.setStyleName("expression-tree--read-only", readOnly);
     }
 
     /// @return The item detached (to be attached to another operator), or null for none.

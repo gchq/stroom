@@ -27,7 +27,20 @@
     gap: var(--control__gap--horizontal);
 }
 
+/* A results table's (result-table.css) bar, inset from its sides */
+.result-table .pager-panel__bar {
+    padding: 0 5px;
+}
+
 /* The part that holds the list, scrolling */
 .pager-panel__list {
     overflow: auto;
+}
+
+/* A list as big as its rows (SelectionList.setFitContent, a selection box's list in its popup),
+   within the popup's limits (was selection-popup.css's) */
+.pager-panel--fit-content .pager-panel__list {
+    min-width: 200px;
+    max-width: 400px;
+    max-height: 400px;
 }

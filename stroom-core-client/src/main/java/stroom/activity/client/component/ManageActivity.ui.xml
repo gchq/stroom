@@ -6,7 +6,7 @@
              xmlns:act="urn:import:stroom.activity.client.component">
     <g:FlowPanel styleName="max dock-container-vertical quick-filter-layout overflow-hidden focus-ring-room">
         <view:QuickFilter accessibleName="Filter activities" ui:field="nameFilter" addStyleNames="dock-min"/>
-        <g:SimplePanel styleName="dock-max control-box">
+        <g:SimplePanel styleName="dock-max control-box control-box--padded">
             <act:ActivityList ui:field="list"/>
         </g:SimplePanel>
     </g:FlowPanel>

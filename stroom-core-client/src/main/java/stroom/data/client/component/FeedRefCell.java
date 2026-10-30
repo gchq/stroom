@@ -63,7 +63,8 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
     private static final String OPEN_CLASS_NAME = "doc-ref-link__open";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
+    // The icons shown only on a hover, or with the keyboard on the row (doc-ref-link.css)
+    private static final String HOVER_ICON_CLASS_NAME = "doc-ref-link__icon doc-ref-link__icon--hover";
 
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
@@ -195,11 +196,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         } else {
             final String name = NullSafe.get(value, nameFunction);
             final SafeHtml cellHtmlText = cellTextFunction.apply(value);
-            String cssClasses = "doc-ref-link__text";
-            final String additionalClasses = cssClassFunction.apply(value);
-            if (additionalClasses != null) {
-                cssClasses += " " + additionalClasses;
-            }
+            final String cssClasses = NullSafe.string(cssClassFunction.apply(value));
             final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
 
             final String containerClasses = String.join(
@@ -216,7 +213,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                             documentType.getDisplayType(),
                             svgImage,
                             ICON_CLASS_NAME,
-                            "docRefLinkIcon");
+                            "doc-ref-link__icon");
                     sb.append(iconDiv);
                 }
             }
@@ -241,7 +238,8 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
                             ICON_CLASS_NAME,
-                            HOVER_ICON_CLASS_NAME);
+                            HOVER_ICON_CLASS_NAME,
+                            RowActions.ICON_CLASS_NAME);
                     sb.append(RowActions.button(
                             OPEN_CLASS_NAME,
                             "Open " + FeedDoc.TYPE + " " + name,

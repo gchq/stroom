@@ -4,7 +4,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <g:FlowPanel styleName="result-table max stroom-dashboard-table">
+    <g:FlowPanel styleName="result-table max">
         <dg:PagerPanel ui:field="pager" toolbarName="Table actions">
             <dg:DataGrid ui:field="dataGrid" virtual="true" addStyleNames="result-table__grid"/>
         </dg:PagerPanel>

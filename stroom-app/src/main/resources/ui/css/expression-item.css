@@ -93,11 +93,11 @@
 
 /* A tree with the read-only look (expression-tree.css): its items greyed, as a read-only field's
    value is (a disabled item keeps its own look) */
-.expression-tree-view--read-only .expression-item__label {
+.expression-tree--read-only .expression-item__label {
 	color: var(--control__text-color--readonly);
 }
 
-.expression-tree-view--read-only .expression-item--disabled .expression-item__label {
+.expression-tree--read-only .expression-item--disabled .expression-item__label {
 	color: var(--expression-item__text-color--disabled);
 }
 
@@ -131,7 +131,7 @@
 
 .expression-item__refused-icon {
 	flex-shrink: 0;
-	/* Its drawing's size (svg-icon.css), as well as its own, so that the drawing is centred in the
+	/* Its drawing's size (icon-wrap.css), as well as its own, so that the drawing is centred in the
 	   row */
 	--icon-width: 14px;
 	--icon-height: 14px;

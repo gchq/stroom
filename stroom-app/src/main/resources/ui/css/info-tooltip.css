@@ -47,7 +47,7 @@
     table-layout: fixed;
 }
 
-.info-tooltip table .wrap {
+.info-tooltip table .info-tooltip__wrap {
     white-space: normal;
 }
 

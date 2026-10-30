@@ -8,7 +8,7 @@
                         label="Dependencies"
                         addStyleNames="default-min-sizes dock-max"
                         helpText="Other scripts that this script needs. They are loaded before this script, in the order listed.">
-            <g:SimplePanel styleName="dock-max control-box">
+            <g:SimplePanel styleName="dock-max control-box control-box--padded">
                 <s:ScriptDependencyList ui:field="dependencies"/>
             </g:SimplePanel>
         </form:FormGroup>

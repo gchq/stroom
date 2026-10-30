@@ -487,7 +487,7 @@ public final class ExpressionBuilderStories {
                     // The background, which the pointer is over between the items (the tree's, not
                     // that of the copy of what is dragged)
                     final Query background = play.querySelector(
-                            ".expression-tree:not([aria-hidden='true']) > .expression-tree__canvas");
+                            ".expression-tree-panel:not([aria-hidden='true']) > .expression-tree-panel__canvas");
                     final Query pane = play.querySelector(".dock-max");
                     play.run("narrow the tree's pane, so that it scrolls",
                             () -> pane.element().get().getStyle().setProperty("width", "200px"));

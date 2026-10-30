@@ -1489,8 +1489,10 @@ public class FlexLayout extends Composite {
         return layoutConfigContainer.get();
     }
 
+    /// @param designMode Whether the layout is being designed, its design surface drawn with a grid.
     public void setDesignMode(final boolean designMode) {
         this.designMode = designMode;
+        setStyleName("flex-layout--design-mode", designMode);
         clear();
         onResize();
     }
@@ -1499,14 +1501,14 @@ public class FlexLayout extends Composite {
         this.layoutConstraints = layoutConstraints;
 
         if (layoutConstraints.isFitWidth()) {
-            scrollPanel.removeStyleName("dashboard__scroll--horizontal");
+            scrollPanel.removeStyleName("flex-layout__scroll--horizontal");
         } else {
-            scrollPanel.addStyleName("dashboard__scroll--horizontal");
+            scrollPanel.addStyleName("flex-layout__scroll--horizontal");
         }
         if (layoutConstraints.isFitHeight()) {
-            scrollPanel.removeStyleName("dashboard__scroll--vertical");
+            scrollPanel.removeStyleName("flex-layout__scroll--vertical");
         } else {
-            scrollPanel.addStyleName("dashboard__scroll--vertical");
+            scrollPanel.addStyleName("flex-layout__scroll--vertical");
         }
 
         clear();

@@ -37,7 +37,7 @@
     text-decoration: underline;
 }
 
-.table-filter-outer .column-values-filter {
+.table-filter .column-values-filter {
     gap: 0;
     flex-grow: 1;
     overflow: hidden;

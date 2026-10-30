@@ -35,7 +35,7 @@ public final class VisFrameLayout {
     /// @param visFrame  The frame.
     /// @param container The space kept for it, or `null` to move the frame off the page.
     public static void layOver(final VisFrame visFrame, final Element container) {
-        final Element dashboard = getParentByClass(container, "dashboard__scroll");
+        final Element dashboard = getParentByClass(container, "flex-layout__scroll");
 
         if (container != null) {
             final Rect inner = ElementUtil.getBoundingClientRectPlusWindowScroll(container);

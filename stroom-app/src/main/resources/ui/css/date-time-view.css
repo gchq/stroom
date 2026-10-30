@@ -44,7 +44,7 @@
 }
 
 /* The spinner fills the field beside its button */
-.date-time-view__field .value-spinner {
+.date-time-view__field .date-time-view__spinner {
     flex: 1 1 auto;
     min-width: 0;
 }

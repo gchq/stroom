@@ -28,20 +28,13 @@
     overflow: hidden;
 }
 
-/* Icon buttons in the explorer (its toolbar, its quick filter's) are in the explorer's colours */
-.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
-    background-color: var(--navigation-icon-button__background-color--hover);
-    border: thin solid var(--navigation-icon-button__border-color--hover);
+/* (was theme.css's) */
+.stroom-theme-dark .navigation {
+    background-color: var(--navigation__background-color) !important;
 }
 
-.navigation .toolbar-button[aria-pressed="true"]::before {
-    background-color: var(--navigation-icon-button__background-color--on);
-    border: thin solid var(--navigation-icon-button__border-color--on);
-}
-
-.navigation .toolbar-button__icon {
-    color: var(--navigation-icon-button__color);
-}
+/* Its icon buttons (its toolbar's, its quick filter's) are in the explorer's colours: see
+   toolbar-button.css */
 
 /* The current activity, below the explorer, as a button that changes it (was stroom.css's
    activityOuter and activityButton) */
@@ -71,7 +64,7 @@
 
 /* The Main Menu button's toolbar, with room after it for its focus ring, which the explorer would
    otherwise cut off */
-.navigation__title-bar > .toolbar {
+.navigation__title-bar > .navigation__menu {
     margin: 0 6px 0 0;
 }
 

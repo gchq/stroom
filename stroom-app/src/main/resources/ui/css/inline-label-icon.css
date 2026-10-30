@@ -23,7 +23,7 @@
    gap: 5px;
 }
 
-.inline-label-icon > .text-label {
+.inline-label-icon > .inline-label-icon__label {
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;

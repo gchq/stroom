@@ -55,7 +55,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
     private final TraceOverviewChart traceOverviewChart;
     private final RestFactory restFactory;
     // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
-    // right-aligned by the .traces-toolbar wrapper, rather than in a dedicated band above the grid.
+    // right-aligned by the traces-list-tab__toolbar wrapper, rather than in a dedicated band above the grid.
     private final TimeRangeSelector timeRangeSelector = new TimeRangeSelector();
     private final FlowPanel toolbar = new FlowPanel();
     private DocRef dataSourceRef;
@@ -80,7 +80,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
         this.restFactory = restFactory;
         traceOverviewChart = view.getTraceOverview();
 
-        toolbar.addStyleName("traces-toolbar");
+        toolbar.addStyleName("traces-list-tab__toolbar");
         toolbar.add(timeRangeSelector);
 
         own(timeRangeSelector.addValueChangeHandler(e -> {

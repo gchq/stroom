@@ -26,6 +26,56 @@
    released, so while it is dragged the marker is drawn as the dragged splitter.
 */
 
+/* The layout's scrolling panel and the design surface its panes are laid on, with a grid in design
+   mode */
+
+.flex-layout {
+    display: flex;
+    flex-grow: 1;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
+
+.flex-layout__scroll {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	background-color: var(--dashboard-panel__grid-background-color);
+}
+
+.flex-layout__scroll--horizontal {
+    overflow-x: auto;
+}
+
+.flex-layout__scroll--vertical {
+    overflow-y: auto;
+}
+
+.flex-layout__layout {
+    display: flex;
+    flex-grow: 1;
+	position: relative;
+}
+
+.flex-layout__design-surface {
+    position: absolute;
+    overflow: hidden;
+    min-width: 100%;
+    min-height: 100%;
+    background: var(--dashboard-panel__grid-background-color);
+}
+
+.flex-layout--design-mode .flex-layout__design-surface {
+    background-image:
+        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+}
+
 /* A pane or splitter, where the layout puts it (the custom properties are set by FlexLayout) */
 .flex-layout__item {
     position: absolute;

@@ -51,6 +51,6 @@
     width: 100%;
 }
 
-.global-property-edit__attributes > .form-group {
+.global-property-edit__attributes > .global-property-edit__attribute {
     flex-grow: 1;
 }

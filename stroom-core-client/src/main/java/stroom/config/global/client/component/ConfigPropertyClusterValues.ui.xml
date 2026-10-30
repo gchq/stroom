@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:cfg="urn:import:stroom.config.global.client.component">
-    <g:SimplePanel styleName="max default-min-sizes control-box">
+    <g:SimplePanel styleName="max default-min-sizes control-box control-box--padded">
         <cfg:ConfigPropertyClusterValuesList ui:field="list"/>
     </g:SimplePanel>
 </ui:UiBinder>

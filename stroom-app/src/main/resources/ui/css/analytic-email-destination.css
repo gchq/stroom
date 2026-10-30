@@ -4,14 +4,14 @@
  */
 
 /* The subject is one line */
-.analytic-email-destination__subject .code-editor {
+.analytic-email-destination__subject-editor {
     height: 60px;
 }
 
-.analytic-email-destination__body .code-editor {
+.analytic-email-destination__body-editor {
     min-height: 300px;
 }
 
-.analytic-email-destination .button {
+.analytic-email-destination__button {
     width: 200px;
 }

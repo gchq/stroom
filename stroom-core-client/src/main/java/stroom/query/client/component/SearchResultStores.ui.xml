@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:q="urn:import:stroom.query.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client">
-    <g:SimplePanel styleName="max control-box">
+    <g:SimplePanel styleName="max control-box control-box--padded search-result-stores">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Result stores, Info" addStyleNames="max">
             <!-- The stores, their list's own -->

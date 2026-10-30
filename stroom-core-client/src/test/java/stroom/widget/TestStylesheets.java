@@ -77,11 +77,12 @@ class TestStylesheets {
     // an element by (ElementUtil, querySelector), or a part a layout helper styles
     private static final Set<String> HOOKS = Set.of(
             "code-editor__load-error-container",
-            "colour-swatch-cell__text", "conditional-formatting-rule-editor__type", "contentstore-details-name",
-            "create-document-types-icon",
+            "colour-swatch-cell__text", "conditional-formatting-rule-editor__type",
+            "create-document-types__icon",
             "date-time-box__input", "date-time-view__column",
             "delete-confirm__summary-header", "delete-confirm__type-count", "dialog--resizable", "dock-min",
-            "draggable-tree__status", "expression-tree", "expression-tree__canvas", "expression-tree__items",
+            "draggable-tree__status", "embedded-query", "expression-tree-panel", "expression-tree-panel__canvas",
+            "expression-tree-panel__items",
             "file-chooser__button", "form-group__help-text", "form-page", "line-col-input", "line-col-input__field",
             "navigation__name-filter-panel", "password-box__status", "pathway-tree__node-icon",
             "pipeline-tree__canvas", "pipeline-tree__items", "query-buttons__button", "query-edit__results",
@@ -90,33 +91,16 @@ class TestStylesheets {
             "tab-layout__settings-button", "term-editor__item--field", "timeline-date-box", "value-spinner__status");
 
     // Sheets of shared patterns, each styling several blocks of its own (UI-GUIDE.md: the layout
-    // helpers, the shared form patterns, the fonts and the conditional formatting's colours)
+    // helpers, the shared form patterns, the fonts and the conditional formatting's colours), and the
+    // visualisation frame's sheet, whose classes (e.g. vis-point) are an interface the visualisation
+    // packs, kept in their own repository and installed as content, style too
     private static final Set<String> SHARED_SHEETS = Set.of(
-            "layout-helpers.css", "form-controls.css", "font.css", "conditional-formatting.css");
+            "layout-helpers.css", "form-controls.css", "font.css", "conditional-formatting.css", "vis.css");
 
     // The page's settings, as classes on its root (the theme, density and font size), which any
     // sheet may style its block under, or set its custom properties for
     private static final Pattern ROOT_SETTINGS = Pattern.compile(
             "stroom-(theme|density|font-size)-[\\w-]+");
-
-    // Sheets that still style blocks other than their own, to be split one block per sheet
-    // (UI_AUDIT.md wave 8); each must still do so, so the list only shrinks
-    private static final Set<String> SHEETS_TO_SPLIT = Set.of(
-            "ai-message.css", "analytic-email-destination.css", "annotation-history.css", "app-page.css",
-            "ask-stroom-ai.css", "authentication-error.css", "base.css", "batch-execution-schedule-edit.css",
-            "calendar.css", "chooser.css", "clipboard.css", "code-editor.css",
-            "contentstore-details.css", "create-document-types.css",
-            "curve-tab-layout.css", "dashboard-body.css", "dashboard.css", "data-grid.css", "date-time-box.css",
-            "date-time-view.css", "dialog.css", "drop-down.css", "duration-picker.css",
-            "explorer-node-edit-tags.css", "expression-tree.css",
-            "form-group.css", "form.css", "gitrepo-settings-form.css", "global-property-edit.css", "iframe.css",
-            "imports-tab.css", "info-tooltip.css", "inline-label-icon.css", "lozenge.css", "markdown.css",
-            "navigation.css", "password-box.css", "pathways.css", "popup.css", "query-help-detail.css",
-            "quick-filter.css", "ref-link.css", "result-table.css", "row-action.css", "selection-box.css",
-            "selection-popup.css", "setting-block.css", "sign-in-page.css", "stepping-button.css",
-            "stroom-dashboard.css", "stroom-floormap.css",
-            "svg-icon.css", "table-filter-cell.css", "table-filter.css", "term-editor.css", "theme.css",
-            "toolbar.css", "user-task.css", "vis.css");
 
     // State words a state is given as a modifier, not as a class of its own (UI-GUIDE.md); only
     // `disabled`, which GWT's widgets set, is kept as a bare class
@@ -309,26 +293,18 @@ class TestStylesheets {
     @Test
     void testEachSheetStylesItsOwnBlock() {
         final List<String> problems = new ArrayList<>();
-        final List<String> split = new ArrayList<>();
         for (final String sheet : new TreeSet<>(loaded)) {
             if (!isOwnSheet(sheet) || SHARED_SHEETS.contains(sheet)) {
                 continue;
             }
             final Set<String> others = otherBlocksStyled(sheet);
-            if (SHEETS_TO_SPLIT.contains(sheet)) {
-                if (others.isEmpty()) {
-                    split.add(sheet);
-                }
-            } else if (!others.isEmpty()) {
+            if (!others.isEmpty()) {
                 problems.add(sheet + " styles " + String.join(", ", others));
             }
         }
         assertThat(problems)
                 .as("sheets styling blocks other than the one they're named after (another block may be "
                     + "the context, e.g. `.data-grid .my-block__cell`, but not what is styled)")
-                .isEmpty();
-        assertThat(split)
-                .as("SHEETS_TO_SPLIT that style only their own block now: take them off the list")
                 .isEmpty();
     }
 

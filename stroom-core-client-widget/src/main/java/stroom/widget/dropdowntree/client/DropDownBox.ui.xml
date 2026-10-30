@@ -9,10 +9,10 @@
       the value it shows; a FormGroup names it with its label, followed by the value. A problem with
       its value is shown in the feedback line under it, while there is one and the picker isn't in a
       form group (DropDownBox): briefly, with the full message for screen readers. The wrapper takes
-      no box of its own (drop-down-box), so the button and its feedback are laid out as if they were
+      no box of its own (drop-down__wrapper), so the button and its feedback are laid out as if they were
       their parent's children.
     -->
-    <g:HTMLPanel styleName="drop-down-box">
+    <g:HTMLPanel styleName="drop-down__wrapper">
         <c:AriaPanel ui:field="button" styleName="drop-down stroom-control allow-focus" tabIndex="0" role="button"
                      ariaHasPopup="dialog">
             <tx:Label ui:field="label" styleName="drop-down__value"/>

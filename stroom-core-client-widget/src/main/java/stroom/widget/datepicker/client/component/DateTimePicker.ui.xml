@@ -33,7 +33,7 @@
                             helpText="Hour of the day, 0 to 23, in the displayed time zone. Values wrap round. Reset sets the hour, minute, second and millisecond to 0."
                             screenReaderText="0 to 23.">
                 <g:FlowPanel styleName="date-time-view__field">
-                    <v:ValueSpinner ui:field="hour" wrapValues="true" minValue="0" maxValue="23" minStep="1" maxStep="1"/>
+                    <v:ValueSpinner ui:field="hour" addStyleNames="date-time-view__spinner" wrapValues="true" minValue="0" maxValue="23" minStep="1" maxStep="1"/>
                     <b:LinkButton ui:field="hourReset" addStyleNames="date-time-view__shortcut"
                                   text="Reset" ariaLabel="Reset hour"/>
                 </g:FlowPanel>
@@ -42,7 +42,7 @@
                             helpText="Minute, 0 to 59. Values wrap round. Reset sets the minute, second and millisecond to 0."
                             screenReaderText="0 to 59.">
                 <g:FlowPanel styleName="date-time-view__field">
-                    <v:ValueSpinner ui:field="minute" wrapValues="true" minValue="0" maxValue="59" minStep="1" maxStep="1"/>
+                    <v:ValueSpinner ui:field="minute" addStyleNames="date-time-view__spinner" wrapValues="true" minValue="0" maxValue="59" minStep="1" maxStep="1"/>
                     <b:LinkButton ui:field="minuteReset" addStyleNames="date-time-view__shortcut"
                                   text="Reset" ariaLabel="Reset minute"/>
                 </g:FlowPanel>
@@ -51,7 +51,7 @@
                             helpText="Second, 0 to 59. Values wrap round. Reset sets the second and millisecond to 0."
                             screenReaderText="0 to 59.">
                 <g:FlowPanel styleName="date-time-view__field">
-                    <v:ValueSpinner ui:field="second" wrapValues="true" minValue="0" maxValue="59" minStep="1" maxStep="1"/>
+                    <v:ValueSpinner ui:field="second" addStyleNames="date-time-view__spinner" wrapValues="true" minValue="0" maxValue="59" minStep="1" maxStep="1"/>
                     <b:LinkButton ui:field="secondReset" addStyleNames="date-time-view__shortcut"
                                   text="Reset" ariaLabel="Reset second"/>
                 </g:FlowPanel>
@@ -60,7 +60,7 @@
                             helpText="Millisecond, 0 to 999. Values wrap round. Reset sets it to 0."
                             screenReaderText="0 to 999.">
                 <g:FlowPanel styleName="date-time-view__field">
-                    <v:ValueSpinner ui:field="millisecond" wrapValues="true" minValue="0" maxValue="999" minStep="1" maxStep="10"/>
+                    <v:ValueSpinner ui:field="millisecond" addStyleNames="date-time-view__spinner" wrapValues="true" minValue="0" maxValue="999" minStep="1" maxStep="10"/>
                     <b:LinkButton ui:field="millisecondReset" addStyleNames="date-time-view__shortcut"
                                   text="Reset" ariaLabel="Reset millisecond"/>
                 </g:FlowPanel>

@@ -116,12 +116,12 @@ public final class DocumentPermissionsTabStories {
                     expectCreateColumns(play);
                     play.waitFor(() -> play.expect(play.getByText("admin")).toBeInTheDocument());
                     // admin's explicit column shows type icons (Feed and Dictionary).
-                    // The type icons are in a 'create-document-types-container', each with the class
-                    // 'create-document-types-icon' and titled with its type
-                    play.expect(play.querySelectorAll(".create-document-types-container").count())
+                    // The type icons are in a 'create-document-types', each with the class
+                    // 'create-document-types__icon' and titled with its type
+                    play.expect(play.querySelectorAll(".create-document-types").count())
                             .toBeGreaterThanOrEqual(1);
-                    play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types-icon");
-                    play.expect(play.getByTitle("Dictionary")).toHaveClass("create-document-types-icon");
+                    play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types__icon");
+                    play.expect(play.getByTitle("Dictionary")).toHaveClass("create-document-types__icon");
                     // admin's effective column covers all three types: 'ALL'
                     play.expect(play.getByText("ALL")).toBeInTheDocument();
                     // The details of the selected user

@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/// A column's filter box in a results table's header (`dashboard-table-filter-cell`,
-/// table-filter-cell.css): Stroom's text field ([TextFieldCell]) for the filter, named for its
+/// A column's filter box in a results table's header (`filter-cell`,
+/// filter-cell.css): Stroom's text field ([TextFieldCell]) for the filter, named for its
 /// column, with a toolbar button ([ToolbarButtonCell]) over its right end that turns the filter off
 /// and on. An off filter's box looks disabled but can still be changed.
 ///
@@ -57,7 +57,7 @@ public class FilterCell extends CompositeCell<Column> {
     private static final Template TEMPLATE = GWT.create(Template.class);
     // A column's header finds the button by it, to know that a press was the button's (and opens
     // no menu)
-    private static final String DISABLE_BUTTON_CLASS = "dashboard-table-filter-cell__disable-button";
+    private static final String DISABLE_BUTTON_CLASS = "filter-cell__disable-button";
 
     private final TextFieldCell field;
     private final HasCell<Column, ?> fieldPart;
@@ -213,16 +213,16 @@ public class FilterCell extends CompositeCell<Column> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"dashboard-table-filter-cell\">{0}</div>")
+        @Template("<div class=\"filter-cell\">{0}</div>")
         SafeHtml filter(SafeHtml parts);
 
-        @Template("<div class=\"dashboard-table-filter-cell dashboard-table-filter-cell--disabled\">{0}</div>")
+        @Template("<div class=\"filter-cell filter-cell--disabled\">{0}</div>")
         SafeHtml disabledFilter(SafeHtml parts);
 
-        @Template("<div>{0}</div>")
+        @Template("<div class=\"filter-cell__field\">{0}</div>")
         SafeHtml field(SafeHtml field);
 
-        @Template("<div class=\"dashboard-table-filter-cell__buttons\">{0}</div>")
+        @Template("<div class=\"filter-cell__buttons\">{0}</div>")
         SafeHtml buttons(SafeHtml button);
     }
 }

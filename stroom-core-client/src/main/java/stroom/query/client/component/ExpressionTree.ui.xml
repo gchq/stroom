@@ -6,7 +6,7 @@
       An expression's tree of terms and operators (expression-tree.css), whose items can be dragged
       to another operator
     -->
-    <pv:DraggableTreePanel ui:field="layoutPanel" addStyleNames="expression-tree-view" allowDragging="true">
+    <pv:DraggableTreePanel ui:field="layoutPanel" addStyleNames="expression-tree" allowDragging="true">
         <pv:tree>
             <qc:ExpressionTreePanel ui:field="treePanel"/>
         </pv:tree>

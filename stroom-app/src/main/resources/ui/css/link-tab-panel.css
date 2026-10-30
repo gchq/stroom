@@ -26,6 +26,14 @@
     padding: 0 5px;
 }
 
+/* Flush with the panel's edge (LinkTabPanel.setFlush): the tab bar alone sets the row's height, as
+   it does a column's that holds it directly (the status is placed absolutely) */
+.link-tab-panel--flush {
+    display: block;
+    min-height: 0;
+    padding: 0;
+}
+
 .link-tab-panel__middle {
     flex-grow: 1;
 }

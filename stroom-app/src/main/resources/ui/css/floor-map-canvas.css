@@ -1,0 +1,332 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The floor map's canvas (FloorMapCanvas): the map's keyboard host (its root), holding the
+   SVG and what is laid over it, the area-draw hint, the gesture readout, the hover tooltip,
+   the scale bar and the empty status. It also defines the floor map's colours, which its
+   canvas, grid (floor-map-grid.css), timeline (floor-map-timeline.css) and event store's
+   settings (floor-map-event-store-settings.css) use. */
+
+/* ============================================================
+ * Floor Map Grid — theme-aware colours
+ *
+ * These variables are used by the SVG grid background
+ * (FloorMapGridBackground.java) so that the grid respects
+ * the current light/dark theme.
+ * ============================================================ */
+
+:root {
+    --floormap-grid__background-color: var(--dashboard-panel__grid-background-color);
+    --floormap-grid__major-stroke:     var(--vis-axis__color);
+    --floormap-grid__minor-stroke:     var(--vis-text__color--faint);
+    --floormap-grid__highlight-color:  var(--blue-600);
+
+    /* Out-of-range chevron. This is a meaningful non-text indicator — it is the
+       only thing that says the tracked object is outside the timeline range — so
+       it has to clear 3:1 against the page background (WCAG 1.4.11). The obvious
+       Material Orange 700 (#f57c00) is only 2.7:1 on white, so the light theme
+       needs the darker 900; the dark theme needs a *lighter* orange for the same
+       reason, hence the per-theme value rather than one shared constant. */
+    --floormap-out-of-range__color: #e65100; /* 3.8:1 on white */
+
+    /* Accent for the map's small text: tooltips, readouts, the speed badge, and the
+       borders and caret that go with them. Aliased to the primary button colour because
+       that is the one accent in the palette held to the 4.5:1 text threshold rather than
+       the 3:1 non-text one — --blue-500 is 3.12:1 on white and fails as text. The alias
+       exists so these are not silently restyled by a future button redesign: if the
+       button family moves to white-on-blue, point this at a value of its own instead. */
+    --floormap-accent__color: var(--button--default-primary__color);
+
+    /* Warning text on the FloorMap Event Store's settings tab, where enabling condense is
+       offered. It is body text explaining a consequence, not a status badge, so it is held to
+       the 4.5:1 text threshold rather than the 3:1 non-text one. Material Orange is nowhere
+       near that on white at any usable weight, so this is a red-brown that reads as a caution
+       without shouting. */
+    --floormap-warning__color: #b3261e; /* 6.4:1 on white */
+}
+
+.stroom-theme-dark {
+    --floormap-out-of-range__color: #ffa726; /* 7.9:1 on the dark page background */
+    --floormap-warning__color:      #f2b8b5; /* 8.9:1 on the dark page background */
+}
+
+/* -----------------------------------------------------------------------
+   Canvas keyboard focus
+
+   The map's FocusPanel is a div, so base.css's app-wide `outline: none`
+   strips its focus ring. Without this, tabbing into the map — where arrow
+   keys pan, +/- zoom and Tab walks the entities — gives no indication that
+   the map is now listening, which is the difference between "the keys do
+   nothing" and "the keys do nothing *yet*".
+
+   Drawn inset so it reads as a border around the map rather than a ring
+   around a control, and so it cannot be clipped by the panel's own edge.
+   ----------------------------------------------------------------------- */
+.floor-map-canvas:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus-border);
+}
+
+/* While a modal gesture (drawing an area, measuring for Set Scale) is live */
+.floor-map-canvas--crosshair {
+    cursor: crosshair;
+}
+
+/* The Set Scale line's running length: a halo in the page's colour keeps it legible over the map */
+.floor-map-canvas__measure-label {
+    stroke: var(--page__background-color);
+}
+
+/* -----------------------------------------------------------------------
+   Area drawing mode
+   ----------------------------------------------------------------------- */
+
+/* Positioning context for the drawing-mode hint overlaid on the canvas */
+.floor-map-canvas__container {
+    position: relative;
+}
+
+/* Instruction pill shown while the area-drawing mode is active — same
+   visual language as the timeline scrub tooltip (blue text/border pill on
+   the page background, theme-aware) */
+.floor-map-canvas__area-draw-hint {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+}
+
+.floor-map-canvas__area-draw-hint--visible {
+    display: block;
+}
+
+/* -----------------------------------------------------------------------
+   Gesture readout
+
+   Follows the cursor while an object is being moved or resized, showing its
+   position or size in real-world units. Same visual language as the timeline
+   scrub tooltip (blue text/border pill on the page background), because it
+   answers the same kind of question about the thing under the pointer.
+
+   Positioned from the left/top by the view, which offsets it clear of the
+   cursor and keeps it inside the canvas.
+   ----------------------------------------------------------------------- */
+
+.floor-map-canvas__gesture-readout {
+    position: absolute;
+    left: var(--floor-map-canvas__gesture-readout-left, 0);
+    top: var(--floor-map-canvas__gesture-readout-top, 0);
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 25;
+    display: none;
+}
+
+.floor-map-canvas__gesture-readout--visible {
+    display: block;
+}
+
+/* -----------------------------------------------------------------------
+   Hover tooltip
+
+   Describes the glyph under the pointer: the members of a cluster — the
+   answer to "who are those ten?", which the count alone cannot give — or a
+   single entity's name, type, containing areas and position. One panel for
+   both, because only one thing can be under the pointer. Same visual
+   language as the gesture readout and the timeline scrub tooltip, because
+   it answers the same kind of question about the thing under the pointer.
+
+   Anchored to the glyph by the view, not to the cursor, so it holds still
+   while the pointer moves across the glyph.
+   ----------------------------------------------------------------------- */
+
+.floor-map-canvas__hover-tooltip {
+    position: absolute;
+    left: var(--floor-map-canvas__hover-tooltip-left, 0);
+    top: var(--floor-map-canvas__hover-tooltip-top, 0);
+    background-color: var(--page__background-color);
+    color: var(--text-color);
+    font-size: 11px;
+    padding: 5px 9px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    /* The pointer must never enter it: this is driven by mousemove over the
+       canvas, and a panel that could take the pointer would hide the very
+       glyph it describes and then never receive a leave event. */
+    pointer-events: none;
+    z-index: 26;
+    display: none;
+    max-width: 260px;
+}
+
+.floor-map-canvas__hover-tooltip--visible {
+    display: block;
+}
+
+.floor-map-canvas__hover-caption {
+    color: var(--floormap-accent__color);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+/* One member name, or one line of detail. Kept to a single line: the panel
+   is capped in width, and a name or an area list that wrapped would push the
+   lines below it away from the glyph being described. */
+.floor-map-canvas__hover-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* -----------------------------------------------------------------------
+   Glyph caption
+
+   The text under a point glyph: an entity's name, or a cluster's "10 users"
+   / "Alice + 9 others". One style for both, because naming one entity and
+   naming ten are the same job.
+
+   It is drawn OUTSIDE the glyph, so it has no controlled backdrop the way
+   text on top of a coloured shape would: it sits over whatever floor plan
+   happens to be beneath it, in either theme.
+
+   Hence the halo: paint-order puts the stroke under the fill, so the outline
+   is drawn behind the letterforms rather than eating into them. The fill
+   follows the theme's text colour and the halo is the page background, so
+   the pair inverts correctly in dark mode.
+   ----------------------------------------------------------------------- */
+
+.floor-map-canvas__glyph-caption {
+    fill: var(--text-color);
+    stroke: var(--page__background-color);
+    stroke-width: 3px;
+    paint-order: stroke;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: sans-serif;
+}
+
+/* -----------------------------------------------------------------------
+   Scale bar
+
+   A conventional map scale bar pinned to the bottom-left of the canvas —
+   clear of the area-drawing hint pill (top centre) and of the dock (right).
+   Fixed to the viewport rather than to map space, so it answers "how big is
+   this?" wherever the map has been panned to. The grid draws no text of its
+   own, so this is the canvas's only standing statement of scale.
+   ----------------------------------------------------------------------- */
+
+/*
+ * Line naming why the map is empty, top-centre.
+ *
+ * Two registers, and the split is the point of the whole thing. The default is quiet, because the
+ * most common cause - the timeline sitting outside the data - is not a fault, and a map that is
+ * correctly empty must not look broken. --fault is for the three causes that really are
+ * misconfiguration. One uniform warning style would teach people to ignore the line that matters.
+ *
+ * Top-centre is shared with the area-draw / set-scale hint, and they cannot collide: both of those
+ * modes exist only on the Editor tab, which has its own canvas instance, and this line is only ever
+ * set by the Map tab. The lower z-index settles it in that order anyway if that ever changes -
+ * a modal mode's instructions matter more than an explanation of emptiness.
+ *
+ * Not bottom-centre, which would run into the scale bar on a narrow pane; the pane is resizable and
+ * routinely narrow with the dock open.
+ *
+ * pointer-events: none so it can never intercept a click meant for the map; the text is still
+ * selectable by dragging from outside it, and reachable by a screen reader either way.
+ */
+.floor-map-canvas__empty-status {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 20px);
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 12px;
+    color: var(--vis-text__color--faint);
+    background-color: var(--page__background-color);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    pointer-events: none;
+    z-index: 16;
+    display: none;
+}
+
+.floor-map-canvas__empty-status--visible {
+    display: block;
+}
+
+.floor-map-canvas__empty-status--fault {
+    color: var(--floormap-accent__color);
+    border-color: var(--floormap-accent__color);
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.floor-map-canvas__scale-bar {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.floor-map-canvas__scale-bar-label {
+    color: var(--floormap-grid__highlight-color);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-bottom: 2px;
+    /* The bar sits over whatever the floor plan happens to be; a soft halo keeps
+       the text legible on light and dark imagery alike without a solid panel. */
+    text-shadow: 0 0 3px var(--page__background-color),
+                 0 0 3px var(--page__background-color);
+}
+
+/* The rule itself: a baseline with an end tick at each end (├────┤). Its width
+   is set per frame from the chosen distance. */
+.floor-map-canvas__scale-bar-line {
+    width: var(--floor-map-canvas__scale-bar-width);
+    height: 6px;
+    border-left: 2px solid var(--floormap-grid__highlight-color);
+    border-right: 2px solid var(--floormap-grid__highlight-color);
+    border-bottom: 2px solid var(--floormap-grid__highlight-color);
+    box-sizing: border-box;
+}

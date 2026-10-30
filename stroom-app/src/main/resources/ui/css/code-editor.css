@@ -140,14 +140,6 @@
     overflow-wrap: anywhere;
 }
 
-.stroom .ace_tooltip.ace_doc-tooltip .query-help-detail {
-    background-color: var(--tooltip__background-color) !important;
-}
-
-.stroom .ace_tooltip.ace_doc-tooltip .markdown {
-    background-color: var(--tooltip__background-color);
-}
-
 .code-editor__ace .ace_gutter-cell.stroom_info {
     background-image: url(../images/info.svg);
     background-size: 14px 14px;

@@ -1329,6 +1329,16 @@ after wave 40.
 > `stroom-control` frames became `control-box`, and the borrowed classes have blocks of their own.
 > See `wave-41.md`.
 
+## 42. UI audit wave 8: one block per sheet, and the layout put back
+
+Record: [`component-migration/wave-42.md`](component-migration/wave-42.md). Added 30 October 2026,
+after wave 41.
+
+> **Done, 30 October 2026**: every sheet styles only its own block (the shared sheets and the
+> visualisations' `vis.css` aside), and, against screenshots of the UI before the audit, the layout
+> changes waves 38 to 41 had taken are put back (the user's rule: the layout stays as it was, to
+> within a pixel, unless a change has a reason of its own). See `wave-42.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

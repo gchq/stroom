@@ -19,12 +19,8 @@
 }
 
 /* Room for "Milliseconds" (the longest unit) beside the drop-down arrow. Under the block, to outrank
-   selection-box.css's width, and its field's minimum width (icon-box.css) */
+   selection-box.css's width; its field has no least width (icon-box--fluid) */
 .duration-picker .duration-picker__unit {
     flex: 0 0 auto;
     width: calc(var(--font-size-13) * 6 + 40px);
-}
-
-.duration-picker .duration-picker__unit .icon-box__field {
-    min-width: 0;
 }

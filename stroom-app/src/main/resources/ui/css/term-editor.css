@@ -97,15 +97,6 @@
 	margin: 0;
 }
 
-/* A value's field (a SuggestionBox's, suggestion-box.css), borderless in the term's row, as the
-   GWT SuggestBox it replaced was */
-.term-editor__item .suggestion-box__input {
-	height: 100%;
-	padding-left: 5px;
-	padding-right: 5px;
-	border: none;
-}
-
 .term-editor__label {
     display: flex;
     margin: 0px;

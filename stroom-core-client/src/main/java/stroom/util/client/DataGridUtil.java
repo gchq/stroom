@@ -78,7 +78,7 @@ public class DataGridUtil {
     public static Header<SafeHtml> createRightAlignedHeader(final String headerText) {
         final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
         header.setHeaderStyleNames(GwtUtil.appendStyles(
-                header.getHeaderStyleNames(), "right-align"));
+                header.getHeaderStyleNames(), "data-grid__header-cell--align-right"));
         return header;
     }
 
@@ -86,7 +86,7 @@ public class DataGridUtil {
         final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
         header.setHeaderStyleNames(GwtUtil.appendStyles(
                 header.getHeaderStyleNames(),
-                "center-align"));
+                "data-grid__header-cell--align-center"));
         return header;
     }
 

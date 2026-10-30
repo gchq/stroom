@@ -37,11 +37,11 @@ import com.google.gwt.user.client.ui.Widget;
 public class OpenLinkUtil {
 
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
-    private static final String HOVER_ICON_CLASS_NAME = "svg-image--hover";
+    // The icon shown only on a hover, or with the keyboard on the row (doc-ref-link.css)
+    private static final String HOVER_ICON_CLASS_NAME = "doc-ref-link__icon doc-ref-link__icon--hover";
     private static final String ICON_CLASS_NAME = "icon-wrap";
     private static final String LINK_CONTAINER_CLASS_NAME = "doc-ref-link";
     private static final String LINK_OPEN_CLASS_NAME = "doc-ref-link__open";
-    private static final String LINK_TEXT_CLASS_NAME = "doc-ref-link__text";
     private static final String LINK_ID_ATTRIBUTE = "link-id";
     private static final String LINK_TYPE_ATTRIBUTE = "link-type";
 
@@ -53,7 +53,7 @@ public class OpenLinkUtil {
 
     public static SafeHtml render(final String value, final LinkType linkType) {
         return render(value, linkType,
-                TEMPLATE.div(LINK_TEXT_CLASS_NAME, SafeHtmlUtils.fromString(value)));
+                TEMPLATE.div(SafeHtmlUtils.fromString(value)));
     }
 
     public static SafeHtml render(final String value, final LinkType linkType, final SafeHtml innerHtml) {
@@ -126,8 +126,8 @@ public class OpenLinkUtil {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String cssClass, SafeHtml content);
+        @Template("<div>{0}</div>")
+        SafeHtml div(SafeHtml content);
 
         @Template("<div title=\"{0}\">{1}</div>")
         SafeHtml divWithToolTip(String title, SafeHtml content);

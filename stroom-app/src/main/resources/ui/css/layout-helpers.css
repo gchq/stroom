@@ -17,7 +17,8 @@
 /* Layout helpers, set beside a component's own classes: max (fill the parent), the dock
    containers and their parts, w-100 and h-100, align-center, overflow-hidden, input-row,
    focus-ring-room (room for a focus ring inside a box that clips, as a form has), the borders
-   stroom-border-top and -bottom, lower-case-input, and sr-only (text for screen readers only). */
+   stroom-border-top and -bottom, lower-case-input, quick-filter-layout, and sr-only (text for
+   screen readers only). */
 
 .stroom-border-top {
 	border-top: 1px solid var(--border-color);
@@ -96,6 +97,13 @@
     height: calc(100% + 2 * var(--focus-ring__room));
 }
 
+/* A form's padding, inset from the edges of its panel, as a form's controls are, on a form or
+   anything laid out as one (e.g. a lone form group, a row of controls); after focus-ring-room, which
+   it outranks (was form.css's, and nothing loaded between the two pads these boxes) */
+.form-padding {
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
+}
+
 .lower-case-input {
     text-transform: lowercase;
 }
@@ -112,4 +120,9 @@
 .section--disabled,
 .section--disabled .form-group__label {
     color: var(--text-color--disabled);
+}
+
+/* A panel holding a quick filter above what it filters (was quick-filter.css's) */
+.quick-filter-layout {
+    gap: var(--control__padding--vertical);
 }

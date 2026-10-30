@@ -90,20 +90,16 @@
     color: var(--control__text-color--readonly);
 }
 
-/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (a box's field is
-   otherwise at least 200px, icon-box.css) */
+/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (its field too, as the
+   cell is also icon-box--fluid; a box's field is otherwise at least 200px, icon-box.css) */
 .selection-box.selection-box--cell {
     width: 100%;
-}
-
-.selection-box--cell.icon-box .icon-box__field {
-    min-width: 0;
 }
 
 /* Where it sits: */
 
 /* In a Git repo's settings, beside the credentials' button */
-.gitrepo-settings-form #credentials-group .selection-box {
+.git-repo-settings__credentials .selection-box {
     width: 280px;
 }
 

@@ -56,6 +56,9 @@ a rule reads).
   screenshot taken is the data grid's header input (its box is the text field cell the app's
   column filter uses, 2px further in).
 
+> **Undone in wave 42** (30 October 2026): the user asked for the layout to stay as it was, to
+> within a pixel; the look changes this wave took are put back there (see `wave-42.md`).
+
 ## Looks that changed
 
 - The column filter box, View Source and Assign Yourself show the standard keyboard focus ring.

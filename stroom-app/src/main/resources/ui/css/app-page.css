@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-/* The app's page: its body (stroom-body), the panel the app is shown in (Core), and the
-   loading banner and logo that index.html shows before the app starts. */
+/* The app's page (app-page, on its body): the panel the app is shown in (Core, app-page__panel),
+   and the loading banner and logo that the page shows before the app starts. */
 
-.stroom-body {
+.app-page {
 	background-color: var(--app__background-color);
 	line-height: 14px;
 	line-height: initial;
 }
 
-.app-panel {
+.app-page__panel {
 	position: absolute;
 	top: 0px;
 	left: 0px;
@@ -46,7 +46,7 @@
 }
 
 /* Gone once a page is shown: hidden, not just transparent, so screen readers stop reading it */
-#loading.loading--hidden {
+#loading.app-page__loading--hidden {
     opacity: 0;
     visibility: hidden;
 }

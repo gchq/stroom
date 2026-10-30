@@ -122,7 +122,7 @@ public class ActionCell<R> extends AbstractCell<R> {
             sb.append(RowActions.button(
                     "icon-cell--button",
                     name,
-                    SvgImageUtil.toSafeHtml(cellIcon.getIcon(), "icon-cell")));
+                    SvgImageUtil.toSafeHtml(cellIcon.getIcon(), "icon-cell", RowActions.ICON_CLASS_NAME)));
         }
     }
 }

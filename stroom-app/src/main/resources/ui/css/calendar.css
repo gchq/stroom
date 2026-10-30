@@ -21,31 +21,27 @@
     padding: 0 2px;
 }
 
-/* The row's box shares it with the Previous and Next toolbar */
-.calendar__row .selection-box {
+/* The row's box (a selection box) shares it with the Previous and Next toolbar. Under the row, to
+   outrank selection-box.css's width, which comes later */
+.calendar__row .calendar__select {
     flex-grow: 1;
     width: 5px;
 }
 
-.calendar__row .selection-box input {
+.calendar__row .calendar__select input {
     min-width: 5px;
 }
 
 /* The Previous and Next buttons, a toolbar beside each box, spaced as the row is */
-.calendar__row > .toolbar {
+.calendar__row > .calendar__toolbar {
     margin: 0;
     gap: 4px;
 }
 
-.calendar__row .toolbar-button {
+/* Each a small arrow (toolbar-button--arrow) */
+.calendar__row .calendar__button {
     width: 26px;
     height: 26px;
-}
-
-.calendar__row .toolbar-button__icon {
-    color: var(--navigation__text-color);
-    width: 10px;
-    height: 10px;
 }
 
 .calendar__grid {

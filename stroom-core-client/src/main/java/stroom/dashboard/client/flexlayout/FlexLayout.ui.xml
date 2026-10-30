@@ -3,10 +3,10 @@
      bigger than the space it has -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel styleName="dashboard__outer">
-        <g:SimplePanel ui:field="scrollPanel" styleName="dashboard__scroll">
-            <g:SimplePanel ui:field="layout" styleName="dashboard-layout">
-                <g:FlowPanel ui:field="designSurface" styleName="dashboard__design-surface"/>
+    <g:SimplePanel styleName="flex-layout">
+        <g:SimplePanel ui:field="scrollPanel" styleName="flex-layout__scroll">
+            <g:SimplePanel ui:field="layout" styleName="flex-layout__layout">
+                <g:FlowPanel ui:field="designSurface" styleName="flex-layout__design-surface"/>
             </g:SimplePanel>
         </g:SimplePanel>
     </g:SimplePanel>

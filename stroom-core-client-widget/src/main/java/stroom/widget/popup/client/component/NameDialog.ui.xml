@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup ui:field="nameGroup" identity="textBoxFieldName" label="Name"
+        <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="nameGroup" identity="textBoxFieldName" label="Name"
                         helpText="The name to save this under. A name is required."
                         screenReaderText="The name to save this under."
                         required="true">

@@ -151,7 +151,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                             final Element button = ElementUtil.findChild(th, "column-header__value-filter-icon");
                             final boolean isFilterButton = button.isOrHasChild(target);
                             final Element diableFilterButton = ElementUtil.findChild(th,
-                                    "dashboard-table-filter-cell__disable-button");
+                                    "filter-cell__disable-button");
                             final boolean isDiableFilterButton = diableFilterButton.isOrHasChild(target);
 
 

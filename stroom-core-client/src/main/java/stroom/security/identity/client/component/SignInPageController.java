@@ -29,7 +29,7 @@ public abstract class SignInPageController extends Controller {
 
     // Hides the host page's loading message, not just making it transparent, so screen readers
     // stop reading "Loading..." (app-page.css)
-    private static final String LOADING_HIDDEN = "loading--hidden";
+    private static final String LOADING_HIDDEN = "app-page__loading--hidden";
 
     /// @param eventBus The application's event bus.
     protected SignInPageController(final EventBus eventBus) {

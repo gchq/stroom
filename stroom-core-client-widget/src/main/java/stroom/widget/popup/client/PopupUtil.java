@@ -33,7 +33,7 @@ public class PopupUtil {
     private static final String ARIA_DESCRIBED_BY = "aria-describedby";
     private static final String ARIA_MODAL = "aria-modal";
     // The glass behind a modal popup
-    private static final String GLASS_CLASS = "popup-glass";
+    private static final String GLASS_CLASS = "popup__glass";
     // The least room left between a dialog and each edge of the window
     private static final int WINDOW_MARGIN = 10;
 

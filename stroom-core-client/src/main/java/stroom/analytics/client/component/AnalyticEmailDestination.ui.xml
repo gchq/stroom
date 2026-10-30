@@ -31,10 +31,10 @@
                         helpText="Jinja template for the email subject, e.g. Detector '{{{{ detectorName | escape }}' Alert. It must be a single line and cannot be blank. Select Test Template to see example output."
                         screenReaderText="Jinja template on one line. Required.">
             <g:FlowPanel styleName="dock-min form">
-                <g:SimplePanel addStyleNames="dock-max form-control-border analytic-email-destination__subject">
-                    <ed:CodeEditor ui:field="subjectTemplate"/>
+                <g:SimplePanel addStyleNames="dock-max form-control-border">
+                    <ed:CodeEditor ui:field="subjectTemplate" addStyleNames="analytic-email-destination__subject-editor"/>
                 </g:SimplePanel>
-                <b:Button addStyleNames="dock-min allow-focus"
+                <b:Button addStyleNames="dock-min allow-focus analytic-email-destination__button"
                           ui:field="testSubjectTemplateBtn"
                           text="Test Template"
                           icon="TICK"/>
@@ -46,10 +46,10 @@
                         helpText="Jinja template for the email body. If the output contains HTML tags the email is sent as HTML, otherwise as plain text. It cannot be blank; select Test Template to see example output."
                         screenReaderText="Jinja template. Required. Output containing HTML tags is sent as HTML.">
             <g:FlowPanel styleName="dock-min form">
-                <g:SimplePanel addStyleNames="dock-max form-control-border analytic-email-destination__body">
-                    <ed:CodeEditor ui:field="bodyTemplate"/>
+                <g:SimplePanel addStyleNames="dock-max form-control-border">
+                    <ed:CodeEditor ui:field="bodyTemplate" addStyleNames="analytic-email-destination__body-editor"/>
                 </g:SimplePanel>
-                <b:Button addStyleNames="dock-min allow-focus"
+                <b:Button addStyleNames="dock-min allow-focus analytic-email-destination__button"
                           ui:field="testBodyTemplateBtn"
                           text="Test Template"
                           icon="TICK"/>
@@ -58,7 +58,7 @@
 
         <form:FormGroup identity="analyticEmailDestinationTesting"
                         helpText="Sends one test email to the To, Cc and Bcc recipients, using the current templates and an example detection. You are asked to confirm before it is sent.">
-            <b:Button addStyleNames="dock-min allow-focus"
+            <b:Button addStyleNames="dock-min allow-focus analytic-email-destination__button"
                       ui:field="sendTestEmailBtn"
                       text="Send Test Email"/>
         </form:FormGroup>

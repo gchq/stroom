@@ -1,6 +1,30 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+/*
+ * A trace's overview (TraceOverviewChart). The root is a vertical stack: the pager bar on top, then
+ * the panel TraceOverviewChart draws the trace in, a vertical flex column of a full-width timeline
+ * (__timeline) above a row (__body) of the operation list (__operations, left) and, when a span is
+ * selected, the Span Info panel (__span-info, right), so the span info's header lines up with the
+ * section header.
+ */
 
-.timeline-container {
+/* The timeline: its time markers, the spans' bars with the window's sliders over them, and the
+   window's buttons */
+.trace-overview-chart__timeline {
     padding: 5px 30px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -8,13 +32,14 @@
     gap: 5px;
 }
 
-.timeline-header {
+.trace-overview-chart__timeline-header {
     position: relative;
 }
 
-.timeline-header span {
+/* A time marker, placed by its time (--trace-overview-chart__marker-left) */
+.trace-overview-chart__timeline-header span {
     position: absolute;
-    left: var(--timeline-marker__left);
+    left: var(--trace-overview-chart__marker-left);
     font-size: 10px;
     color: var(--text-color--muted);
     padding: 5px 0;
@@ -22,17 +47,17 @@
 }
 
 /* The last marker, the trace's whole duration, at its end */
-.timeline-header span.timeline-header__end {
+.trace-overview-chart__timeline-header span.trace-overview-chart__timeline-end {
     left: 100%;
 }
 
-.timeline-controls {
+.trace-overview-chart__timeline-controls {
     position: relative;
 }
 
-/* The grid's lines are spaced and offset by the time shown (--grid-lines__*, set by
+/* The grid's lines are spaced and offset by the time shown (--trace-overview-chart__grid-*, set by
    TraceOverviewChart.computeGridStyle) */
-.timeline-bar {
+.trace-overview-chart__timeline-bar {
     min-height: 40px;
     height: 40px;
     background-color: #2d2d2d;
@@ -43,24 +68,26 @@
     background-image:
        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: var(--grid-lines__big-size, 100%) 100%, var(--grid-lines__small-size, 100%) 100%;
-    background-position: var(--grid-lines__big-offset, 0) 0, var(--grid-lines__small-offset, 0) 0;
+    background-size: var(--trace-overview-chart__grid-big-size, 100%) 100%, var(--trace-overview-chart__grid-small-size, 100%) 100%;
+    background-position: var(--trace-overview-chart__grid-big-offset, 0) 0, var(--trace-overview-chart__grid-small-offset, 0) 0;
 }
 
-/* A span in the timeline, placed by its time and its row (--timeline-span__*) */
-.timeline-span {
+/* A span in the timeline, placed by its time and its row (--trace-overview-chart__timeline-span-*) */
+.trace-overview-chart__timeline-span {
     position: absolute;
-    left: var(--timeline-span__left);
-    width: var(--timeline-span__width);
-    top: var(--timeline-span__top);
-    height: var(--timeline-span__height);
+    left: var(--trace-overview-chart__timeline-span-left);
+    width: var(--trace-overview-chart__timeline-span-width);
+    top: var(--trace-overview-chart__timeline-span-top);
+    height: var(--trace-overview-chart__timeline-span-height);
     background-color: rgb(255, 140, 66);
     opacity: 0.9;
     border-radius: 1px;
     min-width: 1px;
 }
 
-.time-slider-container {
+/* The window's sliders and overlays, over the timeline's bar. The window starts and ends at
+   --trace-overview-chart__window-start and __window-end, set on this. */
+.trace-overview-chart__slider-container {
     position: absolute;
     top: 0px;
     left: 0;
@@ -68,7 +95,7 @@
     height: 40px;
 }
 
-.time-dim-overlay {
+.trace-overview-chart__dim-overlay {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -76,19 +103,18 @@
     pointer-events: none;
 }
 
-/* Before and after the window, which starts and ends at --time-slider__start and __end (set on
-   .time-slider-container), as its overlay and sliders are placed */
-.time-dim-overlay--before {
+/* Before and after the window, as its overlay and sliders are placed */
+.trace-overview-chart__dim-overlay--before {
     left: 0%;
-    width: var(--time-slider__start);
+    width: var(--trace-overview-chart__window-start);
 }
 
-.time-dim-overlay--after {
-    left: var(--time-slider__end);
-    width: calc(100% - var(--time-slider__end));
+.trace-overview-chart__dim-overlay--after {
+    left: var(--trace-overview-chart__window-end);
+    width: calc(100% - var(--trace-overview-chart__window-end));
 }
 
-.time-slider {
+.trace-overview-chart__slider {
     position: absolute;
     width: 8px;
     height: 40px;
@@ -101,15 +127,15 @@
     margin-left: -4px;
 }
 
-.time-slider--start {
-    left: var(--time-slider__start);
+.trace-overview-chart__slider--start {
+    left: var(--trace-overview-chart__window-start);
 }
 
-.time-slider--end {
-    left: var(--time-slider__end);
+.trace-overview-chart__slider--end {
+    left: var(--trace-overview-chart__window-end);
 }
 
-.time-slider::after {
+.trace-overview-chart__slider::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -121,7 +147,8 @@
     border-radius: 1px;
 }
 
-.time-slider .slider-label {
+/* A slider's time, above it */
+.trace-overview-chart__slider .trace-overview-chart__slider-label {
     position: absolute;
     left: 4px;
     top: -19px;
@@ -135,19 +162,11 @@
     border: 1px solid #555;
 }
 
-/*
-.time-slider#startSlider .slider-label {
-    left: 4px;
-}
-
-.time-slider#endSlider .slider-label {
-    right: -26px;
-}
-*/
-.time-range-overlay {
+/* The window, dragged to move it */
+.trace-overview-chart__range-overlay {
     position: absolute;
-    left: var(--time-slider__start);
-    width: calc(var(--time-slider__end) - var(--time-slider__start));
+    left: var(--trace-overview-chart__window-start);
+    width: calc(var(--trace-overview-chart__window-end) - var(--trace-overview-chart__window-start));
     top: 0;
     bottom: 0;
     border-radius: 2px;
@@ -156,12 +175,13 @@
     background: transparent;
 }
 
-.timeline-buttons {
+/* Reset Range, then the window's size */
+.trace-overview-chart__timeline-buttons {
     display: flex;
     justify-content: space-between;
 }
 
-.reset-range-btn {
+.trace-overview-chart__reset-range-button {
     background-color: #404040;
     color: #e0e0e0;
     border: 1px solid #555;
@@ -172,14 +192,15 @@
     transition: background-color 0.2s ease;
 }
 
-.time-range-info {
+.trace-overview-chart__range-info {
     color: var(--text-color--muted);
     padding: 4px 8px;
     font-size: 10px;
 }
 
-/* Pager for large (paged) traces — the standard traces-list Pager widget, top-right above the timeline. */
-.trace-pager-bar {
+/* The pager bar for large (paged) traces: the group level buttons on the left, the traces-list
+   Pager widget on the right, above the timeline */
+.trace-overview-chart__pager-bar {
     flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
@@ -187,18 +208,19 @@
     padding: 2px 8px;
 }
 
-.trace-expand-controls {
+.trace-overview-chart__expand-controls {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.service-operations {
+/* The operations: the grid's lines behind a section header and the list of operations */
+.trace-overview-chart__operations {
     background-color: var(--row__background-color--even);
     position: relative;
 }
 
-.grid-lines {
+.trace-overview-chart__grid-lines {
     position: absolute;
     top: 0;
     left: 400px;
@@ -207,38 +229,32 @@
     background-image:
        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: var(--grid-lines__big-size, 100%) 100%, var(--grid-lines__small-size, 100%) 100%;
-    background-position: var(--grid-lines__big-offset, 0) 0, var(--grid-lines__small-offset, 0) 0;
+    background-size: var(--trace-overview-chart__grid-big-size, 100%) 100%, var(--trace-overview-chart__grid-small-size, 100%) 100%;
+    background-position: var(--trace-overview-chart__grid-big-offset, 0) 0, var(--trace-overview-chart__grid-small-offset, 0) 0;
 }
 
-.section-header {
+.trace-overview-chart__section-header {
     background-color: var(--row__background-color--even);
     padding: 8px 20px;
     border-bottom: 1px solid var(--border-color);
     font-size: 13px;
-    line-height: 15px;      /* explicit line box so .span-info-header can match exactly */
+    line-height: 15px;      /* explicit line box so __span-info-header can match exactly */
     font-weight: 500;
 }
 
-.operation-list {
+.trace-overview-chart__operation-list {
     padding: 8px 0;
 }
 
-/*
- * Trace overview layout. The root (.trace-overview) is a vertical flex column:
- * a full-width timeline on top, then a .trace-body row holding the operation list
- * (left) and, when a span is selected, the Span Info panel (.span-info-panel) on
- * the right — so the span-info header lines up with the section header.
- */
-/* Root stack: pager bar on top (right-aligned), then the trace overview filling the rest. */
-.trace-overview-root {
+/* The pager bar on top (right-aligned), then the panel filling the rest */
+.trace-overview-chart {
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
 }
 
-.trace-overview {
+.trace-overview-chart__panel {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
@@ -246,23 +262,23 @@
     overflow: hidden;
 }
 
-.trace-overview .timeline-container {
+.trace-overview-chart__panel .trace-overview-chart__timeline {
     flex: 0 0 auto;
 }
 
 /*
  * Below the full-width timeline: the operations list on the left and (when a span
  * is selected) the Span Info panel on the right. Both start at the same y, so the
- * span-info header lines up with the "Service & Operation" section header.
+ * span info's header lines up with the "Service & Operation" section header.
  */
-.trace-body {
+.trace-overview-chart__body {
     display: flex;
     flex-direction: row;
     flex: 1 1 auto;
     min-height: 0;
 }
 
-.trace-body .service-operations {
+.trace-overview-chart__body .trace-overview-chart__operations {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
@@ -270,25 +286,26 @@
     flex-direction: column;
 }
 
-.trace-body .section-header {
+.trace-overview-chart__body .trace-overview-chart__section-header {
     flex: 0 0 auto;
 }
 
-.trace-body .operation-list {
+.trace-overview-chart__body .trace-overview-chart__operation-list {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
 }
 
-.operation-item--selected {
+.trace-overview-chart__operation--selected {
     background-color: rgba(255, 140, 66, 0.15);
 }
 
-/* Span Info side panel — shown when a span row is clicked. */
-.span-info-panel {
+/* The Span Info side panel, shown when a span's row is clicked, as wide as it is dragged to
+   (--trace-overview-chart__span-info-width) */
+.trace-overview-chart__span-info {
     position: relative;
     flex: 0 0 auto;
-    width: var(--span-info__width, 340px); /* as wide as it is dragged to */
+    width: var(--trace-overview-chart__span-info-width, 340px);
     min-width: 0;
     min-height: 0;
     display: flex;
@@ -298,7 +315,7 @@
 }
 
 /* Left-edge drag handle to resize the panel. */
-.span-info-resize {
+.trace-overview-chart__span-info-resize {
     position: absolute;
     left: 0;
     top: 0;
@@ -308,36 +325,36 @@
     z-index: 1;
 }
 
-.span-info-resize:hover {
+.trace-overview-chart__span-info-resize:hover {
     background-color: rgba(255, 140, 66, 0.4);
 }
 
-.span-info-header {
+.trace-overview-chart__span-info-header {
     flex: 0 0 auto;
     position: relative;       /* anchors the absolutely-positioned close button */
     padding: 8px 20px;
     border-bottom: 1px solid #404040;
     font-size: 13px;
-    line-height: 15px;        /* same explicit line box as .section-header -> identical height */
+    line-height: 15px;        /* same explicit line box as __section-header -> identical height */
     font-weight: 500;
     background-color: #2d2d2d;
 }
 
-/* Force the title text to match .section-header; without this it picks up a
+/* Force the title text to match __section-header; without this it picks up a
  * different inherited/element font (renders larger and lighter). */
-.span-info-title {
+.trace-overview-chart__span-info-title {
     font-size: 13px;
     font-weight: 500;
 }
 
-.span-info-close {
+.trace-overview-chart__span-info-close {
     position: absolute;
     top: 8px;
     right: 20px;
     cursor: pointer;
 }
 
-.span-info-body {
+.trace-overview-chart__span-info-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -345,7 +362,7 @@
     font-size: 12px;
 }
 
-.span-info-name {
+.trace-overview-chart__span-info-name {
     font-weight: 500;
     margin-bottom: 8px;
     padding-bottom: 8px;
@@ -354,8 +371,9 @@
     word-break: break-all;
 }
 
-.span-info-row,
-.span-info-attr {
+/* A detail or attribute: its key, then its value (CopyTextUtil's doc-ref-link, the row's div) */
+.trace-overview-chart__span-info-row,
+.trace-overview-chart__span-info-attr {
     margin: 3px 0;
     word-break: break-all;
     display: flex;
@@ -363,31 +381,33 @@
     gap: 4px;
 }
 
-.span-info-row .doc-ref-link,
-.span-info-attr .doc-ref-link {
+.trace-overview-chart__span-info-row > div,
+.trace-overview-chart__span-info-attr > div {
     min-width: 0;
     flex: 1;
 }
 
-.span-info-attr .doc-ref-link__text {
+/* An attribute's value's text (the doc-ref-link's first part) wraps */
+.trace-overview-chart__span-info-attr > div > div:first-child {
     white-space: pre-wrap;
     word-break: normal;
     overflow-wrap: anywhere;
 }
 
-.span-info-key {
+.trace-overview-chart__span-info-key {
     color: #9aa0a6;
     flex-shrink: 0;
 }
 
-.span-info-section {
+.trace-overview-chart__span-info-section {
     font-weight: 500;
     margin: 12px 0 4px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color);
 }
 
-.operation-item {
+/* An operation's row: its name (with its expander), then its span's bar */
+.trace-overview-chart__operation {
     display: flex;
     align-items: center;
     padding: 2px 2px;
@@ -397,17 +417,18 @@
     padding-right: 50px;
 }
 
-/* Indented by its span's depth in the tree (--operation__depth) */
-.operation-content {
+/* Indented by its span's depth in the tree (--trace-overview-chart__depth, set by
+   TraceOverviewChart.appendOperationContent), so it works at any nesting depth */
+.trace-overview-chart__operation-content {
     display: flex;
     align-items: center;
     width: 400px;
     position: relative;
     flex-shrink: 0;
-    padding-left: calc(var(--operation__depth, 0) * 30px);
+    padding-left: calc(var(--trace-overview-chart__depth, 0) * 30px);
 }
 
-.expand-icon {
+.trace-overview-chart__expand {
     width: 12px;
     height: 12px;
     margin-right: 6px;
@@ -421,7 +442,7 @@
 
 /* The reused ARROW_RIGHT/ARROW_DOWN SVGs (svg-image) sized to the 12px cell; they use currentColor. The
    inner <svg> needs explicit dimensions or it renders at its natural (huge) size. */
-.expand-icon .svg-image {
+.trace-overview-chart__expand .trace-overview-chart__expand-icon {
     width: 100%;
     height: 100%;
     display: flex;
@@ -429,28 +450,30 @@
     justify-content: center;
 }
 
-.expand-icon svg {
+.trace-overview-chart__expand svg {
     width: 12px;
     height: 12px;
     display: block;   /* block avoids the inline-baseline offset so the arrow centres in the row */
 }
 
 /* Leaf spans: keep the 12px slot so names stay aligned, but no control. */
-.expand-icon.expand-leaf {
+.trace-overview-chart__expand.trace-overview-chart__expand--leaf {
     cursor: default;
 }
 
-.operation-content .doc-ref-link {
+/* The name (CopyTextUtil's doc-ref-link, the content's div) fills the rest, its text (the link's
+   first part) cut short */
+.trace-overview-chart__operation-content > div {
     flex: 1;
     min-width: 0;
 }
 
-.operation-content .doc-ref-link__text {
+.trace-overview-chart__operation-content > div > div:first-child {
     min-width: 0;
     overflow: hidden;
 }
 
-.operation-name {
+.trace-overview-chart__operation-name {
     color: #b0b0b0;
     display: block;
     flex: 1;
@@ -460,17 +483,17 @@
     text-overflow: ellipsis;   /* truncate long names instead of wrapping/overflowing */
 }
 
-.waterfall-container {
+.trace-overview-chart__waterfall {
     position: relative;
     flex-grow: 1;
 }
 
-/* Placed by its span's time in the window (--span-bar__left and __width), with its duration after it
-   (--span-bar__end) */
-.span-bar {
+/* Placed by its span's time in the window (--trace-overview-chart__bar-left and -width), with its
+   duration after it (--trace-overview-chart__bar-end) */
+.trace-overview-chart__span-bar {
     position: absolute;
-    left: var(--span-bar__left);
-    width: var(--span-bar__width);
+    left: var(--trace-overview-chart__bar-left);
+    width: var(--trace-overview-chart__bar-width);
     top: 50%;
     transform: translateY(-50%);
     height: 6px;
@@ -478,59 +501,33 @@
     min-width: 2px;
 }
 
-.span-http {
+.trace-overview-chart__span-bar--http {
     background: linear-gradient(90deg, #ff8c42 0%, #ff6b1a 100%);
 }
 
 /* Span that reported an error status — red bar (see TraceOverviewChart.isErrorSpan). */
-.span-error {
+.trace-overview-chart__span-bar--error {
     background: linear-gradient(90deg, var(--red-400) 0%, var(--red-600) 100%);
 }
 
-.duration {
+.trace-overview-chart__duration {
     color: #888;
     font-size: 11px;
     position: absolute;
-    left: var(--span-bar__end);
+    left: var(--trace-overview-chart__bar-end);
     top: 50%;
     transform: translateY(-50%);
     margin-left: 2px;
 }
 
-.children {
+.trace-overview-chart__children {
     transition: all 0.2s ease;
-}
-
-/* Operation-name indentation is .operation-content's padding-left, from the span's depth
- * (--operation__depth, set by TraceOverviewChart.appendOperationContent), so it works at any
- * nesting depth. */
-
-/* ---- Traces toolbar ---- */
-
-/* Wrapper contributed to the doc tab's save-toolbar row (via HasToolbar); flex-grow fills the
-   width right of the save buttons and pushes the TimeRangeSelector to the right edge. */
-.traces-toolbar {
-    display: flex;
-    flex-grow: 1;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 0 5px;
-}
-
-/* ---- Errored trace rows ---- */
-
-/* Colour all text in a trace-list row red when the trace has any errored span (TraceRoot.error).
-   Targets the cells (and their content) so it overrides the columns' own text colours; the themed
-   --text-color--red keeps it legible in both light and dark themes. */
-.trace-row--error .data-grid__cell,
-.trace-row--error .data-grid__cell * {
-    color: var(--text-color--red);
 }
 
 /* The glass laid over the page while the trace overview's divider is dragged (TraceOverviewChart),
    so the drag keeps its cursor and isn't lost to an iframe. It has a colour, or the mouse events
    would go through it, but can't be seen */
-.timeline-glass {
+.trace-overview-chart__glass {
     position: absolute;
     margin: 0px;
     padding: 0px;

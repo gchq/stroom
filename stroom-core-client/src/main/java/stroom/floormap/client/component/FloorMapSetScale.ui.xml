@@ -5,12 +5,12 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The Set Scale dialog's content (stroom-floormap.css): what the line measured comes to now, and
+      The Set Scale dialog's content (floor-map-set-scale.css): what the line measured comes to now, and
       what it really is, a distance and its unit. The table only lays the labels beside their
       controls, so it is presentation to assistive technology
     -->
-    <g:HTMLPanel styleName="floormap-set-scale">
-        <table class="floormap-set-scale-fields" role="presentation">
+    <g:HTMLPanel styleName="floor-map-set-scale">
+        <table class="floor-map-set-scale__fields" role="presentation">
             <tbody>
                 <tr>
                     <td>The line you measured is currently</td>
@@ -19,8 +19,8 @@
                 <tr>
                     <td ui:field="distanceLabel">It is really</td>
                     <td>
-                        <g:FlowPanel styleName="floormap-set-scale-row">
-                            <form:TextBox ui:field="distanceBox" addStyleNames="stroom-control floormap-set-scale-distance"
+                        <g:FlowPanel styleName="floor-map-set-scale__row">
+                            <form:TextBox ui:field="distanceBox" addStyleNames="stroom-control floor-map-set-scale__distance"
                                             placeholder="e.g. 2.4"/>
                             <i:SelectionBox ui:field="unitListBox"/>
                         </g:FlowPanel>

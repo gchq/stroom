@@ -19,13 +19,21 @@
    (form-heading). */
 
 /* A box holding a control, or a read-only field's text, framed and filled as an input is, in either
-   theme, so it stands apart from the dialog around it. A grid in it (data-grid.css) sits on the
-   box's colour */
+   theme, so it stands apart from the dialog around it */
 .control-box {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
     overflow: hidden;
     background-color: var(--control__background-color);
+}
+
+/* A box with a field's padding and text colour, whose grid's header sits on the box's colour: the
+   look the panels framed by a field's class (stroom-control) had before wave 41, kept so they don't
+   move */
+.control-box--padded {
+    color: var(--control__text-color);
+    padding: var(--input__padding--vertical) var(--input__padding--horizontal);
+    overflow: visible;
     --data-grid__head-background-color: var(--control__background-color);
 }
 

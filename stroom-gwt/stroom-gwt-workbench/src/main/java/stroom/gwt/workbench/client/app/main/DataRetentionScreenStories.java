@@ -98,9 +98,8 @@ public final class DataRetentionScreenStories {
     private static final String STOP_QUERY = "Stop Query";
     private static final String SET_FILTER = "Set Query Filter";
 
-    // The expression panel has no class of its own; it is the expression tree's
-    // view (ExpressionTree)
-    private static final String EXPRESSION_PANEL = ".expression-tree-view";
+    // The expression panel is the expression tree (ExpressionTree)
+    private static final String EXPRESSION_PANEL = ".expression-tree";
 
     private DataRetentionScreenStories() {
         // Static utility

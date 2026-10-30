@@ -65,3 +65,9 @@
 .welcome-tab__build-info > tbody > tr > td:last-child {
     user-select: text;
 }
+
+/* Links in its text are underlined, as links in running text are, so they are told from the text
+   round them by more than their colour (WCAG 1.4.1) (was base.css's) */
+.welcome-tab__body a {
+    text-decoration: underline;
+}

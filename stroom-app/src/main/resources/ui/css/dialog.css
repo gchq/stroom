@@ -131,14 +131,10 @@
     background-color: var(--popup__background-color);
 }
 
-/* The window options button (Move, Resize, Maximise, Restore Size) */
+/* The window options button (Move, Resize, Maximise, Restore Size), its icon in the title's colour
+   (toolbar--text-colour), as part of the window rather than an action of the dialog */
 .dialog__toolbar {
     align-self: center;
-}
-
-/* Its icon in the title's colour, as part of the window rather than an action of the dialog */
-.dialog__toolbar .toolbar-button__icon {
-    color: var(--text-color);
 }
 
 /* Being moved or resized from the keyboard (modifiers with no ARIA attribute): the focus border and
@@ -298,4 +294,10 @@
         outline: 2px solid Highlight;
         outline-offset: 2px;
     }
+}
+
+/* The colour a grid's header takes in it (data-grid.css): a layer behind its content (dialog__frame) paints its colour, so the grid can't
+   inherit it */
+.dialog {
+    --data-grid__head-background-color: var(--dialog__background-color);
 }

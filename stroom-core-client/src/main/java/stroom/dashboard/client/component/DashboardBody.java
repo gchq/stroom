@@ -22,16 +22,14 @@ import stroom.widget.component.client.Component;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// A dashboard's body: its layout of panes, drawn for design mode while the dashboard is designed.
+/// A dashboard's body: its layout of panes, which draws itself for design mode while the dashboard is
+/// designed.
 public class DashboardBody extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    @UiField
-    FlowPanel root;
     @UiField
     FlexLayout layout;
 
@@ -43,11 +41,6 @@ public class DashboardBody extends Component {
     /// @return The layout of panes, for the controller to fill.
     public FlexLayout getLayout() {
         return layout;
-    }
-
-    /// @param designMode Whether the dashboard is being designed.
-    public void setDesignMode(final boolean designMode) {
-        root.setStyleName("dashboard--design-mode", designMode);
     }
 
 

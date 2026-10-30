@@ -56,7 +56,7 @@ public class UserAndGroupHelper {
     }
 
     public static SafeHtml buildSingleIconHeader(final boolean isGroup) {
-        final String iconClassName = "icon-cell";
+        final String iconClassName = "icon-cell data-grid__header-icon";
         final SvgImage icon = isGroup
                 ? SvgImage.USERS
                 : SvgImage.USER;
@@ -69,12 +69,12 @@ public class UserAndGroupHelper {
                                     icon,
                                     iconClassName));
                         },
-                        Attribute.className("single-icon-column-header"))
+                        Attribute.className("data-grid__icon-header"))
                 .toSafeHtml();
     }
 
     public static SafeHtml buildUserAndGroupIconHeader() {
-        final String iconClassName = "icon-cell";
+        final String iconClassName = "icon-cell data-grid__header-icon";
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {
@@ -88,7 +88,7 @@ public class UserAndGroupHelper {
                                     SvgImage.USERS,
                                     iconClassName));
                         },
-                        Attribute.className("two-icon-column-header"))
+                        Attribute.className("data-grid__icon-header"))
                 .toSafeHtml();
     }
 

@@ -25,41 +25,41 @@
     <!-- Grid layout: columns are [left controls | bar | right controls]; the histogram and
          date-label rows live in the middle column so they always stay in line with the bar,
          however wide the flanking control groups are (e.g. when the help button is shown). -->
-    <g:HTMLPanel styleName="stroom-floormap-timeline-container max">
+    <g:HTMLPanel styleName="floor-map-timeline max">
 
         <!-- Histogram canvas sits above the bar, in the same grid column -->
-        <g:SimplePanel addStyleNames="stroom-floormap-timeline-histogram-container">
+        <g:SimplePanel addStyleNames="floor-map-timeline__histogram">
             <h:Histogram ui:field="histogram"/>
         </g:SimplePanel>
 
         <!-- Left controls: step-back, play/pause, step-forward -->
-        <b:Toolbar name="Playback controls" addStyleNames="stroom-floormap-timeline-left-controls">
+        <b:Toolbar name="Playback controls" addStyleNames="floor-map-timeline__left-controls">
             <b:ToolbarButton ui:field="stepBack" svg="STEP_BACKWARD" title="Step Back"
-                             addStyleNames="stroom-floormap-timeline-step-button"/>
+                             addStyleNames="floor-map-timeline__step-button"/>
             <b:ToolbarButton ui:field="playPause" svg="PLAY" title="Play"
-                             addStyleNames="stroom-floormap-timeline-play-button"/>
+                             addStyleNames="floor-map-timeline__play-button"/>
             <b:ToolbarButton ui:field="stepForward" svg="STEP_FORWARD" title="Step Forward"
-                             addStyleNames="stroom-floormap-timeline-step-button"/>
+                             addStyleNames="floor-map-timeline__step-button"/>
         </b:Toolbar>
 
         <!-- Centre section: the timeline scrubber bar, a slider from 0 to 100 (%) -->
-        <div class="stroom-floormap-timeline-centre">
-            <a:AriaPanel ui:field="outerBar" addStyleNames="stroom-floormap-timeline-outer-bar"
+        <div class="floor-map-timeline__centre">
+            <a:AriaPanel ui:field="outerBar" addStyleNames="floor-map-timeline__bar"
                          role="slider" tabIndex="0" ariaValueMin="0" ariaValueMax="100" ariaValueNow="0">
-                <g:FlowPanel addStyleNames="stroom-floormap-timeline-inner-bar"/>
-                <g:FlowPanel addStyleNames="stroom-floormap-timeline-handle"/>
-                <tx:Label ui:field="scrubTooltip" addStyleNames="stroom-floormap-timeline-scrub-tooltip"/>
+                <g:FlowPanel addStyleNames="floor-map-timeline__progress"/>
+                <g:FlowPanel addStyleNames="floor-map-timeline__handle"/>
+                <tx:Label ui:field="scrubTooltip" addStyleNames="floor-map-timeline__scrub-tooltip"/>
             </a:AriaPanel>
         </div>
 
         <!-- Right controls: speed badge (a button that opens the speed menu), settings gear, and
              help, shown only where it is given (the Editor tab) -->
-        <div class="stroom-floormap-timeline-right-controls">
-            <a:AriaPanel ui:field="speedBadge" addStyleNames="stroom-floormap-timeline-speed-badge"
+        <div class="floor-map-timeline__right-controls">
+            <a:AriaPanel ui:field="speedBadge" addStyleNames="floor-map-timeline__speed-badge"
                          role="button" tabIndex="0" title="Playback Speed"/>
             <b:Toolbar name="Playback settings">
                 <b:ToolbarButton ui:field="settings" svg="SETTINGS" title="Playback Settings"
-                                 addStyleNames="stroom-floormap-timeline-settings-button"/>
+                                 addStyleNames="floor-map-timeline__settings-button"/>
             </b:Toolbar>
             <b:Toolbar ui:field="helpToolbar" name="Timeline help" visible="false"/>
         </div>
@@ -67,19 +67,19 @@
         <!-- Date labels sit below the playback row, inset to align with the bar ends. The
              out-of-range chevrons are decoration (guillemets a screen reader reads as punctuation
              or skips); the status below says the same in words. -->
-        <div class="stroom-floormap-timeline-date-labels-row">
-            <div class="stroom-floormap-timeline-date-labels-left">
+        <div class="floor-map-timeline__date-labels">
+            <div class="floor-map-timeline__date-labels-left">
                 <div ui:field="outOfRangeLeft"
-                     class="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--left"
+                     class="floor-map-timeline__out-of-range floor-map-timeline__out-of-range--left"
                      title="Object out of range. Extend timeline range to view object."
                      aria-hidden="true">&#171;</div>
-                <tx:Label ui:field="startDateLabel" addStyleNames="stroom-floormap-timeline-date-label"/>
+                <tx:Label ui:field="startDateLabel" addStyleNames="floor-map-timeline__date-label"/>
             </div>
-            <div class="stroom-floormap-timeline-date-labels-right">
+            <div class="floor-map-timeline__date-labels-right">
                 <tx:Label ui:field="endDateLabel"
-                         addStyleNames="stroom-floormap-timeline-date-label stroom-floormap-timeline-date-label-end"/>
+                         addStyleNames="floor-map-timeline__date-label floor-map-timeline__date-label--end"/>
                 <div ui:field="outOfRangeRight"
-                     class="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--right"
+                     class="floor-map-timeline__out-of-range floor-map-timeline__out-of-range--right"
                      title="Object out of range. Extend timeline range to view object."
                      aria-hidden="true">&#187;</div>
             </div>
@@ -87,9 +87,9 @@
 
         <!-- Announces the out-of-range state, which is otherwise conveyed only by a pulsing orange
              chevron appearing. role="status" implies aria-live="polite"; both are set because some
-             screen readers honour only one. Absolutely positioned by the visually-hidden class, so
+             screen readers honour only one. Absolutely positioned by sr-only, so
              grid auto-placement does not apply to it and it cannot disturb the layout above. -->
-        <div ui:field="timelineStatus" class="stroom-floormap-visually-hidden"
+        <div ui:field="timelineStatus" class="sr-only"
              role="status" aria-live="polite" aria-atomic="true"></div>
     </g:HTMLPanel>
 </ui:UiBinder>

@@ -32,9 +32,9 @@
     cursor: pointer;
 }
 
-/* A row action's icon also shows while it has the focus */
-.row-action:focus .svg-image,
-.row-action:focus .svg-image.svg-image--hover {
+/* A row action's icon (RowActions.ICON_CLASS_NAME) also shows while it has the focus, an icon shown
+   only on a hover too (user-ref-link.css and doc-ref-link.css, imported before this) */
+.row-action:focus .row-action__icon {
     opacity: .8;
     color: var(--text-color);
 }

@@ -4,8 +4,8 @@
              xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <tab:CurveTabLayoutPanel ui:field="layout" styleName="curve-tab-layout__layout">
-        <g:FlowPanel styleName="tab-bar-container">
-            <b:Toolbar name="Sidebar" addStyleNames="toolbar--quiet">
+        <g:FlowPanel styleName="curve-tab-layout__bar">
+            <b:Toolbar name="Sidebar" addStyleNames="curve-tab-layout__toolbar toolbar--quiet">
                 <b:ToolbarButton ui:field="menu" svg="HIDE_MENU" title="Hide Sidebar"/>
             </b:Toolbar>
             <g:SimplePanel styleName="curve-tab-layout__tab-bar-outer">
@@ -13,7 +13,7 @@
             </g:SimplePanel>
         </g:FlowPanel>
         <g:SimplePanel styleName="curve-tab-layout__layer-container-outer">
-            <tab:LayerContainerImpl ui:field="layerContainer" styleName="stroom-main-content-container"/>
+            <tab:LayerContainerImpl ui:field="layerContainer" styleName="curve-tab-layout__content"/>
         </g:SimplePanel>
     </tab:CurveTabLayoutPanel>
 </ui:UiBinder> 

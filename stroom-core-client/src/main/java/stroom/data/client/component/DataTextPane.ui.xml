@@ -3,12 +3,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:button="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max stepping-button-container">
+    <g:FlowPanel styleName="max stepping-button__container">
         <g:SimplePanel styleName="max">
             <ed:CodeEditor ui:field="editor"/>
         </g:SimplePanel>
         <button:FabButton ui:field="steppingButton"
-                          addStyleNames="stepping-button"
+                          addStyleNames="stepping-button fab-button--primary"
                           icon="STEPPING"
                           title="Enter Stepping Mode" visible="false"/>
     </g:FlowPanel>

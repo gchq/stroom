@@ -16,7 +16,7 @@
 
 /* The document types a user may create, as icons in a row (DocumentUserPermissionsList). */
 
-.create-document-types-container {
+.create-document-types {
     display: flex;
     flex-direction: row;
     gap: 0.2em;

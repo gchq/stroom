@@ -62,13 +62,13 @@
 /* The glass behind a modal popup (PopupUtil), and the glass over the page while a popup is
    dragged or resized (AbstractPopupPanel), so the drag keeps its cursor (were GWT's
    gwt-PopupPanelGlass and stroom.css's popupPanel-dragGlass) */
-.popup-glass {
+.popup__glass {
   background-color: #000;
   opacity: 0.4;
   z-index: 100;
 }
 
-.popup-drag-glass {
+.popup__drag-glass {
     position: absolute;
 	background-color: transparent;
 	visibility: hidden;
@@ -79,6 +79,12 @@
     height: var(--glass__height);
 }
 
-.popup-drag-glass--visible {
+.popup__drag-glass--visible {
 	visibility: visible;
+}
+
+/* The colour a grid's header takes in it (data-grid.css): the elements between it and the grid are transparent, so the grid can't
+   inherit it */
+.popup {
+    --data-grid__head-background-color: var(--popup__background-color);
 }

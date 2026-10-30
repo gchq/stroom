@@ -24,7 +24,7 @@
         <g:ScrollPanel ui:field="errorContainer" styleName="query-data-pane__error-container" visible="false">
             <tx:Label ui:field="errorLabel" styleName="query-data-pane__error-label"/>
         </g:ScrollPanel>
-        <g:SimplePanel styleName="max dock-max result-table__grid">
+        <g:SimplePanel styleName="max dock-max">
             <q:QueryResultTable ui:field="table"/>
         </g:SimplePanel>
     </g:FlowPanel>

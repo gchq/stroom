@@ -29,6 +29,15 @@
     width: 100%;
 }
 
+/* Borderless, filling the height of the row it is in, e.g. a term's value (TermEditor), as the GWT
+   SuggestBox it replaced was */
+.suggestion-box--borderless .suggestion-box__input {
+	height: 100%;
+	padding-left: 5px;
+	padding-right: 5px;
+	border: none;
+}
+
 .suggestion-box__popup {
     z-index: 100;
     min-width: var(--suggestion-box__width, 200px);

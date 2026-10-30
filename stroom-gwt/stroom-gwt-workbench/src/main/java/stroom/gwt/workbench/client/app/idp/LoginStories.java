@@ -148,7 +148,7 @@ public final class LoginStories {
         play.expect(play.getByPlaceholderText("Enter Password")).toHaveValue("");
         play.expect(play.getByRole("button", IdpPlays.SIGN_IN)).toBeEnabled();
         // The host page's loading message is hidden once the page is shown
-        play.expect(play.screen().querySelector("#loading")).toHaveClass("loading--hidden");
+        play.expect(play.screen().querySelector("#loading")).toHaveClass("app-page__loading--hidden");
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 IdpPlays.FETCH_POLICY.toSpyMatcher()));
         IdpPage.expectNoProblems(play);

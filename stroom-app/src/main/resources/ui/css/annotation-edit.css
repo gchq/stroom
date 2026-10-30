@@ -156,3 +156,8 @@
 .annotation-edit__button {
     width: 200px;
 }
+
+/* A label or collection, a lozenge (lozenge.css), one under another */
+.annotation-edit__tag {
+    padding: 3px 0;
+}

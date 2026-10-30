@@ -15,13 +15,13 @@
  */
 
 /*
- * A query expression's tree (ExpressionTree, a draggable tree, see draggable-tree.css),
- * named BEM style: the tree (ExpressionTreePanel, .expression-tree), its brackets (__canvas) and its
- * items (__items, the tree for assistive technology; see expression-item.css). The view's live
- * region is the draggable tree's (draggable-tree.css).
+ * A query expression's tree (ExpressionTree, a draggable tree, see draggable-tree.css), named BEM
+ * style. The tree it draws (ExpressionTreePanel, .expression-tree-panel) holds its brackets
+ * (__canvas) and its items (__items, the tree for assistive technology; see expression-item.css).
+ * Its live region is the draggable tree's (draggable-tree.css).
  */
 
-.expression-tree-view {
+.expression-tree {
 	position: absolute;
 }
 

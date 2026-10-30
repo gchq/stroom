@@ -12,7 +12,7 @@
                             label="Imports"
                             helpText="Other dictionaries whose words, and the words of their own imports, are added to this dictionary. Imported words come before this dictionary's own words."
                             addStyleNames="default-min-sizes">
-                <g:SimplePanel addStyleNames="dock-max control-box">
+                <g:SimplePanel addStyleNames="dock-max control-box control-box--padded">
                     <d:DocRefList ui:field="imports"/>
                 </g:SimplePanel>
             </form:FormGroup>
@@ -20,7 +20,7 @@
                             label="Effective Words"
                             helpText="The words in the selected import, including words from any dictionaries it imports. Read-only."
                             addStyleNames="default-min-sizes dock-max imports-tab__words">
-                <g:SimplePanel addStyleNames="dock-max control-box">
+                <g:SimplePanel addStyleNames="dock-max control-box control-box--padded">
                     <d:EffectiveWordsList ui:field="words"/>
                 </g:SimplePanel>
             </form:FormGroup>

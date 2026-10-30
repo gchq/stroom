@@ -67,13 +67,13 @@ public final class FloorMapGrid {
 
     // -- Appearance constants ------------------------------------------------
 
-    // The grid's colours come from classes in stroom-floormap.css, which use the theme's tokens
+    // The grid's colours come from classes in floor-map-grid.css, which use the theme's tokens
     // (--floormap-grid__background-color, __major-stroke and __minor-stroke): a CSS rule resolves
     // var() as a property declaration does, which a presentation attribute is not clearly
     // guaranteed to.
-    private static final String BG_CLASS = "stroom-floormap-grid__background";
-    private static final String MAJOR_CLASS = "stroom-floormap-grid__line stroom-floormap-grid__line--major";
-    private static final String MINOR_CLASS = "stroom-floormap-grid__line stroom-floormap-grid__line--minor";
+    private static final String BG_CLASS = "floor-map-grid__background";
+    private static final String MAJOR_CLASS = "floor-map-grid__line floor-map-grid__line--major";
+    private static final String MINOR_CLASS = "floor-map-grid__line floor-map-grid__line--minor";
     /// Desired screen-pixel width for major grid lines.
     private static final double MAJOR_SCREEN_PX = 1.0;
     /// Maximum opacity for minor grid lines (reached mid-decade).

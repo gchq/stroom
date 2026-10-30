@@ -35,17 +35,22 @@
     flex-basis: 200px;
 }
 
-.explorer-node-edit-tags__input-panel .toolbar {
+/* The Clear button's toolbar, over the end of the field */
+.explorer-node-edit-tags__input-panel .explorer-node-edit-tags__clear-toolbar {
     position: absolute;
     margin-top: 7px;
     right: 50px;
 }
 
-.explorer-node-edit-tags__clear .toolbar-button__icon {
-    color: var(--control__text-color);
+/* Its icon in the field's text colour: the colour a toolbar button's icon takes (toolbar-button.css) */
+.explorer-node-edit-tags__clear {
+    --icon-button__color: var(--control__text-color);
 }
 
-.explorer-node-edit-tags__lists .form-group {
+/* The lists' groups side by side, so without the space a form group has above it after the first
+   (form-group.css) */
+.explorer-node-edit-tags__lists .explorer-node-edit-tags__all-tags,
+.explorer-node-edit-tags__lists .explorer-node-edit-tags__node-tags {
     margin-top: 0px;
 }
 
@@ -54,8 +59,4 @@
 .explorer-node-edit-tags__lists {
     flex-basis: 0;
     min-height: 0;
-}
-
-.explorer-node-edit-tags .form-label {
-    margin-bottom: 0px;
 }

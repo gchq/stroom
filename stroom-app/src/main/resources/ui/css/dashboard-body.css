@@ -23,13 +23,6 @@
     padding-left: var(--control__padding--horizontal);
 }
 
-.dashboard-body .tab-bar--link .tab-bar__tab {
-    opacity: 0.8 !important;
-    color: var(--link-tab__text-color) !important;
-    transition: none;
-    -webkit-transition: none;
-}
-
 .dashboard-body__content {
     display: flex;
     flex-grow: 1;

@@ -51,7 +51,7 @@ class TestAppServlet {
         final String html = render(new StroomServlet(UiConfig::new, () -> mock(UserPreferencesService.class)));
 
         assertThat(html)
-                .contains("<body class=\"stroom-body\">")
+                .contains("<body class=\"app-page\">")
                 .doesNotContain("oncontextmenu");
     }
 

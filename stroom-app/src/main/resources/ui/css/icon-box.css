@@ -35,6 +35,13 @@
     min-width: 200px;
 }
 
+/* A box whose field has no least width, as narrow as its box, e.g. in a grid's cell, an expression's
+   term or a duration's unit (were selection-box.css's, date-time-box.css's and
+   duration-picker.css's) */
+.icon-box--fluid .icon-box__field {
+    min-width: 0;
+}
+
 /* The icon, over the end of the field, centred on its height */
 .icon-box__icon {
     position: absolute;

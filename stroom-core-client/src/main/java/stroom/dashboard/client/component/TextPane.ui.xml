@@ -6,11 +6,11 @@
              xmlns:l="urn:import:stroom.data.client.component"
              xmlns:button="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
-    <g:FlowPanel styleName="max dock-container-vertical stroom-dashboard-text">
-        <g:FlowPanel styleName="dock-max stepping-button-container">
+    <g:FlowPanel styleName="max dock-container-vertical text-pane">
+        <g:FlowPanel styleName="dock-max stepping-button__container">
             <g:SimplePanel ui:field="content" styleName="max"/>
             <button:FabButton ui:field="steppingButton"
-                              addStyleNames="stepping-button"
+                              addStyleNames="stepping-button fab-button--primary"
                               icon="STEPPING"
                               title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>

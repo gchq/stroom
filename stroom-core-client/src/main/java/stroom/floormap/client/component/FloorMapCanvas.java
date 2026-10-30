@@ -133,7 +133,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// Opacity applied to a dimmed (0.3) layer group.
     private static final String DIMMED_LAYER_OPACITY = "0.3";
     /// The focus panel's class while a modal gesture shows the crosshair pointer.
-    private static final String CROSSHAIR = "stroom-floormap-canvas-focus--crosshair";
+    private static final String CROSSHAIR = "floor-map-canvas--crosshair";
     private static final String HANDLE_STROKE = ACCENT_BLUE;
     private static final String HANDLE_FILL = "#ffffff";
     /// Fill for the round "+" insert handle (light blue tint).
@@ -159,7 +159,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// drawn *outside* the glyph, over whatever floor plan is beneath it: it
     /// needs the theme's text colour and a halo to stay legible in both light and
     /// dark themes, and neither can be hard-coded here.
-    private static final String GLYPH_CAPTION_CLASS = "stroom-floormap-glyph-caption";
+    private static final String GLYPH_CAPTION_CLASS = "floor-map-canvas__glyph-caption";
 
     /// Average glyph advance (px) used to estimate a caption's width for collision
     /// testing, at the caption's 11px font. Deliberately a little generous:
@@ -276,7 +276,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     Label areaDrawHint;
 
     private static final String AREA_DRAW_HINT_VISIBLE =
-            "stroom-floormap-area-draw-hint--visible";
+            "floor-map-canvas__area-draw-hint--visible";
 
     /// Pill that follows the cursor while an object is moved or resized, showing
     /// its position or size in real-world units.
@@ -284,7 +284,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     Label gestureReadout;
 
     private static final String GESTURE_READOUT_VISIBLE =
-            "stroom-floormap-gesture-readout--visible";
+            "floor-map-canvas__gesture-readout--visible";
 
     /// Offset of the readout from the cursor, so the pointer never covers it.
     private static final int READOUT_OFFSET_X_PX = 16;
@@ -309,9 +309,9 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     FlowPanel hoverLines;
 
     private static final String HOVER_TOOLTIP_VISIBLE =
-            "stroom-floormap-hover-tooltip--visible";
+            "floor-map-canvas__hover-tooltip--visible";
     private static final String HOVER_TOOLTIP_LINE_CLASS =
-            "stroom-floormap-hover-tooltip__line";
+            "floor-map-canvas__hover-line";
 
     /// Gap between the glyph's centre and the tooltip's near corner.
     private static final int HOVER_TOOLTIP_OFFSET_PX = 34;
@@ -339,10 +339,10 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     Label emptyStatus;
 
     private static final String EMPTY_STATUS_VISIBLE =
-            "stroom-floormap-empty-status--visible";
+            "floor-map-canvas__empty-status--visible";
 
     private static final String EMPTY_STATUS_FAULT =
-            "stroom-floormap-empty-status--fault";
+            "floor-map-canvas__empty-status--fault";
 
     /// Visually-hidden live region carrying the map's spoken commentary. See
     /// [#announce(String)].
@@ -936,7 +936,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                     new Attribute("font-family", "sans-serif"),
                     new Attribute("font-weight", "600"),
                     new Attribute("paint-order", "stroke"),
-                    new Attribute("class", "stroom-floormap-measure-label"),
+                    new Attribute("class", "floor-map-canvas__measure-label"),
                     new Attribute("stroke-width", "3"),
                     new Attribute("pointer-events", "none"));
         }
@@ -981,7 +981,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
         }
         scaleBar.setVisible(true);
         scaleBarLabel.setText(FloorMapMeasurementUnits.format(measurementUnits, bar[0]));
-        CssProperties.set(scaleBarLine.getElement(), "--floormap-scale-bar__width", bar[1] + "px");
+        CssProperties.set(scaleBarLine.getElement(), "--floor-map-canvas__scale-bar-width", bar[1] + "px");
     }
 
     /// Sets what one map unit means in the real world, used to label the grid
@@ -1024,8 +1024,9 @@ public class FloorMapCanvas extends Component implements RequiresResize {
             y = cursorYPx - READOUT_OFFSET_Y_PX - READOUT_ASSUMED_HEIGHT_PX;
         }
 
-        CssProperties.set(gestureReadout.getElement(), "--floormap-gesture-readout__left", Math.max(0, x) + "px");
-        CssProperties.set(gestureReadout.getElement(), "--floormap-gesture-readout__top", Math.max(0, y) + "px");
+        final Element readout = gestureReadout.getElement();
+        CssProperties.set(readout, "--floor-map-canvas__gesture-readout-left", Math.max(0, x) + "px");
+        CssProperties.set(readout, "--floor-map-canvas__gesture-readout-top", Math.max(0, y) + "px");
         gestureReadout.addStyleName(GESTURE_READOUT_VISIBLE);
     }
 
@@ -1099,8 +1100,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
             y = anchorYPx - HOVER_TOOLTIP_OFFSET_PX - tooltipHeight;
         }
 
-        CssProperties.set(hoverTooltip.getElement(), "--floormap-hover-tooltip__left", Math.max(0, x) + "px");
-        CssProperties.set(hoverTooltip.getElement(), "--floormap-hover-tooltip__top", Math.max(0, y) + "px");
+        CssProperties.set(hoverTooltip.getElement(), "--floor-map-canvas__hover-tooltip-left", Math.max(0, x) + "px");
+        CssProperties.set(hoverTooltip.getElement(), "--floor-map-canvas__hover-tooltip-top", Math.max(0, y) + "px");
     }
 
     /// The width/height ratio of an image the canvas has already loaded, or
@@ -1132,7 +1133,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
 
     /// Shows, hides and words the instruction pill for whichever modal canvas
     /// mode is active. It is an HTML overlay (see the ui.xml) rather than part of
-    /// the rebuilt SVG, styled via `stroom-floormap-area-draw-hint` to match
+    /// the rebuilt SVG, styled via `floor-map-canvas__area-draw-hint` to match
     /// the timeline scrub tooltip.
     ///
     /// A modal mode must be visibly announced from the instant it starts, or

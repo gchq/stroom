@@ -20,3 +20,11 @@
     align-items: center;
     gap: 4px;
 }
+
+/* A trace with any errored span (TraceRoot.error): all of its row's text is red. It colours the
+   row's cells (its divs, DataGrid's data-grid__cell) and their content, so it overrides the
+   columns' own text colours; the themed --text-color--red keeps it legible in both themes. */
+.data-grid__row.traces-list__row--error > div,
+.data-grid__row.traces-list__row--error > div * {
+    color: var(--text-color--red);
+}

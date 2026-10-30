@@ -19,7 +19,7 @@
                 </g:SimplePanel>
 
                 <!-- User Name -->
-                <form:FormGroup ui:field="userNameGroup" identity="userName" label="User Name" required="true"
+                <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="userNameGroup" identity="userName" label="User Name" required="true"
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
                         <!-- The fields say what they hold, so that browsers and password managers
@@ -30,7 +30,7 @@
                 </form:FormGroup>
 
                 <!-- Password -->
-                <form:FormGroup ui:field="passwordGroup" identity="password" label="Password" required="true">
+                <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="passwordGroup" identity="password" label="Password" required="true">
                     <form:PasswordBox ui:field="password" placeholder="Enter Password"
                                       autocomplete="current-password"/>
                 </form:FormGroup>

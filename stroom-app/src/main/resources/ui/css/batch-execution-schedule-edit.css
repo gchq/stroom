@@ -22,12 +22,12 @@
     align-items: center;
 }
 
-.batch-execution-schedule-edit__row > .tick-box {
+.batch-execution-schedule-edit__row > .batch-execution-schedule-edit__tick {
     flex: 0 0 50px;
 }
 
 /* Not spaced from the tick box above it, as a form group following another is */
-.batch-execution-schedule-edit__row > .form-group:not(:first-child) {
+.batch-execution-schedule-edit__row > .batch-execution-schedule-edit__field:not(:first-child) {
     flex: 1 1 auto;
     min-width: 0;
     margin-top: 0;

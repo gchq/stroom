@@ -22,6 +22,10 @@ October 2026, after wave 37.
 - **Create User declares its group form** (security-settings-04): `CreateUser.ui.xml` declares the
   `NameEntry` beside the other two forms, and `CreateNewGroupController` attaches to one
   (`attach(NameEntry)`) rather than injecting it; Add User Group attaches it to one it makes.
+
+> **Undone in wave 42** (30 October 2026): the user asked for the layout to stay as it was, to
+> within a pixel; the look changes this wave took are put back there (see `wave-42.md`).
+
 - **A look kept:** in User Preferences and the AI settings the tabs and the tab showing were two rows
   of the dialog's form, which puts a gap between its rows; as one `LinkTabPanel` they lost it (18px).
   Each dialog gives its panel the form's gap (`user-preferences-dialog__tabs`, and a new

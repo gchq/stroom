@@ -3,9 +3,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:e="urn:import:stroom.entity.client.component">
-    <g:FlowPanel styleName="ask-stroom-ai-config-dialog max dock-container-vertical form">
-        <e:LinkTabPanel ui:field="tabs" addStyleNames="ask-stroom-ai-config-dialog__tabs dock-max overflow-hidden"/>
+             xmlns:tab="urn:import:stroom.widget.tab.client">
+    <g:FlowPanel styleName="max dock-container-vertical form">
+        <g:FlowPanel styleName="dock-min link-tab-panel">
+            <tab:LinkTabBar ui:field="tabBar" addStyleNames="link-tab-panel__middle"/>
+        </g:FlowPanel>
+        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
         <g:FlowPanel styleName="button-group dock-min">
             <b:Button ui:field="restoreFromDefaults"
                       text="Restore From Defaults"

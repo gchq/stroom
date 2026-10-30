@@ -13,7 +13,7 @@
                  left out of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and
                  hidden from them -->
             <b:Button ui:field="logo" styleName="navigation__logo" tabIndex="-2" ariaHidden="true"/>
-            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
+            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet navigation__menu">
                 <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>
         </g:FlowPanel>
