@@ -148,21 +148,24 @@ start_databases() {
 }
 
 generate_ddl_dump() {
-  echo "::group::DDL dump"
+  echo "::group::Prepare for DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
 
   # The service name is not prefixed with bounceit_ at this point
   start_databases stroom-all-dbs
+  echo "::endgroup::"
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
   # Assumes the app jar has been built already
-  echo -e "${GREEN}Running DB migration on empty DB${NC}"
+  #echo -e "${GREEN}Running DB migration on empty DB${NC}"
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" MIGRATE
 
-  echo -e "${GREEN}Dumping the database DDL${NC}"
+  echo "::group::Dump DDL to file"
+  echo -e "${GREEN}Dumping the database DDL to file ${BLUE}${DDL_DUMP_FILE}${NC}"
+
   # Produce the dump file
   docker exec \
     bounceit_stroom-all-dbs \
@@ -175,12 +178,9 @@ generate_ddl_dump() {
 }
 
 generate_entity_rel_diagram() {
-
-  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
-  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -321,8 +321,8 @@ format_manifest_file() {
 }
 
 # args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
-releaseToDockerHub() {
-  # echo "releaseToDockerHub called with args [$@]"
+doDockerBuildAndRelease() {
+  # echo "doDockerBuildAndRelease called with args [$@]"
 
   if [ $# -lt 3 ]; then
     echo "Incorrect args, expecting at least 3"
@@ -336,6 +336,17 @@ releaseToDockerHub() {
 
   local allTagArgs=()
   local firstTag=""
+  local vexDir=""
+  if [[ ! ${dockerRepo} =~ ^gcqh/ ]]; then
+    echo -e "ERROR: Expecting '${BLUE}${dockerRepo}${NC}' to start" \
+      "with '${BLUE}gchq/${NC}'${NC}"
+    exit 1
+  fi
+  if [[ ! -d "${vexDir}" ]]; then
+    echo -e "ERROR: Expecting VEX directory '${BLUE}${vexDir}${NC}' to exist"
+    exit 1
+  fi
+  vexDir="vex/${dockerRepo#gchq/}"
 
   for tagVersionPart in "$@"; do
     if [[ -n "${tagVersionPart}" ]]; then
@@ -349,9 +360,11 @@ releaseToDockerHub() {
   done
 
   echo "::group::Docker build (${dockerRepo})"
-  echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
+  echo -e "Building a ${GREEN}${dockerRepo}${NC} docker image"
+  echo -e "Tags:        [${GREEN}${allTagArgs[*]}${NC}]"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
+  echo -e "vexDir:      [${GREEN}${vexDir}${NC}]"
   # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
@@ -368,7 +381,8 @@ releaseToDockerHub() {
     cves \
     "${firstTag}" \
     --only-unfixed \
-    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}" \
+    --vex-location "${vexDir}"
   echo "::endgroup::"
 
   # TODO add '--exit-code' arg back in once vulns are fixed and vex files are in place
@@ -381,8 +395,15 @@ releaseToDockerHub() {
     cves \
     "${firstTag}" \
     --only-fixed \
-    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}" \
+    --vex-location "${vexDir}"
   echo "::endgroup::"
+
+
+  docker scout attestation add \
+    --file CVE-XXXX-YYYY.vex.json \
+    --predicate-type https://openvex.dev/ns/v0.2.0 \
+    "${fi}"
 
   echo "::group::Docker release (${dockerRepo})"
   if [[ -z "${LOCAL_BUILD}" ]]; then
@@ -438,6 +459,14 @@ docker_logout() {
   fi
 }
 
+install_docker_scout() {
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
+}
+
 copy_swagger_ui_content() {
   echo "::group::Copy Swagger content"
   local ghPagesDir=$BUILD_DIR/gh-pages
@@ -478,12 +507,9 @@ copy_swagger_ui_content() {
 }
 
 check_for_out_of_date_puml_svgs() {
-
-  echo "::group::Converting .puml files to .svg"
-
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
-  echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
+  #echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
 
   # shellcheck disable=SC2068
   # Convert any .puml files into .puml.svg if the sha1 hash of the .puml file
@@ -497,6 +523,7 @@ check_for_out_of_date_puml_svgs() {
   # are up to date with their puml file.
   # This is different to stroom-docs which does not check in svg files.
 
+  echo "::group::Check for SVGs not up to date in Git"
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
@@ -661,20 +688,16 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
-  # Install scout for docker image scanning
-  echo "::group::Docker Scout Install"
-  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
-    | sh -s --
-  echo "::endgroup::"
+  install_docker_scout
 
   # build and release stroom image to dockerhub
-  releaseToDockerHub \
+  doDockerBuildAndRelease \
     "${STROOM_DOCKER_REPO}" \
     "${STROOM_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
 
   # build and release stroom-proxy image to dockerhub
-  releaseToDockerHub \
+  doDockerBuildAndRelease \
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
