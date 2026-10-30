@@ -63,6 +63,8 @@ final class FakeProcessingFacts implements ProcessingFacts {
     final Map<Integer, Set<Long>> selected = new HashMap<>();
     boolean dependenciesReady = true;
     final Map<String, Profile> profiles = new HashMap<>();
+    List<VolumeGroup> dataVolumeGroups = List.of(new VolumeGroup("Default Volume Group", true, 1, 1));
+    List<VolumeGroup> indexVolumeGroups = List.of(new VolumeGroup("Default Volume Group", true, 1, 1));
     // The permissions the user lacks, as the facts' reads name them.
     final Set<String> lacking = new HashSet<>();
 
@@ -185,6 +187,16 @@ final class FakeProcessingFacts implements ProcessingFacts {
     public Optional<Profile> profile(final String name) {
         check("Manage Processors");
         return Optional.ofNullable(profiles.get(name));
+    }
+
+    @Override
+    public List<VolumeGroup> dataVolumeGroups() {
+        return dataVolumeGroups;
+    }
+
+    @Override
+    public List<VolumeGroup> indexVolumeGroups() {
+        return indexVolumeGroups;
     }
 
     private void check(final String permission) {

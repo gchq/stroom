@@ -70,6 +70,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(StreamMetaTool.class)
                 .addBinding(ProcessorTasksTool.class)
                 .addBinding(ExplainProcessingTool.class)
+                .addBinding(ExplainRetentionTool.class)
                 .addBinding(ServerTasksTool.class)
                 .addBinding(DocumentLinksTool.class)
                 .addBinding(FindInContentTool.class)
@@ -81,7 +82,10 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ProposeVisualisationTool.class)
                 .addBinding(ProposeDocumentationChangeTool.class)
                 .addBinding(ConfigPropertiesTool.class)
+                .addBinding(VolumesTool.class)
                 .addBinding(ElasticIndexTemplatesTool.class);
+
+        bind(RetentionFacts.class).to(StroomRetentionFacts.class);
 
         // The guides and conventions bundled for agents, bound by the module that bundles them (stroom-mcp-impl).
         OptionalBinder.newOptionalBinder(binder(), AgentKnowledge.class);

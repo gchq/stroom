@@ -35,8 +35,10 @@ import stroom.config.global.api.GlobalConfigReader;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
+import stroom.data.store.api.FsVolumeStates;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docstore.api.ContentIndex;
@@ -49,6 +51,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.feed.api.FeedProperties;
+import stroom.index.api.IndexVolumeStates;
 import stroom.job.api.JobStates;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
@@ -154,7 +157,9 @@ class TestAgentModeTools {
             Map.entry("stream_meta", false),
             Map.entry("processor_tasks", false),
             Map.entry("explain_processing", false),
+            Map.entry("explain_retention", false),
             Map.entry("server_tasks", false),
+            Map.entry("volumes", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
             Map.entry("xslt_lookups", false),
@@ -202,6 +207,9 @@ class TestAgentModeTools {
             bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
             bind(ProcessingDiagnostics.class).toInstance(Mockito.mock(ProcessingDiagnostics.class));
             bind(JobStates.class).toInstance(Mockito.mock(JobStates.class));
+            bind(FsVolumeStates.class).toInstance(Mockito.mock(FsVolumeStates.class));
+            bind(IndexVolumeStates.class).toInstance(Mockito.mock(IndexVolumeStates.class));
+            bind(DataRetentionRulesProvider.class).toInstance(Mockito.mock(DataRetentionRulesProvider.class));
             bind(ClusterNodeManager.class).toInstance(Mockito.mock(ClusterNodeManager.class));
             bind(TaskResource.class).toInstance(Mockito.mock(TaskResource.class));
             bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
