@@ -147,10 +147,7 @@ public class McpElicitations {
             // not the user's answer, so the agent is told so, not that the user declined (seen: told "The user made
             // no choice", the agent called the tool again and again, each time asked the same questions).
             warn(chatId, "A form from " + STROOM_AI + " couldn't be shown, as " + problem + ".");
-            throw new ToolRefusal("Stroom couldn't show this tool's form to the user, as " + problem + ", so the "
-                                  + "user wasn't asked and didn't decline. It would fail the same way again: don't "
-                                  + "repeat the call as it was. Tell the user what you were doing and that the "
-                                  + "form couldn't be shown, and ask them how to go on.");
+            throw new ToolRefusal(ElicitationSchema.cannotShow(problem));
         }
         // It waits for as long as the user takes, as nothing is held while it does.
         aiDao.storeMessage(chatId, AiMessageType.ELICITATION, JsonUtil.writeValueAsString(

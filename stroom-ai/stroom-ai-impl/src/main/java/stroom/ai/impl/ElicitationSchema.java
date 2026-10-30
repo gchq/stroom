@@ -37,8 +37,10 @@ public final class ElicitationSchema {
     /// The most fields a form can have to be shown. A tool asking more questions than this splits them, or asks
     /// some together.
     public static final int MAX_FIELDS = 20;
-    static final int MAX_SCHEMA_CHARS = 16_000;
-    static final int MAX_MESSAGE_CHARS = 2_000;
+    /// The most characters a form's fields can take, written as JSON.
+    public static final int MAX_SCHEMA_CHARS = 16_000;
+    /// The most characters a form's message can have.
+    public static final int MAX_MESSAGE_CHARS = 2_000;
     static final int MAX_TEXT_CHARS = 10_000;
 
     private static final Set<String> STRING_FORMATS = Set.of("email", "uri", "date", "date-time");
@@ -50,10 +52,13 @@ public final class ElicitationSchema {
         // Static only.
     }
 
-    /// @param message What the server says.
+    /// Whether a form can be shown: a tool checks its own forms with this before asking, so that one too large is
+    /// asked another way rather than refused.
+    ///
+    /// @param message What the form says.
     /// @param schema  The form.
-    /// @return Why the form can't be shown, or null if it can.
-    static String check(final String message, final Map<String, Object> schema) {
+    /// @return Why the form can't be shown, e.g. "its message is too long", or null if it can.
+    public static String check(final String message, final Map<String, Object> schema) {
         if (NullSafe.string(message).length() > MAX_MESSAGE_CHARS) {
             return "its message is too long";
         }
@@ -80,6 +85,14 @@ public final class ElicitationSchema {
             }
         }
         return null;
+    }
+
+    /// @param why Why a tool's form couldn't be shown, e.g. "its message is too long".
+    /// @return What the agent is told: the user wasn't asked, so didn't decline, and asking again would fail too.
+    public static String cannotShow(final String why) {
+        return "Stroom couldn't show this tool's form to the user, as " + why + ", so the user wasn't asked and "
+               + "didn't decline. It would fail the same way again: don't repeat the call as it was. Tell the user "
+               + "what you were doing and that the form couldn't be shown, and ask them how to go on.";
     }
 
     /// Converts the user's answer to what the server expects, checking it against the form.

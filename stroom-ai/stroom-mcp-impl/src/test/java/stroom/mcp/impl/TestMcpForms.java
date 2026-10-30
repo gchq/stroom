@@ -18,12 +18,15 @@ package stroom.mcp.impl;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.McpEndpointConfig;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.util.shared.UserRef;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
+import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +56,28 @@ class TestMcpForms {
     void tearDown() {
         // Leave the test thread as it was found.
         Thread.interrupted();
+    }
+
+    @Test
+    void aFormTooLargeToShowIsNotSentAndTheAgentIsToldTheUserWasntAsked() {
+        // Seen in testing: a client declined a form whose message was too long, and the tool said the user made
+        // no choice.
+        final McpForms forms = forms(10);
+
+        assertThatThrownBy(() -> forms.ask(session(ALICE), exchange, "x".repeat(2_001), McpForms.NO_FIELDS))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("as its message is too long, so the user wasn't asked and didn't decline");
+        Mockito.verifyNoInteractions(exchange);
+    }
+
+    @Test
+    void aFormTheClientAnswersWithAnErrorIsNotTakenForTheUsersAnswer() {
+        Mockito.when(exchange.createElicitation(Mockito.any())).thenReturn(Mono.error(McpError.builder(
+                ErrorCodes.INVALID_PARAMS).message("Form too large").build()));
+
+        assertThatThrownBy(() -> forms(10).ask(session(ALICE), exchange, "Allow it?", McpForms.NO_FIELDS))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("as the client said: Form too large, so the user wasn't asked");
     }
 
     @Test

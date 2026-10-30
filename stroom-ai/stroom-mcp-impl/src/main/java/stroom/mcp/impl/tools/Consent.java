@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -113,8 +114,8 @@ public class Consent {
     /// @param options  The options to choose from.
     /// @param title    The question as its answer's heading, where the question itself is long, or null for the
     ///                 question.
-    /// @return The option picked; empty when the session can't show a form now (the agent then asks the user), or
-    /// the answer is not one of the options.
+    /// @return The option picked; empty when the session can't show a form now, or the form would be too large to
+    /// show (the agent then asks the user), or the answer is not one of the options.
     /// @throws ToolRefusal if the user made no choice.
     public Optional<String> choose(final ToolCall call,
                                    final ToolCallContext context,
@@ -134,6 +135,9 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.of("choice"));
         schema.put("properties", Map.of("choice", field));
+        if (unshowable(context, action, question, schema)) {
+            return Optional.empty();
+        }
         final ElicitResult answer = context.userQuestions().ask(call.name(),
                 UserQuestions.formCallId(call.id(), key), question, schema);
         final Object given = answer.action() == ElicitResult.Action.ACCEPT
@@ -161,8 +165,8 @@ public class Consent {
     /// @param action    The tool asking, e.g. `build_translation_xslt`.
     /// @param intro     What the questions are about, the form's message.
     /// @param questions The questions by key, each with its options (the recommended one first), in the order asked.
-    /// @return The option picked for each question, by its key; empty when the session can't show a form now (the
-    /// agent then asks the user).
+    /// @return The option picked for each question, by its key; empty when the session can't show a form now, or
+    /// the form would be too large to show (the agent then asks the user).
     /// @throws ToolRefusal if the user made no choice.
     public Optional<Map<String, String>> chooseEach(final ToolCall call,
                                                     final ToolCallContext context,
@@ -187,6 +191,9 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
+        if (unshowable(context, action, intro, schema)) {
+            return Optional.empty();
+        }
         final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
         final ElicitResult answer = context.userQuestions().ask(call.name(),
                 UserQuestions.formCallId(call.id(), "choices-" + digest), intro, schema);
@@ -208,6 +215,24 @@ public class Consent {
             throw new ToolRefusal("The user made no choice: " + intro);
         }
         return Optional.of(chosen);
+    }
+
+    // A form too large to show is asked in the chat instead, as when the session can't show forms: shown, it would
+    // be refused, stopping the call where the user can never answer it (seen: a stand-ins form of a question for
+    // each of ~150 values, and a hand-edit question naming every field of a wide mapping).
+    private boolean unshowable(final ToolCallContext context,
+                               final String action,
+                               final String message,
+                               final Map<String, Object> schema) {
+        final String problem = ElicitationSchema.check(message, schema);
+        if (problem == null) {
+            return false;
+        }
+        LOGGER.warn(() -> LogUtil.message("Form for '{}' from {} not shown, as {}: asked in the chat instead",
+                heading(message, 80), action, problem));
+        auditLogProvider.get().processed(context.session(), null, "choice", action + ": " + heading(message),
+                "not asked in a form, as " + problem, false);
+        return true;
     }
 
     /// @param context  The call's context.
