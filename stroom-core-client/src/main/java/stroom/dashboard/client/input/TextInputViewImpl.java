@@ -17,26 +17,50 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
+import stroom.dashboard.shared.TextInputFormat;
+import stroom.svg.client.SvgIconBox;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.UTCDate;
 
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> implements TextInputView {
 
+    private static final String INVALID_CLASS_NAME = "invalid";
+    private static final String NO_ICON_CLASS_NAME = "TextInputView-noIcon";
+    // Matches an offset without a colon at the end of a date-time, e.g. +1000
+    private static final String OFFSET_WITHOUT_COLON_REGEX = "([+-]\\d{2})(\\d{2})$";
+
     private final Widget widget;
+    private final Provider<DateTimePopup> dateTimePopupProvider;
+    private final TextBox value;
 
     @UiField
-    TextBox value;
+    SvgIconBox iconBox;
+
+    private boolean dateTime;
 
     @Inject
-    public TextInputViewImpl(final Binder binder) {
+    public TextInputViewImpl(final Binder binder,
+                             final Provider<DateTimePopup> dateTimePopupProvider) {
+        this.dateTimePopupProvider = dateTimePopupProvider;
         widget = binder.createAndBindUi(this);
+
+        value = new TextBox();
+        value.addStyleName("w-100 allow-focus");
+        value.addKeyUpHandler(event -> fireValueChanged());
+
+        // The calendar icon is only shown for the date/time format.
+        iconBox.setWidget(value, SvgImage.CALENDAR);
+        iconBox.addClickHandler(event -> showDateTimePopup());
+        setFormat(TextInputFormat.TEXT);
     }
 
     @Override
@@ -54,8 +78,44 @@ public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> i
         return value.getValue();
     }
 
-    @UiHandler("value")
-    public void onValueKeyUp(final KeyUpEvent event) {
+    @Override
+    public void setFormat(final TextInputFormat format) {
+        dateTime = format == TextInputFormat.DATE_TIME;
+        iconBox.setReadonly(!dateTime);
+        if (dateTime) {
+            iconBox.removeStyleName(NO_ICON_CLASS_NAME);
+        } else {
+            iconBox.addStyleName(NO_ICON_CLASS_NAME);
+        }
+    }
+
+    @Override
+    public void setValid(final boolean valid) {
+        if (valid) {
+            value.removeStyleName(INVALID_CLASS_NAME);
+        } else {
+            value.addStyleName(INVALID_CLASS_NAME);
+        }
+    }
+
+    private void showDateTimePopup() {
+        if (dateTime) {
+            final DateTimePopup popup = dateTimePopupProvider.get();
+            // Start the picker at the current absolute date if there is one, else at now.
+            final UTCDate date = UTCDate.create(value.getValue());
+            popup.setTime(date != null
+                    ? (long) date.getTime()
+                    : System.currentTimeMillis());
+            popup.show(ms -> {
+                // The picker writes offsets like +1000, but the server only parses +10:00.
+                final String isoDateTime = popup.getDateTimeModel().formatIso(UTCDate.create(ms));
+                value.setValue(isoDateTime.replaceFirst(OFFSET_WITHOUT_COLON_REGEX, "$1:$2"));
+                fireValueChanged();
+            });
+        }
+    }
+
+    private void fireValueChanged() {
         if (getUiHandlers() != null) {
             getUiHandlers().onValueChanged(value.getText());
         }

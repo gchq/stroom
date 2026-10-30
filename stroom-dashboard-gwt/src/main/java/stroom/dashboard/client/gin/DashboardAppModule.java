@@ -81,6 +81,9 @@ import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
+import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
+import stroom.widget.datepicker.client.DateTimeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -190,6 +193,11 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
+        // Bound by MonitoringModule in the main app. Needed here for the dashboard text input date picker.
+        bindPresenterWidget(
+                DateTimePopup.class,
+                DateTimeView.class,
+                DateTimeViewImpl.class);
 
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);

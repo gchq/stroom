@@ -20,7 +20,14 @@ import stroom.dashboard.client.input.ListInputPresenter.WordItem;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
+import java.util.List;
+
 public interface ListInputUiHandlers extends UiHandlers {
 
     void onValueChanged(WordItem value);
+
+    /// Called when the user ticks or unticks a value in multi-select mode.
+    ///
+    /// @param values All the values that are now ticked.
+    void onSelectedValuesChanged(List<WordItem> values);
 }
