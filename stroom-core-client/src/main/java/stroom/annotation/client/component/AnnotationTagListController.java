@@ -20,11 +20,11 @@ import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.FindAnnotationTagCriteria;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.view.client.Range;

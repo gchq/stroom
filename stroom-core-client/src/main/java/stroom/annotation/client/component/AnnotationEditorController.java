@@ -18,13 +18,13 @@ package stroom.annotation.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.DurationLabel;
-import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.Lozenge;
 import stroom.annotation.client.component.AnnotationEditor.AnnotationEditAction;
 import stroom.annotation.client.component.ChooserController.DataSupplier;
+import stroom.annotation.client.event.AnnotationChangeEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;

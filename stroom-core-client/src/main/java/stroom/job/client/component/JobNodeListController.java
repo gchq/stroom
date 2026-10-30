@@ -16,9 +16,8 @@
 
 package stroom.job.client.component;
 
-import stroom.cell.info.client.CommandLink;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.cell.client.CommandLink;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
@@ -37,6 +36,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

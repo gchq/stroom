@@ -31,7 +31,7 @@ import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserRefSelectionController;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;

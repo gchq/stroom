@@ -17,7 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
-import stroom.item.client.SelectionBox;
 import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.CustomConditionalFormattingStyle;
@@ -26,6 +25,7 @@ import stroom.query.client.component.ExpressionEditor;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

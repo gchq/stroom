@@ -15,7 +15,7 @@
  */
 
 /*
-   The selection box's list (stroom.item.client.SelectionPopup), named BEM style: a popup below the
+   The selection box's list (stroom.widget.selection.client.SelectionPopup), named BEM style: a popup below the
    box holding a selection list (its quick filter, path and rows, styled by selection-list.css). The
    list inside it takes the size of what it holds, within limits, rather than filling a pane.
 */

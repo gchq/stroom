@@ -17,15 +17,15 @@
 package stroom.pipeline.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.config.global.client.ListDataProvider;
-import stroom.data.client.ColumnSizeConstants;
-import stroom.data.client.component.DocRefCell;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.docref.DocRef;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.cell.DocRefCell;
 import stroom.util.shared.Selection;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.ListDataProvider;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

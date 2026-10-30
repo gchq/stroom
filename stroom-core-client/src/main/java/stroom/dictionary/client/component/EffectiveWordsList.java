@@ -16,11 +16,10 @@
 
 package stroom.dictionary.client.component;
 
-import stroom.cell.info.client.CommandLink;
+import stroom.cell.client.CommandLink;
 import stroom.dictionary.shared.Word;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
@@ -28,6 +27,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

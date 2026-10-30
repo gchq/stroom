@@ -16,9 +16,9 @@
 
 package stroom.pipeline.structure.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

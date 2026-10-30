@@ -18,7 +18,7 @@ package stroom.annotation.client.component;
 
 import stroom.annotation.client.AssignYourself;
 import stroom.annotation.client.Lozenge;
-import stroom.annotation.client.SettingBlock;
+import stroom.annotation.client.component.SettingBlock;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.util.shared.UserRef;

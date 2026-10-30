@@ -28,8 +28,8 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.button.client.Button;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.core.client.Scheduler;

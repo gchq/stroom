@@ -16,12 +16,12 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

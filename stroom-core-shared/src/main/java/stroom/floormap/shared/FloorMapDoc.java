@@ -564,7 +564,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// to one with `valueFormat == JSON`, even though their getters
     /// would return the same value. This is intentional — it allows the
     /// dirty-detection logic in
-    /// `stroom.entity.client.component.DocumentEditor#onChange()`
+    /// `stroom.document.client.editor.DocumentEditor#onChange()`
     /// to correctly detect when a user has explicitly set a field that
     /// previously relied on the default.
     ///

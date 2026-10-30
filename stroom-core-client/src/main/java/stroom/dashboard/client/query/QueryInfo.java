@@ -19,10 +19,10 @@ package stroom.dashboard.client.query;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
 import stroom.dashboard.client.component.QueryInfoPromptController;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.inject.Provider;
 

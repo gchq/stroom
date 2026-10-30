@@ -16,10 +16,10 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricValueSchema;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

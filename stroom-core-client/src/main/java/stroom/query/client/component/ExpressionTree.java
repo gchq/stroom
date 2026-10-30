@@ -17,19 +17,16 @@
 package stroom.query.client.component;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.structure.client.component.Box;
-import stroom.pipeline.structure.client.component.DraggableTree;
-import stroom.pipeline.structure.client.component.TreeKeyboard;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.client.ExpressionItemRenderer;
-import stroom.query.client.ExpressionTreePanel;
-import stroom.query.client.FieldSelectionListModel;
 import stroom.query.client.Item;
 import stroom.query.client.Operator;
-import stroom.query.client.TermEditor;
+import stroom.query.client.model.FieldSelectionListModel;
 import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
+import stroom.widget.htree.client.Box;
+import stroom.widget.htree.client.DraggableTree;
+import stroom.widget.htree.client.TreeKeyboard;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.SingleItemSelectionModel;
 

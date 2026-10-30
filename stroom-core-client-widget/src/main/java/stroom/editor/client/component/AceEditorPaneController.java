@@ -16,12 +16,12 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.CurrentPreferences;
 import stroom.editor.client.DelegatingAceCompleter;
 import stroom.editor.client.ace.AceEditorPane;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.widget.component.client.Controller;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
+import stroom.widget.preferences.client.CurrentPreferences;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.Scheduler;

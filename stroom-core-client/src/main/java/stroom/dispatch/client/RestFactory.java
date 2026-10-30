@@ -16,8 +16,8 @@
 
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import org.fusesource.restygwt.client.DirectRestService;
 

@@ -2,9 +2,10 @@
 <!-- Data to upload to a feed: its meta data, type, effective date and file -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:l="urn:import:stroom.item.client"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:compon="urn:import:stroom.widget.form.client.component">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max"
                         helpText="Extra meta data to attach to the uploaded data, one 'Key:Value' entry per line. Example: System:Example."
@@ -25,7 +26,7 @@
                         helpText="The file to upload. A .zip file is unpacked as a Stroom zip; .gz and .gzip files are treated as gzip compressed. Other files are stored as they are."
                         screenReaderText=".zip and .gz files are handled as compressed data."
                         required="true">
-            <form:FileChooser ui:field="fileChooser"/>
+            <compon:FileChooser ui:field="fileChooser"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

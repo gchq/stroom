@@ -31,12 +31,14 @@
     <inherits name='stroom.util.Util'/>
     <inherits name='stroom.svg.SVG'/>
     <inherits name='stroom.task.Task'/>
+    <inherits name='stroom.widget.task.Task'/>
     <inherits name="stroom.widget.util.Util"/>
     <inherits name="stroom.widget.component.Component"/>
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.form.Form"/>
     <inherits name="stroom.widget.text.Text"/>
     <inherits name="stroom.widget.help.Help"/>
+    <inherits name="stroom.widget.preferences.Preferences"/>
     <inherits name="stroom.widget.tooltip.Tooltip"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.cell.tickbox.TickBox"/>
@@ -73,10 +75,8 @@
     <inherits name='stroom.editor.Editor'/>
     <inherits name='stroom.data.Data'/>
     <inherits name='stroom.widget.datagrid.DataGrid'/>
-    <inherits name='stroom.data.table.Table'/>
-    <inherits name='stroom.data.pager.Pager'/>
     <inherits name='stroom.cell.Cell'/>
-    <inherits name='stroom.item.Item'/>
+    <inherits name='stroom.widget.selection.Selection'/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
     <!-- The quick filter box (the widget library) -->
@@ -96,7 +96,7 @@
     <inherits name='stroom.receive.rules.RuleSet'/>
     <inherits name='stroom.annotation.Annotation'/>
     <inherits name="stroom.widget.datepicker.DatePicker"/>
-    <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.duration.Duration"/>
     <inherits name="stroom.widget.tab.Tab"/>
     <inherits name="stroom.widget.layout.Layout"/>
     <inherits name="stroom.widget.htree.HTree"/>
@@ -114,10 +114,8 @@
     <inherits name='stroom.node.Node'/>
     <inherits name='stroom.schedule.Schedule'/>
     <inherits name='stroom.processor.Processor'/>
-    <inherits name='stroom.monitoring.Monitoring'/>
     <!-- Widgets/Editors & Viewers -->
     <inherits name='com.google.gwt.xml.XML'/>
-    <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
     <inherits name="stroom.widget.menu.Menu"/>
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.iframe.IFrame"/>
@@ -128,6 +126,7 @@
 
     <!-- Widgets/Data Grid: MyDataGrid's hyperlink context menu items -->
     <inherits name="stroom.hyperlink.Hyperlink"/>
+    <inherits name="stroom.widget.hyperlink.Hyperlink"/>
 
     <!-- The query batch (App/Editors/QueryEditor, ViewEditor, PlanBEditor, ...) -->
     <inherits name="stroom.view.View"/>
@@ -158,6 +157,7 @@
 
     <!-- The security batch: CurrentPasswordController needs Stroom's CurrentUser (CurrentActivity) -->
     <inherits name="stroom.activity.Activity"/>
+    <inherits name="stroom.splash.Splash"/>
 
     <!-- The processing batch (node groups, processors, pipelines, data retention, ...) -->
     <inherits name="stroom.data.retention.DataRetention"/>

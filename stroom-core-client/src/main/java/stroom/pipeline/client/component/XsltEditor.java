@@ -16,10 +16,10 @@
 
 package stroom.pipeline.client.component;
 
-import stroom.entity.client.component.CodeTabController;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.component.CodeTabController;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;

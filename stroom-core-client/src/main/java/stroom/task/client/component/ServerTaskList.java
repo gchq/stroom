@@ -16,18 +16,15 @@
 
 package stroom.task.client.component;
 
+import stroom.cell.client.InfoColumn;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.ColumnSizeConstants;
-import stroom.data.client.component.UserRefCell;
-import stroom.entity.client.TreeRowHandler;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.task.client.TaskProgressUtil;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.cell.UserRefCell;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -38,10 +35,13 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.datagrid.client.TreeRowHandler;
 import stroom.widget.menu.client.Item;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.cell.client.Cell;

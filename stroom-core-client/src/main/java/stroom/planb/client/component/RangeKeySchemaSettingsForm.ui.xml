@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Range Type"
                         helpText="The data type used to store the start and end of each range: unsigned Byte, Short, Integer or Long. Choose the smallest type that holds your largest value. Default is Unsigned Long."

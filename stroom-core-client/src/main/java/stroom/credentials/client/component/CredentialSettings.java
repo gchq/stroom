@@ -17,12 +17,12 @@
 package stroom.credentials.client.component;
 
 import stroom.credentials.shared.CredentialType;
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 

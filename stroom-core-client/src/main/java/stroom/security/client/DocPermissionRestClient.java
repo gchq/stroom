@@ -16,14 +16,15 @@
 
 package stroom.security.client;
 
+import stroom.dispatch.client.AbstractRestClient;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.DocumentUserPermissionsRequest;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

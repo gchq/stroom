@@ -32,7 +32,7 @@ import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
-import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.datepicker.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.HtmlTableBuilder;

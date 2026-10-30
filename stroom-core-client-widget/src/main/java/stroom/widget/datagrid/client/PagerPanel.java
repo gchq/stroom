@@ -16,13 +16,12 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.data.pager.client.Pager;
-import stroom.data.pager.client.RefreshButton;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.RefreshButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

@@ -18,9 +18,9 @@
 package stroom.gwt.workbench.client.widgets.query;
 
 import stroom.docref.DocRef;
-import stroom.gwt.workbench.client.app.main.ContentStorySupport;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
@@ -42,14 +42,14 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
-import stroom.query.client.DynamicFieldSelectionListModel;
-import stroom.query.client.FieldSelectionListModel;
-import stroom.query.client.SimpleFieldSelectionListModel;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.component.ExpressionTree;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.component.TermEditorController;
+import stroom.query.client.model.DynamicFieldSelectionListModel;
+import stroom.query.client.model.FieldSelectionListModel;
+import stroom.query.client.model.SimpleFieldSelectionListModel;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;

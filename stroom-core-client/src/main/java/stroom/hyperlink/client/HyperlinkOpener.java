@@ -17,11 +17,12 @@
 package stroom.hyperlink.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.CreateAnnotationEvent;
-import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.event.CreateAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
+import stroom.dashboard.client.event.ShowDashboardEvent;
 import stroom.data.client.DataViewType;
 import stroom.data.client.DisplayMode;
 import stroom.data.client.event.ShowDataEvent;
@@ -38,6 +39,9 @@ import stroom.util.shared.TextRange;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.HyperlinkTargetType;
+import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 

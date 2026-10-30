@@ -19,7 +19,7 @@ package stroom.widget.form.client;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.help.client.HelpPopup;
-import stroom.widget.tooltip.client.event.ShowHelpEvent;
+import stroom.widget.help.client.ShowHelpEvent;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;

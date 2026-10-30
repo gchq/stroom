@@ -19,8 +19,8 @@ package stroom.security.client.api;
 import stroom.docref.DocRef;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import java.util.function.Consumer;
 

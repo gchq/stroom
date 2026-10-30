@@ -16,6 +16,7 @@
 
 package stroom.preferences.client.component;
 
+import stroom.preferences.client.model.KeyBindingRow;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.KeyShortcut;

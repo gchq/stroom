@@ -16,10 +16,10 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.annotation.client.AnnotationChangeEvent;
-import stroom.annotation.client.CreateAnnotationEvent;
-import stroom.annotation.client.EditAnnotationEvent;
-import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.annotation.client.event.AnnotationChangeEvent;
+import stroom.annotation.client.event.CreateAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
+import stroom.annotation.client.event.ShowFindAnnotationEvent;
 import stroom.data.client.event.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;

@@ -16,10 +16,10 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.model.MutableTabConfig;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.svg.shared.SvgImage;

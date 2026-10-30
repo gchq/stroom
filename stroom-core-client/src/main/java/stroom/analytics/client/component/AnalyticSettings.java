@@ -19,10 +19,10 @@ package stroom.analytics.client.component;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleLevel;
 import stroom.analytics.shared.AnalyticRuleStatus;
-import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

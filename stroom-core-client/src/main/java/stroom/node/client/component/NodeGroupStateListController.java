@@ -16,14 +16,14 @@
 
 package stroom.node.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.NodeStatusResult;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;

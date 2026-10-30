@@ -24,11 +24,11 @@ import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.task.client.SimpleTask;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Button;
 import stroom.widget.spinner.client.SmallBusySpinner;
+import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.text.client.InlineLabel;
 import stroom.widget.text.client.Label;
 

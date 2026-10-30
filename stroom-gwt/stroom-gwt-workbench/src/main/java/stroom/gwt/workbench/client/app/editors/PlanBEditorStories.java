@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;

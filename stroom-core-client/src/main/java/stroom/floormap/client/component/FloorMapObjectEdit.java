@@ -22,7 +22,7 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;

@@ -20,14 +20,14 @@ import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

@@ -18,7 +18,7 @@ package stroom.config.global.client.component;
 
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.NodeSource;
+import stroom.config.global.client.model.NodeSource;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;

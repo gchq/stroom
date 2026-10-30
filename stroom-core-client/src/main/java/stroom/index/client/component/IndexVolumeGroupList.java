@@ -17,11 +17,11 @@
 package stroom.index.client.component;
 
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

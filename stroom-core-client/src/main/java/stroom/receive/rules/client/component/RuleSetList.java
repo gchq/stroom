@@ -16,11 +16,11 @@
 
 package stroom.receive.rules.client.component;
 
-import stroom.data.client.ColumnSizeConstants;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModel;

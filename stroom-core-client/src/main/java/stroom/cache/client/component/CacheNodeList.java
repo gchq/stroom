@@ -16,16 +16,16 @@
 
 package stroom.cache.client.component;
 
-import stroom.cell.info.client.ActionCell;
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.ActionCell;
+import stroom.cell.client.CellIcon;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.cache.CacheInfo;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;

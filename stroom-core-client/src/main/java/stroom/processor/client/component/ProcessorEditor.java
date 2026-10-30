@@ -16,18 +16,18 @@
 
 package stroom.processor.client.component;
 
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionListModel;
-import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.duration.client.DurationPicker;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SelectionListModel;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

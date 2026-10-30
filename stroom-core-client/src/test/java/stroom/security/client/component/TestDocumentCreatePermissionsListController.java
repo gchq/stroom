@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;

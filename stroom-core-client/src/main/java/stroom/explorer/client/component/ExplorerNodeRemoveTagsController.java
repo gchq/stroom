@@ -21,7 +21,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
+import stroom.explorer.client.ExplorerTaskMonitorFactory;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;

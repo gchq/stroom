@@ -16,14 +16,15 @@
 
 package stroom.gwt.workbench.client.widgets.layout;
 
+import stroom.widget.component.client.Component;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Split panes declared in a UiBinder template (`SplitPaneTemplate.ui.xml`), nested as User Groups'
 /// split panels are.
-final class SplitPaneTemplate extends Composite {
+final class SplitPaneTemplate extends Component {
 
     SplitPaneTemplate() {
         initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));

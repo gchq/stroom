@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.tabs;
 
+import stroom.content.client.component.CurveTabLayout;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -27,11 +28,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.SimpleTask;
 import stroom.widget.tab.client.CurveTabBar;
 import stroom.widget.tab.client.TabBar;
 import stroom.widget.tab.client.TabData;
-import stroom.widget.tab.client.component.CurveTabLayout;
+import stroom.widget.task.client.SimpleTask;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;

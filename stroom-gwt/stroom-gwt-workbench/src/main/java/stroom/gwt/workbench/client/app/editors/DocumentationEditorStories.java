@@ -17,10 +17,10 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.document.client.component.DocumentationTabController;
 import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
-import stroom.entity.client.component.DocumentationTabController;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;

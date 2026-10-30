@@ -16,13 +16,14 @@
 
 package stroom.config.global.client.component;
 
+import stroom.config.global.client.model.ConfigPropertyRow;
 import stroom.config.global.shared.GlobalConfigResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 

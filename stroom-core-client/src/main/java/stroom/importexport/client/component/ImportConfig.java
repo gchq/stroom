@@ -17,7 +17,7 @@
 package stroom.importexport.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.component.FileChooser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

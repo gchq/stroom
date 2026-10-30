@@ -27,9 +27,8 @@ import com.google.inject.Singleton;
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
 ///
-/// Unlike the other mirrors, it keeps the dashboard's singletons: the `PaneRegistry` (which the
-/// component plugins fill, and every dashboard's `Panes` reads) and the `VisFunctionCache`
-/// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`).
+/// Unlike the other mirrors, it keeps the dashboard's singletons: the `PaneRegistry` (which
+/// `DashboardPaneTypes` fills, and every dashboard's `Panes` reads) and the `VisFunctionCache`.
 public class DashboardScreenModule extends AbstractGinModule {
 
     /// Binds the controllers and components.

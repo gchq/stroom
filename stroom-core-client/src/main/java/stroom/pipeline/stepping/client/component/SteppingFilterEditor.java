@@ -16,8 +16,7 @@
 
 package stroom.pipeline.stepping.client.component;
 
-import stroom.cell.info.client.CellIcon;
-import stroom.item.client.SelectionBox;
+import stroom.cell.client.CellIcon;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.structure.client.PipelineElementTypes;
@@ -28,6 +27,7 @@ import stroom.util.shared.Severity;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

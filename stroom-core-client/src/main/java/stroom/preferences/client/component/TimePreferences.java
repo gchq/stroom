@@ -16,14 +16,14 @@
 
 package stroom.preferences.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.MomentJs;
+import stroom.widget.datepicker.client.MomentJs;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

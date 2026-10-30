@@ -17,10 +17,10 @@
 package stroom.floormap.client.component;
 
 import stroom.document.asset.client.component.DocumentAssetsTabController;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
-import stroom.floormap.client.FloorMapEventQuery;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.floormap.client.query.FloorMapEventQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;

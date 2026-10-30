@@ -5,7 +5,7 @@
              xmlns:n="urn:import:stroom.node.client.component"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="nodeGroupName" label="Node Group Name"
                         helpText="The name of this node group. It cannot be changed here."

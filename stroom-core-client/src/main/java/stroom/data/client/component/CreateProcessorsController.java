@@ -21,7 +21,7 @@ import stroom.util.shared.Selection;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Inject;

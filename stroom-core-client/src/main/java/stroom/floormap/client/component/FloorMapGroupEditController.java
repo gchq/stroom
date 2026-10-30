@@ -18,6 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
+import stroom.floormap.client.model.MemberCandidate;
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

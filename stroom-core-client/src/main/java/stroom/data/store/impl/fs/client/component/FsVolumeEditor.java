@@ -19,9 +19,9 @@ package stroom.data.store.impl.fs.client.component;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.editor.client.component.CodeEditor;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

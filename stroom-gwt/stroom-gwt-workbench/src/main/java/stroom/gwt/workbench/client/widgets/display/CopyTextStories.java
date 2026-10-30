@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.data.client.CopyTextUtil;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -24,9 +23,10 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.menu.client.Menu;
-import stroom.widget.menu.client.MenuController;
+import stroom.widget.datagrid.client.CopyTextUtil;
 import stroom.widget.menu.client.MenuManager;
+import stroom.widget.menu.client.component.Menu;
+import stroom.widget.menu.client.component.MenuController;
 import stroom.widget.text.client.Html;
 import stroom.widget.text.client.InlineLabel;
 

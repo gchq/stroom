@@ -16,15 +16,15 @@
 
 package stroom.search.solr.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

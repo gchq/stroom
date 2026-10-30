@@ -21,9 +21,9 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ResetPasswordRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;

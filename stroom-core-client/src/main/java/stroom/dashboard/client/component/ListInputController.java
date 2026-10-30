@@ -19,6 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
+import stroom.dashboard.client.model.WordItem;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;

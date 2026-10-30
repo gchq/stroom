@@ -18,9 +18,8 @@ package stroom.security.identity.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.info.client.CommandLink;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.cell.client.CommandLink;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -36,6 +35,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.GWT;

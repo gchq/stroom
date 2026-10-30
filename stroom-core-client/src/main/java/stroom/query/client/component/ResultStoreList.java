@@ -16,18 +16,18 @@
 
 package stroom.query.client.component;
 
-import stroom.data.client.ColumnSizeConstants;
-import stroom.data.client.component.UserRefCell;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource.SourceType;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.util.client.cell.UserRefCell;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

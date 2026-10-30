@@ -16,14 +16,13 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.event.AnnotationChangeEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.UnlinkEvents;
-import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.DisplayMode;
 import stroom.data.client.component.DataViewerController;
 import stroom.docref.DocRef;
@@ -31,6 +30,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

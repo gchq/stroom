@@ -23,7 +23,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.component.FileChooser;
 import stroom.widget.text.client.InlineLabel;
 import stroom.widget.text.client.Label;
 

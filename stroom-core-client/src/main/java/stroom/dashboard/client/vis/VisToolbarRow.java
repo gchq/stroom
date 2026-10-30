@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.data.pager.client.RefreshButton;
+import stroom.widget.button.client.RefreshButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;

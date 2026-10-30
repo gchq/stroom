@@ -29,6 +29,7 @@ import stroom.hyperlink.client.HyperlinkOpener;
 import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.main.client.MainScreens;
 import stroom.main.client.component.MainController;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.menu.client.MenuItems;
 import stroom.widget.menu.client.MenuManager;
@@ -54,6 +55,7 @@ public class AppModule extends AbstractGinModule {
         bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
+        bind(UiConfigCache.class).asEagerSingleton();
 
         // Controllers
         // Hear the app-wide events that open its screens, for the life of the app

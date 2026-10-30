@@ -16,10 +16,10 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.planb.shared.StateType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

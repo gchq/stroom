@@ -16,18 +16,18 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
-import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.RadioGroup;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Html;
+import stroom.widget.util.client.FloorMapAria;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;

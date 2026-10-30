@@ -17,11 +17,11 @@
 package stroom.analytics.client.component;
 
 import stroom.analytics.shared.DuplicateCheckRow;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;

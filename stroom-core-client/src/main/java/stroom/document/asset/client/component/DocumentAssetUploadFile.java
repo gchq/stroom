@@ -17,7 +17,7 @@
 package stroom.document.asset.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.component.FileChooser;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

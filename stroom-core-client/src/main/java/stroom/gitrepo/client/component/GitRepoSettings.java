@@ -17,14 +17,14 @@
 package stroom.gitrepo.client.component;
 
 import stroom.credentials.shared.Credential;
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionListModel;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SelectionListModel;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 

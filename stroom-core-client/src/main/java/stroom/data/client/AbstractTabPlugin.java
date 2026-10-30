@@ -21,12 +21,12 @@ import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.Plugin;
 import stroom.core.client.event.CloseContentEvent;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.SimpleTask;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;

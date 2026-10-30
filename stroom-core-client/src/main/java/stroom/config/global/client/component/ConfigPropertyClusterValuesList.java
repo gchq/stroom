@@ -17,12 +17,14 @@
 package stroom.config.global.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.config.global.client.ListDataProvider;
-import stroom.config.global.client.NodeSource;
-import stroom.entity.client.TreeRowHandler;
+import stroom.config.global.client.model.ClusterValuesRow;
+import stroom.config.global.client.model.ClusterValuesTreeAction;
+import stroom.config.global.client.model.NodeSource;
 import stroom.util.shared.Expander;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.ListDataProvider;
+import stroom.widget.datagrid.client.TreeRowHandler;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;

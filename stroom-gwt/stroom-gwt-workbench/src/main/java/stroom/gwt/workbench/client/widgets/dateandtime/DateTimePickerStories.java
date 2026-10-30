@@ -23,10 +23,10 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.client.IconBox;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.IconBox;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.user.client.ui.Widget;

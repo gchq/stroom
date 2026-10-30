@@ -16,7 +16,7 @@
 
 package stroom.dictionary.client.component;
 
-import stroom.cell.info.client.CommandLink;
+import stroom.cell.client.CommandLink;
 import stroom.docref.DocRef;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

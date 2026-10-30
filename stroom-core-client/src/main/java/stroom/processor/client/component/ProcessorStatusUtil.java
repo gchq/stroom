@@ -21,7 +21,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.util.shared.NullSafe;
-import stroom.widget.customdatebox.client.MomentJs;
+import stroom.widget.datepicker.client.MomentJs;
 
 class ProcessorStatusUtil {
 

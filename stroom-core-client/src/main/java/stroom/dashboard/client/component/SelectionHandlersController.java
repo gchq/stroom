@@ -35,10 +35,10 @@ import stroom.query.api.Format;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.DynamicFieldSelectionListModel;
-import stroom.query.client.FieldSelectionListModel;
-import stroom.query.client.SimpleFieldSelectionListModel;
 import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.model.DynamicFieldSelectionListModel;
+import stroom.query.client.model.FieldSelectionListModel;
+import stroom.query.client.model.SimpleFieldSelectionListModel;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 

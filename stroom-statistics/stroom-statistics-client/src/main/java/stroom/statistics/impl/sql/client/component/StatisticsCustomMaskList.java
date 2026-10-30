@@ -17,13 +17,13 @@
 package stroom.statistics.impl.sql.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.config.global.client.ListDataProvider;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Field;
 import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Mask;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.ListDataProvider;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

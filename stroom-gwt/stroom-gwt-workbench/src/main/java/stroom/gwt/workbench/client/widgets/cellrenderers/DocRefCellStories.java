@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
-import stroom.data.client.component.DocRefCell;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -25,6 +24,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.util.client.cell.DocRefCell;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.HasChildren;
 import stroom.widget.menu.client.Item;

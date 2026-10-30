@@ -16,19 +16,17 @@
 
 package stroom.main.client.component;
 
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.content.client.component.ContentTabPaneController;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
-import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.explorer.client.component.ExplorerController;
 import stroom.main.client.PageTitle;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
@@ -38,6 +36,8 @@ import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.MaximiseEvent;
+import stroom.widget.task.client.TaskEndEvent;
+import stroom.widget.task.client.TaskStartEvent;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.KeyBinding;

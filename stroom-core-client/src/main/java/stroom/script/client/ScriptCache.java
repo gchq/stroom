@@ -16,10 +16,10 @@
 
 package stroom.script.client;
 
-import stroom.dashboard.client.vis.ClearScriptCacheEvent;
-import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.docref.DocRef;
-import stroom.security.client.api.event.LogoutEvent;
+import stroom.script.client.event.ClearScriptCacheEvent;
+import stroom.security.client.event.LogoutEvent;
+import stroom.widget.util.client.HandlerRegistry;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

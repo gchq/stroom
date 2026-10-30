@@ -16,9 +16,8 @@
 
 package stroom.floormap.client.component;
 
-import stroom.cell.info.client.CellIcon;
-import stroom.cell.info.client.IconCell;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.client.CellIcon;
+import stroom.cell.client.IconCell;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;
@@ -29,6 +28,7 @@ import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.SingleSelectionEventManager;
 

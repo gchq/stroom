@@ -21,7 +21,7 @@ import stroom.floormap.client.component.FloorMapLayerStyle;
 import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
 import stroom.floormap.client.component.FloorMapObjectEdit;
 import stroom.floormap.client.component.FloorMapSetScale;
-import stroom.floormap.client.component.MemberCandidate;
+import stroom.floormap.client.model.MemberCandidate;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;

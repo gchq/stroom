@@ -17,10 +17,10 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.folder.client.FolderTabs;
+import stroom.folder.client.component.FolderTabs;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;

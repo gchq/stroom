@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.playback;
 
+
 /// Rate limiter for the server queries timeline playback issues.
 ///
 /// Playback moves the scrubber every animation frame — around 60 times a second —

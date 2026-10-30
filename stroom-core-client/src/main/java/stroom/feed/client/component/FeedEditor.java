@@ -18,9 +18,9 @@ package stroom.feed.client.component;
 
 import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.component.ProcessorTasksTabController;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;

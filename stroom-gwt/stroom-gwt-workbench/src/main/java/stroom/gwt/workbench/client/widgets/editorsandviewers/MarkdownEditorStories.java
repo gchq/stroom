@@ -17,12 +17,10 @@
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.CurrentPreferences;
-import stroom.entity.client.MarkdownConverter;
-import stroom.entity.client.component.DocumentationTab;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.MarkdownEditorController;
+import stroom.document.client.MarkdownConverter;
+import stroom.document.client.component.DocumentationTab;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.component.MarkdownEditorController;
 import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -35,6 +33,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
+import stroom.widget.preferences.client.CurrentPreferences;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;

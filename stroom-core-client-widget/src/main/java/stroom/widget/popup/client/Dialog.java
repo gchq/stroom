@@ -18,11 +18,11 @@ package stroom.widget.popup.client;
 
 import stroom.svg.client.Icon;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.spinner.client.LargeBusySpinner;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;

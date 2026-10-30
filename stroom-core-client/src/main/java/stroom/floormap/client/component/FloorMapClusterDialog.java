@@ -20,13 +20,13 @@ import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.cluster.FloorMapClusterFilter;
 import stroom.floormap.client.cluster.FloorMapClusterMember;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;
-import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.SingleSelectionEventManager;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.cell.client.SafeHtmlCell;

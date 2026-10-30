@@ -5,7 +5,7 @@
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:l="urn:import:stroom.widget.layout.client"
              xmlns:e="urn:import:stroom.explorer.client.component"
-             xmlns:t="urn:import:stroom.widget.tab.client.component">
+             xmlns:t="urn:import:stroom.content.client.component">
     <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
          stop it held the whole app, with no name -->
     <g:FlowPanel styleName="main-screen">

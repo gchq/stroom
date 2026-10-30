@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:sec="urn:import:stroom.security.client.component">
     <!-- The permissions below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->

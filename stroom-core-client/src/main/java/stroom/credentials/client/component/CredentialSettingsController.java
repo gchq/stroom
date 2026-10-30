@@ -26,7 +26,7 @@ import stroom.credentials.shared.Secret;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

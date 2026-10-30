@@ -16,12 +16,12 @@
 
 package stroom.search.elastic.client.component;
 
-import stroom.config.global.client.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.ListDataProvider;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

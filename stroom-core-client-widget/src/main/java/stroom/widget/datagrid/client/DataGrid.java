@@ -16,11 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.LinkValue;
-import stroom.hyperlink.client.OpenHyperlinkRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
@@ -30,8 +26,12 @@ import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
 import stroom.widget.datagrid.client.model.SortRebuild;
-import stroom.widget.tab.client.GlobalResizeObserver;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.hyperlink.client.OpenHyperlinkRequest;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

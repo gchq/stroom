@@ -5,7 +5,6 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:p="urn:import:stroom.data.pager.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel addStyleNames="max dock-container-vertical pager-panel">
@@ -13,7 +12,7 @@
             <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-panel__toolbar">
                 <b:Toolbar ui:field="toolbar" name="List actions" visible="false"/>
             </g:FlowPanel>
-            <p:Pager ui:field="pager" addStyleNames="dock-min"/>
+            <dg:Pager ui:field="pager" addStyleNames="dock-min"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="listContainer" addStyleNames="pager-panel__list dock-max">
             <dg:MessagePanel ui:field="messagePanel"/>

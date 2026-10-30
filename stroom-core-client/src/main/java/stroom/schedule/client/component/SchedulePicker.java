@@ -16,17 +16,17 @@
 
 package stroom.schedule.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.scheduler.CronExpression;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.FrequencyExpression;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.QuickSettings;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.QuickSettings;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

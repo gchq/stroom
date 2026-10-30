@@ -17,7 +17,7 @@
 package stroom.credentials.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.entity.client.MarkdownConverter;
+import stroom.document.client.MarkdownConverter;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;

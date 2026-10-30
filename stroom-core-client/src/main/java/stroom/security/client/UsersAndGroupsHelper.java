@@ -16,7 +16,7 @@
 
 package stroom.security.client;
 
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.CellIcon;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;

@@ -20,8 +20,6 @@ import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.LinkValue;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -29,6 +27,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 import stroom.widget.component.client.Controller;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;

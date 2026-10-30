@@ -18,7 +18,7 @@ package stroom.annotation.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationResourceClient;
-import stroom.annotation.client.AnnotationTagNameChangeEvent;
+import stroom.annotation.client.event.AnnotationTagNameChangeEvent;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.component.ContentTabController;

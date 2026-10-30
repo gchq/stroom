@@ -17,6 +17,10 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableSize;
+import stroom.dashboard.client.model.MutableSplitLayoutConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 import stroom.dashboard.shared.Dimension;
 
 import org.junit.jupiter.api.Test;

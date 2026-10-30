@@ -17,7 +17,6 @@
 package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
@@ -30,6 +29,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.animation.client.AnimationScheduler;

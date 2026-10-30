@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:p="urn:import:stroom.data.pager.client"
+             xmlns:p="urn:import:stroom.widget.datagrid.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       A trace's overview (trace-overview-chart.css): a vertical stack of the pager bar, shown once a trace is,

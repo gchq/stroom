@@ -30,19 +30,19 @@ import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.document.client.editor.HasCommonTabs;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.HasCommonTabs;
-import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.SimpleTask;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
+import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.web.bindery.event.shared.EventBus;
 

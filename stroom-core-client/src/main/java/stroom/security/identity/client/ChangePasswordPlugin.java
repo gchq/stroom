@@ -22,10 +22,10 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.identity.client.component.CurrentPasswordController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

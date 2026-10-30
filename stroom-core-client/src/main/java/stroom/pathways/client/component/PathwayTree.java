@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.component;
 
-import stroom.pathways.client.Bezier;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Pathway;

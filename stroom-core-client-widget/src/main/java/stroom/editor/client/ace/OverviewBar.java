@@ -17,6 +17,7 @@
 package stroom.editor.client.ace;
 
 import stroom.util.shared.Severity;
+import stroom.widget.util.client.ScrollbarMetrics;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;

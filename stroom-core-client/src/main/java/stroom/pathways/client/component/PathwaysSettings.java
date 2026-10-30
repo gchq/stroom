@@ -20,8 +20,8 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.duration.client.DurationPicker;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 

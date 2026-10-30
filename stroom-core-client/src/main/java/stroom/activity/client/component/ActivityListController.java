@@ -18,7 +18,7 @@ package stroom.activity.client.component;
 
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.shared.NullSafe;

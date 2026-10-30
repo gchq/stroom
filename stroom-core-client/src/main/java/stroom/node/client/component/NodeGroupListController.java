@@ -16,9 +16,8 @@
 
 package stroom.node.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.FindNodeGroupRequest;
@@ -26,6 +25,7 @@ import stroom.node.shared.NodeGroup;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.view.client.Range;

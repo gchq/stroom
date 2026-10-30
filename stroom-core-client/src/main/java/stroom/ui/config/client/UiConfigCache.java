@@ -16,16 +16,16 @@
 
 package stroom.ui.config.client;
 
-import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.event.AnnotationChangeEvent;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.component.client.Listeners;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

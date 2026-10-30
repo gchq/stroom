@@ -17,7 +17,6 @@
 package stroom.task.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -25,6 +24,7 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.KeyBinding.Action;
 

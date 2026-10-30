@@ -2,8 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client"
-             xmlns:qv="urn:import:stroom.query.client.component">
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:dp="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Key Type"
                         helpText="The data type used to store keys. Fixed-size types (Boolean to Double) are compact; String allows up to 511 bytes; the lookup table types de-duplicate keys to save space at some cost to speed; Variable stores short keys directly and longer ones in a lookup table; Tags stores sets of name=value tags. Default is Tags."
@@ -21,7 +21,7 @@
             <i:SelectionBox ui:field="temporalResolution" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <g:SimplePanel addStyleNames="form-group">
-            <qv:TimeZoneBox ui:field="timeZoneBox"/>
+            <dp:TimeZoneBox ui:field="timeZoneBox"/>
         </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

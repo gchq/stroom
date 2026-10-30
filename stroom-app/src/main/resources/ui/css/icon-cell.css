@@ -15,7 +15,7 @@
  */
 
 /*
-   The icon cell (stroom.cell.info.client.IconCell), named BEM style: an icon in a grid cell
+   The icon cell (stroom.cell.client.IconCell), named BEM style: an icon in a grid cell
    (icon-cell), clickable (--button) or disabled (--disabled). ActionCell, ActionMenuCell and the
    permission and user cells draw their icons with the same classes. Was SvgCell.css (svgCell-*).
    svgCell-face is unused (see ISSUES.md).

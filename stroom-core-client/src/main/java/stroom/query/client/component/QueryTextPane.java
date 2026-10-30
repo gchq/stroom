@@ -18,12 +18,12 @@ package stroom.query.client.component;
 
 import stroom.data.client.component.ClassificationLabel;
 import stroom.editor.client.component.CodeEditor;
-import stroom.editor.client.component.HtmlPane;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.spinner.client.LargeBusySpinner;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.text.client.HtmlPane;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;

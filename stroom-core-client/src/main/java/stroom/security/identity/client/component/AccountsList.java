@@ -16,18 +16,18 @@
 
 package stroom.security.identity.client.component;
 
-import stroom.cell.info.client.CommandLink;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.client.CommandLink;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

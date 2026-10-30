@@ -35,8 +35,6 @@ import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.asset.shared.DocumentAssetResource;
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.CurrentPreferences;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.Result;
@@ -59,6 +57,8 @@ import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Layer;
 import stroom.widget.component.client.LayerContainer;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
+import stroom.widget.preferences.client.CurrentPreferences;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;

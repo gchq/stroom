@@ -25,13 +25,13 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Html;
 
 import com.google.gwt.dom.client.Element;

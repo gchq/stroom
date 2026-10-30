@@ -21,7 +21,7 @@ import stroom.annotation.client.DurationLabel;
 import stroom.annotation.client.FindAnnotationCell;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;

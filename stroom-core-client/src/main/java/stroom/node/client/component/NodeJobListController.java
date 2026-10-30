@@ -16,8 +16,8 @@
 
 package stroom.node.client.component;
 
-import stroom.cell.info.client.CommandLink;
-import stroom.data.client.RestDataProvider;
+import stroom.cell.client.CommandLink;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;

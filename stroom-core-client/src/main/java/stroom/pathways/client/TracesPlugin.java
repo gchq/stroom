@@ -20,8 +20,9 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.pathways.client.component.TracesEditor;
+import stroom.pathways.client.event.ShowTracesEvent;
 import stroom.pathways.shared.TracesDoc;
 
 import com.google.inject.Inject;

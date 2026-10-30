@@ -3,13 +3,12 @@
      After and Before times, each a date-time box that also takes expressions such as now()-1d -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
                         helpText="Preset time ranges, grouped as Relative, Present, Past and All. Select one to fill in both times.">
-            <b:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
+            <form:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="timeRangeFrom" label="After Time (inclusive)" addStyleNames="dock-min"
                         helpText="Start of the time range; this time is included. Enter a date and time such as 2026-01-01T00:00:00.000Z, or an expression such as now()-1d or day(). Leave blank for no start limit."

@@ -20,8 +20,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

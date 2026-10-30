@@ -17,7 +17,7 @@
 package stroom.annotation.client.component;
 
 import stroom.annotation.client.AssignYourself;
-import stroom.annotation.client.SettingBlock;
+import stroom.annotation.client.component.SettingBlock;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;

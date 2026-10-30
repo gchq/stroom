@@ -16,6 +16,7 @@
 
 package stroom.widget.tab.client;
 
+import stroom.widget.util.client.GlobalResizeObserver;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;

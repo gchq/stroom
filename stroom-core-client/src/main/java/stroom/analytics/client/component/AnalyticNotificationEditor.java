@@ -17,10 +17,10 @@
 package stroom.analytics.client.component;
 
 import stroom.analytics.shared.NotificationDestinationType;
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.duration.client.DurationPicker;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

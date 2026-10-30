@@ -16,6 +16,8 @@
 
 package stroom.widget.menu.client;
 
+import stroom.widget.menu.client.component.Menu;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 

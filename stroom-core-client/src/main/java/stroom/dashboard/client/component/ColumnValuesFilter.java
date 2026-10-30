@@ -19,13 +19,13 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.table.ColumnValueCell;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.query.api.ColumnValueSelection;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

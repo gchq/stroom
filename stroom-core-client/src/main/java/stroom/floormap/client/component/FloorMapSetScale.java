@@ -16,13 +16,13 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Family;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
+import stroom.widget.util.client.FloorMapAria;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;

@@ -16,16 +16,16 @@
 
 package stroom.data.store.impl.fs.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;

@@ -17,13 +17,13 @@
 package stroom.security.client.component;
 
 import stroom.data.client.component.FilterExpressionController;
-import stroom.explorer.client.component.DocumentPermissionsListController;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.security.client.component.DocumentPermissionsListController;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.util.shared.NullSafe;

@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.gin;
 
 import stroom.credentials.client.component.CredentialsPickerController;
 import stroom.dictionary.client.component.DictionaryEditor;
-import stroom.entity.client.component.InfoDocumentController;
+import stroom.document.client.component.InfoDocumentController;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;

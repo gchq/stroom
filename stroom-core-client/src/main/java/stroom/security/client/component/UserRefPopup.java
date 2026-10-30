@@ -16,19 +16,19 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.ColumnSizeConstants;
 import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.UserFields;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterDialog;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

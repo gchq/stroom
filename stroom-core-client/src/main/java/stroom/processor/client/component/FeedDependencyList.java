@@ -16,13 +16,13 @@
 
 package stroom.processor.client.component;
 
-import stroom.data.client.ColumnSizeConstants;
-import stroom.data.client.component.FeedRefCell;
 import stroom.processor.shared.FeedDependency;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.cell.FeedRefCell;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

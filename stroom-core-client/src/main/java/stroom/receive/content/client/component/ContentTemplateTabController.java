@@ -18,7 +18,7 @@ package stroom.receive.content.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.CellIcon;
 import stroom.content.client.component.ContentTabController;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.event.CloseContentEvent;

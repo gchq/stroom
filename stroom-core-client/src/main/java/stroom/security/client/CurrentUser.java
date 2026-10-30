@@ -17,19 +17,19 @@
 package stroom.security.client;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.SplashScreen;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.security.client.event.RequestLogoutEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.splash.client.SplashScreen;
 import stroom.util.shared.UserRef;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

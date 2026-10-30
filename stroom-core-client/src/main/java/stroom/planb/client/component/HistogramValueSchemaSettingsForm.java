@@ -16,10 +16,10 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.planb.shared.MaxValueSize;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

@@ -23,13 +23,13 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.SimpleTask;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
+import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;

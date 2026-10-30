@@ -19,13 +19,13 @@ package stroom.ai.client.component;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.spinner.client.SmallBusySpinner;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

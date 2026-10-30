@@ -18,9 +18,9 @@ package stroom.gwt.workbench.client.app.screen;
 
 import stroom.gwt.workbench.client.app.rest.FixtureUploads;
 import stroom.gwt.workbench.client.app.rest.RecordedUpload;
-import stroom.widget.form.client.FileChooserController;
 import stroom.widget.form.client.FileUploadCallback;
 import stroom.widget.form.client.FileUploadTransport;
+import stroom.widget.form.client.component.FileChooserController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;

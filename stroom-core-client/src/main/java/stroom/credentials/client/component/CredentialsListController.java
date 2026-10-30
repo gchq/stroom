@@ -22,7 +22,7 @@ import stroom.credentials.client.component.CredentialEditorController.CreationSt
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;

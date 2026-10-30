@@ -6,7 +6,7 @@
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:c="urn:import:stroom.widget.component.client"
-             xmlns:pb="urn:import:stroom.widget.progress.client.component"
+             xmlns:pb="urn:import:stroom.widget.progress.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:btn="urn:import:stroom.widget.button.client">
     <d:ClassificationWrapper ui:field="classificationWrapper">

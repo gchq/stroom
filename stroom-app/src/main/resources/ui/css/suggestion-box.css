@@ -15,7 +15,7 @@
  */
 
 /*
-   A text field that suggests what to type (stroom.item.client.SuggestionBox), named BEM style: its
+   A text field that suggests what to type (stroom.widget.selection.client.SuggestionBox), named BEM style: its
    field (a text field, text-field.css) fills the box, and its suggestions are a list in a popup below
    it (the shared popup's box, popup.css), at least as wide as the field (--suggestion-box__width).
    The option the keys have moved to is drawn as a list's selected row.

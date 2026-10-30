@@ -16,12 +16,12 @@
 
 package stroom.receive.rules.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

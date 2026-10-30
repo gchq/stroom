@@ -17,8 +17,8 @@
 package stroom.gwt.workbench.client.app.ai;
 
 import stroom.ai.client.component.AskStroomAiController;
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.ai.shared.GeneralTableContext;
-import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;

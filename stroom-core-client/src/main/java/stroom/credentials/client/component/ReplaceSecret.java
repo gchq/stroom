@@ -17,7 +17,7 @@
 package stroom.credentials.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;

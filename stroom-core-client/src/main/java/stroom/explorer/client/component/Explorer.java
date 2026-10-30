@@ -17,7 +17,6 @@
 package stroom.explorer.client.component;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
@@ -25,6 +24,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.spinner.client.SmallBusySpinner;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 

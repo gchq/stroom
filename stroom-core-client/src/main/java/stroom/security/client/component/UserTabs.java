@@ -16,8 +16,8 @@
 
 package stroom.security.client.component;
 
-import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.TabbedController;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.TabbedController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.UserRef;

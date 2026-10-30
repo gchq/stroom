@@ -24,11 +24,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.datepicker.client.DateTimeBoxController;
-import stroom.widget.form.client.FileChooserController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
+import stroom.widget.form.client.component.FileChooserController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;

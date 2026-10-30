@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
-import stroom.cell.info.client.CellIcon;
-import stroom.cell.info.client.IconCell;
+import stroom.cell.client.CellIcon;
+import stroom.cell.client.IconCell;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
 import stroom.gwt.workbench.framework.client.args.ArgType;

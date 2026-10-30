@@ -18,7 +18,6 @@ package stroom.index.client.component;
 
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.IndexFieldFields;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
@@ -26,6 +25,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

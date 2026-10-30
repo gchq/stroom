@@ -16,7 +16,7 @@
 
 package stroom.credentials.client.component;
 
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.editor.LinkTabPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.menu.client.ShowMenuEvent;

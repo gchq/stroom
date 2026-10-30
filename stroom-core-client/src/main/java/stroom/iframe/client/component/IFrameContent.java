@@ -17,9 +17,9 @@
 package stroom.iframe.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.tab.client.GlobalResizeObserver;
 import stroom.widget.text.client.Frame;
 import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.GlobalResizeObserver;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;

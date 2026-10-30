@@ -19,8 +19,6 @@ package stroom.preferences.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
-import stroom.editor.client.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -34,6 +32,8 @@ import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
+import stroom.widget.preferences.client.CurrentPreferences;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 

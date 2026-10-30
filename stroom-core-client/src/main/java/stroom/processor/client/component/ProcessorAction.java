@@ -16,6 +16,7 @@
 
 package stroom.processor.client.component;
 
+
 /// What can be done to the processors in a [ProcessorList], a toolbar button each.
 public enum ProcessorAction {
     /// Adds a processor.

@@ -16,6 +16,7 @@
 
 package stroom.data.client;
 
+
 public enum DisplayMode {
     /**
      * Displays the controller in a popup modal dialog

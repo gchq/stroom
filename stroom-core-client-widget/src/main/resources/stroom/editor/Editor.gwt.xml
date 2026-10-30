@@ -4,6 +4,7 @@
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
   <inherits name='edu.ycp.cs.dh.acegwt.AceGWT'/>
+  <inherits name='stroom.widget.preferences.Preferences'/>
 
   <source path="client" />
 </module>

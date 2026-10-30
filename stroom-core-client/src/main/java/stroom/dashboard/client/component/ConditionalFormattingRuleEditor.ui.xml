@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="conditional-formatting-rule-editor max form">
 

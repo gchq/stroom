@@ -5,7 +5,7 @@
              xmlns:colour="urn:import:stroom.widget.colour.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:fv="urn:import:stroom.floormap.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--

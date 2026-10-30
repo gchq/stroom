@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.pathways.client.component.TracesEditor;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesDocResource;
@@ -31,7 +31,7 @@ import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

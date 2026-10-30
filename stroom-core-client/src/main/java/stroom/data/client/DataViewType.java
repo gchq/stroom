@@ -16,6 +16,7 @@
 
 package stroom.data.client;
 
+
 public enum DataViewType {
     PREVIEW("preview"),
     INFO("info"),

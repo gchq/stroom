@@ -16,7 +16,7 @@
 
 package stroom.widget.popup.client;
 
-import stroom.widget.datagrid.client.Glass;
+import stroom.widget.util.client.Glass;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 

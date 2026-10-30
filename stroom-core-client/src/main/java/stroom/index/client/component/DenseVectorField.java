@@ -16,7 +16,6 @@
 
 package stroom.index.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
@@ -24,6 +23,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.InputChecks;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

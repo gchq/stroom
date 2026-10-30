@@ -16,8 +16,7 @@
 
 package stroom.importexport.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,6 +36,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuBuilder;
 import stroom.widget.menu.client.ShowMenuEvent;

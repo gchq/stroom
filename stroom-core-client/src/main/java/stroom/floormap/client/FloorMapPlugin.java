@@ -24,14 +24,14 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.floormap.client.component.FloorMapEditor;
 import stroom.floormap.client.component.NewFloorMapStoresController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

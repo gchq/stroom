@@ -18,7 +18,7 @@ package stroom.core.client.component;
 
 import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.widget.component.client.Controller;
 
 import com.google.gwt.user.client.Window;

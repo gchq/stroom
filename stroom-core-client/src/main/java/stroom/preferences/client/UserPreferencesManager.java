@@ -19,9 +19,7 @@ package stroom.preferences.client;
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
@@ -30,6 +28,8 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.TextContextMenu;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.datepicker.client.ClientTimeZone;
+import stroom.widget.preferences.client.CurrentPreferences;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.ClientStringUtil;
 import stroom.widget.util.client.KeyBinding;
 

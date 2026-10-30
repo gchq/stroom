@@ -16,16 +16,16 @@
 
 package stroom.node.client.component;
 
-import stroom.cell.info.client.CommandLink;
+import stroom.cell.client.CommandLink;
 import stroom.job.shared.JobNodeAndInfo;
 import stroom.node.client.component.JobNodeColumns.ActionMenuHandler;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

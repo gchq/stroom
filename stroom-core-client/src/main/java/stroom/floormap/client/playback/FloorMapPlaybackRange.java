@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.playback;
 
+
 /// Whether a proposed timeline playback range is usable.
 ///
 /// Kept free of GWT types so the rules can be tested on the JVM; the timeline

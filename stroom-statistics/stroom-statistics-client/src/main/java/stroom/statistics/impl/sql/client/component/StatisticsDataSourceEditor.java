@@ -17,9 +17,9 @@
 package stroom.statistics.impl.sql.client.component;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks;
 import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Field;

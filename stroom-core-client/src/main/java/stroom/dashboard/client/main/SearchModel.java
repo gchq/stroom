@@ -35,13 +35,13 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TimeRange;
 import stroom.query.client.DateTimeSettingsFactory;
-import stroom.query.client.ResultStoreModel;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

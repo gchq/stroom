@@ -2,13 +2,13 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:c="urn:import:stroom.widget.duration.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <!-- The Add Filter and Edit Filter dialog's content -->
     <g:FlowPanel styleName="max form">

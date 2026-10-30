@@ -16,10 +16,10 @@
 
 package stroom.pathways.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.pathways.shared.pathway.ConstraintValueType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

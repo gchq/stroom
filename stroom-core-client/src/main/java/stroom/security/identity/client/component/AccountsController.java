@@ -17,9 +17,9 @@
 package stroom.security.identity.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.util.client.HasRefresh;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

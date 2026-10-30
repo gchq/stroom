@@ -4,8 +4,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.processor.client.component"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client"
-             xmlns:qv="urn:import:stroom.query.client.component">
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:dp="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="profileName" label="Profile Name" required="true"
                         helpText="A unique name for this processing profile. Processor filters refer to the profile by this name."
@@ -24,7 +24,7 @@
             </g:SimplePanel>
         </form:FormGroup>
         <g:SimplePanel addStyleNames="form-group">
-            <qv:TimeZoneBox ui:field="timeZone"/>
+            <dp:TimeZoneBox ui:field="timeZone"/>
         </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

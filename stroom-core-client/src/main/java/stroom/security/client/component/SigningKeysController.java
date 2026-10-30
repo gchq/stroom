@@ -19,7 +19,6 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.identity.shared.SigningKeyResource;
@@ -27,6 +26,7 @@ import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.IsButton;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

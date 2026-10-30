@@ -1,14 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:pv="urn:import:stroom.pipeline.structure.client.component"
-             xmlns:qc="urn:import:stroom.query.client">
+             xmlns:ht="urn:import:stroom.widget.htree.client"
+             xmlns:qc="urn:import:stroom.query.client.component">
     <!--
       An expression's tree of terms and operators (expression-tree.css), whose items can be dragged
       to another operator
     -->
-    <pv:DraggableTree ui:field="layoutPanel" addStyleNames="expression-tree" allowDragging="true">
-        <pv:tree>
+    <ht:DraggableTree ui:field="layoutPanel" addStyleNames="expression-tree" allowDragging="true">
+        <ht:tree>
             <qc:ExpressionTreePanel ui:field="treePanel"/>
-        </pv:tree>
-    </pv:DraggableTree>
+        </ht:tree>
+    </ht:DraggableTree>
 </ui:UiBinder>

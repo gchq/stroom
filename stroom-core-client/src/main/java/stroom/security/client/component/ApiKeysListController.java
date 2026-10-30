@@ -17,8 +17,7 @@
 package stroom.security.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -37,6 +36,7 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

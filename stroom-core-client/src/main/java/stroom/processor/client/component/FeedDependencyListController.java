@@ -17,10 +17,10 @@
 package stroom.processor.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.component.FeedRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.shared.StreamTypeNames;
 import stroom.processor.shared.FeedDependency;
+import stroom.util.client.cell.FeedRefCell;
 import stroom.widget.component.client.Controller;
 
 import com.google.gwt.user.client.ui.Focus;

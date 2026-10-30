@@ -21,8 +21,8 @@ import stroom.dispatch.client.FakeRestFactory;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.ValidationResult;
 import stroom.node.client.NodeClient;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;

@@ -16,11 +16,11 @@
 
 package stroom.floormap.client.component;
 
-import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.component.client.Controller;
+import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

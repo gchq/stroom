@@ -19,7 +19,7 @@ package stroom.index.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.component.NameEntry;
+import stroom.document.client.component.NameEntry;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.util.shared.NullSafe;

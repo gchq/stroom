@@ -17,6 +17,8 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.LinkTabBar;

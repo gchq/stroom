@@ -17,13 +17,13 @@
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.data.client.component.DataTextPaneController;
-import stroom.editor.client.CurrentPreferences;
 import stroom.editor.client.DelegatingAceCompleter;
 import stroom.editor.client.component.AceEditorPaneController;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.widget.preferences.client.CurrentPreferences;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;

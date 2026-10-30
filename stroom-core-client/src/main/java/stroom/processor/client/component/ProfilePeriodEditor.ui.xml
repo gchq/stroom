@@ -4,26 +4,26 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:datepicker="urn:import:stroom.widget.datepicker.client"
-             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
-             xmlns:days="urn:import:stroom.processor.client.component">
+             xmlns:compon="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="form">
         <form:FormGroup identity="days"
                         label="Active Days"
                         helpText="The days of the week on which this period applies."
                         screenReaderText="Tick each day this period applies.">
-            <days:DaysOfWeek ui:field="days"/>
+            <datepicker:DaysOfWeek ui:field="days"/>
         </form:FormGroup>
         <form:FormGroup identity="startTime"
                         label="Start Time"
                         helpText="The time of day this period starts, in 24-hour HH:mm:ss format, e.g. 08:00:00. Times use the profile's time zone."
                         screenReaderText="24-hour time, e.g. 08:00:00.">
-            <datepicker:TimeBox ui:field="startTime"/>
+            <compon:TimeBox ui:field="startTime"/>
         </form:FormGroup>
         <form:FormGroup identity="endTime"
                         label="End Time"
                         helpText="The time of day this period ends, in 24-hour HH:mm:ss format, e.g. 18:00:00. If it is not later than the start time, the period runs until midnight; it does not continue into the next day."
                         screenReaderText="24-hour time, e.g. 18:00:00. Use 00:00:00 to run to midnight.">
-            <datepicker:TimeBox ui:field="endTime"/>
+            <compon:TimeBox ui:field="endTime"/>
         </form:FormGroup>
         <form:FormGroup identity="limitNodeThreads"
                         helpText="Tick to limit how many threads each node can use for processing during this period. When unticked, there is no per-node limit."

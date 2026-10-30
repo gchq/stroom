@@ -18,10 +18,10 @@ package stroom.content.client.component;
 
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.LayerController;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.web.bindery.event.shared.EventBus;
 

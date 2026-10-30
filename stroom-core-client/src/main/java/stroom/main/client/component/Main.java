@@ -17,12 +17,12 @@
 package stroom.main.client.component;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
+import stroom.content.client.component.CurveTabLayout;
+import stroom.dashboard.client.table.cf.DynamicStyles;
 import stroom.explorer.client.component.Explorer;
-import stroom.main.client.DynamicStyles;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
-import stroom.widget.tab.client.component.CurveTabLayout;
 import stroom.widget.util.client.ContentFocus;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Size;

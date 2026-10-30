@@ -16,15 +16,15 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.event.AnnotationChangeEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.TabbedController;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.TabbedController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;

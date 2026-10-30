@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.security.client.ClassNameBuilder;
+import stroom.widget.util.client.ClassNameBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;

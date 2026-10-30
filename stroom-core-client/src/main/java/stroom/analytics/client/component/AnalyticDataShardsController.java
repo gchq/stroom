@@ -22,7 +22,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.HasToolbar;
+import stroom.document.client.editor.HasToolbar;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.component.QueryToolbarController;

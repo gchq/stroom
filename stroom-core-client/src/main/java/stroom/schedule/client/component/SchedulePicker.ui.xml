@@ -3,7 +3,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
@@ -15,7 +15,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
                         helpText="Presets that fill in the expression with a common schedule.">
-            <b:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
+            <form:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression"
                         helpText="For Frequency, an interval such as 10m or 1h (units s, m, h, d). For Cron, six fields starting with seconds, e.g. 0 0 2 * * ? for 2am every day."

@@ -15,7 +15,7 @@
  */
 
 /*
-   A setting of an annotation (stroom.annotation.client.SettingBlock), shown as its value with a
+   A setting of an annotation (stroom.annotation.client.component.SettingBlock), shown as its value with a
    hint (or button) to change it, named BEM style (block, block__element, block--modifier).
 */
 .setting-block {

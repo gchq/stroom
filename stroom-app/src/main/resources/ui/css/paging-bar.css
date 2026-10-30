@@ -15,7 +15,7 @@
  */
 
 /*
-   A pager (stroom.data.pager.client.Pager), named BEM style (paging-bar; a PagerPanel puts it in
+   A pager (stroom.widget.datagrid.client.Pager), named BEM style (paging-bar; a PagerPanel puts it in
    its bar, pager-panel__bar): which rows are shown and of how many (its labels, paging-bar__label,
    with boxes to type the first and last in, paging-bar__text-box), spaced from what is before them
    and from its buttons (paging-bar__space), then the buttons that page through them.

@@ -15,7 +15,7 @@
  */
 
 /*
-   The content tab pane's layout (stroom.widget.tab.client.component.CurveTabLayout), named BEM style. Its rules were in `components.css`.
+   The content tab pane's layout (stroom.content.client.component.CurveTabLayout), named BEM style. Its rules were in `components.css`.
 */
 
 .curve-tab-layout__layout {

@@ -42,7 +42,7 @@ import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 import stroom.widget.component.client.Controller;
 import stroom.widget.progress.client.Progress;
-import stroom.widget.progress.client.component.SourceProgressBar;
+import stroom.widget.progress.client.SourceProgressBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;

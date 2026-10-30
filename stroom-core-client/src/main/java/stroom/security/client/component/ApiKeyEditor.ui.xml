@@ -1,11 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!-- An API key: its owner, name, hash algorithm, prefix, the key itself just after it is made, and its expiry -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:item="urn:import:stroom.item.client"
+             xmlns:item="urn:import:stroom.widget.selection.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:tx="urn:import:stroom.widget.text.client">

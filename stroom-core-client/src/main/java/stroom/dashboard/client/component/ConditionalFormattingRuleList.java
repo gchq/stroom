@@ -16,14 +16,14 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
-import stroom.data.client.ColumnSizeConstants;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModel;

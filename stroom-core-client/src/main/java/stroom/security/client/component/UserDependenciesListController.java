@@ -16,22 +16,22 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
-import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.cell.DocRefCell;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.GWT;

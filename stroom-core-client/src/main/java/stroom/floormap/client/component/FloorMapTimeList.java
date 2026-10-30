@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.model.FloorMapEditorModel;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.TemporalEntry;

@@ -23,12 +23,13 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.folder.client.component.FolderTabs;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

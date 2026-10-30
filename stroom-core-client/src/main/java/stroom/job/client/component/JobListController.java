@@ -17,7 +17,7 @@
 package stroom.job.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;

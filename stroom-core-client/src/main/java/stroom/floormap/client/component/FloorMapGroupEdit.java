@@ -16,12 +16,13 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
+import stroom.floormap.client.model.MemberCandidate;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
+import stroom.widget.util.client.FloorMapAria;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;

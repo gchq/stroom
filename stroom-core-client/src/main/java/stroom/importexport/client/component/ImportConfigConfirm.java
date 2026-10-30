@@ -19,7 +19,7 @@ package stroom.importexport.client.component;
 import stroom.importexport.shared.ImportState;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.tickbox.client.TickBox;
 

@@ -17,6 +17,8 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 
 import java.util.List;
 

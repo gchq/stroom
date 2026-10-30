@@ -16,7 +16,7 @@
 
 package stroom.pathways.client.component;
 
-import stroom.pathways.client.ShowTracesEvent;
+import stroom.pathways.client.event.ShowTracesEvent;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeSequence;

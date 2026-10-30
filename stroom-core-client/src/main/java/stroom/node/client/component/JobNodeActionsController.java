@@ -30,7 +30,6 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.schedule.client.component.SchedulePickerController;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenServerTasksEvent;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
@@ -39,6 +38,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuBuilder;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;

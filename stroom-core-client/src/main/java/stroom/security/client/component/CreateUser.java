@@ -17,10 +17,10 @@
 package stroom.security.client.component;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.client.component.NameEntry;
-import stroom.item.client.SelectionBox;
+import stroom.document.client.component.NameEntry;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

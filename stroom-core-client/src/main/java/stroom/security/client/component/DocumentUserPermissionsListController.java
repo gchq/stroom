@@ -16,10 +16,8 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.RefCellsController;
-import stroom.data.client.component.UserRefCell;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -32,11 +30,13 @@ import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.UserFields;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.cell.UserRefCell;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 

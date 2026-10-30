@@ -17,6 +17,7 @@
 package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.model.FactListRow;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;

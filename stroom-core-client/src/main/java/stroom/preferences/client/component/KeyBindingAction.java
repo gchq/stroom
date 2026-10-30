@@ -16,6 +16,7 @@
 
 package stroom.preferences.client.component;
 
+
 /// What can be done to the shortcuts in the Keyboard Shortcuts tab ([KeyBindingPreferences]), a
 /// toolbar button each.
 public enum KeyBindingAction {

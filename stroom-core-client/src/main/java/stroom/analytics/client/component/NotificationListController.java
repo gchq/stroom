@@ -22,13 +22,13 @@ import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
-import stroom.config.global.client.ListDataProvider;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.ListDataProvider;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

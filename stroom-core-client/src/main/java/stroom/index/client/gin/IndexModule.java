@@ -18,11 +18,13 @@ package stroom.index.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.index.client.IndexPlugin;
+import stroom.index.client.ManageIndexVolumesPlugin;
 
 public class IndexModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(IndexPlugin.class);
+        bindPlugin(ManageIndexVolumesPlugin.class);
     }
 }

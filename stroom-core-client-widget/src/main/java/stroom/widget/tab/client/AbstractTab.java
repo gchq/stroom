@@ -16,9 +16,9 @@
 
 package stroom.widget.tab.client;
 
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;

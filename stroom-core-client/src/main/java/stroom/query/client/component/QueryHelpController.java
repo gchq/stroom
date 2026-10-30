@@ -17,22 +17,22 @@
 package stroom.query.client.component;
 
 import stroom.docref.DocRef;
+import stroom.document.client.MarkdownConverter;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.entity.client.MarkdownConverter;
-import stroom.query.client.DynamicQueryHelpSelectionListModel;
 import stroom.query.client.QueryHelpAceCompletionProvider;
 import stroom.query.client.QueryHelpDetailProvider;
 import stroom.query.client.QueryHelpSelectionItem;
+import stroom.query.client.model.DynamicQueryHelpSelectionListModel;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.MultiSelectionModel;
 

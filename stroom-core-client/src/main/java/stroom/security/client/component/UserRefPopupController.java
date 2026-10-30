@@ -16,9 +16,8 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
@@ -37,6 +36,7 @@ import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.popup.client.DialogAction;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;

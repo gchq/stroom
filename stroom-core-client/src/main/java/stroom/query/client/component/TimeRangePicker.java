@@ -19,9 +19,9 @@ package stroom.query.client.component;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
-import stroom.widget.button.client.QuickSettings;
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
+import stroom.widget.form.client.QuickSettings;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

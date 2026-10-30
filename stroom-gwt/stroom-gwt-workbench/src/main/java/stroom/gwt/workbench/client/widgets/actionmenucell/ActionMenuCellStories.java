@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.actionmenucell;
 
-import stroom.cell.info.client.ActionMenuCell;
+import stroom.cell.client.ActionMenuCell;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;

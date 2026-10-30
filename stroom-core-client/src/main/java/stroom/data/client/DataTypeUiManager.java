@@ -18,7 +18,7 @@ package stroom.data.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaResource;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 

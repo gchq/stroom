@@ -19,7 +19,7 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.component.NameEntry;
+import stroom.document.client.component.NameEntry;
 import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;

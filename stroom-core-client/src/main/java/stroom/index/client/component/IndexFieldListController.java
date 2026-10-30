@@ -17,9 +17,8 @@
 package stroom.index.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -36,6 +35,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

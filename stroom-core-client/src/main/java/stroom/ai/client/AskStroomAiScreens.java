@@ -17,9 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.client.component.AskStroomAiController;
-import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.datagrid.client.AskStroomAiEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

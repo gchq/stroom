@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissionsReport;
 

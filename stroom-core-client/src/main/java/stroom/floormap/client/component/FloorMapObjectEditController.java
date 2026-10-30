@@ -19,8 +19,8 @@ package stroom.floormap.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
-import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
+import stroom.floormap.client.model.FloorMapEditorModel;
 import stroom.floormap.client.value.FloorMapEntryParser;
 import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.client.value.ValueAccessor;
@@ -34,7 +34,7 @@ import stroom.floormap.shared.TypeStyle;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.PopupType;
 
 import com.google.inject.Inject;

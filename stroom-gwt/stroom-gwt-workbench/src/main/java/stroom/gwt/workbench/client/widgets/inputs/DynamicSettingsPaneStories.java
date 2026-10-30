@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
-import stroom.dashboard.client.vis.DynamicSettingsPane;
+import stroom.dashboard.client.component.DynamicSettingsPane;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;

@@ -16,8 +16,8 @@
 
 package stroom.task.client;
 
-
 import stroom.node.shared.Node;
+import stroom.task.client.model.ServerTaskTreeAction;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;

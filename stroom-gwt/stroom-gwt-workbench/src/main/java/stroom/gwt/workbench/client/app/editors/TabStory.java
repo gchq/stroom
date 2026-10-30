@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.component.TabbedController.TabReader;
+import stroom.document.client.editor.TabbedController.TabReader;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;

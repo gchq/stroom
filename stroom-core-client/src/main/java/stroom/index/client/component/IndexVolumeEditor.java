@@ -17,9 +17,9 @@
 package stroom.index.client.component;
 
 import stroom.index.shared.IndexVolume.VolumeUseState;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

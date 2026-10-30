@@ -16,22 +16,22 @@
 
 package stroom.security.client.component;
 
-import stroom.cell.info.client.ActionMenuCell;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.client.ActionMenuCell;
 import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.UserFields;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.menu.client.Item;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

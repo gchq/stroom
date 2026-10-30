@@ -17,6 +17,7 @@
 package stroom.pathways.client.component;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.pathways.client.model.ConstraintValueText;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.pathways.shared.pathway.ConstraintValueType;
 import stroom.widget.component.client.Controller;

@@ -15,7 +15,7 @@
  */
 
 /*
-   The file chooser (stroom.widget.form.client.FileChooser), the BEM block file-chooser: its
+   The file chooser (stroom.widget.form.client.component.FileChooser), the BEM block file-chooser: its
    button (file-chooser__button, a Button), which opens the browser's file dialog through the hidden
    file input (file-chooser__input), and the chosen file's name beside it (file-chooser__name, with
    --empty while none is chosen).

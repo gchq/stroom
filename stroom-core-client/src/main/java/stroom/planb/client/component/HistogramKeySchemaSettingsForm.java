@@ -16,14 +16,14 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.component.TimeZoneBox;
 import stroom.widget.component.client.Component;
+import stroom.widget.datepicker.client.TimeZoneBox;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

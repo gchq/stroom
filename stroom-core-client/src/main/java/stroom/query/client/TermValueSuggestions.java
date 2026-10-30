@@ -17,11 +17,11 @@
 package stroom.query.client;
 
 import stroom.docref.DocRef;
-import stroom.item.client.SuggestionSource;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
+import stroom.widget.selection.client.SuggestionSource;
 
 import com.google.gwt.user.client.Timer;
 
@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/// Suggests a term's values for a [stroom.item.client.SuggestionBox]: True and False for a boolean
+/// Suggests a term's values for a [stroom.widget.selection.client.SuggestionBox]: True and False for a boolean
 /// field, else what its data source suggests for the field, fetched (by whatever [#setFetcher] is
 /// given, e.g. a term editor's controller) once typing pauses, and kept if the source says it may be.
 /// (It was a GWT `SuggestOracle` for GWT's `SuggestBox`.)

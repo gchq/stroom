@@ -24,7 +24,6 @@ import stroom.data.client.component.ItemSelection;
 import stroom.data.client.component.ItemSelectionController;
 import stroom.data.client.component.MarkerList;
 import stroom.data.client.component.MarkerListController;
-import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
@@ -42,6 +41,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.widget.text.client.HtmlPane;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;

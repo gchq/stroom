@@ -19,11 +19,11 @@ package stroom.gwt.workbench.client.app.screen;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.CurrentPreferences;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.preferences.client.CurrentPreferences;
 
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;

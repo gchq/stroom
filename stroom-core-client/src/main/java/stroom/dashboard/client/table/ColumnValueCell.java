@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.query.api.ColumnValueSelection;
 import stroom.widget.util.client.HtmlBuilder;

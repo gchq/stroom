@@ -16,7 +16,7 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.SettingBlock;
+import stroom.annotation.client.component.SettingBlock;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;

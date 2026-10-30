@@ -16,8 +16,8 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.event.AnnotationChangeEvent;
 import stroom.annotation.shared.ChangeAssignedTo;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;

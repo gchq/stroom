@@ -2,17 +2,17 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:annotation="urn:import:stroom.annotation.client"
+             xmlns:c="urn:import:stroom.annotation.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel addStyleNames="annotation-setting">
-        <annotation:SettingBlock ui:field="statusBlock" title="Change Status">
+        <c:SettingBlock ui:field="statusBlock" title="Change Status">
             <form:FormGroup ui:field="statusGroup" identity="annotationStatus" label="Status"
                             helpText="The status to set on all the selected annotations when you select OK. Select it to choose a status; OK asks for one while it shows None.">
                 <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
                     <tx:Label ui:field="status" styleName="annotation-setting__value"/>
                 </g:FlowPanel>
             </form:FormGroup>
-        </annotation:SettingBlock>
+        </c:SettingBlock>
     </g:FlowPanel>
 </ui:UiBinder>
 

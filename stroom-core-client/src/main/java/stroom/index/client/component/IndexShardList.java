@@ -16,20 +16,20 @@
 
 package stroom.index.client.component;
 
-import stroom.cell.info.client.InfoColumn;
+import stroom.cell.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;

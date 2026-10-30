@@ -17,7 +17,7 @@
 package stroom.receive.content.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.receive.rules.client.ContentTemplatePlugin;
+import stroom.receive.content.client.ContentTemplatePlugin;
 
 public class ContentTemplateModule extends PluginModule {
 

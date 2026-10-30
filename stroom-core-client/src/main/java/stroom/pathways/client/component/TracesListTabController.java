@@ -18,7 +18,7 @@ package stroom.pathways.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.HasToolbar;
+import stroom.document.client.editor.HasToolbar;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
@@ -31,7 +31,7 @@ import stroom.query.client.component.TimeRangeSelector;
 import stroom.query.client.component.TimeRangeSelectorController;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.component.client.Controller;
-import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.datepicker.client.ClientDateUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;

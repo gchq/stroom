@@ -18,19 +18,19 @@ package stroom.gwt.workbench.client.widgets.buttons;
 
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
-/// Toolbars declared in a UiBinder template (`ToolbarTemplate.ui.xml`), as a view declares them:
-/// the template lays out the buttons, and their behaviour is set here with `setOnClick` and
-/// `setOnToggle`.
-final class ToolbarTemplate extends Composite {
+/// Toolbars declared in a UiBinder template (`ToolbarTemplate.ui.xml`), as a component's template
+/// declares them: the template lays out the buttons, and their behaviour is set here with
+/// `setOnClick` and `setOnToggle`.
+final class ToolbarTemplate extends Component {
 
     @UiField
     ToolbarButton save;
@@ -39,10 +39,22 @@ final class ToolbarTemplate extends Composite {
     @UiField
     ToolbarButton first;
 
-    ToolbarTemplate(final Runnable onSave, final Consumer<Boolean> onFilter, final Runnable onFirst) {
+    ToolbarTemplate() {
         initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+    }
+
+    /// @param onSave What to run when Save is clicked.
+    void setOnSave(final Runnable onSave) {
         save.setOnClick(onSave);
+    }
+
+    /// @param onFilter What to run when Show Filters is toggled, with whether it is now on.
+    void setOnFilter(final Consumer<Boolean> onFilter) {
         filter.setOnToggle(onFilter);
+    }
+
+    /// @param onFirst What to run when First is clicked.
+    void setOnFirst(final Runnable onFirst) {
         first.setOnClick(onFirst);
     }
 

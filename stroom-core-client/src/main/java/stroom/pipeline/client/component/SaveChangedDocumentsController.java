@@ -16,9 +16,9 @@
 
 package stroom.pipeline.client.component;
 
-import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.docref.DocRef;
+import stroom.util.client.cell.DocRefCell;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;

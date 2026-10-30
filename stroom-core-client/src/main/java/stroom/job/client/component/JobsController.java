@@ -17,12 +17,12 @@
 package stroom.job.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;

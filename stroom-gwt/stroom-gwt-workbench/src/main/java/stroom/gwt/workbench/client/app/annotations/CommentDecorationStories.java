@@ -17,12 +17,12 @@
 
 package stroom.gwt.workbench.client.app.annotations;
 
-import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
 import stroom.data.client.event.ShowDataEvent;
+import stroom.gwt.workbench.client.app.annotations.AnnotationFixtures;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
-import stroom.gwt.workbench.client.app.main.AnnotationFixtures;
-import stroom.gwt.workbench.client.app.main.ContentStorySupport;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;

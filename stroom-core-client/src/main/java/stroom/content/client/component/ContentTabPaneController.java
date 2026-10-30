@@ -28,21 +28,20 @@ import stroom.content.client.event.RefreshContentTabEvent.RefreshContentTabHandl
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
-import stroom.data.table.client.HasRefresh;
 import stroom.explorer.client.RecentItems;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.AbstractTab;
 import stroom.widget.tab.client.TabData;
-import stroom.widget.tab.client.component.CurveTabLayout;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.ContentFocus;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 

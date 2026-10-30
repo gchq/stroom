@@ -17,8 +17,8 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.data.client.CopyTextUtil;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CopyTextUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

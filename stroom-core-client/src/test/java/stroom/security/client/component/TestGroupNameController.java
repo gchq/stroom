@@ -17,10 +17,10 @@
 package stroom.security.client.component;
 
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.entity.client.component.NameEntry;
+import stroom.document.client.component.NameEntry;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.SimpleEventBus;

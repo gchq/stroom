@@ -16,9 +16,7 @@
 
 package stroom.node.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
-import stroom.data.table.client.HasRefresh;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
@@ -33,8 +31,10 @@ import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.HtmlTableBuilder;

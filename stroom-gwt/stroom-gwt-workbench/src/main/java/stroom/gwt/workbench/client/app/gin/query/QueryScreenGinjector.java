@@ -26,9 +26,9 @@ import stroom.hyperlink.client.HyperlinkOpener;
 import stroom.iframe.client.component.IFrameContentController;
 import stroom.planb.client.component.PlanBEditor;
 import stroom.query.client.DateTimeSettingsFactory;
-import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.QueryDocEditor;
 import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.view.client.component.ViewDocEditor;
 

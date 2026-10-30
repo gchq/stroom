@@ -20,7 +20,7 @@ import stroom.ai.client.AiChatCell;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form dock-container-vertical">
         <form:FormGroup identity="constraintName" label="Name">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>

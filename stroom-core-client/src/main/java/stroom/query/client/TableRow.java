@@ -16,10 +16,9 @@
 
 package stroom.query.client;
 
-import stroom.hyperlink.client.HyperlinkName;
-import stroom.hyperlink.client.LinkValue;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
+import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;

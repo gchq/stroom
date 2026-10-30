@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:compon="urn:import:stroom.widget.form.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max">
         <form:FormGroup identity="visualisationAssetsUploadFileTo"
@@ -15,7 +16,7 @@
                         helpText="The file to add to the visualisation's assets. Any '/' or ':' characters are removed from its name."
                         screenReaderText="Any '/' or ':' characters are removed from its name."
                         required="true">
-            <form:FileChooser ui:field="fileChooser"/>
+            <compon:FileChooser ui:field="fileChooser"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -16,11 +16,11 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
-import stroom.dashboard.client.flexlayout.MutableSize;
-import stroom.dashboard.client.flexlayout.MutableSplitLayoutConfig;
-import stroom.dashboard.client.flexlayout.MutableTabConfig;
-import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableSize;
+import stroom.dashboard.client.model.MutableSplitLayoutConfig;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;

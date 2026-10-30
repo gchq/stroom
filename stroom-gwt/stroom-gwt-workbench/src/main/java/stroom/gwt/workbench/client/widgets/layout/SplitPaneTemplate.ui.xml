@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Split panes declared in a template, nested as User Groups' are: a list of users above, and
+     below it the groups the selected user is a member of beside the members of the selected
+     group. Each pane is named, and so is the splitter that resizes it. -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:l="urn:import:stroom.widget.layout.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <l:SplitPane vertical="true" thin="true" sizes="50%, *" names="Users, Membership">
+        <tx:Html>Users</tx:Html>
+        <l:SplitPane thin="true" sizes="50%, *" names="Member of, Members">
+            <tx:Html>Member of</tx:Html>
+            <tx:Html>Members</tx:Html>
+        </l:SplitPane>
+    </l:SplitPane>
+</ui:UiBinder>

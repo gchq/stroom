@@ -16,14 +16,14 @@
 
 package stroom.preferences.client.component;
 
-import stroom.item.client.DecoratedItem;
-import stroom.item.client.SelectionBox;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.TextContextMenu;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.DecoratedItem;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

@@ -33,10 +33,10 @@
 package stroom.widget.datepicker.client;
 
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;

@@ -16,14 +16,13 @@
 
 package stroom.gwt.workbench.client.widgets.datagrid;
 
+import stroom.cell.client.ActionMenuCell;
+import stroom.cell.client.CommandLink;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.ActionMenuCell;
-import stroom.cell.info.client.CommandLink;
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -33,6 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;

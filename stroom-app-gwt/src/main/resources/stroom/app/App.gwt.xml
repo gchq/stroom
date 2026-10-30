@@ -43,6 +43,7 @@
     <inherits name='stroom.core.Core'/>
     <inherits name='stroom.event.Event' />
     <inherits name='stroom.task.Task'/>
+    <inherits name='stroom.widget.task.Task'/>
     <inherits name='stroom.main.Main'/>
     <inherits name='stroom.http.Http' />
     <inherits name='stroom.widget.popup.Popup'/>
@@ -56,19 +57,20 @@
     <inherits name="stroom.widget.util.Util"/>
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.widget.tab.Tab"/>
-    <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.duration.Duration"/>
     <inherits name="stroom.widget.datepicker.DatePicker"/>
 
     <inherits name="stroom.widget.dropdowntree.DropDownTree" />
     <!-- The quick filter box (the widget library) -->
     <inherits name="stroom.widget.quickfilter.QuickFilter"/>
     <inherits name="stroom.widget.layout.Layout" />
-    <inherits name="stroom.item.Item" />
+    <inherits name="stroom.widget.selection.Selection" />
     <inherits name="stroom.widget.menu.Menu" />
     <inherits name="stroom.widget.button.Button" />
     <inherits name="stroom.widget.form.Form" />
     <inherits name="stroom.widget.text.Text"/>
     <inherits name="stroom.widget.help.Help" />
+    <inherits name="stroom.widget.preferences.Preferences" />
     <inherits name="stroom.widget.popup.Popup" />
     <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox" />
@@ -76,7 +78,6 @@
     <inherits name="stroom.widget.valuespinner.ValueSpinner" />
     <inherits name="stroom.widget.datagrid.DataGrid" />
     <inherits name="stroom.editor.Editor" />
-    <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
     <inherits name="stroom.widget.htree.HTree"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
     <inherits name="stroom.widget.linecolinput.LineColInput"/>
@@ -89,6 +90,7 @@
     <inherits name="stroom.meta.Meta" />
     <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
+    <inherits name="stroom.splash.Splash" />
     <inherits name="stroom.annotation.Annotation" />
     <inherits name="stroom.alert.Alert" />
     <inherits name="stroom.apikeys.ApiKeys" />
@@ -105,6 +107,7 @@
     <inherits name="stroom.welcome.Welcome" />
     <inherits name="stroom.trackers.Trackers" />
     <inherits name="stroom.hyperlink.Hyperlink" />
+    <inherits name="stroom.widget.hyperlink.Hyperlink"/>
     <inherits name="stroom.iframe.IFrame" />
     <inherits name="stroom.preferences.Preferences" />
 
@@ -155,7 +158,6 @@
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.schedule.Schedule" />
-    <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />
     <inherits name="stroom.datagen.DataGen" />
@@ -168,8 +170,6 @@
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data" />
-    <inherits name="stroom.data.table.Table" />
-    <inherits name="stroom.data.pager.Pager" />
     <inherits name="stroom.cell.Cell" />
 
     <!-- Specify the app entry point class. -->

@@ -16,9 +16,9 @@
 
 package stroom.data.client.component;
 
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Controller;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.inject.Inject;
 

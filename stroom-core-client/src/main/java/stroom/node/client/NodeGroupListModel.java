@@ -17,15 +17,15 @@
 package stroom.node.client;
 
 import stroom.credentials.shared.Credential;
-import stroom.item.client.SelectionListModel;
-import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.widget.selection.client.SelectionListModel;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;

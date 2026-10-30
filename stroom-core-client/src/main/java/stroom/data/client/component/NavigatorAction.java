@@ -16,6 +16,7 @@
 
 package stroom.data.client.component;
 
+
 /// What the user asks of a navigator of the data viewer ([ItemNavigator], [CharacterNavigator]).
 public enum NavigatorAction {
     /// Show the first page.

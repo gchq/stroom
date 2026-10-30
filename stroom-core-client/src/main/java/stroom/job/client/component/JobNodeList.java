@@ -16,21 +16,21 @@
 
 package stroom.job.client.component;
 
-import stroom.cell.info.client.CommandLink;
-import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.client.CommandLink;
+import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeAndInfo;
 import stroom.node.client.component.JobNodeColumns;
 import stroom.node.client.component.JobNodeColumns.ActionMenuHandler;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

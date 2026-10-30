@@ -16,8 +16,6 @@
 
 package stroom.cell.valuespinner.client;
 
-import stroom.cell.valuespinner.shared.Editable;
-import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.ElementUtil;
 

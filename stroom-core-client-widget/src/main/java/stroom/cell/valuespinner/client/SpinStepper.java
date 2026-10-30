@@ -16,8 +16,6 @@
 
 package stroom.cell.valuespinner.client;
 
-import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
-
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.Timer;
 

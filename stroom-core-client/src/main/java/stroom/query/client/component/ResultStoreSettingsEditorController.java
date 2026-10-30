@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.LifespanInfo;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.ResultStoreModel;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.query.shared.UpdateStoreRequest;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;

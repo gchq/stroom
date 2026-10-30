@@ -16,11 +16,11 @@
 
 package stroom.data.client.component;
 
-import stroom.data.pager.client.RefreshButton;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.button.client.RefreshButton;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 

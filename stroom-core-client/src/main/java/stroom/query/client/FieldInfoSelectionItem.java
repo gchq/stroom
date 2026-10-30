@@ -16,9 +16,9 @@
 
 package stroom.query.client;
 
-import stroom.item.client.SelectionItem;
 import stroom.query.api.datasource.QueryField;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.selection.client.SelectionItem;
 
 import java.util.Objects;
 

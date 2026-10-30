@@ -19,9 +19,9 @@ package stroom.widget.tab.client;
 import stroom.svg.client.Icon;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitor;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.spinner.client.SmallBusySpinner;
+import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

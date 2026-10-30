@@ -17,9 +17,9 @@
 package stroom.gwt.workbench.client.app.ai;
 
 import stroom.ai.client.component.AskStroomAiController;
-import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.ai.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.widget.datagrid.client.AskStroomAiEvent;
 
 import java.util.Objects;
 import java.util.function.Supplier;

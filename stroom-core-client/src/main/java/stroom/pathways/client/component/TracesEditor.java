@@ -17,9 +17,9 @@
 package stroom.pathways.client.component;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.client.component.PlanBSettingsController;

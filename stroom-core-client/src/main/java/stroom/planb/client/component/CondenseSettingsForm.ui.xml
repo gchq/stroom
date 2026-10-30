@@ -4,7 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
                 helpText="Once data is older than the condense age, merges redundant entries for the same key to reduce store size: only the first of a run of identical values is kept, and overlapping or adjacent sessions are joined. Untick it while loading old or late-arriving data. Default is unticked."

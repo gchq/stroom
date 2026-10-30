@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.value;
 
-import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.model.FloorMapEditorModel;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

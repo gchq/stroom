@@ -16,12 +16,12 @@
 
 package stroom.planb.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

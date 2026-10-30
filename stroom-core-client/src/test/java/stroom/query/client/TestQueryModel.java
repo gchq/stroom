@@ -23,6 +23,7 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.TableResult;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ErrorMessage;

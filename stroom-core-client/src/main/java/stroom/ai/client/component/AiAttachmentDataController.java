@@ -18,7 +18,7 @@ package stroom.ai.client.component;
 
 import stroom.ai.client.AskStroomAiClient;
 import stroom.ai.shared.GetAttachmentDataRequest;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;

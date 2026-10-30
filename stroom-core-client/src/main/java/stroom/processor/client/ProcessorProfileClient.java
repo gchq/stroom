@@ -21,8 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorProfileResource;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.shared.GWT;
 

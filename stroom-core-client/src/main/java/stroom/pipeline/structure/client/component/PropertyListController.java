@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -33,6 +32,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.PipelineModel;
 import stroom.pipeline.structure.client.component.PropertyList.PropertyState;
+import stroom.util.client.cell.DocRefCell;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;

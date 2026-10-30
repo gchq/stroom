@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
@@ -34,6 +33,7 @@ import stroom.pipeline.structure.client.PipelineModel;
 import stroom.pipeline.structure.client.component.PipelineReferenceList.ReferenceState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
+import stroom.util.client.cell.DocRefCell;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;

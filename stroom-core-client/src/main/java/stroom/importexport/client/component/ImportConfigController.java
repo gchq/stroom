@@ -28,7 +28,7 @@ import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.form.client.FileChooserController;
+import stroom.widget.form.client.component.FileChooserController;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;

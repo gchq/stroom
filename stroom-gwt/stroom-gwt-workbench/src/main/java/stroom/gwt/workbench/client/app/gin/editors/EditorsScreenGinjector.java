@@ -28,7 +28,7 @@ import stroom.floormap.client.component.FloorMapEventStoreEditor;
 import stroom.floormap.client.component.FloorMapMapTabController;
 import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.floormap.client.component.NewFloorMapStoresController;
-import stroom.folder.client.FolderTabs;
+import stroom.folder.client.component.FolderTabs;
 import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.index.client.component.LuceneIndexEditor;

@@ -17,13 +17,14 @@
 package stroom.explorer.client.component;
 
 import stroom.docref.DocRef;
-import stroom.item.client.SelectionList;
-import stroom.item.client.SimpleSelectionItemWrapper;
+import stroom.explorer.client.model.TagListModel;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionList;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;

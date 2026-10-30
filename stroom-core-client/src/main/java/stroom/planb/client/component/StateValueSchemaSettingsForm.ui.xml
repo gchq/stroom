@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="State Value Type"
                         helpText="The data type used to store values. Fixed-size types (Boolean to Double) are compact; String stores text; the lookup table types de-duplicate values to save space at some cost to speed; Variable stores short values directly and longer ones in a lookup table. Default is Variable."

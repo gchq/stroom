@@ -28,7 +28,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
-import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.duration.client.DurationPicker;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.text.client.Label;
 

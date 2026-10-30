@@ -17,7 +17,7 @@
 package stroom.pipeline.stepping.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;

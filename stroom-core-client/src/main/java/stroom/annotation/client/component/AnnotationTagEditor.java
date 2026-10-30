@@ -17,7 +17,6 @@
 package stroom.annotation.client.component;
 
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
-import stroom.item.client.SelectionBox;
 import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.widget.button.client.Button;
@@ -25,6 +24,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

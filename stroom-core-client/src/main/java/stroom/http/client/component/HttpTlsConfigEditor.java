@@ -17,13 +17,13 @@
 package stroom.http.client.component;
 
 import stroom.credentials.shared.Credential;
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionListModel;
-import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SelectionListModel;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
-import stroom.data.client.component.FeedRefCell;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.EventInit;
@@ -26,6 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.util.client.cell.FeedRefCell;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.text.client.InlineLabel;
 

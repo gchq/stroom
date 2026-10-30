@@ -27,7 +27,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 

@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

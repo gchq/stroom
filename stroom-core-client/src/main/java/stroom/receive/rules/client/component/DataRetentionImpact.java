@@ -17,12 +17,14 @@
 package stroom.receive.rules.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.receive.rules.client.model.DataRetentionImpactRow;
+import stroom.receive.rules.client.model.DataRetentionImpactTreeAction;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.core.client.GWT;

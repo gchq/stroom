@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.help.client.HelpPopup;
-import stroom.widget.tooltip.client.event.ShowHelpEvent;
+import stroom.widget.help.client.ShowHelpEvent;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;

@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

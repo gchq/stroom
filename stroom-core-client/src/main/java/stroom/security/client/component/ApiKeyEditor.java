@@ -16,16 +16,16 @@
 
 package stroom.security.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.security.shared.HashAlgorithm;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
 

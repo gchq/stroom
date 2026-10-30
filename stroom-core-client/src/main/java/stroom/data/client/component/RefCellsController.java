@@ -17,11 +17,14 @@
 package stroom.data.client.component;
 
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.feed.client.CopyFeedUrlEvent;
-import stroom.feed.client.OpenFeedEvent;
+import stroom.feed.client.event.CopyFeedUrlEvent;
+import stroom.feed.client.event.OpenFeedEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.AppPermission;
+import stroom.util.client.cell.DocRefCell;
+import stroom.util.client.cell.FeedRefCell;
+import stroom.util.client.cell.UserRefCell;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
 

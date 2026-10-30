@@ -19,9 +19,9 @@ package stroom.core.client;
 import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.core.client.event.ShowFullScreenEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.widget.task.client.TaskEndEvent;
+import stroom.widget.task.client.TaskStartEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

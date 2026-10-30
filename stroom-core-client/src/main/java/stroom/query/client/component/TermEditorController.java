@@ -23,7 +23,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.TermEditor;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
@@ -34,8 +33,8 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
-import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

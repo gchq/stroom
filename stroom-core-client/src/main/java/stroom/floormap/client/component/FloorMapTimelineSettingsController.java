@@ -18,7 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.PopupType;

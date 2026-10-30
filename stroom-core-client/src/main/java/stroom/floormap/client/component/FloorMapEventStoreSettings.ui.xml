@@ -20,7 +20,7 @@
              xmlns:sg="urn:import:stroom.planb.client.component"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:i="urn:import:stroom.item.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
       Deliberately without the Key Schema and Value Schema panels a Plan B store shows here. Those
@@ -30,7 +30,7 @@
       is worse than no control at all.
     -->
     <g:FlowPanel styleName="max form floor-map-event-store-settings">
-        <sg:SettingsGroup label="Map Display">
+        <form:SettingsGroup label="Map Display">
             <form:FormGroup
                     identity="floorMapEventExpiry"
                     label="Event Expiry"
@@ -41,11 +41,11 @@
                     <i:SelectionBox ui:field="expiryTimeUnit" addStyleNames="allow-focus"/>
                 </g:FlowPanel>
             </form:FormGroup>
-        </sg:SettingsGroup>
-        <sg:SettingsGroup label="General">
+        </form:SettingsGroup>
+        <form:SettingsGroup label="General">
             <sg:GeneralSettingsForm ui:field="generalSettings"/>
-        </sg:SettingsGroup>
-        <sg:SettingsGroup label="Condense Data">
+        </form:SettingsGroup>
+        <form:SettingsGroup label="Condense Data">
             <!-- What turning condense on costs, in the one place a user can turn it on: condense
                  collapses a run of identical values to the earliest row of the run, so a
                  stationary entity's latest effective time stops advancing and it expires while
@@ -56,9 +56,9 @@
                          text="This will cause repeating events to disappear from the map."/>
                 <sg:CondenseSettingsForm ui:field="condenseSettings"/>
             </g:FlowPanel>
-        </sg:SettingsGroup>
-        <sg:SettingsGroup label="Data Retention">
+        </form:SettingsGroup>
+        <form:SettingsGroup label="Data Retention">
             <sg:RetentionSettingsForm ui:field="retentionSettings"/>
-        </sg:SettingsGroup>
+        </form:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

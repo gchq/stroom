@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.flexlayout;
 
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableSplitLayoutConfig;
 import stroom.dashboard.shared.Dimension;
 import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.TabData;

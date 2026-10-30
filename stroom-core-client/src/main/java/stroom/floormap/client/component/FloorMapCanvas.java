@@ -16,11 +16,10 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.FloorMapGrid;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
 import stroom.floormap.client.cluster.FloorMapClusterOverlay;
+import stroom.floormap.client.geometry.FloorMapGrid;
 import stroom.floormap.client.geometry.FloorMapLabelPlacement;
 import stroom.floormap.client.geometry.FloorMapMarker;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
@@ -28,6 +27,7 @@ import stroom.floormap.client.geometry.FloorMapShapes;
 import stroom.floormap.client.geometry.FloorMapZOrder;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
+import stroom.floormap.client.model.FloorMapImageSizeCache;
 import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.overlay.FloorMapAreaOverlay;
@@ -41,6 +41,7 @@ import stroom.util.client.Console;
 import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.CssProperties;
+import stroom.widget.util.client.FloorMapAria;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;

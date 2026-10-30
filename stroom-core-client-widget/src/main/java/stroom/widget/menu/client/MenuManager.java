@@ -18,6 +18,7 @@ package stroom.widget.menu.client;
 
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.menu.client.component.MenuController;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.InputModality;
 

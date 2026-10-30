@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:sl="urn:import:stroom.item.client"
+             xmlns:sl="urn:import:stroom.widget.selection.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="explorer-node-remove-tags max form">
         <g:FlowPanel styleName="explorer-node-remove-tags__lists form dock-max">

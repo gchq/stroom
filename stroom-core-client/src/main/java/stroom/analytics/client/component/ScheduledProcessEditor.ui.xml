@@ -5,9 +5,9 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:schedule="urn:import:stroom.schedule.client"
-             xmlns:l="urn:import:stroom.item.client"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
+             xmlns:schedule="urn:import:stroom.schedule.client.component"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="name" label="Name"

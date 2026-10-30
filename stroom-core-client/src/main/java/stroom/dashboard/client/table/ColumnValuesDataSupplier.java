@@ -21,7 +21,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.view.client.Range;
 

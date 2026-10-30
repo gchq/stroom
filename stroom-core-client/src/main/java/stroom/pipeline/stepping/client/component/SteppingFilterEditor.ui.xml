@@ -4,7 +4,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client"
              xmlns:st="urn:import:stroom.pipeline.stepping.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">

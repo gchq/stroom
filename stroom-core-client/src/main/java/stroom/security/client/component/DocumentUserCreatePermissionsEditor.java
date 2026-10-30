@@ -17,11 +17,11 @@
 package stroom.security.client.component;
 
 import stroom.docref.DocRef;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

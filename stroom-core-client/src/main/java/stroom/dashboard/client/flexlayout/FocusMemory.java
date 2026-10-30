@@ -18,6 +18,8 @@ package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableTabConfig;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;

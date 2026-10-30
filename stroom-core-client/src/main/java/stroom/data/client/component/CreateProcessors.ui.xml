@@ -4,7 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component">
     <g:FlowPanel styleName="max form-page form">
         <form:FormGroup identity="processChoicePriority" label="Priority"
                         helpText="The priority of the new processor filters, from 1 to 100. Filters with a higher priority are processed first. Default is 10. Ignored when automatic priority is ticked and the pipeline has an existing filter."

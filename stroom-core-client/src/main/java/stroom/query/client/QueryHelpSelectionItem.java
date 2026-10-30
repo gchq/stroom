@@ -17,9 +17,9 @@
 package stroom.query.client;
 
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.item.client.SelectionItem;
 import stroom.query.shared.QueryHelpRow;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.selection.client.SelectionItem;
 
 import java.util.Objects;
 

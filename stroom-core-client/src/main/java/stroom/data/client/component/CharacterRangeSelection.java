@@ -17,11 +17,11 @@
 package stroom.data.client.component;
 
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.widget.component.client.Component;
 import stroom.widget.linecolinput.client.LineColInput;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

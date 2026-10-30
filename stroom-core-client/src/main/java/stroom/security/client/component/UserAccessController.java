@@ -19,7 +19,6 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.UserAccessResource;
@@ -28,6 +27,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.IsButton;
+import stroom.widget.util.client.HasRefresh;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

@@ -17,10 +17,10 @@
 package stroom.credentials.client.component;
 
 import stroom.ai.shared.KeyStoreType;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.FileChooser;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.component.FileChooser;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

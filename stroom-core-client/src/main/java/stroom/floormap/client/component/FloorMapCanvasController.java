@@ -16,11 +16,11 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapGrid;
 import stroom.floormap.client.MapContextMenu;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
 import stroom.floormap.client.cluster.FloorMapClusterOverlay;
+import stroom.floormap.client.geometry.FloorMapGrid;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
 import stroom.floormap.client.geometry.FloorMapViewport;
 import stroom.floormap.client.geometry.FloorMapZOrder;

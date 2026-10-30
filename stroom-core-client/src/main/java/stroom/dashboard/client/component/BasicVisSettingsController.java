@@ -17,7 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.vis.DynamicSettingsPane;
 import stroom.dashboard.client.vis.VisFieldOption;
 import stroom.dashboard.client.vis.VisInputChoices;
 import stroom.dashboard.shared.ComponentConfig;
@@ -32,7 +31,7 @@ import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.component.client.Layer;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.core.client.GWT;

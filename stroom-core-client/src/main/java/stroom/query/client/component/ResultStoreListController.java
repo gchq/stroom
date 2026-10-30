@@ -18,14 +18,14 @@ package stroom.query.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.RestDataProvider;
 import stroom.data.client.component.RefCellsController;
-import stroom.data.client.component.UserRefCell;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.ResultStoreModel;
+import stroom.query.client.model.ResultStoreModel;
+import stroom.util.client.cell.UserRefCell;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;

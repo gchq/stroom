@@ -18,11 +18,11 @@ package stroom.ai.client.component;
 
 import stroom.ai.client.AiChatCell;
 import stroom.ai.shared.AiChat;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

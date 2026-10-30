@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:pb="urn:import:stroom.widget.progress.client.component"
+             xmlns:pb="urn:import:stroom.widget.progress.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
 

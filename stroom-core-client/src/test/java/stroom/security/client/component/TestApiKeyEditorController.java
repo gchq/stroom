@@ -21,7 +21,7 @@ import stroom.dispatch.client.FakeRestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;

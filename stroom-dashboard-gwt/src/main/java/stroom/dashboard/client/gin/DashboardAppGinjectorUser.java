@@ -22,7 +22,7 @@ import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.dispatch.client.RestModule;
-import stroom.entity.client.gin.EntityModule;
+import stroom.document.client.gin.DocumentModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
@@ -47,7 +47,7 @@ import com.google.web.bindery.event.shared.EventBus;
         AlertModule.class,
         SecurityModule.class,
         IdentityModule.class,
-        EntityModule.class,
+        DocumentModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
         DashboardModule.class})
@@ -55,7 +55,6 @@ public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
         SecurityGinjector,
-        DashboardGinjector,
         UserPreferencesGinjector,
         IdentityGinjector {
 

@@ -16,13 +16,13 @@
 
 package stroom.ai.client.component;
 
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
 import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;

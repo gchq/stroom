@@ -16,11 +16,11 @@
 
 package stroom.query.client.component;
 
-import stroom.item.client.SelectionList;
 import stroom.query.client.QueryHelpSelectionItem;
 import stroom.query.shared.QueryHelpRow;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionList;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;

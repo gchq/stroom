@@ -17,12 +17,12 @@
 package stroom.openai.client.component;
 
 import stroom.credentials.shared.Credential;
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionListModel;
-import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SelectionListModel;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

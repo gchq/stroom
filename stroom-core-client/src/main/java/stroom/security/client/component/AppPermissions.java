@@ -16,9 +16,9 @@
 
 package stroom.security.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

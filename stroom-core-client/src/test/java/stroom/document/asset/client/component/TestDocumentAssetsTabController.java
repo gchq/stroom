@@ -23,8 +23,8 @@ import stroom.dispatch.client.RestFactory.TaskExecutor;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.document.asset.shared.DocumentAssetSaveAsParameters;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.GWTMockUtilities;

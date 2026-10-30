@@ -16,14 +16,15 @@
 
 package stroom.gwt.workbench.client;
 
-import stroom.gwt.workbench.client.screens.signin.RedirectUrlStories;
+import stroom.gwt.workbench.client.app.idp.RedirectUrlStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 /// Registers the workbench's `Screens/*` stories.
 ///
 /// ## Adding a story class
 ///
-/// 1. Write the stories class in a sub-package of `stroom.gwt.workbench.client.screens` (see
+/// 1. Write the stories class in the sub-package of `stroom.gwt.workbench.client.app` for the
+///    Stroom area it shows, e.g. `app.idp` for the sign in pages (see
 ///    `widgets/buttons/ButtonStories` for an example), giving it a `public static void
 ///    addTo(StoryRegistry registry)` method that calls `registry.component("<title>",
 ///    XxxStories.class)` and `.story("<export name>", ...)` for each story. The title and export

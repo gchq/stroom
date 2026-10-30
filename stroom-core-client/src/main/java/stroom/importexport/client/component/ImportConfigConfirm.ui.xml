@@ -2,7 +2,7 @@
 <!-- What an import will do to each item, with the import's settings -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client"

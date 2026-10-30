@@ -34,7 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
-import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.user.client.ui.Widget;
 

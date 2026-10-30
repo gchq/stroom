@@ -16,7 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;

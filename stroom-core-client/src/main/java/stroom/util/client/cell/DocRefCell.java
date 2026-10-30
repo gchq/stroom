@@ -1,0 +1,411 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.util.client.cell;
+
+import stroom.core.client.UrlParameters;
+import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.CopyTextUtil;
+import stroom.widget.datagrid.client.EventCell;
+import stroom.widget.datagrid.client.HasContextMenus;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.util.client.Clipboard;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
+import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
+
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.view.client.CellPreviewEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+/// A cell showing a document by its name (or another of its details), with its type's icon and hover
+/// buttons that copy its name and open it, and the grid's context menu items to open it and copy its
+/// details. Opening is its owner's: [Builder#onOpen] (see `RefCellsController`). With no `onOpen`
+/// the cell offers no way to open the document.
+///
+/// @param <T_ROW> The row's type.
+public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
+        implements EventCell, HasContextMenus<T_ROW> {
+
+    private static final String ICON_CLASS_NAME = "icon-wrap";
+    private static final String COPY_CLASS_NAME = "doc-ref-link__copy";
+    private static final String OPEN_CLASS_NAME = "doc-ref-link__open";
+    private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
+    // The icons shown only on a hover, or with the keyboard on the row (doc-ref-link.css)
+    private static final String HOVER_ICON_CLASS_NAME = "doc-ref-link__icon doc-ref-link__icon--hover";
+
+    private final boolean showIcon;
+    private final boolean hasOpenAndCopy;
+    private final Function<T_ROW, SafeHtml> cellTextFunction;
+    private final Function<T_ROW, DocRef> docRefFunction;
+    private final Function<T_ROW, String> cssClassFunction;
+    private final Function<T_ROW, Boolean> canOpenFunction;
+    private final Consumer<DocRef> onOpen;
+
+    /**
+     * @param showIcon         Set to true to show the type icon next to the text
+     * @param cellTextFunction Function to provide the cell 'text' in HTML form.
+     * @param docRefFunction   Function to provide a doc ref if the value can give us one.
+     * @param cssClassFunction Function to provide additional css class names.
+     * @param onOpen           What opens a document, or null if it can't be opened.
+     */
+    private DocRefCell(final boolean showIcon,
+                       final boolean hasOpenAndCopy,
+                       final Function<T_ROW, SafeHtml> cellTextFunction,
+                       final Function<T_ROW, DocRef> docRefFunction,
+                       final Function<T_ROW, String> cssClassFunction,
+                       final Function<T_ROW, Boolean> canOpenFunction,
+                       final Consumer<DocRef> onOpen) {
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
+        this.showIcon = showIcon;
+        this.hasOpenAndCopy = hasOpenAndCopy;
+        this.cellTextFunction = cellTextFunction;
+        this.docRefFunction = docRefFunction;
+        this.cssClassFunction = cssClassFunction;
+        this.canOpenFunction = canOpenFunction;
+        this.onOpen = onOpen;
+    }
+
+    @Override
+    public boolean isConsumed(final CellPreviewEvent<?> event) {
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+            final Element element = nativeEvent.getEventTarget().cast();
+            return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
+                   ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
+        }
+        return false;
+    }
+
+    @Override
+    public void onBrowserEvent(final Context context,
+                               final Element parent,
+                               final T_ROW value,
+                               final NativeEvent event,
+                               final ValueUpdater<T_ROW> valueUpdater) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
+            if (MouseUtil.isPrimary(event)) {
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
+            }
+        } else if (RowActions.isKeyPress(event)) {
+            // Enter or Space on the open button; the button's own click would come too
+            event.preventDefault();
+            onEnterKeyDown(context, parent, value, event, valueUpdater);
+        }
+    }
+
+    @Override
+    public List<Item> getContextMenuItems(final Context context, final T_ROW value) {
+        final List<Item> menuItems = new ArrayList<>();
+        final DocRef docRef = NullSafe.get(value, docRefFunction);
+
+        if (docRef != null) {
+            final String type;
+            final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+            type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
+
+            int priority = 1;
+            final Boolean canOpen = NullSafe.get(value, canOpenFunction);
+            if (onOpen != null && canOpen != null && canOpen) {
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open " + type)
+                        .command(() -> onOpen.accept(docRef))
+                        .build());
+            }
+            menuItems.add(createCopyAsMenuItem(docRef, type, priority++));
+
+        }
+        return menuItems.isEmpty()
+                ? null
+                : menuItems;
+    }
+
+    @Override
+    protected void onEnterKeyDown(final Context context,
+                                  final Element parent,
+                                  final T_ROW value,
+                                  final NativeEvent event,
+                                  final ValueUpdater<T_ROW> valueUpdater) {
+        final Element element = event.getEventTarget().cast();
+        final DocRef docRef = NullSafe.get(value, docRefFunction);
+        if (docRef != null) {
+            if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
+                final String text = cellTextFunction.apply(value).asString();
+                if (text != null) {
+                    Clipboard.writeText(text);
+                }
+            } else if (onOpen != null && ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
+                onOpen.accept(docRef);
+            }
+        } else {
+            final String text = cellTextFunction.apply(value).asString();
+            if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
+                if (text != null) {
+                    Clipboard.writeText(text);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void render(final Context context, final T_ROW value, final SafeHtmlBuilder sb) {
+        if (value == null) {
+            sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        } else {
+            final DocRef docRef = NullSafe.get(value, docRefFunction);
+            final SafeHtml cellHtmlText = cellTextFunction.apply(value);
+            final String cssClasses = NullSafe.string(cssClassFunction.apply(value));
+            final SafeHtml textDiv = Templates.div(cssClasses, cellHtmlText);
+
+            final String containerClasses = String.join(
+                    " ",
+                    HOVER_ICON_CONTAINER_CLASS_NAME,
+                    "doc-ref-link");
+
+            sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
+            if (docRef != null && showIcon) {
+                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                if (documentType != null) {
+                    final SvgImage svgImage = documentType.getIcon();
+                    final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            svgImage,
+                            ICON_CLASS_NAME,
+                            "doc-ref-link__icon");
+                    sb.append(iconDiv);
+                }
+            }
+
+            sb.append(textDiv);
+
+            // Add copy and open links.
+            if (hasOpenAndCopy && docRef != null) {
+                // This DocRefCell gets used for pipeline props which sometimes are a docRef
+                // and other times just a simple string
+                final SafeHtml copy = SvgImageUtil.toSafeHtml(
+                        SvgImage.COPY,
+                        ICON_CLASS_NAME,
+                        COPY_CLASS_NAME,
+                        HOVER_ICON_CLASS_NAME);
+                sb.append(Templates.divWithTitle(
+                        "Copy name '" + docRef.getName() + "' to clipboard",
+                        copy));
+
+                // A broken ref may have an empty UUID, which can't be opened
+                if (onOpen != null && NullSafe.isNonBlankString(docRef.getUuid())) {
+                    // A button the keyboard reaches from its row (a row action)
+                    final SafeHtml open = SvgImageUtil.toSafeHtml(
+                            SvgImage.OPEN,
+                            ICON_CLASS_NAME,
+                            HOVER_ICON_CLASS_NAME,
+                            RowActions.ICON_CLASS_NAME);
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
+                            "Open " + docRef.getType() + " " + docRef.getName(),
+                            open));
+                }
+            }
+
+            sb.appendHtmlConstant("</div>");
+        }
+    }
+
+    private MenuItem createCopyAsMenuItem(final DocRef docRef,
+                                          final String type,
+                                          final int priority) {
+        final List<Item> children = createCopyAsChildMenuItems(docRef);
+        // Says what is copied, as this can sit beside the grid's own 'Copy' submenu
+        return new IconParentMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.COPY)
+                .text("Copy " + type + " Details")
+                .children(children)
+                .enabled(true)
+                .build();
+    }
+
+    private List<Item> createCopyAsChildMenuItems(final DocRef docRef) {
+        // If a user has VIEW on a doc they will also see (but not have VIEW) all ancestor
+        // docs, so we need to only allow 'copy name' for these 'see but not view' cases.
+        // Thus, totalCount may be bigger than readableCount
+        final List<Item> childMenuItems = new ArrayList<>();
+        int priority = 1;
+        if (NullSafe.isNonBlankString(docRef.getName())) {
+            childMenuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Name")
+                    .enabled(true)
+                    .command(() -> Clipboard.writeText(docRef.getName()))
+                    .build());
+        }
+        if (NullSafe.isNonBlankString(docRef.getUuid())) {
+            childMenuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("UUID")
+                    .enabled(true)
+                    .command(() -> Clipboard.writeText(docRef.getUuid()))
+                    .build());
+        }
+        childMenuItems.add(createCopyLinkMenuItem(docRef, priority++));
+        return childMenuItems;
+    }
+
+    private MenuItem createCopyLinkMenuItem(final DocRef docRef, final int priority) {
+        // Generate a URL that can be used to open a new Stroom window with the target document loaded
+        final String docUrl = Window.Location.createUrlBuilder()
+                .setPath("/")
+                .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
+                .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, docRef.getType())
+                .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, docRef.getUuid())
+                .buildString();
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.SHARE)
+                .text("Link")
+                .command(() -> Clipboard.writeText(docUrl))
+                .build();
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder<T> {
+
+        private boolean showIcon = false;
+        private boolean hasOpenAndCopy = true;
+        private DocRef.DisplayType displayType = DisplayType.NAME;
+        private Function<T, SafeHtml> cellTextFunction;
+        private Function<T, DocRef> docRefFunction;
+        private Function<T, String> cssClassFunction;
+        private Function<T, Boolean> canOpenFunction;
+        private Consumer<DocRef> onOpen;
+
+        /// Sets what opens a row's document, from its open button or its 'Open' menu item, e.g.
+        /// firing the app's open document event (see `RefCellsController`).
+        ///
+        /// @param onOpen What opens a document, or null (the default) for a cell that can't open
+        ///               one: it shows no open button or menu item.
+        /// @return This builder.
+        public Builder<T> onOpen(final Consumer<DocRef> onOpen) {
+            this.onOpen = onOpen;
+            return this;
+        }
+
+        public Builder<T> showIcon(final boolean showIcon) {
+            this.showIcon = showIcon;
+            return this;
+        }
+
+        public Builder<T> hasOpenAndCopy(final boolean hasOpenAndCopy) {
+            this.hasOpenAndCopy = hasOpenAndCopy;
+            return this;
+        }
+
+        public Builder<T> displayType(final DisplayType displayType) {
+            this.displayType = displayType;
+            return this;
+        }
+
+        public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
+            this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public Builder<T> canOpenFunction(final Function<T, Boolean> canOpenFunction) {
+            this.canOpenFunction = canOpenFunction;
+            return this;
+        }
+
+        public Builder<T> docRefFunction(final Function<T, DocRef> docRefFunction) {
+            this.docRefFunction = docRefFunction;
+            return this;
+        }
+
+        public Builder<T> cssClassFunction(final Function<T, String> cssClassFunction) {
+            this.cssClassFunction = cssClassFunction;
+            return this;
+        }
+
+        public DocRefCell<T> build() {
+            if (docRefFunction == null) {
+                docRefFunction = v -> null;
+            }
+            if (cellTextFunction == null) {
+                cellTextFunction = v -> {
+                    final DocRef docRef = docRefFunction.apply(v);
+                    if (docRef == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        final String displayValue = docRef.getDisplayValue(Objects.requireNonNullElse(
+                                displayType,
+                                DisplayType.AUTO));
+                        return NullSafe.isNonBlankString(displayValue)
+                                ? SafeHtmlUtils.fromString(displayValue)
+                                : SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    }
+                };
+            }
+            if (cssClassFunction == null) {
+                cssClassFunction = v -> null;
+            }
+
+            if (canOpenFunction == null) {
+                canOpenFunction = v -> true;
+            }
+
+
+            return new DocRefCell<>(
+                    showIcon,
+                    hasOpenAndCopy,
+                    cellTextFunction,
+                    docRefFunction,
+                    cssClassFunction,
+                    canOpenFunction,
+                    onOpen);
+        }
+    }
+}

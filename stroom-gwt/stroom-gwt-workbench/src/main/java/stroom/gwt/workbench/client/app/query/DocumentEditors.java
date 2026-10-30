@@ -18,8 +18,8 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentEditorHost;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.JsonValues;

@@ -4,9 +4,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:v="urn:import:stroom.widget.quickfilter.client"
-             xmlns:ex="urn:import:stroom.explorer.client.component"
+             xmlns:c="urn:import:stroom.security.client.component"
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">
@@ -45,7 +45,7 @@
                         dropdown.
                     </p>
                 </form:HelpHTML>
-                <ex:DocumentPermissionsList ui:field="documentsList"/>
+                <c:DocumentPermissionsList ui:field="documentsList"/>
             </v:QuickFilterPage>
         </g:SimplePanel>
     </g:FlowPanel>

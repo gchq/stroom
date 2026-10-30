@@ -17,7 +17,7 @@
 package stroom.document.client;
 
 import stroom.docref.DocRef;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import java.util.function.Consumer;
 

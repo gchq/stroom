@@ -15,7 +15,7 @@
  */
 
 /*
-   The menu (stroom.widget.menu.client.Menu, its items drawn by MenuItemCell).
+   The menu (stroom.widget.menu.client.component.Menu, its items drawn by MenuItemCell).
    Named BEM style (block, block__element, block--modifier).
 
    menu__viewport          the scrolling box holding the menu, with room for a focus ring

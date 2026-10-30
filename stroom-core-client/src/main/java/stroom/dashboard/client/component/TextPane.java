@@ -17,10 +17,10 @@
 package stroom.dashboard.client.component;
 
 import stroom.data.client.component.ClassificationLabel;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.spinner.client.LargeBusySpinner;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

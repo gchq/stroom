@@ -18,8 +18,8 @@ package stroom.annotation.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationResourceClient;
-import stroom.annotation.client.EditAnnotationEvent;
-import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
+import stroom.annotation.client.event.ShowFindAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;

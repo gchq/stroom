@@ -16,7 +16,7 @@
 
 package stroom.widget.component.client;
 
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 /// Gives what a dialog shows the dialog's spinner as its task monitor ([Contexts#TASK_MONITOR])
 /// while it is shown, so its requests, and those of everything it owns, show on the dialog, and

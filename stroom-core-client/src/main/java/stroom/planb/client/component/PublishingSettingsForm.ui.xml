@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="form-group">
         <form:FormGroup identity="maxWaitForDataPanel"
                         label="Max Wait For Data"

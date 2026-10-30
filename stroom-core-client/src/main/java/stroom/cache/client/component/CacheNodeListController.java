@@ -18,7 +18,7 @@ package stroom.cache.client.component;
 
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;

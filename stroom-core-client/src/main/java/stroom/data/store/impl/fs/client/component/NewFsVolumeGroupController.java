@@ -21,7 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.component.NameEntry;
+import stroom.document.client.component.NameEntry;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PathSafeNames;
 import stroom.widget.component.client.Controller;

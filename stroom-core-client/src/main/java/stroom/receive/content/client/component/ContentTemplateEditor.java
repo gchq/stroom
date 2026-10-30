@@ -16,7 +16,6 @@
 
 package stroom.receive.content.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.receive.content.shared.TemplateType;
@@ -25,6 +24,7 @@ import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

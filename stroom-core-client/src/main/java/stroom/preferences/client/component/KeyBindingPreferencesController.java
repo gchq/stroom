@@ -18,6 +18,7 @@ package stroom.preferences.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.preferences.client.model.KeyBindingRow;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;

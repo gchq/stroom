@@ -17,10 +17,12 @@
 package stroom.task.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.task.client.ServerTasksPlugin;
 
 public class TaskModule extends PluginModule {
 
     @Override
     protected void configure() {
+        bindPlugin(ServerTasksPlugin.class);
     }
 }

@@ -15,7 +15,7 @@
  */
 
 /*
-   A progress bar (stroom.widget.progress.client.component.SourceProgressBar), named BEM style: its track
+   A progress bar (stroom.widget.progress.client.SourceProgressBar), named BEM style: its track
    (the whole of the data) holding its window (the section shown, placed and sized by
    --source-progress-bar__from and --source-progress-bar__width). The window's colour says what it can do: blue
    while it can be moved, grey while it can't (--disabled), green when it shows everything

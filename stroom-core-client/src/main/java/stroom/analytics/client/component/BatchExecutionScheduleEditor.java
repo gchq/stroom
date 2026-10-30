@@ -18,19 +18,19 @@ package stroom.analytics.client.component;
 
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ScheduleBounds;
-import stroom.item.client.SelectionBox;
-import stroom.schedule.client.ScheduleBox;
+import stroom.schedule.client.component.ScheduleBox;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.ClientDateUtil;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

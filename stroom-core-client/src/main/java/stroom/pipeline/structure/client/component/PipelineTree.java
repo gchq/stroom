@@ -22,6 +22,8 @@ import stroom.pipeline.structure.client.PipelineModel;
 import stroom.pipeline.structure.client.StructureValidationUtil;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
+import stroom.widget.htree.client.DraggableTree;
+import stroom.widget.htree.client.TreeKeyboard;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.core.client.GWT;

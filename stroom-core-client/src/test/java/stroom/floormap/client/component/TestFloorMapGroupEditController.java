@@ -17,6 +17,7 @@
 package stroom.floormap.client.component;
 
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
+import stroom.floormap.client.model.MemberCandidate;
 import stroom.floormap.shared.FloorMapGroup;
 
 import org.junit.jupiter.api.Test;

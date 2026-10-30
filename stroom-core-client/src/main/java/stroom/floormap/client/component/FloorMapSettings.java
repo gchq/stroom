@@ -17,20 +17,20 @@
 package stroom.floormap.client.component;
 
 import stroom.cell.textfield.client.TextFieldCell;
-import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.ValueFormat;
-import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionBoxCell;
-import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
+import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SelectionBoxCell;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
+import stroom.widget.selection.client.SimpleSelectionListModel;
+import stroom.widget.util.client.FloorMapAria;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

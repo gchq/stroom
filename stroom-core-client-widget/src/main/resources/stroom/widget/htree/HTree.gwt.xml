@@ -2,5 +2,9 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <module>
 	<inherits name="com.google.gwt.user.User" />
+	<inherits name="stroom.widget.contextmenu.ContextMenu" />
+	<inherits name="stroom.widget.datagrid.DataGrid" />
+	<inherits name="stroom.widget.popup.Popup" />
+	<inherits name="stroom.widget.util.Util" />
 	<source path="client" />
 </module>

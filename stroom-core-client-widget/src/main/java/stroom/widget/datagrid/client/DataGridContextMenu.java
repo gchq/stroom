@@ -17,12 +17,11 @@
 package stroom.widget.datagrid.client;
 
 import stroom.ai.shared.GeneralTableContext;
-import stroom.data.client.event.AskStroomAiTableRequest;
-import stroom.hyperlink.client.LinkValue;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.datagrid.client.model.TableText;
+import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.IconParentMenuItem;
 import stroom.widget.menu.client.Item;

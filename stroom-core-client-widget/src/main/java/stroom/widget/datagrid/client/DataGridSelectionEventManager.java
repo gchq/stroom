@@ -16,11 +16,10 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.data.client.event.SelectAllEvent;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.LinkValue;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.datagrid.client.model.SelectionRules;
+import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.KeyBinding;

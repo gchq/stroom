@@ -17,12 +17,11 @@
 package stroom.config.global.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.ListDataProvider;
+import stroom.config.global.client.model.ConfigPropertyRow;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
-import stroom.data.client.CriteriaUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.util.client.DelayedUpdate;
@@ -31,6 +30,8 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
+import stroom.widget.datagrid.client.ListDataProvider;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

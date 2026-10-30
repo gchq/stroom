@@ -19,11 +19,12 @@ package stroom.security.client;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.credentials.shared.Credential;
+import stroom.dispatch.client.AbstractRestClient;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.PermissionChangeResource;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

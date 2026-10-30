@@ -18,10 +18,10 @@ package stroom.index.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.ToolsContentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.index.client.component.IndexVolumeGroupsController;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.ToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;

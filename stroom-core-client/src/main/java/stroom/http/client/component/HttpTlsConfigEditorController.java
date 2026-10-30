@@ -17,7 +17,7 @@
 package stroom.http.client.component;
 
 import stroom.credentials.client.CredentialClient;
-import stroom.credentials.client.CredentialListModel;
+import stroom.credentials.client.model.CredentialListModel;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.util.shared.http.HttpTlsConfig;

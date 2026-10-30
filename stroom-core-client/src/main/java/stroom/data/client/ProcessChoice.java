@@ -16,6 +16,7 @@
 
 package stroom.data.client;
 
+
 public class ProcessChoice {
 
     private final int priority;

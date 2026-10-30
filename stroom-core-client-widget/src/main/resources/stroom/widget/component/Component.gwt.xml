@@ -8,7 +8,7 @@
 <module>
     <inherits name="com.google.gwt.user.User"/>
     <inherits name="stroom.Stroom"/>
-    <inherits name="stroom.task.Task"/>
+    <inherits name="stroom.widget.task.Task"/>
     <inherits name="com.google.gwt.inject.Inject"/>
     <!-- Dialogs (ControllerDialog) -->
     <inherits name="stroom.widget.popup.Popup"/>

@@ -19,11 +19,11 @@ package stroom.credentials.client.component;
 import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.Secret;
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

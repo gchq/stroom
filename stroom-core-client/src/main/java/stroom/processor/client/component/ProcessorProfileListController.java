@@ -16,8 +16,7 @@
 
 package stroom.processor.client.component;
 
-import stroom.data.client.CriteriaUtil;
-import stroom.data.client.RestDataProvider;
+import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.FindProcessorProfileRequest;
@@ -25,6 +24,7 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.CriteriaUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.view.client.Range;

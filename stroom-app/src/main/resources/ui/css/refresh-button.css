@@ -1,5 +1,5 @@
 /*
-   The refresh button (stroom.data.pager.client.RefreshButton): a toolbar button (see toolbar.css)
+   The refresh button (stroom.widget.button.client.RefreshButton): a toolbar button (see toolbar.css)
    holding four icons, one above another, each centred in it. Named BEM style; its modifiers choose
    which icons are shown:
    - refresh, when it is none of refreshing, pausable or paused;

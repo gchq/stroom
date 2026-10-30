@@ -16,10 +16,10 @@
 
 package stroom.preferences.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.visualisation.shared.VisPalette;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

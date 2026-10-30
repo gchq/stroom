@@ -19,12 +19,12 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.MessageSupport;
 import stroom.dashboard.client.vis.VisButtonSpec;
-import stroom.hyperlink.client.LinkValue;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.VisFunction;
 import stroom.visualisation.client.VisFunction.LoadStatus;
 import stroom.widget.component.client.Component;
+import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.text.client.Frame;
 import stroom.widget.util.client.CssProperties;
 

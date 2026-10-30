@@ -18,8 +18,8 @@ package stroom.gwt.workbench.client.app.gin.shell;
 
 import stroom.about.client.AboutPlugin;
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.SplashScreen;
 import stroom.ai.client.component.AskStroomAiController;
+import stroom.analytics.client.ExecutionSchedulesPlugin;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
 import stroom.annotation.client.AnnotationCommentPlugin;
@@ -27,17 +27,18 @@ import stroom.annotation.client.AnnotationCreatePlugin;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
 import stroom.cache.client.CachesPlugin;
+import stroom.config.global.client.ManageGlobalPropertiesPlugin;
 import stroom.content.client.component.ContentTabPaneController;
 import stroom.contentstore.client.ContentStorePlugin;
 import stroom.core.client.ContentManager;
 import stroom.credentials.client.CredentialsPlugin;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.dictionary.client.DictionaryPlugin;
+import stroom.document.client.DocumentDialogScreens;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.entity.client.DocumentDialogScreens;
-import stroom.entity.client.component.CreateDocumentController;
-import stroom.entity.client.component.InfoDocumentController;
+import stroom.document.client.component.CreateDocumentController;
+import stroom.document.client.component.InfoDocumentController;
 import stroom.explorer.client.ExplorerPlugin;
 import stroom.explorer.client.TabSessionManager;
 import stroom.explorer.client.component.ExplorerController;
@@ -54,18 +55,16 @@ import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
+import stroom.job.client.JobsPlugin;
 import stroom.main.client.GlobalKeyHandlerImpl;
-import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
-import stroom.monitoring.client.ExecutionSchedulesPlugin;
-import stroom.monitoring.client.JobsPlugin;
-import stroom.monitoring.client.NodeGroupsPlugin;
-import stroom.monitoring.client.NodesPlugin;
-import stroom.monitoring.client.ProcessorProfilesPlugin;
-import stroom.node.client.ManageGlobalPropertiesPlugin;
+import stroom.node.client.DatabaseTablesMonitoringPlugin;
+import stroom.node.client.NodeGroupsPlugin;
+import stroom.node.client.NodesPlugin;
 import stroom.pathways.client.TracesPlugin;
 import stroom.preferences.client.UserPreferencesPlugin;
+import stroom.processor.client.ProcessorProfilesPlugin;
 import stroom.query.client.ResultStorePlugin;
-import stroom.receive.rules.client.ContentTemplatePlugin;
+import stroom.receive.content.client.ContentTemplatePlugin;
 import stroom.receive.rules.client.DataRetentionPlugin;
 import stroom.receive.rules.client.ReceiveDataRuleSetPlugin;
 import stroom.security.client.ApiKeysPlugin;
@@ -80,6 +79,7 @@ import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
+import stroom.splash.client.SplashScreen;
 import stroom.task.client.ServerTasksPlugin;
 
 import com.google.gwt.inject.client.GinModules;
@@ -179,7 +179,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's `ExplorerPlugin`, registered as it is created.
     ExplorerPlugin getExplorerPlugin();
 
-    /// @return The document dialogs' wiring, which Stroom's `EntityModule` makes eagerly.
+    /// @return The document dialogs' wiring, which Stroom's `DocumentModule` makes eagerly.
     DocumentDialogScreens getDocumentDialogScreens();
 
     /// @return Stroom's `HelpPlugin`, registered as it is created.

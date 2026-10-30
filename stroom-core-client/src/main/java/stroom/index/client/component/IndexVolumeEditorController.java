@@ -23,7 +23,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.node.client.NodeClient;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -31,6 +30,7 @@ import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

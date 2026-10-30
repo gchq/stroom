@@ -7,7 +7,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:i="urn:import:stroom.item.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:dp="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="calendar">
         <g:FlowPanel styleName="calendar__header">

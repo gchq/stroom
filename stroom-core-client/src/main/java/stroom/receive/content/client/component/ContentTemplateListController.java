@@ -16,9 +16,9 @@
 
 package stroom.receive.content.client.component;
 
-import stroom.data.client.component.DocRefCell;
 import stroom.data.client.component.RefCellsController;
 import stroom.receive.content.shared.ContentTemplate;
+import stroom.util.client.cell.DocRefCell;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.Item;

@@ -17,10 +17,11 @@
 package stroom.explorer.client.component;
 
 import stroom.docref.DocRef;
-import stroom.item.client.SelectionList;
-import stroom.item.client.SimpleSelectionItemWrapper;
+import stroom.explorer.client.model.TagListModel;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionList;
+import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

@@ -16,12 +16,12 @@
 
 package stroom.pipeline.structure.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.pipeline.structure.client.component.PropertyListController.Source;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

@@ -16,12 +16,13 @@
 
 package stroom.dashboard.client.component;
 
+import stroom.dashboard.client.model.WordItem;
 import stroom.docref.DocRef;
-import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;

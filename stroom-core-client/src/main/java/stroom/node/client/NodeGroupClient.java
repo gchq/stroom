@@ -23,8 +23,8 @@ import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeGroupState;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.shared.GWT;
 

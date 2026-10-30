@@ -3,10 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:annotation="urn:import:stroom.annotation.client"
+             xmlns:c="urn:import:stroom.annotation.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel addStyleNames="annotation-setting">
-        <annotation:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
+        <c:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
             <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
                             helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned.">
                 <g:FlowPanel addStyleNames="annotation-setting__heading annotation-setting__heading--clickable">
@@ -16,7 +16,7 @@
                                   addStyleNames="annotation-setting__assign-yourself"/>
                 </g:FlowPanel>
             </form:FormGroup>
-        </annotation:SettingBlock>
+        </c:SettingBlock>
     </g:FlowPanel>
 </ui:UiBinder>
 

@@ -18,7 +18,7 @@ package stroom.node.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.entity.client.component.NameEntry;
+import stroom.document.client.component.NameEntry;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.util.shared.NullSafe;

@@ -21,6 +21,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.structure.client.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.htree.client.Box;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.SvgImageUtil;
 

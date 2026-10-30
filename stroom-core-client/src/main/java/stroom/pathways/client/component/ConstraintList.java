@@ -17,7 +17,7 @@
 package stroom.pathways.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;

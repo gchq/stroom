@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.playback;
 
+
 /// Chooses the bucket width for the timeline's density histogram.
 ///
 /// The histogram used to be counted on the client from every event the store held, which is the

@@ -16,7 +16,7 @@
 
 package stroom.security.identity.client;
 
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.CellIcon;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.MonitoringPlugin;

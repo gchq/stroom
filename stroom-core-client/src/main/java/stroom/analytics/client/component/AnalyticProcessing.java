@@ -17,8 +17,8 @@
 package stroom.analytics.client.component;
 
 import stroom.analytics.shared.AnalyticProcessType;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

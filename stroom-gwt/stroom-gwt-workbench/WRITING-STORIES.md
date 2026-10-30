@@ -35,9 +35,14 @@ screenshots and the leak check.
 ## Packages and registration
 
 * Stories are grouped by title (`Widgets/Buttons/StepControls`, `App/Main/JobsScreen`). One
-  `XxxStories` class per title, named after its last part, in a package named after the middle
-  part in lower case without spaces or punctuation: `Widgets/Date & Time/*` →
-  `client.widgets.dateandtime`, `App/Main/JobsScreen` → `client.app.main.JobsScreenStories`.
+  `XxxStories` class per title, named after its last part. A widget's stories are in a package
+  named after the title's middle part in lower case without spaces or punctuation:
+  `Widgets/Date & Time/*` → `client.widgets.dateandtime`. A screen's stories are in the package
+  of the Stroom area the screen belongs to, as Stroom's client packages are grouped, whatever its
+  title: `App/Main/JobsScreen` → `client.app.nodes.JobsScreenStories`, `App/Main/UsersScreen` →
+  `client.app.security.UsersScreenStories`; `client.app.main` holds the shell's own (`AppShell`,
+  `TopBar`, `ContentTabPane`, `AboutDialog`, `WelcomeScreen`). A title never changes when its
+  class moves.
 * A story's id, and so its URL, is made from its title and export name with Storybook's rules:
   `Widgets/Buttons/Button` + `WithIcons` → `widgets-buttons-button--with-icons`. A display name
   given with `.story(exportName, name, ...)` changes only the name shown, not the id.
@@ -77,7 +82,7 @@ A widget story creates the widget, applies the story's args and returns it. See
 Screens (controllers and their components) run for real against fake REST replies. Copy the story closest to
 your screen:
 
-* a dialog opened by an event, with its own fixtures: `client/app/main/RecentItemsDialogStories`;
+* a dialog opened by an event, with its own fixtures: `client/app/explorer/RecentItemsDialogStories`;
 * start-up fixtures only, customised: `AboutDialogStories`; a tab's content: `WelcomeScreenStories`;
 * simple dialogs: `CredentialPickerDialogStories`, `DocInfoDialogStories`; chained requests:
   `EditTagsDialogStories`; lists with toolbars and permissions: `JobsScreenStories`,
@@ -562,7 +567,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
 * **Processing** (pipelines, stepping, processors, data retention and receipt rules, execution
   schedules, data): `ProcessingScreenGinjector` gives `DocumentPluginEventManager`,
   `PipelinePlugin` and `XsltPlugin` for `StoryDocumentPlugins`; shared pipeline replies (element
-  types, a stepper) are in `app/main/PipelineFixtures`.
+  types, a stepper) are in `app/pipeline/PipelineFixtures`.
 * **Content screens** (content, monitoring, volume, activity and annotation screens):
   `ContentStorySupport` (`expectNoProblems`, `queryParam`, `decorate`, which answers the explorer's
   `decorate` with the document asked about), `ActivityFixtures`, `AnnotationFixtures`.
@@ -622,9 +627,9 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   dashboard search with `t1`'s rows `alpha`/`beta`, a StroomQL search, the referenced query
   `q-ref`, the editor routes and the Permissions tab) after the story's own routes. Options:
   `linkParams` (as `DashboardPlugin.openParameterisedDashboard`), `harness(...)`,
-  `setup((harness, injector) -> ...)` and `afterOpen(...)`. `registerComponentTypes` gets every
-  component plugin from the injector before the dashboard is read, as Stroom's eager singletons
-  fill `PaneRegistry` (the ginjector keeps `PaneRegistry` and `VisFunctionCache` as
+  `setup((harness, injector) -> ...)` and `afterOpen(...)`. `registerComponentTypes` gets
+  `DashboardPaneTypes` from the injector before the dashboard is read, as Stroom's eager singleton
+  fills `PaneRegistry` (the ginjector keeps `PaneRegistry` and `VisFunctionCache` as
   singletons, so they belong to the rendering's harness). `app/dashboard/DashboardDocs` builds dashboards in Stroom's JSON
   (`component`, `query`, `table`, `tabs`, `split`, `sized`, `operator`, `term`), adding what Stroom
   needs: a preferred size on every layout, an `automate`, `queryTablePreferences` and full

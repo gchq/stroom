@@ -20,7 +20,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.duration.client.DurationPicker;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;

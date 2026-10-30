@@ -16,7 +16,7 @@
 
 package stroom.annotation.client.component;
 
-import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.event.EditAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.explorer.client.component.FindPanel;
 import stroom.security.shared.DocumentPermission;

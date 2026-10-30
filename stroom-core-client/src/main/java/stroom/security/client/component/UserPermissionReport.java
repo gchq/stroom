@@ -16,12 +16,11 @@
 
 package stroom.security.client.component;
 
-import stroom.explorer.client.component.DocumentPermissionsList;
-import stroom.item.client.SelectionBox;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.widget.component.client.Component;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.selection.client.SelectionBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

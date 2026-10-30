@@ -18,10 +18,10 @@ package stroom.query.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.FireAlertEventFunction;
-import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
+import stroom.query.client.ErrorMessageTemplates;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
 import stroom.util.shared.ErrorMessage;

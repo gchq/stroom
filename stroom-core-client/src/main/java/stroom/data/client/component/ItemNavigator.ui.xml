@@ -4,8 +4,7 @@
      them, hidden until there are items -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:btn="urn:import:stroom.widget.button.client"
-             xmlns:refresh-button="urn:import:stroom.data.pager.client">
+             xmlns:btn="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="item-navigator">
         <btn:LinkButton ui:field="lblDetail" addStyleNames="item-navigator__label" opensDialog="true"
                         visible="false"/>
@@ -14,7 +13,7 @@
             <btn:ToolbarButton ui:field="previousPageBtn" svg="STEP_BACKWARD" title="Backward" visible="false"/>
             <btn:ToolbarButton ui:field="nextPageBtn" svg="STEP_FORWARD" title="Forward" visible="false"/>
             <btn:ToolbarButton ui:field="lastPageBtn" svg="FAST_FORWARD" title="Last" visible="false"/>
-            <refresh-button:RefreshButton ui:field="refresh" visible="false"/>
+            <btn:RefreshButton ui:field="refresh" visible="false"/>
         </btn:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>

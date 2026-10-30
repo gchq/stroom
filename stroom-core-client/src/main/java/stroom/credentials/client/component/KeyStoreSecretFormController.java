@@ -24,7 +24,7 @@ import stroom.importexport.client.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Controller;
-import stroom.widget.form.client.FileChooserController;
+import stroom.widget.form.client.component.FileChooserController;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

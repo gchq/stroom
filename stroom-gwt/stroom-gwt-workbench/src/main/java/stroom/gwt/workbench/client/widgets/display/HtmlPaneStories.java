@@ -17,12 +17,12 @@
 
 package stroom.gwt.workbench.client.widgets.display;
 
-import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.text.client.HtmlPane;
 
 import com.google.gwt.user.client.ui.Widget;
 

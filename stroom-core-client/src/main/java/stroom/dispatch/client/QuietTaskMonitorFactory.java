@@ -16,9 +16,9 @@
 
 package stroom.dispatch.client;
 
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 public class QuietTaskMonitorFactory implements TaskMonitorFactory {
 

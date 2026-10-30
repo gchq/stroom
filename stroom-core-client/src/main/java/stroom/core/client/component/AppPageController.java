@@ -18,20 +18,20 @@ package stroom.core.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskEndEvent.TaskEndHandler;
-import stroom.task.client.TaskStartEvent;
-import stroom.task.client.TaskStartEvent.TaskStartHandler;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.widget.component.client.Controller;
+import stroom.widget.datagrid.client.AskStroomAiTableRequest;
+import stroom.widget.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.menu.client.MenuRequest;
+import stroom.widget.task.client.TaskEndEvent;
+import stroom.widget.task.client.TaskEndEvent.TaskEndHandler;
+import stroom.widget.task.client.TaskStartEvent;
+import stroom.widget.task.client.TaskStartEvent.TaskStartHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

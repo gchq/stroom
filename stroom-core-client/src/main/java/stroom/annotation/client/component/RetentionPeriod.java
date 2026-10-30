@@ -19,7 +19,7 @@ package stroom.annotation.client.component;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
-import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.duration.client.DurationPicker;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

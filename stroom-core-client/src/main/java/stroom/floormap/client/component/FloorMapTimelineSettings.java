@@ -16,11 +16,11 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.tickbox.client.TickBox;
+import stroom.widget.util.client.FloorMapAria;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

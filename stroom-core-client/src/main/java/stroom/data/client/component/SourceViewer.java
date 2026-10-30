@@ -16,10 +16,10 @@
 
 package stroom.data.client.component;
 
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
-import stroom.widget.progress.client.component.SourceProgressBar;
+import stroom.widget.progress.client.SourceProgressBar;
 import stroom.widget.spinner.client.LargeBusySpinner;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

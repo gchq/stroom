@@ -16,7 +16,7 @@
 
 package stroom.widget.component.client;
 
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

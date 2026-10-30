@@ -17,13 +17,13 @@
 package stroom.widget.popup.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.DialogTaskMonitor;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;

@@ -21,7 +21,7 @@ import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.CustomConditionalFormattingStyle;
 import stroom.query.api.TextAttributes;
-import stroom.security.client.ClassNameBuilder;
+import stroom.widget.util.client.ClassNameBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;

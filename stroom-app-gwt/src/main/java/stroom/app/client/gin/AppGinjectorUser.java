@@ -24,32 +24,35 @@ import stroom.analytics.client.gin.ReportModule;
 import stroom.annotation.client.gin.AnnotationModule;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheModule;
+import stroom.config.global.client.gin.GlobalConfigModule;
 import stroom.contentstore.client.gin.ContentStoreModule;
 import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.credentials.client.gin.CredentialsModule;
-import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.data.client.gin.StreamStoreModule;
+import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
+import stroom.document.client.gin.DocumentModule;
 import stroom.documentation.client.gin.DocumentationModule;
-import stroom.entity.client.gin.EntityModule;
 import stroom.feed.client.gin.FeedModule;
 import stroom.floormap.client.gin.FloorMapModule;
 import stroom.folder.client.gin.FolderModule;
 import stroom.gitrepo.client.gin.GitRepoModule;
 import stroom.importexport.client.gin.ImportExportConfigModule;
 import stroom.index.client.gin.IndexModule;
+import stroom.job.client.gin.JobModule;
 import stroom.kafka.client.gin.KafkaConfigModule;
-import stroom.monitoring.client.gin.MonitoringModule;
+import stroom.node.client.gin.NodeModule;
 import stroom.openai.client.gin.OpenAIModelModule;
 import stroom.pathways.client.gin.PathwaysModule;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.planb.client.gin.PlanBModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
+import stroom.processor.client.gin.ProcessorModule;
 import stroom.query.client.gin.QueryModule;
 import stroom.receive.content.client.gin.ContentTemplateModule;
 import stroom.receive.rules.client.gin.ReceiveRulesModule;
@@ -90,13 +93,17 @@ import com.google.web.bindery.event.shared.EventBus;
         DashboardModule.class,
         DictionaryModule.class,
         DocumentationModule.class,
-        EntityModule.class,
+        DocumentModule.class,
         FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
         KafkaConfigModule.class,
-        MonitoringModule.class,
+        JobModule.class,
+        NodeModule.class,
+        ProcessorModule.class,
+        FsVolumeModule.class,
+        GlobalConfigModule.class,
         OpenAIModelModule.class,
         PathwaysModule.class,
         PipelineModule.class,
@@ -128,7 +135,6 @@ import com.google.web.bindery.event.shared.EventBus;
         GitRepoModule.class
 })
 public interface AppGinjectorUser extends
-        DashboardGinjector,
         Ginjector,
         PluginsGinjector,
         PopupGinjector,

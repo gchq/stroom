@@ -20,7 +20,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.widget.layout.client"
-             xmlns:e="urn:import:stroom.entity.client.component"
+             xmlns:e="urn:import:stroom.document.client.editor"
              xmlns:f="urn:import:stroom.floormap.client.component">
     <!-- The bottom strip is a third of the height; its edge to the top area can be dragged -->
     <l:SplitPane vertical="true" thin="true" sizes="*, 33%" names="Map and Controls, Timeline and Lists"

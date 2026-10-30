@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:q="urn:import:stroom.query.client.component"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:i="urn:import:stroom.item.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:form="urn:import:stroom.widget.form.client"
 >
     <g:FlowPanel styleName="max form">

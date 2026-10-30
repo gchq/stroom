@@ -16,11 +16,10 @@
 
 package stroom.data.client.component;
 
+import stroom.cell.client.CellIcon;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -28,8 +27,9 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.datasource.QueryField;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.cell.DocRefCell;
+import stroom.util.client.cell.FeedRefCell;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -37,9 +37,11 @@ import stroom.util.shared.Selection;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;

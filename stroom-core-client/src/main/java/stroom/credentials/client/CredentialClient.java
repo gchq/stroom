@@ -25,8 +25,8 @@ import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

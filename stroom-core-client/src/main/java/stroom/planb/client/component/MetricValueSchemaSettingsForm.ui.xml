@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:i="urn:import:stroom.item.client">
+             xmlns:i="urn:import:stroom.widget.selection.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Value Size"
                         helpText="The largest whole-number value a single data point can hold, from Max 255 (1 byte) to about 9.2 quintillion (8 bytes). Larger limits need more storage. Default is Max 65,535."

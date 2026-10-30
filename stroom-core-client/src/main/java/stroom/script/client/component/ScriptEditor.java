@@ -16,15 +16,15 @@
 
 package stroom.script.client.component;
 
-import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
-import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.component.CodeTabController;
-import stroom.entity.client.component.DocumentEditor;
-import stroom.entity.client.component.DocumentationTabController;
-import stroom.entity.client.component.LinkTabPanel;
+import stroom.document.client.component.CodeTabController;
+import stroom.document.client.component.DocumentationTabController;
+import stroom.document.client.editor.DocumentEditor;
+import stroom.document.client.editor.LinkTabPanel;
+import stroom.script.client.event.ClearScriptCacheEvent;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
+import stroom.visualisation.client.event.ClearFunctionCacheEvent;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 

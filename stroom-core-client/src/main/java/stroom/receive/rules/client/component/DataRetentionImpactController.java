@@ -17,8 +17,6 @@
 package stroom.receive.rules.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.ListDataProvider;
-import stroom.data.client.CriteriaUtil;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -28,12 +26,16 @@ import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.SimpleFieldSelectionListModel;
 import stroom.query.client.component.ExpressionEditor;
 import stroom.query.client.component.ExpressionEditorController;
+import stroom.query.client.model.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.component.DataRetentionImpact.ImpactAction;
+import stroom.receive.rules.client.model.DataRetentionImpactRow;
+import stroom.receive.rules.client.model.DataRetentionImpactTreeAction;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.datagrid.client.CriteriaUtil;
+import stroom.widget.datagrid.client.ListDataProvider;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 

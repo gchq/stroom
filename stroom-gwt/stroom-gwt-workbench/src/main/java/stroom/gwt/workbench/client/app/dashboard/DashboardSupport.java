@@ -23,8 +23,8 @@ import stroom.dashboard.client.component.DashboardEditor;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.MultiInstanceEditorHost;
 import stroom.document.client.event.SaveDocumentEvent;
-import stroom.entity.client.component.MultiInstanceEditorHost;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.dashboard.DashboardScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -194,8 +194,8 @@ public final class DashboardSupport {
         harness.getSecurityContext().setDocumentPermission(DocumentPermission.OWNER);
         opts.setup.accept(harness, injector);
         // As Stroom's app does at start-up (eager singletons): form help buttons fire their
-        // events on the static event bus, which the help manager shows, and the component plugins
-        // register the component types
+        // events on the static event bus, which the help manager shows, and DashboardPaneTypes
+        // registers the pane types
         new StaticEventBus(harness.getEventBus());
         new HelpManager(harness.getEventBus());
         registerComponentTypes(injector);
@@ -210,20 +210,12 @@ public final class DashboardSupport {
         return harness.asWidget();
     }
 
-    /// Creates every component plugin of the injector, so that each registers its component type
-    /// in the dashboard's `PaneRegistry`, as Stroom's eager singletons do.
+    /// Creates the injector's `DashboardPaneTypes`, which registers every pane type in the
+    /// dashboard's `PaneRegistry`, as Stroom's eager singleton does.
     ///
     /// @param injector The story's injector.
     public static void registerComponentTypes(final DashboardScreenGinjector injector) {
-        injector.getQueryPanePlugin();
-        injector.getTablePlugin();
-        injector.getVisPlugin();
-        injector.getTextPlugin();
-        injector.getEmbeddedQueryPlugin();
-        injector.getKeyValueInputPlugin();
-        injector.getListInputPlugin();
-        injector.getTextInputPlugin();
-        injector.getTableFilterPlugin();
+        injector.getDashboardPaneTypes();
     }
 
     // As DashboardPlugin (DocumentPlugin) does: fetch, check EDIT, read, show the tab, select it

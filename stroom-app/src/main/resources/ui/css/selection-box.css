@@ -15,7 +15,7 @@
  */
 
 /*
-   The selection box (stroom.item.client.BaseSelectionBox), named BEM style (block, block__element,
+   The selection box (stroom.widget.selection.client.BaseSelectionBox), named BEM style (block, block__element,
    block--modifier): a WAI-ARIA combobox, its text box over a picture of its value, with the icon
    box's drop-down arrow at its end (icon-box.css). Its list is styled by selection-popup.css.
 

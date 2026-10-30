@@ -16,12 +16,13 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
+import stroom.floormap.client.model.FactListRow;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.FloorMapAria;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:sel="urn:import:stroom.item.client"
+             xmlns:sel="urn:import:stroom.widget.selection.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!-- A Git repository's Settings tab (git-repo-settings.css) -->
     <g:FlowPanel styleName="max form-padding form git-repo-settings">

@@ -15,7 +15,7 @@
  */
 
 /*
-   The icon box (stroom.svg.client.IconBox), named BEM style (block, block__element,
+   The icon box (stroom.widget.form.client.IconBox), named BEM style (block, block__element,
    block--modifier): a field with an icon inside the end of its border, e.g. a selection box's
    drop-down arrow, or a date or time box's calendar or clock. The icon is a picture (the field opens
    the same thing from the keyboard), so it has no focus or hover states.

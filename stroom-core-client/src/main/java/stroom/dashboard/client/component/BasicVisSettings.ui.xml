@@ -3,7 +3,7 @@
      and the visualisation that draws it -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:i="urn:import:stroom.item.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tx="urn:import:stroom.widget.text.client">

@@ -16,7 +16,6 @@
 
 package stroom.cell.tickbox.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;

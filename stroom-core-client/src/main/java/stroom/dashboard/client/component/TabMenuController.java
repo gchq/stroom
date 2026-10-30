@@ -18,11 +18,11 @@ package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.flexlayout.FlexLayout;
-import stroom.dashboard.client.flexlayout.MutableTabConfig;
-import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.Panes;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.svg.client.IconColour;

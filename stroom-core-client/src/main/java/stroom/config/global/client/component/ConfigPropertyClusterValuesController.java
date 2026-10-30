@@ -16,7 +16,7 @@
 
 package stroom.config.global.client.component;
 
-import stroom.config.global.client.NodeSource;
+import stroom.config.global.client.model.NodeSource;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

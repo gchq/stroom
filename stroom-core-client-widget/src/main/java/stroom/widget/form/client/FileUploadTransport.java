@@ -16,6 +16,9 @@
 
 package stroom.widget.form.client;
 
+import stroom.widget.form.client.component.FileChooser;
+import stroom.widget.form.client.component.FileChooserController;
+
 import com.google.gwt.dom.client.Element;
 
 /// Sends the file chosen in a [FileChooser] to the server. Stroom's own transport uploads it

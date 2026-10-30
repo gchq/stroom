@@ -20,10 +20,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.client.DateTimeSettingsFactory;
-import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.AbstractQueryDataController;
 import stroom.query.client.component.QueryDataTab;
 import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 
 import com.google.inject.Inject;

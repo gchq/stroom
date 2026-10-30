@@ -16,17 +16,17 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.ColumnSizeConstants;
-import stroom.data.client.component.DocRefCell;
 import stroom.security.shared.FindUserDependenciesCriteria;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.cell.DocRefCell;
 import stroom.util.shared.UserDependency;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.quickfilter.client.QuickFilterPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;

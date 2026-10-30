@@ -20,7 +20,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:view="urn:import:stroom.widget.quickfilter.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <!-- Search and filters on one line: all three narrow the same list, so

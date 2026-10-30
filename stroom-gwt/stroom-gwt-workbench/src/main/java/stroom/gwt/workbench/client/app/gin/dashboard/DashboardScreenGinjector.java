@@ -19,15 +19,7 @@ package stroom.gwt.workbench.client.app.gin.dashboard;
 
 import stroom.ai.client.component.AskStroomAiController;
 import stroom.dashboard.client.component.DashboardEditor;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
-import stroom.dashboard.client.input.KeyValueInputPlugin;
-import stroom.dashboard.client.input.ListInputPlugin;
-import stroom.dashboard.client.input.TableFilterPlugin;
-import stroom.dashboard.client.input.TextInputPlugin;
-import stroom.dashboard.client.query.QueryPanePlugin;
-import stroom.dashboard.client.table.TablePlugin;
-import stroom.dashboard.client.text.TextPlugin;
-import stroom.dashboard.client.vis.VisPlugin;
+import stroom.dashboard.client.main.DashboardPaneTypes;
 import stroom.data.client.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkOpener;
@@ -42,12 +34,12 @@ import com.google.gwt.inject.client.GinModules;
 ///
 /// It reuses the query batch's mirrors of the modules a dashboard's components share with
 /// StroomQL queries (the dashboard Table, Query and Vis modules, pipelines, annotations, streams)
-/// and the editors batch's mirror of the Ask Stroom AI module, and adds mirrors of Stroom's
-/// `DashboardModule`, `EmbeddedQueryModule`, `InputModule` and `TextModule`.
+/// and the editors batch's mirror of the Ask Stroom AI module, and adds a mirror of Stroom's
+/// `DashboardModule`.
 ///
-/// A dashboard creates its components through the `PaneRegistry`, which Stroom's component
-/// plugins (eager singletons in Stroom) fill: get every plugin before reading a dashboard
-/// (`DashboardStories.registerComponentTypes`).
+/// A dashboard creates its panes through the `PaneRegistry`, which Stroom's `DashboardPaneTypes`
+/// (an eager singleton in Stroom) fills: get it before reading a dashboard
+/// (`DashboardSupport.registerComponentTypes`).
 @GinModules({
         DashboardScreenModule.class,
 })
@@ -67,32 +59,7 @@ public interface DashboardScreenGinjector extends ScreenGinjector {
     /// eagerly.
     DataDisplaySupport getDataDisplaySupport();
 
-    // The component plugins, which register their component types as they are created
-
-    /// @return The plugin of Query components.
-    QueryPanePlugin getQueryPanePlugin();
-
-    /// @return The plugin of Table components.
-    TablePlugin getTablePlugin();
-
-    /// @return The plugin of Visualisation components.
-    VisPlugin getVisPlugin();
-
-    /// @return The plugin of Text components.
-    TextPlugin getTextPlugin();
-
-    /// @return The plugin of Embedded Query components.
-    EmbeddedQueryPlugin getEmbeddedQueryPlugin();
-
-    /// @return The plugin of Key/Value Input components.
-    KeyValueInputPlugin getKeyValueInputPlugin();
-
-    /// @return The plugin of List Input components.
-    ListInputPlugin getListInputPlugin();
-
-    /// @return The plugin of Text Input components.
-    TextInputPlugin getTextInputPlugin();
-
-    /// @return The plugin of Table Filter components.
-    TableFilterPlugin getTableFilterPlugin();
+    /// @return The registrar of the dashboard's pane types, which registers them in the
+    /// `PaneRegistry` as it is created.
+    DashboardPaneTypes getDashboardPaneTypes();
 }

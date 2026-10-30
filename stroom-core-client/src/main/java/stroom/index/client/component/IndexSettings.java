@@ -16,15 +16,15 @@
 
 package stroom.index.client.component;
 
-import stroom.feed.client.SupportedRetentionAge;
+import stroom.index.client.model.SupportedRetentionAge;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexDoc.PartitionBy;
-import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

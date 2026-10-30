@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;
@@ -26,6 +25,7 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.SingleSelectionEventManager;
+import stroom.widget.util.client.FloorMapAria;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;

@@ -16,15 +16,15 @@
 
 package stroom.cache.client.component;
 
-import stroom.cell.info.client.ActionCell;
-import stroom.cell.info.client.CellIcon;
+import stroom.cell.client.ActionCell;
+import stroom.cell.client.CellIcon;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheIdentity;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

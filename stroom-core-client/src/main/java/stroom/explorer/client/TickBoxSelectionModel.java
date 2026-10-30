@@ -16,7 +16,7 @@
 
 package stroom.explorer.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;

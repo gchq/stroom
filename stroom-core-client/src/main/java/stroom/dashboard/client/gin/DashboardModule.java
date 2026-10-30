@@ -18,7 +18,9 @@ package stroom.dashboard.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
+import stroom.dashboard.client.main.DashboardPaneTypes;
 import stroom.dashboard.client.main.PaneRegistry;
+import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.inject.Singleton;
 
@@ -28,6 +30,11 @@ public class DashboardModule extends PluginModule {
     protected void configure() {
 
         bind(PaneRegistry.class).in(Singleton.class);
+        // Registers the pane types as the app starts
+        bind(DashboardPaneTypes.class).asEagerSingleton();
+        // The vis panes' cache of vis functions, one for the app (the dashboard app has no
+        // VisualisationModule)
+        bind(VisFunctionCache.class).in(Singleton.class);
 
         bindPlugin(DashboardPlugin.class);
     }

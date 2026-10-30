@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.content.client.component.ContentTabController;
 import stroom.content.client.component.ContentTabPaneController;
+import stroom.content.client.component.CurveTabLayout;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
@@ -28,6 +29,7 @@ import stroom.document.client.HasMultipleInstances;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.framework.client.play.EventInit;
@@ -39,7 +41,6 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerNode;
-import stroom.widget.tab.client.component.CurveTabLayout;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

@@ -18,7 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
-import stroom.floormap.client.FloorMapQueryBuilder;
+import stroom.floormap.client.query.FloorMapQueryBuilder;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapFieldMapping;

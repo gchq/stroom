@@ -16,10 +16,10 @@
 
 package stroom.ai.client.component;
 
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;

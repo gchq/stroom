@@ -16,11 +16,11 @@
 
 package stroom.visualisation.client.component;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.util.client.DirtyKeyDownHander;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;

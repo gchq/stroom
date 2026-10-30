@@ -20,10 +20,10 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.TabPlugin;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
-import stroom.data.table.client.HasRefresh;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
+import stroom.widget.util.client.HasRefresh;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

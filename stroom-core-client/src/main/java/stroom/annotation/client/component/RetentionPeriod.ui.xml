@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
-             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:d="urn:import:stroom.widget.duration.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel>
         <form:FormGroup helpText="Keep this annotation for ever, so retention never deletes it. When ticked, Retain For is disabled.">

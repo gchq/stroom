@@ -18,8 +18,8 @@ package stroom.floormap.client.component;
 
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
-import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;

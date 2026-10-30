@@ -17,7 +17,6 @@
 package stroom.floormap.client.component;
 
 import stroom.floormap.shared.FloorMapEventStoreDoc;
-import stroom.item.client.SelectionBox;
 import stroom.planb.client.component.CondenseSettingsForm;
 import stroom.planb.client.component.GeneralSettingsForm;
 import stroom.planb.client.component.RetentionSettingsForm;
@@ -25,6 +24,7 @@ import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;

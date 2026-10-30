@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:sl="urn:import:stroom.item.client">
+             xmlns:sl="urn:import:stroom.widget.selection.client">
 
     <split:SplitPane vertical="true" thin="true" sizes="250px, *"
                      names="Help items, Details" addStyleNames="query-help max">

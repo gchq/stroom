@@ -16,12 +16,12 @@
 
 package stroom.pipeline.stepping.client.component;
 
-import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
 
 import com.google.gwt.core.client.GWT;

@@ -18,12 +18,12 @@ package stroom.processor.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.HasRefresh;
 import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.HasRefresh;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

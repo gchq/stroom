@@ -126,7 +126,7 @@ client durations treat 0 as meaningful ("no timeout", or Keep Alive "close after
 isn't clear whether a typed 0 is clamped when saved.
 
 * `stroom-core-client/src/main/java/stroom/http/client/component/HttpClientConfigEditor.ui.xml`
-* `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/DurationPicker.java`
+* `stroom-core-client-widget/src/main/java/stroom/widget/duration/client/DurationPicker.java`
 
 ### Values quietly replaced or dropped
 
@@ -458,7 +458,7 @@ run of 22 October 2026 (1,538 stories).
   `App/Editors/QueryEditor` `AddToAnnotation` (found 25 October 2026): one full run showed the
   focus ring on the results toolbar's annotate button, which it doesn't have alone (twice).
 
-* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/credentials/CredentialsScreenStories.java`
 
 ### A dictionary's word list ignores its secondary sort orders
 
@@ -1827,6 +1827,14 @@ checks which element has the focus after opening.
 
 * `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/AbstractTabBar.java` (`onResize`)
 * `ContentTabPaneController.onOpen`, `ContentFocus.focus`
+
+### Two story classes share a title
+
+**Open** (30 October 2026, wave 44): `QueryResultsTableStories` (`app.query`) and
+`QueryResultsTableDashboardStories` (`app.dashboard`) both register `App/Query/QueryResultsTable`,
+so their stories make one group. Titles can't change (they are the stories' ids and baselines), and
+merging the classes means making one area's helpers public (`DashboardPlays`, or the query's
+fixtures). To do with wave 11's query/dashboard merge, which brings the two together anyway.
 
 ### Screenshots that differ in every run
 

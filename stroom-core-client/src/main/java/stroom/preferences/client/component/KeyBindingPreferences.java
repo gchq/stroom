@@ -16,6 +16,7 @@
 
 package stroom.preferences.client.component;
 
+import stroom.preferences.client.model.KeyBindingRow;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;

@@ -16,11 +16,10 @@
 
 package stroom.node.client.component;
 
-import stroom.cell.info.client.ActionCell;
-import stroom.cell.info.client.CommandLink;
+import stroom.cell.client.ActionCell;
+import stroom.cell.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.ColumnSizeConstants;
+import stroom.cell.tickbox.client.TickBoxState;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode.JobType;
@@ -29,6 +28,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;

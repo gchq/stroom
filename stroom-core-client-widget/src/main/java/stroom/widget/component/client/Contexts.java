@@ -17,9 +17,9 @@
 package stroom.widget.component.client;
 
 import stroom.docref.DocRef;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 /// The context keys shared across the UI. A feature may define its own key, but context is only
 /// for values that many layers need; a direct child is given what it needs as an argument.
