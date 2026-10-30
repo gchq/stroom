@@ -14,14 +14,7 @@
                         in each stream's own .meta or .manifest file. Streams that don't name a feed go into the
                         feed selected above. When using the feeds named in the zip, the upload is rejected if any
                         of those feeds don't exist or you don't have permission to update them.">
-            <g:FlowPanel>
-                <g:SimplePanel>
-                    <g:RadioButton ui:field="selectedFeed" name="dataUploadFeedSource"/>
-                </g:SimplePanel>
-                <g:SimplePanel>
-                    <g:RadioButton ui:field="zipFeeds" name="dataUploadFeedSource"/>
-                </g:SimplePanel>
-            </g:FlowPanel>
+            <l:SelectionBox ui:field="feedSource" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max">
             <g:TextArea ui:field="metaData" addStyleNames="max"/>

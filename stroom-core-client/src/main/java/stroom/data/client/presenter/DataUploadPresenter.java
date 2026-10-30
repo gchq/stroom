@@ -195,7 +195,8 @@ public class DataUploadPresenter
                 streamTypes.addAll(list);
                 getView().getType().addItems(list);
                 getView().getType().setValue(StreamTypeNames.RAW_EVENTS);
-                setTypeFromFeed(initialFeedRef);
+                // The user may have picked a different feed while the types were loading.
+                setTypeFromFeed(feedSelectionPresenter.getSelectedEntityReference());
             }
         }, this);
 

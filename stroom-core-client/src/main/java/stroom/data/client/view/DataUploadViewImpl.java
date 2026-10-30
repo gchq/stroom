@@ -25,7 +25,6 @@ import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,9 +39,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     SimplePanel feed;
     @UiField
-    RadioButton selectedFeed;
-    @UiField
-    RadioButton zipFeeds;
+    SelectionBox<UploadFeedSource> feedSource;
     @UiField
     SelectionBox<String> type;
     @UiField
@@ -58,9 +55,9 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
         widget = binder.createAndBindUi(this);
         effective.setUtc(userPreferencesManager.isUtc());
 
-        selectedFeed.setText(UploadFeedSource.SELECTED_FEED.getDisplayValue());
-        zipFeeds.setText(UploadFeedSource.ZIP_FEEDS.getDisplayValue());
-        selectedFeed.setValue(true);
+        feedSource.addItem(UploadFeedSource.SELECTED_FEED);
+        feedSource.addItem(UploadFeedSource.ZIP_FEEDS);
+        feedSource.setValue(UploadFeedSource.SELECTED_FEED);
     }
 
     @Override
@@ -105,9 +102,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Override
     public UploadFeedSource getFeedSource() {
-        return zipFeeds.getValue()
-                ? UploadFeedSource.ZIP_FEEDS
-                : UploadFeedSource.SELECTED_FEED;
+        return feedSource.getValue();
     }
 
 
