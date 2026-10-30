@@ -36,8 +36,8 @@
     "name" : "template-pipelines",
     "version" : "0.6"
   }, {
-    "url" : "https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.17.2/stroom-visualisations-v3.17.2.zip",
+    "url" : "https://github.com/gchq/stroom-visualisations-dev/releases/download/v8.0-beta.3/stroom-visualisations-v8.0-beta.3.zip",
     "name" : "stroom-visualisations",
-    "version" : "3.17.2"
+    "version" : "8.0-beta.3"
   } ]
 }
