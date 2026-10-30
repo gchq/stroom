@@ -181,6 +181,26 @@
     "totalResults" : 1
   }
 
+## explain_retention {"feed":"TEST-FEED"}
+- audit: streamsSearched(1, "data retention of feed TEST-FEED", [], {"View"="Full"}, "Data retention explained by the explain_retention tool")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Data retention explained by the explain_retention tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Data retention explained by the explain_retention tool"
+    }, {
+      "name" : "View",
+      "value" : "Full"
+    } ],
+    "query" : {
+      "raw" : "data retention of feed TEST-FEED"
+    },
+    "totalResults" : 0
+  }
+
 ## fetch_events {"path":"/outputs/a.csv"}
 (nothing recorded)
 
@@ -646,6 +666,26 @@
       "success" : true
     },
     "type" : "APPLICATION"
+  }
+
+## volumes {}
+- audit: documentsSearched(1, "volumes (both)", [], {"View"="Full"}, "Volumes read by the volumes tool")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Volumes read by the volumes tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Volumes read by the volumes tool"
+    }, {
+      "name" : "View",
+      "value" : "Full"
+    } ],
+    "query" : {
+      "raw" : "volumes (both)"
+    },
+    "totalResults" : 0
   }
 
 ## wc {"path":"/outputs/a.txt"}

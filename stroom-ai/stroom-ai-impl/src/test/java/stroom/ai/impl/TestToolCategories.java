@@ -48,8 +48,9 @@ class TestToolCategories {
                     "propose_query",
                     "propose_query_change", "propose_visualisation", "xslt_lookups"),
             AiToolCategory.INDEXING, List.of("elastic_index_templates"),
-            AiToolCategory.PROCESSING, List.of("explain_processing", "processor_tasks", "stream_meta"),
-            AiToolCategory.ADMINISTRATION, List.of("config_properties", "server_tasks"));
+            AiToolCategory.PROCESSING, List.of("explain_processing", "explain_retention", "processor_tasks",
+                    "stream_meta"),
+            AiToolCategory.ADMINISTRATION, List.of("config_properties", "server_tasks", "volumes"));
 
     @Test
     void testEachToolIsInItsCategory(@TempDir final Path tempDir) {
