@@ -329,8 +329,10 @@ subprojects {
         addTestListener(new TestListener() {
             @Override
             void beforeSuite(TestDescriptor descriptor) {
-                if (descriptor?.className?.trim())
+                // Extra check to stop it logging for each TestFactory dynamic test
+                if (descriptor?.className?.trim() && descriptor.name == descriptor.className) {
                     println "Executing test class ${descriptor.className}"
+                }
             }
 
             @Override
