@@ -79,6 +79,7 @@ public class PhysicalDeleteExecutor {
     private final ExecutorProvider executorProvider;
     private final FsFileDeleter fsFileDeleter;
     private final PathCreator pathCreator;
+    private final S3StreamDeleter s3StreamDeleter;
 
     @Inject
     PhysicalDeleteExecutor(
@@ -91,7 +92,8 @@ public class PhysicalDeleteExecutor {
             final TaskContextFactory taskContextFactory,
             final ExecutorProvider executorProvider,
             final FsFileDeleter fsFileDeleter,
-            final PathCreator pathCreator) {
+            final PathCreator pathCreator,
+            final S3StreamDeleter s3StreamDeleter) {
         this.clusterLockService = clusterLockService;
         this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
@@ -102,6 +104,7 @@ public class PhysicalDeleteExecutor {
         this.executorProvider = executorProvider;
         this.fsFileDeleter = fsFileDeleter;
         this.pathCreator = pathCreator;
+        this.s3StreamDeleter = s3StreamDeleter;
     }
 
     public void exec() {
@@ -463,11 +466,7 @@ public class PhysicalDeleteExecutor {
                                         }
                                     }
                                     case S3 -> {
-                                        // FIXME: Add something.
-                                        LOGGER.warn("{} - S3 physical delete currently not implemented. " +
-                                                    "Cannot physically delete simpleMeta: {}",
-                                                TASK_NAME, simpleMeta);
-                                        isSuccessful = false;
+                                        isSuccessful = s3StreamDeleter.delete(dataVolume, simpleMeta);
                                     }
                                     default -> {
                                         LOGGER.warn(
