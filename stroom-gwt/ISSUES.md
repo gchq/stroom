@@ -1727,8 +1727,8 @@ background with no text colour) and is fixed; a warning in the custom style dial
 **Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,
 not yet worked on.
 
-* **#3416** (marked wontfix): disabled rules look the same as enabled ones in the explorer (the
-  explorer tree has no disabled look).
+* ~~**#3416** (marked wontfix): disabled rules look the same as enabled ones in the explorer (the
+  explorer tree has no disabled look).~~ **Kept wontfix** (30 October 2026, the user's decision).
 * **#5847**: nothing says that jobs are disabled for the whole cluster.
 * **#5743**: the Info pane's keys have no help.
 
@@ -1872,7 +1872,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 ### Left from wave 15
 
-**Reported** (28 October 2026, overnight; decisions taken without the user, to check).
+**Reported** (28 October 2026, overnight; decisions taken without the user, to check). **Accepted**
+(30 October 2026, the user's decision): the decisions below stand as recorded.
 
 * **Screens left as the plan's "stays" or for later.** Wave 20 (28 October 2026): `WelcomeTab`'s build information is a table with `<th scope="row">` headers in its template; `Main`'s banner is an `AriaPanel` with `role="alert"` in its template, and the selected tab's colour the theme's `--curve-tab__selected-color` set on it, not a generated rule; `Navigation`'s toolbar, tree and logo are in its template, wired through `ExplorerAction`. What stays, as it depends on what is known only at runtime: `Main`'s split panes (rebuilt as the AI panel docks), the page border (a config value of any CSS declarations), the inner content's size and the landmarks on the widgets it is given. As reported: `WelcomeTab` keeps its `g:Grid` and sets its
   name cells' `rowheader` role in Java (the plan's `<th scope="row">` table changes the cells'
@@ -1959,10 +1960,10 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 that day). Those the record accepts as right stay only there (see
 [Tracked elsewhere](#tracked-elsewhere)).
 
-* **Two unused SafeHtml templates** (moved from `component-migration/wave-40.md` § Left, and why):
+* ~~**Two unused SafeHtml templates** (moved from `component-migration/wave-40.md` § Left, and why):
   `SafeHtmlUtil.Template`'s `divWithClassStyleAndTitle` and `divWithClassAndStyle`
   (`SafeHtmlUtil.java:445` and `448`) have no users. A removal, so it waits for approval (or the
-  dead code pass).
+  dead code pass).~~ **Deleted** (30 October 2026, at the user's approval).
 * **`NameDialog` duplicates `NameEntry`** (moved from `wave-43.md` § Left, and why): two name forms,
   `NameDialog` (`stroom.widget.popup.client.component`, with `NameDialogController`, used by
   `TabSessionManager`) and `NameEntry` (`stroom.document.client.component`, used by Rename and the
@@ -2093,8 +2094,7 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
-**Open** (30 October 2026, moved from COMPONENTS.md § To delete; a removal, so it needs approval):
-the rules for bare inputs (`text-field.css`'s `textarea:where(:not(.text-field))` block and the
+**Kept** (30 October 2026, at the user's approval removed and then put back, as the check found a use): the activity editor shows the site's own configured HTML form, built of plain `input`, `select` and `textarea` elements, which only these rules give Stroom's look; without them its fields were the browser's white boxes, and the Manage Activity Validation Blocks Save story's contrast check failed. Removing them would need that form's controls styled another way (e.g. rules scoped to the activity editor's form). ~~the rules for bare inputs (`text-field.css`'s `textarea:where(:not(.text-field))` block and the
 `input:where(:not(.text-field))` selectors from line 38, the `select option` rules and the bare
 `::placeholder`, and `base.css`'s `input[type="file"]` rules at 569) may now style nothing that
 needs them: every input on Stroom's screens has a block of its own, the floor map's schema grid
@@ -2102,7 +2102,7 @@ needs them: every input on Stroom's screens has a block of its own, the floor ma
 elements those selectors match was stopped for lack of memory, and the blocks whose inputs they
 still match (the tick box's, the radios', the hidden file input, the colour box, Ace's hidden
 textarea) aren't checked for relying on a property only these rules set. The check is a screenshot
-diff of every story in both themes before and after deleting them.
+diff of every story in both themes before and after deleting them.~~
 
 **Fixed** (30 October 2026, wave 46, changelog entry: greyed in the read-only text colour, as the
 user chose). **Confirmed** (29 October 2026, wave 42): a read-only annotation's settings aren't greyed, though
@@ -2210,9 +2210,10 @@ to delete them by hand.~~
   `AceEditorPane`'s attach handler doesn't apply it then (found 25 October 2026, in wave 6's audit; older).
   The line's height comes from `code-editor__ace--single-line`'s rules. Fix with `updateMaxLines()`
   in the attach handler, and the single line stories' screenshots.~~
-* Two files in Ace's directory (`edu/ycp/cs/dh/acegwt`), which aren't changed without approval,
+* ~~Two files in Ace's directory (`edu/ycp/cs/dh/acegwt`), which aren't changed without approval,
   still name `editor.css`, renamed `code-editor.css` in wave 6's audit (25 October 2026): its
-  `public/README.md` and `AceAnnotationType.java`'s comment.
+  `public/README.md` and `AceAnnotationType.java`'s comment.~~ **Fixed** (30 October 2026, with the
+  user's approval): both name `code-editor.css`.
 * ~~The code editor's own `OverviewTooltip` (static in `CodeEditor`, before that `EditorViewImpl`) is
   never shown: the overview bar (`OverviewBar`) shows one of its own, which hides itself on a click
   (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,
@@ -2256,10 +2257,12 @@ to delete them by hand.~~
   too): nothing under `stroom.floormap.client` watches `Contexts.READ_ONLY`, and `FloorMapLayers`
   has no `onReadOnlyChange`, so a floor map the user can only view can still have its layers
   reordered and restyled on the Editor tab (though it can't be saved).
-* The floor map's dock (`FloorMapDock`) hands out its tab bar and layer container, and its controller
+* ~~The floor map's dock (`FloorMapDock`) hands out its tab bar and layer container, and its controller
   adds its handlers to the tab bar, rather than the dock having a callback for each (decided in
   wave 7, as the plan accepted the controller relaying the tab bar's menu). Revisit with
-  `TabbedController` in wave 14.
+  `TabbedController` in wave 14.~~ **Kept** (30 October 2026, the user's decision): since wave 38 the
+  dock is a declared `LinkTabPanel` that `FloorMapDockController` attaches to, and the controller
+  adding its handlers to the panel's tab bar stays.
 * No story hovers or drags on the floor map canvas but Set Scale's (wave 7's audit, 26 October
   2026): the hover tooltip's and the gesture readout's positions, custom properties since wave 7,
   are checked only by the screenshots, and neither shows in one.

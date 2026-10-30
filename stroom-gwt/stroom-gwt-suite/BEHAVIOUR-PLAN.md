@@ -243,6 +243,9 @@ regresses fails the run by name.
 
 ### B6 — the configuration-gated features (a day each, when wanted)
 
+**Decided** (30 October 2026, the user): when the suite is next run, walk them, each with a test
+configuration that turns the feature on, as below. Not scheduled: the suite isn't to be run for now.
+
 BRANCHING-PLAN.md § Layer 4 enumerated them and the second-corpus mechanism (`NAME=`) that
 keeps them from polluting the default baselines: the activity chooser (4 presenters), the splash,
 the info popup (`QueryInfoPresenter` — one of the 7 unreached doors), the banner. Each is a

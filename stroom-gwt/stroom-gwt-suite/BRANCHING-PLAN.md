@@ -153,7 +153,7 @@ actions**.
 99 self-shown + 40 edges. Each dialog is itself a node with its own affordances, so this layer
 recurses; the graph gives the parent for every one.
 
-### Layer 4 — config-gated features · BLOCKED, needs a decision
+### Layer 4 — config-gated features · decided 30 October 2026: walk them (BEHAVIOUR-PLAN.md § B6)
 **A whole category that no amount of crawling reaches, because it does not exist in this deployment.**
 Four found, and the set was never enumerated before:
 
